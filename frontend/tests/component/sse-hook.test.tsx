@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, act } from '@testing-library/react';
 import { useEventSource } from '@/lib/sse';
+import { setAccessToken } from '@/lib/auth-fetch';
 
 class FakeES {
   static last: FakeES;
@@ -13,8 +14,10 @@ class FakeES {
 }
 
 describe('useEventSource', () => {
-  beforeEach(() => { vi.useFakeTimers(); });
-  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+  // A signed-in session: with no JWT in memory, authFetch refreshes before a
+  // ticket mint (#251), which would add /api/auth/refresh calls to the count.
+  beforeEach(() => { vi.useFakeTimers(); setAccessToken('jwt'); });
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); setAccessToken(null); });
 
   it('mints a fresh ticket per reconnect', async () => {
     vi.stubGlobal('EventSource', FakeES as unknown as typeof EventSource);

@@ -198,6 +198,14 @@ class DockerSocketDriver:
         # failure would surface as a health-probe timeout with no clue why.
         self._names: dict[str, str] = {}
 
+    @property
+    def default_image(self) -> str:
+        """The image an engine runs when its spec pins none. Read by the
+        supervisor to record which engine a model variant actually ran
+        (app/runtime/variants.py): a warden upgrade that moves this default
+        is a new variant even for a model that pins nothing."""
+        return self._image
+
     def engine_host(self, model_id: str) -> str:
         # The sibling engine is reachable from the control-plane container by
         # its docker DNS name once both share ENGINE_NETWORK. The published

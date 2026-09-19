@@ -1,6 +1,7 @@
 import hashlib
 import re
 import secrets
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -40,17 +41,25 @@ class TokenRow:
     expires_at: str | None
     rotated_at: str | None
     rotated_from: str | None
-    # S5 (#104) — sliding-window rate limit in TOKENS/sec (NULL = unlimited)
-    # and STRICT scheduler priority 0..9 (9 always served first; starvation
-    # of priority-0 tokens is by design and documented in the UI tooltip).
+    # UNUSED since per-token rate limits were removed (2026-09). The column
+    # stays in api_tokens (SQLite cannot drop it cheaply) and the field stays
+    # here, in its original position, so ``priority`` and ``paused_at`` keep
+    # their positional indexes (see the rule above). Nothing reads or writes
+    # it any more; do not expose it.
     rate_limit_tps: int | None = None
+    # S5 (#104) — STRICT scheduler priority 0..9 (9 always served first;
+    # starvation of priority-0 tokens is by design and documented in the UI
+    # tooltip).
     priority: int = 5
+    # Token details page (0033) -- when the operator paused this key; None =
+    # not paused. require_bearer answers a paused key with 403 "token paused".
+    paused_at: str | None = None
 
 
 _SELECT_COLS = (
     "id, name, prefix, scope, allowed_models, rate_limit_rpm, rate_limit_tpm, "
     "revoked_at, last_used_at, created_at, expires_at, rotated_at, rotated_from, "
-    "rate_limit_tps, priority"
+    "rate_limit_tps, priority, paused_at"
 )
 
 
@@ -59,10 +68,10 @@ def hash_token(plaintext: str) -> str:
 
 
 class _Unset:
-    """Sentinel marker for "field not provided" in update_limits().
+    """Sentinel marker for "field not provided" in TokenRepo.update().
 
-    Distinct from None so callers can clear rate_limit_tps (set to NULL)
-    without us treating it as 'leave alone'. Defined above ``TokenRepo``
+    Distinct from None so a nullable field can be explicitly cleared without
+    us treating it as 'leave alone'. Defined above ``TokenRepo``
     so the method annotations can reference the class without forward
     refs / TYPE_CHECKING gymnastics.
     """
@@ -90,13 +99,11 @@ class TokenRepo:
         scope: str = "inference",
         allowed_models: list[str] | None = None,
         expires_in_days: int = 365,
-        rate_limit_tps: int | None = None,
         priority: int = 5,
     ) -> None:
         """Insert a new API token row and commit.
 
         expires_in_days=0 (or any non-positive value) means 'never expires'.
-        rate_limit_tps=None means 'unlimited'.
         priority must be 0..9 (DB CHECK trigger enforces this, but we validate
         at the Pydantic layer too so users get a 422 instead of a 500).
         """
@@ -108,13 +115,13 @@ class TokenRepo:
         await self.db.execute(
             "INSERT INTO api_tokens"
             "(id, name, prefix, hash, scope, allowed_models, expires_at, "
-            " rate_limit_tps, priority) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " priority) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 token_id, name, prefix, hash_token(plaintext), scope,
                 ",".join(allowed_models) if allowed_models else None,
                 expires_at,
-                rate_limit_tps, priority,
+                priority,
             ),
         )
         await self.db.commit()
@@ -182,9 +189,9 @@ class TokenRepo:
             translates that into 409. Idempotent rotation would silently
             allocate ``(old 2)``, ``(old 3)`` … on accidental double-clicks
             and is footgun-y enough to forbid.
-          * The successor INHERITS ``rate_limit_tps`` and ``priority`` —
-            operators do not want a rotation to silently change throughput
-            or scheduler behaviour. To change either, PATCH the successor.
+          * The successor INHERITS ``priority`` — operators do not want a
+            rotation to silently change scheduler behaviour. To change it,
+            PATCH the successor.
           * ``grace_hours`` schedules the predecessor's ``revoked_at`` (in
             the future when >0). Existing callers keep working through the
             window — see ``tests/integration/test_token_rotate_grace.py``.
@@ -200,7 +207,7 @@ class TokenRepo:
 
         # Look up predecessor for inheritable fields + the current name.
         cur = await self.db.execute(
-            "SELECT name, expires_at, rate_limit_tps, priority, rotated_at "
+            "SELECT name, expires_at, priority, rotated_at "
             "FROM api_tokens WHERE id = ?",
             (old_id,),
         )
@@ -209,7 +216,7 @@ class TokenRepo:
             # rotate() is only called from routes after a list_all() existence
             # check, but guard anyway so future direct callers see a clean error.
             raise ValueError(f"token {old_id} not found")
-        pred_name, pred_expires, pred_rate, pred_priority, pred_rotated_at = row
+        pred_name, pred_expires, pred_priority, pred_rotated_at = row
 
         if pred_rotated_at is not None:
             # Predecessor was already rotated. Rotating again would chain
@@ -241,12 +248,12 @@ class TokenRepo:
         await self.db.execute(
             "INSERT INTO api_tokens"
             "(id, name, prefix, hash, scope, rotated_from, expires_at, "
-            " rate_limit_tps, priority) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " priority) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 new_id, pred_name, new_prefix, hash_token(new_plaintext),
                 "inference", old_id, new_expires_at,
-                pred_rate, pred_priority,
+                pred_priority,
             ),
         )
 
@@ -290,9 +297,24 @@ class TokenRepo:
         )
         await self.db.commit()
 
+    # How stale last_used_at may get before a request rewrites it.
+    LAST_USED_GRANULARITY_S = 60
+
     async def touch_last_used(self, token_id: str) -> None:
+        """Stamp ``last_used_at``, at most once a minute per key.
+
+        This runs on every proxied request. Since 0035 indexes last_used_at
+        (the list sorts by it), each rewrite dirties an index page as well as
+        the row and pays a WAL append + fsync -- about 4 KB per request for a
+        busy key, against nothing when the value is left alone. So a key used
+        within the last LAST_USED_GRANULARITY_S seconds keeps its stamp: the
+        column reads "used at most a minute before this", which is all the
+        list and the token page ("2 min ago") show.
+        """
         await self.db.execute(
-            "UPDATE api_tokens SET last_used_at = datetime('now') WHERE id = ?", (token_id,)
+            "UPDATE api_tokens SET last_used_at = datetime('now') WHERE id = ?"
+            " AND (last_used_at IS NULL OR last_used_at < datetime('now', ?))",
+            (token_id, f"-{self.LAST_USED_GRANULARITY_S} seconds"),
         )
         await self.db.commit()
 
@@ -303,29 +325,42 @@ class TokenRepo:
         await self.db.commit()
         return cur.rowcount > 0
 
-    async def update_limits(
+    async def update(
         self,
         token_id: str,
         *,
-        rate_limit_tps: "int | None | _Unset" = _UNSET,
+        name: "str | _Unset" = _UNSET,
         priority: "int | _Unset" = _UNSET,
+        paused: "bool | _Unset" = _UNSET,
     ) -> bool:
-        """PATCH-style update for the rate/priority fields.
+        """PATCH-style update for the operator-editable fields.
 
-        Pass _UNSET (the default) to leave a field untouched; pass None to
-        explicitly clear rate_limit_tps (i.e. switch back to unlimited).
-        priority cannot be None — it's NOT NULL in the schema; pass an int.
+        Pass _UNSET (the default) to leave a field untouched. ``name`` and
+        ``priority`` are NOT NULL in the schema; pass a value.
 
-        Returns True if a row was updated, False if token_id was unknown.
+        ``paused=True`` stamps ``paused_at`` with the current UTC time only if
+        it is not already set, so a repeated pause keeps the ORIGINAL time
+        (the page says "paused since ..."). ``paused=False`` clears it. The
+        rule that a dead key cannot be paused lives in the route, which has
+        the row in hand; this method writes what it is told.
+
+        Returns True if a row was updated, False if token_id was unknown. A
+        call that sets nothing returns True without touching the database.
         """
         sets: list[str] = []
         params: list[object] = []
-        if not isinstance(rate_limit_tps, _Unset):
-            sets.append("rate_limit_tps = ?")
-            params.append(rate_limit_tps)
+        if not isinstance(name, _Unset):
+            sets.append("name = ?")
+            params.append(name)
         if not isinstance(priority, _Unset):
             sets.append("priority = ?")
             params.append(priority)
+        if not isinstance(paused, _Unset):
+            if paused:
+                sets.append("paused_at = COALESCE(paused_at, ?)")
+                params.append(sqlite_utc_now())
+            else:
+                sets.append("paused_at = NULL")
         if not sets:
             return True  # noop PATCH — treat as success (idempotent)
         params.append(token_id)
@@ -335,6 +370,289 @@ class TokenRepo:
         )
         await self.db.commit()
         return cur.rowcount > 0
+
+    async def lineage(self, token_id: str) -> list[TokenRow]:
+        """The rotation chain ``token_id`` belongs to, OLDEST first.
+
+        Walks ``rotated_from`` backwards for the predecessors, then forwards
+        through the row whose ``rotated_from`` is the current one for the
+        successors -- rotate() refuses to rotate a row twice, so each row has
+        at most one. Returns [] for an unknown id.
+
+        A deleted predecessor ends the backward walk (``rotated_from`` is ON
+        DELETE SET NULL, and with foreign keys off the lookup simply misses).
+        ``seen`` bounds both walks so a hand-edited cycle terminates.
+        """
+        me = await self.get(token_id)
+        if me is None:
+            return []
+        seen = {me.id}
+        earlier: list[TokenRow] = []
+        cur = me
+        while cur.rotated_from is not None and cur.rotated_from not in seen:
+            prev = await self.get(cur.rotated_from)
+            if prev is None:
+                break
+            seen.add(prev.id)
+            earlier.append(prev)
+            cur = prev
+        later: list[TokenRow] = []
+        cur = me
+        while True:
+            c = await self.db.execute(
+                f"SELECT {_SELECT_COLS} FROM api_tokens WHERE rotated_from = ? "
+                "ORDER BY created_at ASC, id ASC LIMIT 1",
+                (cur.id,),
+            )
+            r = await c.fetchone()
+            if r is None or r[0] in seen:
+                break
+            nxt = TokenRow(*r)
+            seen.add(nxt.id)
+            later.append(nxt)
+            cur = nxt
+        return [*reversed(earlier), me, *later]
+
+
+# ---------------------------------------------------------------------------
+# GET /api/tokens: one sorted page, built for millions of rows.
+#
+# Two statements per page, whatever the page size: the page itself (rows +
+# successor + 24h usage) and the counts. Nothing in Python walks the table.
+# ---------------------------------------------------------------------------
+
+# The list hides a key that was revoked WITHOUT being rotated; a rotated
+# predecessor stays visible for the whole of its grace window and after it.
+TOKEN_LIST_VISIBLE_SQL = "(t.revoked_at IS NULL OR t.rotated_at IS NOT NULL)"
+
+# The status badge's rank, the same ladder as the UI's deriveStatus
+# (token-row.tsx) and _enrich: Paused -> Revoked -> Expired -> Grace ->
+# Expiring soon -> Active. "Revoked" is a rotated key whose grace is over (and
+# a plainly revoked one, which the list hides) plus "Rotated (orphan)" -- the
+# red rotated badges. The CASE tests run in deriveStatus's order, so a key that
+# is both expired and past its grace ranks as Expired, the badge it shows. Every
+# comparison uses the one ``:now`` the request captured.
+TOKEN_STATUS_RANK_SQL = (
+    "CASE"
+    " WHEN t.paused_at IS NOT NULL THEN 0"
+    " WHEN t.revoked_at IS NOT NULL AND t.rotated_at IS NULL THEN 1"
+    " WHEN t.expires_at IS NOT NULL AND t.expires_at <= :now THEN 2"
+    " WHEN t.rotated_at IS NOT NULL AND NOT EXISTS"
+    "  (SELECT 1 FROM api_tokens s WHERE s.rotated_from = t.id) THEN 1"
+    " WHEN t.rotated_at IS NOT NULL AND t.revoked_at <= :now THEN 1"
+    " WHEN t.rotated_at IS NOT NULL THEN 3"
+    " WHEN t.expires_at IS NOT NULL AND t.expires_at <= :in30 THEN 4"
+    " ELSE 5 END"
+)
+
+
+@dataclass(frozen=True)
+class _SortKey:
+    expr: str  # over the api_tokens alias ``t`` (and ``u`` for usage_24h)
+    collate: str = ""  # appended to the key in BOTH the inner and outer ORDER BY
+    nullable: bool = False  # adds NULLS LAST -- never-used / never-expires sort last
+
+
+# Every key but usage_24h and status is served by an index from 0035 walked
+# in either direction, so a page reads only
+# offset + limit index entries. usage_24h and status are computed per row and
+# need a scan with a bounded top-N sorter.
+TOKEN_SORT_KEYS: dict[str, _SortKey] = {
+    "name": _SortKey("t.name", collate=" COLLATE NOCASE"),
+    "prefix": _SortKey("t.prefix"),
+    "created": _SortKey("t.created_at"),
+    "expires": _SortKey("t.expires_at", nullable=True),
+    "last_used": _SortKey("t.last_used_at", nullable=True),
+    "priority": _SortKey("t.priority"),
+    "usage_24h": _SortKey("COALESCE(u.tokens, 0)"),
+    "status": _SortKey(TOKEN_STATUS_RANK_SQL),
+}
+
+# Only the usage_24h sort joins every token's 24h total into the ORDER BY
+# query. idx_token_usage_minute_minute bounds it to the last day's buckets.
+_USAGE_SORT_JOIN = (
+    " LEFT JOIN (SELECT token_id, SUM(prompt_tokens) + SUM(completion_tokens) AS tokens"
+    "  FROM token_usage_minute WHERE minute >= :since AND minute < :until"
+    "  GROUP BY token_id) u ON u.token_id = t.id"
+)
+
+
+@dataclass
+class TokenListEntry:
+    row: TokenRow
+    successor_id: str | None
+    usage_24h: tuple[int, int, int]  # (requests, prompt_tokens, completion_tokens)
+
+
+@dataclass
+class TokenPage:
+    entries: list[TokenListEntry]
+    total: int  # visible tokens, all pages
+    near_expiry: int  # visible tokens expiring within 30 days, not yet expired
+
+
+def _order_by(key: _SortKey, k: str, id_col: str, desc: bool) -> str:
+    d = " DESC" if desc else " ASC"
+    nulls = " NULLS LAST" if key.nullable else ""
+    return f"{k}{key.collate}{d}{nulls}, {id_col}{d}"
+
+
+# Name search: a case-insensitive substring match. SQLite's LIKE already folds
+# ASCII case; the pattern escapes its own wildcards (see like_contains) so a
+# name search for "50%_off" is literal. A leading-% LIKE cannot seek a B-tree,
+# so a search scans the visible rows -- see documents/API.md for the numbers
+# and the FTS5 trigram option if that ever becomes too slow.
+_NAME_SEARCH_SQL = " AND t.name LIKE :q ESCAPE '\\'"
+
+
+def like_contains(needle: str) -> str:
+    """A LIKE pattern matching ``needle`` anywhere, its own %, _ and \\ literal."""
+    esc = needle.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{esc}%"
+
+
+# is_near_expiry, the ``near_expiry`` count and the ``near_expiry=1`` filter
+# are one predicate: expires within 30 days and has not expired yet.
+NEAR_EXPIRY_SQL = "t.expires_at > :now AND t.expires_at <= :in30"
+
+
+def _visible_where(search: bool, expiring: bool = False) -> str:
+    return (
+        TOKEN_LIST_VISIBLE_SQL
+        + (_NAME_SEARCH_SQL if search else "")
+        + (f" AND {NEAR_EXPIRY_SQL}" if expiring else "")
+    )
+
+
+def token_page_sql(
+    sort: str, desc: bool, search: bool = False, expiring: bool = False,
+) -> str:
+    """The page statement for one sort order (exposed for EXPLAIN tests).
+
+    The ``page`` CTE picks the ids -- ORDER BY, LIMIT and OFFSET over the
+    visible set, touching nothing but the sort index for most keys. The outer
+    query then decorates just those rows: the full column list, the successor
+    (idx_api_tokens_rotated_from) and the 24h usage summed through
+    token_usage_minute's (token_id, minute) primary key for the page's ids
+    only. It re-sorts the page by the key the CTE carried out.
+    """
+    key = TOKEN_SORT_KEYS[sort]
+    join = _USAGE_SORT_JOIN if sort == "usage_24h" else ""
+    cols = ", ".join(f"t.{c.strip()}" for c in _SELECT_COLS.split(","))
+    return (
+        "WITH page AS ("
+        f" SELECT t.id AS id, {key.expr} AS k FROM api_tokens t{join}"
+        f" WHERE {_visible_where(search, expiring)}"
+        # By the alias, so a computed key (the status CASE and its
+        # EXISTS) is evaluated once per row, not again for the sort.
+        f" ORDER BY {_order_by(key, 'k', 't.id', desc)}"
+        " LIMIT :limit OFFSET :offset"
+        ")"
+        f" SELECT {cols},"
+        " (SELECT s.id FROM api_tokens s WHERE s.rotated_from = t.id"
+        "  ORDER BY s.created_at ASC, s.id ASC LIMIT 1),"
+        " COALESCE(us.r, 0), COALESCE(us.p, 0), COALESCE(us.c, 0)"
+        " FROM page JOIN api_tokens t ON t.id = page.id"
+        " LEFT JOIN (SELECT token_id, SUM(requests) AS r, SUM(prompt_tokens) AS p,"
+        "  SUM(completion_tokens) AS c FROM token_usage_minute"
+        "  WHERE token_id IN (SELECT id FROM page) AND minute >= :since AND minute < :until"
+        "  GROUP BY token_id) us ON us.token_id = t.id"
+        f" ORDER BY {_order_by(key, 'page.k', 'page.id', desc)}"
+    )
+
+
+# The keys the list hides -- the negation of TOKEN_LIST_VISIBLE_SQL, written
+# exactly as 0035's partial idx_api_tokens_hidden is so the planner uses it.
+_HIDDEN_SQL = "t.revoked_at IS NOT NULL AND t.rotated_at IS NULL"
+_HIDDEN_FROM = "api_tokens t INDEXED BY idx_api_tokens_hidden"
+
+
+def token_counts_sql(search: bool = False, expiring: bool = False) -> str:
+    """``(total, near_expiry)`` over the visible -- searched, filtered -- set.
+
+    Unsearched, both are "all rows" minus "hidden rows": COUNT(*) walks the
+    smallest index, the near-expiry range is a covering count on the expires
+    index, and the hidden keys come from 0035's partial, covering
+    idx_api_tokens_hidden -- no table row is read to test the visibility
+    rule (a few ms at a million keys, against ~50 ms for a filtered scan). A
+    search has to read every name anyway, so it counts the visible matches
+    directly. With the near-expiry filter the total IS the near-expiry count.
+
+    INDEXED BY because left alone the planner prefers 0007's
+    idx_api_tokens_revoked, which is not covering and costs a table lookup
+    per hidden key. The migration guarantees the index exists.
+    """
+    window = NEAR_EXPIRY_SQL
+    if search:
+        where = _visible_where(True, expiring)
+        return (
+            f"SELECT (SELECT COUNT(*) FROM api_tokens t WHERE {where}),"
+            f" (SELECT COUNT(*) FROM api_tokens t WHERE {where} AND {window})"
+        )
+    near = (
+        f"(SELECT COUNT(*) FROM api_tokens t WHERE {window})"
+        f" - (SELECT COUNT(*) FROM {_HIDDEN_FROM} WHERE {_HIDDEN_SQL} AND {window})"
+    )
+    if expiring:
+        return f"SELECT {near}, {near}"
+    return (
+        "SELECT (SELECT COUNT(*) FROM api_tokens)"
+        f" - (SELECT COUNT(*) FROM {_HIDDEN_FROM} WHERE {_HIDDEN_SQL}),"
+        f" {near}"
+    )
+
+
+async def list_token_page(
+    db: aiosqlite.Connection,
+    *,
+    sort: str,
+    desc: bool,
+    limit: int,
+    offset: int,
+    now_str: str,
+    in_30d_str: str,
+    since_minute: int,
+    until_minute: int,
+    q: str = "",
+    near_expiry_only: bool = False,
+) -> TokenPage:
+    """One page of the token list, plus the list-wide counts.
+
+    ``sort`` is a TOKEN_SORT_KEYS key (the route validates it). ``id`` breaks
+    every tie in the same direction, so a page boundary never splits or
+    repeats rows. ``now_str`` / ``in_30d_str`` must be the instants the caller
+    also hands to ``_enrich`` so the rank and the badge agree. Usage covers
+    minutes ``[since_minute, until_minute)``. A non-empty ``q`` keeps only
+    names containing it, case-insensitively; ``near_expiry_only`` keeps only
+    keys expiring within 30 days and not yet expired. The counts honour both.
+    """
+    search = q != ""
+    params: dict[str, object] = {
+        "now": now_str,
+        "in30": in_30d_str,
+        "since": since_minute,
+        "until": until_minute,
+        "limit": limit,
+        "offset": offset,
+    }
+    count_params: dict[str, object] = {"now": now_str, "in30": in_30d_str}
+    if search:
+        params["q"] = count_params["q"] = like_contains(q)
+    cur = await db.execute(token_page_sql(sort, desc, search, near_expiry_only), params)
+    entries: list[TokenListEntry] = []
+    width = len(_SELECT_COLS.split(","))
+    for r in await cur.fetchall():
+        entries.append(
+            TokenListEntry(
+                row=TokenRow(*r[:width]),
+                successor_id=r[width],
+                usage_24h=(int(r[width + 1]), int(r[width + 2]), int(r[width + 3])),
+            )
+        )
+    cur = await db.execute(token_counts_sql(search, near_expiry_only), count_params)
+    counts = await cur.fetchone()
+    total, near = (int(counts[0]), int(counts[1])) if counts else (0, 0)
+    return TokenPage(entries=entries, total=total, near_expiry=near)
 
 
 class TokenUsageRepo:
@@ -353,6 +671,8 @@ class TokenUsageRepo:
         minute: int,
         prompt_tokens: int,
         completion_tokens: int,
+        *,
+        commit: bool = True,
     ) -> None:
         # ON CONFLICT works here because (token_id, minute) is a real composite
         # PK with both columns NOT NULL — unlike the counters table that has
@@ -367,7 +687,8 @@ class TokenUsageRepo:
             "  completion_tokens = completion_tokens + excluded.completion_tokens",
             (token_id, minute, prompt_tokens, completion_tokens),
         )
-        await self.db.commit()
+        if commit:
+            await self.db.commit()
 
     async def range(
         self,
@@ -414,3 +735,160 @@ class TokenUsageRepo:
         )
         r = await cur.fetchone()
         return (int(r[0]), int(r[1]), int(r[2])) if r else (0, 0, 0)
+
+    async def chain_bins(
+        self,
+        token_ids: Sequence[str],
+        *,
+        from_minute: int,
+        to_minute: int,
+        bin_minutes: int,
+    ) -> list[tuple[int, int, int, int, int, int]]:
+        """``(bin, requests, prompt_tokens, completion_tokens, peak_prompt,
+        peak_completion)`` for ``token_ids`` over ``[from_minute, to_minute)``,
+        in bins of ``bin_minutes`` keyed ``(minute / w) * w``, ascending.
+
+        The inner ``GROUP BY minute`` adds up every key in the set for each
+        minute FIRST, so the peaks are the set's busiest minute -- two rotated
+        keys serving 10 and 20 prompt tokens in the same minute peak at 30,
+        not at 20. Bins without rows are absent.
+        """
+        if not token_ids:
+            return []
+        marks = ",".join("?" for _ in token_ids)
+        cur = await self.db.execute(
+            "SELECT (minute / ?) * ? AS bin, SUM(r), SUM(p), SUM(c), MAX(p), MAX(c) "
+            "FROM ("
+            "  SELECT minute, SUM(requests) AS r, SUM(prompt_tokens) AS p, "
+            "         SUM(completion_tokens) AS c "
+            "  FROM token_usage_minute "
+            f"  WHERE token_id IN ({marks}) AND minute >= ? AND minute < ? "
+            "  GROUP BY minute"
+            ") GROUP BY bin ORDER BY bin",
+            (bin_minutes, bin_minutes, *token_ids, from_minute, to_minute),
+        )
+        return [
+            (int(r[0]), int(r[1]), int(r[2]), int(r[3]), int(r[4]), int(r[5]))
+            for r in await cur.fetchall()
+        ]
+
+
+#: SQL behind ``TokenModelUsageRepo.earliest_minute``; a module constant so the
+#: EXPLAIN QUERY PLAN test pins the exact production query.
+EARLIEST_MODEL_MINUTE_SQL = "SELECT MIN(minute) FROM token_model_usage_minute"
+
+
+class TokenModelUsageRepo:
+    """Per-(key, model variant) minute-bucket rollup (token_model_usage_minute,
+    0036).
+
+    Written next to token_usage_minute in the proxy success path, with the same
+    minute integer, only for requests that carried a key. Stores the variant id
+    (app/runtime/variants.py) and, denormalised, its model id; the served name
+    is resolved at read time and falls back to the stored id once the model is
+    deleted. Source of the token page's "Usage by model" card and its per-model
+    tokens chart (``GET /api/tokens/{id}/series``).
+    """
+
+    def __init__(self, db: aiosqlite.Connection) -> None:
+        self.db = db
+
+    async def add(
+        self,
+        token_id: str,
+        variant_id: str,
+        model_id: str,
+        minute: int,
+        prompt_tokens: int,
+        completion_tokens: int,
+        *,
+        commit: bool = True,
+    ) -> None:
+        await self.db.execute(
+            "INSERT INTO token_model_usage_minute"
+            "(token_id, variant_id, model_id, minute, requests, prompt_tokens, "
+            " completion_tokens) "
+            "VALUES (?, ?, ?, ?, 1, ?, ?) "
+            "ON CONFLICT(token_id, variant_id, minute) DO UPDATE SET "
+            "  requests = requests + 1, "
+            "  prompt_tokens = prompt_tokens + excluded.prompt_tokens, "
+            "  completion_tokens = completion_tokens + excluded.completion_tokens",
+            (token_id, variant_id, model_id, minute, prompt_tokens, completion_tokens),
+        )
+        if commit:
+            await self.db.commit()
+
+    async def by_variant(
+        self,
+        token_ids: Sequence[str],
+        *,
+        from_minute: int,
+        to_minute: int,
+    ) -> list[tuple[str, str, str, str | None, float | None, int, int, int]]:
+        """``(model_id, model, variant_id, descriptor_json, first_seen,
+        requests, prompt_tokens, completion_tokens)`` per (model, variant) for
+        ``token_ids`` over ``[from_minute, to_minute)``, in no particular order.
+
+        ``model`` is the served name from ``models``, else the name the variant
+        was first seen under, else the stored model id. ``descriptor_json`` and
+        ``first_seen`` are None for a variant with no ``model_variants`` row.
+        """
+        if not token_ids:
+            return []
+        marks = ",".join("?" for _ in token_ids)
+        cur = await self.db.execute(
+            "SELECT a.model_id, "
+            "       COALESCE(m.served_model_name, v.served_model_name, a.model_id), "
+            "       a.variant_id, v.descriptor, v.first_seen, a.r, a.p, a.c "
+            "FROM ("
+            "  SELECT model_id, variant_id, SUM(requests) AS r, "
+            "         SUM(prompt_tokens) AS p, SUM(completion_tokens) AS c "
+            "  FROM token_model_usage_minute "
+            f"  WHERE token_id IN ({marks}) AND minute >= ? AND minute < ? "
+            "  GROUP BY model_id, variant_id"
+            ") AS a "
+            "LEFT JOIN models AS m ON m.id = a.model_id "
+            "LEFT JOIN model_variants AS v ON v.id = a.variant_id",
+            (*token_ids, from_minute, to_minute),
+        )
+        return [
+            (
+                str(r[0]), str(r[1]), str(r[2]),
+                None if r[3] is None else str(r[3]),
+                None if r[4] is None else float(r[4]),
+                int(r[5]), int(r[6]), int(r[7]),
+            )
+            for r in await cur.fetchall()
+        ]
+
+    async def model_bins(
+        self,
+        token_ids: Sequence[str],
+        *,
+        from_minute: int,
+        to_minute: int,
+        bin_minutes: int,
+    ) -> list[tuple[int, str, int, int]]:
+        """``(bin, model_id, prompt_tokens, completion_tokens)`` for every
+        (bin, model) pair with rows -- variants of one model summed -- bins
+        keyed ``(minute / w) * w`` exactly like ``TokenUsageRepo.chain_bins``,
+        ascending by bin."""
+        if not token_ids:
+            return []
+        marks = ",".join("?" for _ in token_ids)
+        cur = await self.db.execute(
+            "SELECT (minute / ?) * ? AS bin, model_id, SUM(prompt_tokens), "
+            "       SUM(completion_tokens) "
+            "FROM token_model_usage_minute "
+            f"WHERE token_id IN ({marks}) AND minute >= ? AND minute < ? "
+            "GROUP BY bin, model_id ORDER BY bin, model_id",
+            (bin_minutes, bin_minutes, *token_ids, from_minute, to_minute),
+        )
+        return [(int(r[0]), str(r[1]), int(r[2]), int(r[3])) for r in await cur.fetchall()]
+
+    async def earliest_minute(self) -> int | None:
+        """The first minute with a row, store-wide -- where the per-model
+        breakdown starts (0036 has no backfill). None on an empty table."""
+        cur = await self.db.execute(EARLIEST_MODEL_MINUTE_SQL)
+        row = await cur.fetchone()
+        return int(row[0]) if row and row[0] is not None else None

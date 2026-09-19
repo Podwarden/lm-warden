@@ -260,6 +260,28 @@ describe('authFetch', () => {
     }
   });
 
+  // #251: the SSE ticket mint is under /api/auth/ but requires the JWT. On a
+  // hard reload it used to go out with no bearer, 401, refresh, and replay —
+  // two ticket POSTs per stream (NavBar's header metrics, on every page load).
+  it('eager-refreshes before minting an SSE ticket: one POST, with the bearer', async () => {
+    setAccessToken(null);
+    const fetchMock = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url === '/api/auth/refresh') return new Response('{"access_token":"fresh"}', { status: 200 });
+      const auth = (init?.headers as Record<string, string> | undefined)?.Authorization;
+      return auth ? new Response('{"ticket":"t"}', { status: 200 }) : new Response('{}', { status: 401 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const r = await authFetch('/api/auth/sse-ticket', { method: 'POST', body: '{"path":"/x"}' });
+
+    expect(r.status).toBe(200);
+    const urls = fetchMock.mock.calls.map((c) => c[0]);
+    expect(urls).toEqual(['/api/auth/refresh', '/api/auth/sse-ticket']);
+    expect(fetchMock).toHaveBeenLastCalledWith('/api/auth/sse-ticket', expect.objectContaining({
+      headers: expect.objectContaining({ Authorization: 'Bearer fresh' }),
+    }));
+  });
+
   it('does NOT eager-refresh on bypass paths (/api/auth/*, /api/csrf) to avoid recursion', async () => {
     // The crux of the bypass: refresh() itself POSTs /api/auth/refresh.
     // If that POST went through authFetch (it doesn't, but a future
@@ -273,7 +295,7 @@ describe('authFetch', () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
 
-    await authFetch('/api/auth/sse-ticket', { method: 'POST', body: '{}' });
+    await authFetch('/api/auth/login', { method: 'POST', body: '{}' });
     await authFetch('/api/csrf');
 
     // Two calls total — one per authFetch — and NO /api/auth/refresh.

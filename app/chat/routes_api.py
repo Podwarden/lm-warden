@@ -174,7 +174,7 @@ async def chat_completions(
     the priority slot via the regular proxy machinery.
 
     Calls the internal `/v1/chat/completions` route via loopback so the
-    real proxy pipeline (rate limit, priority scheduler, token usage
+    real proxy pipeline (priority scheduler, token usage
     rollup, error enrichment) runs unmodified. We don't shortcut into
     ``_forward`` because that would skip the bearer validation we want
     as defence-in-depth — if the playground token is somehow stale we'd

@@ -1,38 +1,39 @@
 "use client";
 
 // God-mode live viewer — real-time prompts + model output flowing through the
-// LLM Warden proxy. Admin-only (the SSE endpoint gates on require_jwt).
+// LLM Warden proxy for ONE key (and optionally its earlier keys). Admin-only
+// (the SSE endpoint gates on require_jwt). Its only consumer is the token
+// page's dock (components/tokens/detail/godmode-dock.tsx, spec 2026-09-18 D7).
 //
-// This mirrors models/log-stream.tsx deliberately: <Virtuoso> + the shared
-// `useStickyBottom` hook give us live/explore scroll, "Jump to latest", the
-// elided-count banner, AND the fast-load fix (followOutput is always "auto",
-// decoupled from the stick/free latch) for free. We consume the god-mode SSE
-// exactly like LogStream — same single-use ticket flow via `useEventSource`.
+// <Virtuoso> + the shared `useStickyBottom` hook give live/explore scroll and
+// "Jump to latest", exactly as models/log-stream.tsx. The stream is scoped by
+// the SERVER (`?token_ids=`, spec §3.5): every event carries token_id, so the
+// filter is exact and never splits a request from its deltas. That is why the
+// old client-side model filter is gone.
 //
 // Rendering: events are grouped by `req_id` into request blocks. Each block is
-// one Virtuoso row — a header (token label · model · client · finish_reason)
-// with the completion streaming in beneath it. `channel:"reasoning"` deltas
-// render dimmed/italic, distinct from `channel:"content"`. Every request gets
-// a stable per-session color (see req-color.ts) on its header + a left-edge
-// bar so concurrent, interleaved sessions are separable by eye.
+// one Virtuoso row — a header (token label · model · client · finish_reason or
+// "streaming") with the completion streaming in beneath it. Reasoning renders
+// dimmed/italic. Every request gets a stable per-session colour (req-color.ts).
 
-import { forwardRef, useCallback, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 
-import { Button } from "@/components/ui/button";
 import { useStickyBottom } from "@/components/shared/use-sticky-bottom";
-import { useEventSource, MAX_RECONNECT, type SseState } from "@/lib/sse";
-import { useHeaderMetrics } from "@/lib/header-metrics-stream";
-import { activeModelsOf } from "@/lib/header-models";
-import { useModelSelection } from "@/lib/model-selection";
-import { ModelSelector } from "@/components/stats/model-selector";
+import { btn, FONT_SANS, GUTTER_X } from "@/components/tokens/detail/styles";
+import { useEventSource, MAX_RECONNECT, type SseState, type SseStatus } from "@/lib/sse";
 import { cn } from "@/lib/utils";
 import { reqColor } from "./req-color";
 import { MediaStrip } from "./godmode-media";
 
-// SSE endpoint — same admin-gated ticket path convention as the model log
-// stream. useEventSource mints a single-use ticket via POST /api/auth/sse-ticket
-// scoped to this path before opening the EventSource.
 const GODMODE_STREAM_PATH = "/api/admin/godmode/stream";
 
 // Bounded in-memory FIFO ring, mirroring log-stream's MAX_LINES. A long-open
@@ -104,7 +105,7 @@ export type GodModeEvent = RequestStartEvent | DeltaEvent | RequestEndEvent;
 // Ring state
 // ---------------------------------------------------------------------------
 
-interface GmState {
+export interface GmState {
   events: GodModeEvent[];
   /** Total events dropped by the FIFO so far — surfaced as a banner row. */
   elided: number;
@@ -137,6 +138,17 @@ export function appendEvent(prev: GmState, ev: GodModeEvent): GmState {
   return { events: [...prev.events, ev], elided: prev.elided, reqIndex, nextIndex };
 }
 
+/** The dock's Clear button: drop every request that has ended. Running ones
+ *  stay (their deltas are still arriving). `reqIndex` is kept so colours stay
+ *  stable. Returns `prev` itself when there is nothing to drop. */
+export function clearFinished(prev: GmState): GmState {
+  const ended = new Set(
+    prev.events.filter((e) => e.type === "request_end").map((e) => e.req_id),
+  );
+  if (ended.size === 0) return prev;
+  return { ...prev, events: prev.events.filter((e) => !ended.has(e.req_id)) };
+}
+
 // ---------------------------------------------------------------------------
 // Grouping
 // ---------------------------------------------------------------------------
@@ -166,34 +178,6 @@ export function groupBlocks(events: GodModeEvent[]): RequestBlockData[] {
     else if (ev.type === "request_end") block.end = ev;
   }
   return order.map((id) => byId.get(id)!);
-}
-
-/**
- * Narrow request blocks to a model selection.
- *
- * `modelIds` of `null` means no filter. Filtering happens HERE, in the client,
- * and not in the SSE: the hub is a shared broadcast ring with a replay
- * snapshot, and a per-subscriber server-side filter would drop a
- * `request_start` while still delivering that request's `delta` and
- * `request_end` frames — leaving orphan blocks with no prompt and no model.
- * Correlation is by `req_id`, so the whole conversation has to arrive together
- * and be grouped before anything can be attributed to a model at all.
- *
- * The god-mode env gate is untouched by this: the stream is as gated as it
- * ever was, and this only decides what a viewer who already has it renders.
- *
- * A block with NO `request_start` is KEPT. Its start was evicted from the ring,
- * so its model is unknowable — and silently dropping traffic we cannot
- * attribute would make a narrowed god-mode view quietly incomplete, which is
- * the one thing a forensic tool must never be.
- */
-export function filterBlocksByModel(
-  blocks: RequestBlockData[],
-  modelIds: readonly string[] | null,
-): RequestBlockData[] {
-  if (modelIds === null) return blocks;
-  const wanted = new Set(modelIds);
-  return blocks.filter((b) => !b.start || wanted.has(b.start.model));
 }
 
 // ---------------------------------------------------------------------------
@@ -264,7 +248,7 @@ export function computePromptCollapse(
 }
 
 // ---------------------------------------------------------------------------
-// Status message (mirrors log-stream.renderStatusMessage)
+// Status message
 // ---------------------------------------------------------------------------
 
 function renderStatusMessage(s: SseState): { text: string; tone: "info" | "warn" | "error" } | null {
@@ -301,17 +285,62 @@ function isDisabledResponse(s: SseState): boolean {
   return s.status === "terminal-error" && (s.errorCode === 404 || s.errorCode === 409);
 }
 
+// The mockup's `.dock-empty` line: dim DM Sans, 18px top/bottom, inside the
+// stream's gutter. Error text keeps the danger colour.
+function EmptyLine({ tone = "info", role = "status", children }: {
+  tone?: "info" | "warn" | "error"; role?: "status" | "alert"; children: React.ReactNode;
+}) {
+  return (
+    <div
+      role={role}
+      className={cn(
+        GUTTER_X,
+        FONT_SANS,
+        "py-[18px] text-[12px]",
+        tone === "error" ? "text-vw-danger-fg" : tone === "warn" ? "text-chat-accent" : "text-chat-dim",
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-interface GodModeViewerProps {
-  className?: string;
-  /** Fixed list height in px. */
-  heightPx?: number;
+export interface GodModeCounts {
+  requests: number;
+  running: number;
 }
 
-export function GodModeViewer({ className, heightPx = 560 }: GodModeViewerProps) {
+export interface GodModeViewerHandle {
+  clear: () => void;
+  setFollowing: (on: boolean) => void;
+}
+
+export interface GodModeViewerProps {
+  tokenIds: string[];
+  className?: string;
+  heightPx?: number;
+  onCounts?: (c: GodModeCounts) => void;
+  onFollowingChange?: (following: boolean) => void;
+  onStatusChange?: (status: SseStatus) => void;
+  ref?: React.Ref<GodModeViewerHandle>;
+}
+
+/** Virtuoso's atBottomThreshold, also the follow-on-growth tolerance. */
+const AT_BOTTOM_PX = 64;
+
+export function GodModeViewer({
+  tokenIds,
+  className,
+  heightPx = 560,
+  onCounts,
+  onFollowingChange,
+  onStatusChange,
+  ref,
+}: GodModeViewerProps) {
   const [state, setState] = useState<GmState>(INITIAL_STATE);
 
   const onMessage = useCallback((ev: GodModeEvent) => {
@@ -321,44 +350,113 @@ export function GodModeViewer({ className, heightPx = 560 }: GodModeViewerProps)
     setState((prev) => appendEvent(prev, ev));
   }, []);
 
-  const sse = useEventSource<GodModeEvent>(GODMODE_STREAM_PATH, { onMessage });
+  // No tokens, no stream: an empty `token_ids=` is a 422, and the viewer
+  // never streams unfiltered (#251).
+  const sse = useEventSource<GodModeEvent>(GODMODE_STREAM_PATH, {
+    onMessage,
+    enabled: tokenIds.length > 0,
+    query: { token_ids: tokenIds.join(",") },
+  });
 
   const sticky = useStickyBottom("stick");
+  // useStickyBottom returns a fresh object every render, but its callbacks
+  // (jumpToLatest, onAtBottomStateChange) are individually stable (useCallback
+  // with empty deps). Destructure them so effects/callbacks below can depend
+  // on the stable pieces instead of the ever-changing `sticky` object —
+  // otherwise every delta-driven re-render (streaming can be <50ms apart)
+  // would tear down and reschedule the landing timer below, and it would
+  // never get a quiet window to fire.
+  const { jumpToLatest: stickJump, followOutput, onAtBottomStateChange, mode } = sticky;
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  // The dock's "Following" button can stop auto-scroll while the list is still
+  // at the bottom — something the stick/free latch alone cannot express,
+  // because it only flips on scroll.
+  const [followPaused, setFollowPaused] = useState(false);
+  const following = !followPaused && mode === "stick";
+  // Virtuoso's followOutput reacts to new blocks; the last block growing delta
+  // by delta only re-scrolls once it has pushed past atBottomThreshold, so the
+  // tail lagged 1–4 lines behind. The mockup scrolls to the end on every delta
+  // while following. Only when the view sat at the bottom before this growth,
+  // so an operator scrolling up to read is never yanked back.
+  const followingRef = useRef(following);
+  followingRef.current = following;
+  const scrollerEl = useRef<HTMLElement | null>(null);
+  // Distance from the bottom as of the scroller's last scroll event, i.e.
+  // measured against the scrollHeight the reader actually saw. Growth never
+  // fires a scroll event, so this stays the "gap before this growth" whether
+  // or not the DOM already includes the new block (recomputing it from the
+  // current scrollHeight minus the growth underestimates it when it doesn't).
+  const gapAtLastScroll = useRef(0);
+  const listH = useRef(0);
+  const onListHeight = useCallback((h: number) => {
+    const grew = h - listH.current;
+    listH.current = h;
+    if (!followingRef.current || !scrollerEl.current || grew <= 0) return;
+    // "At the bottom" uses the same tolerance as atBottomThreshold (the
+    // landing's align:"end" leaves the stream's bottom padding below the fold).
+    if (gapAtLastScroll.current <= AT_BOTTOM_PX) virtuosoRef.current?.scrollTo({ top: Number.MAX_SAFE_INTEGER });
+  }, []);
+  const onScrollerScroll = useCallback((e: Event) => {
+    const el = e.currentTarget as HTMLElement;
+    gapAtLastScroll.current = el.scrollHeight - el.scrollTop - el.clientHeight;
+  }, []);
+  const onScroller = useCallback((el: HTMLElement | Window | null) => {
+    scrollerEl.current?.removeEventListener("scroll", onScrollerScroll);
+    scrollerEl.current = el && !(el instanceof Window) ? el : null;
+    scrollerEl.current?.addEventListener("scroll", onScrollerScroll, { passive: true });
+  }, [onScrollerScroll]);
 
-  // The loaded-model list comes from the header-metrics stream, which is
-  // already open in this tab (NavBar mounts it everywhere but /login and
-  // /setup) and is ref-counted, so subscribing here costs no new connection
-  // and no new endpoint. It is also exactly the right list: the models the
-  // box is currently serving.
-  const header = useHeaderMetrics();
-  const loadedModels = useMemo(
-    () =>
-      activeModelsOf(header.frame).map((m) => ({
-        id: m.id,
-        served_model_name: m.served_model_name,
-      })),
-    [header.frame],
+  const blocks = useMemo(() => groupBlocks(state.events), [state.events]);
+  const running = useMemo(() => blocks.filter((b) => b.start && !b.end).length, [blocks]);
+
+  // Callbacks go through refs so a parent passing inline arrows can't loop.
+  const cbs = useRef({ onCounts, onFollowingChange, onStatusChange });
+  cbs.current = { onCounts, onFollowingChange, onStatusChange };
+  useEffect(() => {
+    cbs.current.onCounts?.({ requests: blocks.length, running });
+  }, [blocks.length, running]);
+  useEffect(() => {
+    cbs.current.onFollowingChange?.(following);
+  }, [following]);
+  useEffect(() => {
+    cbs.current.onStatusChange?.(sse.status);
+  }, [sse.status]);
+
+  const jumpToLatest = useCallback(() => {
+    setFollowPaused(false);
+    if (blocks.length > 0) {
+      virtuosoRef.current?.scrollToIndex({ index: blocks.length - 1, behavior: "smooth" });
+    }
+    stickJump();
+  }, [blocks.length, stickJump]);
+
+  // The replay arrives as one burst right after connect and Virtuoso leaves the
+  // view at the top (and the burst latches the sticky state to "free"). The
+  // mockup opens scrolled to the newest request, following. Once the burst has
+  // been quiet for 50 ms, land on the last block and re-stick — once per mount.
+  const landedRef = useRef(false);
+  useEffect(() => {
+    if (landedRef.current || blocks.length === 0) return;
+    const t = setTimeout(() => {
+      landedRef.current = true;
+      virtuosoRef.current?.scrollToIndex({ index: blocks.length - 1, align: "end" });
+      stickJump();
+    }, 50);
+    return () => clearTimeout(t);
+  }, [blocks.length, stickJump]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      clear: () => setState((prev) => clearFinished(prev)),
+      setFollowing: (on: boolean) => {
+        if (on) jumpToLatest();
+        else setFollowPaused(true);
+      },
+    }),
+    [jumpToLatest],
   );
-  const modelIds = useMemo(() => loadedModels.map((m) => m.id), [loadedModels]);
-  const selection = useModelSelection(modelIds);
 
-  const allBlocks = useMemo(() => groupBlocks(state.events), [state.events]);
-  const blocks = useMemo(
-    () =>
-      filterBlocksByModel(
-        allBlocks,
-        // No selection yet (still resolving, or nothing loaded) means no
-        // filter — never an empty allow-list, which would blank the view.
-        selection.selected.length > 0 ? selection.selected : null,
-      ),
-    [allBlocks, selection.selected],
-  );
-
-  // Per-request collapse decision: diff each request's prompt against the
-  // PREVIOUS request from the same token identity (label preferred, id fallback)
-  // and collapse the shared head. Built in first-seen (start) order so each
-  // block sees only requests that preceded it. Keyed by reqId for the row.
   const collapseByReq = useMemo(() => {
     const out: Record<string, PromptCollapse | null> = {};
     const lastPromptByToken: Record<string, string> = {};
@@ -376,137 +474,94 @@ export function GodModeViewer({ className, heightPx = 560 }: GodModeViewerProps)
     return out;
   }, [blocks]);
 
-  // Disabled placeholder — god mode is off on the backend.
   if (isDisabledResponse(sse)) {
     return (
-      <div
-        role="status"
-        className={cn(
-          "rounded border p-4 text-sm",
-          "border-slate-700 bg-slate-900/50 text-slate-400",
-          className,
-        )}
-      >
-        God mode is disabled (<code className="font-mono text-slate-300">VW_GODMODE_ENABLED</code>).
+      <div className={className}>
+        <EmptyLine>
+          God mode is disabled (<code className="!font-mono text-chat-muted">VW_GODMODE_ENABLED</code>).
+        </EmptyLine>
       </div>
     );
   }
 
   const statusBar = renderStatusMessage(sse);
-  const showStatusBar =
-    statusBar !== null && (state.events.length === 0 || sse.status !== "connected");
 
-  // Connected-but-empty — the stream is live but nothing is flowing yet.
-  const showEmptyPlaceholder = sse.status === "connected" && state.events.length === 0;
-  if (showEmptyPlaceholder) {
+  if (sse.status === "connected" && state.events.length === 0) {
     return (
-      <div
-        role="status"
-        className={cn(
-          "rounded border p-4 text-sm",
-          "border-slate-700 bg-slate-900/50 text-slate-400",
-          className,
-        )}
-      >
-        Waiting for requests… (no traffic through the proxy yet)
+      <div className={className}>
+        <EmptyLine>Waiting for requests… (no traffic through the proxy yet)</EmptyLine>
       </div>
     );
   }
 
   if (state.events.length === 0 && statusBar !== null) {
-    const role = statusBar.tone === "error" ? "alert" : "status";
-    const toneClass =
-      statusBar.tone === "error"
-        ? "border-red-700/60 bg-red-950/40 text-red-200"
-        : statusBar.tone === "warn"
-          ? "border-amber-700/60 bg-amber-950/30 text-amber-200"
-          : "border-slate-700 bg-slate-900/50 text-slate-400";
     return (
-      <div role={role} className={cn("rounded border p-4 text-sm", toneClass, className)}>
-        {statusBar.text}
+      <div className={className}>
+        <EmptyLine tone={statusBar.tone} role={statusBar.tone === "error" ? "alert" : "status"}>
+          {statusBar.text}
+        </EmptyLine>
       </div>
     );
   }
 
   return (
-    <div className={cn("space-y-2", className)}>
-      {/* The same selection as /stats. God mode's own gate is
-          untouched — this decides only what a viewer who already has the
-          stream renders. */}
-      <ModelSelector models={loadedModels} selection={selection} />
-
-      {showStatusBar && statusBar !== null && (
-        <div
-          role={statusBar.tone === "error" ? "alert" : "status"}
-          className={cn(
-            "rounded border px-3 py-1.5 text-xs",
-            statusBar.tone === "error"
-              ? "border-red-700/60 bg-red-950/40 text-red-200"
-              : statusBar.tone === "warn"
-                ? "border-amber-700/60 bg-amber-950/30 text-amber-200"
-                : "border-slate-700 bg-slate-900/50 text-slate-400",
-          )}
-        >
+    <div className={cn("relative", className)}>
+      {statusBar !== null && sse.status !== "connected" && (
+        <EmptyLine tone={statusBar.tone} role={statusBar.tone === "error" ? "alert" : "status"}>
           {statusBar.text}
-        </div>
+        </EmptyLine>
       )}
-
+      <Virtuoso
+        ref={virtuosoRef}
+        components={{ List: GodModeList, Header: StreamTop, Footer: StreamBottom }}
+        style={{ height: heightPx }}
+        className="!font-mono text-[12px] leading-[1.6]"
+        data={blocks}
+        followOutput={followPaused ? false : followOutput}
+        // Match log-stream's generous tolerance so a mid-burst frame where a
+        // freshly-appended block sits below the fold doesn't flap the
+        // "Jump to latest" button (see use-sticky-bottom rationale).
+        atBottomThreshold={AT_BOTTOM_PX}
+        atBottomStateChange={onAtBottomStateChange}
+        totalListHeightChanged={onListHeight}
+        scrollerRef={onScroller}
+        computeItemKey={(_idx, block) => block.reqId}
+        itemContent={(_idx, block) => (
+          <RequestBlock
+            block={block}
+            colorIndex={state.reqIndex[block.reqId]}
+            collapse={collapseByReq[block.reqId]}
+          />
+        )}
+      />
       {state.elided > 0 && (
-        <div
-          role="status"
-          className="rounded-t border border-b-0 border-slate-700 bg-slate-900/70 px-3 py-1 font-mono text-[11px] text-slate-400"
-        >
+        <div role="status" className={cn(GUTTER_X, FONT_SANS, "absolute left-0 right-0 top-0 z-10 bg-vw-dock text-[11px] text-chat-dim")}>
           … {state.elided} older event{state.elided === 1 ? "" : "s"} elided
         </div>
       )}
-
-      <div
-        className={cn(
-          "relative rounded border border-slate-700 bg-slate-950",
-          state.elided > 0 ? "rounded-t-none border-t-0" : undefined,
-        )}
-      >
-        <Virtuoso
-          ref={virtuosoRef}
-          components={{ List: GodModeList }}
-          style={{ height: heightPx }}
-          data={blocks}
-          followOutput={sticky.followOutput}
-          // Match log-stream's generous tolerance so a mid-burst frame where a
-          // freshly-appended block sits below the fold doesn't flap the
-          // "Jump to latest" button (see use-sticky-bottom rationale).
-          atBottomThreshold={64}
-          atBottomStateChange={sticky.onAtBottomStateChange}
-          computeItemKey={(_idx, block) => block.reqId}
-          itemContent={(_idx, block) => (
-            <RequestBlock
-              block={block}
-              colorIndex={state.reqIndex[block.reqId]}
-              collapse={collapseByReq[block.reqId]}
-            />
+      {mode === "free" && blocks.length > 0 && (
+        <button
+          type="button"
+          onClick={jumpToLatest}
+          className={btn(
+            "primary",
+            "absolute bottom-3.5 right-[max(24px,calc((100vw_-_1250px)/2_+_8px))]",
           )}
-        />
-
-        {sticky.mode === "free" && blocks.length > 0 && (
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            className="absolute bottom-2 right-2 shadow-lg"
-            onClick={() => {
-              virtuosoRef.current?.scrollToIndex({
-                index: blocks.length - 1,
-                behavior: "smooth",
-              });
-              sticky.jumpToLatest();
-            }}
-          >
-            Jump to latest
-          </Button>
-        )}
-      </div>
+        >
+          Jump to latest
+        </button>
+      )}
     </div>
   );
+}
+
+// .stream padding-top 8px / padding-bottom 14px. Virtuoso owns the list's
+// vertical padding for virtualisation, so the spacing lives in Header/Footer.
+function StreamTop() {
+  return <div style={{ height: 8 }} />;
+}
+function StreamBottom() {
+  return <div style={{ height: 14 }} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -515,12 +570,12 @@ export function GodModeViewer({ className, heightPx = 560 }: GodModeViewerProps)
 
 interface RequestBlockProps {
   block: RequestBlockData;
-  /** Per-session index for golden-angle color; undefined only if the block's
-   *  start was elided before we assigned one (falls back to a hash of the id). */
   colorIndex?: number;
-  /** Repeated-system-prompt collapse for this request's prompt, or null/undefined
-   *  to render the prompt in full (first request from a token, or no match). */
   collapse?: PromptCollapse | null;
+}
+
+function Sep() {
+  return <span aria-hidden className="text-vw-rule-soft">·</span>;
 }
 
 function RequestBlock({ block, colorIndex, collapse }: RequestBlockProps) {
@@ -532,11 +587,11 @@ function RequestBlock({ block, colorIndex, collapse }: RequestBlockProps) {
     <div
       data-testid="godmode-block"
       data-req-id={block.reqId}
-      className="mb-2 rounded border-l-4 border-slate-800 bg-slate-900/30"
+      className="mb-2 rounded border-l-4 bg-chat-surface/55"
       style={{ borderLeftColor: color.accent }}
     >
       <div
-        className="flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-tr px-3 py-1.5 text-xs"
+        className={cn(FONT_SANS, "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-tr px-3 py-[5px] text-[12px]")}
         style={{ backgroundColor: color.headerBg }}
       >
         <span className="font-semibold" style={{ color: color.text }}>
@@ -544,26 +599,28 @@ function RequestBlock({ block, colorIndex, collapse }: RequestBlockProps) {
         </span>
         {start?.model && (
           <>
-            <span aria-hidden className="text-slate-600">·</span>
-            <span className="font-mono text-slate-300">{start.model}</span>
+            <Sep />
+            <span className="!font-mono text-chat-muted">{start.model}</span>
           </>
         )}
         {start?.client_ip && (
           <>
-            <span aria-hidden className="text-slate-600">·</span>
-            <span className="font-mono text-slate-400">{start.client_ip}</span>
+            <Sep />
+            <span className="!font-mono text-chat-dim">{start.client_ip}</span>
           </>
         )}
-        {block.end && (
-          <>
-            <span aria-hidden className="text-slate-600">·</span>
-            <span
-              data-testid="godmode-finish"
-              className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] uppercase text-slate-300"
-            >
-              {block.end.finish_reason ?? "ended"}
-            </span>
-          </>
+        <Sep />
+        {block.end ? (
+          <span
+            data-testid="godmode-finish"
+            className="rounded-[3px] bg-chat-surface-2 px-1.5 py-px !font-mono text-[10px] uppercase text-chat-muted"
+          >
+            {block.end.finish_reason ?? "ended"}
+          </span>
+        ) : (
+          <span data-testid="godmode-running" className="text-[11px] text-vw-ok-fg">
+            streaming
+          </span>
         )}
       </div>
 
@@ -571,73 +628,82 @@ function RequestBlock({ block, colorIndex, collapse }: RequestBlockProps) {
 
       {start?.prompt && <PromptView prompt={start.prompt} collapse={collapse} />}
 
-      <div className="whitespace-pre-wrap px-3 py-1.5 font-mono text-xs leading-5 text-slate-100">
+      <div className="whitespace-pre-wrap px-3 py-1.5 text-chat-fg">
         {block.deltas.map((d) => (
           <span
             key={d.seq}
             data-channel={d.channel}
-            className={cn(d.channel === "reasoning" && "italic text-slate-500")}
+            className={cn("!font-mono", d.channel === "reasoning" && "italic text-chat-dim")}
           >
             {d.text}
           </span>
         ))}
+        {!block.end && <span aria-hidden data-testid="godmode-caret" className="vw-caret" />}
       </div>
     </div>
   );
 }
 
-// Prompt row — collapses a repeated system-prompt head behind a toggle when
-// `collapse` is set, otherwise renders the prompt in full (matching the prior
-// look). The collapsed head starts hidden; the divergent remainder is always
-// visible so the newest turn reads at a glance.
+function Tri() {
+  return <span aria-hidden className="mr-1 select-none !font-mono text-vw-rule-soft">▸</span>;
+}
+
+// Prompt row. With a collapse, the mockup's `.sys` pill IS the toggle: it keeps
+// the existing expand behaviour and the existing test id.
 function PromptView({ prompt, collapse }: { prompt: string; collapse?: PromptCollapse | null }) {
   const [expanded, setExpanded] = useState(false);
+  const rowClass = "whitespace-pre-wrap border-b border-chat-rule/60 px-3 py-[5px] text-chat-dim";
 
   if (!collapse) {
     return (
-      <div className="whitespace-pre-wrap border-b border-slate-800/60 px-3 py-1.5 font-mono text-xs text-slate-400">
-        <span className="mr-1 select-none text-slate-600">▸</span>
-        {prompt}
+      <div className={rowClass}>
+        <Tri />
+        <span className="!font-mono text-chat-muted">{prompt}</span>
       </div>
     );
   }
 
-  const chars = collapse.collapsed.length;
   return (
-    <div className="whitespace-pre-wrap border-b border-slate-800/60 px-3 py-1.5 font-mono text-xs text-slate-400">
-      <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-        <button
-          type="button"
-          data-testid="godmode-prompt-toggle"
-          aria-expanded={expanded}
-          onClick={() => setExpanded((v) => !v)}
-          className="inline-flex select-none items-center rounded bg-slate-800/80 px-1.5 py-0.5 text-[10px] font-medium text-slate-300 hover:bg-slate-700/80"
-        >
-          (system prompt [{expanded ? "−" : "+"}])
-        </button>
-        <span className="select-none text-[10px] text-slate-500">
-          system prompt · {chars.toLocaleString()} chars · unchanged from previous
-        </span>
-      </div>
+    <div className={rowClass}>
+      <button
+        type="button"
+        data-testid="godmode-prompt-toggle"
+        aria-expanded={expanded}
+        onClick={() => setExpanded((v) => !v)}
+        className={cn(
+          FONT_SANS,
+          "mr-2 inline-block rounded-[3px] bg-chat-surface-2 px-1.5 text-[10.5px] text-chat-muted hover:text-chat-fg",
+        )}
+      >
+        system prompt · {collapse.collapsed.length.toLocaleString()} chars · unchanged from previous
+      </button>
       {expanded && (
-        <div data-testid="godmode-prompt-collapsed" className="text-slate-500">
+        <div data-testid="godmode-prompt-collapsed" className="text-chat-dim">
           {collapse.collapsed}
         </div>
       )}
-      <div data-testid="godmode-prompt-remainder">
-        <span className="mr-1 select-none text-slate-600">▸</span>
-        {collapse.remainder}
-      </div>
+      <span data-testid="godmode-prompt-remainder">
+        <Tri />
+        <span className="!font-mono text-chat-muted">{collapse.remainder}</span>
+      </span>
     </div>
   );
 }
 
-// Virtuoso List override — stamps role="log" so the virtualized scroll
-// container is a polite live region for screen readers (matches LogStream).
+// Virtuoso List override — role="log" live region; carries the stream gutter.
 const GodModeList = forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & { context?: unknown }
 >(function GodModeListImpl(props, ref) {
-  const { context: _context, ...rest } = props;
-  return <div ref={ref} role="log" aria-label="God mode live stream" {...rest} />;
+  const { context: _context, className, ...rest } = props;
+  return (
+    <div
+      ref={ref}
+      role="log"
+      aria-live="polite"
+      aria-label="God mode live stream"
+      className={cn(GUTTER_X, className)}
+      {...rest}
+    />
+  );
 });

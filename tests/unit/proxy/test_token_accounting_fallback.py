@@ -9,7 +9,7 @@ Two layers, tested separately because they fail for different reasons:
 tokenizer_repo is the CORRECT answer and gives exact counts; the character
 estimate is the SAFETY NET for when even that is unavailable. The estimate is
 deliberately visible -- it is logged once per repo and reported through the
-cache -- because it feeds the per-token rate limiter, and silently inaccurate
+cache -- because it feeds the per-token usage figures, and silently inaccurate
 billing is worse than loudly approximate billing.
 """
 

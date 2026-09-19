@@ -252,6 +252,9 @@ export function combineThroughput(
 
 export interface LiveRequestRow {
   id: string;
+  /** Opaque token row id. Null for anonymous requests; links the row to the
+   *  token's details page (`/tokens/{id}`) when present. */
+  token_id: string | null;
   token_name: string | null;
   client_ip: string | null;
   model: string;
@@ -267,6 +270,9 @@ export interface LiveRequestRow {
 }
 
 export interface LiveByToken {
+  /** Opaque token row id — the grouping key (names are reused across
+   *  rotations, so two distinct tokens can share a name). Null = anonymous. */
+  token_id: string | null;
   token_name: string | null;
   requests: number;
   context_tokens: number;
@@ -301,6 +307,10 @@ export interface LiveRequestsSnapshot {
  * The server's aggregation is a plain group-by over the same rows, so
  * recomputing from the filtered rows is exact rather than an approximation —
  * and passing ALL rows here reproduces the server's own output.
+ *
+ * Grouped by `token_id`, not `token_name` — names are reused across
+ * rotations, so two distinct tokens sharing a name must stay separate rows.
+ * `token_id === null` is the anonymous bucket.
  */
 export function aggregateRequests(rows: readonly LiveRequestRow[]): {
   by_token: LiveByToken[];
@@ -309,7 +319,8 @@ export function aggregateRequests(rows: readonly LiveRequestRow[]): {
   const byToken = new Map<string | null, LiveByToken>();
   const byIp = new Map<string | null, LiveByIp>();
   for (const r of rows) {
-    const t = byToken.get(r.token_name) ?? {
+    const t = byToken.get(r.token_id) ?? {
+      token_id: r.token_id,
       token_name: r.token_name,
       requests: 0,
       context_tokens: 0,
@@ -320,7 +331,7 @@ export function aggregateRequests(rows: readonly LiveRequestRow[]): {
     t.context_tokens += r.context_tokens;
     t.prompt_tokens += r.prompt_tokens;
     t.completion_tokens += r.completion_tokens;
-    byToken.set(r.token_name, t);
+    byToken.set(r.token_id, t);
 
     const p = byIp.get(r.client_ip) ?? {
       client_ip: r.client_ip,

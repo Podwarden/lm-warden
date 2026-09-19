@@ -1,0 +1,30 @@
+-- Admission-queue wait, in seconds, for one proxied request.
+--
+-- The proxy admits every /v1 request through a per-engine, strict-priority
+-- gate (app/proxy/scheduler.py::PriorityScheduler) before it forwards
+-- anything. Time spent waiting there was recorded NOWHERE: the clock that
+-- `ttft_s` is measured from is read AFTER admission (app/proxy/routes.py --
+-- `started_monotonic` is set once the slot is held), so queue wait is absent
+-- from `ttft_s` and from `duration_s` alike. The scheduler's own docstring
+-- warns that priority-9 traffic CAN starve lower priorities indefinitely, and
+-- until now nothing in the product could show that happening.
+--
+-- Backend-independent by construction. `acquire` sits in the single `_forward`
+-- path ahead of any backend branching, so vLLM and llama.cpp requests queue
+-- through the same gate and are timed by the same monotonic clock. Only the
+-- ENGINE-side priority hint is capability-gated (supports_request_priority);
+-- the warden's admission ordering applies to every backend.
+--
+-- Measures the admission wait ALONE -- not tokenization, not the rate-limit
+-- check, both of which precede it. Nullable rather than DEFAULT 0 for the same
+-- reason `ttft_s` is: rows written before this migration were not measured,
+-- and "not measured" is not the claim "waited zero seconds". A zero here is a
+-- real reading, meaning the engine had a free slot.
+--
+-- Scope, stated so it is not misread: this is the WARDEN's queue. Once
+-- admitted, an engine keeps its own waiting queue (vLLM's continuous batching
+-- especially), and that wait IS inside `ttft_s` and cannot be seen from the
+-- proxy. Subtracting this column from `ttft_s` would therefore be wrong --
+-- it was never added in.
+
+ALTER TABLE request_history ADD COLUMN queued_s REAL;

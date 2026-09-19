@@ -7,7 +7,8 @@ from app.db.repos.tokens import TokenRepo, TokenRow, sqlite_utc_now
 async def require_bearer(request: Request) -> TokenRow:
     """Validate Bearer token, return the full TokenRow, update last_used_at.
 
-    Raises 401 if missing/malformed/unknown/expired/revoked.
+    Raises 401 if missing/malformed/unknown/expired/revoked, and 403 if the
+    key is paused (token details page, migration 0033).
     """
     auth = request.headers.get("authorization", "")
     if not auth.lower().startswith("bearer "):
@@ -33,6 +34,14 @@ async def require_bearer(request: Request) -> TokenRow:
         # hard-revoked token an up-to-1s admission window.
         if row.revoked_at is not None and row.revoked_at <= sqlite_utc_now():
             raise HTTPException(401, "token revoked")
+        # Paused by the operator. 403, not 401, so a client can tell "your key
+        # is paused" from "your key is wrong". Checked AFTER expiry and
+        # revocation so a key that is both dead and paused still gets the 401:
+        # the dead state wins. Requests already in flight are not touched, and
+        # there is no cache to flush -- this reads the row on every request.
+        # Raised before touch_last_used: a refused request is not a use.
+        if row.paused_at is not None:
+            raise HTTPException(403, "token paused")
         await repo.touch_last_used(row.id)
     return row
 

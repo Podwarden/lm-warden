@@ -217,6 +217,111 @@ describe("merged stats — requests chart and its table", () => {
       expect(screen.getByTestId("requests-empty").textContent).toMatch(/no requests recorded yet/i),
     );
   });
+
+  it("links a finished row's token name to its details page when token_id is present", async () => {
+    installFetchStub();
+    renderPage();
+    await waitFor(() =>
+      expect(screen.getAllByTestId("finished-row")).toHaveLength(2),
+    );
+    // f1 carries token_id "tok-a" -- rendered as a link.
+    const first = screen.getAllByTestId("finished-row")[0];
+    const link = within(first).getByRole("link", { name: "key-a" });
+    expect(link).toHaveAttribute("href", "/tokens/tok-a");
+    expect(link.className).toContain("hover:underline");
+  });
+
+  it("does not link a finished row recorded before token_id existed", async () => {
+    installFetchStub();
+    renderPage();
+    await waitFor(() =>
+      expect(screen.getAllByTestId("finished-row")).toHaveLength(2),
+    );
+    // f2 has token_id: null (an older row) -- plain text, no link.
+    const second = screen.getAllByTestId("finished-row")[1];
+    expect(within(second).queryByRole("link", { name: "key-b" })).toBeNull();
+    expect(second.textContent).toContain("key-b");
+  });
+});
+
+describe("merged stats — in-flight requests and the by-token rollup", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    setAccessToken("test-jwt", 900);
+    setCsrfToken("test-csrf");
+    vi.stubGlobal("ResizeObserver", FakeResizeObserver);
+    setFrame(frameWith([block("model-a-8b"), SILENT_LLAMACPP]));
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("links the token name in the in-flight table when token_id is present", async () => {
+    installFetchStub();
+    renderPage();
+    const panel = await screen.findByTestId("live-requests");
+    const link = await within(panel).findByRole("link", { name: "key-a" });
+    expect(link).toHaveAttribute("href", "/tokens/tok-a");
+  });
+
+  it("renders anonymous in-flight rows as plain text, no link", async () => {
+    installFetchStub({
+      requests: {
+        ts: "2026-09-05T19:00:00Z",
+        count: 1,
+        requests: [
+          {
+            id: "r-anon", token_id: null, token_name: null, client_ip: "10.0.0.9",
+            model: "model-a-8b", path: "/v1/chat/completions",
+            prompt_tokens: 10, completion_tokens: 1, context_tokens: 11,
+            max_model_len: 8192, context_pct: 0.001, elapsed_s: 1, phase: "decode",
+            orphan: false,
+          },
+        ],
+        by_token: [],
+        by_ip: [],
+      },
+    });
+    renderPage();
+    const panel = await screen.findByTestId("live-requests");
+    expect(within(panel).getByText("anonymous")).toBeInTheDocument();
+    expect(within(panel).queryByRole("link")).toBeNull();
+  });
+
+  it("links the token name in the By-token rollup and groups two ids sharing a name separately", async () => {
+    installFetchStub({
+      requests: {
+        ts: "2026-09-05T19:00:00Z",
+        count: 2,
+        requests: [
+          {
+            id: "r1", token_id: "tok-old", token_name: "shared-name", client_ip: "10.0.0.1",
+            model: "model-a-8b", path: "/v1/chat/completions",
+            prompt_tokens: 100, completion_tokens: 10, context_tokens: 110,
+            max_model_len: 8192, context_pct: 0.013, elapsed_s: 1, phase: "decode",
+            orphan: false,
+          },
+          {
+            id: "r2", token_id: "tok-new", token_name: "shared-name", client_ip: "10.0.0.2",
+            model: "model-a-8b", path: "/v1/chat/completions",
+            prompt_tokens: 200, completion_tokens: 20, context_tokens: 220,
+            max_model_len: 8192, context_pct: 0.027, elapsed_s: 2, phase: "decode",
+            orphan: false,
+          },
+        ],
+        by_token: [],
+        by_ip: [],
+      },
+    });
+    renderPage();
+    const panel = await screen.findByTestId("by-token-panel");
+    const links = await within(panel).findAllByRole("link", { name: "shared-name" });
+    // Two distinct token_ids sharing a display name stay two separate rows.
+    expect(links).toHaveLength(2);
+    const hrefs = links.map((l) => l.getAttribute("href")).sort();
+    expect(hrefs).toEqual(["/tokens/tok-new", "/tokens/tok-old"]);
+  });
 });
 
 describe("merged stats — latency from the store", () => {

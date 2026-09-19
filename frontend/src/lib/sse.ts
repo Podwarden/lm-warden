@@ -68,6 +68,16 @@ const INITIAL_BACKOFF_MS = 250;
 interface UseEventSourceOptions<T> {
   onMessage: (m: T) => void;
   enabled?: boolean;
+  /**
+   * Extra query parameters for the stream URL (e.g. god mode's `token_ids`).
+   *
+   * The SSE ticket is still minted for the BARE `path`: the ticket check on the
+   * server compares `request.url.path` only, and the god-mode 409 check in
+   * `POST /api/auth/sse-ticket` compares the body's path exactly. The ticket is
+   * appended last, so the URL is `${path}?${query}&ticket=…`. Changing the
+   * query tears the stream down and reconnects.
+   */
+  query?: Record<string, string>;
 }
 
 export function useEventSource<T>(
@@ -87,6 +97,10 @@ export function useEventSource<T>(
   // a non-memoised handler by always reading from the ref.
   const onMessageRef = useRef(opts.onMessage);
   onMessageRef.current = opts.onMessage;
+
+  // Serialised once per render so the effect can depend on a string: a fresh
+  // object literal from the caller must not reconnect on every render.
+  const qs = opts.query ? new URLSearchParams(opts.query).toString() : '';
 
   useEffect(() => {
     if (opts.enabled === false) {
@@ -209,7 +223,11 @@ export function useEventSource<T>(
         return;
       }
 
-      es = new EventSource(`${path}?ticket=${encodeURIComponent(ticket)}`);
+      // The effect may have been torn down while the ticket was minting.
+      if (stopped) return;
+      es = new EventSource(
+        `${path}?${qs ? `${qs}&` : ''}ticket=${encodeURIComponent(ticket)}`,
+      );
       es.onopen = () => {
         // Successful connection — reset the backoff and attempts. Note
         // we don't reset `attempts` to 0 until we've actually opened;
@@ -247,7 +265,7 @@ export function useEventSource<T>(
       es?.close();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path, opts.enabled]);
+  }, [path, opts.enabled, qs]);
 
   return state;
 }

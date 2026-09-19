@@ -13,9 +13,9 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from app.db.database import open_db
 from app.db.repos.counters import CountersRepo
-from app.db.repos.models import ModelRepo
+from app.db.repos.models import ModelRepo, ModelRow
 from app.db.repos.samples import SamplesRepo
-from app.db.repos.tokens import TokenRow, TokenUsageRepo
+from app.db.repos.tokens import TokenModelUsageRepo, TokenRow, TokenUsageRepo
 from app.models.context_window import effective_context_window
 from app.proxy import content_log
 from app.proxy.auth import require_bearer, token_allows
@@ -28,6 +28,13 @@ from app.proxy.runaway import RunawayDetector
 # live-request registry off app.state), which would shadow an unaliased import
 # for the whole function -- a real F823 that ruff caught rather than a style nit.
 from app.runtime.backends import registry as backend_registry
+from app.runtime.variants import (
+    ModelVariantRepo,
+    Variant,
+    is_recorded,
+    mark_recorded,
+    running_variant,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +79,11 @@ async def _resolve_target(request: Request, served_name: str):
     # in-container subprocess, the engine container's DNS name for the
     # docker driver. Loopback fallback covers a driver without get_host.
     host = sup.get_host(model.id) or "127.0.0.1"
-    return model, host, port
+    # The variant the running engine was launched as (0036), read where the
+    # engine itself is resolved, so the usage rollup and request_history name
+    # the same one.
+    variant = running_variant(request.app.state, model)
+    return model, host, port, variant
 
 
 def _extract_prompt(body_json) -> str:
@@ -361,6 +372,7 @@ async def _record_counters(
     token_id: str | None,
     prompt_tokens: int,
     completion_tokens: int,
+    variant: Variant | None = None,
 ) -> None:
     settings = request.app.state.settings
     minute = int(time.time() // 60)
@@ -383,15 +395,58 @@ async def _record_counters(
         # NULL key doesn't accumulate orphan rows). Same minute integer as
         # SamplesRepo above for cross-table joins later (Stats v2).
         if token_id is not None:
+            # Committed together with the per-model row below (one commit, not
+            # two), and on its own if that part fails.
             await TokenUsageRepo(db).add(
                 token_id=token_id,
                 minute=minute,
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
+                commit=False,
             )
+            # 0036 -- the same minute split by model VARIANT, for the token
+            # page's "Usage by model" card and per-model tokens chart. The
+            # variant is the RUNNING engine's (app/runtime/variants.py), not
+            # the row's current settings. Its descriptor is INSERT OR IGNOREd
+            # the first time this process sees it, in case the engine start did
+            # not record it. Bookkeeping: this runs after the upstream replied,
+            # so a failure here is logged and must never fail the response.
+            recorded: str | None = None
+            try:
+                if variant is None:
+                    variant = running_variant(request.app.state, model)
+                if not is_recorded(settings.db_path, variant.id):
+                    await ModelVariantRepo(db).ensure(variant, commit=False)
+                    recorded = variant.id
+                await TokenModelUsageRepo(db).add(
+                    token_id=token_id,
+                    variant_id=variant.id,
+                    model_id=model.id,
+                    minute=minute,
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                    commit=False,
+                )
+            except Exception:  # noqa: BLE001 -- see above
+                recorded = None
+                logger.warning(
+                    "could not record per-model usage for %s", model.id, exc_info=True
+                )
+            await db.commit()
+            if recorded is not None:
+                mark_recorded(settings.db_path, recorded)
 
 
-async def _forward(request: Request, model, host: str, port: int, path: str, token: TokenRow):
+async def _forward(
+    request: Request,
+    model: ModelRow,
+    host: str,
+    port: int,
+    path: str,
+    token: TokenRow,
+    *,
+    variant: Variant | None = None,
+) -> Response:
     body = await request.body()
     body_json = json.loads(body) if body else {}
     is_stream = bool(body_json.get("stream"))
@@ -418,6 +473,8 @@ async def _forward(request: Request, model, host: str, port: int, path: str, tok
         is_stream = True
     tok_cache = request.app.state.tokenizers
     token_id = token.id
+    if variant is None:
+        variant = running_variant(request.app.state, model)
     # Wall-clock origin for the server-side reaper (see settings.request_max_wall_s).
     request_start = time.monotonic()
 
@@ -468,23 +525,6 @@ async def _forward(request: Request, model, host: str, port: int, path: str, tok
             **({"media": gm_media} if gm_media else {}),
         })
 
-    # S5 (#104) — sliding-window rate limit (per-token; NULL means unlimited).
-    # MUST be 429 NOT 503 — OpenAI-compatible clients (openai-python, Vercel AI
-    # SDK, LangChain) retry-with-backoff on 429 and surface "model unavailable"
-    # on 503. The proxy must not be mistaken for an outage.
-    rate_limiter = request.app.state.rate_limiter
-    if not await rate_limiter.check_and_charge(
-        token_id, token.rate_limit_tps, prompt_tokens,
-    ):
-        raise HTTPException(
-            status_code=429,
-            detail=(
-                f"rate limit exceeded: token configured for "
-                f"{token.rate_limit_tps} tokens/sec over a "
-                f"{rate_limiter.window_s:g}s window"
-            ),
-        )
-
     # S5 — STRICT priority scheduler in front of vLLM. Acquired here so the
     # slot is held for the full duration of the upstream call (including the
     # streaming-response body), and released in the StreamingResponse's
@@ -496,7 +536,18 @@ async def _forward(request: Request, model, host: str, port: int, path: str, tok
     # preserved as the admission ordering within the engine's queue, and
     # pushed into vLLM itself (#173 part B) via the per-request priority field.
     slot_cm = scheduler.acquire(priority=token.priority, engine_key=model.id)
+    # Time the admission gate ALONE. Tokenization happens above and is
+    # deliberately outside this span, so the recorded
+    # figure means "waited for a slot" and nothing else.
+    #
+    # This wait is NOT inside ttft_s or duration_s: `started_monotonic` below
+    # is read once the slot is held, so it was never added in and must not be
+    # subtracted from either. It is the WARDEN's queue only -- once admitted,
+    # an engine keeps its own waiting queue (vLLM's continuous batching), and
+    # THAT wait is inside ttft_s and invisible from here.
+    _queue_start = time.monotonic()
     await slot_cm.__aenter__()
+    queued_s = time.monotonic() - _queue_start
     slot_released = False
 
     # #173 part B — push the token's priority into the engine itself. vLLM's
@@ -549,11 +600,13 @@ async def _forward(request: Request, model, host: str, port: int, path: str, tok
                 client_ip=_client_ip(request),
                 model=model.served_model_name,
                 model_row_id=model.id,
+                variant_id=variant.id,
                 path=path,
                 prompt_tokens=prompt_tokens,
                 max_model_len=model.max_model_len,
                 started_monotonic=time.monotonic(),
                 started_iso=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                queued_s=queued_s,
             )
             await registry.register(live_req)
     except Exception:
@@ -748,12 +801,14 @@ async def _forward(request: Request, model, host: str, port: int, path: str, tok
                             if gm_content:
                                 _gm_publish(hub, {
                                     "type": "delta", "req_id": req_id,
+                                    "token_id": token_id,
                                     "ts": time.time(), "channel": "content",
                                     "text": gm_content,
                                 })
                             if gm_reasoning:
                                 _gm_publish(hub, {
                                     "type": "delta", "req_id": req_id,
+                                    "token_id": token_id,
                                     "ts": time.time(), "channel": "reasoning",
                                     "text": gm_reasoning,
                                 })
@@ -781,10 +836,13 @@ async def _forward(request: Request, model, host: str, port: int, path: str, tok
                     trust_remote_code=bool(model.trust_remote_code),
                     fallback_repo=getattr(model, "tokenizer_repo", None),
                 )
-                await _record_counters(request, model, token_id, prompt_tokens, completion_tokens)
+                await _record_counters(
+                    request, model, token_id, prompt_tokens, completion_tokens, variant
+                )
                 if gm_on:
                     _gm_publish(hub, {
                         "type": "request_end", "req_id": req_id,
+                        "token_id": token_id,
                         "ts": time.time(), "finish_reason": gm_finish_reason,
                         "prompt_tokens": prompt_tokens,
                         "completion_tokens": completion_tokens,
@@ -888,7 +946,9 @@ async def _forward(request: Request, model, host: str, port: int, path: str, tok
                     live_req.completion_tokens = completion_tokens
                 except Exception:
                     pass
-            await _record_counters(request, model, token_id, prompt_tokens, completion_tokens)
+            await _record_counters(
+                request, model, token_id, prompt_tokens, completion_tokens, variant
+            )
         finally:
             await _deregister()
             await resp.aclose()
@@ -959,7 +1019,9 @@ async def _forward(request: Request, model, host: str, port: int, path: str, tok
                 live_req.completion_tokens = completion_tokens
             except Exception:
                 pass
-        await _record_counters(request, model, token_id, prompt_tokens, completion_tokens)
+        await _record_counters(
+            request, model, token_id, prompt_tokens, completion_tokens, variant
+        )
     except TimeoutError:
         # Wall-clock backstop fired: the upstream read outlived
         # request_max_wall_s. The ``finally`` below tears down the upstream
@@ -994,16 +1056,19 @@ async def _forward(request: Request, model, host: str, port: int, path: str, tok
             gm_reasoning = message.get("reasoning_content")
             if gm_content:
                 _gm_publish(hub, {
-                    "type": "delta", "req_id": req_id, "ts": time.time(),
+                    "type": "delta", "req_id": req_id, "token_id": token_id,
+                    "ts": time.time(),
                     "channel": "content", "text": gm_content,
                 })
             if gm_reasoning:
                 _gm_publish(hub, {
-                    "type": "delta", "req_id": req_id, "ts": time.time(),
+                    "type": "delta", "req_id": req_id, "token_id": token_id,
+                    "ts": time.time(),
                     "channel": "reasoning", "text": gm_reasoning,
                 })
             _gm_publish(hub, {
-                "type": "request_end", "req_id": req_id, "ts": time.time(),
+                "type": "request_end", "req_id": req_id, "token_id": token_id,
+                "ts": time.time(),
                 "finish_reason": choice0.get("finish_reason"),
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
@@ -1071,14 +1136,16 @@ async def chat_completions(request: Request, token: TokenRow = Depends(require_b
         raise HTTPException(400, "missing 'model' field")
     if not token_allows(token, served_name):
         raise HTTPException(403, f"token not allowed for model '{served_name}'")
-    model, host, port = await _resolve_target(request, served_name)
+    model, host, port, variant = await _resolve_target(request, served_name)
 
     # Re-set the body on the request so _forward can re-read it.
     async def _receive():
         return {"type": "http.request", "body": body_bytes, "more_body": False}
     request._receive = _receive
 
-    return await _forward(request, model, host, port, "/v1/chat/completions", token)
+    return await _forward(
+        request, model, host, port, "/v1/chat/completions", token, variant=variant
+    )
 
 
 @router.post("/completions")
@@ -1090,13 +1157,13 @@ async def completions(request: Request, token: TokenRow = Depends(require_bearer
         raise HTTPException(400, "missing 'model' field")
     if not token_allows(token, served_name):
         raise HTTPException(403, f"token not allowed for model '{served_name}'")
-    model, host, port = await _resolve_target(request, served_name)
+    model, host, port, variant = await _resolve_target(request, served_name)
 
     async def _receive():
         return {"type": "http.request", "body": body_bytes, "more_body": False}
     request._receive = _receive
 
-    return await _forward(request, model, host, port, "/v1/completions", token)
+    return await _forward(request, model, host, port, "/v1/completions", token, variant=variant)
 
 
 @router.get("/models")

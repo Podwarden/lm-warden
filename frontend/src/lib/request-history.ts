@@ -26,6 +26,10 @@ export interface RequestHistoryRow {
   /** Served name — what a human reads. */
   model: string;
   token_name: string | null;
+  /** Opaque token row id; links this row to the token's details page. Null
+   *  for anonymous requests and for rows written before the token_id column
+   *  existed (migration adding it, v2026.09.18.1). */
+  token_id: string | null;
   client_ip: string | null;
   prompt_tokens: number;
   completion_tokens: number;
@@ -33,6 +37,16 @@ export interface RequestHistoryRow {
   /** Null when no token ever arrived (abort before the first frame, or a
    *  non-streaming request, which has no first frame to time). */
   ttft_s: number | null;
+  /**
+   * Seconds spent waiting at the proxy's per-engine admission gate before the
+   * request was forwarded (migration 0032).
+   *
+   * NOT part of `ttft_s` or `duration_s` — the clock both are measured from is
+   * read once the slot is held, so this was never inside either. Null means a
+   * row written before 0032, i.e. not measured; 0 is a real reading meaning
+   * the engine had a free slot.
+   */
+  queued_s: number | null;
   finish_reason: string | null;
   orphan: boolean;
   started_iso: string;
@@ -291,4 +305,40 @@ function topShare(counts: Map<string, number>, total: number): number {
   let top = 0;
   for (const c of counts.values()) if (c > top) top = c;
   return total > 0 ? top / total : 0;
+}
+
+// ---- /api/stats/v2/throughput ----------------------------------------------
+
+/**
+ * Which question the panel is answering.
+ *
+ * `request`   per-request engine speed. How fast is the rig — idle time is
+ *             invisible to it.
+ * `wallclock` tokens counted per minute, idle minutes included as zero. How
+ *             much work did the box do.
+ */
+export type ThroughputBasis = "request" | "wallclock";
+
+/** One rate series. `null` means absent, which is NOT the same as 0 tok/s. */
+export interface RateSummary {
+  count: number;
+  avg: number | null;
+  max: number | null;
+  /** Modal value over ~5%-wide bins. Null when the sample is too small or
+   *  nothing repeats — see request_history.mode_relative on the Python side. */
+  mode: number | null;
+}
+
+export interface ThroughputResponse {
+  basis: ThroughputBasis;
+  range: StatsRange;
+  since_epoch: number;
+  selected_model_ids: string[] | null;
+  /** Prompt tokens per second. On the request basis this is
+   *  `prompt_tokens / ttft`, which INCLUDES queue wait and counts
+   *  prefix-cached tokens it never computed. */
+  prefill: RateSummary;
+  /** Completion tokens per second through the decode phase. */
+  generation: RateSummary;
+  coverage: HistoryCoverage;
 }

@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import deque
+from typing import Any
 
 # How many events a single subscriber queue holds before drop-oldest kicks in.
 # Bounded so one slow SSE client can't pin unbounded memory; the frontend keys
@@ -40,6 +41,41 @@ def _event_chars(event: dict) -> int:
     Used only for ring-eviction accounting, so an approximation is fine.
     """
     return sum(len(v) for v in event.values() if isinstance(v, str))
+
+
+# Most ids ``GET /api/admin/godmode/stream?token_ids=`` accepts (spec
+# 2026-09-18 §3.5). The token page sends one rotation chain -- a handful of
+# keys -- so twenty is headroom, and the cap keeps the query string bounded.
+MAX_TOKEN_IDS = 20
+
+
+def parse_token_ids(raw: str | None) -> frozenset[str] | None:
+    """``?token_ids=a,b`` -> the ids to keep, or None for "no filter".
+
+    Absent (None) means today's unfiltered stream. Present but naming no id
+    (``token_ids=`` or ``token_ids=,``) is refused rather than read as "no
+    filter": silently widening an empty selection to every key is exactly
+    the substitution a per-token view must never make. Raises ValueError for
+    that and for more than MAX_TOKEN_IDS ids; the route answers 422.
+    """
+    if raw is None:
+        return None
+    ids = frozenset(part.strip() for part in raw.split(",") if part.strip())
+    if not ids:
+        raise ValueError("token_ids names no token")
+    if len(ids) > MAX_TOKEN_IDS:
+        raise ValueError(f"token_ids names more than {MAX_TOKEN_IDS} tokens")
+    return ids
+
+
+def event_matches(event: dict[str, Any], token_ids: frozenset[str] | None) -> bool:
+    """Whether a stream filtered to ``token_ids`` carries ``event``.
+
+    Exact because every event of a request -- request_start, each delta and
+    request_end -- carries the same ``token_id`` (app/proxy/routes.py), so a
+    filter can never keep a request's start and drop its deltas.
+    """
+    return token_ids is None or event.get("token_id") in token_ids
 
 
 class GodModeHub:

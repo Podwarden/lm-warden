@@ -232,3 +232,37 @@ def test_live_finished_reads_the_store_now(tmp_data_dir, client):
     body = client.get("/api/stats/live/finished?models=id-model-b", headers=auth).json()
     assert [r["id"] for r in body["requests"]] == ["r2"]
     assert client.get("/api/stats/live/finished?models=", headers=auth).status_code == 400
+
+
+def test_the_requests_row_carries_the_admission_queue_wait(tmp_data_dir, client):
+    """0032: queue wait is on the row the chart and table read.
+
+    It is reported alongside ttft_s rather than folded into it: the clock
+    ttft_s is measured from is read after admission, so the wait was never
+    inside it (app/proxy/routes.py).
+    """
+    db_path, auth = _ready(client, tmp_data_dir)
+    now = time.time()
+    with sqlite3.connect(db_path) as db:
+        db.execute(
+            "INSERT INTO request_history(id, finished_at, model_id, model, token_name, "
+            "client_ip, prompt_tokens, completion_tokens, duration_s, ttft_s, "
+            "finish_reason, orphan, started_iso, queued_s) "
+            "VALUES ('r-q', ?, 'id-model-a', 'model-a', 'key-a', '10.0.0.1', "
+            "100, 50, 2.0, 0.5, 'stop', 0, '2026-09-10T18:59:00Z', 3.25)",
+            (now - 10,),
+        )
+        # A row from before the migration: absent, not zero.
+        db.execute(
+            "INSERT INTO request_history(id, finished_at, model_id, model, duration_s, "
+            "ttft_s, started_iso) VALUES ('r-old', ?, 'id-model-a', 'model-a', 2.0, 0.5, 'x')",
+            (now - 20,),
+        )
+        db.commit()
+
+    r = client.get("/api/stats/v2/requests?range=1h", headers=auth)
+    assert r.status_code == 200, r.text
+    rows = {row["id"]: row for row in r.json()["requests"]}
+    assert rows["r-q"]["queued_s"] == 3.25
+    assert rows["r-q"]["ttft_s"] == 0.5  # untouched by the queue figure
+    assert rows["r-old"]["queued_s"] is None

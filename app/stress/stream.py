@@ -4,8 +4,8 @@ Probes go straight to ``127.0.0.1:{engine_port}``, not through the warden's
 own ``/v1``. That is not a shortcut: ``PriorityScheduler`` admits
 ``VW_PROXY_MAX_INFLIGHT`` — default 16 — per engine, so a concurrency run
 through the proxy could never test past 16 and would be measuring the warden
-rather than the engine. Going direct also sidesteps the token rate limiter, the
-priority push-down and ``runaway_mode``'s body rewrite.
+rather than the engine. Going direct also sidesteps the priority push-down and
+``runaway_mode``'s body rewrite.
 
 The cost is that none of the proxy's streaming machinery is reusable:
 ``warmup_probe`` is a single non-streaming POST, and ``_feed_detector`` takes

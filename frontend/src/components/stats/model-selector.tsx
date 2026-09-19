@@ -1,5 +1,5 @@
 "use client";
-// The model selector, shared by /stats and /godmode.
+// The model selector used by /stats.
 //
 // One control, one selection, every surface — the operator picks once and
 // every page answers about the same models. A per-page selector would let two

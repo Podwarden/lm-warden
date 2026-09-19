@@ -19,6 +19,7 @@
 // `currentColor` inherited from a token-classed wrapper for the same reason.
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { LiveStatsState } from "@/lib/live-stats-stream";
 import {
@@ -657,7 +658,16 @@ export function LiveRequestsPanel({
                 <tr key={r.id} className="text-chat-fg">
                   <td className="px-4 py-2.5">
                     <span className="font-mono text-xs">
-                      {r.token_name ?? <span className="text-chat-dim">anonymous</span>}
+                      {r.token_id ? (
+                        <Link
+                          href={`/tokens/${encodeURIComponent(r.token_id)}`}
+                          className="hover:underline underline-offset-2"
+                        >
+                          {r.token_name ?? r.token_id}
+                        </Link>
+                      ) : (
+                        r.token_name ?? <span className="text-chat-dim">anonymous</span>
+                      )}
                     </span>
                     {r.orphan && (
                       <span

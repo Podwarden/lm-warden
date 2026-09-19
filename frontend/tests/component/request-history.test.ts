@@ -21,9 +21,9 @@ import {
 function row(over: Partial<RequestHistoryRow> = {}): RequestHistoryRow {
   return {
     id: "r", finished_at: 1000, model_id: "id-model-a", model: "model-a",
-    token_name: "key-a", client_ip: "10.0.0.1", prompt_tokens: 10,
+    token_name: "key-a", token_id: "tok-a", client_ip: "10.0.0.1", prompt_tokens: 10,
     completion_tokens: 5, duration_s: 1, ttft_s: 0.1, finish_reason: "stop",
-    orphan: false, started_iso: "x",
+    orphan: false, started_iso: "x", queued_s: 0,
     ...over,
   };
 }

@@ -7,7 +7,7 @@
 [![Engines](https://img.shields.io/badge/engines-vLLM%200.26.0%20%C2%B7%20llama.cpp%20b10731-4b8bbe.svg)](#two-engines-and-the-model-that-made-us-add-the-second)
 [![Deploy](https://img.shields.io/badge/deploy-Docker%20Compose-2496ed.svg)](documents/INSTALL.md)
 
-![LLM Warden stats — a week of GPU utilisation, power draw and throughput across four cards](assets/screenshots/01-stats-overview.jpg)
+![LLM Warden stats — host VRAM, GPU utilisation and power, and a week of GPU utilisation and power draw](assets/screenshots/01-stats-overview.jpg)
 
 You have NVIDIA GPUs — in a rack, in a workstation, or two cards bought
 eighteen months apart in a box under a desk. You want what is on them to be
@@ -20,9 +20,10 @@ hardware is doing — without one container per model, a
 a second terminal to find out why a request is slow.
 
 LLM Warden is the control plane around the engines. Pull a model from
-HuggingFace, load it, mint a key, see what that key spent, watch what the card
-is actually doing. One published port, so your own TLS terminator, ingress,
-SSO or network policy sits in front of it unchanged. Nothing leaves the host:
+HuggingFace, load it, mint a key, open that key's page to see what it spent
+and how long its requests waited, watch what the card is actually doing. One
+published port, so your own TLS terminator, ingress, SSO or network policy
+sits in front of it unchanged. Nothing leaves the host:
 no account, no licence check, no analytics, and an
 [offline install](documents/INSTALL.md#a7-offline--air-gapped-install) for machines with
 no route out at all.
@@ -237,7 +238,7 @@ Two more limits worth knowing before you pick it:
   and says which of the two reasons applies rather than offering a switch that
   does nothing.
 - **A GGUF-only repository ships no tokenizer**, so token accounting falls back
-  to a character estimate (which also drives per-token rate limits). Set
+  to a character estimate (which also drives per-key usage figures). Set
   `tokenizer_repo` to the upstream safetensors sibling and counts are exact,
   local and free. The degradation is reported rather than hidden.
 
@@ -257,37 +258,49 @@ per-token line on someone's invoice.
 |---|---|
 | One model per container, restart to switch | Register, pull, load and unload from the browser |
 | One engine, take it or leave it | vLLM **and** llama.cpp, chosen per model |
-| A single shared API key, or none | A key per consumer, each with its own token-rate limit, priority lane and rotation grace window |
-| No record of who used what | Requests, prompt tokens and completion tokens rolled up per key and per client IP |
-| No way to see what a client actually sent | God Mode: an opt-in, in-memory live view of prompts and completions, off by default |
+| A single shared API key, or none | A key per consumer, each with its own page, priority lane, pause switch and rotation grace window |
+| No record of who used what | Requests, prompt tokens and completion tokens rolled up per key and per client IP, plus each key's queue wait and latency |
+| No way to see what a client actually sent | God mode: an opt-in, in-memory live view of one key's prompts and completions, docked on that key's page and streaming only while open; off by default |
 | A port per engine to expose | One published port — your own TLS terminator, ingress, SSO or network policy goes in front of it |
 | `nvidia-smi` in a second terminal | Per-card VRAM, utilisation, power, temperature against the driver's own throttle point, PCIe width, ECC, NVLink |
 | No idea why a request is slow | Live request table, TTFT and duration distributions from the proxy, KV-cache pressure and preemptions where the engine reports them |
 | Hand-edited `--tensor-parallel-size` | Guided setup, a fit preview before you pull, and a stress test that measures the ceiling |
 | A dead engine nobody notices | `/health` watchdog, evidence captured, model reloaded |
 
-- **Browser UI** — models, live engine logs, chat playground, stats.
+- **Browser UI** — models, live engine logs, chat playground, stats, and a page
+  per API key.
 - **OpenAI-compatible gateway** at `/v1/*` — drop-in for any existing client.
   `GET /v1/models` reports `max_model_len`, so clients stop guessing the context
   window.
 - **Model lifecycle** — pull from HuggingFace, hot-swap without restarting the
   container, per-model settings, GGUF on either engine.
 - **Per-key auth and accounting** — one token per consumer, each with its own
-  token-per-second rate limit (`VW_RATE_LIMIT_WINDOW_S` sets the window it is
-  measured over), priority lane and rotation grace window. Requests, prompt
+  priority lane and rotation grace window. Requests, prompt
   tokens and completion tokens are attributed to the key that spent them and
-  to the IP that called; `GET /api/tokens/{id}/usage` returns the same
-  1 h / 24 h / 7 d rollup the page draws, minute by minute.
+  to the IP that called.
+- **A page per key** — rename it, set its priority, pause it (its clients get
+  `403 token paused` until you resume it; requests already running finish),
+  test, rotate or delete it, and see the keys it replaced. Its charts show
+  tokens and requests per minute, queue wait and latency (first token or full
+  response, median and 95th percentile) over 1 h, 6 h, 24 h, 7 d or any period
+  you drag or type, with the keys it was rotated from included by default.
+  Binning happens on the server, so a week is still a few hundred points.
+  Per-request timings are recorded per key from v2026.09.18.1 on; an earlier
+  period is marked "Not recorded" rather than drawn as an idle one.
+  `GET /api/tokens/{id}/series` returns the same series the page draws.
 - **Request-level visibility** — a live table of what is in flight: key,
   client IP, model, context used against `max_model_len`, prefill or decode,
   and whether the caller has already disconnected. Finished requests are
   persisted with TTFT, duration and how each one ended. All of that is
   metadata: the `request_history` table has no column that holds prompt or
   completion text.
-- **Reading what a client actually sent** — God Mode is an opt-in live view of
+- **Reading what a client actually sent** — god mode is an opt-in live view of
   prompts, completions and inline images, off by default and held only in a
-  bounded in-memory ring. It, and the one other feature that can capture
-  content, are described together with their bounds under
+  bounded in-memory ring. It lives in a dock at the bottom of each key's page
+  and shows that key's traffic alone, its earlier keys included; it streams
+  only while the dock is open, and a closed dock holds no connection. It, and
+  the one other feature that can capture content, are described together with
+  their bounds under
   [Where request content can end up](documents/OPERATING.md#where-request-content-can-end-up).
 - **HuggingFace cache manager** — see what is on disk, garbage-collect orphans,
   export and import the whole cache as a tarball.
@@ -340,6 +353,24 @@ index each one holds.</td>
 <b>Starting points, not blank fields.</b> Presets for common card/model shapes,
 and a suggestion pass driven by the model config and the VRAM actually detected.</td>
 </tr>
+<tr>
+<td><img src="assets/screenshots/10-token-details.jpg" alt="A key's page over 7 days: priority P0 to P9, details, rotation history listing two earlier keys, a history strip with rotation markers and a selected window, and tokens-per-minute and requests-per-minute charts"><br>
+<b>Every key has its own page.</b> Rename, pause, test, rotate or delete it and set
+its priority. The history strip spans the key's whole life, earlier keys
+included, with each rotation marked — drag the window to chart any period, or
+type exact times.</td>
+<td><img src="assets/screenshots/11-token-timings.jpg" alt="The same page over the last hour: tokens and requests per minute, queue wait, and time-to-first-token latency with the median solid and the 95th percentile dashed"><br>
+<b>What one key waited for.</b> Queue wait and latency — first token or full
+response — per key, median and 95th percentile, next to the tokens and requests
+it sent. A bin with no requests is left empty rather than drawn as zero.</td>
+</tr>
+<tr>
+<td colspan="2"><img src="assets/screenshots/12-token-godmode-dock.jpg" alt="The god-mode dock open at the bottom of a key's page, live, replaying that key's recent requests and streaming a response as it is generated"><br>
+<b>God mode, one key at a time.</b> Open the dock at the bottom of a key's page to
+watch that key's prompts and responses as they happen, earlier keys included.
+Close it and the stream stops — nothing is watched in the background. Off by
+default (<code>VW_GODMODE_ENABLED</code>), and held only in memory.</td>
+</tr>
 </table>
 
 ---
@@ -348,8 +379,9 @@ and a suggestion pass driven by the model config and the VRAM actually detected.
 
 By default no prompt or completion text is stored anywhere. `request_history`
 — the table behind the requests chart and the per-key rollups — has no column
-that holds it. Two diagnostic features can capture content: God Mode
-(`VW_GODMODE_ENABLED`), an in-memory ring for one privileged viewer, and the
+that holds it. Two diagnostic features can capture content: god mode
+(`VW_GODMODE_ENABLED`), an in-memory ring watched one key at a time from a
+dock on that key's page, streaming only while the dock is open; and the
 content log (`VW_CONTENT_LOG_ENABLED`), which writes to disk and only for
 token ids on an explicit allowlist. Both are off by default, and with both off
 the proxy's forward path is the code it would be in a build that never had
@@ -369,16 +401,17 @@ Each of these is one hop from here and says what it holds.
   install, what `make uninstall` does and does not free, and a symptom-to-cause
   table.
 - [documents/API.md](documents/API.md) — driving it without a browser: the six-call first run,
-  minting a key, and register / pull / load from the API, including the four
-  fields only a llama.cpp row has.
+  minting and managing a key (rename, pause, rotation history, its usage and
+  timing series, its god-mode stream), and register / pull / load from the API,
+  including the four fields only a llama.cpp row has.
 - [documents/HAZARDS.md](documents/HAZARDS.md) — five things that cost an afternoon to diagnose and
   a paragraph to prevent: `/dev/shm` and tensor parallelism, one loaded model
   per GPU, what `gpu_memory_utilization` really reserves, what fits on a 16 GiB
   card, why first loads are slow — and how to measure `max_model_len` instead
   of bisecting it.
 - [documents/OPERATING.md](documents/OPERATING.md) — the day-to-day `make` targets, upgrading, the
-  URLs once it is running, HTTP against HTTPS, and where request content can
-  end up.
+  URLs once it is running, HTTP against HTTPS, managing API keys from their
+  pages, and where request content can end up.
 - [documents/ARCHITECTURE.md](documents/ARCHITECTURE.md) — one port and three containers, drivers
   against backends, and the full account of the two engines and what the second
   one costs.

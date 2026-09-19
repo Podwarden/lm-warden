@@ -601,7 +601,6 @@ write_override() {
     echo "      VW_CONTAINER_GPU_COUNT: \"\${VW_CONTAINER_GPU_COUNT:-$_sel}\""
     echo "      VW_WARMUP_PROBE_TIMEOUT_S: \"\${VW_WARMUP_PROBE_TIMEOUT_S:-600.0}\""
     echo "      VW_STATS_SAMPLER_INTERVAL_S: \"\${VW_STATS_SAMPLER_INTERVAL_S:-5.0}\""
-    echo "      VW_RATE_LIMIT_WINDOW_S: \"\${VW_RATE_LIMIT_WINDOW_S:-10.0}\""
     echo "      VW_HEADER_METRICS_INTERVAL_S: \"\${VW_HEADER_METRICS_INTERVAL_S:-2.0}\""
     echo "      VW_REQUEST_MAX_WALL_S: \"\${VW_REQUEST_MAX_WALL_S:-0.0}\""
     echo "      VW_GODMODE_ENABLED: \"\${VW_GODMODE_ENABLED:-false}\""

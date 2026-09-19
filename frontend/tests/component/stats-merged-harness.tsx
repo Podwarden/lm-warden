@@ -108,14 +108,14 @@ export const REQUESTS = {
   count: 2,
   requests: [
     {
-      id: "r1", token_name: "key-a", client_ip: "10.0.0.1",
+      id: "r1", token_id: "tok-a", token_name: "key-a", client_ip: "10.0.0.1",
       model: "model-a-8b", path: "/v1/chat/completions",
       prompt_tokens: 100, completion_tokens: 10, context_tokens: 110,
       max_model_len: 8192, context_pct: 0.013, elapsed_s: 1, phase: "decode",
       orphan: false,
     },
     {
-      id: "r2", token_name: "key-b", client_ip: "10.0.0.2",
+      id: "r2", token_id: "tok-b", token_name: "key-b", client_ip: "10.0.0.2",
       model: "model-b-27b", path: "/v1/chat/completions",
       prompt_tokens: 200, completion_tokens: 20, context_tokens: 220,
       max_model_len: 8192, context_pct: 0.027, elapsed_s: 2, phase: "decode",
@@ -135,14 +135,15 @@ export const NOW_EPOCH = 1_788_000_000;
 
 export const HISTORY_ROWS = [
   {
-    id: "f1", finished_at: NOW_EPOCH - 60, token_name: "key-a", client_ip: "10.0.0.1",
+    id: "f1", finished_at: NOW_EPOCH - 60, token_id: "tok-a", token_name: "key-a", client_ip: "10.0.0.1",
     model: "model-a-8b", model_id: "id-model-a-8b",
     prompt_tokens: 41200, completion_tokens: 812,
     duration_s: 23.1, ttft_s: 0.4, finish_reason: "stop",
     orphan: false, started_iso: "2026-09-05T18:59:00Z",
   },
   {
-    id: "f2", finished_at: NOW_EPOCH - 120, token_name: "key-b", client_ip: "10.0.0.2",
+    // No token_id: an older row recorded before the column existed.
+    id: "f2", finished_at: NOW_EPOCH - 120, token_id: null, token_name: "key-b", client_ip: "10.0.0.2",
     model: "model-b-27b", model_id: "id-model-b-27b",
     prompt_tokens: 3100, completion_tokens: 96,
     duration_s: 4.2, ttft_s: null, finish_reason: "length",
@@ -253,12 +254,41 @@ export function overviewFor(url: string, models = MODELS) {
   };
 }
 
+export function throughputFor(url: string, models = MODELS) {
+  const params = new URL(url, "http://x").searchParams;
+  const raw = params.get("models");
+  const selected = raw ? raw.split(",") : null;
+  const narrowed = selected !== null && selected.length < models.length;
+  // Distinguishable per scope, exactly as overviewFor's tps was: a test can
+  // tell WHICH response the panel read.
+  return {
+    basis: params.get("basis") ?? "request",
+    range: params.get("range") ?? "24h",
+    since_epoch: 1_757_000_000,
+    selected_model_ids: selected,
+    prefill: narrowed
+      ? { count: 40, avg: 200, max: 300, mode: 180 }
+      : { count: 100, avg: 500, max: 900, mode: 480 },
+    generation: narrowed
+      ? { count: 40, avg: 20, max: 30, mode: 19 }
+      : { count: 100, avg: 50, max: 70, mode: 48 },
+    coverage: {
+      earliest_epoch: 1_756_000_000,
+      retention_days: 30,
+      max_rows: 200000,
+      covers_window: true,
+    },
+  };
+}
+
 export interface StubOptions {
   models?: typeof MODELS;
   /** A fixed body for /api/stats/v2/requests, or a function of the URL. */
   history?: unknown | ((url: string) => unknown);
   /** A fixed body for /api/stats/v2/latency, or a function of the URL. */
   latency?: unknown | ((url: string) => unknown);
+  /** A fixed body for /api/stats/v2/throughput, or a function of the URL. */
+  throughput?: unknown | ((url: string) => unknown);
   requests?: unknown;
 }
 
@@ -282,6 +312,11 @@ export function installFetchStub(opts: StubOptions = {}): string[] {
       const h = opts.history;
       if (typeof h === "function") return json((h as (u: string) => unknown)(url));
       return json(h ?? historyFor(url));
+    }
+    if (url.startsWith("/api/stats/v2/throughput")) {
+      const t = opts.throughput;
+      if (typeof t === "function") return json((t as (u: string) => unknown)(url));
+      return json(t ?? throughputFor(url, opts.models ?? MODELS));
     }
     if (url.startsWith("/api/stats/v2/latency")) {
       const l = opts.latency;

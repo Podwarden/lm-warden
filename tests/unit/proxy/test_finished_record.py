@@ -56,3 +56,11 @@ def test_ttft_is_measured_from_the_first_streamed_frame() -> None:
 def test_duration_is_measured_to_now() -> None:
     rec = finished_record(_req(), now=102.5)
     assert rec["duration_s"] == 2.5
+
+
+def test_the_token_row_id_is_carried_next_to_the_name() -> None:
+    # Names are reused across rotations (migration 0033); only the id says
+    # which key made the request.
+    rec = finished_record(_req(), now=101.0)
+    assert rec["token_id"] == "t1"
+    assert rec["token_name"] == "dev"

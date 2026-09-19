@@ -28,8 +28,8 @@ def engine_bind_host(driver: str) -> str:
 
     The engine's own OpenAI server is COMPLETELY UNAUTHENTICATED: whatever
     can open a TCP connection to it gets ``/v1/chat/completions`` directly,
-    behind the back of ``require_bearer`` (app/proxy/auth.py), the per-token
-    rate limiter, the priority scheduler and every byte of token accounting.
+    behind the back of ``require_bearer`` (app/proxy/auth.py), the priority
+    scheduler and every byte of token accounting.
     So the bind host is a security boundary, not a connectivity knob, and it
     has to be as narrow as the driver allows.
 

@@ -3,7 +3,7 @@
 The chat playground (S8 of the vllm-warden overhaul, see plan §S8) needs a
 real bearer token to call `/v1/chat/completions` — that path is locked
 behind ``require_bearer`` and we don't want the playground to invent a
-JWT-only shortcut around the proxy's rate-limit / priority machinery.
+JWT-only shortcut around the proxy's priority / accounting machinery.
 
 The trade-off this module exists to negotiate:
 
@@ -44,7 +44,7 @@ class PlaygroundStore:
 
     Storage is intentionally process-local: if we run more than one
     uvicorn worker in future (we don't today — see ``app/main.py``
-    rate-limiter comment) this store must be swapped for something
+    scheduler comment) this store must be swapped for something
     shared (Redis, mounted file, etc.). For the single-worker reality of
     the warden, an asyncio.Lock + dict is the right amount of machinery.
     """

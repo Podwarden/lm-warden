@@ -49,8 +49,11 @@ async def test_columns_added_with_backfill(tmp_path):
         assert row[1] is None
         assert row[2] is None
 
-        # Index must exist.
+        # An expires_at index must exist. apply_migrations ran every later file
+        # too, and 0035 replaces 0009's idx_tokens_expires_at with the
+        # composite idx_api_tokens_expires_id.
         idx = await (await db.execute(
-            "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_tokens_expires_at'"
+            "SELECT name FROM sqlite_master WHERE type='index' "
+            "AND name IN ('idx_tokens_expires_at', 'idx_api_tokens_expires_id')"
         )).fetchone()
         assert idx is not None

@@ -93,7 +93,7 @@ async def test_old_row_keeps_secret_working_during_grace(db):
     assert found is not None
     assert found.id == "a"
     assert found.name == "prod-bot (old 1)"
-    # rate_limit / priority preserved on the old row (#150 spec).
+    # priority preserved on the old row (#150 spec).
     assert found.priority == 5  # default carried through
 
 

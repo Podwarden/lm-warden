@@ -40,4 +40,13 @@ describe('reqColor', () => {
     // Same session index → same hue, independent of the id passed alongside.
     expect(reqColorHue('a', 3)).toBe(reqColorHue('b', 3));
   });
+
+  it('uses the mockup palette: hue = 40 + i·137.508, accent 70%/60%, header 45%/18%/.55, text 85%/75%', () => {
+    expect(reqColorHue('x', 0)).toBe(40);
+    const c = reqColor('x', 1);
+    expect(c.hue).toBeCloseTo(177.508, 3);
+    expect(c.accent).toBe('hsl(177.5 70% 60%)');
+    expect(c.headerBg).toBe('hsl(177.5 45% 18% / 0.55)');
+    expect(c.text).toBe('hsl(177.5 85% 75%)');
+  });
 });

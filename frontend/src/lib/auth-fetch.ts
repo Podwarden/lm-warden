@@ -421,6 +421,17 @@ const UNAUTH_BYPASS_PREFIXES: readonly string[] = [
   "/api/csrf",
 ];
 
+// ...except the one endpoint under /api/auth/ that is called without a user
+// action on every page load and requires the JWT: the SSE ticket mint
+// (`require_jwt` in app/auth/routes.py). No recursion is possible — it is
+// not part of `refresh()`, which calls `fetch` directly. Bypassing it made
+// the header-metrics stream (opened by NavBar, outside SessionGate, before
+// the session is known) POST its first ticket with no bearer on every hard
+// load: a 401, a refresh, a replay — two ticket mints per page load (#251).
+const EAGER_REFRESH_AUTH_PATHS: ReadonlySet<string> = new Set([
+  "/api/auth/sse-ticket",
+]);
+
 function shouldEagerRefresh(input: RequestInfo | URL): boolean {
   const path = pathFromInput(input);
   let pathname = path;
@@ -429,6 +440,7 @@ function shouldEagerRefresh(input: RequestInfo | URL): boolean {
       pathname = new URL(path).pathname;
     }
   } catch { /* fall back to raw path */ }
+  if (EAGER_REFRESH_AUTH_PATHS.has(pathname)) return true;
   return !UNAUTH_BYPASS_PREFIXES.some((p) => pathname.startsWith(p));
 }
 

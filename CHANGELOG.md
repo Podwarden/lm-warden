@@ -7,6 +7,304 @@ release ships.
 
 ## [Unreleased]
 
+## [v2026.09.19.1] — 2026-09-19
+
+### Added
+
+- **Breadcrumb trail and smart back button on every page.** A one-row strip
+  under the nav shows where you are (`Home › Models › Qwen3-8B › Settings`,
+  with detail pages named after the model or token) and a `← <previous page>`
+  button that returns to the page you came from at the scroll position you
+  left it, or `← Home` on a fresh load (Home is the Models page; the button
+  is hidden where it would lead back to the page you are on); it replaces the
+  token and model pages' own "API tokens /" and "← Back to" links.
+- **Migration 0035: indexes for sorting the token list.** Composite
+  `(column, id)` indexes on `api_tokens` for `created_at`, `last_used_at`,
+  `expires_at`, `name` (case-insensitive), `priority` and `prefix`, so a page
+  of the list is read off an index instead of sorting every key; one on
+  `rotated_from` for the successor lookup; and a partial index over the keys
+  the list hides, so its `total` and `near_expiry` counts never scan the
+  table. The `rotated_from` index also stops deleting a key from scanning the
+  whole table for its successor. 0009's `idx_tokens_expires_at` and 0007's
+  `idx_api_tokens_prefix` are dropped: the new composites start with the same
+  column and serve everything they did. Created with `IF NOT EXISTS`;
+  nothing to backfill. 0018's manual rollback recipe now drops
+  `idx_api_tokens_priority_id` before the `priority` column.
+- **Search the token list by name.** `GET /api/tokens?q=` keeps keys whose
+  name contains the text, ignoring case, with `%`, `_` and `\` matched
+  literally (up to 64 characters). The tokens page has a search box for it
+  (debounced, kept in the URL as `?q=`), and says "No tokens match …" with a
+  **Clear search** button when nothing does.
+- **Filter the token list to keys expiring soon.** `GET /api/tokens?near_expiry=1`
+  keeps only the keys the `near_expiry` count counts (expiring within 30 days,
+  not yet expired). The expiring-soon banner's **Show them** applies it, shown
+  as a removable chip (`?expiring=1` in the page URL).
+- **Usage by model on the token page.** A new card between the summary and
+  the charts lists, for the selected period and key set (the "Include earlier
+  keys" toggle applies), each model's requests, prefill, generation and total
+  tokens and its share of the key's traffic, busiest first. Usage is
+  attributed to the exact model VARIANT the engine was running -- backend,
+  engine version or image, repo and revision, files, quantization, dtype,
+  context, max sequences, trust-remote-code and extra args, never `extra_env` --
+  plus what the launch actually ran: the engine image (the pin, or the
+  driver's default), or the in-container engine's version, and the commit the
+  revision resolved to in the HF cache. So a model whose row was changed in
+  place (a try-stack engine swap, a settings edit), a warden upgrade that
+  moved the default engine, or a `main` that moved upstream shows each
+  configuration it was served as, expandable under the model with a compact
+  settings line. The variant is fixed when the engine starts; editing a model
+  without restarting it does not move attribution. Values of secret-looking
+  extra-args flags (`key`, `token`, `secret`, `pass`, `auth`, `cred`) are
+  stored as a digest, never in clear.
+  The card says from when per-model data exists.
+- **Per-model tokens chart.** The tokens-per-minute chart draws one line per
+  model (for the active Prefill/Generation switch) when the period saw more
+  than one, with a legend and per-model tooltip rows; the part of the period
+  before per-model recording began keeps the total as a dashed "All models"
+  line, and the footnote says so.
+- **Migration 0036: per-key, per-variant minute rollup.** New
+  `model_variants` (id = first 16 hex of sha256 over the canonical JSON of the
+  model id and its identity fields) and `token_model_usage_minute` keyed on
+  `(token_id, variant_id, minute)` with `model_id` alongside, written by the
+  proxy next to the per-key rollup; `request_history.variant_id` (nullable)
+  records the variant of each request. No backfill: per-model data starts at
+  the upgrade. Recording is bookkeeping: a failure to write it is logged and
+  never fails the proxied response.
+- **`GET /api/tokens/{id}/series` returns `by_model`, `model_bins` and
+  `by_model_since`.** `by_model` lists models (with their `variants`) and
+  their totals and share; `model_bins` carries sparse per-bin, per-model
+  prefill and generation rates on the same bins; `by_model_since` is the
+  first per-model minute store-wide. `by_model=0` skips all three; the
+  history strip passes it.
+
+### Changed
+
+- **The token list is paged and sortable, on the server.**
+  `GET /api/tokens` takes `sort` (`name`, `prefix`, `created`, `expires`,
+  `last_used`, `priority`, `usage_24h`, `status`), `dir` (`asc`/`desc`),
+  `limit` (1–500) and `offset`, and its response gains `total`, `limit`,
+  `offset` and `near_expiry` beside `items`. **The default page is 50 keys,
+  newest first — a client that read the whole list from one call must now
+  page through it** (see *Listing keys* in documents/API.md). Unknown values
+  and out-of-range numbers are a 422. A page is two queries however many keys
+  exist: the per-key "last 24h" query and the successor scan that made the
+  old list slow with many keys are gone. On `/ui/tokens` the column headers
+  sort (click again to reverse), a bar under the table pages it with 25, 50
+  or 100 rows, sort and page are kept in the URL, and the expiring-soon
+  banner counts across the whole list instead of listing the names.
+- **`last_used_at` is stamped at most once a minute per key.** It is now
+  indexed for the list's sort, and rewriting it on every proxied request cost
+  a page write and a WAL append (~4 KB) per request for a busy key. A request
+  updates it only when it is empty or more than 60 seconds old, so it reads
+  accurate to a minute.
+- **Prefill and generation.** The token page's summary reads "prefill tokens"
+  and "generation tokens", and the tokens chart's switch "Prefill" /
+  "Generation" (were prompt and completion).
+- **Migration 0034: a partial index for the token page's `latency_since`.**
+  `idx_request_history_token_finished` covers `request_history(finished_at)`
+  for rows with a token id, so the "per-token timings start at" lookup on
+  every `/series` poll reads one index entry instead of walking every older
+  row without a token id. Created with `IF NOT EXISTS`; nothing to backfill
+  (#251).
+- **Documentation and README describe the token details page.** The
+  public docs and the README now cover the per-key page, its usage charts
+  and the god-mode dock that replaced the standalone page, with new
+  screenshots; the stats screenshot no longer shows the removed God Mode
+  button (#251).
+
+### Fixed
+
+- **Rotation history no longer says "in grace" for a key that is refused.**
+  A predecessor that is paused, or that expired inside its grace window, now
+  reads "cut off" on the token page's lineage card: `in_grace` is false for
+  it, matching the 403/401 it actually gets (#251).
+- **A custom range that lies entirely in the future gets a clear error.**
+  `GET /api/tokens/{id}/series` clamps a future `to` to the server's clock;
+  when that leaves nothing, the 422 now says "'from' is after the server's
+  current time" instead of "'from' must be before 'to'", which the client had
+  not got wrong (#251).
+- **God mode's "Live" badge appears as soon as the stream opens.** The stream
+  now starts with an SSE comment (`: connected`), so the browser's open event
+  fires at once instead of waiting up to 15 s for the first event or
+  keepalive. SSE parsers ignore comments; the `data:` frames are unchanged
+  (#251).
+- **A god-mode dock filtered to one key keeps alive on time.** Other keys'
+  traffic could stretch the gap between keepalives to about 30 s; it is now
+  at most the 15 s interval (#251).
+- **The token page's history strip: the selection brush no longer hangs past
+  the strip's right edge** on a young key, where the strip ends up to a minute
+  before the selected window does.
+- **The token page stops polling a token deleted elsewhere.** Once the token
+  returns 404 the page shows "Token not found" and makes no further token,
+  chart or strip requests (it used to keep getting 404s). The token itself is
+  also re-polled every 10 s on the 1h and 6h ranges again; the page's own
+  re-renders kept restarting that timer, so it never fired.
+- **One header-metrics stream ticket per page load, not two.** On a fresh
+  load the nav bar's live metrics minted its first SSE ticket before the
+  session was restored, got a 401, and minted again.
+
+## [v2026.09.18.2] — 2026-09-18
+
+### Changed
+
+- Token names on the stats page now link to the token's details page.
+
+### Removed
+
+- **Per-token rate limits (`rate_limit_tps`).** The limit counted only the
+  tokenizer's estimate of *prompt* tokens over a 10 s sliding window, so
+  completions were never charged, and any prompt larger than ten times the
+  key's rate was rejected with 429 on every attempt, forever. Priority remains
+  the per-key fairness control. `rate_limit_tps` is gone from every token API
+  response (list, `GET /api/tokens/{id}`, create, PATCH, `/test`); a create or
+  PATCH body that still sends it is refused with 422 rather than silently
+  ignored. The tokens table loses its Rate column, the create dialog and the
+  token page's Limits card lose the rate field, and the
+  `VW_RATE_LIMIT_WINDOW_S` setting is gone. The `api_tokens.rate_limit_tps`
+  column is left in place, unused — SQLite cannot drop it cheaply — and
+  rotation no longer copies it to the successor.
+
+### Fixed
+
+- **The token page's custom range: Apply never looks like it did nothing.**
+  Apply now always refetches the charts and the history strip, even when the
+  times are unchanged (a custom range does not poll, so it used to neither
+  refetch nor respond). Times outside the key's lifetime are clamped as
+  before, but the fields now show the clamped times, with a short
+  "Adjusted to this key's lifetime." note until the next edit. The history
+  strip of a key younger than two days labels its axis with times instead of
+  the same date five times over.
+
+## [v2026.09.18.1] — 2026-09-18
+
+### Added
+
+- **A token details page, `/ui/tokens/{id}`.** Everything that was spread
+  across the tokens table and a shared god-mode page now lives on the one
+  key: rename, rate/priority, pause/resume, test, rotate and delete, plus
+  usage charts over 1h / 6h / 24h / 7d or a custom window, a history strip
+  for picking an older period, and a per-key god-mode dock that streams
+  prompt/output events for that key alone, and only while the dock is open.
+  New `GET /api/tokens/{id}` serves the page's detail — every field the list
+  carries, plus `lineage`, the key's rotation chain oldest-first — and
+  `PATCH /api/tokens/{id}` now accepts `name` and `paused` alongside the
+  existing fields. `GET /api/tokens/{id}/series` bins usage and timings
+  server-side for any window (≤360 bins, with timing percentiles), sampling
+  at a uniform stride once a window holds more than 50,000 request-history
+  rows so a busy key over 7d stays cheap. `GET /api/admin/godmode/status`
+  reports whether god mode is switched on (`{enabled}`), and the existing god-mode
+  stream takes `?token_ids=` to narrow it to one key's chain instead of the
+  whole fleet. God-mode events now carry `token_id` throughout.
+
+### Changed
+
+- **A paused key is refused with 403, not 401.** `require_bearer` answers a
+  paused token with `403 {"detail": "token paused"}` once the expired and
+  revoked checks have passed — those still 401, since a paused key is a
+  live key an operator switched off, not a dead one. `GET /api/tokens` items
+  carry `paused_at` and `is_paused` alongside the existing fields.
+  Migration 0033 adds `api_tokens.paused_at` and `request_history.token_id`
+  (plus `idx_request_history_token`); there is no backfill, so per-key
+  latency and queue-wait history starts at the deploy that ships this file,
+  not before.
+
+  Rollback note: rolling back to an image from before this feature, after
+  0033 has run, is schema-safe — the added columns are simply ignored. It is
+  not behavior-safe: any key paused while the new image was live goes back
+  to being treated as live the moment the old image starts serving requests
+  again, since nothing in the old code reads `paused_at`.
+
+### Removed
+
+- **The standalone `/ui/godmode` page, and the God Mode link on
+  `/ui/stats`.** God mode now lives in the token details page's dock, scoped
+  to the key you opened it from.
+
+## [v2026.09.11.2] — 2026-09-11
+
+### Fixed
+
+- **Two intermittent unit-test failures fixed.**
+  `test_unload_route_evicts_tokenizer_cache` used
+  `asyncio.get_event_loop().run_until_complete(...)`, which raises
+  `RuntimeError: There is no current event loop in thread 'MainThread'` when
+  nothing earlier in that worker happened to set one — intermittent under
+  `pytest -n auto` and deterministic when `tests/unit/stats` ran alone. It now
+  uses `asyncio.run`, which owns its loop. Separately, the request-history
+  store's background-writer drain was polled with a 5-second deadline, too
+  tight on a loaded runner; it is 30s, which bounds the failure case without
+  slowing the passing one.
+
+- **The token-throughput panel no longer presents two misleading numbers as
+  engine speed.** Shipped in v2026.09.11.1 and caught on the first real
+  deployment. The per-request basis is wrong in *both* directions on a
+  long-context, concurrent workload:
+
+  - `prompt_tokens / ttft` counts prefix-cached tokens the engine never
+    computed. Measured on a live 27B: median prompt 46,363 tokens, median TTFT
+    1.9s — about 26,000 tok/s. Prefilling 46k tokens through a 27B is roughly
+    2.5e15 FLOPs, which four A4000s at a generous 100 TFLOPS would need ~25
+    *seconds* for. The tokens came from the prefix cache. It measures cache
+    hits, not compute, so it is no longer labelled a prefill rate — it is
+    "prompt intake", and says what it counts.
+  - `(completion_tokens - 1) / (duration - ttft)` is one request's share of a
+    batched engine, not the engine's aggregate — 1.5 tok/s per request on a box
+    doing far more. It now says so.
+
+  The panel therefore **defaults to the wall-clock basis**, which reads the
+  minute rollup and is distorted by neither. The per-request basis remains
+  available for comparing requests against each other, which is what it is
+  actually good for.
+
+  The panel also moved under Context and cache at the same two-thirds width,
+  sized to sit level with the Preemptions tile, and is rendered even when the
+  engine is idle — it reads persisted history, which outlives the engine.
+
+
+## [v2026.09.11.1] — 2026-09-11
+
+### Added
+
+- **Admission-queue wait is now recorded per request** (`request_history.queued_s`,
+  migration 0032). The proxy admits every `/v1` request through a per-engine,
+  strict-priority gate, and time spent waiting there was in no stored column:
+  `started_monotonic` — the clock both `ttft_s` and `duration_s` are measured
+  from — is read once the slot is held, so a request that queued for ten seconds
+  looked identical to one that did not. `PriorityScheduler`'s own docstring warns
+  that priority-9 traffic can starve lower priorities indefinitely, and nothing
+  in the product could show it happening. The column measures the acquire alone,
+  so it excludes tokenization and the rate-limit check, and it is backend-
+  independent: `acquire` sits in the single `_forward` path ahead of any backend
+  branching. Nullable rather than `DEFAULT 0` — rows written before the migration
+  were not measured, which is not the claim "waited zero seconds". It surfaces on
+  `GET /api/stats/v2/requests`.
+
+### Changed
+
+- **The stats page reports prefill and generation speed separately, instead of
+  one blended tokens-per-second tile.** `current.tps` is
+  `(prompt_tokens + completion_tokens) / 60` over the last full minute, which
+  averages two quantities that move independently: prefill is compute-bound and
+  runs in the hundreds or thousands of tok/s, generation is
+  memory-bandwidth-bound and runs in the tens. The result described neither, and
+  it moved whenever the prompt-to-completion ratio moved even though the
+  hardware had not. A new `Token throughput` panel replaces the tile with two
+  series, each as average / max / mode over the selected window, leaving the
+  current row as three genuinely host-scoped tiles.
+
+  `GET /api/stats/v2/throughput` serves it, with two bases the response names.
+  `basis=request` derives per-request engine speed from the store the latency
+  panels already read — `prompt_tokens / ttft` and
+  `(completion_tokens - 1) / (duration - ttft)` — so idle time is invisible to
+  it. `basis=wallclock` reads the `model_samples` minute rollup and counts idle
+  minutes as zero. Two caveats the panel states rather than hides: TTFT is timed
+  from arrival and so includes queue wait, which `request_history` has no column
+  to subtract; and a prefix-cache hit counts prompt tokens it never computed, so
+  prefill is bimodal by construction. That is why `mode` is reported at all —
+  over bins about 5% wide, and null rather than invented when the sample is too
+  small or nothing repeats, since an average across the two humps lands in the
+  trough between them.
+
 ## [v2026.09.10.1] — 2026-09-10
 
 ### Fixed

@@ -123,7 +123,8 @@ async def test_stream_replays_ring_then_streams_live_then_unsubscribes(tmp_data_
     finally:
         await resp.body_iterator.aclose()
 
-    # Ring replay came first, live event after.
+    # The connected comment (#251), then the ring replay, then the live event.
+    assert seen[0] == ": connected\n\n"
     assert any('"history"' in c for c in seen)
     assert any("livetoken" in c for c in seen)
     # Every data frame is valid SSE JSON.

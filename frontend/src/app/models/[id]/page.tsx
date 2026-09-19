@@ -21,6 +21,7 @@ import { DeleteModelModal } from "@/components/models/delete-model-modal";
 import { ForceUnloadModal } from "@/components/models/force-unload-modal";
 import { TryStackPanel } from "@/components/models/try-stack-panel";
 import { StressTestModal } from "@/components/stress/stress-test-modal";
+import { useBreadcrumb } from "@/lib/use-breadcrumb";
 
 interface ModelDetail {
   id: string;
@@ -132,6 +133,10 @@ export default function ModelDetailPage({
     refreshInterval: () =>
       typeof document !== "undefined" && document.hidden ? 0 : 2000,
   });
+  // The breadcrumb strip and the back button name the model by its served
+  // name, not its id. A model that failed to load (404 included) falls back
+  // to the id so the crumb isn't stuck on the italic "Model" placeholder.
+  useBreadcrumb({ title: data?.served_model_name ?? (error ? id : undefined) });
   // Does a version-pin control mean anything for the engine that serves this
   // row? The rule is @/lib/backend-fields' (hide what the engine has no
   // concept of; disable-and-explain what only this deployment cannot do); the
@@ -221,11 +226,6 @@ export default function ModelDetailPage({
   if (status === 404) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-slate-400">
-          <Link href="/models" className="hover:underline">
-            ← Back to models
-          </Link>
-        </p>
         <Card>
           <CardHeader>
             <CardTitle>Model not found</CardTitle>
@@ -252,11 +252,6 @@ export default function ModelDetailPage({
   if (error && !data) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-slate-400">
-          <Link href="/models" className="hover:underline">
-            ← Back to models
-          </Link>
-        </p>
         <div className="rounded-md border border-red-700 bg-red-900/30 p-4 text-sm text-red-200">
           Failed to load model
           {error instanceof Error ? `: ${error.message}` : "."}
@@ -272,12 +267,6 @@ export default function ModelDetailPage({
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-slate-400">
-        <Link href="/models" className="hover:underline">
-          ← Back to models
-        </Link>
-      </p>
-
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="truncate text-2xl font-semibold">

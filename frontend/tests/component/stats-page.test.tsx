@@ -17,6 +17,7 @@ import {
   waitFor,
   fireEvent,
   act,
+  within,
 } from "@testing-library/react";
 import { SWRConfig } from "swr";
 import StatsPage from "@/app/stats/page";
@@ -62,6 +63,7 @@ function json(body: unknown, status = 200): Response {
 interface FixtureSet {
   overview?: unknown;
   tokensPerKey?: unknown;
+  throughput?: unknown;
 }
 
 function installFetchStub(fixtures: FixtureSet) {
@@ -75,6 +77,9 @@ function installFetchStub(fixtures: FixtureSet) {
     }
     if (url.startsWith("/api/stats/v2/overview")) {
       return json(fixtures.overview ?? {});
+    }
+    if (url.startsWith("/api/stats/v2/throughput")) {
+      return json(fixtures.throughput ?? FIXTURE_THROUGHPUT);
     }
     if (url.startsWith("/api/stats/v2/tokens-per-key")) {
       return json(fixtures.tokensPerKey ?? { range: "1h", since_minute: 0, rows: [] });
@@ -105,6 +110,21 @@ const FIXTURE_OVERVIEW = {
     util: [{ minute: 31538879, max_pct: 50 }],
     power: [{ minute: 31538879, watts: 230.0 }],
     tokens: [{ minute: 31538879, prompt: 1000, completion: 500 }],
+  },
+};
+
+const FIXTURE_THROUGHPUT = {
+  basis: "request",
+  range: "1h",
+  since_epoch: 1_757_000_000,
+  selected_model_ids: null,
+  prefill: { count: 1284, avg: 412.4, max: 980.0, mode: 380.2 },
+  generation: { count: 1284, avg: 48.6, max: 71.3, mode: 46.1 },
+  coverage: {
+    earliest_epoch: 1_756_000_000,
+    retention_days: 30,
+    max_rows: 200000,
+    covers_window: true,
   },
 };
 
@@ -144,18 +164,15 @@ describe("StatsPage", () => {
     vi.unstubAllGlobals();
   });
 
-  it("links to the god-mode viewer at /godmode", async () => {
-    // The god-mode entry point is a static header link — present regardless
-    // of whether the stats payloads have loaded yet.
+  it("has no God Mode link (the token page's dock replaced /godmode)", () => {
     installFetchStub({ overview: FIXTURE_OVERVIEW, tokensPerKey: FIXTURE_TPK });
     renderPage();
 
-    const link = screen.getByTestId("godmode-link");
-    expect(link).toHaveTextContent(/god mode/i);
-    expect(link).toHaveAttribute("href", "/godmode");
+    expect(screen.queryByTestId("godmode-link")).toBeNull();
+    expect(screen.queryByRole("link", { name: /god mode/i })).toBeNull();
   });
 
-  it("renders the four current-row tiles populated from the overview payload", async () => {
+  it("renders the three host tiles populated from the overview payload", async () => {
     installFetchStub({
       overview: FIXTURE_OVERVIEW,
       tokensPerKey: FIXTURE_TPK,
@@ -176,8 +193,69 @@ describe("StatsPage", () => {
     // Power tile — 250W → "250" (≥100 → integer)
     expect(screen.getByTestId("tile-power-value").textContent).toBe("250");
 
-    // TPS tile — 14 → "14" (≥10 → integer)
-    expect(screen.getByTestId("tile-tps-value").textContent).toBe("14");
+    // No blended tokens-per-second tile: prefill and generation move
+    // independently, so their average described neither and has been replaced
+    // by the throughput panel below.
+    expect(screen.queryByTestId("tile-tps-value")).toBeNull();
+  });
+
+  it("renders prefill and generation separately in the throughput panel", async () => {
+    installFetchStub({
+      overview: FIXTURE_OVERVIEW,
+      tokensPerKey: FIXTURE_TPK,
+      throughput: FIXTURE_THROUGHPUT,
+    });
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("throughput-panel")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("tp-prefill-avg").textContent).toBe("412");
+    expect(screen.getByTestId("tp-prefill-mode").textContent).toBe("380");
+    expect(screen.getByTestId("tp-generation-avg").textContent).toBe("49");
+    expect(screen.getByTestId("tp-generation-mode").textContent).toBe("46");
+  });
+
+  it("defaults the throughput panel to the wall-clock basis", async () => {
+    // The per-request basis cannot answer "how fast is the rig" on a
+    // prefix-cached, concurrent workload: prompt/ttft counts cached tokens as
+    // computed, and per-request decode is a share of the engine's aggregate.
+    // Wall clock is distorted by neither, so it is what the panel opens on.
+    const mock = installFetchStub({
+      overview: FIXTURE_OVERVIEW,
+      tokensPerKey: FIXTURE_TPK,
+      throughput: FIXTURE_THROUGHPUT,
+    });
+    renderPage();
+    await waitFor(() => {
+      const urls = mock.mock.calls.map((c) => String(c[0]));
+      expect(
+        urls.some((u) => u.startsWith("/api/stats/v2/throughput") && u.includes("basis=wallclock")),
+      ).toBe(true);
+    });
+  });
+
+  it("re-reads the throughput endpoint on the selected window", async () => {
+    // The panel follows the page's range picker like every other history
+    // panel — a 24h reading must not sit under a 1h heading.
+    const mock = installFetchStub({
+      overview: FIXTURE_OVERVIEW,
+      tokensPerKey: FIXTURE_TPK,
+      throughput: FIXTURE_THROUGHPUT,
+    });
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByTestId("throughput-panel")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "24h" }));
+
+    await waitFor(() => {
+      const urls = mock.mock.calls.map((c) => String(c[0]));
+      expect(
+        urls.some((u) => u.startsWith("/api/stats/v2/throughput") && u.includes("range=24h")),
+      ).toBe(true);
+    });
   });
 
   it("names the loaded models in the selector", async () => {
@@ -213,6 +291,27 @@ describe("StatsPage", () => {
     expect(rows[0].textContent).toContain("2,250");
     expect(rows[1].textContent).toContain("(unknown)");
     expect(rows[1].textContent).toContain("orphan");
+  });
+
+  it("links a per-key token name to its details page, but leaves a deleted token unlinked", async () => {
+    installFetchStub({
+      overview: FIXTURE_OVERVIEW,
+      tokensPerKey: FIXTURE_TPK,
+    });
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("tokens-per-key-table")).toBeInTheDocument();
+    });
+    const rows = screen.getAllByTestId("tokens-per-key-row");
+    const heavy = rows.find((r) => r.textContent?.includes("Heavy Key"))!;
+    const link = within(heavy).getByRole("link", { name: "Heavy Key" });
+    expect(link).toHaveAttribute("href", "/tokens/t-heavy");
+    expect(link.className).toContain("hover:underline");
+
+    // The deleted-token row (name "(unknown)") stays plain text.
+    const orphan = rows.find((r) => r.textContent?.includes("(unknown)"))!;
+    expect(within(orphan).queryByRole("link")).toBeNull();
   });
 
   it("renders the three host chart panels and no VRAM-over-time chart", async () => {

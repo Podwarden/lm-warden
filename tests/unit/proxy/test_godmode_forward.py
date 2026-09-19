@@ -165,6 +165,9 @@ def test_enabled_streaming_emits_start_deltas_end(tmp_data_dir, client):
     assert end["finish_reason"] == "stop"
     assert end["prompt_tokens"] == 1  # "hi" → one word
 
+    # Every event names the key, so a per-token stream can filter exactly.
+    assert [e.get("token_id") for e in snap] == ["tok1"] * len(snap)
+
 
 # --------------------------------------------------------------------------
 # Enabled — non-stream: request_start → one delta per channel → request_end
@@ -213,3 +216,6 @@ def test_enabled_nonstream_emits_start_delta_end(tmp_data_dir, client):
     end = snap[-1]
     assert end["finish_reason"] == "stop"
     assert end["completion_tokens"] == 2
+
+    # Every event names the key, so a per-token stream can filter exactly.
+    assert [e.get("token_id") for e in snap] == ["tok1"] * len(snap)

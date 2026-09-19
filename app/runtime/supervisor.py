@@ -12,6 +12,7 @@ from app.runtime.backends.vllm.images import resolve_image
 from app.runtime.engine import EngineSpec
 from app.runtime.engine.local_subprocess import LocalSubprocessDriver
 from app.runtime.gpu_ownership import GpuOwnership
+from app.runtime.variants import Variant, runtime_facts, variant_of
 
 UNLOAD_GRACE_SECONDS = 30.0
 
@@ -106,6 +107,11 @@ class Supervisor:
         # those keys override row defaults.
         # Populated by ``load()``; cleared by ``unload()`` / ``_watch_exit``.
         self._overrides: dict[str, dict | None] = {}
+        # model_id -> the VARIANT the running engine was launched as
+        # (app/runtime/variants.py). Fixed at spawn, so a later edit of the
+        # models row does not re-attribute the engine's traffic until it is
+        # restarted. Cleared with the other per-engine state.
+        self._variants: dict[str, Variant] = {}
         self._watchers: dict[str, asyncio.Task] = {}
         self._state: dict[str, ModelState] = {}
         self._lock = asyncio.Lock()
@@ -129,6 +135,7 @@ class Supervisor:
             self._ports.pop(model_id, None)
             self._hosts.pop(model_id, None)
             self._overrides.pop(model_id, None)
+            self._variants.pop(model_id, None)
             self._watchers.pop(model_id, None)
             self._state.pop(model_id, None)
             self.gpus.release(model_id)
@@ -232,12 +239,32 @@ class Supervisor:
                     gpu_indices=plan.gpu_indices,
                     backend=backend.capabilities.name,
                 )
+                # The variant this launch IS (app/runtime/variants.py): the row
+                # and overrides plus what the plan resolved -- the image the
+                # driver will actually run (the pin, else the driver's default)
+                # or the in-container engine's baked version, and the commit
+                # the revision points at. Before the spawn, so nothing after
+                # it can fail.
+                default_image = getattr(self._driver, "default_image", None)
+                image_used = plan.image or (
+                    default_image if isinstance(default_image, str) else None
+                )
+                facts = await asyncio.to_thread(
+                    runtime_facts,
+                    backend=backend.capabilities.name,
+                    image=image_used,
+                    hf_cache_dir=getattr(self.settings, "hf_cache_dir", None),
+                    hf_repo=getattr(model, "hf_repo", None),
+                    revision=getattr(model, "hf_revision", None),
+                )
+                variant = variant_of(model, overrides, facts)
                 handle = await self._driver.spawn(spec)
 
                 self._handles[model.id] = handle
                 self._ports[model.id] = port
                 self._hosts[model.id] = _driver_engine_host(self._driver, model.id)
                 self._overrides[model.id] = overrides
+                self._variants[model.id] = variant
                 self._state[model.id] = ModelState.LOADING
                 self._watchers[model.id] = asyncio.create_task(
                     self._watch_exit(model.id, on_exit)
@@ -314,6 +341,11 @@ class Supervisor:
         """
         return self._overrides.get(model_id)
 
+    def get_variant(self, model_id: str) -> Variant | None:
+        """The variant ``model_id``'s engine was launched as, or None when it
+        was not launched by this supervisor (or is not running)."""
+        return self._variants.get(model_id)
+
     def is_running(self, model_id: str) -> bool:
         h = self._handles.get(model_id)
         return h is not None and h.returncode is None
@@ -373,6 +405,7 @@ class Supervisor:
                 self._ports.pop(model_id, None)
                 self._hosts.pop(model_id, None)
                 self._overrides.pop(model_id, None)
+                self._variants.pop(model_id, None)
                 self._state.pop(model_id, None)
                 self.gpus.release(model_id)
 

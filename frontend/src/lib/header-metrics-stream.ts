@@ -95,15 +95,13 @@ interface Stream {
 // Module-level singleton. ``null`` when no subscribers exist.
 let stream: Stream | null = null;
 
-function broadcast() {
-  if (!stream) return;
-  for (const sub of stream.subscribers) sub(stream.state);
+function broadcast(s: Stream) {
+  for (const sub of s.subscribers) sub(s.state);
 }
 
-function setState(patch: Partial<HeaderMetricsState>) {
-  if (!stream) return;
-  stream.state = { ...stream.state, ...patch };
-  broadcast();
+function setState(s: Stream, patch: Partial<HeaderMetricsState>) {
+  s.state = { ...s.state, ...patch };
+  broadcast(s);
 }
 
 function isTerminalStatus(status: number): boolean {
@@ -111,14 +109,23 @@ function isTerminalStatus(status: number): boolean {
   return status >= 400 && status < 500;
 }
 
-async function connect() {
-  if (!stream || stream.stopped) return;
+/** True once `s` has been torn down — including when a NEW stream has since
+ *  replaced it. Every async step re-checks this against the stream it started
+ *  for, never against the module-level `stream`: an unmount + remount during
+ *  a ticket mint must not let the old connect() open a second EventSource on
+ *  the new stream (#251). */
+function dead(s: Stream): boolean {
+  return s.stopped || stream !== s;
+}
+
+async function connect(s: Stream) {
+  if (dead(s)) return;
 
   // Mirror sse.ts: short-circuit if a peer authFetch already triggered
   // /login. Avoids the same race where the preflight resolves a 401
   // mid-unload.
   if (isLoginRedirectInFlight()) {
-    setState({ status: 'terminal-error', errorCode: 401 });
+    setState(s, { status: 'terminal-error', errorCode: 401 });
     return;
   }
 
@@ -129,9 +136,10 @@ async function connect() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path: STREAM_PATH }),
     });
+    if (dead(s)) return;
     if (!r.ok) {
       if (isTerminalStatus(r.status)) {
-        setState({ status: 'terminal-error', errorCode: r.status });
+        setState(s, { status: 'terminal-error', errorCode: r.status });
         return;
       }
       throw new Error(String(r.status));
@@ -143,55 +151,56 @@ async function connect() {
       ticket = '';
     }
   } catch (e) {
+    if (dead(s)) return;
     if (isLoginRedirectInFlight()) {
-      setState({ status: 'terminal-error', errorCode: 401 });
+      setState(s, { status: 'terminal-error', errorCode: 401 });
       return;
     }
     const status =
       e instanceof Error && /^\d+$/.test(e.message) ? Number(e.message) : null;
-    scheduleReconnect(status);
+    scheduleReconnect(s, status);
     return;
   }
 
-  if (!stream || stream.stopped) return;
+  if (dead(s)) return;
 
   const es = new EventSource(
     `${STREAM_PATH}?ticket=${encodeURIComponent(ticket)}`,
   );
-  stream.es = es;
+  s.es = es;
 
   es.onopen = () => {
-    if (!stream) return;
-    stream.backoffMs = INITIAL_BACKOFF_MS;
-    setState({ status: 'connected', errorCode: null });
+    if (dead(s)) return;
+    s.backoffMs = INITIAL_BACKOFF_MS;
+    setState(s, { status: 'connected', errorCode: null });
   };
 
   es.onmessage = (e) => {
-    if (!stream) return;
+    if (dead(s)) return;
     try {
       const frame = JSON.parse(e.data) as HeaderMetricsFrame;
-      setState({ status: 'connected', errorCode: null, frame });
+      setState(s, { status: 'connected', errorCode: null, frame });
     } catch {
       // Malformed payload — swallow. Backend pins JSON shape.
     }
   };
 
   es.onerror = () => {
-    if (!stream) return;
-    stream.es?.close();
-    stream.es = null;
-    scheduleReconnect(null);
+    es.close();
+    if (dead(s)) return;
+    s.es = null;
+    scheduleReconnect(s, null);
   };
 }
 
-function scheduleReconnect(httpStatus: number | null) {
-  if (!stream || stream.stopped) return;
-  setState({ status: 'reconnecting', errorCode: httpStatus });
-  const delay = Math.min(stream.backoffMs, MAX_BACKOFF_MS);
-  stream.backoffMs *= 2;
-  stream.timer = setTimeout(() => {
-    if (!stream || stream.stopped) return;
-    void connect();
+function scheduleReconnect(s: Stream, httpStatus: number | null) {
+  if (dead(s)) return;
+  setState(s, { status: 'reconnecting', errorCode: httpStatus });
+  const delay = Math.min(s.backoffMs, MAX_BACKOFF_MS);
+  s.backoffMs *= 2;
+  s.timer = setTimeout(() => {
+    if (dead(s)) return;
+    void connect(s);
   }, delay);
 }
 
@@ -221,7 +230,7 @@ export function subscribeHeaderMetrics(sub: Subscriber): () => void {
       timer: null,
       stopped: false,
     };
-    void connect();
+    void connect(stream);
   }
   stream.subscribers.add(sub);
   // Hand the new subscriber the cached state synchronously so they

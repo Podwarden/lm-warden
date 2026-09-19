@@ -30,9 +30,10 @@ function fakeItem(overrides: Partial<TokenItem> = {}): TokenItem {
     // #185 — server-computed `revoked_at <= now`; false for a token whose
     // grace window is still open as well as for one that was never revoked.
     is_revoked: false,
-    // S5 (#104) defaults — matches the backend's "unlimited / mid-priority /
-    // no usage" defaults for a freshly minted token.
-    rate_limit_tps: null,
+    paused_at: null,
+    is_paused: false,
+    // S5 (#104) defaults — matches the backend's "mid-priority / no usage"
+    // defaults for a freshly minted token.
     priority: 5,
     usage_24h: {
       requests: 0,
@@ -258,6 +259,21 @@ describe('CreateTokenDialog', () => {
     expect(screen.getByRole('button', { name: /copy/i })).toBeInTheDocument();
   });
 
+  it('has no rate limit field and never sends rate_limit_tps', async () => {
+    const f = vi.fn().mockResolvedValue(new Response(
+      '{"id":"new","name":"ci-bot","plaintext":"vw_freshtoken","prefix":"vw_fresh","preview":"vw_fresh","expires_at":null}',
+      { status: 201 },
+    ));
+    vi.stubGlobal('fetch', f);
+    render(<CreateTokenDialog open onClose={() => {}} />);
+    expect(screen.queryByLabelText(/rate limit/i)).toBeNull();
+    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'ci-bot' } });
+    fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+    await waitFor(() => expect(screen.getByText('vw_freshtoken')).toBeInTheDocument());
+    const body = JSON.parse(String((f.mock.calls[0][1] as RequestInit).body));
+    expect(body).toEqual({ name: 'ci-bot', expires_in_days: 365, priority: 5 });
+  });
+
   it('clears plaintext from DOM after close', async () => {
     // Mirror of the RotateTokenDialog wipe test. Pins the §11.6
     // "plaintext must NOT remain accessible — clear it from state on
@@ -317,6 +333,16 @@ describe('TokenRow', () => {
     // We don't pin on the exact locale string — just that it's there.
     const created = screen.getByTestId('token-created');
     expect(created.textContent).toBeTruthy();
+  });
+
+  it('renders no Rate cell (per-token rate limits were removed)', () => {
+    render(
+      <table><tbody>
+        <TokenRow item={fakeItem()} onChange={() => {}} />
+      </tbody></table>,
+    );
+    expect(screen.queryByTestId('token-rate')).toBeNull();
+    expect(screen.queryByText('unlimited')).toBeNull();
   });
 
   it('shows "Expiring soon" status when is_near_expiry', () => {
@@ -412,25 +438,25 @@ describe('TokenRow', () => {
 describe('ExpiryBanner', () => {
   afterEach(() => { cleanup(); });
 
-  it('hides when no items are near expiry', () => {
-    const { container } = render(
-      <ExpiryBanner items={[fakeItem({ is_near_expiry: false })]} />,
-    );
+  it('hides when nothing is near expiry', () => {
+    const { container } = render(<ExpiryBanner count={0} />);
     expect(container.textContent).toBe('');
   });
 
-  it('renders amber alert with names when near-expiry items exist', () => {
-    render(
-      <ExpiryBanner
-        items={[
-          fakeItem({ id: 'a', name: 'about-to-expire', is_near_expiry: true }),
-          fakeItem({ id: 'b', name: 'fine', is_near_expiry: false }),
-        ]}
-      />,
-    );
+  it('renders the server-side count, not the page in hand', () => {
+    // `near_expiry` counts the whole list; the page may hold none of them.
+    render(<ExpiryBanner count={1234} />);
     const alert = screen.getByRole('alert');
-    expect(alert.textContent).toMatch(/expiring soon/i);
-    expect(alert.textContent).toMatch(/about-to-expire/);
-    expect(alert.textContent).not.toMatch(/^.*\bfine\b.*$/);
+    expect(alert.textContent).toMatch(/expiring soon \(1,234\)/i);
+    expect(alert.textContent).toMatch(/1,234 tokens expire within 30 days/);
+    expect(screen.queryByRole('button', { name: /show them/i })).not.toBeInTheDocument();
+  });
+
+  it('offers to show just those tokens', () => {
+    const onShow = vi.fn();
+    render(<ExpiryBanner count={1} onShow={onShow} />);
+    expect(screen.getByRole('alert').textContent).toMatch(/1 token expires within 30 days/);
+    fireEvent.click(screen.getByRole('button', { name: /show them/i }));
+    expect(onShow).toHaveBeenCalledOnce();
   });
 });

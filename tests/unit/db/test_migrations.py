@@ -51,8 +51,22 @@ async def test_migrations_idempotent(tmp_data_dir):
         # multi-hour run is not a blank modal) + 0031 (request_history: one row
         # per completed /v1 request -- the proxy's own TTFT and duration, so
         # llama.cpp gets a latency panel and the requests chart honours the
-        # window instead of a 15-minute in-memory ring).
-        assert count == 30
+        # window instead of a 15-minute in-memory ring) + 0032
+        # (request_history.queued_s: the wait at the proxy's admission gate,
+        # which no stored column held -- the clock ttft_s and duration_s are
+        # measured from is read AFTER the slot is granted, so queueing was
+        # invisible while the scheduler can starve low priorities) + 0033
+        # (api_tokens.paused_at + request_history.token_id: the token details
+        # page's pause and its per-key timings, no backfill by name) + 0034
+        # (a partial index on request_history(finished_at) WHERE token_id IS
+        # NOT NULL, so the series endpoint's latency_since stops walking every
+        # token-less row on each poll -- #251) + 0035 (api_tokens sort
+        # indexes ending in id, plus rotated_from, so the paged token list
+        # reads one page off an index instead of sorting the table) + 0036
+        # (model_variants + token_model_usage_minute + request_history.variant_id:
+        # the per-(key, model variant) minute rollup behind the token page's
+        # "Usage by model" card, no backfill).
+        assert count == 35
 
 
 async def test_migrations_create_all_v2_tables(tmp_data_dir):

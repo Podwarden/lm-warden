@@ -53,7 +53,7 @@ class TokenizerCache:
         """Repos currently being character-estimated rather than tokenized.
 
         Exposed so the health/status surface can say so. Approximate accounting
-        feeds the per-token rate limiter, and an operator is entitled to know
+        feeds the per-token usage rollups, and an operator is entitled to know
         their billing is an estimate.
         """
         return frozenset(self._estimating)
@@ -105,7 +105,7 @@ class TokenizerCache:
                 logger.warning(
                     "TokenizerCache: no usable tokenizer for %r (tried %r); token "
                     "accounting for this model is a CHARACTER ESTIMATE, which "
-                    "also drives the per-token rate limit. Set the model's "
+                    "also feeds the per-token usage figures. Set the model's "
                     "tokenizer_repo to a repo that ships tokenizer.json -- for a "
                     "GGUF quant that is normally the upstream safetensors repo.",
                     hf_repo,

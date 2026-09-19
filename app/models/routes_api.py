@@ -53,6 +53,7 @@ from app.runtime.backends.registry import DEFAULT_BACKEND
 from app.runtime.backends.vllm.images import UnsupportedChannelError, resolve_image
 from app.runtime.engine.run_marker import tail_since_last_run
 from app.runtime.supervisor import UnloadRefused, wait_for_health
+from app.runtime.variants import ModelVariantRepo, Variant, mark_recorded
 from app.runtime.warmup_probe import warmup_probe
 from app.templates import store as template_store
 from app.templates.registry import EngineSpec, template_to_dict
@@ -1325,6 +1326,18 @@ async def start_engine(settings, sup, port_alloc, model, port, overrides=None):
                 await ModelRepo(db).update_status(model_id, "failed", last_error=str(e))
             port_alloc.release(port)
             return
+        # Record the variant this engine was launched as (0036), so the token
+        # page can name it. Bookkeeping: a failure here must not fail a load
+        # that succeeded; the proxy then records it on the first request.
+        get_variant = getattr(sup, "get_variant", None)
+        variant = get_variant(model_id) if get_variant is not None else None
+        if isinstance(variant, Variant):
+            try:
+                async with open_db(settings.db_path) as db:
+                    await ModelVariantRepo(db).ensure(variant)
+                mark_recorded(settings.db_path, variant.id)
+            except Exception:  # noqa: BLE001
+                logger.warning("could not record the variant of %s", model_id, exc_info=True)
         # The driver owns where the engine actually listens — loopback for
         # the in-container subprocess, the engine container's DNS name for
         # the docker driver. ``get_host`` returns None only if the engine

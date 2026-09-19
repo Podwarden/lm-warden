@@ -587,7 +587,21 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Tokens */
+        /**
+         * List Tokens
+         * @description One page of the visible tokens -- ``{items, total, limit, offset,
+         *     near_expiry}``.
+         *
+         *     A key revoked WITHOUT a rotation is hidden, as it always was; a rotated
+         *     predecessor stays listed. ``total`` counts the visible (and ``q``-matched)
+         *     keys across all pages and ``near_expiry`` those of them expiring within 30
+         *     days but not yet expired -- the expiry banner's number. ``near_expiry=1``
+         *     narrows the list to exactly those keys. Every item is the
+         *     ``GET /{id}`` shape without ``lineage``.
+         *
+         *     A page costs two statements however many keys exist; see
+         *     ``list_token_page`` for how the sorts use the 0035 indexes.
+         */
         get: operations["list_tokens_api_tokens_get"];
         put?: never;
         /** Create Token */
@@ -605,7 +619,19 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Get Token
+         * @description One token: every field a ``GET /api/tokens`` item carries, plus
+         *     ``lineage`` -- the rotation chain it belongs to, oldest first, each entry
+         *     ``{id, name, created_at, rotated_at, is_revoked, in_grace, is_self}``.
+         *     ``in_grace`` is true only while a rotated key's grace window is open AND
+         *     it still authenticates -- an expired or paused predecessor is refused, so
+         *     it reads false.
+         *
+         *     Unlike the list, this answers for a plainly revoked key too: a details
+         *     page linked from anywhere must not 404 a row that exists.
+         */
+        get: operations["get_token_api_tokens__token_id__get"];
         put?: never;
         post?: never;
         /** Delete Token */
@@ -614,11 +640,18 @@ export interface paths {
         head?: never;
         /**
          * Update Token
-         * @description Update rate/priority on an existing token.
+         * @description Update name, priority and pause state on an existing token.
          *
-         *     Omitted keys are untouched. Explicit ``null`` for ``rate_limit_tps``
-         *     clears the limit (back to unlimited). The Pydantic schema rejects
-         *     out-of-range values with 422; the DB CHECK trigger is belt-and-braces.
+         *     Omitted keys are untouched. The Pydantic schema rejects out-of-range
+         *     values -- and the removed ``rate_limit_tps`` -- with 422; the DB CHECK
+         *     trigger is belt-and-braces.
+         *
+         *     ``paused: true`` on a key that is expired, or revoked with its grace
+         *     window over, is a 409 and nothing in the body is applied: there is
+         *     nothing left to pause. A predecessor still inside its grace window CAN
+         *     be paused -- that is the quick way to cut an old key off early.
+         *
+         *     Returns the full token, the same shape as ``GET /api/tokens/{id}``.
          *
          *     **Note:** ``priority`` cannot be set to ``null`` — the column is ``NOT NULL``
          *     in the schema. Sending ``{"priority": null}`` will cause the underlying DB
@@ -682,6 +715,37 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tokens/{token_id}/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Token Series
+         * @description Usage and timings for one key over any window, binned server-side.
+         *
+         *     See app/tokens/series.py for the binning rules and the response shape.
+         *     A ``to`` past the server's clock is clamped to it, not rejected -- a
+         *     client clock running fast must not turn a "last hour" poll into an empty
+         *     chart. 422 when that leaves ``from >= to``, or the (possibly clamped)
+         *     window is longer than 366 days; 404 for an unknown id.
+         *
+         *     ``timings=0`` skips request_history entirely -- the history strip draws
+         *     usage only, over up to 366 days, and must not pay for a COUNT plus up to
+         *     50k timing rows it never shows (#251). ``by_model=0`` likewise skips
+         *     token_model_usage_minute; the strip passes both.
+         */
+        get: operations["get_token_series_api_tokens__token_id__series_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tokens/{token_id}/test": {
         parameters: {
             query?: never;
@@ -703,8 +767,7 @@ export interface paths {
          *     so the UI can display the exact failure to the operator.
          *
          *     NB: this endpoint runs as the JWT-authenticated UI user, not as the
-         *     bearer token holder. It cannot validate the rate-limit / priority
-         *     path because that requires routing through the real proxy with the
+         *     bearer token holder. It cannot validate the priority path because that requires routing through the real proxy with the
          *     bearer secret — out of scope for the test button; the wizard surfaces
          *     "ping the proxy" mode which is sufficient for operator confidence.
          */
@@ -959,6 +1022,73 @@ export interface paths {
          *                           "count", "sum"}}
          */
         get: operations["stats_v2_latency_api_stats_v2_latency_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/v2/throughput": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stats V2 Throughput
+         * @description Prefill and generation tokens per second, as average / max / mode.
+         *
+         *     This exists because the overview's single ``current.tps`` is
+         *     ``(prompt + completion) / 60`` over the last full minute -- one number
+         *     blending two quantities that move independently. Prefill is compute-bound
+         *     and runs in the hundreds or thousands of tok/s; generation is
+         *     memory-bandwidth-bound and runs in the tens. Their average describes
+         *     neither, and it changes when the prompt-to-completion ratio changes even
+         *     though the hardware did not.
+         *
+         *     Two bases, and the response says which:
+         *
+         *       basis=request    per-request engine speed from ``request_history``:
+         *                        ``prompt_tokens / ttft`` and
+         *                        ``(completion_tokens - 1) / (duration - ttft)``.
+         *                        It does NOT answer "how fast is the rig", and the
+         *                        panel defaults to wallclock for that reason. It is
+         *                        wrong in both directions on a real workload: the prompt
+         *                        figure counts prefix-cached tokens the engine never
+         *                        computed (measured ~26k tok/s where the hardware can do
+         *                        roughly 1/13th of that), and the decode figure is one
+         *                        request's share of a batched engine rather than the
+         *                        engine's aggregate. What it IS good for is comparing
+         *                        requests with each other. Also note the ENGINE's own
+         *                        waiting queue is inside TTFT and invisible from the
+         *                        proxy; the WARDEN's admission queue is not -- that is
+         *                        ``queued_s``, migration 0032.
+         *       basis=wallclock  tokens counted per minute from ``model_samples``, with
+         *                        idle minutes included as zero. Answers "how much work
+         *                        did the box do".
+         *
+         *     ``mode`` is the modal value over bins ~5% wide (see
+         *     ``request_history.mode_relative``) and is null when the sample is too
+         *     small or nothing repeats. On a bimodal prefill series it is the statistic
+         *     worth reading; ``max`` there is usually a cache artefact.
+         *
+         *     Returns:
+         *       {
+         *         "basis": "request" | "wallclock",
+         *         "range": str,
+         *         "since_epoch": float,
+         *         "selected_model_ids": [str, ...] | None,
+         *         "prefill":    {"count": int, "avg": float|None,
+         *                        "max": float|None, "mode": float|None},
+         *         "generation": {... same ...},
+         *         "coverage": {... as /api/stats/v2/requests, for the store this basis
+         *                      reads ...},
+         *       }
+         */
+        get: operations["stats_v2_throughput_api_stats_v2_throughput_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1294,6 +1424,28 @@ export interface paths {
          *     Decoding happens here, off the proxy hot path.
          */
         get: operations["godmode_media_api_admin_godmode_media__media_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/godmode/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Godmode Status
+         * @description Whether god mode is on. The token page asks before it renders the dock
+         *     at all (spec 2026-09-18 §3.5). A plain authed fetch, like ``/media``: no
+         *     SSE ticket, and nothing is subscribed.
+         */
+        get: operations["godmode_status_api_admin_godmode_status_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1642,7 +1794,7 @@ export interface paths {
          *     the priority slot via the regular proxy machinery.
          *
          *     Calls the internal `/v1/chat/completions` route via loopback so the
-         *     real proxy pipeline (rate limit, priority scheduler, token usage
+         *     real proxy pipeline (priority scheduler, token usage
          *     rollup, error enrichment) runs unmodified. We don't shortcut into
          *     ``_forward`` because that would skip the bearer validation we want
          *     as defence-in-depth — if the playground token is somehow stale we'd
@@ -2527,13 +2679,67 @@ export interface components {
              * @default 365
              */
             expires_in_days: number;
-            /** Rate Limit Tps */
-            rate_limit_tps?: number | null;
             /**
              * Priority
              * @default 5
              */
             priority: number;
+        };
+        /**
+         * TokenListItem
+         * @description One ``GET /api/tokens`` item: ``_enrich``'s shape, field for field.
+         */
+        TokenListItem: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Prefix */
+            prefix: string;
+            /** Preview */
+            preview: string;
+            /** Created At */
+            created_at: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Expires At */
+            expires_at: string | null;
+            /** Rotated At */
+            rotated_at: string | null;
+            /** Rotated From */
+            rotated_from: string | null;
+            /** Successor Id */
+            successor_id: string | null;
+            /** Successor Deleted */
+            successor_deleted: boolean;
+            /** Is Expired */
+            is_expired: boolean;
+            /** Is Near Expiry */
+            is_near_expiry: boolean;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Is Revoked */
+            is_revoked: boolean;
+            /** Priority */
+            priority: number;
+            usage_24h: components["schemas"]["TokenUsage24h"];
+            /** Paused At */
+            paused_at: string | null;
+            /** Is Paused */
+            is_paused: boolean;
+        };
+        /** TokenListPage */
+        TokenListPage: {
+            /** Items */
+            items: components["schemas"]["TokenListItem"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Near Expiry */
+            near_expiry: number;
         };
         /** TokenRotate */
         TokenRotate: {
@@ -2549,16 +2755,34 @@ export interface components {
          * TokenUpdate
          * @description PATCH body — every field is optional; omit to leave untouched.
          *
-         *     Setting ``rate_limit_tps`` to null (JSON null) clears the limit (i.e.
-         *     switches the token back to unlimited). Omitting the key entirely leaves
-         *     whatever value the row already has. The route turns the "omitted" case
-         *     into the ``_UNSET`` sentinel before calling ``TokenRepo.update_limits``.
+         *     The route turns an omitted key into the ``_UNSET`` sentinel before
+         *     calling ``TokenRepo.update``. ``rate_limit_tps`` is refused with 422:
+         *     per-token rate limits were removed.
+         *
+         *     ``name`` is trimmed, then held to TokenCreate's 1..64 bounds. Duplicate
+         *     names are allowed, as they are at create time. ``paused`` true pauses the
+         *     key (403 "token paused" on its next request), false resumes it. Neither
+         *     accepts JSON null: both columns have no "cleared" meaning a null could ask
+         *     for.
          */
         TokenUpdate: {
-            /** Rate Limit Tps */
-            rate_limit_tps?: number | null;
+            /** Name */
+            name?: string | null;
             /** Priority */
             priority?: number | null;
+            /** Paused */
+            paused?: boolean | null;
+        };
+        /** TokenUsage24h */
+        TokenUsage24h: {
+            /** Requests */
+            requests: number;
+            /** Prompt Tokens */
+            prompt_tokens: number;
+            /** Completion Tokens */
+            completion_tokens: number;
+            /** Total Tokens */
+            total_tokens: number;
         };
         /** ToolResultIn */
         ToolResultIn: {
@@ -3619,7 +3843,17 @@ export interface operations {
     };
     list_tokens_api_tokens_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Sort column. `usage_24h` = prompt + completion tokens over the last 24h; `status` = the badge order Paused, Revoked, Expired, Grace, Expiring soon, Active. NULLs (never used / never expires) sort last in both directions; `id` breaks ties. */
+                sort?: "name" | "prefix" | "created" | "expires" | "last_used" | "priority" | "usage_24h" | "status";
+                dir?: "asc" | "desc";
+                limit?: number;
+                offset?: number;
+                /** @description Case-insensitive substring of the token name; empty = no filter. */
+                q?: string;
+                /** @description 1 = only keys expiring within 30 days and not yet expired -- the keys the `near_expiry` count counts. */
+                near_expiry?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3632,7 +3866,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["TokenListPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3657,6 +3900,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_token_api_tokens__token_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */
@@ -3789,6 +4065,51 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_token_series_api_tokens__token_id__series_get: {
+        parameters: {
+            query: {
+                /** @description Window start, epoch seconds. */
+                from: number;
+                /** @description Window end (exclusive), epoch seconds. */
+                to: number;
+                /** @description 1 = include the key's earlier rotated keys; 0 = this key only. */
+                chain?: number;
+                max_bins?: number;
+                /** @description 1 = include the queue/TTFT/duration percentiles; 0 = usage only (every timing field null, timing_sample empty, latency_since null). */
+                timings?: number;
+                /** @description 1 = include the per-model split (by_model, model_bins, by_model_since); 0 = skip it (empty lists, null since). */
+                by_model?: number;
+            };
+            header?: never;
+            path: {
+                token_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */
@@ -4000,6 +4321,41 @@ export interface operations {
                 models?: string | null;
                 basis?: string;
                 n?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stats_v2_throughput_api_stats_v2_throughput_get: {
+        parameters: {
+            query?: {
+                range?: string;
+                models?: string | null;
+                basis?: string;
             };
             header?: never;
             path?: never;
@@ -4419,9 +4775,33 @@ export interface operations {
             };
         };
     };
+    godmode_status_api_admin_godmode_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
+                };
+            };
+        };
+    };
     godmode_stream_api_admin_godmode_stream_get: {
         parameters: {
             query: {
+                /** @description Comma-separated api_tokens ids, at most 20. Only those keys' events are replayed and streamed. Omit for every key. */
+                token_ids?: string | null;
                 ticket: string;
             };
             header?: never;

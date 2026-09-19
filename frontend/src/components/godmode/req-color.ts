@@ -35,7 +35,7 @@ export interface ReqColor {
 // the hue wheel (used the same way d3 / many palette generators do).
 const GOLDEN_ANGLE = 137.508;
 // Start offset so index 0 isn't pure red (0°) — a small aesthetic nudge.
-const HUE_OFFSET = 47;
+const HUE_OFFSET = 40;
 
 /** FNV-1a 32-bit hash. `Math.imul` keeps the multiply in exact 32-bit space
  *  so the result is stable across engines. */
@@ -62,10 +62,11 @@ export function reqColorHue(reqId: string, index?: number): number {
 /** Full color set for a request block. Deterministic in `(reqId, index)`. */
 export function reqColor(reqId: string, index?: number): ReqColor {
   const hue = reqColorHue(reqId, index);
+  // Values from the approved token-details mockup (spec 2026-09-18 §4.6).
   return {
     hue,
-    accent: `hsl(${hue.toFixed(1)} 70% 55%)`,
-    headerBg: `hsl(${hue.toFixed(1)} 65% 50% / 0.15)`,
-    text: `hsl(${hue.toFixed(1)} 80% 72%)`,
+    accent: `hsl(${hue.toFixed(1)} 70% 60%)`,
+    headerBg: `hsl(${hue.toFixed(1)} 45% 18% / 0.55)`,
+    text: `hsl(${hue.toFixed(1)} 85% 75%)`,
   };
 }

@@ -1,10 +1,10 @@
 """Repo-level coverage for the S5 tokens-v2 additions (#104):
 
-  * TokenRepo.create accepts rate_limit_tps / priority
-  * TokenRepo.rotate inherits both fields from the predecessor in a single
-    transaction (verified by reading sqlite directly)
-  * TokenRepo.update_limits is a PATCH-style sentinel-aware updater
-  * TokenRepo.get returns the new fields
+  * TokenRepo.create accepts priority
+  * TokenRepo.rotate inherits priority from the predecessor in a single
+    transaction
+  * TokenRepo.update is a PATCH-style sentinel-aware updater
+  * the removed per-token rate limit is neither written nor inherited
   * TokenUsageRepo.add / range / totals follow the half-open-interval contract
 """
 
@@ -22,80 +22,83 @@ async def db(tmp_data_dir):
         yield conn
 
 
-async def test_create_stores_rate_and_priority(db):
+async def _raw_rate(db, token_id: str):
+    cur = await db.execute("SELECT rate_limit_tps FROM api_tokens WHERE id = ?", (token_id,))
+    return (await cur.fetchone())[0]
+
+
+async def test_create_stores_priority(db):
     repo = TokenRepo(db)
-    await repo.create(
-        "tok-rp", "rp", "vw_" + "a" * 32,
-        rate_limit_tps=500, priority=7,
-    )
+    await repo.create("tok-rp", "rp", "vw_" + "a" * 32, priority=7)
     row = await repo.get("tok-rp")
     assert row is not None
-    assert row.rate_limit_tps == 500
     assert row.priority == 7
+    # Per-token rate limits were removed; the column is left in place, unused.
+    assert await _raw_rate(db, "tok-rp") is None
 
 
-async def test_create_defaults_unlimited_priority_5(db):
+async def test_create_defaults_priority_5(db):
     repo = TokenRepo(db)
     await repo.create("tok-def", "def", "vw_" + "b" * 32)
     row = await repo.get("tok-def")
-    assert row.rate_limit_tps is None
     assert row.priority == 5
 
 
-async def test_rotate_inherits_rate_and_priority(db):
+async def test_create_no_longer_takes_a_rate_limit(db):
+    with pytest.raises(TypeError):
+        await TokenRepo(db).create(  # type: ignore[call-arg]
+            "t", "n", "vw_" + "g" * 32, rate_limit_tps=100,
+        )
+
+
+async def test_rotate_inherits_priority_but_not_a_legacy_rate(db):
     repo = TokenRepo(db)
-    await repo.create(
-        "old", "n", "vw_" + "c" * 32,
-        rate_limit_tps=250, priority=8,
-    )
+    await repo.create("old", "n", "vw_" + "c" * 32, priority=8)
+    # A row written before the removal can still carry a value in the column.
+    await db.execute("UPDATE api_tokens SET rate_limit_tps = 250 WHERE id = 'old'")
+    await db.commit()
     # #150 — rotate() no longer takes new_name; successor keeps the
     # predecessor's name and the predecessor is renamed to "n (old 1)".
     new_id, _plaintext, renamed_to = await repo.rotate(old_id="old")
     new_row = await repo.get(new_id)
-    assert new_row.rate_limit_tps == 250
     assert new_row.priority == 8
     assert new_row.name == "n"
     assert renamed_to == "n (old 1)"
+    assert await _raw_rate(db, new_id) is None
 
 
-async def test_update_limits_patches_rate_only(db):
+async def test_update_patches_priority_only(db):
     repo = TokenRepo(db)
-    await repo.create("t", "n", "vw_" + "d" * 32, rate_limit_tps=100, priority=5)
-    ok = await repo.update_limits("t", rate_limit_tps=200)
+    await repo.create("t", "n", "vw_" + "d" * 32, priority=5)
+    ok = await repo.update("t", priority=2)
     assert ok is True
     row = await repo.get("t")
-    assert row.rate_limit_tps == 200
-    assert row.priority == 5  # untouched by the patch
+    assert row.priority == 2
+    assert row.name == "n"  # untouched by the patch
 
 
-async def test_update_limits_can_clear_rate_back_to_unlimited(db):
+async def test_update_no_longer_takes_a_rate_limit(db):
+    with pytest.raises(TypeError):
+        await TokenRepo(db).update("t", rate_limit_tps=100)  # type: ignore[call-arg]
+
+
+async def test_update_unset_is_noop(db):
     repo = TokenRepo(db)
-    await repo.create("t", "n", "vw_" + "e" * 32, rate_limit_tps=100)
-    # None ≠ _UNSET — None explicitly clears.
-    ok = await repo.update_limits("t", rate_limit_tps=None)
-    assert ok is True
-    row = await repo.get("t")
-    assert row.rate_limit_tps is None
-
-
-async def test_update_limits_unset_is_noop(db):
-    repo = TokenRepo(db)
-    await repo.create("t", "n", "vw_" + "f" * 32, rate_limit_tps=100, priority=4)
-    ok = await repo.update_limits("t")  # both default to _UNSET
+    await repo.create("t", "n", "vw_" + "f" * 32, priority=4)
+    ok = await repo.update("t", name=_UNSET, priority=_UNSET)
     assert ok is True  # noop is idempotent success
     row = await repo.get("t")
-    assert row.rate_limit_tps == 100
     assert row.priority == 4
 
 
-async def test_update_limits_returns_false_for_unknown_token(db):
-    ok = await TokenRepo(db).update_limits("does-not-exist", priority=2)
+async def test_update_returns_false_for_unknown_priority_patch(db):
+    ok = await TokenRepo(db).update("does-not-exist", priority=2)
     assert ok is False
 
 
 async def test_unset_sentinel_is_a_real_singleton():
     """A regression would split _UNSET into multiple instances, breaking
-    the isinstance() check inside update_limits."""
+    the isinstance() check inside update."""
     from app.db.repos.tokens import _Unset
     assert _UNSET is _Unset()
 

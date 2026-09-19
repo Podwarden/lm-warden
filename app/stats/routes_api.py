@@ -649,7 +649,7 @@ async def stats_v2_latency(
             # No row cap here: the distribution must be over EVERY request in
             # the window, not a sample of it. Four columns a row keeps a full
             # 7d at the retention cap well under a second.
-            rows = await request_history.query_window_latency(
+            rows = await request_history.query_window_stats(
                 db, since=since, model_ids=selected
             )
         else:
@@ -668,6 +668,174 @@ async def stats_v2_latency(
             since=since,
             retention_days=int(settings.request_history_retention_days),
             max_rows=int(settings.request_history_max_rows),
+        ),
+    }
+
+
+_THROUGHPUT_BASES = ("request", "wallclock")
+# model_samples is pruned on a fixed 7-day retention by the stats pruner
+# (app/runtime/stats_pruner.py:RETENTION_MINUTES); unlike request_history it
+# has no configurable setting and no row cap.
+_SAMPLES_RETENTION_DAYS = 7
+
+
+async def _wallclock_rates(
+    db: aiosqlite.Connection, *, since_minute: int, selected: list[str] | None
+) -> tuple[list[float], list[float], float | None]:
+    """Per-minute prefill and generation tok/s, idle minutes included as zero.
+
+    Returns ``(prefill, generation, earliest_epoch)``.
+
+    The zero-fill is what makes this basis answer "how much work did the box
+    do" rather than "how fast was it when it was busy": a minute with no row
+    in ``model_samples`` is a minute the deployment served nothing, and
+    averaging only over the busy minutes would report the engine's speed under
+    a heading that claims to describe the window.
+
+    It is bounded by the store on the left and by the clock on the right:
+
+      left   ``MIN(minute)`` over the WHOLE table, so a 7d window over a
+             deployment that booted an hour ago does not report six days of
+             idle minutes nobody has evidence for. Unfiltered by the selection
+             on purpose -- a quiet model over a busy hour really was idle for
+             it, and filtering here would hide exactly the thing being asked.
+      right  the last COMPLETE minute. The current minute is still being
+             written and would read as a partial, artificially slow one.
+    """
+    where = ""
+    args: tuple[str, ...] = ()
+    if selected is not None:
+        where = f" AND model_id IN ({','.join('?' for _ in selected)})"
+        args = tuple(selected)
+    cur = await db.execute(
+        "SELECT minute, COALESCE(SUM(prompt_tokens), 0), COALESCE(SUM(completion_tokens), 0) "
+        "FROM model_samples WHERE minute >= ?" + where + " GROUP BY minute",
+        (since_minute, *args),
+    )
+    by_minute = {int(r[0]): (float(r[1]), float(r[2])) for r in await cur.fetchall()}
+
+    cur = await db.execute("SELECT MIN(minute) FROM model_samples")
+    earliest_minute = (await cur.fetchone() or (None,))[0]
+    if earliest_minute is None:
+        return [], [], None
+    earliest_epoch = float(earliest_minute) * 60.0
+    first = max(int(since_minute), int(earliest_minute))
+    last = int(time.time() // 60) - 1
+    if last < first:
+        return [], [], earliest_epoch
+    prefill: list[float] = []
+    generation: list[float] = []
+    for minute in range(first, last + 1):
+        prompt, completion = by_minute.get(minute, (0.0, 0.0))
+        prefill.append(prompt / 60.0)
+        generation.append(completion / 60.0)
+    return prefill, generation, earliest_epoch
+
+
+@router.get("/api/stats/v2/throughput")
+async def stats_v2_throughput(
+    request: Request,
+    range: str = "1h",
+    models: str | None = None,
+    basis: str = "request",
+    _user: str = Depends(require_jwt),
+) -> dict[str, Any]:
+    """Prefill and generation tokens per second, as average / max / mode.
+
+    This exists because the overview's single ``current.tps`` is
+    ``(prompt + completion) / 60`` over the last full minute -- one number
+    blending two quantities that move independently. Prefill is compute-bound
+    and runs in the hundreds or thousands of tok/s; generation is
+    memory-bandwidth-bound and runs in the tens. Their average describes
+    neither, and it changes when the prompt-to-completion ratio changes even
+    though the hardware did not.
+
+    Two bases, and the response says which:
+
+      basis=request    per-request engine speed from ``request_history``:
+                       ``prompt_tokens / ttft`` and
+                       ``(completion_tokens - 1) / (duration - ttft)``.
+                       It does NOT answer "how fast is the rig", and the
+                       panel defaults to wallclock for that reason. It is
+                       wrong in both directions on a real workload: the prompt
+                       figure counts prefix-cached tokens the engine never
+                       computed (measured ~26k tok/s where the hardware can do
+                       roughly 1/13th of that), and the decode figure is one
+                       request's share of a batched engine rather than the
+                       engine's aggregate. What it IS good for is comparing
+                       requests with each other. Also note the ENGINE's own
+                       waiting queue is inside TTFT and invisible from the
+                       proxy; the WARDEN's admission queue is not -- that is
+                       ``queued_s``, migration 0032.
+      basis=wallclock  tokens counted per minute from ``model_samples``, with
+                       idle minutes included as zero. Answers "how much work
+                       did the box do".
+
+    ``mode`` is the modal value over bins ~5% wide (see
+    ``request_history.mode_relative``) and is null when the sample is too
+    small or nothing repeats. On a bimodal prefill series it is the statistic
+    worth reading; ``max`` there is usually a cache artefact.
+
+    Returns:
+      {
+        "basis": "request" | "wallclock",
+        "range": str,
+        "since_epoch": float,
+        "selected_model_ids": [str, ...] | None,
+        "prefill":    {"count": int, "avg": float|None,
+                       "max": float|None, "mode": float|None},
+        "generation": {... same ...},
+        "coverage": {... as /api/stats/v2/requests, for the store this basis
+                     reads ...},
+      }
+    """
+    _validate_range(range)
+    if basis not in _THROUGHPUT_BASES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"invalid basis '{basis}'; allowed: {sorted(_THROUGHPUT_BASES)}",
+        )
+    since = time.time() - _RANGE_TO_MINUTES[range] * 60.0
+    settings = request.app.state.settings
+    selected = _parse_models(models)
+    async with open_db(settings.db_path) as db:
+        await _validate_selection(db, selected)
+        if basis == "request":
+            rows = await request_history.query_window_stats(
+                db, since=since, model_ids=selected
+            )
+            prefill = [
+                v for v in (request_history.prefill_tps_of(r) for r in rows)
+                if v is not None
+            ]
+            generation = [
+                v for v in (request_history.gen_tps_of(r) for r in rows)
+                if v is not None
+            ]
+            earliest = await request_history.earliest_finished_at(db)
+            retention_days = int(settings.request_history_retention_days)
+            max_rows = int(settings.request_history_max_rows)
+        else:
+            prefill, generation, earliest = await _wallclock_rates(
+                db, since_minute=int(since // 60), selected=selected
+            )
+            # The minute rollup has a fixed retention and no row cap, so
+            # coverage reports the store this basis actually read rather than
+            # request_history's, which governs nothing here.
+            retention_days = _SAMPLES_RETENTION_DAYS
+            max_rows = 0
+    return {
+        "basis": basis,
+        "range": range,
+        "since_epoch": since,
+        "selected_model_ids": selected,
+        "prefill": request_history.rate_summary(prefill),
+        "generation": request_history.rate_summary(generation),
+        "coverage": _coverage(
+            earliest=earliest,
+            since=since,
+            retention_days=retention_days,
+            max_rows=max_rows,
         ),
     }
 

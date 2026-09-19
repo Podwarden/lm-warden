@@ -148,20 +148,19 @@ async def lifespan(app: FastAPI):
 
     app.state.tokenizers = TokenizerCache()
 
-    # S5 (#104) — sliding-window rate limiter + STRICT priority scheduler.
-    # Both are in-process singletons because the warden runs a single
-    # uvicorn worker per pod; if we ever scale workers, swap for Redis-
-    # backed implementations (see app/proxy/scheduler.py module docstring).
-    from app.proxy.scheduler import PriorityScheduler, TokenRateLimiter
+    # S5 (#104) — STRICT priority scheduler. An in-process singleton because
+    # the warden runs a single uvicorn worker per pod; if we ever scale
+    # workers, swap for a Redis-backed implementation (see
+    # app/proxy/scheduler.py module docstring).
+    from app.proxy.scheduler import PriorityScheduler
 
-    app.state.rate_limiter = TokenRateLimiter()
     app.state.scheduler = PriorityScheduler()
 
     # S8 (#117) — chat playground singletons. ``playground_store`` caches
     # the `vw-playground` bearer plaintext server-side (browser never sees
     # it). ``chat_active_requests`` is a counter the Playwright suite polls
     # to verify abort-cleanup. Both are process-local for the same reason
-    # rate_limiter is — single uvicorn worker.
+    # the scheduler is — single uvicorn worker.
     from app.chat.active_requests import ActiveRequestCounter
     from app.chat.playground_store import PlaygroundStore
 
@@ -416,7 +415,7 @@ def build_app() -> FastAPI:
     from app.chat2.locks import TurnLocks
 
     # In-process singletons — single uvicorn worker, same rationale as
-    # rate_limiter/scheduler above. TurnLocks enforces one turn in flight
+    # the scheduler above. TurnLocks enforces one turn in flight
     # per chat; AlwaysAllow is the warden's no-op budget policy (the Hub
     # wires its rolling-window budget checker in here instead). LiveTurns is
     # the detached-turn registry (feat/chat2-detached-turns): a turn's SSE

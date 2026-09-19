@@ -19,6 +19,7 @@ import { SettingField } from "@/components/settings/setting-field";
 import { SettingsSection } from "@/components/settings-section";
 import { type GpuInfo } from "@/components/gpu/gpu-checklist";
 import { copyToClipboard } from "@/lib/utils";
+import { useBreadcrumb } from "@/lib/use-breadcrumb";
 
 // ---------------------------------------------------------------------------
 // Patchable allowlist — must stay in sync with backend
@@ -304,6 +305,10 @@ export default function ModelSettingsPage({
       revalidateOnFocus: false,
     },
   );
+  // Name the parent crumb (/models/[id]) after the model — on a direct load
+  // of this page nothing else has told the breadcrumb what it is called. The
+  // page's own crumb is the registry's "Settings".
+  useBreadcrumb({ path: `/models/${id}`, title: data?.served_model_name ?? (error ? id : undefined) });
   const { data: gpuData } = useSWR<{ gpus: GpuInfo[]; probed_at: string; probe_error: string | null }>(
     "/api/system/gpus",
     authFetchJSON,
@@ -349,11 +354,6 @@ export default function ModelSettingsPage({
   if (errStatus === 404) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-slate-400">
-          <Link href="/models" className="hover:underline">
-            ← Back to models
-          </Link>
-        </p>
         <Card>
           <CardHeader>
             <CardTitle>Model not found</CardTitle>
@@ -379,11 +379,6 @@ export default function ModelSettingsPage({
   if (error && !data) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-slate-400">
-          <Link href={`/models/${id}`} className="hover:underline">
-            ← Back to model
-          </Link>
-        </p>
         <div className="rounded-md border border-red-700 bg-red-900/30 p-4 text-sm text-red-200">
           Failed to load settings
           {error instanceof Error ? `: ${error.message}` : "."}
@@ -567,12 +562,6 @@ export default function ModelSettingsPage({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-400">
-        <Link href={`/models/${id}`} className="hover:underline">
-          ← Back to {data.served_model_name}
-        </Link>
-      </p>
-
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h1 className="text-2xl font-semibold">Settings</h1>
         <div className="flex gap-2">

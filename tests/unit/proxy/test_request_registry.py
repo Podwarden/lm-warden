@@ -1,8 +1,10 @@
 """Plane B — live per-request registry + GET /api/stats/requests snapshot.
 
-Covers: register/deregister/count/snapshot, the endpoint's by-token and by-IP
-aggregation, context_pct math, the orphan flag surfacing, and the invariant
-that neither the registry nor the endpoint ever emits a token secret.
+Covers: register/deregister/count/snapshot, the endpoint's by-token (grouped
+by token_id, not name) and by-IP aggregation, context_pct math, the orphan
+flag surfacing, and the invariant that neither the registry nor the endpoint
+ever emits a token secret (token_id is fine — it's an opaque row id, not a
+hash/plaintext column, and the frontend links it to /tokens/{id}).
 """
 
 import dataclasses
@@ -105,16 +107,17 @@ def test_serialize_surfaces_orphan_flag():
 def test_aggregate_by_token_and_ip():
     now = time.monotonic()
     rows = [
-        _serialize(_mk(id="1", token_name="hermes-bot", client_ip="10.0.0.1",
+        _serialize(_mk(id="1", token_id="tok1", token_name="hermes-bot", client_ip="10.0.0.1",
                        prompt_tokens=100, completion_tokens=10), now),
-        _serialize(_mk(id="2", token_name="hermes-bot", client_ip="10.0.0.2",
+        _serialize(_mk(id="2", token_id="tok1", token_name="hermes-bot", client_ip="10.0.0.2",
                        prompt_tokens=200, completion_tokens=20), now),
-        _serialize(_mk(id="3", token_name="other", client_ip="10.0.0.1",
+        _serialize(_mk(id="3", token_id="tok2", token_name="other", client_ip="10.0.0.1",
                        prompt_tokens=50, completion_tokens=5), now),
     ]
     by_token, by_ip = _aggregate(rows)
 
-    hermes = next(t for t in by_token if t["token_name"] == "hermes-bot")
+    hermes = next(t for t in by_token if t["token_id"] == "tok1")
+    assert hermes["token_name"] == "hermes-bot"
     assert hermes["requests"] == 2
     assert hermes["prompt_tokens"] == 300
     assert hermes["completion_tokens"] == 30
@@ -123,6 +126,37 @@ def test_aggregate_by_token_and_ip():
     ip1 = next(p for p in by_ip if p["client_ip"] == "10.0.0.1")
     assert ip1["requests"] == 2
     assert ip1["context_tokens"] == (100 + 10) + (50 + 5)
+
+
+def test_aggregate_by_token_groups_same_name_different_id_separately():
+    # Names are reused across rotations (migration 0033) -- two distinct
+    # tokens sharing a display name must not collapse into one by-token row.
+    now = time.monotonic()
+    rows = [
+        _serialize(_mk(id="1", token_id="tok-old", token_name="shared-name",
+                       client_ip="10.0.0.1", prompt_tokens=100, completion_tokens=10), now),
+        _serialize(_mk(id="2", token_id="tok-new", token_name="shared-name",
+                       client_ip="10.0.0.2", prompt_tokens=200, completion_tokens=20), now),
+    ]
+    by_token, _ = _aggregate(rows)
+    assert len(by_token) == 2
+    ids = {t["token_id"] for t in by_token}
+    assert ids == {"tok-old", "tok-new"}
+    for t in by_token:
+        assert t["token_name"] == "shared-name"
+        assert t["requests"] == 1
+
+
+def test_aggregate_by_token_anonymous_bucket_has_no_id():
+    now = time.monotonic()
+    rows = [
+        _serialize(_mk(id="1", token_id=None, token_name=None, client_ip="10.0.0.1"), now),
+        _serialize(_mk(id="2", token_id=None, token_name=None, client_ip="10.0.0.2"), now),
+    ]
+    by_token, _ = _aggregate(rows)
+    assert len(by_token) == 1
+    assert by_token[0]["token_id"] is None
+    assert by_token[0]["requests"] == 2
 
 
 # --------------------------------------------------------------------------- #
@@ -141,8 +175,9 @@ def test_live_request_has_no_secret_fields():
 def test_serialized_row_leaks_no_token_secret():
     now = time.monotonic()
     row = _serialize(_mk(), now)
-    # token_id is internal — the wire row exposes only the human-readable name.
-    assert "token_id" not in row
+    # token_id is an opaque row id (used by the frontend to link to the
+    # token's details page) -- fine to expose. Actual secret columns aren't.
+    assert row["token_id"] == "tok1"
     assert set(row) & {"hash", "prefix", "scope", "plaintext", "secret"} == set()
     assert row["token_name"] == "hermes-bot"
 
@@ -157,10 +192,10 @@ async def test_requests_endpoint_snapshot(tmp_data_dir, client):
     auth = jwt_login(client)
 
     reg = client.app.state.request_registry
-    await reg.register(_mk(id="a", token_name="hermes-bot", client_ip="10.0.0.1",
+    await reg.register(_mk(id="a", token_id="tok1", token_name="hermes-bot", client_ip="10.0.0.1",
                            prompt_tokens=300, completion_tokens=20,
                            max_model_len=1000, phase="decode"))
-    await reg.register(_mk(id="b", token_name="hermes-bot", client_ip="10.0.0.1",
+    await reg.register(_mk(id="b", token_id="tok1", token_name="hermes-bot", client_ip="10.0.0.1",
                            prompt_tokens=100, completion_tokens=0, orphan=True))
 
     r = client.get("/api/stats/requests", headers=auth)
@@ -173,17 +208,18 @@ async def test_requests_endpoint_snapshot(tmp_data_dir, client):
     assert a["context_tokens"] == 320
     assert a["context_pct"] == 0.32
     assert a["phase"] == "decode"
+    assert a["token_id"] == "tok1"
 
     b = next(x for x in body["requests"] if x["id"] == "b")
     assert b["orphan"] is True
 
+    assert body["by_token"][0]["token_id"] == "tok1"
     assert body["by_token"][0]["token_name"] == "hermes-bot"
     assert body["by_token"][0]["requests"] == 2
     assert body["by_ip"][0]["client_ip"] == "10.0.0.1"
     assert body["by_ip"][0]["requests"] == 2
 
-    # No secret column anywhere in the payload.
-    assert "token_id" not in a
+    # No secret column anywhere in the payload (token_id itself is fine).
     for row in body["requests"]:
         assert set(row) & {"hash", "prefix", "scope", "plaintext", "secret"} == set()
 

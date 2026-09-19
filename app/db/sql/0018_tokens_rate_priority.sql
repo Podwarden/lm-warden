@@ -19,9 +19,12 @@
 --     DROP TRIGGER IF EXISTS api_tokens_rate_limit_tps_range_insert;
 --     DROP TRIGGER IF EXISTS api_tokens_rate_limit_tps_range_update;
 --     DROP TABLE IF EXISTS token_usage_minute;
+--     -- 0035's sort index covers priority; an index on a column blocks its
+--     -- DROP COLUMN just as a trigger does.
+--     DROP INDEX IF EXISTS idx_api_tokens_priority_id;
 --     -- SQLite has no DROP COLUMN before 3.35 — older runners must recreate
---     -- api_tokens. The deployed runtime image pins sqlite >= 3.45 so the
---     -- direct DROP COLUMN form below works.
+--     -- api_tokens. The runtime image (Ubuntu 22.04 base) ships SQLite
+--     -- 3.37.2, which is new enough for the direct DROP COLUMN form below.
 --     ALTER TABLE api_tokens DROP COLUMN priority;
 --     ALTER TABLE api_tokens DROP COLUMN rate_limit_tps;
 --     DELETE FROM schema_migrations WHERE filename = '0018_tokens_rate_priority.sql';

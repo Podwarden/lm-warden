@@ -3,8 +3,8 @@ detached-turn surface (`GET .../turn/live`, `POST .../turn/abort`) (spec §4.2).
 
 The turn is DETACHED from its HTTP response: after the pre-flight checks and
 the user/tool-row persist, the whole generation pipeline — the loopback call
-to the warden's own OpenAI-compatible proxy (so the real rate-limit /
-priority / usage-rollup pipeline runs unmodified), the `ChatEvent`
+to the warden's own OpenAI-compatible proxy (so the real priority /
+usage-rollup pipeline runs unmodified), the `ChatEvent`
 normalisation, the assistant-row/ledger/title persistence — runs on its own
 `asyncio.Task` (`_run_turn`, the *runner*), which appends every SSE frame to
 an `app.chat2.live.LiveTurn` entry. The HTTP response is merely a replayable

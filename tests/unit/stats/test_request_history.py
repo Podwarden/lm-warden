@@ -314,3 +314,143 @@ def test_latency_summary_of_nothing_is_empty_not_zero():
         assert s[k]["count"] == 0
         assert s[k]["p50"] is None
         assert s[k]["mean"] is None
+
+
+# ---- token-rate statistics (prefill / generation tok-per-second) ------------
+
+
+def test_prefill_tps_is_prompt_tokens_over_ttft():
+    ok = {"prompt_tokens": 100, "ttft_s": 0.5}
+    assert rh.prefill_tps_of(ok) == 200.0
+    assert rh.prefill_tps_of({**ok, "ttft_s": None}) is None  # never saw a first token
+    assert rh.prefill_tps_of({**ok, "ttft_s": 0.0}) is None  # no measurable prefill
+    assert rh.prefill_tps_of({**ok, "prompt_tokens": 0}) is None  # nothing to prefill
+
+
+def test_generation_tps_is_the_reciprocal_of_the_per_request_mean_itl():
+    ok = {"ttft_s": 1.0, "duration_s": 3.0, "completion_tokens": 5}
+    assert rh.gen_tps_of(ok) == 2.0  # 4 gaps in 2s of decode
+    # Refuses exactly what itl_mean_of refuses, for the same reasons.
+    assert rh.gen_tps_of({**ok, "ttft_s": None}) is None
+    assert rh.gen_tps_of({**ok, "completion_tokens": 1}) is None
+    assert rh.gen_tps_of({**ok, "duration_s": 1.0}) is None
+
+
+def test_mode_reports_the_cluster_not_the_mean_and_not_the_outlier():
+    # Four readings within 5% of each other, one far outlier. The mean (121)
+    # describes no observed request; the mode has to land on the cluster.
+    m = rh.mode_relative([100.0, 101.0, 102.0, 103.0, 200.0])
+    assert m is not None
+    assert 100.0 <= m <= 103.0
+
+
+def test_mode_breaks_a_tie_towards_the_slower_bin():
+    # Two equally populated clusters. Reporting the faster one would flatter
+    # the deployment; the conservative read is the lower bin.
+    m = rh.mode_relative([100.0, 101.0, 102.0, 200.0, 201.0, 202.0])
+    assert m is not None
+    assert m < 150.0
+
+
+def test_mode_is_none_when_no_value_actually_repeats():
+    # A flat spread has no modal value, and inventing one from a bin of size
+    # 1 would dress up noise as a typical reading.
+    assert rh.mode_relative([10.0, 20.0, 30.0, 40.0, 50.0]) is None
+
+
+def test_mode_is_none_below_the_minimum_sample_count():
+    assert rh.mode_relative([100.0, 101.0, 102.0, 103.0]) is None
+
+
+def test_mode_counts_idle_as_its_own_bin_rather_than_dropping_it():
+    # Wall-clock basis: a deployment that is idle most minutes HAS a modal
+    # throughput, and it is zero. Dropping the zeros would report the rate of
+    # the busy minutes while claiming to describe every minute.
+    assert rh.mode_relative([0.0, 0.0, 0.0, 50.0, 60.0, 70.0]) == 0.0
+
+
+def test_rate_summary_carries_average_max_mode_and_the_sample_count():
+    s = rh.rate_summary([100.0, 101.0, 102.0, 103.0, 200.0])
+    assert s["count"] == 5
+    assert s["avg"] == pytest.approx(121.2)
+    assert s["max"] == 200.0
+    assert 100.0 <= s["mode"] <= 103.0
+
+
+def test_rate_summary_of_nothing_is_empty_not_zero():
+    s = rh.rate_summary([])
+    assert s == {"count": 0, "avg": None, "max": None, "mode": None}
+
+
+async def test_record_writes_the_token_id(tmp_path):
+    db_path = await _migrated(tmp_path)
+    store = RequestHistoryStore(db_path)
+    assert store.record(_record(1, token_id="tok-a"), finished_at=1000.0) is True
+    assert store.record(_record(2), finished_at=1001.0) is True  # no token_id key
+    assert await store.flush() == 2
+    with sqlite3.connect(db_path) as db:
+        rows = db.execute(
+            "SELECT id, token_name, token_id FROM request_history ORDER BY id"
+        ).fetchall()
+    assert rows == [("req-1", "key-a", "tok-a"), ("req-2", "key-a", None)]
+
+
+# ---- per-token timings and the sampling guard (token details page) -----------
+
+
+def _token_rows(db_path, n: int, *, token_id="tok-a", start=6000.0, span=3600.0):
+    """``n`` rows for ``token_id`` spread evenly over ``[start, start + span)``."""
+    step = span / n
+    with sqlite3.connect(db_path) as db:
+        db.executemany(
+            "INSERT INTO request_history(id, finished_at, model_id, model, token_id, "
+            "queued_s, ttft_s, duration_s, started_iso) "
+            "VALUES (?, ?, 'id-model-a', 'model-a', ?, 0.1, 0.5, 2.0, 'x')",
+            [(f"{token_id}-{i:06d}", start + i * step, token_id) for i in range(n)],
+        )
+        db.commit()
+
+
+async def test_token_timings_filter_by_token_and_window(tmp_path):
+    db_path = await _migrated(tmp_path)
+    _token_rows(db_path, 10, token_id="tok-a", start=6000.0, span=600.0)
+    _token_rows(db_path, 10, token_id="tok-b", start=6000.0, span=600.0)
+    async with open_db(db_path) as db:
+        got = await rh.query_token_timings(db, token_ids=["tok-a"], since=6000.0, until=6300.0)
+    assert (got.total, got.stride, len(got.rows)) == (5, 1, 5)
+    assert all(6000.0 <= r[0] < 6300.0 for r in got.rows)
+    assert got.rows[0][1:] == (0.1, 0.5, 2.0)
+
+
+async def test_exactly_at_the_cap_reads_every_row(tmp_path):
+    db_path = await _migrated(tmp_path)
+    _token_rows(db_path, rh.TIMING_ROW_CAP)
+    async with open_db(db_path) as db:
+        got = await rh.query_token_timings(db, token_ids=["tok-a"], since=0.0, until=1e12)
+    assert (got.total, got.stride, len(got.rows)) == (rh.TIMING_ROW_CAP, 1, rh.TIMING_ROW_CAP)
+
+
+async def test_one_past_the_cap_samples_every_second_row_across_the_whole_period(tmp_path):
+    db_path = await _migrated(tmp_path)
+    n = rh.TIMING_ROW_CAP + 1
+    _token_rows(db_path, n, start=6000.0, span=3600.0)  # minutes 100..159
+    async with open_db(db_path) as db:
+        got = await rh.query_token_timings(db, token_ids=["tok-a"], since=0.0, until=1e12)
+    assert got.total == n
+    assert got.stride == 2
+    # Every second row of 50_001, oldest first: rows 0, 2, ..., 50_000.
+    assert len(got.rows) == 25_001
+    minutes = {int(r[0] // 60) for r in got.rows}
+    # Every k-th row, oldest first: the first AND the last minute survive,
+    # which a "newest N" cut would not give.
+    assert min(minutes) == 100 and max(minutes) == 159
+
+
+async def test_the_cap_can_be_lowered(tmp_path):
+    db_path = await _migrated(tmp_path)
+    _token_rows(db_path, 25)
+    async with open_db(db_path) as db:
+        got = await rh.query_token_timings(
+            db, token_ids=["tok-a"], since=0.0, until=1e12, cap=10,
+        )
+    assert (got.total, got.stride, len(got.rows)) == (25, 3, 9)  # ceil(25/10) = 3

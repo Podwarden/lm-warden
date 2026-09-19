@@ -119,9 +119,12 @@ def test_unload_route_evicts_tokenizer_cache(tmp_data_dir, client):
         return_value=fake,
     ):
         import asyncio
-        asyncio.get_event_loop().run_until_complete(
-            cache.get("Qwen/Qwen3.5-9B", trust_remote_code=False)
-        )
+        # asyncio.run, not get_event_loop().run_until_complete: the latter
+        # raises "There is no current event loop in thread 'MainThread'" when
+        # nothing earlier in this worker happened to set one, which made this
+        # test fail intermittently under `pytest -n auto` and deterministically
+        # when tests/unit/stats ran on its own. asyncio.run owns its loop.
+        asyncio.run(cache.get("Qwen/Qwen3.5-9B", trust_remote_code=False))
     assert cache.size() == 1
 
     auth = jwt_login(client)

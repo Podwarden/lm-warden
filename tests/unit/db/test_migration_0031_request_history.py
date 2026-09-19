@@ -56,6 +56,13 @@ async def test_request_history_table_exists_with_columns(tmp_data_dir):
         "token_name": "TEXT", "client_ip": "TEXT", "prompt_tokens": "INTEGER",
         "completion_tokens": "INTEGER", "duration_s": "REAL", "ttft_s": "REAL",
         "finish_reason": "TEXT", "orphan": "INTEGER", "started_iso": "TEXT",
+        # Added by 0032; asserted here too because this test pins the shape of
+        # the table as it actually ships, not as 0031 left it.
+        "queued_s": "REAL",
+        # Added by 0033 (token details page), for the same reason.
+        "token_id": "TEXT",
+        # Added by 0036 (per-variant usage), likewise.
+        "variant_id": "TEXT",
     }
     assert set(cols) == set(expected)
     for name, typ in expected.items():
@@ -64,7 +71,10 @@ async def test_request_history_table_exists_with_columns(tmp_data_dir):
     for required in ("finished_at", "model_id", "model", "duration_s", "started_iso"):
         assert cols[required][notnull_idx] == 1, required
     # Nullable on purpose: no first token, no token, no reason observed.
-    for optional in ("ttft_s", "token_name", "client_ip", "finish_reason"):
+    for optional in (
+        "ttft_s", "token_name", "client_ip", "finish_reason", "queued_s", "token_id",
+        "variant_id",
+    ):
         assert cols[optional][notnull_idx] == 0, optional
 
 

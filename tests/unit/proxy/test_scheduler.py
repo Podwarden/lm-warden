@@ -1,12 +1,12 @@
-"""Tests for the sliding-window rate limiter + STRICT priority scheduler
-(``app.proxy.scheduler``, introduced in S5 / closes #104).
+"""Tests for the STRICT priority scheduler (``app.proxy.scheduler``,
+introduced in S5 / closes #104).
 """
 
 import asyncio
 
 import pytest
 
-from app.proxy.scheduler import PriorityScheduler, TokenRateLimiter
+from app.proxy.scheduler import PriorityScheduler
 
 # These tests deliberately busy-wait on an internal queue-size invariant
 # (sched._queue_size_for_test) so we can deterministically observe that a
@@ -15,73 +15,6 @@ from app.proxy.scheduler import PriorityScheduler, TokenRateLimiter
 # heap state of asyncio.PriorityQueue.put(), not for a signal the
 # waiter coroutine can hand us. ASYNC110 is suppressed at the line of
 # each loop with a short pointer back to this paragraph.
-
-
-# ---------------------------------------------------------------------------
-# Rate limiter
-# ---------------------------------------------------------------------------
-
-
-async def test_rate_limiter_admits_within_budget():
-    """A token with budget = window_s * tps should admit a request that
-    fits inside the window without rejecting."""
-    rl = TokenRateLimiter(window_s=10.0)
-    # 100 tps × 10s window = 1000 token budget. One 500-token charge fits.
-    assert await rl.check_and_charge("tok-A", 100, n_tokens=500, now=1000.0) is True
-
-
-async def test_rate_limiter_rejects_when_burst_exceeds_budget():
-    rl = TokenRateLimiter(window_s=10.0)
-    # 100 tps × 10s = 1000 budget; 600 + 600 = 1200 > 1000 → second must reject.
-    assert await rl.check_and_charge("tok-B", 100, n_tokens=600, now=1000.0) is True
-    assert await rl.check_and_charge("tok-B", 100, n_tokens=600, now=1000.1) is False
-
-
-async def test_rate_limiter_rejected_request_does_not_consume_budget():
-    """Charge-on-success policy — a rejected request must NOT shrink the
-    remaining headroom. Otherwise a steady stream of oversized prompts
-    would lock a token out indefinitely.
-    """
-    rl = TokenRateLimiter(window_s=10.0)
-    # Budget 1000. Spend 700.
-    assert await rl.check_and_charge("tok-C", 100, n_tokens=700, now=1000.0) is True
-    # 400 doesn't fit (would total 1100) → rejected; budget unchanged.
-    assert await rl.check_and_charge("tok-C", 100, n_tokens=400, now=1000.0) is False
-    # 200 should still fit (700 + 200 = 900 ≤ 1000).
-    assert await rl.check_and_charge("tok-C", 100, n_tokens=200, now=1000.0) is True
-
-
-async def test_rate_limiter_window_slides_forward():
-    rl = TokenRateLimiter(window_s=10.0)
-    assert await rl.check_and_charge("tok-D", 100, n_tokens=900, now=1000.0) is True
-    # 100 more right now → still inside budget (total 1000).
-    assert await rl.check_and_charge("tok-D", 100, n_tokens=100, now=1000.0) is True
-    # 1 more right now → rejected (would exceed 1000).
-    assert await rl.check_and_charge("tok-D", 100, n_tokens=1, now=1000.0) is False
-    # 11 seconds later the window has moved past the original 900+100;
-    # the new sample of 50 should be accepted.
-    assert await rl.check_and_charge("tok-D", 100, n_tokens=50, now=1011.0) is True
-
-
-async def test_rate_limiter_null_means_unlimited():
-    """A token with NULL rate_limit_tps must NEVER be rejected, regardless
-    of charge size — the schema's CHECK trigger guarantees we never see
-    <= 0; None is the sentinel for 'no limit configured'."""
-    rl = TokenRateLimiter(window_s=10.0)
-    assert await rl.check_and_charge("tok-E", None, n_tokens=10**9) is True
-    # Repeated giant requests must continue to pass.
-    for _ in range(100):
-        assert await rl.check_and_charge("tok-E", None, n_tokens=10**6) is True
-
-
-async def test_rate_limiter_isolates_tokens():
-    """One token blowing through its budget must NOT affect another token."""
-    rl = TokenRateLimiter(window_s=10.0)
-    # Saturate tok-X.
-    assert await rl.check_and_charge("tok-X", 10, n_tokens=100, now=1000.0) is True
-    assert await rl.check_and_charge("tok-X", 10, n_tokens=10, now=1000.0) is False
-    # tok-Y is independent.
-    assert await rl.check_and_charge("tok-Y", 10, n_tokens=100, now=1000.0) is True
 
 
 # ---------------------------------------------------------------------------

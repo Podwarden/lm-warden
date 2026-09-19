@@ -184,6 +184,7 @@ async def test_manual_rollback_recipe_works(tmp_data_dir):
         db.execute("DROP TRIGGER IF EXISTS api_tokens_rate_limit_tps_range_insert")
         db.execute("DROP TRIGGER IF EXISTS api_tokens_rate_limit_tps_range_update")
         db.execute("DROP TABLE IF EXISTS token_usage_minute")
+        db.execute("DROP INDEX IF EXISTS idx_api_tokens_priority_id")  # 0035
         db.execute("ALTER TABLE api_tokens DROP COLUMN priority")
         db.execute("ALTER TABLE api_tokens DROP COLUMN rate_limit_tps")
         db.execute(

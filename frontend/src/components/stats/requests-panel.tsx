@@ -12,6 +12,7 @@
 // exact value — and its depth is the window's, not a ring's.
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { formatCompact, formatInt, formatLatency } from "@/lib/live-stats";
 import {
@@ -164,7 +165,16 @@ export function RequestsPanel({
                       </td>
                       <td className="px-3 py-2">
                         <span className="font-mono text-xs">
-                          {r.token_name ?? <span className="text-chat-dim">anonymous</span>}
+                          {r.token_id ? (
+                            <Link
+                              href={`/tokens/${encodeURIComponent(r.token_id)}`}
+                              className="hover:underline underline-offset-2"
+                            >
+                              {r.token_name ?? r.token_id}
+                            </Link>
+                          ) : (
+                            r.token_name ?? <span className="text-chat-dim">anonymous</span>
+                          )}
                         </span>
                         {r.orphan && (
                           <span

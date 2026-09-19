@@ -116,7 +116,7 @@ Two more limits worth knowing before you pick it:
   and says which of the two reasons applies rather than offering a switch that
   does nothing.
 - **A GGUF-only repository ships no tokenizer**, so token accounting falls back
-  to a character estimate (which also drives per-token rate limits). Set
+  to a character estimate (which also drives per-key usage figures). Set
   `tokenizer_repo` to the upstream safetensors sibling and counts are exact,
   local and free. The degradation is reported rather than hidden.
 

@@ -19,11 +19,6 @@ const NAME_MIN = 1;
 const NAME_MAX = 64;
 const DAYS_MIN = 0;
 const DAYS_MAX = 3650;
-// rate_limit_tps mirrors the DB CHECK trigger (NULL OR > 0). 1_000_000 is
-// a generous cap so a typo can't be confused with "unlimited" — operators
-// who genuinely want >1M tps should leave the field blank.
-const RATE_MIN = 1;
-const RATE_MAX = 1_000_000;
 // priority mirrors the DB CHECK trigger (0..9). Default 5 matches the SQL
 // column default in 0018_tokens_rate_priority.sql.
 const PRIORITY_MIN = 0;
@@ -42,12 +37,6 @@ interface CreateResponse {
 export function CreateTokenDialog({ open, onClose }: CreateTokenDialogProps) {
   const [name, setName] = useState("");
   const [expiresInDays, setExpiresInDays] = useState("365");
-  // Blank string means "unlimited" (rate_limit_tps = NULL on the backend).
-  // We deliberately surface the empty state as the default — most operators
-  // create tokens for trusted internal clients that don't need throttling,
-  // and the column shows "unlimited" elegantly enough that there's no UX
-  // confusion. Concrete numbers are an opt-in.
-  const [rateLimitTps, setRateLimitTps] = useState("");
   const [priority, setPriority] = useState(String(PRIORITY_DEFAULT));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -65,13 +54,11 @@ export function CreateTokenDialog({ open, onClose }: CreateTokenDialogProps) {
 
   const nameId = useId();
   const daysId = useId();
-  const rateId = useId();
   const priorityId = useId();
 
   function reset() {
     setName("");
     setExpiresInDays("365");
-    setRateLimitTps("");
     setPriority(String(PRIORITY_DEFAULT));
     setError(null);
     setCreated(null);
@@ -106,22 +93,6 @@ export function CreateTokenDialog({ open, onClose }: CreateTokenDialogProps) {
       days = parsed;
     }
 
-    // Blank rate field → null (unlimited). Backend Pydantic accepts None
-    // and the migration's CHECK trigger only fires on NOT NULL values, so
-    // we don't even need to send the field if the operator left it blank.
-    let rateTps: number | null = null;
-    if (rateLimitTps.trim()) {
-      const parsed = Number(rateLimitTps);
-      if (!Number.isInteger(parsed) || parsed < RATE_MIN || parsed > RATE_MAX) {
-        setError(
-          `Rate limit must be an integer between ${RATE_MIN} and ${RATE_MAX.toLocaleString()} ` +
-          `tokens/sec, or blank for unlimited`,
-        );
-        return;
-      }
-      rateTps = parsed;
-    }
-
     const parsedPrio = Number(priority);
     if (!Number.isInteger(parsedPrio) || parsedPrio < PRIORITY_MIN || parsedPrio > PRIORITY_MAX) {
       setError(`Priority must be an integer between ${PRIORITY_MIN} and ${PRIORITY_MAX}`);
@@ -136,7 +107,6 @@ export function CreateTokenDialog({ open, onClose }: CreateTokenDialogProps) {
         body: JSON.stringify({
           name: trimmed,
           expires_in_days: days,
-          rate_limit_tps: rateTps,
           priority: parsedPrio,
         }),
       });
@@ -241,24 +211,6 @@ export function CreateTokenDialog({ open, onClose }: CreateTokenDialogProps) {
             />
             <span className="text-xs text-slate-500">
               0 = never expires. Default 365.
-            </span>
-          </label>
-
-          <label htmlFor={rateId} className="block space-y-1">
-            <span className="text-sm">Rate limit (tokens / sec)</span>
-            <Input
-              id={rateId}
-              type="number"
-              value={rateLimitTps}
-              onChange={(e) => setRateLimitTps(e.target.value)}
-              placeholder="unlimited"
-              min={RATE_MIN}
-              max={RATE_MAX}
-              inputMode="numeric"
-            />
-            <span className="text-xs text-slate-500">
-              Sliding 10-second window. Leave blank for unlimited (default).
-              Over-limit requests get HTTP 429 from the proxy.
             </span>
           </label>
 

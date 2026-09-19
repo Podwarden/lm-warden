@@ -49,6 +49,62 @@ in `.env` so the warden believes it.
 
 ---
 
+## Managing API keys
+
+**API tokens** lists every key; click a name — there or on the stats page —
+to open that key's page at `/ui/tokens/{id}`. Everything you can do to a key
+is on it:
+
+- **Rename** it with the pencil next to the name (Enter saves, Esc cancels).
+  Names need not be unique.
+- **Pause** it. A paused key's next request gets
+  `403 {"detail":"token paused"}`, so a client can tell "switched off" from
+  "wrong key" (401).
+  Requests already running finish and nothing queued is aborted. **Resume**
+  lets the next request through. An expired key, or one revoked past its
+  grace window, cannot be paused — it is already refused. An old key still in
+  its rotation grace window can be, which cuts it off early.
+- **Priority**, P0 to P9. Scheduling is strict: a waiting P9 request always
+  goes before a P8 one, so a low priority can wait indefinitely on a busy box.
+  If you want fair sharing, give every key the same priority. Priority is the
+  only per-key fairness control: per-key rate limits were removed in
+  v2026.09.18.2, because they counted prompt tokens only. An API body that
+  still sends `rate_limit_tps` is refused with 422, and
+  `VW_RATE_LIMIT_WINDOW_S` is no longer read — a leftover line in `.env` is
+  ignored.
+- **Test** it: whether the key is live, paused, expired or revoked, and
+  whether the proxy answers.
+- **Rotate** it. A new key keeps the name; the old one becomes
+  `<name> (old N)` and keeps working through a grace window you choose
+  (24 hours by default). The page then moves to the new key.
+- **Delete** it.
+- **Rotation history** lists the keys this one replaced, oldest first, each
+  linking to its own page with when it was rotated and whether its grace
+  window is still open.
+
+**Usage.** The charts show tokens per minute (prompt or completion), requests
+per minute, queue wait, and latency (first token or full response) — median
+solid, 95th percentile dashed — over 1h, 6h, 24h or 7d, or a custom period:
+drag the window on the history strip, which covers the key's whole life with
+each rotation marked, or type **From** and **To** and press **Apply**. The
+period is kept in the URL, so a reload or a shared link shows the same view.
+**Include earlier keys** (on by default) adds the keys this one was rotated
+from. Bins are chosen on the server, at most about 360 per chart, and a
+minute with no traffic counts as zero rather than being skipped. Presets
+refresh on their own; a custom period does not.
+
+Queue wait and latency come from per-request timings, which are recorded per
+key from v2026.09.18.1 on and kept as long as the rest of request history —
+30 days by default (`VW_REQUEST_HISTORY_RETENTION_DAYS`). A period before that is
+hatched and labelled "Not recorded", so it does not read as idle. On a very
+busy key the timings are computed from an even sample of its requests, and
+the chart says so; request and token counts are always exact.
+
+The same actions and series are in the API — see
+[Managing a key from the API](API.md#managing-a-key-from-the-api).
+
+---
+
 ## Where request content can end up
 
 By default no prompt or completion text is stored anywhere. `request_history`
@@ -58,9 +114,18 @@ reasons, and that is the whole of the metadata path. Two diagnostic features
 can capture content. Both are off by default, and with both off the proxy's
 forward path is the code it would be in a build that never had them.
 
-**God Mode** (`VW_GODMODE_ENABLED`) streams prompts, completions and any
-inline images to one privileged viewer — the way to settle "the model said X"
-when the client is somebody else's code. What it keeps lives in a bounded
+**God mode** (`VW_GODMODE_ENABLED`) streams prompts, completions and any
+inline images to the admin session — the way to settle "the model said X"
+when the client is somebody else's code. You watch it one key at a time: with
+the flag on, each key's page has a **God mode** dock along its bottom edge.
+Opening the dock replays that key's recent requests from memory and then
+streams its new ones live, including the keys it was rotated from when
+**Include earlier keys** is on. Closing the dock closes the stream; a closed
+dock holds no connection, and the dock always starts closed. With the flag
+off the dock is not shown at all. There is no separate god-mode page and no
+all-keys view in the UI. The dock decides only what you watch, not what is
+captured: while the flag is on, every key's traffic goes into the ring whether
+or not a dock is open. What it keeps lives in a bounded
 in-memory ring: 2000 events and ~4 million characters by default
 (`VW_GODMODE_RING_EVENTS`, `VW_GODMODE_RING_CHARS`), oldest evicted first,
 with inline images in a separate bounded store beside it. Nothing reaches the

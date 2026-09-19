@@ -65,6 +65,9 @@ _COLUMNS = (
     "finish_reason",
     "orphan",
     "started_iso",
+    "queued_s",
+    "token_id",
+    "variant_id",
 )
 _SELECT = "SELECT " + ", ".join(_COLUMNS) + " FROM request_history"
 # INSERT OR IGNORE: the id is the registry's uuid, and a record that somehow
@@ -109,6 +112,9 @@ def _row_params(record: dict[str, Any], finished_at: float) -> tuple[Any, ...]:
         record.get("finish_reason"),
         1 if record.get("orphan") else 0,
         str(record.get("started_iso") or ""),
+        _float(record.get("queued_s")),
+        record.get("token_id"),
+        record.get("variant_id"),
     )
 
 
@@ -308,21 +314,25 @@ async def query_window(
     return WindowRows(rows=[_row_dict(r) for r in rows], total=total, stride=stride)
 
 
-async def query_window_latency(
+async def query_window_stats(
     db: aiosqlite.Connection,
     *,
     since: float,
     model_ids: Sequence[str] | None,
 ) -> list[dict[str, Any]]:
-    """Only the columns ``latency_summary`` needs, for EVERY row in the window.
+    """Only the columns the summaries need, for EVERY row in the window.
+
+    Feeds both ``latency_summary`` (TTFT / ITL / duration) and the prefill and
+    generation rates -- one query rather than two nearly identical ones, since
+    the rate functions need the same row plus ``prompt_tokens``.
 
     Deliberately uncapped: a distribution over a sample of the window is not
-    the distribution of the window. Four columns a row keeps a full 7d at the
+    the distribution of the window. Five columns a row keeps a full 7d at the
     retention cap well under a second.
     """
     where, args = _model_clause(model_ids)
     cur = await db.execute(
-        "SELECT finished_at, ttft_s, duration_s, completion_tokens "
+        "SELECT finished_at, ttft_s, duration_s, completion_tokens, prompt_tokens "
         "FROM request_history WHERE finished_at >= ?" + where,
         (since, *args),
     )
@@ -332,6 +342,7 @@ async def query_window_latency(
             "ttft_s": r[1],
             "duration_s": r[2],
             "completion_tokens": r[3],
+            "prompt_tokens": r[4],
         }
         for r in await cur.fetchall()
     ]
@@ -365,6 +376,89 @@ async def earliest_finished_at(db: aiosqlite.Connection) -> float | None:
     a selection with no rows is a different fact that the row count carries.
     """
     cur = await db.execute("SELECT MIN(finished_at) FROM request_history")
+    row = await cur.fetchone()
+    return float(row[0]) if row and row[0] is not None else None
+
+
+#: Most raw rows one series query reads for its percentiles, which are
+#: computed in Python (spec 2026-09-18 §3.4). A busy key over a long window
+#: could otherwise pull the whole retention cap into memory per poll.
+TIMING_ROW_CAP = 50_000
+
+
+@dataclass(frozen=True)
+class TokenTimings:
+    #: ``(finished_at, queued_s, ttft_s, duration_s)``, unordered.
+    rows: list[tuple[float, float | None, float | None, float | None]]
+    #: How many rows the window holds for these keys, before sampling.
+    total: int
+    #: 1 when every row is returned; k when every k-th row (oldest first) is.
+    stride: int
+
+
+async def query_token_timings(
+    db: aiosqlite.Connection,
+    *,
+    token_ids: Sequence[str],
+    since: float,
+    until: float,
+    cap: int = TIMING_ROW_CAP,
+) -> TokenTimings:
+    """Timing columns for every request by one of ``token_ids`` that finished
+    in ``[since, until)`` -- or, past ``cap`` rows, every k-th of them.
+
+    Feeds the token page's queue-wait and latency charts. Sampling is the
+    same uniform stride ``query_window`` uses, ordered OLDEST first, so the
+    whole period stays covered rather than the oldest part being cut off;
+    ``k = ceil(total / cap)`` keeps the rows read at or under ``cap``.
+    Served by idx_request_history_token (0033). Rows written before 0033
+    have no token_id and are never matched.
+    """
+    if not token_ids:
+        return TokenTimings(rows=[], total=0, stride=1)
+    marks = ",".join("?" for _ in token_ids)
+    where = f" WHERE token_id IN ({marks}) AND finished_at >= ? AND finished_at < ?"
+    args = (*token_ids, since, until)
+    cur = await db.execute("SELECT COUNT(*) FROM request_history" + where, args)
+    total = int((await cur.fetchone() or (0,))[0] or 0)
+    cap = max(1, int(cap))
+    if total <= cap:
+        stride = 1
+        cur = await db.execute(
+            "SELECT finished_at, queued_s, ttft_s, duration_s FROM request_history" + where,
+            args,
+        )
+    else:
+        stride = math.ceil(total / cap)
+        cur = await db.execute(
+            "SELECT finished_at, queued_s, ttft_s, duration_s FROM ("
+            "  SELECT finished_at, queued_s, ttft_s, duration_s, "
+            "         ROW_NUMBER() OVER (ORDER BY finished_at, id) AS rn"
+            "  FROM request_history" + where +
+            ") WHERE (rn - 1) % ? = 0",
+            (*args, stride),
+        )
+    rows = [(float(r[0]), r[1], r[2], r[3]) for r in await cur.fetchall()]
+    return TokenTimings(rows=rows, total=total, stride=stride)
+
+
+#: ``earliest_token_finished_at``'s query. Served by the partial index
+#: idx_request_history_token_finished (0034), whose ``WHERE token_id IS NOT
+#: NULL`` this must keep implying; the migration's test EXPLAINs this string.
+EARLIEST_TOKEN_FINISHED_SQL = (
+    "SELECT MIN(finished_at) FROM request_history WHERE token_id IS NOT NULL"
+)
+
+
+async def earliest_token_finished_at(db: aiosqlite.Connection) -> float | None:
+    """When per-TOKEN history begins: the oldest row that carries a token_id.
+
+    Store-wide, like ``earliest_finished_at``, and for the same reason: it is
+    a statement about the store -- token ids were first recorded at the 0033
+    deploy, and retention prunes from the old end -- not about one key. The
+    token page hatches its timing charts before this instant.
+    """
+    cur = await db.execute(EARLIEST_TOKEN_FINISHED_SQL)
     row = await cur.fetchone()
     return float(row[0]) if row and row[0] is not None else None
 
@@ -514,4 +608,134 @@ def latency_summary(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
         "ttft": distribution(ttft, TTFT_EDGES),
         "itl": distribution(itl, ITL_EDGES),
         "duration": distribution(durations, DURATION_EDGES),
+    }
+
+
+# ---- token-rate statistics --------------------------------------------------
+#
+# The stats page asks how FAST the rig runs, which is not the question the
+# tokens-per-minute rollup answers. These derive per-request prefill and
+# generation speeds from the columns the proxy already records, and summarise
+# a set of rates as average / max / mode.
+
+# Geometric bin width for the mode. 1.05 = bins ~5% wide, so one width serves
+# a 900 tok/s prefill and an 8 tok/s generation without per-model tuning.
+MODE_BIN_RATIO = 1.05
+# Below this many samples a "most common value" is noise wearing a statistic's
+# clothes, so it is reported as absent rather than as a number.
+MODE_MIN_SAMPLES = 5
+
+
+def prefill_tps_of(row: dict[str, Any]) -> float | None:
+    """Prefill speed of ONE request: ``prompt_tokens / ttft_s``.
+
+    What this does NOT include, contrary to an earlier reading of it: the
+    warden's admission queue. ``started_monotonic`` in app/proxy/routes.py is
+    read once the scheduler slot is held, so waiting for that slot was never
+    inside ``ttft_s`` -- it is recorded separately in ``queued_s`` (migration
+    0032) and must not be subtracted here.
+
+    What it DOES still include, and what no column can remove: the ENGINE's own
+    waiting queue. vLLM's continuous batching keeps its own queue behind our
+    admission gate, and time spent there lands in ``ttft_s`` with nothing at
+    the proxy able to see it.
+
+    Prefix caching does not merely skew this -- on a long-context workload it
+    DOMINATES it, and the panel no longer calls the result a prefill rate.
+    Measured on a production deployment: median prompt 46,363 tokens, median TTFT
+    1.9s, i.e. ~26,000 tok/s. Prefilling 46k tokens through a 27B is ~2.5e15
+    FLOPs; four A4000s at a generous 100 TFLOPS would need ~25 SECONDS. The
+    tokens were served from the prefix cache, not computed. So this is a
+    measure of CACHE HITS, not of compute, and every statistic over it --
+    average, max and mode alike -- inherits that.
+
+    None when it cannot be computed: no first token (an abort before the first
+    frame, or a non-streaming request, which has no first frame to time), or an
+    empty prompt.
+    """
+    raw_ttft = row.get("ttft_s")
+    n = int(row.get("prompt_tokens") or 0)
+    if raw_ttft is None or n <= 0:
+        return None
+    ttft = float(raw_ttft)
+    if ttft <= 0:
+        return None
+    return n / ttft
+
+
+def gen_tps_of(row: dict[str, Any]) -> float | None:
+    """Generation speed of ONE request, in tokens per second.
+
+    The reciprocal of ``itl_mean_of``: decode-phase tokens over decode-phase
+    seconds is exactly one over the mean gap between them. Sharing that
+    function rather than restating the arithmetic keeps the two panels'
+    refusals identical -- a request with no ITL has no generation rate.
+    """
+    itl = itl_mean_of(row)
+    if itl is None or itl <= 0:
+        return None
+    return 1.0 / itl
+
+
+def mode_relative(
+    values: Iterable[float],
+    *,
+    ratio: float = MODE_BIN_RATIO,
+    min_samples: int = MODE_MIN_SAMPLES,
+) -> float | None:
+    """The most common rate, over bins whose width scales with magnitude.
+
+    Bins are geometric (``floor(log(v) / log(ratio))``) so one setting covers
+    every model on the box: 5% of 900 tok/s and 5% of 8 tok/s are both "near
+    enough to be the same reading". The bin's geometric centre is reported --
+    within 2.5% of every sample in it.
+
+    Zero is its own bin rather than a dropped value: on the wall-clock basis an
+    idle deployment HAS a modal throughput and it is zero, and dropping the
+    idle minutes would report the rate of the busy ones while claiming to
+    describe all of them.
+
+    None when the sample is too small to have a mode, or when no bin holds
+    more than one value -- a flat spread has no modal reading, and taking the
+    lowest bin of size 1 would dress noise up as a typical one.
+    """
+    vals = [
+        float(v)
+        for v in values
+        if v is not None and math.isfinite(float(v)) and float(v) >= 0
+    ]
+    if len(vals) < min_samples:
+        return None
+    log_ratio = math.log(ratio)
+    # None keys the zero bin; ints key the geometric ones.
+    counts: dict[int | None, int] = {}
+    for v in vals:
+        key = None if v == 0 else math.floor(math.log(v) / log_ratio)
+        counts[key] = counts.get(key, 0) + 1
+    # Ties go to the SLOWER bin: two equally common readings and reporting the
+    # faster one would flatter the deployment. The zero bin sorts below every
+    # geometric one, which is what "slowest" means when it is in play.
+    best_key, best_count = max(
+        counts.items(),
+        key=lambda kv: (kv[1], -(kv[0] if kv[0] is not None else -math.inf)),
+    )
+    if best_count < 2:
+        return None
+    return 0.0 if best_key is None else float(ratio ** (best_key + 0.5))
+
+
+def rate_summary(values: Sequence[float]) -> dict[str, Any]:
+    """Average, max and mode of one rate series, plus how many samples it had.
+
+    Empty is reported as absent rather than as zero: no requests in the window
+    is not the same claim as a deployment that ran at 0 tok/s.
+    """
+    vals = [float(v) for v in values if v is not None and math.isfinite(float(v))]
+    if not vals:
+        return {"count": 0, "avg": None, "max": None, "mode": None}
+    return {
+        "count": len(vals),
+        "avg": sum(vals) / len(vals),
+        "max": max(vals),
+        "mode": mode_relative(vals),
     }

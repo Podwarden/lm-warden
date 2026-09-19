@@ -1,11 +1,12 @@
 """S5 (#104) API surface coverage:
 
-  * POST   /api/tokens with rate_limit_tps/priority
+  * POST   /api/tokens with priority
   * PATCH  /api/tokens/{id}
   * GET    /api/tokens/{id}/usage
   * POST   /api/tokens/{id}/test
-  * GET    /api/tokens  surfaces rate_limit_tps + priority + usage_24h
+  * GET    /api/tokens  surfaces priority + usage_24h
   * Pydantic Field(ge=, le=) bounds → 422 (NOT 500)
+  * the removed per-token rate limit: 422 on create/PATCH, absent everywhere
 """
 
 import sqlite3
@@ -23,29 +24,28 @@ def _jwt_login(client):
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
 
 
-def test_create_with_rate_and_priority(tmp_data_dir, client):
+def test_create_with_priority(tmp_data_dir, client):
     _seed_done(tmp_data_dir / "vllm-warden.db")
     auth = _jwt_login(client)
     h = csrf_header(client)
     r = client.post(
         "/api/tokens",
-        json={"name": "fast", "rate_limit_tps": 500, "priority": 9},
+        json={"name": "fast", "priority": 9},
         headers={**auth, **h},
     )
     assert r.status_code == 201, r.text
     body = r.json()
-    assert body["rate_limit_tps"] == 500
     assert body["priority"] == 9
+    assert "rate_limit_tps" not in body
 
 
-def test_create_defaults_unlimited_priority_5(tmp_data_dir, client):
+def test_create_defaults_priority_5(tmp_data_dir, client):
     _seed_done(tmp_data_dir / "vllm-warden.db")
     auth = _jwt_login(client)
     h = csrf_header(client)
     r = client.post("/api/tokens", json={"name": "default"}, headers={**auth, **h})
     assert r.status_code == 201, r.text
     body = r.json()
-    assert body["rate_limit_tps"] is None
     assert body["priority"] == 5
 
 
@@ -61,19 +61,41 @@ def test_create_rejects_priority_out_of_range(tmp_data_dir, client):
     assert r.status_code == 422
 
 
-def test_create_rejects_zero_rate_limit_tps(tmp_data_dir, client):
-    """ge=1 in the Pydantic schema must reject 0 (which means 'unlimited'
-    in the DB schema, but 'unlimited' is expressed via omission/null,
-    not 0). Keeps the API surface unambiguous."""
+def test_create_rejects_the_removed_rate_limit(tmp_data_dir, client):
+    """Per-token rate limits were removed. A client still sending one gets a
+    422 naming the field -- any value, null included -- rather than a 2xx that
+    silently sets no limit. Nothing is created."""
     _seed_done(tmp_data_dir / "vllm-warden.db")
     auth = _jwt_login(client)
     h = csrf_header(client)
-    r = client.post(
-        "/api/tokens",
-        json={"name": "bad", "rate_limit_tps": 0},
-        headers={**auth, **h},
-    )
-    assert r.status_code == 422
+    for value in (500, None, 0):
+        r = client.post(
+            "/api/tokens",
+            json={"name": "bad", "rate_limit_tps": value},
+            headers={**auth, **h},
+        )
+        assert r.status_code == 422, (value, r.text)
+        assert "rate_limit_tps" in r.text
+    assert client.get("/api/tokens", headers=auth).json()["items"] == []
+
+
+def test_patch_rejects_the_removed_rate_limit(tmp_data_dir, client):
+    _seed_done(tmp_data_dir / "vllm-warden.db")
+    auth = _jwt_login(client)
+    h = csrf_header(client)
+    tid = client.post(
+        "/api/tokens", json={"name": "p", "priority": 5}, headers={**auth, **h},
+    ).json()["id"]
+    for value in (200, None):
+        r = client.patch(
+            f"/api/tokens/{tid}",
+            json={"rate_limit_tps": value, "priority": 8},
+            headers={**auth, **h},
+        )
+        assert r.status_code == 422, (value, r.text)
+        assert "rate_limit_tps" in r.text
+    # The whole body was refused: priority is untouched.
+    assert client.get(f"/api/tokens/{tid}", headers=auth).json()["priority"] == 5
 
 
 def test_patch_updates_priority_only(tmp_data_dir, client):
@@ -82,7 +104,7 @@ def test_patch_updates_priority_only(tmp_data_dir, client):
     h = csrf_header(client)
     created = client.post(
         "/api/tokens",
-        json={"name": "p", "rate_limit_tps": 200, "priority": 5},
+        json={"name": "p", "priority": 5},
         headers={**auth, **h},
     )
     tid = created.json()["id"]
@@ -91,28 +113,9 @@ def test_patch_updates_priority_only(tmp_data_dir, client):
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["priority"] == 8
-    assert body["rate_limit_tps"] == 200  # untouched
-
-
-def test_patch_can_clear_rate_limit(tmp_data_dir, client):
-    _seed_done(tmp_data_dir / "vllm-warden.db")
-    auth = _jwt_login(client)
-    h = csrf_header(client)
-    created = client.post(
-        "/api/tokens",
-        json={"name": "c", "rate_limit_tps": 200},
-        headers={**auth, **h},
-    )
-    tid = created.json()["id"]
-
-    r = client.patch(
-        f"/api/tokens/{tid}",
-        json={"rate_limit_tps": None},
-        headers={**auth, **h},
-    )
-    assert r.status_code == 200, r.text
-    body = r.json()
-    assert body["rate_limit_tps"] is None
+    assert body["name"] == "p"  # untouched
+    assert "rate_limit_tps" not in body
+    assert "rate_limit_tps" not in client.get(f"/api/tokens/{tid}", headers=auth).json()
 
 
 def test_patch_404_for_unknown_token(tmp_data_dir, client):
@@ -127,13 +130,13 @@ def test_patch_404_for_unknown_token(tmp_data_dir, client):
     assert r.status_code == 404
 
 
-def test_list_surfaces_rate_priority_and_usage_24h(tmp_data_dir, client):
+def test_list_surfaces_priority_and_usage_24h(tmp_data_dir, client):
     _seed_done(tmp_data_dir / "vllm-warden.db")
     auth = _jwt_login(client)
     h = csrf_header(client)
     create = client.post(
         "/api/tokens",
-        json={"name": "list", "rate_limit_tps": 100, "priority": 6},
+        json={"name": "list", "priority": 6},
         headers={**auth, **h},
     )
     tid = create.json()["id"]
@@ -154,7 +157,7 @@ def test_list_surfaces_rate_priority_and_usage_24h(tmp_data_dir, client):
     items = {it["id"]: it for it in r.json()["items"]}
     assert tid in items
     item = items[tid]
-    assert item["rate_limit_tps"] == 100
+    assert "rate_limit_tps" not in item
     assert item["priority"] == 6
     assert "usage_24h" in item
     assert set(item["usage_24h"].keys()) == {
@@ -219,7 +222,7 @@ def test_post_test_returns_token_health_summary(tmp_data_dir, client):
     h = csrf_header(client)
     create = client.post(
         "/api/tokens",
-        json={"name": "probe", "rate_limit_tps": 500, "priority": 7},
+        json={"name": "probe", "priority": 7},
         headers={**auth, **h},
     )
     tid = create.json()["id"]
@@ -229,10 +232,26 @@ def test_post_test_returns_token_health_summary(tmp_data_dir, client):
     body = r.json()
     assert body["token_id"] == tid
     assert body["ok"] is True
-    assert body["rate_limit_tps"] == 500
+    assert "rate_limit_tps" not in body
     assert body["priority"] == 7
     assert body["revoked"] is False
     # proxy_reachable depends on the test harness — must at least be a bool.
     assert isinstance(body["proxy_reachable"], bool)
     # allowed_models is a list (empty if no models loaded in this test app).
     assert isinstance(body["allowed_models"], list)
+
+
+def test_post_test_reports_paused(tmp_data_dir, client):
+    _seed_done(tmp_data_dir / "vllm-warden.db")
+    auth = _jwt_login(client)
+    h = csrf_header(client)
+    tid = client.post("/api/tokens", json={"name": "probe"}, headers={**auth, **h}).json()["id"]
+
+    body = client.post(f"/api/tokens/{tid}/test", headers={**auth, **h}).json()
+    assert body["paused"] is False
+
+    with sqlite3.connect(tmp_data_dir / "vllm-warden.db") as db:
+        db.execute("UPDATE api_tokens SET paused_at = datetime('now') WHERE id = ?", (tid,))
+        db.commit()
+    body = client.post(f"/api/tokens/{tid}/test", headers={**auth, **h}).json()
+    assert body["paused"] is True

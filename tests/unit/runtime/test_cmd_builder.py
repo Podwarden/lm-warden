@@ -50,7 +50,7 @@ def test_build_vllm_args_bind_host_local_driver_is_loopback(monkeypatch):
     # on loopback. Binding 0.0.0.0 there (the pre-#211 behaviour) published
     # the engine's unauthenticated /v1/* on the pod IP, so anything that
     # could route to the pod got a free LLM API with no bearer check, no
-    # rate limit and no token accounting. Loopback is both sufficient and
+    # priority scheduling and no token accounting. Loopback is both sufficient and
     # the security boundary; this test is the regression guard.
     monkeypatch.delenv("VW_ENGINE_BIND_HOST", raising=False)
     args = build_vllm_args(_row(), port=10001, driver="local")

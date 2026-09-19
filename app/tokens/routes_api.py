@@ -1,10 +1,12 @@
 import secrets
 import time
 from datetime import timedelta
+from typing import Any, Literal
 
+import aiosqlite
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.auth.bearer import generate_bearer_token
 from app.auth.deps import require_jwt
@@ -12,43 +14,214 @@ from app.db.database import open_db
 from app.db.repos.models import ModelRepo
 from app.db.repos.tokens import (
     _UNSET,
+    TokenModelUsageRepo,
     TokenRepo,
+    TokenRow,
     TokenUsageRepo,
+    list_token_page,
     sqlite_utc_in,
     sqlite_utc_now,
 )
+from app.stats import request_history
+from app.tokens import series
 
 router = APIRouter(prefix="/api/tokens", tags=["tokens"])
+
+_RATE_LIMIT_REMOVED = (
+    "rate_limit_tps is no longer supported: per-token rate limits were "
+    "removed. Use priority to order a key's traffic."
+)
+
+
+def _reject_rate_limit_tps(data: object) -> object:
+    """422 a body that still carries ``rate_limit_tps`` (any value, null too).
+
+    Per-token rate limits were removed. These models otherwise ignore unknown
+    keys, like every other body in this API, so without this a client still
+    setting a limit would get a 2xx and silently no limit -- the one outcome
+    worth refusing loudly.
+    """
+    if isinstance(data, dict) and "rate_limit_tps" in data:
+        raise ValueError(_RATE_LIMIT_REMOVED)
+    return data
 
 
 class TokenCreate(BaseModel):
     name: str = Field(min_length=1, max_length=64)
     expires_in_days: int = Field(default=365, ge=0, le=3650)
-    # S5 (#104) — sliding-window rate limit in TOKENS/sec; None = unlimited.
-    # Pydantic validates >0; the DB CHECK trigger is redundant defence in
-    # depth (we don't want a 500 if the route ever forgets the validator).
-    rate_limit_tps: int | None = Field(default=None, ge=1, le=1_000_000)
     # STRICT scheduler priority 0..9; 9 is served first, 0 last. The schema
     # CHECK trigger mirrors this bound. Default 5 matches the column DEFAULT.
     priority: int = Field(default=5, ge=0, le=9)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _no_rate_limit(cls, data: object) -> object:
+        return _reject_rate_limit_tps(data)
 
 
 class TokenUpdate(BaseModel):
     """PATCH body — every field is optional; omit to leave untouched.
 
-    Setting ``rate_limit_tps`` to null (JSON null) clears the limit (i.e.
-    switches the token back to unlimited). Omitting the key entirely leaves
-    whatever value the row already has. The route turns the "omitted" case
-    into the ``_UNSET`` sentinel before calling ``TokenRepo.update_limits``.
+    The route turns an omitted key into the ``_UNSET`` sentinel before
+    calling ``TokenRepo.update``. ``rate_limit_tps`` is refused with 422:
+    per-token rate limits were removed.
+
+    ``name`` is trimmed, then held to TokenCreate's 1..64 bounds. Duplicate
+    names are allowed, as they are at create time. ``paused`` true pauses the
+    key (403 "token paused" on its next request), false resumes it. Neither
+    accepts JSON null: both columns have no "cleared" meaning a null could ask
+    for.
     """
 
-    rate_limit_tps: int | None = Field(default=None, ge=1, le=1_000_000)
+    name: str | None = Field(default=None, min_length=1, max_length=64)
     priority: int | None = Field(default=None, ge=0, le=9)
+    paused: bool | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _no_rate_limit(cls, data: object) -> object:
+        return _reject_rate_limit_tps(data)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def _trim_name(cls, v: object) -> object:
+        # mode="before" runs only when the key is present, so an omitted name
+        # never reaches here; an explicit null does, and is refused.
+        if v is None:
+            raise ValueError("name cannot be null")
+        return v.strip() if isinstance(v, str) else v
+
+    @field_validator("paused", mode="before")
+    @classmethod
+    def _paused_not_null(cls, v: object) -> object:
+        if v is None:
+            raise ValueError("paused cannot be null")
+        return v
 
 
 class TokenRotate(BaseModel):
     grace_hours: int = Field(default=24, ge=0, le=720)
     expires_in_days: int | None = Field(default=None, ge=0, le=3650)
+
+
+def _is_expired(r: TokenRow, now_str: str) -> bool:
+    return r.expires_at is not None and r.expires_at <= now_str
+
+
+def _is_revoked(r: TokenRow, now_str: str) -> bool:
+    # #185 — `revoked_at` alone cannot distinguish "grace window still
+    # open" from "already cut off"; both are non-null. Compute the same
+    # comparison require_bearer makes (app/proxy/auth.py) server-side so
+    # the status badge doesn't depend on the operator's workstation clock.
+    return r.revoked_at is not None and r.revoked_at <= now_str
+
+
+def _dead_state(r: TokenRow, now_str: str) -> str | None:
+    """Why require_bearer would 401 this key -- "expired" or "revoked" -- or
+    None when it is live. Expiry is checked first, in require_bearer's order."""
+    if _is_expired(r, now_str):
+        return "expired"
+    if _is_revoked(r, now_str):
+        return "revoked"
+    return None
+
+
+def _enrich(
+    r: TokenRow,
+    *,
+    successor_id: str | None,
+    usage_24h: tuple[int, int, int],
+    now_str: str,
+    in_30d_str: str,
+) -> dict[str, Any]:
+    """The token's API shape, shared by the list and ``GET /{id}``.
+
+    ``now_str`` is captured once per request by the caller, so every row in
+    one response is judged against the same instant -- up to one 10s UI poll
+    behind, which is the same staleness the list always had.
+    """
+    is_expired = _is_expired(r, now_str)
+    is_near = (
+        r.expires_at is not None
+        and not is_expired
+        and r.expires_at <= in_30d_str
+    )
+    usage_requests, usage_prompt, usage_completion = usage_24h
+    return {
+        "id": r.id,
+        "name": r.name,
+        "prefix": r.prefix,
+        "preview": r.prefix,
+        "created_at": r.created_at,
+        "last_used_at": r.last_used_at,
+        "expires_at": r.expires_at,
+        "rotated_at": r.rotated_at,
+        "rotated_from": r.rotated_from,
+        "successor_id": successor_id,
+        "successor_deleted": r.rotated_at is not None and successor_id is None,
+        "is_expired": is_expired,
+        "is_near_expiry": is_near,
+        "revoked_at": r.revoked_at,
+        "is_revoked": _is_revoked(r, now_str),
+        # S5 (#104) — surface priority + 24h usage rollup so the UI can
+        # paint the "Priority / Last 24h" columns without an extra
+        # round-trip per row.
+        "priority": r.priority,
+        "usage_24h": {
+            "requests": usage_requests,
+            "prompt_tokens": usage_prompt,
+            "completion_tokens": usage_completion,
+            "total_tokens": usage_prompt + usage_completion,
+        },
+        # Token details page (0033): the list badge shows Paused too.
+        "paused_at": r.paused_at,
+        "is_paused": r.paused_at is not None,
+    }
+
+
+def _lineage_entry(r: TokenRow, *, self_id: str, now_str: str) -> dict[str, Any]:
+    return {
+        "id": r.id,
+        "name": r.name,
+        "created_at": r.created_at,
+        "rotated_at": r.rotated_at,
+        "is_revoked": _is_revoked(r, now_str),
+        # A future revoked_at is a rotation grace window still open -- but
+        # only while require_bearer would still let the key in (#251): an
+        # expired key gets 401 and a paused one 403, so neither is "in grace".
+        "in_grace": (
+            r.revoked_at is not None
+            and r.revoked_at > now_str
+            and not _is_expired(r, now_str)
+            and r.paused_at is None
+        ),
+        "is_self": r.id == self_id,
+    }
+
+
+async def _token_detail(db: aiosqlite.Connection, token_id: str) -> dict[str, Any] | None:
+    """``GET /{id}``'s body: ``_enrich`` plus ``lineage``. None if unknown."""
+    chain = await TokenRepo(db).lineage(token_id)
+    ids = [r.id for r in chain]
+    if token_id not in ids:
+        return None
+    i = ids.index(token_id)
+    now_minute = int(time.time() // 60)
+    usage = await TokenUsageRepo(db).totals(
+        token_id=token_id,
+        since_minute=now_minute - 24 * 60,
+        until_minute=now_minute + 1,
+    )
+    now_str = sqlite_utc_now()
+    body = _enrich(
+        chain[i],
+        successor_id=ids[i + 1] if i + 1 < len(ids) else None,
+        usage_24h=usage,
+        now_str=now_str,
+        in_30d_str=sqlite_utc_in(timedelta(days=30)),
+    )
+    body["lineage"] = [_lineage_entry(r, self_id=token_id, now_str=now_str) for r in chain]
+    return body
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -64,7 +237,6 @@ async def create_token(
             name=body.name,
             plaintext=plaintext,
             expires_in_days=body.expires_in_days,
-            rate_limit_tps=body.rate_limit_tps,
             priority=body.priority,
         )
         created = await repo.get(tid)
@@ -78,7 +250,6 @@ async def create_token(
         "prefix": prefix,
         "preview": prefix,
         "expires_at": created.expires_at,
-        "rate_limit_tps": created.rate_limit_tps,
         "priority": created.priority,
     }
 
@@ -90,38 +261,48 @@ async def update_token(
     request: Request,
     _user: str = Depends(require_jwt),
 ):
-    """Update rate/priority on an existing token.
+    """Update name, priority and pause state on an existing token.
 
-    Omitted keys are untouched. Explicit ``null`` for ``rate_limit_tps``
-    clears the limit (back to unlimited). The Pydantic schema rejects
-    out-of-range values with 422; the DB CHECK trigger is belt-and-braces.
+    Omitted keys are untouched. The Pydantic schema rejects out-of-range
+    values -- and the removed ``rate_limit_tps`` -- with 422; the DB CHECK
+    trigger is belt-and-braces.
+
+    ``paused: true`` on a key that is expired, or revoked with its grace
+    window over, is a 409 and nothing in the body is applied: there is
+    nothing left to pause. A predecessor still inside its grace window CAN
+    be paused -- that is the quick way to cut an old key off early.
+
+    Returns the full token, the same shape as ``GET /api/tokens/{id}``.
 
     **Note:** ``priority`` cannot be set to ``null`` — the column is ``NOT NULL``
     in the schema. Sending ``{"priority": null}`` will cause the underlying DB
     write to fail. To reset priority to the default, send ``{"priority": 5}``.
     """
     raw = body.model_dump(exclude_unset=True)
-    rate_arg = raw.get("rate_limit_tps", _UNSET) if "rate_limit_tps" in raw else _UNSET
-    prio_arg = raw.get("priority", _UNSET) if "priority" in raw else _UNSET
-
     async with open_db(request.app.state.settings.db_path) as db:
         repo = TokenRepo(db)
-        ok = await repo.update_limits(
-            token_id, rate_limit_tps=rate_arg, priority=prio_arg,
-        )
-        if not ok:
-            raise HTTPException(404)
         row = await repo.get(token_id)
-    # update_limits returned True so the row MUST exist; the assert
-    # narrows the Optional for mypy and guards against a future race
-    # if the row were deleted between the UPDATE and SELECT (sqlite
-    # serialises the write, so this is defence-in-depth).
-    assert row is not None, f"token {token_id} disappeared mid-PATCH"
-    return {
-        "id": row.id,
-        "rate_limit_tps": row.rate_limit_tps,
-        "priority": row.priority,
-    }
+        if row is None:
+            raise HTTPException(404)
+        if raw.get("paused") is True:
+            dead = _dead_state(row, sqlite_utc_now())
+            if dead is not None:
+                raise HTTPException(
+                    status.HTTP_409_CONFLICT,
+                    detail=f"Token '{row.name}' is {dead}; only a live key can be paused.",
+                )
+        await repo.update(
+            token_id,
+            name=raw.get("name", _UNSET),
+            priority=raw.get("priority", _UNSET),
+            paused=raw.get("paused", _UNSET),
+        )
+        detail = await _token_detail(db, token_id)
+    # get() found the row above and sqlite serialises the write, so the row
+    # MUST still exist; the assert narrows the Optional and guards a race
+    # with a concurrent DELETE.
+    assert detail is not None, f"token {token_id} disappeared mid-PATCH"
+    return detail
 
 
 @router.post("/{token_id}/rotate", status_code=status.HTTP_201_CREATED)
@@ -191,79 +372,147 @@ async def rotate_token(
     }
 
 
-@router.get("")
-async def list_tokens(request: Request, _user: str = Depends(require_jwt)):
-    async with open_db(request.app.state.settings.db_path) as db:
-        rows = await TokenRepo(db).list_all()
-        # Bulk-fetch last-24h usage totals per token in a single pass —
-        # the alternative (N round-trips) would scale poorly when an
-        # operator has hundreds of tokens and the page loads on every
-        # `/tokens` UI mount.
-        usage_repo = TokenUsageRepo(db)
-        now_minute = int(time.time() // 60)
-        since_minute = now_minute - (24 * 60)
-        usage_24h: dict[str, tuple[int, int, int]] = {}
-        for r in rows:
-            usage_24h[r.id] = await usage_repo.totals(
-                token_id=r.id,
-                since_minute=since_minute,
-                until_minute=now_minute + 1,
-            )
+class TokenUsage24h(BaseModel):
+    requests: int
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
 
+
+class TokenListItem(BaseModel):
+    """One ``GET /api/tokens`` item: ``_enrich``'s shape, field for field."""
+
+    id: str
+    name: str
+    prefix: str
+    preview: str
+    created_at: str
+    last_used_at: str | None
+    expires_at: str | None
+    rotated_at: str | None
+    rotated_from: str | None
+    successor_id: str | None
+    successor_deleted: bool
+    is_expired: bool
+    is_near_expiry: bool
+    revoked_at: str | None
+    is_revoked: bool
+    priority: int
+    usage_24h: TokenUsage24h
+    paused_at: str | None
+    is_paused: bool
+
+
+class TokenListPage(BaseModel):
+    items: list[TokenListItem]
+    total: int
+    limit: int
+    offset: int
+    near_expiry: int
+
+
+@router.get("", response_model=TokenListPage)
+async def list_tokens(
+    request: Request,
+    sort: Literal[
+        "name", "prefix", "created", "expires", "last_used", "priority", "usage_24h", "status",
+    ] = Query(
+        default="created",
+        description=(
+            "Sort column. `usage_24h` = prompt + completion tokens over the last "
+            "24h; `status` = the badge order Paused, Revoked, Expired, Grace, "
+            "Expiring soon, Active. NULLs (never used / never expires) sort last "
+            "in both directions; `id` breaks ties."
+        ),
+    ),
+    direction: Literal["asc", "desc"] = Query(default="desc", alias="dir"),
+    limit: int = Query(default=50, ge=1, le=500),
+    offset: int = Query(default=0, ge=0, le=2**62),
+    q: str = Query(
+        default="",
+        max_length=64,
+        description="Case-insensitive substring of the token name; empty = no filter.",
+    ),
+    near_expiry: int = Query(
+        default=0, ge=0, le=1,
+        description=(
+            "1 = only keys expiring within 30 days and not yet expired -- the "
+            "keys the `near_expiry` count counts."
+        ),
+    ),
+    _user: str = Depends(require_jwt),
+) -> dict[str, Any]:
+    """One page of the visible tokens -- ``{items, total, limit, offset,
+    near_expiry}``.
+
+    A key revoked WITHOUT a rotation is hidden, as it always was; a rotated
+    predecessor stays listed. ``total`` counts the visible (and ``q``-matched)
+    keys across all pages and ``near_expiry`` those of them expiring within 30
+    days but not yet expired -- the expiry banner's number. ``near_expiry=1``
+    narrows the list to exactly those keys. Every item is the
+    ``GET /{id}`` shape without ``lineage``.
+
+    A page costs two statements however many keys exist; see
+    ``list_token_page`` for how the sorts use the 0035 indexes.
+    """
+    search = q.strip()
+    now_minute = int(time.time() // 60)
+    # One instant for the whole response: the SQL status rank and _enrich's
+    # badge fields must agree on which keys are expired.
     now_str = sqlite_utc_now()
     in_30d_str = sqlite_utc_in(timedelta(days=30))
-
-    def _enrich(r):
-        is_expired = r.expires_at is not None and r.expires_at <= now_str
-        # #185 — `revoked_at` alone cannot distinguish "grace window still
-        # open" from "already cut off"; both are non-null. Compute the same
-        # comparison require_bearer makes (app/proxy/auth.py) server-side so
-        # the status badge doesn't depend on the operator's workstation clock.
-        # Same staleness characteristics as is_expired: `now_str` is captured
-        # once per list call, i.e. up to one 10s UI poll behind.
-        is_revoked = r.revoked_at is not None and r.revoked_at <= now_str
-        is_near = (
-            r.expires_at is not None
-            and not is_expired
-            and r.expires_at <= in_30d_str
+    async with open_db(request.app.state.settings.db_path) as db:
+        page = await list_token_page(
+            db,
+            sort=sort,
+            desc=direction == "desc",
+            limit=limit,
+            offset=offset,
+            now_str=now_str,
+            in_30d_str=in_30d_str,
+            since_minute=now_minute - 24 * 60,
+            until_minute=now_minute + 1,
+            q=search,
+            near_expiry_only=bool(near_expiry),
         )
-        successor = next((x.id for x in rows if x.rotated_from == r.id), None)
-        usage_requests, usage_prompt, usage_completion = usage_24h.get(
-            r.id, (0, 0, 0),
-        )
-        return {
-            "id": r.id,
-            "name": r.name,
-            "prefix": r.prefix,
-            "preview": r.prefix,
-            "created_at": r.created_at,
-            "last_used_at": r.last_used_at,
-            "expires_at": r.expires_at,
-            "rotated_at": r.rotated_at,
-            "rotated_from": r.rotated_from,
-            "successor_id": successor,
-            "successor_deleted": r.rotated_at is not None and successor is None,
-            "is_expired": is_expired,
-            "is_near_expiry": is_near,
-            "revoked_at": r.revoked_at,
-            "is_revoked": is_revoked,
-            # S5 (#104) — surface rate/priority + 24h usage rollup so the
-            # UI can paint the new "Rate / Priority / Last 24h" columns
-            # without an extra round-trip per row.
-            "rate_limit_tps": r.rate_limit_tps,
-            "priority": r.priority,
-            "usage_24h": {
-                "requests": usage_requests,
-                "prompt_tokens": usage_prompt,
-                "completion_tokens": usage_completion,
-                "total_tokens": usage_prompt + usage_completion,
-            },
-        }
-
     items = [
-        _enrich(r) for r in rows if r.revoked_at is None or r.rotated_at is not None
+        _enrich(
+            e.row,
+            successor_id=e.successor_id,
+            usage_24h=e.usage_24h,
+            now_str=now_str,
+            in_30d_str=in_30d_str,
+        )
+        for e in page.entries
     ]
-    return {"items": items}
+    return {
+        "items": items,
+        "total": page.total,
+        "limit": limit,
+        "offset": offset,
+        "near_expiry": page.near_expiry,
+    }
+
+
+@router.get("/{token_id}")
+async def get_token(
+    token_id: str, request: Request, _user: str = Depends(require_jwt)
+) -> dict[str, Any]:
+    """One token: every field a ``GET /api/tokens`` item carries, plus
+    ``lineage`` -- the rotation chain it belongs to, oldest first, each entry
+    ``{id, name, created_at, rotated_at, is_revoked, in_grace, is_self}``.
+    ``in_grace`` is true only while a rotated key's grace window is open AND
+    it still authenticates -- an expired or paused predecessor is refused, so
+    it reads false.
+
+    Unlike the list, this answers for a plainly revoked key too: a details
+    page linked from anywhere must not 404 a row that exists.
+    """
+    async with open_db(request.app.state.settings.db_path) as db:
+        detail = await _token_detail(db, token_id)
+    if detail is None:
+        raise HTTPException(404)
+    return detail
 
 
 @router.get("/{token_id}/usage")
@@ -329,6 +578,104 @@ async def get_token_usage(
     }
 
 
+@router.get("/{token_id}/series")
+async def get_token_series(
+    token_id: str,
+    request: Request,
+    from_: float = Query(alias="from", description="Window start, epoch seconds."),
+    to: float = Query(description="Window end (exclusive), epoch seconds."),
+    chain: int = Query(
+        default=1, ge=0, le=1,
+        description="1 = include the key's earlier rotated keys; 0 = this key only.",
+    ),
+    max_bins: int = Query(default=series.MAX_BINS, ge=1, le=series.MAX_BINS),
+    timings: int = Query(
+        default=1, ge=0, le=1,
+        description=(
+            "1 = include the queue/TTFT/duration percentiles; 0 = usage only "
+            "(every timing field null, timing_sample empty, latency_since null)."
+        ),
+    ),
+    by_model: int = Query(
+        default=1, ge=0, le=1,
+        description=(
+            "1 = include the per-model split (by_model, model_bins, "
+            "by_model_since); 0 = skip it (empty lists, null since)."
+        ),
+    ),
+    _user: str = Depends(require_jwt),
+) -> dict[str, Any]:
+    """Usage and timings for one key over any window, binned server-side.
+
+    See app/tokens/series.py for the binning rules and the response shape.
+    A ``to`` past the server's clock is clamped to it, not rejected -- a
+    client clock running fast must not turn a "last hour" poll into an empty
+    chart. 422 when that leaves ``from >= to``, or the (possibly clamped)
+    window is longer than 366 days; 404 for an unknown id.
+
+    ``timings=0`` skips request_history entirely -- the history strip draws
+    usage only, over up to 366 days, and must not pay for a COUNT plus up to
+    50k timing rows it never shows (#251). ``by_model=0`` likewise skips
+    token_model_usage_minute; the strip passes both.
+    """
+    try:
+        to = series.validate_window(from_, to, now_s=time.time())
+    except series.SeriesWindowError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+    width = series.pick_bin_minutes(to - from_, max_bins)
+    from_minute, to_minute = series.minute_window(from_, to)
+    async with open_db(request.app.state.settings.db_path) as db:
+        lineage = await TokenRepo(db).lineage(token_id)
+        if not lineage:
+            # A detail of its own, so a test can tell this 404 from a missing
+            # route's bare "Not Found" (#251).
+            raise HTTPException(404, "token not found")
+        ids = series.chain_token_ids(
+            [r.id for r in lineage], token_id, include_earlier=bool(chain),
+        )
+        count_rows = await TokenUsageRepo(db).chain_bins(
+            ids, from_minute=from_minute, to_minute=to_minute, bin_minutes=width,
+        )
+        sample = request_history.TokenTimings(rows=[], total=0, stride=1)
+        latency_since: float | None = None
+        if timings:
+            # Same minutes as the counts, so both halves of a bin cover one
+            # span. The cap is read at call time (not bound as a default) so
+            # a test can lower it.
+            sample = await request_history.query_token_timings(
+                db, token_ids=ids, since=from_minute * 60, until=to_minute * 60,
+                cap=request_history.TIMING_ROW_CAP,
+            )
+            latency_since = await request_history.earliest_token_finished_at(db)
+        model_rows: list[series.VariantRow] = []
+        model_bin_rows: list[series.ModelBinRow] = []
+        by_model_since: int | None = None
+        if by_model:
+            per_model = TokenModelUsageRepo(db)
+            model_rows = await per_model.by_variant(
+                ids, from_minute=from_minute, to_minute=to_minute,
+            )
+            model_bin_rows = await per_model.model_bins(
+                ids, from_minute=from_minute, to_minute=to_minute, bin_minutes=width,
+            )
+            first = await per_model.earliest_minute()
+            by_model_since = None if first is None else first * 60
+    return series.build_series(
+        token_ids=ids,
+        from_minute=from_minute,
+        to_minute=to_minute,
+        bin_minutes=width,
+        count_rows=count_rows,
+        timing_rows=sample.rows,
+        timing_total=sample.total,
+        timing_stride=sample.stride,
+        latency_since=latency_since,
+        by_model=model_rows,
+        model_bin_rows=model_bin_rows,
+        by_model_since=by_model_since,
+    )
+
+
 @router.post("/{token_id}/test")
 async def test_token(
     token_id: str,
@@ -345,8 +692,7 @@ async def test_token(
     so the UI can display the exact failure to the operator.
 
     NB: this endpoint runs as the JWT-authenticated UI user, not as the
-    bearer token holder. It cannot validate the rate-limit / priority
-    path because that requires routing through the real proxy with the
+    bearer token holder. It cannot validate the priority path because that requires routing through the real proxy with the
     bearer secret — out of scope for the test button; the wizard surfaces
     "ping the proxy" mode which is sufficient for operator confidence.
     """
@@ -387,7 +733,6 @@ async def test_token(
         "token_id": token_id,
         "ok": True,
         "allowed_models": allowed_models,
-        "rate_limit_tps": token_row.rate_limit_tps,
         "priority": token_row.priority,
         "proxy_reachable": proxy_reachable,
         # Mirror app/proxy/auth.py::require_bearer — `revoked_at` is a FUTURE
@@ -396,11 +741,10 @@ async def test_token(
         # Reporting it as revoked made Test lie in both directions: about a
         # predecessor still inside a healthy grace window, and about one that
         # was hard-cut with grace_hours=0 (#185).
-        "revoked": (
-            token_row.revoked_at is not None
-            and token_row.revoked_at <= sqlite_utc_now()
-        ),
-        "expired": token_row.expires_at is not None and token_row.expires_at <= sqlite_utc_now(),
+        "revoked": _is_revoked(token_row, sqlite_utc_now()),
+        "expired": _is_expired(token_row, sqlite_utc_now()),
+        # Mirrors require_bearer's 403 "token paused".
+        "paused": token_row.paused_at is not None,
     }
 
 

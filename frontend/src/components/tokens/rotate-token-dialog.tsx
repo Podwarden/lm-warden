@@ -11,6 +11,9 @@ interface RotateTokenDialogProps {
   open: boolean;
   tokenId: string;
   onClose: () => void;
+  /** Called after the success modal closes, with the new token's id. The
+   *  details page navigates there (spec §4.2); the list row doesn't pass it. */
+  onRotated?: (successorId: string) => void;
 }
 
 const GRACE_MIN = 0;
@@ -41,7 +44,7 @@ interface RotateResponse {
 // trap in submit().
 type RotateMode = "grace" | "immediate";
 
-export function RotateTokenDialog({ open, tokenId, onClose }: RotateTokenDialogProps) {
+export function RotateTokenDialog({ open, tokenId, onClose, onRotated }: RotateTokenDialogProps) {
   const [mode, setMode] = useState<RotateMode>("grace");
   const [graceHours, setGraceHours] = useState("24");
   const [expiresInDays, setExpiresInDays] = useState("");
@@ -75,8 +78,10 @@ export function RotateTokenDialog({ open, tokenId, onClose }: RotateTokenDialogP
   }
 
   function handleClose() {
+    const successorId = rotated?.id ?? null;
     reset();
     onClose();
+    if (successorId && onRotated) onRotated(successorId);
   }
 
   async function submit() {

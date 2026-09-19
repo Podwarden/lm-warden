@@ -7,10 +7,15 @@ Authorization header — composes with the existing proxy/Caddy SSE path. There 
 no viewer/operator/admin RBAC in this project; the warden's single privileged UI
 session (a valid access JWT → a ticket) is the gate.
 
-On connect: replay the hub's ring snapshot as ``data:`` frames, then stream live
-events from the subscriber queue. Idle windows emit a ``: keepalive`` comment so
+On connect: send a ``: connected`` comment, replay the hub's ring snapshot as
+``data:`` frames, then stream live events from the subscriber queue. Idle windows emit a ``: keepalive`` comment so
 intermediate proxies don't sever the connection. The subscriber is removed in a
 ``finally`` on disconnect / cancellation / close.
+
+``?token_ids=a,b`` (token details page, spec 2026-09-18 §3.5) narrows both the
+replay and the live events to those keys. Absent, the stream is byte-for-byte
+what it was before the parameter existed -- scripts use it that way -- apart
+from the leading ``: connected`` comment (#251), which every SSE parser skips.
 """
 
 import asyncio
@@ -18,12 +23,15 @@ import base64
 import binascii
 import json
 import re
+import time
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response, StreamingResponse
 
 from app.auth.deps import require_jwt
 from app.models.routes_logs import require_sse_ticket
+from app.proxy.godmode import MAX_TOKEN_IDS, event_matches, parse_token_ids
 from app.utils.sse import sse_headers
 
 router = APIRouter(prefix="/api/admin/godmode", tags=["godmode"])
@@ -41,6 +49,12 @@ STREAM_PATH = "/api/admin/godmode/stream"
 # don't tear down a quiet stream. Module-level so tests can monkeypatch a
 # sub-second value rather than waiting real time. Mirrors routes_logs.py.
 KEEPALIVE_INTERVAL_S: float = 15.0
+
+# The stream's very first bytes (#251). EventSource fires ``open`` -- the
+# viewer's "Live" badge -- only once bytes arrive, and with an empty ring and a
+# quiet hub the first ones used to be a keepalive up to KEEPALIVE_INTERVAL_S
+# later. An SSE comment is ignored by every parser, so it carries no event.
+CONNECTED_FRAME = ": connected\n\n"
 
 # Media ids are secrets.token_hex(8) -> exactly 16 lowercase hex chars. The
 # regex is defense-in-depth (the store is a flat dict, so no traversal is
@@ -76,9 +90,30 @@ async def godmode_media(
     )
 
 
+@router.get("/status")
+async def godmode_status(request: Request, user: str = Depends(require_jwt)) -> dict[str, bool]:
+    """Whether god mode is on. The token page asks before it renders the dock
+    at all (spec 2026-09-18 §3.5). A plain authed fetch, like ``/media``: no
+    SSE ticket, and nothing is subscribed."""
+    settings = request.app.state.settings
+    hub = getattr(request.app.state, "godmode_hub", None)
+    return {"enabled": hub is not None and bool(settings.godmode_enabled)}
+
+
 @router.get("/stream")
 async def godmode_stream(
-    request: Request, user: str = Depends(require_sse_ticket)
+    request: Request,
+    user: str = Depends(require_sse_ticket),
+    token_ids: Annotated[
+        str | None,
+        Query(
+            description=(
+                f"Comma-separated api_tokens ids, at most {MAX_TOKEN_IDS}. "
+                "Only those keys' events are replayed and streamed. "
+                "Omit for every key."
+            ),
+        ),
+    ] = None,
 ):
     settings = request.app.state.settings
     hub = getattr(request.app.state, "godmode_hub", None)
@@ -87,6 +122,11 @@ async def godmode_stream(
     # spinning on an empty EventSource.
     if hub is None or not settings.godmode_enabled:
         raise HTTPException(409, "god mode is disabled (VW_GODMODE_ENABLED)")
+    # Parsed BEFORE subscribing so a refused filter leaves no subscriber.
+    try:
+        wanted = parse_token_ids(token_ids)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
 
     queue, snapshot = hub.subscribe()
     registry = request.app.state.stream_registry
@@ -95,22 +135,38 @@ async def godmode_stream(
         current = asyncio.current_task()
         registry.register(user, current)
         try:
+            yield CONNECTED_FRAME
             # Replay the ring snapshot first so a freshly-opened page
             # immediately shows the last few requests.
             for event in snapshot:
-                yield f"data: {json.dumps(event)}\n\n"
-            # Live loop: block on the queue up to the keepalive interval; on
-            # timeout emit a comment frame and re-check the client connection.
+                if event_matches(event, wanted):
+                    yield f"data: {json.dumps(event)}\n\n"
+            # Live loop: block on the queue until the next keepalive is due;
+            # on timeout emit a comment frame and re-check the connection.
+            #
+            # The wait is the time REMAINING until that deadline, not a fresh
+            # KEEPALIVE_INTERVAL_S, and only a frame this client receives
+            # moves the deadline. A filtered stream can be busy with OTHER
+            # keys' events: each one wakes this loop without reaching the
+            # client, so a full-interval wait after it would let the gap grow
+            # to about twice the interval (#251). Unfiltered, every event is
+            # sent and resets the deadline, so the cadence is as before.
+            keepalive_due = time.monotonic() + KEEPALIVE_INTERVAL_S
             while True:
                 if await request.is_disconnected():
                     return
+                remaining = keepalive_due - time.monotonic()
                 try:
-                    event = await asyncio.wait_for(
-                        queue.get(), timeout=KEEPALIVE_INTERVAL_S
-                    )
-                    yield f"data: {json.dumps(event)}\n\n"
+                    if remaining <= 0:
+                        raise TimeoutError
+                    event = await asyncio.wait_for(queue.get(), timeout=remaining)
                 except TimeoutError:
                     yield ": keepalive\n\n"
+                    keepalive_due = time.monotonic() + KEEPALIVE_INTERVAL_S
+                    continue
+                if event_matches(event, wanted):
+                    yield f"data: {json.dumps(event)}\n\n"
+                    keepalive_due = time.monotonic() + KEEPALIVE_INTERVAL_S
         finally:
             registry.unregister(user, current)
             hub.unsubscribe(queue)

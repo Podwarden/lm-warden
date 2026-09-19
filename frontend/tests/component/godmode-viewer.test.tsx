@@ -15,11 +15,14 @@ import { render, screen, act, cleanup, fireEvent, within } from '@testing-librar
 // Local Virtuoso mock — renders all rows AND records the last props so tests
 // can drive atBottomStateChange and read followOutput. `vi.hoisted` makes the
 // capture object available inside the hoisted vi.mock factory.
-const vh = vi.hoisted(() => ({ lastProps: null as any }));
+const vh = vi.hoisted(() => ({ lastProps: null as any, scrollTo: null as any, scroller: null as any, scrollHeight: 0 }));
 vi.mock('react-virtuoso', () => {
   const React = require('react');
   function Virtuoso(props: any) {
     vh.lastProps = props;
+    // React 19 passes `ref` as a plain prop; expose a spy-able handle.
+    React.useImperativeHandle(props.ref, () => ({ scrollToIndex: () => {}, scrollTo: (o: unknown) => vh.scrollTo?.(o) }), []);
+    React.useEffect(() => { props.scrollerRef?.(vh.scroller); }, [props.scrollerRef]);
     const { data = [], itemContent, computeItemKey, components, style } = props;
     const children = data.map((item: unknown, idx: number) => {
       const key = computeItemKey ? computeItemKey(idx, item) : idx;
@@ -38,7 +41,8 @@ vi.mock('react-virtuoso', () => {
   return { Virtuoso };
 });
 
-import { GodModeViewer } from '@/components/godmode/godmode-viewer';
+import { createRef, type ComponentProps } from 'react';
+import { GodModeViewer, clearFinished, MAX_EVENTS, type GodModeViewerHandle } from '@/components/godmode/godmode-viewer';
 import { reqColor } from '@/components/godmode/req-color';
 import { setAccessToken, setCsrfToken } from '@/lib/auth-fetch';
 
@@ -63,10 +67,10 @@ function push(ev: Record<string, unknown>) {
   });
 }
 
-async function mountConnected() {
+async function mountConnected(props: Partial<ComponentProps<typeof GodModeViewer>> = {}) {
   vi.stubGlobal('EventSource', FakeES as unknown as typeof EventSource);
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ticket":"t1"}')));
-  render(<GodModeViewer />);
+  render(<GodModeViewer tokenIds={['tok_abc']} {...props} />);
   // Flush the ticket-mint promise + the FakeES onopen setTimeout.
   await act(async () => {
     await vi.advanceTimersByTimeAsync(0);
@@ -79,6 +83,13 @@ describe('GodModeViewer', () => {
     setAccessToken('test-jwt');
     setCsrfToken('test-csrf');
     vh.lastProps = null;
+    vh.scrollTo = vi.fn();
+    // A scroller 400 px tall showing the bottom of 1000 px of content.
+    vh.scroller = document.createElement('div');
+    vh.scrollHeight = 1000;
+    Object.defineProperty(vh.scroller, 'scrollHeight', { configurable: true, get: () => vh.scrollHeight });
+    Object.defineProperty(vh.scroller, 'clientHeight', { configurable: true, get: () => 400 });
+    vh.scroller.scrollTop = 600;
   });
   afterEach(() => {
     cleanup();
@@ -192,7 +203,7 @@ describe('GodModeViewer', () => {
     // viewer maps 404/409 to the "god mode is disabled" placeholder.
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('disabled', { status: 409 })));
 
-    render(<GodModeViewer />);
+    render(<GodModeViewer tokenIds={['tok_abc']} />);
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
     });
@@ -247,6 +258,7 @@ describe('GodModeViewer', () => {
     const r2 = document.querySelector('[data-req-id="r2"]') as HTMLElement;
     const toggle = within(r2).getByTestId('godmode-prompt-toggle');
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveTextContent(/^system prompt · [\d,]+ chars · unchanged from previous$/);
 
     // The divergent NEW turn is visible; the shared head is hidden.
     expect(within(r2).getByTestId('godmode-prompt-remainder')).toHaveTextContent(
@@ -329,5 +341,187 @@ describe('GodModeViewer', () => {
     const r2 = document.querySelector('[data-req-id="r2"]') as HTMLElement;
     expect(within(r1).getByTestId('godmode-media-strip')).toBeInTheDocument();
     expect(within(r2).queryByTestId('godmode-media-strip')).toBeNull();
+  });
+
+  it('streams only the given tokens: ?token_ids= is on the EventSource URL', async () => {
+    await mountConnected({ tokenIds: ['tok_a', 'tok_b'] });
+    expect(FakeES.last.url).toBe('/api/admin/godmode/stream?token_ids=tok_a%2Ctok_b&ticket=t1');
+  });
+
+  // #251: no tokens means no stream at all — not an unfiltered one, and not
+  // a ticket for an empty `token_ids=` (the server 422s that).
+  it('opens no stream (and mints no ticket) for an empty token list', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('{"ticket":"t1"}'));
+    vi.stubGlobal('fetch', fetchMock);
+    const made: string[] = [];
+    vi.stubGlobal('EventSource', class { constructor(u: string) { made.push(u); } close() {} } as unknown as typeof EventSource);
+    render(<GodModeViewer tokenIds={[]} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(made).toHaveLength(0);
+  });
+
+  // #251: the banner sits over the scrolled list, so it needs the dock's own
+  // background (and to stack above the rows), or the text under it shows through.
+  it('draws the "older events elided" banner on the dock background, above the rows', async () => {
+    await mountConnected();
+    act(() => {
+      for (let i = 0; i <= MAX_EVENTS; i++) {
+        FakeES.last.onmessage?.(new MessageEvent('message', {
+          data: JSON.stringify(i === 0
+            ? { seq: 0, type: 'request_start', req_id: 'r1', ts: 0, token_label: 'k', token_id: 'tok_abc', model: 'm', served_name: 'm', client_ip: '10.0.0.5', stream: true, prompt: 'p' }
+            : { seq: i, type: 'delta', req_id: 'r1', ts: i, channel: 'content', text: 'x' }),
+        }));
+      }
+    });
+    const banner = screen.getByText(/older event elided/);
+    expect(banner).toHaveTextContent('… 1 older event elided');
+    expect(banner).toHaveClass('bg-vw-dock', 'z-10');
+  });
+
+  it('has no model selector any more', async () => {
+    await mountConnected();
+    push({ seq: 1, type: 'request_start', req_id: 'r1', ts: 0, token_label: 'k', token_id: 't', model: 'm', served_name: 's', client_ip: 'ip', stream: true, prompt: 'p' });
+    // The ModelSelector rendered checkboxes (inline chips) or a summary button.
+    expect(screen.queryByRole('checkbox')).toBeNull();
+  });
+
+  it('marks a running request "streaming" with a caret, then shows the finish reason', async () => {
+    await mountConnected();
+    push({ seq: 1, type: 'request_start', req_id: 'r1', ts: 0, token_label: 'k', token_id: 't', model: 'm', served_name: 's', client_ip: 'ip', stream: true, prompt: 'p' });
+    expect(screen.getByTestId('godmode-running')).toHaveTextContent('streaming');
+    expect(screen.getByTestId('godmode-caret')).toBeInTheDocument();
+    push({ seq: 2, type: 'request_end', req_id: 'r1', ts: 1, finish_reason: 'stop', prompt_tokens: 1, completion_tokens: 1 });
+    expect(screen.queryByTestId('godmode-running')).toBeNull();
+    expect(screen.queryByTestId('godmode-caret')).toBeNull();
+    expect(screen.getByTestId('godmode-finish')).toHaveTextContent('stop');
+  });
+
+  it('reports counts, and clear() drops finished requests but keeps running ones', async () => {
+    const onCounts = vi.fn();
+    const ref = createRef<GodModeViewerHandle>();
+    await mountConnected({ onCounts, ref });
+    push({ seq: 1, type: 'request_start', req_id: 'done', ts: 0, token_label: 'k', token_id: 't', model: 'm', served_name: 's', client_ip: 'ip', stream: true, prompt: 'p1' });
+    push({ seq: 2, type: 'request_end', req_id: 'done', ts: 1, finish_reason: 'stop', prompt_tokens: 1, completion_tokens: 1 });
+    push({ seq: 3, type: 'request_start', req_id: 'live', ts: 2, token_label: 'k', token_id: 't', model: 'm', served_name: 's', client_ip: 'ip', stream: true, prompt: 'p2' });
+    expect(onCounts).toHaveBeenLastCalledWith({ requests: 2, running: 1 });
+
+    act(() => ref.current!.clear());
+    expect(document.querySelector('[data-req-id="done"]')).toBeNull();
+    expect(document.querySelector('[data-req-id="live"]')).not.toBeNull();
+    expect(onCounts).toHaveBeenLastCalledWith({ requests: 1, running: 1 });
+  });
+
+  it('setFollowing(false) stops auto-scroll; setFollowing(true) resumes it', async () => {
+    const onFollowingChange = vi.fn();
+    const ref = createRef<GodModeViewerHandle>();
+    await mountConnected({ onFollowingChange, ref });
+    push({ seq: 1, type: 'request_start', req_id: 'r1', ts: 0, token_label: 'k', token_id: 't', model: 'm', served_name: 's', client_ip: 'ip', stream: true, prompt: 'p' });
+    expect(onFollowingChange).toHaveBeenLastCalledWith(true);
+
+    act(() => ref.current!.setFollowing(false));
+    expect(vh.lastProps.followOutput).toBe(false);
+    expect(onFollowingChange).toHaveBeenLastCalledWith(false);
+
+    act(() => ref.current!.setFollowing(true));
+    expect(vh.lastProps.followOutput).toBe('auto');
+    expect(onFollowingChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('lands on the newest request, following, once the replay burst settles', async () => {
+    const onFollowingChange = vi.fn();
+    await mountConnected({ onFollowingChange });
+    for (let i = 0; i < 3; i++) {
+      push({ seq: i + 1, type: 'request_start', req_id: `r${i}`, ts: i, token_label: 'k', token_id: 't', model: 'm', served_name: 's', client_ip: 'ip', stream: true, prompt: 'p' });
+    }
+    // The burst pushes the tail below the fold; Virtuoso reports not-at-bottom.
+    act(() => vh.lastProps.atBottomStateChange(false));
+    expect(screen.getByRole('button', { name: /jump to latest/i })).toBeInTheDocument();
+    await act(async () => { await vi.advanceTimersByTimeAsync(60); });
+    expect(screen.queryByRole('button', { name: /jump to latest/i })).not.toBeInTheDocument();
+    expect(onFollowingChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('lands and stays following even under a continuous supply of deltas faster than the 50ms landing timer (regression)', async () => {
+    // useStickyBottom returns a fresh object every render. Before the fix, the
+    // landing effect depended on that whole object, so a delta-driven
+    // re-render (deltas can arrive well under 50ms apart while streaming)
+    // tore down and rescheduled the timer before it ever got to fire — the
+    // dock never landed/followed until the stream went quiet.
+    const onFollowingChange = vi.fn();
+    await mountConnected({ onFollowingChange });
+    for (let i = 0; i < 3; i++) {
+      push({ seq: i + 1, type: 'request_start', req_id: `r${i}`, ts: i, token_label: 'k', token_id: 't', model: 'm', served_name: 's', client_ip: 'ip', stream: true, prompt: 'p' });
+    }
+    act(() => vh.lastProps.atBottomStateChange(false));
+    expect(screen.getByRole('button', { name: /jump to latest/i })).toBeInTheDocument();
+
+    let seq = 4;
+    for (let i = 0; i < 10; i++) {
+      push({ seq: seq++, type: 'delta', req_id: 'r1', ts: i, channel: 'content', text: 'x' });
+      await act(async () => { await vi.advanceTimersByTimeAsync(20); });
+    }
+
+    expect(screen.queryByRole('button', { name: /jump to latest/i })).not.toBeInTheDocument();
+    expect(onFollowingChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('keeps the growing last block pinned to the bottom while following, like the mockup\'s scrollEnd() per delta', async () => {
+    const ref = createRef<GodModeViewerHandle>();
+    await mountConnected({ ref });
+    push({ seq: 1, type: 'request_start', req_id: 'r1', ts: 0, token_label: 'k', token_id: 't', model: 'm', served_name: 's', client_ip: 'ip', stream: true, prompt: 'p' });
+    await act(async () => { await vi.advanceTimersByTimeAsync(60); });   // landed, following
+    act(() => vh.lastProps.totalListHeightChanged(950));
+    vh.scrollTo.mockClear();
+
+    // A delta grows the last block by 50 px while the view is at the bottom.
+    act(() => vh.lastProps.totalListHeightChanged(1000));
+    expect(vh.scrollTo).toHaveBeenCalledWith({ top: Number.MAX_SAFE_INTEGER });
+
+    // The operator scrolled up 300 px to read: growth leaves them there.
+    vh.scroller.scrollTop = 300;
+    fireEvent.scroll(vh.scroller);
+    vh.scrollTo.mockClear();
+    act(() => vh.lastProps.totalListHeightChanged(1030));
+    expect(vh.scrollTo).not.toHaveBeenCalled();
+
+    // "Following" off: growth at the bottom no longer scrolls either.
+    vh.scroller.scrollTop = 600;
+    fireEvent.scroll(vh.scroller);
+    act(() => ref.current!.setFollowing(false));
+    vh.scrollTo.mockClear();
+    act(() => vh.lastProps.totalListHeightChanged(1060));
+    expect(vh.scrollTo).not.toHaveBeenCalled();
+  });
+
+  it('a reader 120 px above the bottom is not pulled down when a large block arrives', async () => {
+    await mountConnected();
+    push({ seq: 1, type: 'request_start', req_id: 'r1', ts: 0, token_label: 'k', token_id: 't', model: 'm', served_name: 's', client_ip: 'ip', stream: true, prompt: 'p' });
+    await act(async () => { await vi.advanceTimersByTimeAsync(60); });   // landed, following
+    act(() => vh.lastProps.totalListHeightChanged(950));
+    // Scroll 120 px up from the bottom of 1000 px of content (400 px viewport).
+    vh.scroller.scrollTop = 1000 - 400 - 120;
+    fireEvent.scroll(vh.scroller);
+    vh.scrollTo.mockClear();
+
+    // A 300 px block arrives; Virtuoso reports it before the DOM grows…
+    act(() => vh.lastProps.totalListHeightChanged(1250));
+    expect(vh.scrollTo).not.toHaveBeenCalled();
+    // …and again once the scroller already includes it.
+    vh.scrollHeight = 1600;
+    act(() => vh.lastProps.totalListHeightChanged(1550));
+    expect(vh.scrollTo).not.toHaveBeenCalled();
+    expect(vh.scroller.scrollTop).toBe(480);
+  });
+
+  it('reports the stream status for the dock\'s Live indicator', async () => {
+    const onStatusChange = vi.fn();
+    await mountConnected({ onStatusChange });
+    expect(onStatusChange).toHaveBeenLastCalledWith('connected');
+  });
+
+  it('clearFinished is a no-op when nothing has finished', () => {
+    const s = { events: [], elided: 0, reqIndex: {}, nextIndex: 0 };
+    expect(clearFinished(s)).toBe(s);
   });
 });

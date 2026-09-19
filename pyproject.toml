@@ -23,6 +23,7 @@ pythonpath = ["."]
 addopts = "-ra --strict-markers"
 markers = [
     "integration: requires real subprocess + filesystem",
+    "perf: scale sanity checks (seconds, not minutes); deselect with -m 'not perf'",
     "fresh_db: the `client` fixture must let the lifespan migrate an empty DB instead of copying the pre-migrated template",
 ]
 

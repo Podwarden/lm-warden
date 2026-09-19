@@ -17,6 +17,8 @@ function Chat2Shell() {
   const { theme } = useTheme();
   // stable across renders — the package hooks tolerate churn, but there is no reason to cause it
   const adapters = useMemo(() => createHttpAdapters({ baseUrl: '/api/chat2', fetch: authFetch }), []);
+  // Full-height shell: 100vh minus the nav bar (3.5rem, h-14) and the
+  // breadcrumb strip (30px, BREADCRUMB_BAR_PX in components/breadcrumb-header).
   return (
     <ChatApp
       adapters={adapters}
@@ -25,7 +27,7 @@ function Chat2Shell() {
       initialChatId={params.get('c')}
       syncUrlParam="c"
       rootInertId="app-root"
-      className="-m-6 h-[calc(100vh-3.5rem)]"
+      className="-m-6 h-[calc(100vh-3.5rem-30px)]"
     />
   );
 }

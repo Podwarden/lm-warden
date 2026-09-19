@@ -139,6 +139,29 @@ describe('header-metrics-stream singleton', () => {
     unsubB();
   });
 
+  // #251: an unmount + remount while the first ticket was still minting
+  // (a route change, a remounting parent) tore the first stream down, but its
+  // in-flight connect() then saw the NEW stream as live and opened an
+  // EventSource on it too — two connections, the first never closed.
+  it('a connect() from a torn-down stream never opens an EventSource on its successor', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async () => {
+      await gate; // both mints are in flight together
+      return new Response(JSON.stringify({ ticket: 'ticket-xyz' }), { status: 200 });
+    }));
+    const unsubA = subscribeHeaderMetrics(vi.fn());
+    unsubA();
+    const unsubB = subscribeHeaderMetrics(vi.fn());
+    release();
+    await waitFor(() => FakeEventSource.instances.length >= 1);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(FakeEventSource.instances).toHaveLength(1);
+    expect(FakeEventSource.instances[0].closed).toBe(false);
+    unsubB();
+    expect(FakeEventSource.instances[0].closed).toBe(true);
+  });
+
   it('closes the EventSource when the last subscriber unsubscribes', async () => {
     const sub = vi.fn();
     const unsub = subscribeHeaderMetrics(sub);

@@ -522,10 +522,15 @@ curl -s -b jar -X POST $W/api/tokens \
 {"id":"e17c6f99faf36fc034fb300616cb7b78","name":"my-first-key",
  "plaintext":"vw_s7zngjc5t3hgx745l4e5c2yy54s3rarcb4rky2oqm4acou3q5ersswsa",
  "prefix":"vw_s7zng","preview":"vw_s7zng","expires_at":"2027-09-06 19:35:19",
- "rate_limit_tps":null,"priority":5}
+ "priority":5}
 ```
 
 `plaintext` is shown once. Save it now.
+
+Everything after minting — rename, priority, pause, rotation, the key's usage
+and latency charts — is on the key's own page, `/ui/tokens/{id}` (click its
+name under **API tokens**), and in the API under
+[Managing a key from the API](API.md#managing-a-key-from-the-api).
 
 ### Failure: `403 {"detail":"csrf token invalid"}`
 
@@ -1242,6 +1247,8 @@ And do delete the directory as the closing line says — that is what removes
 | `make: *** [Makefile:NNN: smoke] Error 56` | Race: `compose up -d` returns before the stack serves. `56` is curl's exit code, not a status from the server | `sleep 15` and re-run — [B4](#b4-bring-the-stack-up-and-the-make-restart--make-smoke-race) |
 | `jq: command not found` | `jq` is not installed and is not in the requirements list | `apt install jq`, or substitute `python3 -m json.tool` |
 | `403 {"detail":"csrf token invalid"}` | You read `.csrf_token` instead of `.csrf`, **or** you dropped `-b jar` | [Minting an API key](#minting-an-api-key) |
+| `/v1` answers `403 {"detail":"token paused"}` | The key was paused on its page or by `PATCH {"paused":true}` | **Resume** on the key's page, or `PATCH {"paused":false}` — [Managing API keys](OPERATING.md#managing-api-keys) |
+| Creating or patching a key → `422` naming `rate_limit_tps` | Per-key rate limits were removed in v2026.09.18.2 | Drop the field; use `priority` — [Managing a key from the API](API.md#managing-a-key-from-the-api) |
 | Piping `/pull/progress` to `jq` produces nothing | It is a server-sent event stream, not JSON | Read it line by line |
 | `failed \| vllm subprocess exited unexpectedly (rc=1)` | Usually another process holding the card | `nvidia-smi --query-compute-apps=…` before touching any tuning knob |
 | `failed \| GPU ran out of memory loading the model…` | Genuine capacity | Fewer/larger GPUs, lower `gpu_memory_utilization`, lower `max_model_len` |

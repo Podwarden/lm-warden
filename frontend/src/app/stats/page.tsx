@@ -38,8 +38,8 @@
 // Charts carry a FIXED 24h reference — dashed busy-median, dotted peak — see
 // @/lib/live-history for the busy_median/peak mirror semantics.
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import useSWR from "swr";
 import { authFetchJSON } from "@/lib/auth-fetch";
 import {
@@ -85,6 +85,8 @@ import {
   type LatencyBasis,
   type LatencyResponse,
   type RequestHistoryResponse,
+  type ThroughputBasis,
+  type ThroughputResponse,
 } from "@/lib/request-history";
 import { ModelSelector, type SelectableModel } from "@/components/stats/model-selector";
 import {
@@ -103,6 +105,7 @@ import {
   engineStateOf,
 } from "@/components/stats/live-panels";
 import { BasisToggle, LatencyPanels } from "@/components/stats/latency-panels";
+import { ThroughputPanel } from "@/components/stats/throughput-panel";
 import { RequestsPanel } from "@/components/stats/requests-panel";
 import { StatCard } from "@/components/stat-card";
 import {
@@ -137,6 +140,12 @@ const historyRefreshInterval = () =>
 
 // localStorage key for the latency basis (window vs last N).
 const BASIS_KEY = "vw.stats.latency-basis";
+
+// localStorage key for the throughput basis (per-request speed vs wall-clock
+// throughput). Separate from BASIS_KEY: they answer different questions and
+// an operator who wants engine speed does not thereby want the last N
+// requests' latency.
+const THROUGHPUT_BASIS_KEY = "vw.stats.throughput-basis";
 
 type Sort = { col: keyof StatsV2TokensPerKeyRow | "total_tokens"; dir: "asc" | "desc" };
 
@@ -343,6 +352,40 @@ export default function StatsPage() {
     keepPreviousData: true,
   });
 
+  // ---- prefill / generation throughput ------------------------------------
+  //
+  // Replaces the single blended tokens-per-second tile. Scoped by the model
+  // selection and bound to the window like every other history panel: a 24h
+  // reading must not sit under a 1h heading.
+  // Wall clock by default. The per-request basis cannot answer "how fast is
+  // the rig" on this workload and is wrong in BOTH directions: prompt/ttft
+  // counts prefix-cached tokens the engine never computed (46k-token prompts
+  // at 1.9s TTFT read as ~26k tok/s, ~13x what four A4000s can physically
+  // prefill through a 27B), while per-request decode is one request's share of
+  // a batched engine. See the header comment on throughput-panel.tsx.
+  const [throughputBasis, setThroughputBasis] = useState<ThroughputBasis>(() => {
+    try {
+      return window.localStorage.getItem(THROUGHPUT_BASIS_KEY) === "request"
+        ? "request"
+        : "wallclock";
+    } catch {
+      return "wallclock";
+    }
+  });
+  const chooseThroughputBasis = (b: ThroughputBasis) => {
+    setThroughputBasis(b);
+    try {
+      window.localStorage.setItem(THROUGHPUT_BASIS_KEY, b);
+    } catch {
+      /* private mode */
+    }
+  };
+  const throughput = useSWR<ThroughputResponse>(
+    `/api/stats/v2/throughput?range=${range}&basis=${throughputBasis}${modelsQs}`,
+    authFetchJSON,
+    { refreshInterval, keepPreviousData: true },
+  );
+
   // ---- 5-minute live ring -------------------------------------------------
   //
   // Keyed on wall time, never on the request set, and kept PER MODEL so the
@@ -387,6 +430,25 @@ export default function StatsPage() {
   const state = engineStateOf(shownFrames);
   const scrapeErrors = shownFrames.filter((f) => f.scrape_error !== null);
   const noModel = frame !== null && allFrames.length === 0;
+
+  // Defined once and placed twice, because the two branches below are mutually
+  // exclusive. It LIVES in the live section for layout (under Context and
+  // cache, level with Preemptions) but it is NOT live data -- it reads the
+  // persisted request history, which outlives the engine. Hiding it with the
+  // live panels when the engine goes idle would drop a window the operator can
+  // still act on.
+  const throughputPanel = (
+    <ThroughputPanel
+      className="lg:col-span-2 lg:row-start-2"
+      data={throughput.data}
+      basis={throughputBasis}
+      onBasisChange={chooseThroughputBasis}
+      isLoading={throughput.isLoading && !throughput.data}
+      error={throughput.error}
+      range={range}
+      human={meta.human}
+    />
+  );
 
   // ---- what the numbers cover, read off the RESPONSE ---------------------
   const covering = scoped.data?.selected_model_ids ?? null;
@@ -452,14 +514,6 @@ export default function StatsPage() {
           <StateChip state={noModel ? "none" : state} />
           {frame && <LastUpdated ts={frame.ts} />}
         </div>
-        <Link
-          href="/godmode"
-          data-testid="godmode-link"
-          className="inline-flex h-9 items-center gap-1.5 rounded-md border border-chat-rule bg-chat-surface/50 px-3 text-xs text-chat-muted transition-colors hover:bg-chat-surface-2 hover:text-chat-fg"
-        >
-          <span aria-hidden className="text-chat-positive">◉</span>
-          God Mode
-        </Link>
       </div>
 
       {/* 2 ── ONE control bar: MODELS │ WINDOW │ scope note -------------- */}
@@ -562,10 +616,9 @@ export default function StatsPage() {
           </span>
         </div>
 
-        <div data-testid="current-row" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div data-testid="current-row" className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           {!data ? (
             <>
-              <Skeleton className="h-24 w-full" />
               <Skeleton className="h-24 w-full" />
               <Skeleton className="h-24 w-full" />
               <Skeleton className="h-24 w-full" />
@@ -610,15 +663,6 @@ export default function StatsPage() {
                     ? "No GPU on this host reports power.draw."
                     : undefined
                 }
-              />
-              <StatCard
-                label="Tokens / sec"
-                value={
-                  <span data-testid="tile-tps-value">
-                    {formatTps((tokensData ?? data).current.tps)}
-                  </span>
-                }
-                hint={`last full minute · ${one ? scopePhrase : "selected"}`}
               />
             </>
           )}
@@ -714,10 +758,13 @@ export default function StatsPage() {
         </div>
 
         {noModel ? (
-          <EmptyState
-            title="No model loaded"
-            body="The engine is idle. Load a model to see the live timeline, latency distributions and per-session telemetry. Host charts above keep their history."
-          />
+          <div className="space-y-4">
+            <EmptyState
+              title="No model loaded"
+              body="The engine is idle. Load a model to see the live timeline, latency distributions and per-session telemetry. Host charts above keep their history."
+            />
+            {throughputPanel}
+          </div>
         ) : (
           <>
             <Panel
@@ -755,6 +802,7 @@ export default function StatsPage() {
                     one averaged percentage would describe nothing. */}
                 <ModelContextRows frames={shownFrames} />
               </Panel>
+              {throughputPanel}
               <div className="space-y-4">
                 <Panel
                   title="Preemptions"
@@ -839,9 +887,18 @@ export default function StatsPage() {
                   </thead>
                   <tbody className="divide-y divide-chat-rule/70 font-mono tabular-nums text-chat-muted">
                     {rollups.by_token.map((r, i) => (
-                      <tr key={`${r.token_name ?? "anon"}-${i}`}>
+                      <tr key={`${r.token_id ?? "anon"}-${i}`}>
                         <td className="px-4 py-2 text-xs">
-                          {r.token_name ?? <span className="text-chat-dim">anonymous</span>}
+                          {r.token_id ? (
+                            <Link
+                              href={`/tokens/${encodeURIComponent(r.token_id)}`}
+                              className="hover:underline underline-offset-2"
+                            >
+                              {r.token_name ?? r.token_id}
+                            </Link>
+                          ) : (
+                            r.token_name ?? <span className="text-chat-dim">anonymous</span>
+                          )}
                         </td>
                         <td className="px-3 py-2 text-right">{r.requests}</td>
                         <td className="px-3 py-2 text-right text-chat-fg">
@@ -964,7 +1021,16 @@ export default function StatsPage() {
                 {sortedRows.map((row) => (
                   <tr key={row.token_id} data-testid="tokens-per-key-row" className="text-chat-fg">
                     <td className="px-3 py-2">
-                      {row.name}
+                      {row.name === "(unknown)" ? (
+                        row.name
+                      ) : (
+                        <Link
+                          href={`/tokens/${encodeURIComponent(row.token_id)}`}
+                          className="hover:underline underline-offset-2"
+                        >
+                          {row.name}
+                        </Link>
+                      )}
                       {row.name === "(unknown)" && (
                         <span
                           className="ml-2 rounded bg-chat-warn/20 px-1.5 py-0.5 text-[10px] uppercase text-chat-warn"

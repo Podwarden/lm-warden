@@ -122,19 +122,26 @@ describe("merged stats — selection scoping", () => {
     expect(screen.getByText(/host \/ all models/i)).toBeInTheDocument();
   });
 
-  it("DOES scope the tokens-per-second KPI", async () => {
-    // The overview stub answers tps=11 unfiltered and tps=5 narrowed, so the
-    // tile's value proves which response it read. formatTps keeps one
-    // decimal below 10 (the same rule stats-page.test.tsx pins for 14 → "14"),
-    // so the narrowed figure renders as "5.0".
+  it("DOES scope prefill and generation throughput", async () => {
+    // The throughput stub answers 500/50 tok/s unfiltered and 200/20 narrowed,
+    // so the panel's figures prove which response it read. Prefill and
+    // generation are asserted separately because keeping them apart is the
+    // whole reason this panel replaced the blended tokens-per-second tile.
     renderPage();
     await waitFor(() =>
       expect(screen.getAllByTestId("model-selector-option")).toHaveLength(2),
     );
-    fireEvent.click(boxFor("id-model-b-27b"));
     await waitFor(() =>
-      expect(screen.getByTestId("tile-tps-value").textContent).toBe("5.0"),
+      expect(screen.getByTestId("tp-prefill-avg").textContent).toBe("500"),
     );
+    expect(screen.getByTestId("tp-generation-avg").textContent).toBe("50");
+
+    fireEvent.click(boxFor("id-model-b-27b"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("tp-prefill-avg").textContent).toBe("200"),
+    );
+    expect(screen.getByTestId("tp-generation-avg").textContent).toBe("20");
   });
 });
 
@@ -206,5 +213,32 @@ describe("merged stats — combining a mixed selection", () => {
     const tile = screen.getByTestId("preempt-rate");
     expect(tile.textContent).toContain("—");
     expect(tile.textContent).toMatch(/not reported/i);
+  });
+});
+
+describe("merged stats — throughput survives an idle engine", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    setAccessToken("test-jwt", 900);
+    setCsrfToken("test-csrf");
+    vi.stubGlobal("ResizeObserver", FakeResizeObserver);
+    installFetchStub();
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("still shows token throughput when no model is loaded", async () => {
+    // The panel sits inside the LIVE section for layout reasons (under Context
+    // and cache, beside Preemptions), but it is NOT live data — it reads the
+    // persisted history, which outlives the engine. Hiding it with the live
+    // panels would throw away a window the operator can still act on.
+    setFrame({ ...frameWith([block("model-a-8b")]), models: [] });
+    renderPage();
+    await waitFor(() =>
+      expect(screen.getByText(/no model loaded/i)).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("throughput-panel")).toBeInTheDocument();
   });
 });

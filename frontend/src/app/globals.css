@@ -364,3 +364,116 @@ body {
     outline-offset: 2px;
   }
 }
+
+/* ── Token details page (spec 2026-09-18 §4.6) ─────────────────────────────
+   Colours the approved mockup uses that the chat-* scale has no token for.
+   Space-separated R G B so Tailwind can add alpha (`bg-vw-amber-bg/35`).
+   retro-dark values are copied verbatim from the mockup; `:root` carries them
+   too because retro-dark is the default before ThemeProvider sets data-theme. */
+/* vw-tokens: dark */
+:root,
+[data-theme="retro-dark"] {
+  --vw-rule-soft: 92 69 32;       /* #5c4520 — the mockup's --rule-soft is this at .5 */
+  --vw-btn: 180 83 9;             /* #b45309 */
+  --vw-btn-hover: 194 97 15;      /* #c2610f */
+  --vw-on-btn: 255 251 235;       /* #fffbeb */
+  --vw-danger: 248 113 113;       /* #f87171 */
+  --vw-danger-fg: 252 165 165;    /* #fca5a5 */
+  --vw-danger-bg: 127 29 29;      /* #7f1d1d */
+  --vw-amber-bg: 120 53 15;       /* #78350f */
+  --vw-amber-fg: 252 211 77;      /* #fcd34d */
+  --vw-band-fg: 253 230 138;      /* #fde68a */
+  --vw-ok-bg: 6 78 59;            /* #064e3b */
+  --vw-ok-fg: 110 231 183;        /* #6ee7b7 */
+  --vw-live: 52 211 153;          /* #34d399 */
+  --vw-info-bg: 30 58 138;        /* #1e3a8a */
+  --vw-info-fg: 147 197 253;      /* #93c5fd */
+  --vw-low-bg: 92 58 24;          /* #5c3a18 */
+  --vw-low-fg: 252 217 182;       /* #fcd9b6 */
+  --vw-dock: 21 15 6;             /* #150f06 */
+  --vw-prompt: 167 139 250;       /* #a78bfa */
+  --vw-completion: 52 211 153;    /* #34d399 */
+  --vw-requests: 245 158 11;      /* #f59e0b */
+  --vw-queue: 251 191 36;         /* #fbbf24 */
+  --vw-ttft: 125 211 252;         /* #7dd3fc */
+  --vw-dur: 249 168 212;          /* #f9a8d4 */
+  --vw-strip-chain: 107 85 48;    /* #6b5530 */
+  --vw-strip-own: 161 129 47;     /* #a1812f */
+  /* Categorical palette for per-model lines (the tokens chart, the usage-by-
+     model card). Six hues far apart from each other and bright enough on the
+     #1e160a page; a seventh model reuses model-1. */
+  --vw-model-1: 56 189 248;       /* #38bdf8 sky */
+  --vw-model-2: 244 114 182;      /* #f472b6 pink */
+  --vw-model-3: 163 230 53;       /* #a3e635 lime */
+  --vw-model-4: 251 146 60;       /* #fb923c orange */
+  --vw-model-5: 167 139 250;      /* #a78bfa violet */
+  --vw-model-6: 45 212 191;       /* #2dd4bf teal */
+  --vw-color-scheme: dark;
+}
+/* vw-tokens: light */
+[data-theme="retro"] {
+  --vw-rule-soft: 218 200 160;
+  --vw-btn: 180 83 9;
+  --vw-btn-hover: 146 64 14;
+  --vw-on-btn: 255 255 255;
+  --vw-danger: 220 38 38;
+  --vw-danger-fg: 185 28 28;
+  --vw-danger-bg: 254 202 202;
+  --vw-amber-bg: 254 243 199;
+  --vw-amber-fg: 146 64 14;
+  --vw-band-fg: 120 53 15;
+  --vw-ok-bg: 209 250 229;
+  --vw-ok-fg: 4 120 87;
+  --vw-live: 5 150 105;
+  --vw-info-bg: 219 234 254;
+  --vw-info-fg: 30 64 175;
+  --vw-low-bg: 245 230 200;
+  --vw-low-fg: 120 72 30;
+  --vw-dock: 255 251 240;
+  --vw-prompt: 124 58 237;
+  --vw-completion: 5 150 105;
+  --vw-requests: 217 119 6;
+  --vw-queue: 180 83 9;
+  --vw-ttft: 2 132 199;
+  --vw-dur: 219 39 119;
+  --vw-strip-chain: 230 210 170;
+  --vw-strip-own: 180 130 40;
+  --vw-model-1: 2 132 199;
+  --vw-model-2: 219 39 119;
+  --vw-model-3: 77 124 15;
+  --vw-model-4: 234 88 12;
+  --vw-model-5: 124 58 237;
+  --vw-model-6: 13 148 136;
+  --vw-color-scheme: light;
+}
+/* vw-tokens: end */
+
+/* Mockup: `:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }`,
+   scoped to the page root so the rest of the app keeps its ring styles. */
+.vw-td :focus-visible {
+  outline: 2px solid rgb(var(--chat-accent));
+  outline-offset: 2px;
+}
+
+/* Mockup `.live::before` — the dock's pulsing Live dot. */
+@keyframes vw-pulse {
+  70% { box-shadow: 0 0 0 6px rgb(var(--vw-live) / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(var(--vw-live) / 0); }
+}
+.vw-live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgb(var(--vw-live));
+  box-shadow: 0 0 0 0 rgb(var(--vw-live) / .6);
+  animation: vw-pulse 1.6s infinite;
+}
+/* Mockup `.caret` — block cursor after a streaming response. */
+@keyframes vw-blink { 50% { opacity: 0; } }
+.vw-caret {
+  display: inline-block; width: 7px; height: 13px;
+  background: rgb(var(--chat-accent));
+  vertical-align: -2px; margin-left: 1px;
+  animation: vw-blink 1s steps(2) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vw-live-dot, .vw-caret { animation: none; }
+}
