@@ -130,8 +130,9 @@ export default function ModelDetailPage({
     // detail tab doesn't keep hammering the API while the operator is in
     // another tab. Coming back triggers SWR's focus-revalidate so the
     // first frame after returning is fresh.
-    refreshInterval: () =>
-      typeof document !== "undefined" && document.hidden ? 0 : 2000,
+    // A number, not a function returning 0 while hidden: SWR stops polling
+    // for good on a 0. It already skips ticks while the tab is hidden.
+    refreshInterval: 2000,
   });
   // The breadcrumb strip and the back button name the model by its served
   // name, not its id. A model that failed to load (404 included) falls back

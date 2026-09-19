@@ -34,7 +34,9 @@ cat > "$STUBS/docker" <<'EOF'
 # nvidia runtime in `docker info --format`; STUB_DOCKER_ROOT is the data root
 # `docker info --format {{.DockerRootDir}}` reports (set it empty to model a
 # daemon that reports none); STUB_HAVE_IMAGE=1 makes `docker images -q` find
-# an api image already in the store. Every call is appended to $CALLS.
+# an api image already in the store; STUB_DOCKER_CDI=1 lists CDI spec dirs
+# (CDI enabled); STUB_CGROUP is the cgroup driver (cgroupfs). Every call is
+# appended to $CALLS.
 printf '%s\n' "docker $*" >> "$CALLS"
 case "$1" in
   info)
@@ -42,6 +44,9 @@ case "$1" in
     if [ "${2:-}" = "--format" ]; then
       case "${3:-}" in
         *DockerRootDir*) echo "${STUB_DOCKER_ROOT-/var/lib/docker}" ;;
+        *CDISpecDirs*)
+          if [ "${STUB_DOCKER_CDI:-0}" = 1 ]; then echo '["/etc/cdi","/var/run/cdi"]'; else echo '[]'; fi ;;
+        *CgroupDriver*) echo "${STUB_CGROUP:-cgroupfs}" ;;
         *)
           if [ "${STUB_NVIDIA_RUNTIME:-0}" = 1 ]; then echo '{"io.containerd.runc.v2":{},"nvidia":{"path":"nvidia-container-runtime"},"runc":{}}'
           else echo '{"io.containerd.runc.v2":{},"runc":{}}'; fi ;;
@@ -78,8 +83,22 @@ avail=${STUB_DF_AVAIL_KB:-107500000}
 echo "Filesystem     1024-blocks      Used Available Capacity Mounted on"
 echo "/dev/vda2        209612800 $((209612800 - avail)) $avail  50% /"
 EOF
-# nvidia-ctk deliberately absent: the toolkit is "not installed".
-chmod +x "$STUBS/docker" "$STUBS/nvidia-smi" "$STUBS/df"
+# nvidia-ctk is absent unless a case sets STUB_CTK=1 (the toolkit is then
+# "installed"): run() puts $STUBS/ctk on PATH only for those cases.
+mkdir -p "$STUBS/ctk"
+cat > "$STUBS/ctk/nvidia-ctk" <<'EOF'
+#!/bin/sh
+# nvidia-ctk stub. STUB_CDI is a comma list of nvidia.com/gpu device names the
+# CDI spec provides (e.g. all,0,1); empty = no spec.
+printf '%s\n' "nvidia-ctk $*" >> "$CALLS"
+case "$1 ${2:-}" in
+  "cdi list")
+    echo "INFO Found ${STUB_CDI:+some} CDI devices" >&2
+    for n in $(printf '%s' "${STUB_CDI:-}" | tr ',' ' '); do echo "nvidia.com/gpu=$n"; done ;;
+esac
+exit 0
+EOF
+chmod +x "$STUBS/docker" "$STUBS/nvidia-smi" "$STUBS/df" "$STUBS/ctk/nvidia-ctk"
 
 # A minimal source tree: the real files, as install.sh will see them in a
 # checkout, plus a changelog naming a release so VERSION pinning is exercised.
@@ -115,8 +134,9 @@ run() {
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do envs="$envs $1"; shift; done
   [ $# -eq 0 ] || shift
   set +e
+  case " $envs " in *" STUB_CTK=1 "*) SP="$STUBS/ctk:$STUBS" ;; *) SP="$STUBS" ;; esac
   # shellcheck disable=SC2086
-  (cd "$D" && env PATH="$STUBS:$PATH" $envs "$SH" ./install.sh "$@") >"$OUT" 2>&1
+  (cd "$D" && env PATH="$SP:$PATH" $envs "$SH" ./install.sh "$@") >"$OUT" 2>&1
   RC=$?
   set -e
 }
@@ -129,6 +149,7 @@ run help -- --help
 assert_rc "--help exits 0" 0 "$RC" "$OUT"
 assert_grep "--help documents --gpus" '--gpus VALUE' "$OUT"
 assert_grep "--help documents GPU_TOOLKIT_INSTALL" 'GPU_TOOLKIT_INSTALL=yes.no' "$OUT"
+assert_grep "--help documents GPU_REQUEST" 'GPU_REQUEST=auto.cdi.nvidia' "$OUT"
 
 run badflag -- --bogus
 assert_rc "unknown flag exits 1" 1 "$RC"
@@ -281,7 +302,7 @@ assert_grep "override reserves count: all" 'count: all' "$D/docker-compose.overr
 assert_grep "override exposes all GPUs" 'NVIDIA_VISIBLE_DEVICES: "all"' "$D/docker-compose.override.yml"
 assert_grep "--start brings the stack up" '^docker compose up -d --no-build' "$CALLS"
 assert_grep "summary prints the UI URL" 'http://localhost:8080/ui/' "$OUT"
-assert_grep "override log prints the values, count first" 'Wrote docker-compose.override.yml \(release v2026.01.02.3, GPUs: 2 \(indices 0,1\), port 8080\)' "$OUT"
+assert_grep "override log prints the values, count first" 'Wrote docker-compose.override.yml \(release v2026.01.02.3, GPUs: 2 \(indices 0,1\) via nvidia, port 8080\)' "$OUT"
 assert_nogrep "override log has no unexpanded variables" '\$\{VERSION\}|\$\{WARDEN_PORT\}' "$OUT"
 
 run one STUB_GPUS=1 STUB_NVIDIA_RUNTIME=1 -- --gpus all --yes
@@ -296,6 +317,65 @@ assert_grep "subset log says how many of how many" 'GPUs: 2 of 3 \(indices 2,0\)
 
 run fullsubset STUB_GPUS=2 STUB_NVIDIA_RUNTIME=1 -- --gpus 0,1 --yes
 assert_grep "listing every GPU collapses to count: all" 'count: all' "$D/docker-compose.override.yml"
+
+# ---- GPUs through CDI (#254) -------------------------------------------------------------
+# The legacy nvidia hook grants the GPUs behind the cgroup manager's back, and a
+# systemd reload revokes them from the running container. CDI does not have
+# that problem, so it is the default whenever Docker and the toolkit offer it.
+
+run cdi_all STUB_GPUS=2 STUB_CTK=1 STUB_DOCKER_CDI=1 STUB_CDI=all,0,1 STUB_CGROUP=systemd VW_HOST_ROOT="$WORK/host-cdi_all" -- --gpus all --yes
+assert_rc "CDI: --gpus all exits 0 without the nvidia runtime" 0 "$RC" "$OUT"
+assert_grep "CDI: override uses driver: cdi" 'driver: cdi' "$D/docker-compose.override.yml"
+assert_grep "CDI: override requests nvidia.com/gpu=all" 'device_ids: \["nvidia.com/gpu=all"\]' "$D/docker-compose.override.yml"
+assert_nogrep "CDI: no legacy nvidia driver left" 'driver: nvidia' "$D/docker-compose.override.yml"
+assert_grep "CDI: the legacy hook is told to inject nothing" 'NVIDIA_VISIBLE_DEVICES: "void"' "$D/docker-compose.override.yml"
+assert_grep "CDI: the log says why" 'through CDI' "$OUT"
+assert_grep "CDI: override log names the request" 'GPUs: 2 \(indices 0,1\) via cdi' "$OUT"
+assert_nogrep "CDI: no nvidia-runtime complaint" 'Docker cannot pass them' "$OUT"
+assert_grep "systemd host: udev rule installed" 'create-dev-char-symlinks --create-all' "$WORK/host-cdi_all/etc/udev/rules.d/71-nvidia-dev-char.rules"
+assert_grep "systemd host: symlinks created now" '^nvidia-ctk system create-dev-char-symlinks --create-all' "$CALLS"
+[ "$(env_val VW_CONTAINER_GPU_COUNT "$D/.env")" = 2 ] && pass "CDI: VW_CONTAINER_GPU_COUNT=2" || fail "CDI: VW_CONTAINER_GPU_COUNT=$(env_val VW_CONTAINER_GPU_COUNT "$D/.env")"
+
+run cdi_subset STUB_GPUS=3 STUB_CTK=1 STUB_DOCKER_CDI=1 STUB_CDI=all,0,1,2 -- --gpus 2,0 --yes
+assert_rc "CDI subset exits 0" 0 "$RC" "$OUT"
+assert_grep "CDI subset: one device per index, in order" 'device_ids: \["nvidia.com/gpu=2", "nvidia.com/gpu=0"\]' "$D/docker-compose.override.yml"
+
+run cdi_cgroupfs STUB_GPUS=2 STUB_CTK=1 STUB_DOCKER_CDI=1 STUB_CDI=all,0,1 VW_HOST_ROOT="$WORK/host-cdi_cgroupfs" -- --gpus all --yes
+assert_grep "cgroupfs host: still CDI" 'driver: cdi' "$D/docker-compose.override.yml"
+[ ! -e "$WORK/host-cdi_cgroupfs/etc/udev/rules.d/71-nvidia-dev-char.rules" ] && pass "cgroupfs host: no udev rule" || fail "cgroupfs host: udev rule written"
+
+run cdi_hostprep_no STUB_GPUS=2 STUB_CTK=1 STUB_DOCKER_CDI=1 STUB_CDI=all,0,1 STUB_CGROUP=systemd GPU_HOST_PREP=no VW_HOST_ROOT="$WORK/host-cdi_no" -- --gpus all --yes
+[ ! -e "$WORK/host-cdi_no/etc/udev/rules.d/71-nvidia-dev-char.rules" ] && pass "GPU_HOST_PREP=no: no udev rule" || fail "GPU_HOST_PREP=no: udev rule written"
+assert_nogrep "GPU_HOST_PREP=no: no symlinks created" 'create-dev-char-symlinks' "$CALLS"
+
+run cdi_missing_index STUB_GPUS=2 STUB_NVIDIA_RUNTIME=1 STUB_CTK=1 STUB_DOCKER_CDI=1 STUB_CDI=0 -- --gpus 0,1 --yes
+assert_grep "CDI spec lacks a device: falls back to the hook" 'driver: nvidia' "$D/docker-compose.override.yml"
+assert_grep "CDI spec lacks a device: says which" 'no device for: all' "$OUT"
+
+run cdi_disabled_systemd STUB_GPUS=2 STUB_NVIDIA_RUNTIME=1 STUB_CTK=1 STUB_CDI=all,0,1 STUB_CGROUP=systemd -- --gpus all --yes
+assert_rc "CDI off: legacy hook still installs" 0 "$RC" "$OUT"
+assert_grep "CDI off: legacy driver" 'driver: nvidia' "$D/docker-compose.override.yml"
+assert_grep "CDI off: says Docker has CDI disabled" 'Docker has CDI disabled' "$OUT"
+assert_grep "CDI off on systemd: warns about the reload" 'Failed to initialize' "$OUT"
+
+run cdi_off_cgroupfs STUB_GPUS=2 STUB_NVIDIA_RUNTIME=1 -- --gpus all --yes
+assert_nogrep "cgroupfs host on the hook: no systemd warning" 'Failed to initialize' "$OUT"
+
+run force_nvidia STUB_GPUS=2 STUB_NVIDIA_RUNTIME=1 STUB_CTK=1 STUB_DOCKER_CDI=1 STUB_CDI=all,0,1 GPU_REQUEST=nvidia -- --gpus all --yes
+assert_grep "GPU_REQUEST=nvidia wins over CDI" 'driver: nvidia' "$D/docker-compose.override.yml"
+
+run force_cdi_unavailable STUB_GPUS=2 STUB_NVIDIA_RUNTIME=1 GPU_REQUEST=cdi -- --gpus all --yes
+assert_rc "GPU_REQUEST=cdi without CDI: exit 2 (written, not startable)" 2 "$RC" "$OUT"
+assert_grep "GPU_REQUEST=cdi without CDI: explains" 'GPU_REQUEST=cdi, but' "$OUT"
+
+run bad_request STUB_GPUS=2 GPU_REQUEST=hook -- --gpus all --yes
+assert_rc "unknown GPU_REQUEST exits 1" 1 "$RC" "$OUT"
+assert_grep "unknown GPU_REQUEST is named" "GPU_REQUEST must be auto, cdi or nvidia \(got 'hook'\)" "$OUT"
+
+run check_cdi STUB_GPUS=1 STUB_CTK=1 STUB_DOCKER_CDI=1 STUB_CDI=all,0 STUB_CGROUP=systemd VW_HOST_ROOT="$WORK/host-check_cdi" -- --check
+assert_rc "--check passes on CDI without the nvidia runtime" 0 "$RC" "$OUT"
+[ ! -e "$WORK/host-check_cdi/etc/udev/rules.d/71-nvidia-dev-char.rules" ] && pass "--check writes no udev rule" || fail "--check wrote the udev rule"
+assert_nogrep "--check creates no symlinks" 'create-dev-char-symlinks' "$CALLS"
 
 run flags STUB_GPUS=0 -- --gpus none --yes --origin 'https://llm.example.com,http://10.0.0.5:8080' --port 9090 --version v2026.02.03.1 --no-pull
 assert_rc "origin/port/version/no-pull exits 0" 0 "$RC" "$OUT"

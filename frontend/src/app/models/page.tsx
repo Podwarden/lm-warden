@@ -27,8 +27,9 @@ export default function ModelsPage() {
     // tab nobody is looking at (and the visibilitychange-driven revalidate
     // on focus will catch the user up immediately when they come back).
     {
-      refreshInterval: () =>
-        typeof document !== "undefined" && document.hidden ? 0 : 5000,
+      // A number, not a function returning 0 while hidden: SWR stops polling
+      // for good on a 0. It already skips ticks while the tab is hidden.
+      refreshInterval: 5000,
     },
   );
 

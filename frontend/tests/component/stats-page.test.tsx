@@ -356,6 +356,50 @@ describe("StatsPage", () => {
     expect(screen.getByTestId("tile-power-value").textContent).toBe("—");
   });
 
+  // #255: a failing GPU probe must not leave the pre-failure sample on show.
+  it("says GPU telemetry is unavailable, with the reason, instead of stale numbers", async () => {
+    const NVML = "nvidia-smi exit 255: Failed to initialize NVML: Unknown Error";
+    installFetchStub({
+      overview: {
+        ...FIXTURE_OVERVIEW,
+        current: {
+          ...FIXTURE_OVERVIEW.current,
+          vram_used_mib: null,
+          vram_total_mib: null,
+          vram_pct: null,
+          gpu_util_pct: null,
+          power_w: null,
+          gpu_probe: { state: "failing", error: NVML },
+        },
+      },
+    });
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByTestId("tile-vram-value")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("tile-vram-value").textContent).toBe("—");
+    expect(screen.getByTestId("tile-util-value").textContent).toBe("—");
+    expect(screen.getByTestId("tile-power-value").textContent).toBe("—");
+    expect(screen.getAllByText("GPU telemetry unavailable").length).toBeGreaterThanOrEqual(3);
+    expect(screen.getByText(new RegExp(`GPU telemetry unavailable: ${NVML}`))).toBeInTheDocument();
+    expect(screen.getByText(/loading one will fail until the api container is restarted/)).toBeInTheDocument();
+  });
+
+  it("shows no telemetry banner while the probe is healthy", async () => {
+    installFetchStub({
+      overview: {
+        ...FIXTURE_OVERVIEW,
+        current: { ...FIXTURE_OVERVIEW.current, gpu_probe: { state: "ok", error: null } },
+      },
+    });
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByTestId("tile-vram-value")).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/GPU telemetry unavailable/)).toBeNull();
+    expect(screen.getByTestId("tile-vram-value").textContent).toContain("11.7");
+  });
+
   it("hides the selector entirely when no model is loaded", async () => {
     // There is no selection to make. An empty fieldset would be a control with
     // nothing behind it, which is the defect class this whole branch is about.

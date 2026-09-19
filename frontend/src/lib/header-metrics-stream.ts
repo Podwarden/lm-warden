@@ -46,12 +46,15 @@ export interface HeaderMetricsGpu {
 export interface HeaderMetricsFrame {
   ts: string;
   gpus: HeaderMetricsGpu[];
-  /** Pooled across every card: used / total. A whole-box question. */
-  vram_used_mib: number;
-  vram_total_mib: number;
-  vram_pct: number;
+  /** Pooled across every card: used / total. A whole-box question.
+   *  The four numbers are null when nothing was measured — the GPU probe
+   *  failed (probe_error says why) or no card answered. Never a stand-in 0
+   *  (#255). An API older than that sends 0 instead. */
+  vram_used_mib: number | null;
+  vram_total_mib: number | null;
+  vram_pct: number | null;
   /** The BUSIEST card, not an average — see app/header/routes_api.py. */
-  gpu_util_pct: number;
+  gpu_util_pct: number | null;
   // Every model the box is serving, starting, or has crashed, most
   // significant first. Optional at the type level for the same skew reason as
   // active_model_status below: a UI newer than its API must still render, and

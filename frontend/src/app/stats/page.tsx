@@ -124,19 +124,22 @@ const RANGE_KEY = "vw.stats.range";
 // 30s poll on the minute-bucketed overview — faster would re-render identical
 // numbers. Paused when the tab is hidden.
 const REFRESH_MS = 30_000;
-const refreshInterval = () =>
-  typeof document !== "undefined" && document.hidden ? 0 : REFRESH_MS;
+
+// Tile hint while the GPU probe is failing (#255).
+const GPU_LOST_HINT = "GPU telemetry unavailable";
+// A plain number, not a function returning 0 while hidden: SWR stops its loop
+// for good on a 0, so a tab hidden once never polled again. SWR already
+// skips ticks while hidden (`refreshWhenHidden` defaults to false).
+const refreshInterval = REFRESH_MS;
 
 // Per-request registry poll (Plane B) — spec cadence, hidden-tab paused.
 const REQ_REFRESH_MS = 1_500;
-const reqRefreshInterval = () =>
-  typeof document !== "undefined" && document.hidden ? 0 : REQ_REFRESH_MS;
+const reqRefreshInterval = REQ_REFRESH_MS;
 
 // Per-request history. 15s keeps "just ended" fresh on the chart; the
 // distributions move slowly and poll with the overview.
 const HISTORY_REFRESH_MS = 15_000;
-const historyRefreshInterval = () =>
-  typeof document !== "undefined" && document.hidden ? 0 : HISTORY_REFRESH_MS;
+const historyRefreshInterval = HISTORY_REFRESH_MS;
 
 // localStorage key for the latency basis (window vs last N).
 const BASIS_KEY = "vw.stats.latency-basis";
@@ -498,6 +501,11 @@ export default function StatsPage() {
   }
 
   const data = host.data;
+  // The GPU probe is failing (#255): the host numbers are null and the tiles
+  // say why rather than showing the last sample from before it broke.
+  const gpuProbe = data?.current.gpu_probe;
+  const gpuLost = gpuProbe?.state === "failing";
+  const gpuLostTitle = gpuProbe?.error ?? undefined;
   const one = selection.selected.length === 1;
   const scopePhrase = one
     ? loadedModels.find((m) => m.id === selection.selected[0])?.served_model_name ??
@@ -607,6 +615,15 @@ export default function StatsPage() {
         </Banner>
       ))}
 
+      {gpuLost && (
+        <Banner tone="warn">
+          GPU telemetry unavailable{gpuProbe?.error ? `: ${gpuProbe.error}` : ""}. A
+          model that is already running keeps serving, but loading one will fail
+          until the api container is restarted — usually a systemd reload
+          revoked its GPU access.
+        </Banner>
+      )}
+
       {/* 3 ── HOST — not scoped by the model selection ------------------- */}
       <section aria-label="Host" className="space-y-4">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-chat-dim">
@@ -629,21 +646,32 @@ export default function StatsPage() {
                 label="VRAM"
                 value={
                   <span data-testid="tile-vram-value">
-                    {mibToGib(data.current.vram_used_mib)} /{" "}
-                    {mibToGib(data.current.vram_total_mib)}
+                    {gpuLost ? "—" : (
+                      <>
+                        {mibToGib(data.current.vram_used_mib)} /{" "}
+                        {mibToGib(data.current.vram_total_mib)}
+                      </>
+                    )}
                   </span>
                 }
-                unit="GiB"
-                hint={`${data.current.vram_pct}% used · host`}
-                title={`${data.current.vram_used_mib} / ${data.current.vram_total_mib} MiB`}
+                unit={gpuLost ? undefined : "GiB"}
+                hint={gpuLost ? GPU_LOST_HINT : `${data.current.vram_pct}% used · host`}
+                title={
+                  gpuLost
+                    ? gpuLostTitle
+                    : `${data.current.vram_used_mib} / ${data.current.vram_total_mib} MiB`
+                }
               />
               <StatCard
                 label="GPU util"
                 value={
-                  <span data-testid="tile-util-value">{data.current.gpu_util_pct}</span>
+                  <span data-testid="tile-util-value">
+                    {gpuLost ? "—" : data.current.gpu_util_pct}
+                  </span>
                 }
-                unit="%"
-                hint="max across GPUs · host"
+                unit={gpuLost ? undefined : "%"}
+                hint={gpuLost ? GPU_LOST_HINT : "max across GPUs · host"}
+                title={gpuLost ? gpuLostTitle : undefined}
               />
               <StatCard
                 label="Power"
@@ -654,14 +682,18 @@ export default function StatsPage() {
                 }
                 unit={data.current.power_w === null ? undefined : "W"}
                 hint={
-                  data.current.power_w === null
-                    ? "telemetry unavailable"
-                    : "sum across GPUs · host"
+                  gpuLost
+                    ? GPU_LOST_HINT
+                    : data.current.power_w === null
+                      ? "telemetry unavailable"
+                      : "sum across GPUs · host"
                 }
                 title={
-                  data.current.power_w === null
-                    ? "No GPU on this host reports power.draw."
-                    : undefined
+                  gpuLost
+                    ? gpuLostTitle
+                    : data.current.power_w === null
+                      ? "No GPU on this host reports power.draw."
+                      : undefined
                 }
               />
             </>

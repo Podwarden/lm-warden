@@ -39,8 +39,9 @@ export function ModelTab() {
       // Match the dashboard list's 5s cadence so a load/unload that just
       // happened reflects here without a manual refresh. Pause on hidden
       // tabs to avoid hammering the API when nobody's looking.
-      refreshInterval: () =>
-        typeof document !== "undefined" && document.hidden ? 0 : 5000,
+      // A number, not a function returning 0 while hidden: SWR stops polling
+      // for good on a 0. It already skips ticks while the tab is hidden.
+      refreshInterval: 5000,
     },
   );
 

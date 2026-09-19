@@ -7,6 +7,67 @@ release ships.
 
 ## [Unreleased]
 
+## [v2026.09.19.2] — 2026-09-19
+
+### Added
+
+- **A live test that proves priority queueing on a running install.**
+  `tests/live/test_priority_queueing.py` (marker `live`, deselected by
+  default) creates ten keys across priorities 0–9, fills every engine slot,
+  then sends a burst and checks that requests are admitted strictly by
+  priority and first-in-first-out within a priority, over several rounds.
+  While it runs it pauses every other active key so real traffic can't
+  interfere, and it restores them afterwards, including after Ctrl-C,
+  SIGTERM or a crash (`python -m tests.live.restore --state …`). All settings
+  come from `VW_LIVE_*` environment variables; nothing about the target is in
+  the repository. See `tests/live/README.md`.
+
+### Fixed
+
+- **Lost GPU telemetry is reported instead of shown as an idle 0.** When
+  `nvidia-smi` stopped answering inside the api container, the header showed
+  VRAM 0 % next to a model still marked loaded. `/stats` kept showing the last
+  sample from before the failure. The log repeated `nvidia-smi exit 255:`
+  about 1,300 times an hour with nothing after the colon: the reason,
+  `Failed to initialize NVML: Unknown Error`, is printed on stdout, and only
+  stderr was read. That state means the running model keeps serving but the
+  next load fails. Now:
+  - the error names nvidia-smi's own message, from stdout or stderr;
+  - a hung nvidia-smi is killed rather than left behind;
+  - the api log records the loss once, and the recovery once;
+  - the header gauges read `--`, and their tooltip opens with
+    `GPU telemetry unavailable: <reason>` while still listing the models;
+  - `/stats` shows a banner and `—` tiles instead of stale numbers;
+  - `/healthz` stays `200` but reports `gpu: {state, error, since,
+    checked_at}` from memory, without running nvidia-smi.
+  Optional probes (NVLink, thermal limits, topology, throttle reasons) fail by
+  design on some drivers, so they no longer log warnings or change the state.
+  The header stream's VRAM and utilization fields, and the overview's current
+  GPU numbers, are `null` rather than `0` when nothing was measured. (#255)
+
+- **The installer requests the GPUs through CDI, so a systemd reload can no
+  longer take them away.** The legacy `driver: nvidia` request lets the NVIDIA
+  hook grant the GPUs outside the cgroup manager. On hosts using Docker's
+  systemd cgroup driver, the next `systemctl daemon-reload` (unattended upgrades
+  run one) revoked them from the running container. `nvidia-smi` then failed
+  with `Failed to initialize NVML: Unknown Error`, the VRAM gauges read 0, and
+  new model loads would fail until the container restarted. `install.sh` now
+  writes `driver: cdi` with `nvidia.com/gpu=all` or one device per index
+  whenever Docker has CDI enabled and the toolkit's spec names the GPUs. In that
+  case it no longer needs the `nvidia` runtime, and it sets
+  `NVIDIA_VISIBLE_DEVICES=void`. Otherwise it keeps the hook and, on a
+  systemd-cgroup host, warns. On such hosts it also creates the NVIDIA
+  `/dev/char` symlinks systemd needs and installs NVIDIA's udev rule that
+  recreates them at boot. None of this restarts anything. `GPU_REQUEST` and
+  `GPU_HOST_PREP` override the choices; see `documents/INSTALL.md`. (#254)
+
+- **Pages keep refreshing after you switch back to their tab.** `/stats`
+  (including its system panel), `/cache`, `/models`, a model's page and the
+  settings model tab stopped polling for good the first time their tab was
+  hidden, until a reload. SWR ends its polling loop on an interval of 0, which
+  they returned while hidden; they now use a fixed interval, and SWR itself
+  skips the refresh while the tab is hidden. (#251)
+
 ## [v2026.09.19.1] — 2026-09-19
 
 ### Added

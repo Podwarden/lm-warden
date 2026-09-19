@@ -19,11 +19,23 @@ export const STATS_RANGES: readonly StatsRange[] = ["1h", "6h", "24h", "7d"];
 
 // ---- /api/stats/v2/overview ----------------------------------------------
 
+/** The GPU probe right now (#255). "failing": nvidia-smi is installed but
+ *  did not answer — e.g. "Failed to initialize NVML: Unknown Error" after a
+ *  systemd reload revoked the container's GPU grant. "absent": no nvidia-smi
+ *  (a CPU-only install). Optional: an API older than this omits it. */
+export interface StatsV2GpuProbe {
+  state: "unknown" | "ok" | "failing" | "absent";
+  error: string | null;
+}
+
 export interface StatsV2Current {
-  vram_used_mib: number;
-  vram_total_mib: number;
-  vram_pct: number; // 0..100, rounded
-  gpu_util_pct: number; // max across GPUs at the most recent minute
+  /** The four GPU numbers are null while the probe is failing: the newest
+   *  sample predates the failure and must not pass for current (#255). */
+  vram_used_mib: number | null;
+  vram_total_mib: number | null;
+  vram_pct: number | null; // 0..100, rounded
+  gpu_util_pct: number | null; // max across GPUs at the most recent minute
+  gpu_probe?: StatsV2GpuProbe;
   /** Sum of per-GPU averages over the last minute. `null` when no card
    *  on the host reports power.draw (older or virtualised GPUs). */
   power_w: number | null;
@@ -124,7 +136,8 @@ export interface StatsV2TokensPerKey {
 
 /** Render an integer MiB count as a human-friendly GiB string, e.g.
  *  `12000` → `"11.7"`. One decimal place — matches header-metrics. */
-export function mibToGib(mib: number): string {
+export function mibToGib(mib: number | null): string {
+  if (mib === null) return "—";
   if (!mib) return "0";
   return (mib / 1024).toFixed(1);
 }

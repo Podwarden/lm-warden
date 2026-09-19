@@ -30,6 +30,8 @@ need a new endpoint::
       "active_model_id": "61c82bbc...", # or null
       "active_model_status": "loaded",  # 'loaded'|'failed'|'loading'|null
       "probe_error": null               # passthrough from nvidia-smi probe
+                                        # (the four vram/gpu numbers are null
+                                        # when it is set or no card answered)
     }
 
 Auth: SSE ticket (same pattern as model log streams). The widget is
@@ -188,10 +190,21 @@ def _payload(snap, actives: list[tuple[str, str, str]]) -> dict:
     #             describes neither card and reads as comfortable while a model
     #             saturates its GPU. The per-card breakdown is in the tooltip,
     #             where a number per card can be labelled with its card.
-    used = sum(g.memory_used_mib for g in snap.gpus)
-    total = sum(g.memory_total_mib for g in snap.gpus)
-    vram_pct = int(round(100.0 * used / total)) if total else 0
-    util = max((g.utilization_pct for g in snap.gpus), default=0)
+    #
+    # No reading is not a zero (#255). When the probe failed, or reported no
+    # cards, all four are null so the badge shows "--" instead of a calm 0 %
+    # beside a model that is still serving -- the state a revoked GPU grant
+    # produces, where the next model load is about to fail.
+    used: int | None = None
+    total: int | None = None
+    vram_pct: int | None = None
+    util: int | None = None
+    if snap.gpus and not snap.probe_error:
+        used_mib = sum(g.memory_used_mib for g in snap.gpus)
+        total_mib = sum(g.memory_total_mib for g in snap.gpus)
+        used, total = used_mib, total_mib
+        vram_pct = int(round(100.0 * used_mib / total_mib)) if total_mib else None
+        util = max(g.utilization_pct for g in snap.gpus)
     first = actives[0] if actives else (None, None, None)
     return {
         "ts": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
@@ -263,10 +276,11 @@ async def stream_metrics(
                 err_payload = {
                     "ts": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
                     "gpus": [],
-                    "vram_used_mib": 0,
-                    "vram_total_mib": 0,
-                    "vram_pct": 0,
-                    "gpu_util_pct": 0,
+                    # Nothing was measured: null, never 0 (#255).
+                    "vram_used_mib": None,
+                    "vram_total_mib": None,
+                    "vram_pct": None,
+                    "gpu_util_pct": None,
                     # A list, matching the happy path. A client that maps over
                     # active_models must not crash on the one frame shape it
                     # only ever sees when something is already going wrong.

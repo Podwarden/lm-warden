@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from app.auth.deps import require_jwt
 from app.db.database import open_db
 from app.stats import request_history
+from app.system.gpu import gpu_probe_health
 
 router = APIRouter()
 
@@ -209,13 +210,19 @@ async def stats_v2_overview(
         "selected_model_ids": [str, ...] | None,   # echo; null when unfiltered
         "selected_gpu_indices": [int, ...] | None, # the cards it resolved to
         "current": {
-          "vram_used_mib": int,
-          "vram_total_mib": int,
-          "vram_pct": int,           # 0..100, rounded
-          "gpu_util_pct": int,       # max across GPUs at most-recent minute
+          "vram_used_mib": int | None,
+          "vram_total_mib": int | None,
+          "vram_pct": int | None,    # 0..100, rounded
+          "gpu_util_pct": int | None,  # max across GPUs at most-recent minute
           "power_w": float | None,   # sum across GPUs at most-recent minute
           "tps": float,              # tokens-per-second over last full minute
                                      # (prompt + completion)
+          # The GPU probe right now (#255). While it is "failing" the four
+          # GPU numbers and power_w are null: the newest sample is from
+          # before the probe broke, and showing it as current would hide
+          # that the warden has lost its GPUs.
+          "gpu_probe": {"state": "unknown"|"ok"|"failing"|"absent",
+                        "error": str | None},
         },
         "active_models": [
           {"id": str, "served_model_name": str, "gpu_indices": [int, ...]}, ...
@@ -351,10 +358,17 @@ async def stats_v2_overview(
         )
         active_rows = await cur.fetchall()
 
-    vram_used = int(cur_gpu[0] or 0)
-    vram_total = int(cur_gpu[1] or 0)
-    vram_pct = int(round(100.0 * vram_used / vram_total)) if vram_total else 0
-    util_pct = int(cur_gpu[2] or 0)
+    used_mib = int(cur_gpu[0] or 0)
+    total_mib = int(cur_gpu[1] or 0)
+    vram_used: int | None = used_mib
+    vram_total: int | None = total_mib
+    vram_pct: int | None = int(round(100.0 * used_mib / total_mib)) if total_mib else 0
+    util_pct: int | None = int(cur_gpu[2] or 0)
+    power_w: float | None = float(cur_power) if cur_power is not None else None
+    probe = gpu_probe_health()
+    if probe.state == "failing":
+        vram_used = vram_total = vram_pct = util_pct = None
+        power_w = None
     # TPS = total tokens in last full minute / 60s. Floor at 0.
     tps = float(last_min_tokens) / 60.0 if last_min_tokens else 0.0
 
@@ -374,8 +388,9 @@ async def stats_v2_overview(
             "vram_total_mib": vram_total,
             "vram_pct": vram_pct,
             "gpu_util_pct": util_pct,
-            "power_w": float(cur_power) if cur_power is not None else None,
+            "power_w": power_w,
             "tps": tps,
+            "gpu_probe": {"state": probe.state, "error": probe.error},
         },
         "active_models": [
             {

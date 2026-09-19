@@ -76,15 +76,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 // 30s cadence matches the rest of /stats so a single SWR refresh on
 // page-focus revalidates everything together. Pause on hidden tabs.
 const REFRESH_MS = 30_000;
-const refreshInterval = () =>
-  typeof document !== "undefined" && document.hidden ? 0 : REFRESH_MS;
+// A plain number, not a function returning 0 while hidden: SWR stops its loop
+// for good on a 0, so a tab hidden once never polled again. SWR already
+// skips ticks while hidden (`refreshWhenHidden` defaults to false).
+const refreshInterval = REFRESH_MS;
 
 // Telemetry moves (temperature, power, fan); 10 s is live enough to watch a
 // card warm up without stacking nvidia-smi shell-outs — the server side
 // collapses bursts under its own 2 s cache anyway.
 const LIVE_REFRESH_MS = 10_000;
-const liveRefreshInterval = () =>
-  typeof document !== "undefined" && document.hidden ? 0 : LIVE_REFRESH_MS;
+const liveRefreshInterval = LIVE_REFRESH_MS;
 
 const DASH = "—"; // em-dash — same glyph other tiles use for "missing"
 

@@ -205,6 +205,51 @@ describe('HeaderMetrics', () => {
     expect(root.className).toContain('text-amber-400');
   });
 
+  // #255: a revoked GPU grant leaves a model serving while nvidia-smi in the
+  // container fails. The badge must say that, not show an idle 0 %.
+  const NVML = 'nvidia-smi exit 255: Failed to initialize NVML: Unknown Error';
+
+  it('shows "--" and leads the tooltip with the reason when GPU telemetry is lost', () => {
+    mockState = {
+      status: 'connected',
+      frame: frame({
+        gpus: [],
+        vram_used_mib: null,
+        vram_total_mib: null,
+        vram_pct: null,
+        gpu_util_pct: null,
+        active_models: [{ id: 'm1', served_model_name: 'qwen', status: 'loaded' }],
+        active_model: 'qwen',
+        active_model_id: 'm1',
+        active_model_status: 'loaded',
+        probe_error: NVML,
+      }),
+      errorCode: null,
+    };
+    render(<HeaderMetrics />);
+    const root = screen.getByTestId('header-metrics');
+    expect(screen.getByTestId('header-metrics-vram-pct').textContent).toContain('--');
+    expect(screen.getByTestId('header-metrics-gpu-pct').textContent).toContain('--');
+    const title = root.getAttribute('title') ?? '';
+    expect(title.split('\n')[0]).toBe(`GPU telemetry unavailable: ${NVML}`);
+    // The model is still listed: it is serving, and that is half the story.
+    expect(title).toContain('qwen');
+    expect(title).not.toMatch(/VRAM 0|0 \/ 0 GiB/);
+    expect(root.getAttribute('aria-label')).toContain('GPU telemetry unavailable');
+    expect(root.getAttribute('aria-label')).not.toContain('VRAM');
+  });
+
+  it('never shows a number beside a probe error, even from an older API that sent 0', () => {
+    mockState = {
+      status: 'connected',
+      frame: frame({ gpus: [], vram_used_mib: 0, vram_total_mib: 0, vram_pct: 0, gpu_util_pct: 0, probe_error: NVML }),
+      errorCode: null,
+    };
+    render(<HeaderMetrics />);
+    expect(screen.getByTestId('header-metrics-vram-pct').textContent).toContain('--');
+    expect(screen.getByTestId('header-metrics-gpu-pct').textContent).toContain('--');
+  });
+
   it('collapses to red "offline" on terminal-error', () => {
     mockState = {
       status: 'terminal-error',

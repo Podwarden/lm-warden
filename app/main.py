@@ -466,8 +466,15 @@ def build_app() -> FastAPI:
         return {"csrf": request.state.csrf_token}
 
     @app.get("/healthz")
-    async def healthz() -> dict[str, bool]:
-        return {"ok": True}
+    async def healthz() -> dict[str, object]:
+        # Always 200 while the control plane is up: this is the container's
+        # liveness probe, and failing it over lost GPU telemetry would get a
+        # still-serving engine restarted. The GPU state rides along for
+        # operators and the Hub to read (#255) -- the last-known result of
+        # the GPU probe, from memory, never a fresh nvidia-smi call.
+        from app.system.gpu import gpu_probe_health
+
+        return {"ok": True, "gpu": gpu_probe_health().as_dict()}
 
     return app
 

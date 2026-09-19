@@ -20,11 +20,12 @@ extend-immutable-calls = ["fastapi.Depends", "Depends", "fastapi.File", "File", 
 asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-ra --strict-markers"
+addopts = "-ra --strict-markers -m \"not live\""
 markers = [
     "integration: requires real subprocess + filesystem",
     "perf: scale sanity checks (seconds, not minutes); deselect with -m 'not perf'",
     "fresh_db: the `client` fixture must let the lifespan migrate an empty DB instead of copying the pre-migrated template",
+    "live: talks to a real deployment; opt-in with -m live (see tests/live/README.md)",
 ]
 
 [tool.mypy]

@@ -158,15 +158,26 @@ def test_payload_surfaces_active_model_when_supplied():
 
 def test_payload_with_empty_snapshot_surfaces_probe_error():
     """An empty GPU snapshot with a probe_error string surfaces through
-    the payload so the FE can degrade gracefully."""
-    snap = GpuSnapshot(gpus=[], apps=[], probe_error="nvidia-smi unavailable")
-    out = _payload(snap, [])
-    assert out["probe_error"] == "nvidia-smi unavailable"
+    the payload so the FE can degrade gracefully -- and reports NO numbers:
+    a lost GPU probe beside a serving model must not read as an idle 0 %
+    card (#255)."""
+    snap = GpuSnapshot(gpus=[], apps=[], probe_error="nvidia-smi exit 255: Failed to initialize NVML: Unknown Error")
+    out = _payload(snap, [("m1", "qwen", "loaded")])
+    assert out["probe_error"] == "nvidia-smi exit 255: Failed to initialize NVML: Unknown Error"
     assert out["gpus"] == []
-    assert out["vram_total_mib"] == 0
-    assert out["vram_used_mib"] == 0
-    assert out["vram_pct"] == 0
-    assert out["gpu_util_pct"] == 0
+    assert out["vram_total_mib"] is None
+    assert out["vram_used_mib"] is None
+    assert out["vram_pct"] is None
+    assert out["gpu_util_pct"] is None
+    assert out["active_model_status"] == "loaded"
+
+
+def test_payload_with_no_cards_and_no_error_reports_no_numbers():
+    """No card answered and nothing failed (a CPU-only box): still null,
+    not 0 % of nothing."""
+    out = _payload(GpuSnapshot(gpus=[], apps=[], probe_error=None), [])
+    assert out["vram_pct"] is None
+    assert out["gpu_util_pct"] is None
 
 
 async def test_active_model_returns_none_when_no_loaded_row(

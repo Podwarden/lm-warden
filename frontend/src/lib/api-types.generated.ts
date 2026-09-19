@@ -852,13 +852,19 @@ export interface paths {
          *         "selected_model_ids": [str, ...] | None,   # echo; null when unfiltered
          *         "selected_gpu_indices": [int, ...] | None, # the cards it resolved to
          *         "current": {
-         *           "vram_used_mib": int,
-         *           "vram_total_mib": int,
-         *           "vram_pct": int,           # 0..100, rounded
-         *           "gpu_util_pct": int,       # max across GPUs at most-recent minute
+         *           "vram_used_mib": int | None,
+         *           "vram_total_mib": int | None,
+         *           "vram_pct": int | None,    # 0..100, rounded
+         *           "gpu_util_pct": int | None,  # max across GPUs at most-recent minute
          *           "power_w": float | None,   # sum across GPUs at most-recent minute
          *           "tps": float,              # tokens-per-second over last full minute
          *                                      # (prompt + completion)
+         *           # The GPU probe right now (#255). While it is "failing" the four
+         *           # GPU numbers and power_w are null: the newest sample is from
+         *           # before the probe broke, and showing it as current would hide
+         *           # that the warden has lost its GPUs.
+         *           "gpu_probe": {"state": "unknown"|"ok"|"failing"|"absent",
+         *                         "error": str | None},
          *         },
          *         "active_models": [
          *           {"id": str, "served_model_name": str, "gpu_indices": [int, ...]}, ...
@@ -5636,7 +5642,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        [key: string]: boolean;
+                        [key: string]: unknown;
                     };
                 };
             };

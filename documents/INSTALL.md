@@ -209,6 +209,85 @@ Either install and register the toolkit yourself from NVIDIA's guide and re-run
 Exit status from the installer: `0` installed and startable, `1` a preflight or
 argument problem, `2` files written but the stack cannot start yet.
 
+### How the GPUs are requested: CDI first
+
+There are two ways to hand a GPU to a container, and on most Linux hosts only
+one of them keeps working.
+
+- **CDI** (`driver: cdi`, devices named `nvidia.com/gpu=all` or
+  `nvidia.com/gpu=<index>`). Docker adds the GPU device nodes to the container
+  itself, so its cgroup manager knows the container may use them.
+- **The legacy nvidia hook** (`driver: nvidia`). The NVIDIA Container Toolkit
+  grants the GPUs behind the cgroup manager's back. When Docker uses the
+  **systemd** cgroup driver — the default on current Ubuntu, Debian, Fedora and
+  RHEL — the next `systemctl daemon-reload` re-applies a device list without
+  them. Unattended upgrades run one. From then on, every process in the
+  container that opens a GPU fails:
+
+  ```
+  Failed to initialize NVML: Unknown Error
+  ```
+
+  The model already running keeps serving, because it opened the GPUs before.
+  But the VRAM gauges read 0 and the next model load fails, and nothing says so
+  until someone restarts the container.
+
+The installer uses CDI whenever Docker has it enabled (the default from Docker
+28) and the toolkit's CDI spec names every selected GPU. The toolkit writes and
+refreshes that spec itself from 1.18 on; `nvidia-ctk cdi list` shows it. With
+CDI, Docker does not need the `nvidia` runtime registered at all. Otherwise the
+installer falls back to the hook and, on a systemd-cgroup host, says so with a
+warning. `GPU_REQUEST=cdi` or `GPU_REQUEST=nvidia` forces one or the other.
+
+On a systemd-cgroup host it also does NVIDIA's documented host fix, because
+systemd grants devices through `/dev/char/<major>:<minor>` symlinks that the
+NVIDIA driver never creates:
+
+- it creates those symlinks now (`nvidia-ctk system create-dev-char-symlinks
+  --create-all`), and
+- it installs `/etc/udev/rules.d/71-nvidia-dev-char.rules`, which recreates them
+  every time the driver loads.
+
+Neither restarts anything. `GPU_HOST_PREP=no` skips both.
+
+One more step is worth taking by hand on a host that reboots. Docker can start
+the stack before the NVIDIA driver has finished loading, so order Docker after
+it:
+
+```
+# /etc/systemd/system/docker.service.d/10-after-nvidia.conf
+[Unit]
+Wants=nvidia-persistenced.service nvidia-cdi-refresh.service
+After=nvidia-persistenced.service nvidia-cdi-refresh.service
+```
+
+The installer does not write this, because making it take effect needs a
+`systemctl daemon-reload`. That reload is exactly what revokes the GPUs of any
+*other* container on the host still using the legacy hook. It takes effect by
+itself at the next boot, which is the moment it is for.
+
+To check a running install: `docker exec <api-container> nvidia-smi` must list
+the GPUs. `Failed to initialize NVML: Unknown Error` there means the grant was
+revoked. `docker compose up -d --force-recreate api` restores it; re-running
+`./install.sh` switches to CDI so that it stays.
+
+LLM Warden reports this itself as well. The header gauges read `--` and their
+tooltip opens with `GPU telemetry unavailable:` and the error. `/stats` shows a
+banner and puts `—` in its VRAM, GPU and power tiles. `/healthz` stays `200`
+(it is the liveness probe), but its body carries the state. Its shape (not a
+recorded transcript):
+
+```
+{"ok": true,
+ "gpu": {"state": "failing",
+         "error": "nvidia-smi exit 255: Failed to initialize NVML: Unknown Error",
+         "since": <epoch seconds>, "checked_at": <epoch seconds>}}
+```
+
+`state` is `ok`, `failing`, `absent` (no `nvidia-smi`: a CPU-only install) or
+`unknown` (no probe yet). The api log records one line when it starts failing
+and one when it recovers, not one per probe.
+
 ## A3. Install
 
 ```
@@ -353,6 +432,8 @@ GPU_TOOLKIT_INSTALL=yes ./install.sh --gpus all --yes                   # also i
 | `-y`, `--yes` | never prompt |
 | `--check` | run the host preflight and stop |
 | `GPU_TOOLKIT_INSTALL=yes\|no` | install the NVIDIA Container Toolkit without asking / never. **`yes` restarts the Docker daemon** — see [A2](#a2-preflight-first) |
+| `GPU_REQUEST=auto\|cdi\|nvidia` | how the engine asks Docker for its GPUs; `auto` uses CDI when available — see [How the GPUs are requested](#how-the-gpus-are-requested-cdi-first) |
+| `GPU_HOST_PREP=no` | skip creating the NVIDIA `/dev/char` symlinks and the udev rule that keeps them |
 
 Exit statuses are as in [A2](#a2-preflight-first), and so is the warning
 about `GPU_TOOLKIT_INSTALL=yes` restarting every container on the host.

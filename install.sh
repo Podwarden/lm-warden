@@ -94,6 +94,14 @@ Environment:
                                (yes), or never (no). Unset: ask on a terminal.
                                "yes" RESTARTS THE DOCKER DAEMON, bouncing every
                                container on this host, not only LLM Warden's.
+  GPU_REQUEST=auto|cdi|nvidia  How the engine asks Docker for its GPUs. auto
+                               (default) uses CDI when Docker has it enabled and
+                               the NVIDIA CDI spec names the GPUs, else the
+                               legacy nvidia hook -- whose GPU grant a systemd
+                               reload can silently revoke.
+  GPU_HOST_PREP=no             Do not create the NVIDIA /dev/char symlinks or
+                               install the udev rule that keeps them (systemd
+                               cgroup hosts only; restarts nothing).
   VW_SOURCE_URL                Tarball to download when not run from a checkout.
   VW_REGISTRY                  Image registry prefix (${VW_REGISTRY}).
 EOF
@@ -424,6 +432,127 @@ ensure_nvidia_runtime() {
   return 1
 }
 
+# ---------------------------------------------------------------------------
+# How the api service asks Docker for its GPUs (#254)
+# ---------------------------------------------------------------------------
+#
+#   cdi     driver: cdi, device_ids nvidia.com/gpu=all | nvidia.com/gpu=<idx>.
+#           Docker adds the device nodes itself, so its cgroup manager -- systemd
+#           on most distributions -- knows about them.
+#   nvidia  driver: nvidia, the NVIDIA Container Toolkit's legacy hook. The hook
+#           grants the GPUs behind the cgroup manager's back. With the systemd
+#           cgroup driver the next `systemctl daemon-reload` (unattended
+#           upgrades run one) re-applies a device list without them: every
+#           process in the container that opens a GPU from then on gets
+#           "Failed to initialize NVML: Unknown Error". The engine already
+#           running keeps serving, the VRAM gauges read 0, and the next model
+#           load fails -- silently, until someone restarts the container.
+#
+# CDI is used whenever Docker has it enabled and the toolkit's CDI spec names
+# every selected GPU; GPU_REQUEST=cdi|nvidia forces one.
+
+# Docker 25+ reports the directories it reads CDI specs from; an empty list
+# means CDI is off (it is on by default from Docker 28).
+docker_cdi_enabled() {
+  _dirs=$(docker info --format '{{json .CDISpecDirs}}' 2>/dev/null) || return 1
+  case "$_dirs" in ""|null|"[]") return 1 ;; esac
+  return 0
+}
+
+# nvidia.com/gpu=... device names in the toolkit's CDI spec, one per line.
+# The toolkit (1.18+) regenerates the spec itself (nvidia-cdi-refresh).
+cdi_gpu_names() {
+  command -v nvidia-ctk >/dev/null 2>&1 || return 0
+  nvidia-ctk cdi list 2>/dev/null | grep -E '^nvidia\.com/gpu=' || true
+}
+
+docker_cgroup_driver() { docker info --format '{{.CgroupDriver}}' 2>/dev/null || true; }
+
+# Sets GPU_REQUEST to cdi or nvidia for the selection in GPU_MODE/GPU_SELECTED.
+# Returns 1 only when GPU_REQUEST=cdi was asked for and CDI cannot serve it.
+choose_gpu_request() {
+  _want=${GPU_REQUEST:-auto}
+  case "$_want" in
+    auto|cdi|nvidia) ;;
+    *) die "GPU_REQUEST must be auto, cdi or nvidia (got '$_want')." ;;
+  esac
+  GPU_REQUEST=nvidia
+  [ "$_want" != nvidia ] || { log "GPU_REQUEST=nvidia: requesting the GPUs through the legacy nvidia hook."; return 0; }
+
+  _why=""
+  if ! docker_cdi_enabled; then
+    _why="Docker has CDI disabled (Docker 28+ enables it by default)"
+  else
+    _names=$(cdi_gpu_names)
+    if [ -z "$_names" ]; then
+      _why="no NVIDIA CDI spec was found (nvidia-ctk cdi list shows no nvidia.com/gpu devices)"
+    else
+      _missing=""
+      if [ "$GPU_MODE" = all ]; then
+        printf '%s\n' "$_names" | grep -qx 'nvidia.com/gpu=all' || _missing=" all"
+      else
+        for _i in $(printf '%s' "$GPU_SELECTED" | tr ',' ' '); do
+          printf '%s\n' "$_names" | grep -qx "nvidia.com/gpu=$_i" || _missing="$_missing $_i"
+        done
+      fi
+      [ -z "$_missing" ] || _why="the NVIDIA CDI spec has no device for:$_missing (regenerate it: nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml)"
+    fi
+  fi
+
+  if [ -z "$_why" ]; then
+    GPU_REQUEST=cdi
+    log "Requesting the GPUs through CDI (nvidia.com/gpu); the grant survives systemd reloads."
+    return 0
+  fi
+  if [ "$_want" = cdi ]; then
+    err "GPU_REQUEST=cdi, but $_why."
+    return 1
+  fi
+  log "Requesting the GPUs through the nvidia hook: $_why."
+  if [ "$(docker_cgroup_driver)" = systemd ]; then
+    warn "Docker uses the systemd cgroup driver. With the nvidia hook, the next"
+    warn "  systemctl daemon-reload (unattended upgrades run one) takes the GPUs away"
+    warn "  from the running container: nvidia-smi then fails with 'Failed to initialize"
+    warn "  NVML: Unknown Error', the VRAM gauges read 0 and new model loads fail until"
+    warn "  the container restarts. Enable CDI and re-run ./install.sh to avoid it:"
+    warn "  https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html"
+  fi
+  return 0
+}
+
+# systemd grants a container's devices through /dev/char/<major>:<minor>
+# symlinks, and the NVIDIA driver creates none for its device nodes. Without
+# them even a CDI grant can be dropped on the next reload. NVIDIA's documented
+# fix: create them now, and install a udev rule that recreates them whenever
+# the driver binds (i.e. every boot). Restarts nothing. GPU_HOST_PREP=no skips
+# it; VW_HOST_ROOT redirects the rule file (tests only).
+NVIDIA_DEV_CHAR_RULE=/etc/udev/rules.d/71-nvidia-dev-char.rules
+ensure_nvidia_dev_char() {
+  [ "${GPU_HOST_PREP:-yes}" != no ] || { log "GPU_HOST_PREP=no: leaving /dev/char symlinks and udev rules alone."; return 0; }
+  [ "$(docker_cgroup_driver)" = systemd ] || return 0
+  command -v nvidia-ctk >/dev/null 2>&1 || { warn "nvidia-ctk not found; cannot create the NVIDIA /dev/char symlinks systemd needs."; return 0; }
+  _rule="${VW_HOST_ROOT:-}$NVIDIA_DEV_CHAR_RULE"
+  if [ ! -f "$_rule" ]; then
+    _body='# Installed by the LLM Warden installer (#254). systemd grants container
+# devices through /dev/char/<major>:<minor> symlinks, which the NVIDIA driver
+# does not create; without them a systemd reload can revoke GPU access from
+# running containers. Recreate them whenever the driver binds.
+ACTION=="add", DEVPATH=="/bus/pci/drivers/nvidia", RUN+="/usr/bin/nvidia-ctk system create-dev-char-symlinks --create-all"'
+    if [ -n "${VW_HOST_ROOT:-}" ]; then
+      mkdir -p "$(dirname "$_rule")" && printf '%s\n' "$_body" > "$_rule"
+    else
+      printf '%s\n' "$_body" | as_root tee "$_rule" >/dev/null
+    fi || { warn "Could not write $NVIDIA_DEV_CHAR_RULE; the /dev/char symlinks will not come back after a reboot."; return 0; }
+    log "Installed $NVIDIA_DEV_CHAR_RULE (recreates the NVIDIA /dev/char symlinks at boot)."
+  fi
+  if [ -n "${VW_HOST_ROOT:-}" ]; then
+    nvidia-ctk system create-dev-char-symlinks --create-all >/dev/null 2>&1
+  else
+    as_root nvidia-ctk system create-dev-char-symlinks --create-all >/dev/null 2>&1
+  fi || warn "nvidia-ctk system create-dev-char-symlinks failed; run it as root before starting."
+  return 0
+}
+
 # Resolves GPUS ("" | all | none | list) against the detected GPUs. Sets:
 #   GPU_SELECTED  comma-separated indices, or "" for none
 #   GPU_TOTAL     number of GPUs detected
@@ -621,19 +750,36 @@ write_override() {
     echo "      VW_CONTENT_LOG_MAX_BYTES: \"\${VW_CONTENT_LOG_MAX_BYTES:-536870912}\""
     echo "      VW_RUNAWAY_MODE: \"\${VW_RUNAWAY_MODE:-off}\""
     echo "      HF_HUB_OFFLINE: \"\${HF_HUB_OFFLINE:-0}\""
-    case "$GPU_MODE" in
-      none) echo "      NVIDIA_VISIBLE_DEVICES: \"none\"" ;;
-      all)  echo "      NVIDIA_VISIBLE_DEVICES: \"all\"" ;;
-      *)    echo "      NVIDIA_VISIBLE_DEVICES: \"$GPU_SELECTED\"" ;;
-    esac
+    if [ "$GPU_MODE" != none ] && [ "${GPU_REQUEST:-nvidia}" = cdi ]; then
+      # CDI hands over the devices; "void" stops the legacy hook (should the
+      # nvidia runtime be Docker's default) from injecting any on top.
+      echo "      NVIDIA_VISIBLE_DEVICES: \"void\""
+    else
+      case "$GPU_MODE" in
+        none) echo "      NVIDIA_VISIBLE_DEVICES: \"none\"" ;;
+        all)  echo "      NVIDIA_VISIBLE_DEVICES: \"all\"" ;;
+        *)    echo "      NVIDIA_VISIBLE_DEVICES: \"$GPU_SELECTED\"" ;;
+      esac
+    fi
     echo "    deploy:"
     echo "      resources:"
     echo "        reservations:"
-    case "$GPU_MODE" in
-      none)
+    case "$GPU_MODE:${GPU_REQUEST:-nvidia}" in
+      none:*)
         echo "          # --gpus none: no GPU reservation (the base file asks for all)."
         echo "          devices: !override []" ;;
-      all)
+      *:cdi)
+        echo "          # CDI (nvidia.com/gpu): Docker registers the devices with the cgroup"
+        echo "          # manager, so a systemd reload cannot revoke them (#254)."
+        echo "          devices: !override"
+        echo "            - driver: cdi"
+        if [ "$GPU_MODE" = all ]; then
+          echo "              device_ids: [\"nvidia.com/gpu=all\"]"
+        else
+          echo "              device_ids: [$(echo "$GPU_SELECTED" | sed 's/\([0-9][0-9]*\)/"nvidia.com\/gpu=\1"/g; s/,/, /g')]"
+        fi
+        echo "              capabilities: [gpu]" ;;
+      all:*)
         echo "          devices: !override"
         echo "            - driver: nvidia"
         echo "              count: all"
@@ -661,7 +807,8 @@ write_override() {
     echo "    ports: !override"
     echo "      - \"\${WARDEN_PORT:-8080}:8080\""
   } > "$_f"
-  log "Wrote $_f (release $VERSION, GPUs: $(gpu_describe), port $WARDEN_PORT)."
+  _via=""; [ "$GPU_MODE" = none ] || _via=" via ${GPU_REQUEST:-nvidia}"
+  log "Wrote $_f (release $VERSION, GPUs: $(gpu_describe)$_via, port $WARDEN_PORT)."
 }
 
 # ---------------------------------------------------------------------------
@@ -675,13 +822,22 @@ preflight_docker || exit 1
 preflight_disk
 
 GPU_RUNTIME_OK=1
+GPU_REQUEST_OK=1
 resolve_gpus
 if [ "$GPU_MODE" != none ]; then
-  ensure_nvidia_runtime || GPU_RUNTIME_OK=0
+  if ! choose_gpu_request; then
+    GPU_REQUEST_OK=0
+  elif [ "$GPU_REQUEST" = cdi ]; then
+    # CDI is Docker's own device path: the nvidia runtime is not needed.
+    # --check writes nothing, host files included.
+    [ "$CHECK_ONLY" -eq 1 ] || ensure_nvidia_dev_char
+  else
+    ensure_nvidia_runtime || GPU_RUNTIME_OK=0
+  fi
 fi
 
 if [ "$CHECK_ONLY" -eq 1 ]; then
-  [ "$GPU_RUNTIME_OK" -eq 1 ] || { err "Preflight failed: Docker cannot use the GPUs (see above)."; exit 1; }
+  [ "$GPU_RUNTIME_OK" -eq 1 ] && [ "$GPU_REQUEST_OK" -eq 1 ] || { err "Preflight failed: Docker cannot use the GPUs (see above)."; exit 1; }
   [ "$DISK_STATE" != floor ] || { err "Preflight failed: not enough free disk on $DISK_ROOT for the images (see above)."; exit 1; }
   log "Preflight OK."; exit 0
 fi
@@ -801,6 +957,9 @@ fi
 
 if [ "$GPU_RUNTIME_OK" -eq 0 ]; then
   INCOMPLETE="${INCOMPLETE:+$INCOMPLETE; }Docker has no nvidia runtime, so the GPU reservation cannot be satisfied"
+fi
+if [ "$GPU_REQUEST_OK" -eq 0 ]; then
+  INCOMPLETE="${INCOMPLETE:+$INCOMPLETE; }GPU_REQUEST=cdi, but Docker cannot serve the GPUs through CDI"
 fi
 
 STARTED=0

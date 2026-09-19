@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 import re
 import time
@@ -819,8 +820,99 @@ def parse_compute_apps_csv(stdout: str) -> list[GpuComputeApp]:
     return out
 
 
+GpuProbeState = Literal["unknown", "ok", "failing", "absent"]
+
+
+@dataclass
+class GpuProbeHealth:
+    """Whether the warden can currently read its GPUs (#255).
+
+    Tracks only the PRIMARY probes (the per-card query the stats sampler and
+    the live snapshot both run). The optional ones -- NVLink, thermal limits,
+    PCIe caps, topology, throttle reasons -- legitimately fail on some drivers
+    and must not turn a healthy box into a failing one.
+
+      unknown  no primary probe has run yet
+      ok       the last primary probe answered
+      failing  nvidia-smi is installed but did not answer -- e.g. "Failed to
+               initialize NVML: Unknown Error" after a systemd reload revoked
+               the container's GPU grant (#254). The engine already running
+               keeps serving; the next model load fails.
+      absent   no nvidia-smi on PATH: a CPU-only install, not a fault
+    """
+
+    state: GpuProbeState = "unknown"
+    error: str | None = None
+    # Wall-clock time (epoch s) the current state began, and of the last probe.
+    since: float | None = None
+    checked_at: float | None = None
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "state": self.state,
+            "error": self.error,
+            "since": self.since,
+            "checked_at": self.checked_at,
+        }
+
+
+_gpu_probe_health = GpuProbeHealth()
+
+
+def gpu_probe_health() -> GpuProbeHealth:
+    """The last-known GPU probe state. Reads memory only -- never runs
+    nvidia-smi -- so /healthz can report it on every poll."""
+    return _gpu_probe_health
+
+
+def reset_gpu_probe_health() -> None:
+    """Test hook."""
+    global _gpu_probe_health
+    _gpu_probe_health = GpuProbeHealth()
+
+
+def _record_primary_probe(state: GpuProbeState, error: str | None) -> None:
+    """Update the tracker, logging only when the state or its message
+    changes. The probe runs every few seconds; a log line per probe is how
+    'nvidia-smi exit 255:' reached ~1,300 lines an hour with nothing in it."""
+    h = _gpu_probe_health
+    now = time.time()
+    h.checked_at = now
+    if state == h.state and error == h.error:
+        return
+    previous = h.state
+    h.state, h.error, h.since = state, error, now
+    if state == "failing":
+        logger.warning("GPU telemetry unavailable: %s", error)
+    elif state == "absent":
+        logger.info("GPU telemetry absent: %s (CPU-only host?)", error)
+    elif state == "ok" and previous in ("failing", "absent"):
+        logger.warning("GPU telemetry restored: nvidia-smi is answering again")
+
+
+def _first_line(*streams: bytes) -> str:
+    """The first non-empty line across the streams, trimmed. nvidia-smi
+    prints NVML errors ('Failed to initialize NVML: Unknown Error') on
+    STDOUT, not stderr, so both have to be read."""
+    for raw in streams:
+        for line in raw.decode(errors="replace").splitlines():
+            line = line.strip()
+            if line:
+                return line[:200]
+    return ""
+
+
 async def _run_nvidia_smi(args: list[str], *, timeout: float = 5.0) -> str | None:  # noqa: ASYNC109
-    """Run nvidia-smi with `args` and return stdout, or None if it failed."""
+    """Run nvidia-smi with `args` and return stdout, or None if it failed.
+
+    A failure of a primary probe (NVIDIA_SMI_CMD / NVIDIA_SMI_LIVE_CMD) is
+    recorded in the GPU probe tracker with the reason nvidia-smi gave; an
+    optional probe's failure is only a debug line.
+    """
+    primary = args is NVIDIA_SMI_CMD or args is NVIDIA_SMI_LIVE_CMD
+    failure: tuple[GpuProbeState, str] | None = None
+    stdout = b""
+    proc = None
     try:
         proc = await asyncio.create_subprocess_exec(
             *args,
@@ -828,12 +920,27 @@ async def _run_nvidia_smi(args: list[str], *, timeout: float = 5.0) -> str | Non
             stderr=asyncio.subprocess.PIPE,
         )
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-    except (TimeoutError, FileNotFoundError) as e:
-        logger.warning("nvidia-smi unavailable: %s", e)
+    except FileNotFoundError:
+        failure = ("absent", "nvidia-smi not found")
+    except TimeoutError:
+        failure = ("failing", f"nvidia-smi did not answer within {timeout:g} s")
+        # A wedged driver hangs every probe; without the kill each one
+        # (every few seconds) would leave another nvidia-smi behind.
+        if proc is not None:
+            with contextlib.suppress(ProcessLookupError):
+                proc.kill()
+    else:
+        if proc.returncode != 0:
+            detail = _first_line(stdout, stderr) or "no output"
+            failure = ("failing", f"nvidia-smi exit {proc.returncode}: {detail}")
+    if failure is not None:
+        if primary:
+            _record_primary_probe(*failure)
+        else:
+            logger.debug("optional nvidia-smi probe failed (%s): %s", args[1:3], failure[1])
         return None
-    if proc.returncode != 0:
-        logger.warning("nvidia-smi exit %d: %s", proc.returncode, stderr.decode())
-        return None
+    if primary:
+        _record_primary_probe("ok", None)
     return stdout.decode()
 
 
@@ -971,7 +1078,12 @@ async def query_gpu_snapshot() -> GpuSnapshot:
     """
     live_out = await _run_nvidia_smi(NVIDIA_SMI_LIVE_CMD)
     if live_out is None:
-        return GpuSnapshot(gpus=[], apps=[], probe_error="nvidia-smi unavailable")
+        # The reason nvidia-smi gave (#255), e.g. "nvidia-smi exit 255: Failed
+        # to initialize NVML: Unknown Error"; the generic text only when no
+        # reason was recorded.
+        return GpuSnapshot(
+            gpus=[], apps=[], probe_error=_gpu_probe_health.error or "nvidia-smi unavailable"
+        )
     gpus = parse_nvidia_smi_live_csv(live_out)
     apps_out, facts, throttle = await asyncio.gather(
         _run_nvidia_smi(NVIDIA_SMI_APPS_CMD),

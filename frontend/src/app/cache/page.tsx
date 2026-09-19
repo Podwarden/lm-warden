@@ -41,8 +41,9 @@ export default function CachePage() {
     "/api/cache/models",
     authFetchJSON,
     {
-      refreshInterval: () =>
-        typeof document !== "undefined" && document.hidden ? 0 : 30_000,
+      // A number, not a function returning 0 while hidden: SWR stops polling
+      // for good on a 0. It already skips ticks while the tab is hidden.
+      refreshInterval: 30_000,
     },
   );
 

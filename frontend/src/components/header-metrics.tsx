@@ -42,7 +42,8 @@ function pct(value: number | null | undefined): string {
 
 // Compact MiB → GiB rendering for the VRAM tooltip — keeps the badge
 // itself percentage-only.
-function gib(mib: number): string {
+function gib(mib: number | null): string {
+  if (mib === null) return '--';
   if (!mib) return '0';
   return (mib / 1024).toFixed(1);
 }
@@ -94,8 +95,11 @@ export function HeaderMetrics() {
     loaded ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]' :
     'bg-slate-500/70';
 
-  const vramPct = terminal ? null : frame?.vram_pct ?? null;
-  const gpuPct = terminal ? null : frame?.gpu_util_pct ?? null;
+  // A probe error means nothing was measured: "--", never a number. The
+  // backend sends null then (#255); an older API sent 0, which must not
+  // reach the gauges either.
+  const vramPct = terminal || probeError ? null : frame?.vram_pct ?? null;
+  const gpuPct = terminal || probeError ? null : frame?.gpu_util_pct ?? null;
 
   // What the slot shows when there is no per-model list to show: 'offline' =
   // the stream is gone (we know nothing); 'idle' = the stream is fine and the
@@ -113,19 +117,26 @@ export function HeaderMetrics() {
   // Build a multi-line tooltip that surfaces the data the badge omits:
   // per-GPU breakdown, every model by name, probe error, status hint.
   const tooltipLines: string[] = [];
+  // Lost GPU telemetry leads the tooltip (#255): with the probe down the
+  // gauges read "--", and the reason is the first thing to see. A model can
+  // still be serving here -- it opened the GPUs before they became
+  // unreadable -- but the next load will fail.
+  if (probeError) tooltipLines.push(`GPU telemetry unavailable: ${probeError}`);
   if (frame) {
-    tooltipLines.push(
-      `VRAM ${gib(frame.vram_used_mib)} / ${gib(frame.vram_total_mib)} GiB (all cards)`,
-    );
-    // The GPU readout is a max, so with several cards it names one of them.
-    // Saying which, and listing the rest, is what stops "GPU 90%" from
-    // reading as a statement about the box.
-    tooltipLines.push(`GPU ${frame.gpu_util_pct}% on the busiest card`);
-    for (const g of frame.gpus) {
-      const name = g.name ?? `GPU ${g.index}`;
+    if (!probeError) {
       tooltipLines.push(
-        `  ${name}: ${gib(g.memory_used_mib)}/${gib(g.memory_total_mib)} GiB · util ${g.utilization_pct}%`,
+        `VRAM ${gib(frame.vram_used_mib)} / ${gib(frame.vram_total_mib)} GiB (all cards)`,
       );
+      // The GPU readout is a max, so with several cards it names one of them.
+      // Saying which, and listing the rest, is what stops "GPU 90%" from
+      // reading as a statement about the box.
+      tooltipLines.push(`GPU ${pct(frame.gpu_util_pct).trim()}% on the busiest card`);
+      for (const g of frame.gpus) {
+        const name = g.name ?? `GPU ${g.index}`;
+        tooltipLines.push(
+          `  ${name}: ${gib(g.memory_used_mib)}/${gib(g.memory_total_mib)} GiB · util ${g.utilization_pct}%`,
+        );
+      }
     }
     // EVERY model, including any the "+N" counter folded away. The chip is
     // width-bounded; the tooltip is not, so this is where nothing is lost.
@@ -133,7 +144,6 @@ export function HeaderMetrics() {
       tooltipLines.push(`${STATUS_VERB[m.status]}: ${m.served_model_name}`);
     }
   }
-  if (probeError) tooltipLines.push(`Probe error: ${probeError}`);
   if (reconnecting) tooltipLines.push('Reconnecting…');
   if (terminal) {
     tooltipLines.push(
@@ -154,8 +164,11 @@ export function HeaderMetrics() {
       // The accessible name enumerates EVERY model, including any the "+N"
       // counter folded away — a screen-reader user has no tooltip to hover.
       aria-label={
-        `Header metrics — VRAM ${pct(vramPct).trim()} percent, ` +
-        `GPU ${pct(gpuPct).trim()} percent on the busiest card, ` +
+        'Header metrics — ' +
+        (probeError
+          ? 'GPU telemetry unavailable, '
+          : `VRAM ${pct(vramPct).trim()} percent, ` +
+            `GPU ${pct(gpuPct).trim()} percent on the busiest card, `) +
         (models.length === 0
           ? emptyLabel
           : models

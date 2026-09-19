@@ -264,3 +264,47 @@ def test_a_selection_holding_no_card_reports_no_gpu_data(tmp_data_dir, client):
     # Its TOKENS are still its own -- the model dimension is unaffected by the
     # card dimension being empty.
     assert body["current"]["tps"] == 10.0
+
+
+# ---------------------------------------------------------------------------
+# GPU telemetry lost (#255).
+# ---------------------------------------------------------------------------
+
+
+def test_a_failing_gpu_probe_nulls_the_stale_current_numbers(tmp_data_dir, client):
+    """With the probe failing, the newest gpu_samples row is from before it
+    broke; presenting it as "current" hides that the warden lost its GPUs.
+    The numbers go null and the reason rides along."""
+    from app.system import gpu as gpu_mod
+
+    auth = _ready(tmp_data_dir, client)
+    gpu_mod.reset_gpu_probe_health()
+    gpu_mod._record_primary_probe("failing", "nvidia-smi exit 255: Failed to initialize NVML: Unknown Error")
+    try:
+        cur = _get(client, auth)["current"]
+        assert cur["vram_used_mib"] is None
+        assert cur["vram_total_mib"] is None
+        assert cur["vram_pct"] is None
+        assert cur["gpu_util_pct"] is None
+        assert cur["power_w"] is None
+        assert cur["tps"] == 11.0  # not a GPU reading: unaffected
+        assert cur["gpu_probe"] == {
+            "state": "failing",
+            "error": "nvidia-smi exit 255: Failed to initialize NVML: Unknown Error",
+        }
+    finally:
+        gpu_mod.reset_gpu_probe_health()
+
+
+def test_a_healthy_probe_reports_its_state_alongside_the_numbers(tmp_data_dir, client):
+    from app.system import gpu as gpu_mod
+
+    auth = _ready(tmp_data_dir, client)
+    gpu_mod.reset_gpu_probe_health()
+    gpu_mod._record_primary_probe("ok", None)
+    try:
+        cur = _get(client, auth)["current"]
+        assert cur["vram_used_mib"] == 14000
+        assert cur["gpu_probe"] == {"state": "ok", "error": None}
+    finally:
+        gpu_mod.reset_gpu_probe_health()
