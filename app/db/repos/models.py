@@ -1,9 +1,15 @@
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any
 
 import aiosqlite
 
 from app.runtime.backends.registry import DEFAULT_BACKEND
+
+#: Columns persisted as a JSON document in a TEXT column. One constant, because
+#: ``insert`` and ``update_fields`` both have to agree with ``_decode_row``.
+_JSON_COLUMNS = frozenset({"gpu_indices", "extra_args", "extra_env"})
 
 
 @dataclass
@@ -258,6 +264,27 @@ class ModelRepo:
         )
         await self.db.commit()
 
+    async def update_extra_fields(
+        self, model_id: str, *, extra_env: dict[str, str], extra_args: list[str]
+    ) -> None:
+        """Overwrite ``extra_env``/``extra_args`` verbatim. #266 boot reconcile.
+
+        The only caller today is ``app.runtime.boot_reconcile`` cleaning up a
+        row poisoned by a settings-PATCH door that (before tonight's fix)
+        accepted a hard-locked ``extra_env`` key, or either column in a shape
+        ``POST /api/models`` would have refused (not ``dict[str, str]`` /
+        ``list[str]``). Writes both columns unconditionally -- the caller
+        always has both values in hand (unchanged ones round-trip through
+        unmodified) -- rather than building a partial SET clause for two
+        columns that are only ever touched together here.
+        """
+        await self.db.execute(
+            "UPDATE models SET extra_env = ?, extra_args = ?, "
+            "updated_at = datetime('now') WHERE id = ?",
+            (json.dumps(extra_env), json.dumps(extra_args), model_id),
+        )
+        await self.db.commit()
+
     async def update_pull_progress(
         self, model_id: str, pulled_bytes: int, pulled_total: int | None
     ) -> None:
@@ -265,6 +292,50 @@ class ModelRepo:
             "UPDATE models SET pulled_bytes = ?, pulled_total = ?, updated_at = datetime('now') "
             "WHERE id = ?",
             (pulled_bytes, pulled_total, model_id),
+        )
+        await self.db.commit()
+
+    async def update_fields(self, model_id: str, values: Mapping[str, Any]) -> None:
+        """Write operator-writable columns by name.
+
+        **Not a public write path.** Callers go through
+        ``app/models/writer.py::apply_model_change``, which is where the per-
+        column policy, the principal check, the loaded guard, the full-row
+        ``ModelSpec`` validation and the cross-row checks live. This method only
+        turns a validated mapping into SQL, which is why it asserts rather than
+        raising something an HTTP layer could answer with: a violation is a
+        programming error inside the writer, not a bad request.
+
+        The assert is cheap and it names the invariant the raw ``UPDATE models``
+        statements this method replaced could not state -- one in
+        ``patch_model_settings``, one in ``try_stack`` and one in stress-apply,
+        each with its own idea of what a value should look like (#262, #265).
+        """
+        # Imported here, not at module scope: app/models/policy.py reads
+        # ``ModelRow`` from this module to prove its table is complete.
+        from app.models.policy import OPERATOR_FIELDS
+
+        assert set(values) <= OPERATOR_FIELDS, (
+            f"update_fields may only write operator columns; "
+            f"got {sorted(set(values) - OPERATOR_FIELDS)}"
+        )
+        if not values:
+            return
+        columns = sorted(values)
+        params: list[Any] = []
+        for column in columns:
+            value = values[column]
+            if column in _JSON_COLUMNS:
+                params.append(json.dumps(value))
+            elif column == "trust_remote_code":
+                params.append(int(bool(value)))
+            else:
+                params.append(value)
+        params.append(model_id)
+        await self.db.execute(
+            f"UPDATE models SET {', '.join(f'{c} = ?' for c in columns)}, "
+            f"updated_at = datetime('now') WHERE id = ?",
+            tuple(params),
         )
         await self.db.commit()
 

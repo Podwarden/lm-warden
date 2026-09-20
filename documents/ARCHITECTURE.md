@@ -28,6 +28,31 @@ this build has and — separately — what the *active driver* will actually let
 do, so a control that cannot work is disabled with a reason instead of a load
 failing forty seconds in.
 
+### What the driver does and does not separate
+
+The two drivers are not equally exposed, and the difference is worth stating
+exactly rather than as "docker is more isolated".
+
+Under the **local-subprocess** driver the engine is a child process inside the
+api container. It shares that container's filesystem, so it can read and write
+everything the warden can — the SQLite database, the JWT secret, the HF token.
+That is inherent to the design and is documented, not a defect: a launch is argv
+plus env, and an engine started with attacker-chosen argv in the warden's own
+container is equivalent to code execution in the warden.
+
+Under the **docker** driver the engine is a sibling container. It is handed the
+model-cache volume and nothing else: **the warden's data volume is not mounted
+into it** (#265 — it used to be, read-write, which made this driver no better
+than the one above). What it still shares with the control plane is the
+control-plane network — it must, because that is how the proxy and the health
+probe reach it — the host IPC namespace (`ipc_mode=host`, for tensor-parallel
+shared memory) and the GPUs it was pinned to. So the honest claim is: under the
+docker driver the engine cannot read the database or the signing secret; it is
+not sandboxed from the warden's *API*, which it can reach over that network like
+any other client on it.
+
+Neither driver gives the engine the Docker socket. The warden holds it.
+
 ---
 
 ## Two engines, and the model that made us add the second

@@ -486,6 +486,167 @@ describe('ModelSettingsPage', () => {
     expect(gpuAlert!.textContent).toMatch(/configured but not present in the system/i);
   });
 
+  // ---------------------------------------------------------------------
+  // #262 — the settings PATCH validates the MERGED row against register's
+  // rules. Three consequences the page has to handle, none of which existed
+  // before: a cross-field rule the picker has to satisfy, a 422 whose detail
+  // is a LIST, and a second thing that answers 409.
+  // ---------------------------------------------------------------------
+
+  const TWO_GPU_PROBE = {
+    gpus: [
+      { index: 0, name: 'A4000', memory_total_mib: 16376, memory_used_mib: 0, utilization_pct: 0 },
+      { index: 1, name: 'A4000', memory_total_mib: 16376, memory_used_mib: 0, utilization_pct: 0 },
+    ],
+    probed_at: new Date().toISOString(),
+    probe_error: null,
+  };
+
+  /** GET the settings, answer the PATCH with `patchResponse`, serve `probe`. */
+  function mockSettings(settings: SettingsResponse, patchResponse: () => Response, probe = DEFAULT_GPU_PROBE) {
+    const fetchMock = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : (input as Request).url;
+      const method = (init?.method ?? 'GET').toUpperCase();
+      if (url === '/api/models/abc/settings' && method === 'GET') {
+        return new Response(JSON.stringify(settings), { status: 200 });
+      }
+      if (url === '/api/models/abc/settings' && method === 'PATCH') {
+        return patchResponse();
+      }
+      if (url === '/api/system/gpus') {
+        return new Response(JSON.stringify(probe), { status: 200 });
+      }
+      throw new Error(`unexpected fetch: ${method} ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    return fetchMock;
+  }
+
+  async function patchBodyAfterSave(fetchMock: ReturnType<typeof vi.fn>) {
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.find((c) => (c[1] as RequestInit | undefined)?.method === 'PATCH'),
+      ).toBeDefined();
+    });
+    const call = fetchMock.mock.calls.find(
+      (c) => (c[1] as RequestInit | undefined)?.method === 'PATCH',
+    )!;
+    return JSON.parse((call[1] as RequestInit).body as string);
+  }
+
+  it('carries tensor_parallel_size with the GPU selection', async () => {
+    // The merged row must satisfy register's cross-field rule
+    // (tensor_parallel_size == len(gpu_indices)), and onSave sends only dirty
+    // keys -- so a picker that moves the placement alone produces a 422 on the
+    // most common edit this page has. Both keys must go.
+    const fetchMock = mockSettings(
+      fakeSettings({ gpu_indices: [0], tensor_parallel_size: 1 }),
+      () => new Response('{"ok":true}', { status: 200 }),
+      TWO_GPU_PROBE,
+    );
+
+    renderPage('abc');
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    await screen.findByLabelText(/HF revision/i);
+
+    const gpu1 = document.getElementById('gpu-checklist-1') as HTMLInputElement;
+    expect(gpu1).toBeTruthy();
+    expect(gpu1.checked).toBe(false);
+    await act(async () => {
+      fireEvent.click(gpu1);
+    });
+
+    const saveBtn = screen.getByRole('button', { name: /save/i });
+    await waitFor(() => expect(saveBtn).not.toBeDisabled());
+    fireEvent.click(saveBtn);
+
+    expect(await patchBodyAfterSave(fetchMock)).toEqual({
+      gpu_indices: [0, 1],
+      tensor_parallel_size: 2,
+    });
+  });
+
+  it('renders a 422 whose detail is a list of field errors', async () => {
+    // FastAPI's shape, which is what ModelChangeRefused now raises. Rendering
+    // `String(detail)` here would put `[object Object]` on screen and
+    // ignoring the array would show a bare HTTP 422 -- either way the operator
+    // is not told which field is wrong.
+    mockSettings(fakeSettings(), () =>
+      new Response(
+        JSON.stringify({
+          detail: [
+            { loc: [], msg: 'Value error, tensor_parallel_size=1 must equal len(gpu_indices)=2', type: 'value_error' },
+          ],
+        }),
+        { status: 422 },
+      ),
+    );
+
+    renderPage('abc');
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    const hfRevisionInput = await screen.findByLabelText(/HF revision/i);
+    fireEvent.change(hfRevisionInput, { target: { value: 'abc1234' } });
+    const saveBtn = screen.getByRole('button', { name: /save/i });
+    await waitFor(() => expect(saveBtn).not.toBeDisabled());
+    fireEvent.click(saveBtn);
+
+    const err = await screen.findByTestId('settings-save-error');
+    expect(err.textContent).toMatch(/must equal len\(gpu_indices\)=2/);
+    expect(err.textContent).not.toMatch(/object Object/);
+    // Not the unload-first banner: this is a value problem, not a state one.
+    expect(screen.queryByTestId('settings-loaded-banner')).toBeNull();
+  });
+
+  it('shows a served_model_name collision as a save error, not the unload banner', async () => {
+    // Two things answer 409 now. Only one of them means "go unload it".
+    mockSettings(fakeSettings(), () =>
+      new Response(JSON.stringify({ detail: "served_model_name 'taken' already exists" }), {
+        status: 409,
+      }),
+    );
+
+    renderPage('abc');
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    const hfRevisionInput = await screen.findByLabelText(/HF revision/i);
+    fireEvent.change(hfRevisionInput, { target: { value: 'abc1234' } });
+    const saveBtn = screen.getByRole('button', { name: /save/i });
+    await waitFor(() => expect(saveBtn).not.toBeDisabled());
+    fireEvent.click(saveBtn);
+
+    const err = await screen.findByTestId('settings-save-error');
+    expect(err.textContent).toMatch(/already exists/);
+    expect(screen.queryByTestId('settings-loaded-banner')).toBeNull();
+  });
+
+  it('still shows the unload-first banner for the other 409', async () => {
+    mockSettings(fakeSettings(), () =>
+      new Response(JSON.stringify({ detail: 'model must be unloaded before editing settings' }), {
+        status: 409,
+      }),
+    );
+
+    renderPage('abc');
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    const hfRevisionInput = await screen.findByLabelText(/HF revision/i);
+    fireEvent.change(hfRevisionInput, { target: { value: 'abc1234' } });
+    const saveBtn = screen.getByRole('button', { name: /save/i });
+    await waitFor(() => expect(saveBtn).not.toBeDisabled());
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('settings-loaded-banner')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('settings-save-error')).toBeNull();
+  });
+
   it('blocks Save and shows a message when gpu_indices is emptied, re-enables on re-check', async () => {
     // Start with a single configured + present GPU so we can uncheck it to
     // reach the empty state, then re-check to recover. Per spec the per-model

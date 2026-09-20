@@ -179,6 +179,67 @@ it, is under [One loaded model per GPU](HAZARDS.md#one-loaded-model-per-gpu).
 model can actually serve rather than the one it starts with, is described under
 [Measuring instead of guessing](HAZARDS.md#measuring-instead-of-guessing).
 
+### Changing a model after it is registered
+
+`PATCH /api/models/{id}/settings` takes any subset of the model's settings; an
+omitted key is left alone. The body is merged into the stored row and **the
+merged row is validated by the same rules as `POST /api/models`** — the same
+slug patterns, the same length and numeric bounds, the same `extra_env`
+allowlist, and the same cross-field rules. There is no value this endpoint
+accepts that register would refuse.
+
+```bash
+curl -s -X PATCH $W/api/models/$M/settings "${AUTH[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{"max_model_len": 32768, "extra_args": ["--enforce-eager"]}'
+# 200 {"ok": true}
+```
+
+Two rules catch people out, and both come from register:
+
+- **`tensor_parallel_size` must equal `len(gpu_indices)`.** Changing the GPU
+  selection therefore means sending the new parallel size in the same request.
+  A row where the two disagree cannot load, which is why the pair is refused
+  rather than half-applied.
+- **`extra_args` is a list of strings.** A bare string is refused; it used to
+  be accepted and then appended to the engine's argv one character at a time.
+
+What comes back:
+
+| Status | When |
+|---|---|
+| 400 | a key that is not a setting (`status`, `prior_status`, or an unknown name), a malformed `gpu_indices` / `backend` / capability flag, or a GPU index outside the wizard's allow-list |
+| 403 | an admin token turning `trust_remote_code` on (see below) |
+| 404 | no such model |
+| 409 | the model is `loaded` (unload first), or the new `served_model_name` already belongs to another model |
+| 422 | a value that breaks one of the rules above; the body names the field |
+
+A refused PATCH writes nothing at all — not one of its keys.
+
+Only the capability flags (`supports_tools`, `supports_vision`,
+`supports_reasoning`) may be changed while the model is loaded: they are
+metadata no engine reads, and the loaded model is exactly the one you are
+looking at when you notice one is wrong. Mixing any other setting into the same
+body puts the whole request back under the 409.
+
+The same rules apply wherever else the API writes a model row — registering
+from a template, pinning an engine with `POST /api/models/{id}/try-stack`, and
+applying a measured context with `POST /api/models/{id}/stress/apply` all go
+through one writer, so none of them can store something register would refuse.
+
+Because the whole merged row is checked, any of those can refuse over a column
+the request does not mention — most often an `extra_env` key written before
+that allowlist was enforced, which loads and serves fine because the engine
+drops unknown keys at launch. On `POST /api/models` and the settings PATCH you
+can send the corrected value in the same request and it is accepted; try-stack
+and stress/apply take no such body, so fix the column with a settings PATCH
+first. `POST /api/models/{id}/stress/apply` checks the row **before** it
+unloads anything, so a `422` there normally means the model is still serving on
+its current context and nothing was written. The check cannot close the window
+entirely: if the row changes underneath it, the refusal lands after the unload,
+the engine is restarted before the `422` is returned, and a restart that itself
+fails leaves the row `failed` for the watchdog.
+
 ---
 
 ## Managing a key from the API
@@ -478,11 +539,28 @@ carries its own `?t=` signature) — and `/v1/*`, which marks them
 **Treat an admin token like the admin password.** The session-only routes
 below stop a leaked token from managing admin tokens *through the API* —
 they are an API-level guardrail, not containment. `trust_remote_code` is
-fenced the same way (#256), because that setting runs the target repository's
-Python inside the warden's engine process, and under the default
-local-subprocess driver that process shares the warden's filesystem. Four
-paths are refused for an admin token, which is every way the API has to put a
-`trust_remote_code` model in front of an engine:
+fenced the same way (#256): it is a stored declaration that the target
+repository's Python may be executed with the warden's own privileges, and an
+admin token must not be able to write it.
+
+Where that execution actually happened is worth stating plainly, because this
+page said the wrong thing until #264. **The `trust_remote_code` column has
+never been passed to an engine.** Neither the vLLM nor the llama.cpp launcher
+builds `--trust-remote-code` from it, under any driver. Its one consumer was
+the warden's *own* process: the proxy's tokenizer cache handed the flag to
+`AutoTokenizer.from_pretrained` on `/v1` data-plane requests, for prompt and
+completion token accounting. So a row with the flag made the warden import that
+repository's Python into the process holding the SQLite database and
+`VW_JWT_SECRET` — on inference traffic, not at load, and identically under
+every driver. **As of #264 the flag no longer reaches the tokenizer either**:
+the cache always loads with `trust_remote_code=False`, and a repo whose
+tokenizer can only be built by running its own code is token-*estimated*
+instead (the same visible degradation a GGUF-only repo already gets — see
+`tokenizer_repo`). The column now reaches no code path at all; the four
+refusals below stay as a fence on the stored grant.
+
+Four paths are refused for an admin token, which is every way the API has to
+set the flag or load a model carrying it:
 
 * `POST /api/models` — refused when the **effective** value is true, so a
   `template_id` whose template carries the flag is refused too, builtin
@@ -490,24 +568,38 @@ paths are refused for an admin token, which is every way the API has to put a
 * `POST /api/models/templates` — refused when the template being saved carries
   the flag, so a token cannot leave the instruction lying around;
 * `PATCH /api/models/{id}/settings` — refused when it would turn the flag *on*
-  (turning it off is fine), because the row is what a later load, or the
-  watchdog's restart sweep, reads;
+  (turning it off is fine), because the flag is persisted the same either way;
 * `POST /api/models/{id}/load` — refused when the row already has it, however
-  that row got there.
+  that row got there. Loading does not itself execute anything from the
+  repository — the column never reaches the engine — so this is a check on the
+  stored grant, kept because a row can predate the register-time refusal.
 
 `prior_status`, the column the watchdog's restart sweep keys on, is not
 patchable at all any more — by a token or by a session. It was the other half
-of the same hole: an admin token that could write it, and the flag, could have
-the watchdog start the engine for it without ever calling `/load`.
+of the same hole: an admin token that could write it could have the watchdog
+start the engine, with whatever argv the row carries, without ever calling
+`/load`.
 
-Those four paths are closed, but the `trust_remote_code` **column** is not the
-only way to reach the same code execution, and closing it is not containment.
-`extra_args` is appended to the engine's argv verbatim and last, so an admin
-token can put `--trust-remote-code` there — and `--model <repo>` with it —
-through `POST /api/models` or `PATCH /api/models/{model_id}/settings`, then
-load the model normally: the column stays false, so the refusals above never
-fire. `engine_image` is the same shape wherever the driver runs a container
-image. Both are left open deliberately: `POST /api/models` already accepts
+Those four paths are closed, but they were never containment, and the
+`trust_remote_code` column was never the way to reach code execution in the
+engine. `extra_args` is, and always has been: it is appended to the engine's
+argv verbatim and last, so an admin token can put `--trust-remote-code` there —
+and `--model <repo>` with it — through `POST /api/models` or `PATCH
+/api/models/{model_id}/settings`, then load the model normally: the column
+stays false, so the refusals above never fire. `extra_args` is also the *only*
+way to make an engine trust remote code, which is why the engine-log diagnosis
+for "this model requires trust_remote_code" now says to put
+`--trust-remote-code` there rather than to turn the column on.
+`engine_image` is the same shape wherever the driver runs a container
+image — and note what that reaches. Under the default local-subprocess driver
+the engine runs inside the api container, so argv-level code execution there is
+code execution in the warden, with the database and the JWT secret on the same
+filesystem. Under the docker driver the engine is a sibling container that is
+handed the model-cache volume and nothing else: as of #265 the warden's data
+volume is no longer mounted into it, so a chosen image or argv cannot read
+`vllm-warden.db` or `jwt_secret`. It can still address the warden's API over the
+shared control-plane network, as any client on that network can. Both are left
+open deliberately: `POST /api/models` already accepts
 them, so fencing only the PATCH would move the power one route over rather
 than remove it — if engine start-up inputs are to become session-only, that
 decision belongs at the register route. `extra_env`, by contrast, *is* fenced:
@@ -528,10 +620,10 @@ admin password.
 | `GET/POST /api/admin-tokens`, `POST /api/admin-tokens/{id}/rotate`, `DELETE /api/admin-tokens/{id}`, `GET /api/admin-tokens/{id}/audit` | These are the only API routes that manage admin tokens, so requiring a session here is what makes "revoke it in the UI" an effective response to a leak: a leaked token cannot use *this* API to mint itself a sibling, extend its own life, or revoke or hide the trail of another admin token. It does not mean the token is contained — see the warning above. |
 | `POST /api/auth/logout`, `POST /api/auth/sse-ticket` | They belong to a browser session. A program sends the header to a stream directly. |
 | `PATCH /api/settings/runtime` when the body carries `admin_username`, `admin_password`, `session_access_ttl_minutes`, `session_refresh_ttl_days`, `sse_ticket_ttl_seconds` or `public_url` | A leaked token must not be able to change the operator's credentials or the session's lifetimes and lock the operator out of the UI, which is where it gets revoked. `public_url` is session-only too, as defence in depth: it is the host that client-facing URLs are built from, and a leaked token must not be able to steer it to a host it controls. (The curl examples shown next to a new admin secret use the page's own address and ignore it.) The refusal is on the whole request — nothing in the body is applied, not even its other keys. Every other runtime key stays open to an admin token. |
-| `POST /api/models` when the model's **effective** `trust_remote_code` is true — the body's value, or the template's when the body does not say | `trust_remote_code` runs the target repository's Python inside the warden container. Setting it needs a signed-in session, so a leaked token cannot register a model that will run arbitrary code once loaded. The check is on the merged value, not the body key, because the builtin `gpt-oss-20b` template carries the flag and a `template_id` would otherwise be a one-request way around it. Refused before any write — nothing is persisted. An explicit `trust_remote_code: false` still wins over a template that sets it, and registering without the flag is unaffected. |
+| `POST /api/models` when the model's **effective** `trust_remote_code` is true — the body's value, or the template's when the body does not say | `trust_remote_code` declares that the target repository's Python may be executed with the warden's privileges. Setting it needs a signed-in session, so a leaked token cannot persist that grant. The check is on the merged value, not the body key, because the builtin `gpt-oss-20b` template carries the flag and a `template_id` would otherwise be a one-request way around it. Refused before any write — nothing is persisted. An explicit `trust_remote_code: false` still wins over a template that sets it, and registering without the flag is unaffected. |
 | `POST /api/models/templates` when the template being saved sets `trust_remote_code: true` | A template is a register-time prefill, so saving one is storing an instruction to set the flag on every model made from it. Refused before any write. Templates without it, and every other template field, stay open to an admin token. |
-| `PATCH /api/models/{id}/settings` when the body sets `trust_remote_code` to a true value | The row is what a later load — or the watchdog's restart sweep — reads, so patching the flag on is the same grant of code execution by a different verb. Checked first, before validation and before any write, so a refused PATCH changes nothing at all. Setting it to `false` is open to an admin token, as is every other setting on this route. |
-| `POST /api/models/{id}/load` when the row's `trust_remote_code` is true | The code runs at load time, and a row can predate this restriction, so the same repository-code risk is checked again here regardless of how the row was created. Every other model — and unload, list and everything else on a `trust_remote_code` model — stays open to an admin token. |
+| `PATCH /api/models/{id}/settings` when the body sets `trust_remote_code` to a true value | Patching the flag on persists the same grant by a different verb. Checked first, before validation and before any write, so a refused PATCH changes nothing at all. Setting it to `false` is open to an admin token, as is every other setting on this route. |
+| `POST /api/models/{id}/load` when the row's `trust_remote_code` is true | A row can predate the register-time refusal, so the flag is checked again here regardless of how the row was created. Loading does **not** itself run anything from the repository — the column is never passed to the engine (#264) — so this refuses on the stored grant, not on an execution about to happen. Every other model — and unload, list and everything else on a `trust_remote_code` model — stays open to an admin token. |
 
 The setup wizard (`/api/setup/*`) and `/api/auth/login` take no credential at
 all. An admin token is never a `/v1` credential (`401 invalid token format`).

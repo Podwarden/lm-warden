@@ -1,10 +1,26 @@
 """HF tokenizer cache used by the proxy for prompt/completion accounting.
 
-The cache grows by one entry per distinct (hf_repo, trust_remote_code) tuple
-the proxy has been asked to count tokens for. Each entry holds a fully
-loaded ``AutoTokenizer`` (vocab + merges + special-tokens config), which
-runs anywhere from ~1 MiB (small word-piece tokenizers) to ~20+ MiB
-(sentencepiece + BPE merges for some Qwen/Llama variants) of process RSS.
+The cache grows by one entry per distinct hf_repo the proxy has been asked to
+count tokens for. Each entry holds a fully loaded ``AutoTokenizer``
+(vocab + merges + special-tokens config), which runs anywhere from ~1 MiB
+(small word-piece tokenizers) to ~20+ MiB (sentencepiece + BPE merges for
+some Qwen/Llama variants) of process RSS.
+
+#264 — **this cache never trusts remote code.** ``trust_remote_code=False``
+below is hard-coded and explicit, not a default we inherit. Until #264 the
+cache took the model row's ``models.trust_remote_code`` column and passed it
+here, which made that column the one and only thing in the product that
+executed a Hugging Face repository's Python -- and it did so *inside the
+warden process*, the process holding the SQLite DB and ``VW_JWT_SECRET``, on
+a ``/v1`` data-plane request, for token accounting only, under every driver.
+(No engine ever received the flag: app/runtime/backends/vllm/args.py does not
+emit ``--trust-remote-code``, pinned by tests/unit/runtime/backends/
+test_launch_characterisation.py::test_no_case_sets_trust_remote_code.)
+Accounting is not worth arbitrary code execution: ``count`` already fails
+open to a character estimate, so a repo whose tokenizer genuinely needs
+custom code is now estimated and reported through ``estimating()`` -- the
+same, visible degradation a GGUF-only repo already gets. See
+tests/unit/proxy/test_tokenizer_no_remote_code.py.
 
 S7 (#124) — code-review finding #5: the cache was previously **never**
 flushed on model unload. A long-lived warden that loads-and-unloads a
@@ -14,16 +30,11 @@ distinct repo ever seen — eventually OOMing the process. The fix is
 ``evict(hf_repo)``, called from ``unload`` in the supervisor's unload
 hook (see app/models/routes_api.py::unload_model). Same hf_repo loaded
 again later transparently re-fetches.
-
-The cache is per-(hf_repo, trust_remote_code) on purpose: the same repo
-with and without ``trust_remote_code`` produces different tokenizer
-classes (custom code is loaded only with the flag set), so they must
-not share an entry. Evict by repo only — both variants for the same
-hf_repo go at the same time.
 """
 
 import asyncio
 import logging
+from typing import Any
 
 from transformers import AutoTokenizer
 
@@ -38,10 +49,10 @@ _CHARS_PER_TOKEN = 4
 
 
 class TokenizerCache:
-    """Lazy-loaded HF tokenizer cache keyed by (hf_repo, trust_remote_code). Used for accounting only."""
+    """Lazy-loaded HF tokenizer cache keyed by hf_repo. Used for accounting only."""
 
     def __init__(self) -> None:
-        self._cache: dict[tuple[str, bool], object] = {}
+        self._cache: dict[str, Any] = {}
         # Model repos whose token counts are character ESTIMATES because no
         # tokenizer could be loaded. Keyed by the model's own hf_repo, which is
         # what an operator looking for the row to fix would search for -- not by
@@ -58,22 +69,27 @@ class TokenizerCache:
         """
         return frozenset(self._estimating)
 
-    async def get(self, hf_repo: str, *, trust_remote_code: bool):
-        key = (hf_repo, trust_remote_code)
+    async def get(self, hf_repo: str) -> Any:
+        """Load (and cache) ``hf_repo``'s tokenizer. Never executes repo code.
+
+        ``trust_remote_code=False`` is passed explicitly and takes no argument
+        from the caller -- see the module docstring (#264). A repo whose
+        tokenizer needs custom code raises here, which ``count`` turns into a
+        character estimate.
+        """
         async with self._lock:
-            if key not in self._cache:
+            if hf_repo not in self._cache:
                 loop = asyncio.get_running_loop()
-                self._cache[key] = await loop.run_in_executor(
-                    None, lambda: AutoTokenizer.from_pretrained(hf_repo, trust_remote_code=trust_remote_code),
+                self._cache[hf_repo] = await loop.run_in_executor(
+                    None, lambda: AutoTokenizer.from_pretrained(hf_repo, trust_remote_code=False),
                 )
-            return self._cache[key]
+            return self._cache[hf_repo]
 
     async def count(
         self,
         hf_repo: str,
         text: str,
         *,
-        trust_remote_code: bool,
         fallback_repo: str | None = None,
     ) -> int:
         """Token count for accounting. NEVER raises.
@@ -84,6 +100,11 @@ class TokenizerCache:
         cold cache, a pointless network round trip. (The name is
         ``fallback_repo`` because that is what the column is for from the row's
         point of view: a fallback source for files the weights repo lacks.)
+
+        A tokenizer that can only be built by executing the repository's own
+        Python is also "no tokenizer" as far as this call is concerned: the
+        cache never trusts remote code (#264), so such a repo takes the same
+        estimate path as a GGUF-only one.
 
         When no tokenizer can be loaded we fall back to a character estimate
         rather than raising. This call sits on the proxy's hot path
@@ -97,7 +118,7 @@ class TokenizerCache:
             return 0
         repo = fallback_repo or hf_repo
         try:
-            tok = await self.get(repo, trust_remote_code=trust_remote_code)
+            tok = await self.get(repo)
             return len(tok.encode(text))
         except Exception:  # noqa: BLE001 -- accounting must not fail a request
             if hf_repo not in self._estimating:
@@ -114,17 +135,17 @@ class TokenizerCache:
             return max(1, len(text) // _CHARS_PER_TOKEN)
 
     async def evict(self, hf_repo: str) -> int:
-        """Drop every cached tokenizer for ``hf_repo`` (both trust_remote_code
-        variants). Returns the number of entries that were evicted. Idempotent
-        — calling on an hf_repo never seen by the cache is a no-op that
-        returns 0.
+        """Drop the cached tokenizer for ``hf_repo``. Returns the number of
+        entries that were evicted (0 or 1 — the cache holds one entry per
+        repo). Idempotent — calling on an hf_repo never seen by the cache is a
+        no-op that returns 0.
 
         Called from the model-unload path so the cache doesn't accumulate
         an entry per ever-loaded model over a long-lived warden's lifetime.
         See code-review finding #5 (S7, #124).
         """
         async with self._lock:
-            to_drop = [k for k in self._cache if k[0] == hf_repo]
+            to_drop = [hf_repo] if hf_repo in self._cache else []
             for k in to_drop:
                 self._cache.pop(k, None)
             # Clear the estimate marker too, or a model whose tokenizer_repo the

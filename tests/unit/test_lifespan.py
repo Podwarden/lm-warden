@@ -1,6 +1,9 @@
+import json
 import sqlite3
 
 import pytest
+
+from tests.conftest import jwt_login, seed_admin_user
 
 
 @pytest.mark.fresh_db
@@ -99,3 +102,149 @@ def test_lifespan_reconciles_stranded_rows_before_marking_the_runtime_dead(
     assert prior_status is None, (
         "an interrupted first load must not be flagged for automatic restart"
     )
+
+
+class _DriverSettings:
+    """Only the fields ``_build_engine_driver`` reads."""
+
+    def __init__(self, *, engine_driver, hf_cache_dir, tmp_path):
+        self.engine_driver = engine_driver
+        self.hf_cache_dir = hf_cache_dir
+        self.data_dir = tmp_path
+        self.engine_log_max_bytes = 0
+
+
+def _docker_driver(monkeypatch, *, hf_cache_dir, tmp_path):
+    """Build the docker driver without a docker daemon."""
+    import docker
+
+    monkeypatch.setattr(docker, "from_env", lambda: object())
+    monkeypatch.setenv("VLLM_ENGINE_IMAGE", "img:tag")
+    from app.main import _build_engine_driver
+
+    return _build_engine_driver(
+        _DriverSettings(
+            engine_driver="docker", hf_cache_dir=hf_cache_dir, tmp_path=tmp_path
+        )
+    )
+
+
+def test_docker_driver_warns_when_hf_cache_dir_is_not_the_engine_mount(
+    monkeypatch, caplog, tmp_path
+):
+    """#265 — the one configuration the dropped ``/data`` mount could break.
+
+    The engine container now gets the model-cache volume and nothing else, at a
+    FIXED path. A deployment that moved ``VW_HF_CACHE_DIR`` under ``/data`` was
+    reaching its cache *through* the old data mount; without it the engine's
+    ``HF_HUB_CACHE`` names a path no volume backs and every model re-downloads
+    into the container's writable layer. Being unable to test that live is a
+    reason to be loud at startup, not to guess.
+    """
+    from app.runtime.engine.docker_socket import HFCACHE_MOUNT
+
+    with caplog.at_level("WARNING"):
+        _docker_driver(monkeypatch, hf_cache_dir="/data/hf-cache", tmp_path=tmp_path)
+    assert any(
+        "VW_HF_CACHE_DIR" in r.getMessage() and HFCACHE_MOUNT in r.getMessage()
+        for r in caplog.records
+    ), caplog.text
+
+
+def test_docker_driver_is_quiet_on_the_default_cache_dir(monkeypatch, caplog, tmp_path):
+    """The warning must not fire on every shipped deployment shape."""
+    from pathlib import Path
+
+    from app.runtime.engine.docker_socket import HFCACHE_MOUNT
+
+    with caplog.at_level("WARNING"):
+        _docker_driver(
+            monkeypatch, hf_cache_dir=Path(HFCACHE_MOUNT), tmp_path=tmp_path
+        )
+    assert "VW_HF_CACHE_DIR" not in caplog.text
+
+
+def test_lifespan_cleans_a_hard_locked_extra_env_key_before_serving_a_request(
+    tmp_data_dir, client, caplog
+):
+    """#266 -- a row poisoned by a pre-fix settings PATCH (an extra_env key
+    POST /api/models already refused) must be cleaned, and the operator must
+    be able to see which model and which key from the boot log alone.
+
+    The log line has to land BEFORE the app can serve a request: an operator
+    reading it while the model is still refusing to load, not after, is the
+    entire point (a boot-order regression here is silent until someone tries
+    to load the model and gets a raw environment error instead).
+    """
+    client.get("/healthz")  # first boot: migrated DB
+    db_path = tmp_data_dir / "vllm-warden.db"
+    with sqlite3.connect(db_path) as db:
+        db.execute(
+            "INSERT INTO models(id, served_model_name, hf_repo, hf_revision, gpu_indices, "
+            "tensor_parallel_size, gpu_memory_utilization, trust_remote_code, extra_args, "
+            "extra_env, status, pulled_bytes) VALUES "
+            "('poisoned','poisoned','o/r','main','[0]',1,0.9,0,'[]',?,'pulled',0)",
+            (json.dumps({"VLLM_LOGGING_LEVEL": "DEBUG", "LD_PRELOAD": "/evil.so"}),),
+        )
+        db.commit()
+
+    from fastapi.testclient import TestClient
+
+    from app.main import build_app
+
+    with caplog.at_level("WARNING", logger="app.runtime.boot_reconcile"):
+        # The lifespan runs to completion (poison cleaned, warning logged)
+        # BEFORE ``with`` returns control here -- TestClient's context manager
+        # drives startup synchronously, so this assertion point is already
+        # "after boot, before any request this test sends".
+        with TestClient(build_app()) as c2:
+            # The log line must already be there even before this first
+            # request -- boot reconciliation is not deferred to a request
+            # handler.
+            assert "poisoned" in caplog.text
+            assert "LD_PRELOAD" in caplog.text
+            c2.get("/healthz")
+
+    with sqlite3.connect(db_path) as db:
+        (extra_env,) = db.execute(
+            "SELECT extra_env FROM models WHERE id='poisoned'"
+        ).fetchone()
+    assert json.loads(extra_env) == {"VLLM_LOGGING_LEVEL": "DEBUG"}
+
+
+def test_lifespan_prevents_a_wrong_shaped_row_from_500ing_the_models_list(
+    tmp_data_dir, client
+):
+    """#266 verification: this is the MORE urgent half of the two poisoning
+    questions the issue raised. ``ModelOut`` types ``extra_args: list[str]``,
+    so a row whose column holds a bare string fails FastAPI's response
+    validation -- and because ``GET /api/models`` returns every row in ONE
+    response, that one bad row would 500 the whole models list, hiding every
+    other model on the install too, not just itself. Boot reconciliation
+    must land before the first request so this never happens.
+    """
+    client.get("/healthz")  # first boot: migrated DB
+    db_path = tmp_data_dir / "vllm-warden.db"
+    seed_admin_user(db_path)
+    with sqlite3.connect(db_path) as db:
+        db.execute(
+            "INSERT INTO models(id, served_model_name, hf_repo, hf_revision, gpu_indices, "
+            "tensor_parallel_size, gpu_memory_utilization, trust_remote_code, extra_args, "
+            "extra_env, status, pulled_bytes) VALUES "
+            "('shapeless','shapeless','o/r','main','[0]',1,0.9,0,?,'{}','pulled',0)",
+            (json.dumps("--enforce-eager"),),  # a string, not a list -- what
+            # a pre-#266-fix PATCH could write verbatim
+        )
+        db.commit()
+
+    from fastapi.testclient import TestClient
+
+    from app.main import build_app
+
+    with TestClient(build_app()) as c2:
+        headers = jwt_login(c2)
+        resp = c2.get("/api/models", headers=headers)
+
+    assert resp.status_code == 200, resp.text
+    by_id = {m["id"]: m for m in resp.json()["models"]}
+    assert by_id["shapeless"]["extra_args"] == []

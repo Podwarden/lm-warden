@@ -1,18 +1,24 @@
 """Issue #256: an admin token must not be able to make the warden execute
 arbitrary code via ``trust_remote_code``.
 
-A final security review found that an admin token could register a model
-with ``trust_remote_code: true`` and load it, running that Hugging Face
-repository's Python inside the warden container -- from there it can read
-``VW_JWT_SECRET``, mint a session, or edit ``api_tokens`` / ``admin_audit``
-directly. Two refusals close that, both 403 ``session_only``, both only for
-an admin token (a session is unaffected by either):
+A final security review found that an admin token could register a model with
+``trust_remote_code: true`` and put it in front of the warden -- code running
+with the warden's privileges can read ``VW_JWT_SECRET``, mint a session, or
+edit ``api_tokens`` / ``admin_audit`` directly. Two refusals close that, both
+403 ``session_only``, both only for an admin token (a session is unaffected by
+either):
 
   1. Setting it -- ``POST /api/models`` refuses a body that sets
      ``trust_remote_code: true``, before any write.
   2. Loading it -- ``POST /api/models/{id}/load`` refuses when the target
-     row's ``trust_remote_code`` is truthy (the code runs at load time, and
-     a row can predate this change).
+     row's ``trust_remote_code`` is truthy (a row can predate this change).
+
+#264 corrected the mechanism this file used to describe: the column is never
+emitted to any engine, so nothing ever ran "at load time" or "in the engine
+process". Its one consumer was the warden's own proxy tokenizer on ``/v1``
+traffic, and #264 removed that. The refusals below are unchanged -- they fence
+a stored grant an admin token must not be able to write -- and everything this
+module asserts still holds.
 
 A follow-up review (C1/I1, 2026-09-19) found three ways past those two, all
 closed here and all covered below:

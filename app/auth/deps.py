@@ -49,30 +49,41 @@ SESSION_ONLY_DETAIL: dict[str, str] = {
 }
 
 
-# #256, widened by the C1/I1 follow-up review. trust_remote_code makes the
-# engine execute the target Hugging Face repository's Python inside the warden
-# container, with the warden's own privileges (VW_JWT_SECRET, api_tokens,
-# admin_audit) -- so an admin token that can set it anywhere can mint itself a
-# session and undo the session-only fence around token management. Every write
-# path to a true value is therefore session-only, and they live here rather
-# than next to one route because three modules refuse with them:
-# app/models/routes_api.py (register, register-via-template, template create,
-# load) and app/settings/routes_api.py (the settings PATCH).
+# #256, widened by the C1/I1 follow-up review. ``trust_remote_code`` is a
+# standing declaration that the target Hugging Face repository's Python may be
+# executed -- and anything acting on that declaration does so with the warden's
+# own privileges (VW_JWT_SECRET, api_tokens, admin_audit), so an admin token
+# that can set it anywhere could undo the session-only fence around token
+# management. Every write path to a true value is therefore session-only, and
+# they live here rather than next to one route because three modules refuse
+# with them: app/models/routes_api.py (register, register-via-template,
+# template create, load) and app/settings/routes_api.py (the settings PATCH).
+#
+# #264 corrects the MECHANISM these messages used to name. The column was never
+# emitted to any engine -- no ``--trust-remote-code`` is built for vLLM or
+# llama.cpp (pinned by tests/unit/runtime/backends/
+# test_launch_characterisation.py::test_no_case_sets_trust_remote_code) -- so
+# nothing ran "in the engine process" and nothing ran at load time. Its one
+# consumer was the warden's OWN process: the proxy's tokenizer cache, on /v1
+# data-plane traffic, for token accounting. #264 removed that too, so the
+# column now reaches no code path at all. The fence stays: it is a persisted
+# grant that a future consumer would read, and an admin token must not be able
+# to write it. Say what is true and no more.
 #
 # The first review of #256 guarded only the literal ``trust_remote_code: true``
 # body key on POST /api/models plus the load, which left the settings PATCH,
 # the template create and a template's own merged value wide open. Keep this
 # wording and the code in step: `documents/API.md` quotes it.
 TRUST_REMOTE_CODE_SET_MESSAGE = (
-    "trust_remote_code runs the target repository's Python inside the warden "
-    "container. Setting it to true needs a signed-in session: an admin token "
-    "cannot register a model with it (directly or via a template), save a "
-    "template that carries it, or patch it onto an existing model."
+    "trust_remote_code declares that the target repository's Python may be "
+    "executed by the warden. Setting it to true needs a signed-in session: an "
+    "admin token cannot register a model with it (directly or via a template), "
+    "save a template that carries it, or patch it onto an existing model."
 )
 TRUST_REMOTE_CODE_LOAD_MESSAGE = (
-    "This model has trust_remote_code=true, so loading it runs the target "
-    "repository's Python inside the warden container. Loading it needs a "
-    "signed-in session; an admin token cannot load it."
+    "This model is flagged trust_remote_code=true, a standing declaration that "
+    "the target repository's Python may be executed by the warden. Loading it "
+    "needs a signed-in session; an admin token cannot load it."
 )
 
 
@@ -95,10 +106,12 @@ def refuse_session_only(
     instead): the runtime-settings keys in
     app/settings/routes_api.py::_refuse_session_only_keys, and the
     trust_remote_code refusals in app/models/routes_api.py and
-    app/settings/routes_api.py (#256 -- an admin token registering, patching or
-    loading a trust_remote_code model runs that repository's Python inside the
-    warden container, which is full code execution, not a settings change; see
-    TRUST_REMOTE_CODE_SET_MESSAGE above). No-op for a session; callers check
+    app/settings/routes_api.py (#256 -- an admin token writing the flag is
+    persisting a grant to execute that repository's Python with the warden's
+    privileges, not making a settings change; see
+    TRUST_REMOTE_CODE_SET_MESSAGE above and the #264 note beside it for where
+    that execution did and no longer does happen). No-op for a session;
+    callers check
     whatever they're refusing (a key was sent, a flag is true, ...) before
     calling this, so a session never pays for the check.
     """

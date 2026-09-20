@@ -296,8 +296,8 @@ export const MODEL_HINTS: Record<string, FieldHint> = {
   },
   trust_remote_code: {
     label: 'Trust remote code',
-    hint: 'Required for models that ship Python in their HF repo (e.g. some custom architectures). Off by default for security.',
-    restart: 'model-reload',
+    hint: 'A stored grant only: it is not passed to the engine, and no longer to the tokenizer either. To let an engine run a repo\u2019s own Python, add --trust-remote-code to Extra args.',
+    restart: 'none',
   },
   disable_log_requests: {
     label: 'Disable log requests',

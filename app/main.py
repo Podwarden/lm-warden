@@ -12,7 +12,10 @@ from app.db.repos.models import ModelRepo
 from app.db.repos.runtime import RuntimeRepo
 from app.db.repos.stress_runs import StressRunRepo
 from app.runtime.backends.vllm.env import warn_if_shm_undersized
-from app.runtime.boot_reconcile import reconcile_stranded_models
+from app.runtime.boot_reconcile import (
+    reconcile_poisoned_extra_fields,
+    reconcile_stranded_models,
+)
 from app.runtime.port_alloc import PortAllocator
 from app.runtime.supervisor import Supervisor
 
@@ -29,7 +32,28 @@ def _build_engine_driver(settings):
 
         import docker
 
-        from app.runtime.engine.docker_socket import DockerSocketDriver
+        from app.runtime.engine.docker_socket import HFCACHE_MOUNT, DockerSocketDriver
+
+        # #265 — the engine container is given the model-cache volume and
+        # nothing else; the warden's data volume (SQLite DB + jwt_secret) is no
+        # longer mounted into it. The cache volume lands at a FIXED path, so a
+        # deployment that moved VW_HF_CACHE_DIR elsewhere hands the engine an
+        # HF_HUB_CACHE that nothing is mounted at: it would re-download every
+        # model into the container's writable layer. Say so while the operator
+        # is still reading the startup log rather than after the first 40 GB.
+        # This is a warning, not a refusal — the warden serves fine, and a
+        # deployment whose cache path merely differs by a symlink should not be
+        # taken down by a string comparison.
+        if str(settings.hf_cache_dir) != HFCACHE_MOUNT:
+            logging.getLogger(__name__).warning(
+                "VW_HF_CACHE_DIR is %s, but the docker engine driver mounts the "
+                "model-cache volume at %s inside the engine container. The "
+                "engine's HF_HUB_CACHE will point at a path with no volume "
+                "behind it and every model will be re-downloaded into the "
+                "container's writable layer. Move the cache back to %s, or use "
+                "the local engine driver.",
+                settings.hf_cache_dir, HFCACHE_MOUNT, HFCACHE_MOUNT,
+            )
 
         image = os.environ.get("VLLM_ENGINE_IMAGE")
         if not image:
@@ -113,6 +137,18 @@ async def lifespan(app: FastAPI):
     # flight) are deliberately left to the call below, which records
     # prior_status so the watchdog restores them.
     await reconcile_stranded_models(settings, app.state.supervisor)
+
+    # #266 — a settings PATCH could, before tonight's fix, write an
+    # extra_env/extra_args value POST /api/models would have refused (a
+    # hard-locked key, or either column in a shape register never allowed).
+    # Independent of the transient-status sweep above: the poisoning has
+    # nothing to do with whether a process is or was live, so this checks
+    # every row. Runs here — before the app accepts its first HTTP request —
+    # so the log naming the affected model arrives before any load attempt
+    # or models-list poll can hit the failure it explains. See the module
+    # comment in app/runtime/boot_reconcile.py for why this strips rather
+    # than only logs.
+    await reconcile_poisoned_extra_fields(settings)
 
     async with open_db(settings.db_path) as db:
         await ModelRepo(db).mark_runtime_dead_on_startup()

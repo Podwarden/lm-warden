@@ -94,7 +94,7 @@ def _prep(client, tmp_data_dir, **runaway):
     plaintext = _seed_loaded(tmp_data_dir / "vllm-warden.db")
     client.app.state.supervisor._ports["qwen"] = 19099
     tok = MagicMock()
-    tok.count = AsyncMock(side_effect=lambda repo, text, *, trust_remote_code, fallback_repo=None: len(text.split()) if text else 0)
+    tok.count = AsyncMock(side_effect=lambda repo, text, *, fallback_repo=None: len(text.split()) if text else 0)
     client.app.state.tokenizers = tok
     client.app.state.settings = dataclasses.replace(client.app.state.settings, **runaway)
     return plaintext

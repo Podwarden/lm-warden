@@ -439,17 +439,31 @@ export default function ModelSettingsPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (r.status === 409) {
-        setConflict(true);
-        return;
-      }
       if (!r.ok) {
         let detail = `HTTP ${r.status}`;
         try {
           const j = await r.json();
           if (j && typeof j.detail === "string") detail = j.detail;
+          // A 422 carries FastAPI's list of field errors. The PATCH now
+          // validates the whole merged row against the same rules as register
+          // (#262), so this is the ordinary shape of a refused save and the
+          // message is the only thing that says which field is wrong.
+          else if (Array.isArray(j?.detail)) {
+            const msgs = (j.detail as { msg?: unknown }[])
+              .map((e) => (typeof e?.msg === "string" ? e.msg : null))
+              .filter((m): m is string => m !== null);
+            if (msgs.length) detail = msgs.join("; ");
+          }
         } catch {
           /* non-JSON body */
+        }
+        // Two things answer 409 now: the unload-first guard, and a
+        // served_model_name that another row already holds. Only the first is
+        // the "reload and unload" banner; the second is an ordinary save
+        // error naming the field the operator just edited.
+        if (r.status === 409 && !detail.includes("already exists")) {
+          setConflict(true);
+          return;
         }
         setSaveError(detail);
         return;
@@ -536,8 +550,16 @@ export default function ModelSettingsPage({
             if (
               Array.isArray(v) &&
               v.every((x) => typeof x === "number" && Number.isFinite(x))
-            )
+            ) {
               next.gpu_indices = (v as number[]).map((x) => Math.floor(x));
+              // Carry tensor_parallel_size with the placement, exactly as the
+              // GPU picker's own onChange does. The PATCH validates the MERGED
+              // row and holds it to register's cross-field rule
+              // (tensor_parallel_size == len(gpu_indices)), so a preset that
+              // moves the placement without the parallel size is a 422 -- and a
+              // row where the two disagree could not load anyway.
+              next.tensor_parallel_size = next.gpu_indices.length;
+            }
             break;
           case "extra_args":
             if (Array.isArray(v) && v.every((x) => typeof x === "string"))
@@ -1335,7 +1357,20 @@ function SettingFieldFor({
             value={draft.gpu_indices}
             gpus={gpus}
             excludeModelId={modelId}
-            onChange={(v) => set("gpu_indices", v)}
+            // Placement and parallel size move together. The PATCH validates
+            // the MERGED row and holds it to register's cross-field rule
+            // (tensor_parallel_size == len(gpu_indices)), so sending the
+            // selection on its own is a 422 -- and a row where the two disagree
+            // could not load anyway. Both keys are dirty afterwards, so both
+            // are sent. Shown, not hidden: the tensor_parallel_size field sits
+            // in this same Compute section and updates as you tick.
+            onChange={(v) =>
+              setDraft((d) => ({
+                ...d,
+                gpu_indices: v,
+                tensor_parallel_size: v.length,
+              }))
+            }
             disabled={disabled}
           />
           {gpuIndicesEmpty && (

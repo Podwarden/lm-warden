@@ -116,7 +116,7 @@ class _FakeClock:
 def _fake_tokenizer():
     cache = MagicMock()
     cache.count = AsyncMock(
-        side_effect=lambda repo, text, *, trust_remote_code, fallback_repo=None: 5
+        side_effect=lambda repo, text, *, fallback_repo=None: 5
     )
     return cache
 

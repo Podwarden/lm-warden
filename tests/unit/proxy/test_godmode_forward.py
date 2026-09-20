@@ -44,7 +44,7 @@ def _seed_loaded(db_path):
 
 def _fake_tokenizer(count_for):
     cache = MagicMock()
-    cache.count = AsyncMock(side_effect=lambda repo, text, *, trust_remote_code, fallback_repo=None: count_for(text))
+    cache.count = AsyncMock(side_effect=lambda repo, text, *, fallback_repo=None: count_for(text))
     return cache
 
 

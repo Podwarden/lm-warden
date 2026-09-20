@@ -239,12 +239,24 @@ def diagnose_engine_log(text: str) -> EngineDiagnosis | None:
         )
 
     # trust_remote_code required.
+    #
+    # #264: this used to say "enable trust_remote_code for this model", which
+    # could not fix the error it responds to -- the `trust_remote_code` column
+    # is never emitted to the engine (app/runtime/backends/vllm/args.py builds
+    # no `--trust-remote-code`, pinned by tests/unit/runtime/backends/
+    # test_launch_characterisation.py::test_no_case_sets_trust_remote_code), so
+    # the operator would toggle it, retry, and hit the identical failure. The
+    # only thing that actually reaches argv is `extra_args`, which is appended
+    # verbatim and last. Say that instead. (Making the column emit the flag is
+    # a behaviour change and a separate decision.)
     if _TRUST_REMOTE_CODE_RE.search(text):
         return EngineDiagnosis(
             message=(
-                "This model requires trust_remote_code to load. Enable "
-                "trust_remote_code for this model (it executes code from the "
-                "model repo — only do this for repos you trust), then retry."
+                "This model requires trust_remote_code to load. Add "
+                '"--trust-remote-code" to this model\'s extra_args, then retry '
+                "— the model's trust_remote_code setting is not passed to the "
+                "engine. Only do this for repos you trust: it makes the engine "
+                "execute code from the model repo."
             ),
             recommended_max_model_len=None,
         )

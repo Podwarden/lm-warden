@@ -203,7 +203,29 @@ export interface paths {
         /** List Models */
         get: operations["list_models_api_models_get"];
         put?: never;
-        /** Create Model */
+        /**
+         * Create Model
+         * @description Register a model.
+         *
+         *     The body is merged with ``template_id``'s template (explicit body fields
+         *     win) and the MERGED row is written through
+         *     ``app/models/writer.py::apply_model_change``, which is the one place an
+         *     operator-facing path writes a ``ModelRow``. Everything this route still does
+         *     itself is a DERIVATION, not a rule: reading the template, defaulting a field
+         *     from it, and resolving an engine channel + version to an image.
+         *
+         *     That split is the #262/#265 fix. This route used to carry the only complete
+         *     copy of the ruleset, so the settings PATCH, ``try_stack`` and stress-apply
+         *     each re-derived whatever their author remembered; and the merge point itself
+         *     was a row producer with no ruleset at all, which is how a ``template_id``
+         *     became a one-request way past the ``trust_remote_code`` refusal (#256/I1)
+         *     and past the ``extra_env`` allowlist (#261).
+         *
+         *     Answers: 400 for a GPU the host does not permit or an unsupported engine
+         *     channel, 403 ``session_only`` for an admin token setting
+         *     ``trust_remote_code``, 404 for an unknown ``template_id``, 409 for a taken
+         *     ``served_model_name``, 422 for a value that breaks a rule.
+         */
         post: operations["create_model_api_models_post"];
         delete?: never;
         options?: never;
@@ -239,7 +261,22 @@ export interface paths {
         /** List Try Stack */
         get: operations["list_try_stack_api_models__model_id__try_stack_get"];
         put?: never;
-        /** Try Stack */
+        /**
+         * Try Stack
+         * @description Pin an engine channel + version on a model and open a try-stack attempt.
+         *
+         *     The engine axis is written through
+         *     ``app/models/writer.py::apply_model_change`` (#265). It used to be a raw
+         *     ``UPDATE models``, which made this a row producer with no ruleset: it wrote
+         *     ``engine_image`` verbatim -- ``resolve_image`` returns an explicit ``image``
+         *     unchanged -- onto a row the supervisor then hands to ``containers.run``, and
+         *     it would do it to a model that was currently serving. Now it is the same
+         *     write every other operator path makes: 409 if the model is loaded (unload
+         *     first, because a pinned image only takes effect on the next load anyway),
+         *     422 if the resulting row breaks a rule.
+         *
+         *     ``resolve_image`` stays here: it is a derivation, not a rule.
+         */
         post: operations["try_stack_api_models__model_id__try_stack_post"];
         delete?: never;
         options?: never;
@@ -472,10 +509,23 @@ export interface paths {
          * @description Apply a measured `max_model_len` and reload the engine (design §6.4).
          *
          *     The only action in this feature that changes the model rather than
-         *     observing it. Three steps, in this order and for this reason: the settings
-         *     patch refuses to touch a loaded model, so the row cannot be updated while
-         *     it serves; and the engine must be restarted for a new context to take
-         *     effect at all.
+         *     observing it. Four steps, in this order and for this reason: **every
+         *     refusal is raised before anything is torn down**; then the engine is
+         *     unloaded, because the row cannot be written while it serves; then the row is
+         *     written; then the engine is restarted, because a new context takes effect
+         *     only on a fresh start.
+         *
+         *     The first of those is not an optimisation, it is the rule this route learned
+         *     the hard way: *never put a destructive step before a validation that can fail
+         *     for reasons unrelated to the request.* `apply_model_change` validates the
+         *     whole merged row, so it can refuse over a column nobody touched here -- an
+         *     `extra_env` key a pre-#261 PATCH wrote, for instance, which loads and serves
+         *     perfectly well because `filter_extra_env` drops it at launch. With the
+         *     validation after the unload, that stale column turned "Apply and reload" into
+         *     an outage: 422 with the engine already down, `status` committed as `pulled`,
+         *     and no restart. The watchdog does not recover such a row -- `pulled` with no
+         *     `prior_status` is exactly what an operator unloading on purpose looks like --
+         *     so the model stayed down until a human noticed.
          *
          *     Done server-side rather than as three calls from the browser: a client that
          *     unloads, then patches, then closes its tab leaves the model unloaded and an
@@ -1444,24 +1494,56 @@ export interface paths {
          * Patch Model Settings
          * @description Patch a model's persistent settings.
          *
+         *     Every key is optional; an omitted key is left exactly as it was. The body is
+         *     merged into the current row and the RESULT is validated as a whole row by
+         *     `app/models/schemas.py::ModelSpec`, so this endpoint applies the same rules
+         *     `POST /api/models` does -- including the cross-field ones a partial body
+         *     cannot express, like `tensor_parallel_size` matching `len(gpu_indices)` and
+         *     `extra_env` matching the row's backend.
+         *
+         *     That is #262's fix. This route used to carry a hand-written subset of
+         *     register's validation: three coercers and a `gpu_indices` check, with
+         *     `json.dumps(v)` for the JSON columns and the raw JSON value for everything
+         *     else. A string `extra_args` therefore round-tripped as a string and
+         *     `args += extra_args` appended it to argv one CHARACTER at a time; slug
+         *     patterns, length bounds and numeric bounds were not applied at all; and a
+         *     `served_model_name` that collided with another row -- the column is UNIQUE
+         *     in SQL -- reached SQLite as an IntegrityError and came back as a 500.
+         *
+         *     Answers:
+         *
+         *     * 400 -- a key no operator may write (a `Writer.RUNTIME` or `Writer.DB`
+         *       column, or an unknown one), or one of the three untyped-body shapes this
+         *       endpoint has always answered 400 for (`gpu_indices`, `backend`, a
+         *       capability flag), or a GPU the host does not permit;
+         *     * 403 `session_only` -- an admin token setting `trust_remote_code` true;
+         *     * 404 -- no such model;
+         *     * 409 -- the model is loaded (unload first), or the new
+         *       `served_model_name` is taken;
+         *     * 422 -- a value that breaks a rule of the merged row.
+         *
          *     Refuses to mutate a model that is currently `status == 'loaded'` — that
          *     column is authoritative state set by the supervisor on transitions. The
-         *     operator must unload the model first, which is a 409.
-         *
-         *     One carve-out: a body whose keys are ALL capability flags is allowed
-         *     through on a loaded model. Those columns are inert metadata that the load
-         *     runner and the engine never read (only the chat2 catalog does, per
-         *     request), and the loaded model is precisely the one an operator is looking
-         *     at when they notice vision is set wrong — making them unload it to fix a
-         *     label is backwards. Mixing in any real engine setting puts the whole patch
-         *     back under the guard.
+         *     operator must unload the model first, which is a 409. One carve-out: a body
+         *     whose keys are ALL capability flags is allowed through on a loaded model.
+         *     Those columns are inert metadata that the load runner and the engine never
+         *     read (only the chat2 catalog does, per request), and the loaded model is
+         *     precisely the one an operator is looking at when they notice vision is set
+         *     wrong — making them unload it to fix a label is backwards. Mixing in any
+         *     real engine setting puts the whole patch back under the guard.
          *
          *     ``trust_remote_code: true`` is session-only here (#256, C1), for exactly the
-         *     reason it is session-only on register and on load: the row is what a later
-         *     load — or the watchdog's restart sweep — reads, so patching the flag on is
-         *     the same code-execution grant by a different verb. Refused first, before
-         *     validation and before any write, so a refused PATCH changes nothing at all.
-         *     Turning the flag off, and every other setting, stays open to an admin token.
+         *     reason it is session-only on register and on load: patching the flag on
+         *     persists the same grant by a different verb. (#264: no engine ever reads
+         *     this column, so "the row is what a later load reads" was not the mechanism;
+         *     what read it was the warden's own proxy tokenizer, and that is gone too.
+         *     The refusal stays -- an admin token must not be able to write the grant.)
+         *     Refused first, before the database is even opened, so a refused PATCH
+         *     changes nothing at all -- not even a 404 lookup. Turning the flag off, and
+         *     every other setting, stays open to an admin token.
+         *
+         *     Nothing is written unless every check passes: `apply_model_change` refuses
+         *     before it writes, never part-way through.
          */
         patch: operations["patch_model_settings_api_models__model_id__settings_patch"];
         trace?: never;
@@ -2622,7 +2704,15 @@ export interface components {
             /** Status */
             status: string;
         };
-        /** ModelCreate */
+        /**
+         * ModelCreate
+         * @description ``POST /api/models``'s body: a ``ModelSpec`` plus the request-shaped
+         *     parts.
+         *
+         *     Same wire contract as before ``ModelSpec`` was extracted, plus the three
+         *     ``supports_*`` capability flags, which are ``ModelRow`` columns an operator
+         *     may write and were previously settable only by a follow-up PATCH.
+         */
         ModelCreate: {
             /** Served Model Name */
             served_model_name: string;
@@ -2633,46 +2723,18 @@ export interface components {
              * @default main
              */
             hf_revision: string;
-            /**
-             * Backend
-             * @default vllm
-             * @enum {string}
-             */
-            backend: "vllm" | "llamacpp";
-            /** Template Id */
-            template_id?: string | null;
-            /** Engine Channel */
-            engine_channel?: string | null;
-            /** Engine Vllm Version */
-            engine_vllm_version?: string | null;
-            /** Engine Image */
-            engine_image?: string | null;
+            /** Filename */
+            filename?: string | null;
+            /** Hf Config Repo */
+            hf_config_repo?: string | null;
+            /** Tokenizer Repo */
+            tokenizer_repo?: string | null;
+            /** Mmproj Filename */
+            mmproj_filename?: string | null;
             /** Gpu Indices */
             gpu_indices: number[];
             /** Tensor Parallel Size */
             tensor_parallel_size?: number | null;
-            /** Dtype */
-            dtype?: string | null;
-            /** Max Model Len */
-            max_model_len?: number | null;
-            /**
-             * Gpu Memory Utilization
-             * @default 0.9
-             */
-            gpu_memory_utilization: number;
-            /**
-             * Trust Remote Code
-             * @default false
-             */
-            trust_remote_code: boolean;
-            /** Extra Args */
-            extra_args?: string[];
-            /** Extra Env */
-            extra_env?: {
-                [key: string]: string;
-            };
-            /** Filename */
-            filename?: string | null;
             /**
              * Parallelism Strategy
              * @default auto
@@ -2684,14 +2746,48 @@ export interface components {
              * @default 1
              */
             max_batch_size: number;
-            /** Hf Config Repo */
-            hf_config_repo?: string | null;
-            /** Tokenizer Repo */
-            tokenizer_repo?: string | null;
-            /** Mmproj Filename */
-            mmproj_filename?: string | null;
+            /** Max Model Len */
+            max_model_len?: number | null;
+            /**
+             * Gpu Memory Utilization
+             * @default 0.9
+             */
+            gpu_memory_utilization: number;
+            /** Dtype */
+            dtype?: string | null;
             /** N Gpu Layers */
             n_gpu_layers?: number | null;
+            /**
+             * Backend
+             * @default vllm
+             * @enum {string}
+             */
+            backend: "vllm" | "llamacpp";
+            /** Engine Channel */
+            engine_channel?: string | null;
+            /** Engine Vllm Version */
+            engine_vllm_version?: string | null;
+            /** Engine Image */
+            engine_image?: string | null;
+            /** Extra Args */
+            extra_args?: string[];
+            /** Extra Env */
+            extra_env?: {
+                [key: string]: string;
+            };
+            /**
+             * Trust Remote Code
+             * @default false
+             */
+            trust_remote_code: boolean;
+            /** Supports Tools */
+            supports_tools?: number | null;
+            /** Supports Vision */
+            supports_vision?: number | null;
+            /** Supports Reasoning */
+            supports_reasoning?: number | null;
+            /** Template Id */
+            template_id?: string | null;
         };
         /**
          * ModelEngine
@@ -2915,7 +3011,23 @@ export interface components {
              */
             reset: boolean;
         };
-        /** TemplateCreate */
+        /**
+         * TemplateCreate
+         * @description ``POST /api/models/templates``'s body.
+         *
+         *     A template is not a row -- it has an ``id``, a ``label``, an ``engine`` and
+         *     no GPU axis at all -- so it keeps its own wire shape rather than inheriting
+         *     ``ModelSpec``. What it must NOT keep is its own *rules*: a template is a
+         *     register-time prefill, so every value it stores is a value that lands on a
+         *     row, and the one time the two schemas were allowed to drift, a template
+         *     could store an ``extra_env`` key register refused (#261).
+         *
+         *     The columns it shares with ``ModelSpec`` therefore use the same constrained
+         *     types (``HfRepoId``, ``MaxModelLen``, ``GpuMemoryUtilisation``), and
+         *     ``tests/unit/models/test_template_shares_model_spec_rules.py`` fails if a
+         *     shared column is held to different rules on the two schemas. Defaults still
+         *     differ on purpose: a template states a value, a row may leave one unset.
+         */
         TemplateCreate: {
             /** Id */
             id: string;

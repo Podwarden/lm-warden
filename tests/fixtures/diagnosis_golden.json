@@ -26,7 +26,7 @@
   },
   "trust_remote_code_config_echo_is_not_a_match": null,
   "trust_remote_code_genuinely_required": {
-    "message": "This model requires trust_remote_code to load. Enable trust_remote_code for this model (it executes code from the model repo \u2014 only do this for repos you trust), then retry.",
+    "message": "This model requires trust_remote_code to load. Add \"--trust-remote-code\" to this model's extra_args, then retry \u2014 the model's trust_remote_code setting is not passed to the engine. Only do this for repos you trust: it makes the engine execute code from the model repo.",
     "recommended_max_model_len": null
   },
   "unrecognised": null,

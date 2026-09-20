@@ -3,7 +3,16 @@ import asyncio
 import pytest
 
 from app.runtime.engine import EngineSpec
-from app.runtime.engine.docker_socket import DockerSocketDriver
+from app.runtime.engine.docker_socket import (
+    HFCACHE_MOUNT,
+    HFCACHE_VOLUME,
+    DockerSocketDriver,
+)
+
+# The warden's data volume, spelled out here rather than imported: the driver no
+# longer names it at all (#265), and a test that imported the constant would
+# start passing again the moment somebody re-added it.
+DATA_VOLUME_NAME = "vllm-warden-data"
 
 
 class _FakeContainers:
@@ -461,3 +470,82 @@ async def test_spawn_splits_argv_into_entrypoint_and_command():
     kwargs = client.containers.run_kwargs
     assert kwargs["entrypoint"] == "vllm"
     assert kwargs["command"] == ["serve", "--model", "org/m"]
+
+
+@pytest.mark.asyncio
+async def test_spawn_does_not_mount_the_wardens_data_volume():
+    """#265 — the engine container must not be able to reach the warden's
+    database.
+
+    The driver used to mount ``vllm-warden-data`` at ``/data`` mode "rw" in
+    every engine container. That volume holds ``vllm-warden.db`` (api tokens,
+    the admin-token audit trail, models, sessions) and the auto-minted
+    ``jwt_secret``, so an engine — a model's code, under an image an operator or
+    an admin token names — could read the database and mint a session, and the
+    docker driver was no more isolated from warden state than the
+    local-subprocess driver it is supposed to improve on.
+
+    Asserted as the WHOLE volumes dict, not as "/data is absent": the point is
+    that the model cache is the only thing the engine is handed, so a future
+    mount has to be argued for here rather than slipped in.
+    """
+    client = _FakeClient()
+    drv = DockerSocketDriver(client=client, image="img:tag")
+    spec = EngineSpec(model_id="m1", model_arg="org/m", argv=["vllm", "serve"],
+                      env={}, port=8001, gpu_indices=[0])
+    await drv.spawn(spec)
+    volumes = client.containers.run_kwargs["volumes"]
+    assert volumes == {HFCACHE_VOLUME: {"bind": HFCACHE_MOUNT, "mode": "rw"}}
+    assert DATA_VOLUME_NAME not in volumes
+    binds = {v["bind"] for v in volumes.values()}
+    assert not any(b == "/data" or b.startswith("/data/") for b in binds)
+
+
+@pytest.mark.asyncio
+async def test_engine_logs_are_written_by_the_warden_not_through_a_mount(tmp_path):
+    """#265 — dropping the ``/data`` mount must not cost the Live-logs panel.
+
+    The per-model log file lives under ``<data_dir>/logs``, i.e. on the volume
+    the engine no longer sees. It never needed to: the WARDEN writes it, by
+    streaming ``container.logs()`` from outside (``_start_log_pump``). So the
+    log arrangement after this change is "the file is written, and the container
+    spec carries no mount for it" — both halves asserted together, because
+    either one alone would pass on a broken driver.
+    """
+    chunks = [b"INFO engine up\n"]
+    client = _FakeClient(log_chunks=chunks)
+    drv = DockerSocketDriver(client=client, image="img:tag", log_dir=str(tmp_path))
+    spec = EngineSpec(model_id="m1", model_arg="org/m", argv=["vllm", "serve"],
+                      env={}, port=8001, gpu_indices=[0])
+    await drv.spawn(spec)
+
+    content = _read_log_with_retry(tmp_path / "m1.log", b"".join(chunks))
+    assert _split_sentinel(content) == b"".join(chunks)
+    assert client.containers.run_kwargs["volumes"] == {
+        HFCACHE_VOLUME: {"bind": HFCACHE_MOUNT, "mode": "rw"}
+    }
+
+
+@pytest.mark.asyncio
+async def test_spawn_gives_the_engine_no_env_pointing_at_the_data_volume():
+    """The other half of the #265 evidence, pinned.
+
+    The engine can only need ``/data`` if something tells it to go there. The
+    backends' env builders point ``HF_HUB_CACHE`` at the model cache and name no
+    other directory (the 2026-06-15 ENOSPC fix), and the driver passes that env
+    through unchanged apart from ``CUDA_VISIBLE_DEVICES``. If a future env key
+    reintroduces a ``/data`` path, this fails next to the mount test rather than
+    at 3am on a docker-driver install.
+    """
+    client = _FakeClient()
+    drv = DockerSocketDriver(client=client, image="img:tag")
+    spec = EngineSpec(
+        model_id="m1", model_arg="org/m", argv=["vllm", "serve"],
+        env={"HF_HUB_CACHE": HFCACHE_MOUNT, "VLLM_LOGGING_LEVEL": "INFO"},
+        port=8001, gpu_indices=[0],
+    )
+    await drv.spawn(spec)
+    env = client.containers.run_kwargs["environment"]
+    offenders = {k: v for k, v in env.items()
+                 if v == "/data" or v.startswith("/data/")}
+    assert offenders == {}

@@ -39,15 +39,15 @@ def _break_tokenizer(monkeypatch):
 async def test_falls_back_to_an_estimate_when_the_tokenizer_will_not_load(monkeypatch):
     _break_tokenizer(monkeypatch)
     cache = TokenizerCache()
-    n = await cache.count("org/gguf-only", "hello world", trust_remote_code=False)
+    n = await cache.count("org/gguf-only", "hello world")
     assert n > 0
 
 
 async def test_the_estimate_is_proportional_to_length(monkeypatch):
     _break_tokenizer(monkeypatch)
     cache = TokenizerCache()
-    short = await cache.count("org/gguf-only", "x" * 40, trust_remote_code=False)
-    long = await cache.count("org/gguf-only", "x" * 400, trust_remote_code=False)
+    short = await cache.count("org/gguf-only", "x" * 40)
+    long = await cache.count("org/gguf-only", "x" * 400)
     assert long > short
 
 
@@ -58,7 +58,7 @@ async def test_the_fallback_is_logged_once_per_repo(monkeypatch, caplog):
     cache = TokenizerCache()
     with caplog.at_level(logging.WARNING):
         for _ in range(5):
-            await cache.count("org/gguf-only", "hi", trust_remote_code=False)
+            await cache.count("org/gguf-only", "hi")
     assert sum("estimat" in r.message.lower() for r in caplog.records) == 1
 
 
@@ -69,7 +69,7 @@ async def test_the_estimating_set_names_the_model_repo_not_the_tried_repo(monkey
     _break_tokenizer(monkeypatch)
     cache = TokenizerCache()
     await cache.count(
-        "org/gguf-only", "hi", trust_remote_code=False, fallback_repo="org/also-broken"
+        "org/gguf-only", "hi", fallback_repo="org/also-broken"
     )
     assert cache.estimating() == frozenset({"org/gguf-only"})
 
@@ -93,7 +93,7 @@ async def test_fallback_repo_is_preferred_over_the_gguf_repo(monkeypatch):
     monkeypatch.setattr("app.proxy.tokenizers.AutoTokenizer", _Tok)
     cache = TokenizerCache()
     n = await cache.count(
-        "org/gguf-only", "a b c", trust_remote_code=False, fallback_repo="org/safetensors"
+        "org/gguf-only", "a b c", fallback_repo="org/safetensors"
     )
     assert seen == ["org/safetensors"]
     assert n == 3
@@ -101,7 +101,7 @@ async def test_fallback_repo_is_preferred_over_the_gguf_repo(monkeypatch):
 
 async def test_empty_text_is_still_zero_without_loading_anything(monkeypatch):
     _break_tokenizer(monkeypatch)
-    assert await TokenizerCache().count("org/x", "", trust_remote_code=False) == 0
+    assert await TokenizerCache().count("org/x", "") == 0
 
 
 async def test_evict_clears_the_fallback_marker(monkeypatch):
@@ -109,7 +109,7 @@ async def test_evict_clears_the_fallback_marker(monkeypatch):
     estimating until the process restarts."""
     _break_tokenizer(monkeypatch)
     cache = TokenizerCache()
-    await cache.count("org/gguf-only", "hi", trust_remote_code=False)
+    await cache.count("org/gguf-only", "hi")
     await cache.evict("org/gguf-only")
     assert "org/gguf-only" not in cache.estimating()
 
@@ -124,5 +124,5 @@ async def test_a_working_tokenizer_never_enters_the_estimating_set(monkeypatch):
 
     monkeypatch.setattr("app.proxy.tokenizers.AutoTokenizer", _Tok)
     cache = TokenizerCache()
-    assert await cache.count("org/fine", "a b", trust_remote_code=False) == 2
+    assert await cache.count("org/fine", "a b") == 2
     assert cache.estimating() == frozenset()

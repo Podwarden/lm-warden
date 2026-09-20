@@ -59,6 +59,7 @@ from typing import Any
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo
 from app.runtime.backends.paths import _snapshot_dir
+from app.runtime.backends.vllm.env import HARD_LOCKED_ENV_KEYS
 
 logger = logging.getLogger(__name__)
 
@@ -164,4 +165,146 @@ async def reconcile_stranded_models(
                 # task that no longer exists would lie to the UI.
                 await repo.update_pull_progress(row.id, 0, 0)
             moved.append((row.id, new_status))
+    return moved
+
+
+# ---------------------------------------------------------------------------
+# #266 — rows poisoned before tonight's extra_env write-path fix
+# ---------------------------------------------------------------------------
+#
+# Until tonight, ``PATCH /api/models/{id}/settings`` validated NOTHING about
+# ``extra_env``: no per-backend key allowlist, no hard-locked-key refusal, not
+# even a check that the value was a JSON object of strings. ``POST
+# /api/models`` (``ModelCreate``) always enforced the full shape through
+# pydantic, so every row register ever wrote was clean — the PATCH door was
+# the only way a bad value could reach the table. That door is closed now
+# (``validate_extra_env_for_backend`` runs on both write paths, see
+# ``app/models/schemas.py``), but nothing sweeps rows a pre-fix PATCH already
+# wrote.
+#
+# A row is in exactly one of two poisoned shapes:
+#
+#   1. ``extra_env`` is a well-formed ``dict[str, str]`` that carries one of
+#      ``HARD_LOCKED_ENV_KEYS`` (LD_PRELOAD, PYTHONPATH, HF_TOKEN, PATH, ...).
+#      ``filter_extra_env`` checks the hard-locked set FIRST, unconditionally,
+#      before anything else -- so this row refuses to load with a
+#      ``ValueError`` EVERY time, on EVERY backend, regardless of what else is
+#      on the row. There is no code path on which it loads with the key still
+#      there.
+#
+#   2. Either column is not the shape register would ever have accepted at
+#      all -- ``extra_env`` not a string-to-string object, or ``extra_args``
+#      not a list of strings (a PATCH body of ``{"extra_args": "--foo"}`` was
+#      accepted verbatim: the PATCH route treats both columns as opaque JSON,
+#      ``json.dumps(v)`` on whatever ``v`` is). This is WORSE than case 1 and
+#      more urgent than the load-time failure the issue opens with:
+#      ``ModelOut`` types the two columns ``dict[str, str]`` / ``list[str]``,
+#      so FastAPI's response validation raises on ANY row shaped wrong —
+#      and because ``GET /api/models`` returns every row in one response, one
+#      poisoned row 500s the *entire model list*, not just its own detail
+#      page. The dashboard goes blank for every model on the install, not
+#      just the bad one. It is also broken at load time in its own right:
+#      ``app/runtime/backends/vllm/args.py`` does
+#      ``list(getattr(model, "extra_args", []) or [])``, which on a non-empty
+#      STRING iterates it character by character into argv, and on some other
+#      JSON scalar (e.g. an int) raises an uncaught ``TypeError`` instead of
+#      ``filter_extra_env``'s clean ``ValueError``.
+#
+# Both shapes are unusable on every code path that reads them — never merely
+# "an operator might disagree with this value" — which is the bar #266's
+# ruling sets for mutating instead of only logging. So this strips rather
+# than just reporting: case 1 removes only the hard-locked key(s), keeping
+# every allowlisted key the operator actually meant to set; case 2 resets the
+# column to its empty default (``{}`` / ``[]``), which is exactly what a
+# fresh register with the field omitted would have written. Every strip is
+# WARNING-logged with the model id and precisely what was removed/reset, so
+# an operator reading the boot log — before this process ever accepts an HTTP
+# request, hence before any load attempt or list poll can hit the failure
+# this explains — knows which model was affected and why, without needing DB
+# access to find out.
+#
+# Deliberately NOT folded into ``reconcile_stranded_models``: that function's
+# whole predicate is "does a transient status describe a live process", and
+# runs against ``TRANSIENT_STATUSES`` only. Poisoning here is independent of
+# status — a 'pulled' or 'failed' row can carry it exactly as well as a
+# 'registered' one — so this sweeps every row, unconditionally, once per
+# boot.
+
+
+def _is_str_str_dict(value: object) -> bool:
+    """True iff ``value`` is a ``dict[str, str]`` — the wire contract
+    ``ModelOut.extra_env`` and every write-path validator assume."""
+    return isinstance(value, dict) and all(
+        isinstance(k, str) and isinstance(v, str) for k, v in value.items()
+    )
+
+
+def _is_str_list(value: object) -> bool:
+    """True iff ``value`` is a ``list[str]`` — ``ModelOut.extra_args``'s
+    wire contract, and what ``args.py`` assumes it can append to argv."""
+    return isinstance(value, list) and all(isinstance(v, str) for v in value)
+
+
+async def reconcile_poisoned_extra_fields(settings: Any) -> list[tuple[str, list[str]]]:
+    """Strip extra_env/extra_args poison a pre-#266 settings PATCH could
+    write. Returns ``[(model_id, [what changed, ...])]``.
+
+    See the module comment above this function for the two poisoned shapes,
+    why each is unusable on every code path (not just an operator judgment
+    call), and why that clears the "mutate, don't just log" bar #266 set.
+    Runs against every row regardless of status — unlike
+    ``reconcile_stranded_models``, this poisoning has nothing to do with
+    whether a process is or was live.
+    """
+    async with open_db(settings.db_path) as db:
+        repo = ModelRepo(db)
+        rows = await repo.list_all()
+        moved: list[tuple[str, list[str]]] = []
+        for row in rows:
+            changes: list[str] = []
+
+            new_env = row.extra_env
+            if not _is_str_str_dict(row.extra_env):
+                changes.append(
+                    f"extra_env was not an object of string to string "
+                    f"(got {type(row.extra_env).__name__}: {row.extra_env!r}) "
+                    f"-- reset to {{}}"
+                )
+                new_env = {}
+            else:
+                locked = sorted(k for k in row.extra_env if k in HARD_LOCKED_ENV_KEYS)
+                if locked:
+                    new_env = {
+                        k: v for k, v in row.extra_env.items()
+                        if k not in HARD_LOCKED_ENV_KEYS
+                    }
+                    changes.append(
+                        f"extra_env carried hard-locked key(s) {locked} -- removed "
+                        f"(filter_extra_env refuses to load ANY model with one of "
+                        f"these set, on every backend, every time)"
+                    )
+
+            new_args = row.extra_args
+            if not _is_str_list(row.extra_args):
+                changes.append(
+                    f"extra_args was not a list of strings "
+                    f"(got {type(row.extra_args).__name__}: {row.extra_args!r}) "
+                    f"-- reset to []"
+                )
+                new_args = []
+
+            if not changes:
+                continue
+
+            logger.warning(
+                "boot reconcile: model '%s' carries extra_env/extra_args a "
+                "pre-#266-fix settings PATCH could write but POST /api/models "
+                "would have refused, and it breaks the model on every code "
+                "path (load and, for a wrong-shaped column, the models list "
+                "itself) -- cleaning it up: %s",
+                row.id,
+                "; ".join(changes),
+            )
+            await repo.update_extra_fields(row.id, extra_env=new_env, extra_args=new_args)
+            moved.append((row.id, changes))
     return moved

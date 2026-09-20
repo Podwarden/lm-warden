@@ -63,7 +63,7 @@ async def test_proxy_routes_to_real_fake_vllm_subprocess(tmp_path, monkeypatch):
         from unittest.mock import AsyncMock, MagicMock
         tok_double = MagicMock()
         tok_double.count = AsyncMock(
-            side_effect=lambda repo, text, *, trust_remote_code, fallback_repo=None: len((text or "").split())
+            side_effect=lambda repo, text, *, fallback_repo=None: len((text or "").split())
         )
         app.state.tokenizers = tok_double
 

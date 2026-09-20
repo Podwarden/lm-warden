@@ -47,10 +47,16 @@ from pydantic import BaseModel
 
 from app.auth.bearer import INFERENCE_TOKEN_PREFIX, parse_bearer_header
 from app.auth.deps import require_jwt
+from app.auth.principal import principal_of
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo, ModelRow
 from app.db.repos.stress_runs import StressRunRepo, StressRunRow
 from app.models.suggest import DISCLAIMER_TEXT
+from app.models.writer import (
+    ModelChangeRefused,
+    apply_model_change,
+    dry_run_model_change,
+)
 from app.stress.apply import ApplyRefused, plan_apply
 from app.stress.ceiling import resolve_for_model
 from app.stress.fingerprint import Gpu, Neighbour, Subject, fingerprint
@@ -898,10 +904,23 @@ async def apply_stress_recommendation(
     """Apply a measured `max_model_len` and reload the engine (design §6.4).
 
     The only action in this feature that changes the model rather than
-    observing it. Three steps, in this order and for this reason: the settings
-    patch refuses to touch a loaded model, so the row cannot be updated while
-    it serves; and the engine must be restarted for a new context to take
-    effect at all.
+    observing it. Four steps, in this order and for this reason: **every
+    refusal is raised before anything is torn down**; then the engine is
+    unloaded, because the row cannot be written while it serves; then the row is
+    written; then the engine is restarted, because a new context takes effect
+    only on a fresh start.
+
+    The first of those is not an optimisation, it is the rule this route learned
+    the hard way: *never put a destructive step before a validation that can fail
+    for reasons unrelated to the request.* `apply_model_change` validates the
+    whole merged row, so it can refuse over a column nobody touched here -- an
+    `extra_env` key a pre-#261 PATCH wrote, for instance, which loads and serves
+    perfectly well because `filter_extra_env` drops it at launch. With the
+    validation after the unload, that stale column turned "Apply and reload" into
+    an outage: 422 with the engine already down, `status` committed as `pulled`,
+    and no restart. The watchdog does not recover such a row -- `pulled` with no
+    `prior_status` is exactly what an operator unloading on purpose looks like --
+    so the model stayed down until a human noticed.
 
     Done server-side rather than as three calls from the browser: a client that
     unloads, then patches, then closes its tab leaves the model unloaded and an
@@ -939,6 +958,24 @@ async def apply_stress_recommendation(
         except ApplyRefused as exc:
             raise _conflict(exc.reason, exc.detail) from exc
 
+        # Every refusal the write can raise, raised now -- while the engine is
+        # still serving and a refusal costs the operator nothing but the error
+        # message. See this route's docstring for what happened when this ran
+        # after the unload instead.
+        #
+        # `assume_unloaded=True` because the model IS loaded here and the unload
+        # below is this route's own next step: the loaded guard is the one check
+        # that is legitimately false now and true by the time the write runs.
+        # Everything else -- the merged row's own rules, the GPU allowlist, the
+        # principal -- would answer the same either way.
+        await dry_run_model_change(
+            db,
+            principal=principal_of(request),
+            current=model,
+            changes={"max_model_len": plan.max_model_len},
+            assume_unloaded=True,
+        )
+
     # A stress run in flight is already driving the engine, and reloading
     # underneath it would corrupt its measurement and race its own reloads.
     leases = getattr(request.app.state, "stress_leases", None)
@@ -953,13 +990,52 @@ async def apply_stress_recommendation(
     from app.runtime.watchdog import _restart  # noqa: PLC0415
 
     sup = request.app.state.supervisor
-    await sup.unload(model_id, force=True)
+    try:
+        await sup.unload(model_id, force=True)
+    finally:
+        # Record the unload in a `finally`, because `Supervisor.unload` releases
+        # the handle, the port and the GPU claim in a `finally` of its own: the
+        # engine is gone whether it returned or raised, so `pulled` is the true
+        # status on both paths. Needed at all because `Supervisor.unload` does
+        # not touch `models.status` -- the unload ROUTE writes the terminal
+        # status itself -- so without this the row went on claiming `loaded`
+        # with no process behind it until the restart below fixed it.
+        async with open_db(settings.db_path) as db:
+            await ModelRepo(db).update_status(model_id, "pulled")
+
+    late_refusal: ModelChangeRefused | None = None
     async with open_db(settings.db_path) as db:
-        await db.execute(
-            "UPDATE models SET max_model_len = ? WHERE id = ?",
-            (plan.max_model_len, model_id),
+        # Through the one operator-facing writer (#265), not a raw UPDATE. This
+        # was the sixth producer of a ModelRow and the only one that then
+        # RESTARTED the engine off what it wrote, with no validation of any
+        # kind: `plan_apply` bounds the number, but nothing checked that the
+        # rest of the row it was about to serve still satisfied its own rules.
+        row = await ModelRepo(db).get(model_id)
+        if row is None:
+            raise HTTPException(404, "not found")
+        try:
+            await apply_model_change(
+                db,
+                principal=principal_of(request),
+                current=row,
+                changes={"max_model_len": plan.max_model_len},
+            )
+        except ModelChangeRefused as exc:
+            # The dry run passed, so reaching here means the row changed
+            # underneath this request -- the dry run shrinks that window to a
+            # race, it cannot remove it. The engine is down either way, so bring
+            # it back on the configuration still in the row rather than leaving
+            # the operator with a refusal and a dead model. Handled outside this
+            # connection, because `_restart` opens its own.
+            late_refusal = exc
+
+    if late_refusal is not None:
+        logger.warning(
+            "stress: apply refused after the unload for %s; restarting on the "
+            "unchanged row", model_id,
         )
-        await db.commit()
+        await _restart(settings, request.app.state, model_id, None)
+        raise late_refusal
 
     # overrides=None deliberately: the sweep leaves transient per-load
     # overrides behind, and reloading with them would serve a configuration

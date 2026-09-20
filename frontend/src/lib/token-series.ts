@@ -253,9 +253,18 @@ export class SeriesError extends Error {
   }
 }
 
-// Handles both Pydantic `detail` shapes the backend can return: a plain
-// string, or a list of validation-error objects with a `msg` field. F7
-// reuses this rather than duplicating it (controller ruling).
+// Handles every `detail` shape the backend can return. F7 reuses this rather
+// than duplicating it (controller ruling), and so does everything that talks to
+// a route which can answer 422 — the model write path (#262) made that list a
+// lot longer, and each site that re-derived this got one of the three shapes
+// wrong:
+//
+//   * a plain string           — `HTTPException(409, "...")`
+//   * a list of field errors   — any 422, from FastAPI's body parser or from
+//                                `ModelChangeRefused`. `String(detail)` on one
+//                                of these renders `[object Object]`.
+//   * an object with `message` — the structured refusals (`session_only`,
+//                                the stress route's `_conflict` bodies)
 export function detailOf(body: unknown): string | null {
   if (!body || typeof body !== "object" || !("detail" in body)) return null;
   const d = (body as { detail: unknown }).detail;
@@ -265,6 +274,10 @@ export function detailOf(body: unknown): string | null {
       .map((x) => (x && typeof x === "object" && "msg" in x ? String((x as { msg: unknown }).msg) : null))
       .filter((m): m is string => m !== null);
     return msgs.length ? msgs.join("; ") : null;
+  }
+  if (d !== null && typeof d === "object" && "message" in d) {
+    const m = (d as { message: unknown }).message;
+    if (typeof m === "string") return m;
   }
   return null;
 }

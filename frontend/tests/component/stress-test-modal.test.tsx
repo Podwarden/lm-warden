@@ -732,3 +732,99 @@ describe("StressTestModal — close", () => {
     expect(screen.getByTestId("stress-acknowledge")).not.toBeChecked();
   });
 });
+
+// ---------------------------------------------------------------------------
+// #262/#265 — "Apply and reload" goes through the model write path, which
+// validates the WHOLE merged row, so this button can now answer 422 over a
+// column the operator never touched. The modal has to say which one: this is
+// the single most consequential button in the app, and it used to render a
+// bare `HTTP 422`.
+// ---------------------------------------------------------------------------
+
+describe("StressTestModal — apply failures name the problem", () => {
+  beforeEach(() => {
+    setAccessToken("test-jwt", 900);
+    setCsrfToken("test-csrf");
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  const RUN = {
+    id: "r-1",
+    status: "completed",
+    limits: {
+      quality_context: {
+        value: 122880,
+        unit: "tokens",
+        provenance: "measured",
+        limited_by: "quality",
+        gate_tripped: "abrupt",
+        raw_confirmed: 136533,
+        first_observed_failure: 147456,
+        oracle: { n_consecutive: 3, contour_p: 0.21, confirm_m: 5, safety_factor: 0.9 },
+      },
+    },
+    recommended_config: { max_model_len: 65536, limited_by: "load", next_failed_at: 98304 },
+    observations: [],
+  };
+
+  async function applyAgainst(failure: Response) {
+    installFetchStub((url, init) => {
+      if (url.endsWith("/capabilities")) return json({ runs: [RUN] });
+      if (url === "/api/models/m-1/stress" && init?.method === "POST") {
+        return json({ run_id: "r-1" }, 202);
+      }
+      if (url === "/api/models/m-1/stress/apply") return failure.clone();
+      throw new Error(`Unmocked: ${init?.method} ${url}`);
+    });
+    renderModal();
+    fireEvent.click(screen.getByTestId("stress-acknowledge"));
+    fireEvent.click(screen.getByTestId("stress-start"));
+    await settleUntil(present("stress-done"), "the done phase");
+    fireEvent.click(screen.getByTestId("stress-apply"));
+    await settleUntil(present("stress-apply-error"), "the apply error");
+    return screen.getByTestId("stress-apply-error");
+  }
+
+  it("names the offending column when the merged row is refused", async () => {
+    const err = await applyAgainst(
+      new Response(
+        JSON.stringify({
+          detail: [
+            {
+              loc: [],
+              msg: "Value error, extra_env key 'FOO_BAR' is not in the allowlist for backend 'vllm'",
+              type: "value_error",
+            },
+          ],
+        }),
+        { status: 422 },
+      ),
+    );
+    expect(err.textContent).toMatch(/FOO_BAR/);
+    expect(err.textContent).not.toMatch(/HTTP 422/);
+    expect(err.textContent).not.toMatch(/object Object/);
+  });
+
+  it("still renders the structured {message} refusals", async () => {
+    const err = await applyAgainst(
+      new Response(
+        JSON.stringify({
+          detail: {
+            error_code: "run_already_active",
+            message: "a stress run holds this model",
+          },
+        }),
+        { status: 409 },
+      ),
+    );
+    expect(err.textContent).toMatch(/a stress run holds this model/);
+  });
+
+  it("falls back to the status code only when there is no detail at all", async () => {
+    const err = await applyAgainst(new Response("not json", { status: 500 }));
+    expect(err.textContent).toMatch(/HTTP 500/);
+  });
+});

@@ -1,14 +1,14 @@
 """S7 (#124) — code-review finding #5 — tokenizer cache must flush on unload.
 
 The proxy's ``TokenizerCache`` (app/proxy/tokenizers.py) holds one
-fully-loaded ``AutoTokenizer`` per (hf_repo, trust_remote_code) tuple.
+fully-loaded ``AutoTokenizer`` per hf_repo.
 Before #124 the cache had no eviction — a long-lived warden that
 load/unloads a rotating set of models accumulated one entry per
 ever-seen repo, eventually OOMing the process.
 
 This module covers the in-process counter-unload contract:
 
-  * ``evict(hf_repo)`` drops both trust_remote_code variants for the repo
+  * ``evict(hf_repo)`` drops the repo's cached tokenizer
   * ``evict`` on an unseen repo is a no-op and returns 0
   * After eviction, a subsequent ``count`` re-fetches via
     ``AutoTokenizer.from_pretrained`` rather than returning a stale entry
@@ -25,7 +25,9 @@ from unittest.mock import MagicMock, patch
 from tests.conftest import csrf_header, jwt_login, seed_admin_user
 
 
-async def test_evict_drops_both_trust_variants():
+async def test_evict_drops_the_repos_entry():
+    """One entry per hf_repo since #264 (the cache no longer keys on
+    ``trust_remote_code``, because it never trusts remote code)."""
     from app.proxy.tokenizers import TokenizerCache
     fake = MagicMock()
     fake.encode = lambda s: list(s.encode())
@@ -34,12 +36,11 @@ async def test_evict_drops_both_trust_variants():
         return_value=fake,
     ):
         cache = TokenizerCache()
-        await cache.get("Qwen/Qwen3.5-9B", trust_remote_code=False)
-        await cache.get("Qwen/Qwen3.5-9B", trust_remote_code=True)
-        # Sanity: both variants share the hf_repo but have distinct cache keys.
-        assert cache.size() == 2
+        await cache.get("Qwen/Qwen3.5-9B")
+        await cache.get("Qwen/Qwen3.5-9B")
+        assert cache.size() == 1
         dropped = await cache.evict("Qwen/Qwen3.5-9B")
-    assert dropped == 2
+    assert dropped == 1
     assert cache.size() == 0
 
 
@@ -63,11 +64,11 @@ async def test_after_eviction_get_refetches():
         return_value=fake,
     ) as load:
         cache = TokenizerCache()
-        await cache.get("Qwen/Qwen3.5-9B", trust_remote_code=False)
+        await cache.get("Qwen/Qwen3.5-9B")
         assert load.call_count == 1
         await cache.evict("Qwen/Qwen3.5-9B")
         # After eviction, the next get() must re-fetch.
-        await cache.get("Qwen/Qwen3.5-9B", trust_remote_code=False)
+        await cache.get("Qwen/Qwen3.5-9B")
         assert load.call_count == 2
 
 
@@ -82,14 +83,14 @@ async def test_evict_does_not_overshoot_to_other_repos():
         return_value=fake,
     ):
         cache = TokenizerCache()
-        await cache.get("repo/A", trust_remote_code=False)
-        await cache.get("repo/B", trust_remote_code=False)
+        await cache.get("repo/A")
+        await cache.get("repo/B")
         assert cache.size() == 2
         dropped = await cache.evict("repo/A")
     assert dropped == 1
     assert cache.size() == 1
     # repo/B must still be cached.
-    assert ("repo/B", False) in cache._cache
+    assert "repo/B" in cache._cache
 
 
 def test_unload_route_evicts_tokenizer_cache(tmp_data_dir, client):
@@ -124,7 +125,7 @@ def test_unload_route_evicts_tokenizer_cache(tmp_data_dir, client):
         # nothing earlier in this worker happened to set one, which made this
         # test fail intermittently under `pytest -n auto` and deterministically
         # when tests/unit/stats ran on its own. asyncio.run owns its loop.
-        asyncio.run(cache.get("Qwen/Qwen3.5-9B", trust_remote_code=False))
+        asyncio.run(cache.get("Qwen/Qwen3.5-9B"))
     assert cache.size() == 1
 
     auth = jwt_login(client)

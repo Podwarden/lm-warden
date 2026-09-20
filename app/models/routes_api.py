@@ -16,11 +16,11 @@ from pydantic import BaseModel, Field, model_validator
 
 from app.auth.deps import (
     TRUST_REMOTE_CODE_LOAD_MESSAGE,
-    TRUST_REMOTE_CODE_SET_MESSAGE,
     refuse_session_only,
     require_jwt,
     stream_key,
 )
+from app.auth.principal import principal_of
 from app.auth.stream_guard import guard_stream
 from app.db.constants import ACTIVE_STATUSES
 from app.db.database import open_db
@@ -56,6 +56,7 @@ from app.models.serialisation import model_detail, model_summary
 from app.models.sharding import shard_glob_for
 from app.models.stack_classifier import classify
 from app.models.suggest import suggest_config
+from app.models.writer import apply_model_change, refuse_session_to_set
 from app.runtime.backends import registry
 from app.runtime.backends.paths import ModelFileNotFound, resolve_model_paths
 from app.runtime.backends.registry import DEFAULT_BACKEND
@@ -72,11 +73,19 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/models")
 
-# #256 (final-review finding, v2026.09.19.3): trust_remote_code runs the
-# target Hugging Face repo's Python inside the warden container -- at
-# REGISTER time nothing runs yet (it's just a row), but a model loaded with
-# it runs arbitrary code with the warden's own privileges, able to read
-# VW_JWT_SECRET, mint a session, or edit api_tokens / admin_audit directly.
+# #256 (final-review finding, v2026.09.19.3): trust_remote_code is a persisted
+# declaration that the target Hugging Face repo's Python may be executed by the
+# warden, with the warden's own privileges -- able to read VW_JWT_SECRET, mint
+# a session, or edit api_tokens / admin_audit directly.
+#
+# #264: the column never reached an engine (no --trust-remote-code is built for
+# either backend), so the earlier framing here -- "nothing runs at REGISTER
+# time, the code runs at LOAD time" -- named a mechanism that did not exist.
+# Loading has never acted on this column. What did act on it was the warden's
+# own proxy tokenizer, on /v1 traffic, for accounting; #264 stopped that too.
+# The refusals below stay because the column is a stored grant an admin token
+# must not be able to write, not because a load executes anything.
+#
 # That would make the session-only fence around admin-token management
 # (docs/superpowers/specs/2026-09-19-admin-tokens-design.md) an API-level
 # guardrail only, not real containment. Every refusal in this module is
@@ -89,6 +98,11 @@ router = APIRouter(prefix="/api/models")
 # template create. The first pass at #256 guarded only the literal body key,
 # which a template_id walked straight past -- and a builtin template already
 # carries the flag (app/templates/registry.py).
+#
+# extra_env has exactly the same three doors, and #261's first pass made the
+# same mistake in the other direction (it guarded the body key and the settings
+# PATCH, but not the template prefill). All three now go through
+# app/models/schemas.py::validate_extra_env_for_backend.
 
 # In-process cache for discovery results. 60 s TTL mirrors the rationale in
 # ``app.system.routes_gpus._ProbeCache``: short enough that an operator
@@ -173,8 +187,16 @@ async def create_template(
     # persist the flag on every model made from it; ``create_model`` refuses
     # the merged value as well, but a token must not be able to leave the
     # instruction lying around for a session to trip over either.
-    if body.trust_remote_code:
-        refuse_session_only(request, message=TRUST_REMOTE_CODE_SET_MESSAGE)
+    #
+    # The same function register and the settings PATCH call, driven by the
+    # policy table's SESSION_TO_SET columns rather than by a hand-written `if`
+    # per route -- which is how this door was left open in #256's first pass.
+    # A template is not a row, so it does not go through `apply_model_change`;
+    # the rules its model-shaped fields must satisfy come from sharing
+    # ModelSpec's constrained types (app/models/schemas.py::TemplateCreate).
+    refuse_session_to_set(
+        principal_of(request), {"trust_remote_code": body.trust_remote_code}
+    )
 
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
@@ -733,28 +755,38 @@ async def fit_preview(
 async def create_model(
     body: ModelCreate, request: Request, _user: str = Depends(require_jwt)
 ):
+    """Register a model.
+
+    The body is merged with ``template_id``'s template (explicit body fields
+    win) and the MERGED row is written through
+    ``app/models/writer.py::apply_model_change``, which is the one place an
+    operator-facing path writes a ``ModelRow``. Everything this route still does
+    itself is a DERIVATION, not a rule: reading the template, defaulting a field
+    from it, and resolving an engine channel + version to an image.
+
+    That split is the #262/#265 fix. This route used to carry the only complete
+    copy of the ruleset, so the settings PATCH, ``try_stack`` and stress-apply
+    each re-derived whatever their author remembered; and the merge point itself
+    was a row producer with no ruleset at all, which is how a ``template_id``
+    became a one-request way past the ``trust_remote_code`` refusal (#256/I1)
+    and past the ``extra_env`` allowlist (#261).
+
+    Answers: 400 for a GPU the host does not permit or an unsupported engine
+    channel, 403 ``session_only`` for an admin token setting
+    ``trust_remote_code``, 404 for an unknown ``template_id``, 409 for a taken
+    ``served_model_name``, 422 for a value that breaks a rule.
+    """
+    principal = principal_of(request)
     # #256 -- refuse before any write, and before any DB work at all for the
     # obvious case. ModelCreate.trust_remote_code defaults to False, so a True
     # value here came from the body explicitly setting it. The EFFECTIVE value
-    # after the template merge is refused further down (I1): that is the check
+    # after the template merge is refused by the writer (I1): that is the check
     # that actually matters, this one just answers the common case without
     # opening the database.
-    if body.trust_remote_code:
-        refuse_session_only(request, message=TRUST_REMOTE_CODE_SET_MESSAGE)
+    refuse_session_to_set(principal, {"trust_remote_code": body.trust_remote_code})
+
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
-        setup_state = await SetupRepo(db).get()
-        allowed = set(setup_state.draft.get("allowed_gpu_indices", []))
-        if not set(body.gpu_indices).issubset(allowed):
-            bad = sorted(set(body.gpu_indices) - allowed)
-            raise HTTPException(
-                400, f"GPU indices {bad} not in allowed_gpu_indices {sorted(allowed)}"
-            )
-
-        repo = ModelRepo(db)
-        if await repo.get_by_served_name(body.served_model_name):
-            raise HTTPException(409, f"served_model_name '{body.served_model_name}' already exists")
-
         # Merge template (if any) → effective config. Explicit body fields win.
         tpl = None
         if body.template_id:
@@ -784,19 +816,21 @@ async def create_model(
             if "trust_remote_code" in body.model_fields_set
             else (tpl.trust_remote_code if tpl else body.trust_remote_code)
         )
-        # #256 / I1 -- the refusal that counts is on the MERGED value, because
-        # the row is what a later load reads. Without this a template_id was a
-        # one-request bypass of the body-key check above, and no template create
-        # was even needed: the builtin `gpt-oss-20b` carries the flag. Still
-        # before any write -- everything above this point is a read.
-        if trust:
-            refuse_session_only(request, message=TRUST_REMOTE_CODE_SET_MESSAGE)
         extra_args = (
             list(body.extra_args) if body.extra_args
             else (list(tpl.extra_args) if tpl else [])
         )
+        # `model_fields_set`, not truthiness, so an explicit `extra_env: {}`
+        # means "none, whatever the template says" -- the same precedence
+        # `gpu_memory_utilization` and `trust_remote_code` use above. With the
+        # truthiness test an empty dict fell through to the template's, which
+        # left the merged-value refusal with no operator escape: a vLLM
+        # template registered as llamacpp could only be rescued by supplying a
+        # non-empty, backend-legal dict. The builtin `gpt-oss-20b` carries
+        # extra_env, so that was reachable without creating a template at all.
         extra_env = (
-            dict(body.extra_env) if body.extra_env
+            dict(body.extra_env)
+            if "extra_env" in body.model_fields_set
             else (dict(tpl.extra_env) if tpl else {})
         )
 
@@ -822,41 +856,54 @@ async def create_model(
                 raise HTTPException(400, str(e)) from e
 
         model_id = _gen_id()
-        await repo.insert(ModelRow(
-            id=model_id,
-            served_model_name=body.served_model_name,
-            hf_repo=hf_repo,
-            hf_revision=hf_revision,
-            gpu_indices=sorted(body.gpu_indices),
-            tensor_parallel_size=body.tensor_parallel_size,
-            dtype=dtype,
-            max_model_len=max_model_len,
-            gpu_memory_utilization=gpu_mem,
-            trust_remote_code=trust,
-            extra_args=extra_args,
-            extra_env=extra_env,
-            status="registered",
-            pulled_bytes=0,
-            pulled_total=None,
-            last_error=None,
-            filename=body.filename,
-            parallelism_strategy=body.parallelism_strategy,
-            max_batch_size=body.max_batch_size,
-            hf_config_repo=body.hf_config_repo,
-            tokenizer_repo=body.tokenizer_repo,
-            engine_channel=eng_channel,
-            engine_vllm_version=eng_version,
-            engine_image=eng_image,
-            # Sub-project B. Templates carry no backend field yet, so this is a
-            # straight pass-through of the body's default; it is merged here
-            # anyway, with the same "explicit body wins" rule as hf_repo, so
-            # sub-project C does not have to find this site again.
-            backend=backend,
-            # Sub-project C (migration 0028). llama.cpp only; templates have no
-            # field for either, so both are straight body pass-throughs.
-            mmproj_filename=body.mmproj_filename,
-            n_gpu_layers=body.n_gpu_layers,
-        ))
+        # One call, and every rule the merged row must satisfy is applied to the
+        # merged row: the session-only fence on `trust_remote_code`, the
+        # per-backend `extra_env` allowlist, every bound and slug pattern,
+        # `tensor_parallel_size` against `len(gpu_indices)`, the GPU allowlist,
+        # and the `served_model_name` uniqueness pre-check that answers 409
+        # instead of letting SQLite raise.
+        await apply_model_change(
+            db,
+            principal=principal,
+            current=None,
+            model_id=model_id,
+            changes={
+                "served_model_name": body.served_model_name,
+                "hf_repo": hf_repo,
+                "hf_revision": hf_revision,
+                "gpu_indices": body.gpu_indices,
+                "tensor_parallel_size": body.tensor_parallel_size,
+                "dtype": dtype,
+                "max_model_len": max_model_len,
+                "gpu_memory_utilization": gpu_mem,
+                "trust_remote_code": trust,
+                "extra_args": extra_args,
+                "extra_env": extra_env,
+                "filename": body.filename,
+                "parallelism_strategy": body.parallelism_strategy,
+                "max_batch_size": body.max_batch_size,
+                "hf_config_repo": body.hf_config_repo,
+                "tokenizer_repo": body.tokenizer_repo,
+                "engine_channel": eng_channel,
+                "engine_vllm_version": eng_version,
+                "engine_image": eng_image,
+                # Sub-project B. Templates carry no backend field yet, so this
+                # is a straight pass-through of the body's default; it is merged
+                # here anyway, with the same "explicit body wins" rule as
+                # hf_repo, so sub-project C does not have to find this site
+                # again.
+                "backend": backend,
+                # Sub-project C (migration 0028). llama.cpp only; templates have
+                # no field for either, so both are straight body pass-throughs.
+                "mmproj_filename": body.mmproj_filename,
+                "n_gpu_layers": body.n_gpu_layers,
+                # Capability flags. Tri-state and usually omitted; the wizard
+                # leaves them NULL so app/chat2/catalog.py can auto-detect.
+                "supports_tools": body.supports_tools,
+                "supports_vision": body.supports_vision,
+                "supports_reasoning": body.supports_reasoning,
+            },
+        )
     return {"id": model_id, "served_model_name": body.served_model_name, "status": "registered"}
 
 
@@ -890,21 +937,40 @@ async def try_stack(
     request: Request,
     _user: str = Depends(require_jwt),
 ):
+    """Pin an engine channel + version on a model and open a try-stack attempt.
+
+    The engine axis is written through
+    ``app/models/writer.py::apply_model_change`` (#265). It used to be a raw
+    ``UPDATE models``, which made this a row producer with no ruleset: it wrote
+    ``engine_image`` verbatim -- ``resolve_image`` returns an explicit ``image``
+    unchanged -- onto a row the supervisor then hands to ``containers.run``, and
+    it would do it to a model that was currently serving. Now it is the same
+    write every other operator path makes: 409 if the model is loaded (unload
+    first, because a pinned image only takes effect on the next load anyway),
+    422 if the resulting row breaks a rule.
+
+    ``resolve_image`` stays here: it is a derivation, not a rule.
+    """
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
         repo = ModelRepo(db)
-        if not await repo.get(model_id):
+        row = await repo.get(model_id)
+        if not row:
             raise HTTPException(404, "not found")
         try:
             image = resolve_image(body.channel, body.vllm_version, image=body.image)
         except UnsupportedChannelError as e:
             raise HTTPException(400, str(e)) from e
-        await db.execute(
-            "UPDATE models SET engine_channel=?, engine_vllm_version=?, "
-            "engine_image=?, updated_at=datetime('now') WHERE id=?",
-            (body.channel, body.vllm_version, image, model_id),
+        await apply_model_change(
+            db,
+            principal=principal_of(request),
+            current=row,
+            changes={
+                "engine_channel": body.channel,
+                "engine_vllm_version": body.vllm_version,
+                "engine_image": image,
+            },
         )
-        await db.commit()
         attempt_id = _gen_id()
         await StackAttemptRepo(db).insert(StackAttemptRow(
             id=attempt_id,
@@ -1487,9 +1553,11 @@ async def load_model(model_id: str, request: Request, _user: str = Depends(requi
         model = await ModelRepo(db).get(model_id)
         if not model:
             raise HTTPException(404, "not found")
-        # #256 -- the row may predate this change, so this is checked at
-        # load time (when the repo's Python actually runs) rather than
-        # trusting that register-time refusal above ever ran for it.
+        # #256 -- the row may predate the register-time refusal, so the flag is
+        # checked here too rather than trusting that refusal ever ran for it.
+        # #264: loading does NOT itself execute the repo's Python -- the column
+        # is never emitted to the engine. This is a check on the stored grant,
+        # defence in depth for a row that got the flag before #256 landed.
         if model.trust_remote_code:
             refuse_session_only(request, message=TRUST_REMOTE_CODE_LOAD_MESSAGE)
         if model.status not in ("pulled", "failed"):

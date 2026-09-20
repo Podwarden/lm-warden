@@ -21,6 +21,17 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra --strict-markers -m \"not live\""
+# #260: a test that hangs for 300 s (setup+call+teardown) dumps every thread's
+# stack, so a wedged run leaves a diagnosis behind instead of nothing at all.
+# It does NOT end the run: pytest 8.3.4 arms the timer without `exit=True`
+# (_pytest/faulthandler.py) and cancels it after each item, so the test goes on
+# hanging until CI's job timeout -- the dump is the whole benefit. The guard
+# that actually exits is the session-end watchdog in tests/conftest.py, which
+# covers the other shape, a hang *after* the last test (a leaked non-daemon
+# thread blocking interpreter shutdown). 300 s cannot fire on a healthy run:
+# the slowest single test in the tree is seconds, even eight workers deep on a
+# loaded machine.
+faulthandler_timeout = 300
 markers = [
     "integration: requires real subprocess + filesystem",
     "perf: scale sanity checks (seconds, not minutes); deselect with -m 'not perf'",

@@ -7,6 +7,308 @@ release ships.
 
 ## [Unreleased]
 
+## [v2026.09.20.1] — 2026-09-20
+
+### Fixed
+
+- **A cancelled database open no longer leaves a thread behind that stops the
+  process from exiting.** Every SQLite connection is driven by a worker thread
+  of aiosqlite's own, created non-daemon and parked on a queue until the
+  connection is closed; CPython joins such threads during interpreter shutdown,
+  so one that is never closed hangs the process *after* all of its work is
+  finished, with nothing printed. A cancellation landing inside the connect —
+  which is what the watchdog's background passes get when shutdown tears them
+  down — did exactly that: the connection object was never handed back, so
+  nothing could close it, and aiosqlite does not stop the thread on that path
+  either. `open_db` now runs the connect as a shielded task, waits for it to
+  finish before closing what it produced, and re-raises the cancellation
+  afterwards, so a connection is no longer abandoned on any cancellation a
+  caller can normally deliver. It is not an absolute "never": a caller that
+  cancels the same open repeatedly, or a connect that has not returned 10 s
+  after being cancelled, is abandoned on purpose — the alternative is an
+  uncancellable task, which hangs shutdown exactly the way this bug did. That
+  abandons one *daemon* thread, which cannot block interpreter exit, and it is
+  logged at `error`. The close is deliberately left unshielded: aiosqlite
+  queues it before awaiting and stops the worker from a `finally`, so a
+  cancelled close still closes the connection, and shielding it only added an
+  uncancellable wait — up to `busy_timeout` — to every client disconnect and
+  every shutdown. The wait is bounded all the same: if the connection's worker
+  thread is gone, nothing will ever acknowledge the close, and a `finally` that
+  parks forever is a process that will not exit — the same failure this entry
+  is about. Giving up on the acknowledgement after 10 s costs nothing, because
+  the close is already queued on that thread. A close that fails no longer
+  masks the error it was unwinding from. The test suite was hanging after its own summary line roughly
+  one run in three because of this (#260), and the CI integration job wedged the
+  same way (#43); the workaround that daemonised aiosqlite's threads for
+  `tests/integration` only is gone with it. A hang like it is now diagnosable
+  rather than silent: `faulthandler_timeout` makes a single hung test dump every
+  thread's stack (it does not end the run — pytest arms that timer without
+  `exit=True`), and the end of a test session names any lingering non-daemon
+  thread and arms a faulthandler dump that prints every thread's stack and then
+  exits non-zero instead of burning a CI slot until the job timeout. That timer
+  is armed only in the process CI waits on: an xdist worker finishes its session
+  and then idles until the controller releases it, which on a loaded machine is
+  minutes, and arming it there killed healthy workers.
+- `PRAGMA busy_timeout` is now set before `PRAGMA journal_mode = WAL` rather
+  than after it. Switching to WAL takes an exclusive lock, so the statement most
+  likely to contend with a background writer was the one running with sqlite3's
+  5 s default instead of the 30 s the line below it intended.
+- **`PATCH /api/models/{id}/settings` now validates `extra_env` the same way
+  `POST /api/models` does, and answers `422` instead of `200` (#261).** The
+  PATCH took a raw `dict[str, Any]` body and never ran `ModelCreate`'s
+  allowlist check, so a signed-in session — or an admin token — could PATCH a
+  hard-locked key such as `LD_PRELOAD` or `HF_TOKEN` and get it persisted.
+  This was not code execution: `filter_extra_env` fails closed at launch when
+  it sees a hard-locked key, so the practical effect was a persistent
+  per-model denial of service (the row could no longer load until an
+  operator edited it back out by hand), reachable by session or token alike.
+  The effective backend used is the one being set in the same PATCH when
+  `backend` is in the body, else the model's current backend.
+- **The engine-template prefill was a third way to persist the same
+  `extra_env` (#261).** `POST /api/models/templates` validated nothing, and
+  registering with a `template_id` copies the template's `extra_env` verbatim
+  when the body does not set one — so the payload `POST /api/models` refuses
+  was still storable in two authenticated calls, with the same
+  fails-closed-at-load denial of service. `trust_remote_code` needed this exact
+  treatment in #256, and `extra_env` now gets it too: every one of the four
+  doors — the register body key, the **merged** value at register, a template
+  create, and the settings PATCH — goes through one allowlist check
+  (`app.models.schemas`), each before any write. The merged check is the one
+  that also covers a template stored before this fix.
+
+  A template is held to the **union** of every backend's allowlist, not to one
+  backend's: which backend it serves is decided by the register body, so there
+  is no per-backend answer to give when it is saved. Hard-locked keys
+  (`LD_PRELOAD`, `HF_TOKEN`, `PATH`, …) are global and refused there as
+  everywhere else — that is the half this door exists to stop — and the
+  per-backend rule is still enforced on the merged value at register. So a
+  llama.cpp-only `GGML_*` template saves as it always did, and is refused only
+  if it is then registered against vLLM.
+
+  One behaviour change to know about: registering a model whose merged
+  `extra_env` is not on its **own** backend's allowlist is now a `422` instead
+  of a row whose env is silently dropped at launch — which is reachable with
+  the builtin `gpt-oss-20b` template and `backend: llamacpp`. An explicit
+  `"extra_env": {}` in the body now overrides a template's, so there is a way
+  to say "none of it" (previously the merge was truthiness-based and an empty
+  dict fell through to the template's).
+
+  There is still no sweep for rows poisoned by the old PATCH, so an existing
+  install may hold one; it surfaces as a model that refuses to load until its
+  `extra_env` is edited. *(#266 below sweeps the two unusable shapes; a
+  well-formed key that is merely off the allowlist is left alone, and what that
+  means for you is spelled out there.)*
+- **Boot now cleans up the two unusable shapes a pre-#261 settings PATCH could
+  write, instead of leaving such a row to refuse to load with an error that
+  points at the environment rather than at the row's history (#266).** Both are
+  unusable no matter what an operator does next, so the sweep fixes the row
+  rather than only reporting it — logging exactly what it changed, model by
+  model, so the log alone tells you which model was affected and what happened
+  to it:
+
+  - `extra_env` carrying a hard-locked key (`LD_PRELOAD`, `PYTHONPATH`,
+    `HF_TOKEN`, `PATH`, …) — the key is removed, every other key on the row
+    is kept, and the log names both the model and the key(s) removed.
+  - Either `extra_env` or `extra_args` in a shape registering a model would
+    never have accepted at all (the old PATCH wrote whatever JSON a client
+    sent, with no shape check) — the column is reset to its empty default
+    (`{}` / `[]`) and the log says what was there before.
+
+  If you see one of these lines in the startup log after upgrading, no
+  action is needed — the row is already fixed. If the model still won't
+  load, the cause is unrelated to this.
+
+  **What the sweep deliberately does not touch, and what to do about it.**
+  A third shape is possible and is left exactly as it is: an `extra_env` key
+  that is a well-formed string→string entry but simply not on the backend's
+  allowlist (`FOO_BAR`, or a `GGML_*` key on a vLLM row). Such a row loads and
+  serves normally — `filter_extra_env` drops unknown keys at launch — so
+  removing the key would be this release silently editing a working model's
+  configuration, which is not a thing a boot sweep should do. What changed for
+  it is on the *write* side (#262): because every write now validates the whole
+  merged row, **any settings PATCH on such a row answers `422` naming the key**,
+  including one that changes something else entirely. The same is true of
+  pinning an engine (`try-stack`) and of applying a stress recommendation.
+
+  To find such a row: `GET /api/models/{id}/settings` and read `extra_env`. To
+  fix it: PATCH the corrected `extra_env` — in the same request as whatever you
+  were trying to change, which is accepted — or send `"extra_env": {}` to clear
+  it. Reading the model, loading it and serving from it are unaffected
+  throughout; only writes are refused.
+
+  This also closes a worse, silent
+  failure the same poisoning could cause: a malformed `extra_env` or
+  `extra_args` broke `GET /api/models` outright (a 500, hiding every model
+  in the list, not just the affected one), which the old fail-closed-at-load
+  behaviour for `extra_env` never did on its own.
+
+### Security
+
+- **The docker engine driver no longer mounts the warden's database into engine
+  containers (#265).** Every sibling engine container was started with the
+  `vllm-warden-data` volume bind-mounted at `/data`, mode `rw`. That volume holds
+  `vllm-warden.db` — api tokens, the admin-token audit trail, models, sessions —
+  and the auto-minted `jwt_secret`. So the engine, which runs a model's code
+  under an image an operator or an admin token names (`engine_image`) with argv
+  an admin token can extend (`extra_args`), could read the control plane's own
+  database and secret, mint a session, or edit the audit trail. It also meant the
+  docker driver was no more separated from warden state than the
+  local-subprocess driver it is supposed to improve on. The engine container is
+  now given the model-cache volume and nothing else.
+
+  **Operators running `VW_ENGINE_DRIVER=docker` need do nothing, with one
+  exception.** No new volume is introduced and nothing is renamed, so an existing
+  install picks this up on the next warden restart; already-running engine
+  containers keep the old mount until they are next reloaded. The exception is a
+  deployment that moved `VW_HF_CACHE_DIR` to a path *under* `/data` — not the
+  default, and not what any shipped compose file or Hub template does, all of
+  which mount the cache volume at `/root/.cache/huggingface`. Such a deployment
+  was reaching its model cache **through** the `/data` mount, and without it the
+  engine would re-download every model into the container's writable layer (the
+  2026-06-15 ENOSPC failure in a new costume). Move the cache back to the default
+  path before restarting; the warden now logs a warning at startup whenever
+  `VW_HF_CACHE_DIR` is not the path the driver mounts the cache volume at, since
+  the mount point in the engine container is fixed.
+
+  The engine needed nothing on that volume. Its env names no path under `/data`
+  (`HF_HUB_CACHE` points at the model cache — the 2026-06-15 fix), its argv names
+  files only inside the model cache, and the per-model log file under
+  `<data_dir>/logs` is written by the *warden*, which streams the container's
+  stdout/stderr from outside and writes it — exactly as the watchdog assembles
+  crash bundles from outside. Read-only was considered and rejected: the threat
+  is reading the token table and the signing secret, which a read-only mount
+  serves perfectly well. Unit tests now pin the whole container spec's volume
+  map, so a future mount has to be argued for rather than slipped in.
+  `documents/ARCHITECTURE.md`, `docs/backends.md` and `documents/API.md` now
+  state what each driver does and does not separate — including what the docker
+  driver still shares with the control plane (the network the proxy reaches the
+  engine on, the host IPC namespace, the pinned GPUs) rather than implying a
+  sandbox.
+- **The proxy's tokenizer no longer executes model-repository code.** A model
+  row's `trust_remote_code` column was passed to
+  `AutoTokenizer.from_pretrained` on every `/v1` request, for prompt and
+  completion token accounting — which means it ran that Hugging Face
+  repository's Python **inside the warden's own process**: the process holding
+  the SQLite database and `VW_JWT_SECRET`, on data-plane traffic, identically
+  under every engine driver. The column was never emitted to an engine (no
+  `--trust-remote-code` is built for vLLM or llama.cpp), so the tokenizer was
+  its only consumer and this was the only in-process code-execution path the
+  product had. The cache now loads with `trust_remote_code=False` always, and
+  the flag is no longer accepted as an argument at all (#264).
+
+  The cost is accounting precision, in one narrow case: a repo whose tokenizer
+  can only be built by running its own code now falls back to the existing
+  character estimate, which is logged once and reported through the
+  `estimating()` surface, exactly as a GGUF-only repo already does. No shipped
+  template is affected — the only builtin carrying the flag,
+  `openai/gpt-oss-20b`, ships a plain fast tokenizer that loads without it.
+  Nothing enforces limits from these counts (per-token rate limits were removed;
+  chat budgets and stress runs use the engine's own `usage`), and the warden's
+  counts were already approximate by design: they tokenize the joined message
+  text without the chat template.
+
+### Fixed
+
+- **The "this model requires trust_remote_code" engine diagnosis now gives
+  advice that works.** It told the operator to enable `trust_remote_code` for
+  the model — but that column is never passed to the engine, so following it
+  led back to the identical failure. It now says to add `--trust-remote-code`
+  to the model's `extra_args`, which is the argv the engine actually receives
+  (#264). Making the column emit the flag is a separate decision and is not
+  part of this change.
+
+### Changed
+
+- **`documents/API.md` said `trust_remote_code` ran "inside the warden's engine
+  process … under the default local-subprocess driver".** It did not: it ran in
+  the warden's own process, via the proxy tokenizer, on `/v1` traffic, under
+  every driver — and as of the change above it runs nowhere. The Admin API
+  section now says so, including the `POST /api/models/{id}/load` refusal row,
+  which described load-time engine execution that never happened. The four
+  session-only refusals around the column are **unchanged in behaviour**: they
+  fence a stored grant an admin token must not be able to write. The refusal
+  messages and the in-code comments that inherited the same wrong mechanism
+  were corrected with them (#264).
+
+- **Every API path that writes a model now applies register's rules, because
+  they all go through one writer.** The model row is what the runtime trusts —
+  it becomes the engine's argv and env, its container image, and the thing the
+  watchdog restarts with nobody at the keyboard — but until now every rule
+  about what may be *on* a row was attached to a *request*: the full set on
+  `POST /api/models`, a thinner copy on `POST /api/models/templates`, a
+  hand-written subset on the settings PATCH, and none at all on
+  `POST /api/models/{id}/try-stack` and `POST /api/models/{id}/stress/apply`.
+  So the same hole kept reappearing one door at a time. There is now a
+  full-row validator (`ModelSpec`) and a single writer that consults the
+  per-column policy table, checks the principal, enforces the unload-first
+  guard, merges, validates the *merged row*, and runs the checks a single row
+  cannot state — and refuses before writing anything, ever partially. The
+  state machine keeps its own named methods for `status`, `prior_status`,
+  `pulled_*` and `last_error`; the watchdog, boot reconciliation and the pull
+  task cannot reach the operator writer at all. Two tripwires keep it honest:
+  the policy table already fails at startup if a new column is unclassified,
+  and the test suite now fails if an operator-writable column has no rule
+  (#262, #265).
+
+- **`POST /api/models/{id}/try-stack` and `POST /api/models/{id}/stress/apply`
+  no longer write the model row by hand.** Try-stack wrote the engine channel,
+  version and image with a raw `UPDATE`, including onto a model that was
+  currently serving — it now answers `409` and asks for an unload, which is
+  what pinning an image already required to take effect. Stress-apply wrote
+  `max_model_len` the same way and then restarted the engine off the result;
+  it also now records the unload it performs, so the row no longer claims
+  `loaded` with no process behind it for the length of the restart (#265).
+
+  **`POST /api/models/{id}/stress/apply` can now refuse where it used to
+  succeed.** Because the write validates the whole merged row, "Apply and
+  reload" answers `422` when any column on the row breaks a rule — including a
+  column the request does not touch, such as an `extra_env` key left by a
+  pre-#261 PATCH (see #266 above). The row is checked **before** the engine is
+  touched, so in the ordinary case the model keeps serving on its current
+  context, nothing is written, and the message names the column to fix. If the
+  row changes in the moment between that check and the write, the refusal
+  arrives after the unload: the engine is restarted before the `422` is
+  returned, and if that restart itself fails the row is left `failed` for the
+  watchdog to pick up. Fix the named column with a settings PATCH and apply
+  again.
+
+- **`POST /api/models` accepts the `supports_tools` / `supports_vision` /
+  `supports_reasoning` capability flags.** They are model columns an operator
+  may set, and until now the only way to set one was a second request to the
+  settings PATCH. Omitted is still the default and still means "auto-detect".
+
+### Fixed
+
+- **The per-model settings PATCH silently accepted values the register route
+  refuses.** `PATCH /api/models/{id}/settings` skipped essentially all of
+  register's validation: slug patterns and length bounds on
+  `served_model_name`, `hf_repo`, `filename` and `mmproj_filename`; the
+  numeric bounds on `max_model_len`, `gpu_memory_utilization`,
+  `max_batch_size`, `n_gpu_layers` and `tensor_parallel_size`; the
+  `tp`/`pp`/`auto` choice; `gpu_indices` uniqueness; and the rule tying
+  `tensor_parallel_size` to `gpu_indices`. It also wrote `extra_args`,
+  `extra_env` and `gpu_indices` as whatever JSON type arrived, so a *string*
+  `extra_args` round-tripped as a string and was then appended to the engine's
+  argv one character at a time. All of these are now `422`, and a refused
+  PATCH writes none of its keys. Two consequences worth knowing before you
+  upgrade: changing `gpu_indices` now requires sending the matching
+  `tensor_parallel_size` in the same request (the settings page does this for
+  you), and a `422` carries the standard list of field errors rather than a
+  bare string (#262).
+
+- **A `served_model_name` collision on the settings PATCH was a 500.** The
+  column is `UNIQUE` in SQL and the PATCH never looked, so SQLite raised an
+  `IntegrityError` that reached the client as an unexplained server error.
+  It is now the same `409` register has always answered with, and the settings
+  page shows it as a save error on the field rather than as the unload-first
+  banner (#262).
+
+- **A model row written before a rule existed can still be read.** Validation
+  applies to writes only: `GET /api/models`, the model page and the settings
+  GET decode such a row unchanged. A *change* to one is refused until the
+  offending column is fixed, which the same request can do — patching a valid
+  `extra_env` alongside the edit you wanted is accepted.
+
 ## [v2026.09.19.4] — 2026-09-19
 
 ### Changed

@@ -110,7 +110,7 @@ async def test_full_lifecycle_chat_then_stats_v2(tmp_path, monkeypatch):
         from unittest.mock import AsyncMock, MagicMock
         tok_double = MagicMock()
         tok_double.count = AsyncMock(
-            side_effect=lambda repo, text, *, trust_remote_code, fallback_repo=None:
+            side_effect=lambda repo, text, *, fallback_repo=None:
                 len((text or "").split())
         )
         app.state.tokenizers = tok_double

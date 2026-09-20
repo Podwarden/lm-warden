@@ -484,10 +484,15 @@ async def _forward(
     # 500s a request the engine could have served. tokenizer_repo (migration
     # 0015) points at the sibling that does have one; count() also fails open
     # to a character estimate when even that is unavailable.
+    #
+    # #264: the row's `trust_remote_code` is deliberately NOT passed. This call
+    # runs in the warden's own process, on data-plane traffic, for accounting
+    # only -- it was the one place in the product that executed a model repo's
+    # Python, and no engine ever received the flag. The cache now hard-codes
+    # False; a repo whose tokenizer needs custom code is estimated instead.
     prompt_tokens = await tok_cache.count(
         model.hf_repo,
         prompt_text,
-        trust_remote_code=bool(model.trust_remote_code),
         fallback_repo=getattr(model, "tokenizer_repo", None),
     )
 
@@ -833,7 +838,6 @@ async def _forward(
                 completion_tokens = await tok_cache.count(
                     model.hf_repo,
                     accumulated,
-                    trust_remote_code=bool(model.trust_remote_code),
                     fallback_repo=getattr(model, "tokenizer_repo", None),
                 )
                 await _record_counters(
@@ -938,7 +942,6 @@ async def _forward(
                 completion_tokens = await tok_cache.count(
                     model.hf_repo,
                     completion,
-                    trust_remote_code=bool(model.trust_remote_code),
                     fallback_repo=getattr(model, "tokenizer_repo", None),
                 )
             if live_req is not None:

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { authFetch, authFetchJSON } from "@/lib/auth-fetch";
+import { detailOf } from "@/lib/token-series";
 
 // ---------------------------------------------------------------------------
 // useRuntimeSettings — extracted from the now-deleted runtime-tab.tsx so
@@ -352,10 +353,13 @@ export function useRuntimeSettings(
         body: JSON.stringify(body),
       });
       if (!r.ok) {
+        // Shared with every other surface that reads a FastAPI refusal: a
+        // string detail, a 422's [{loc,msg}] list, or a structured refusal
+        // carrying `message` (session_only). Hand-rolling it here is how this
+        // hook used to render `HTTP 403` for a session-only key.
         let detail = `HTTP ${r.status}`;
         try {
-          const j = await r.json();
-          if (j && typeof j.detail === "string") detail = j.detail;
+          detail = detailOf(await r.json()) ?? detail;
         } catch {
           /* non-JSON body */
         }

@@ -2,9 +2,9 @@
 
 Both other write paths already check the setup allowlist: creation rejects an
 out-of-range index with a 400 (``POST /api/models``) and the load runner
-rejects one with a 422. PATCH does neither -- ``_derive_patchable_model_fields``
-made ``gpu_indices`` patchable by default, and the handler writes the list
-straight into SQLite.
+rejects one with a 422. PATCH does neither -- ``gpu_indices`` is an
+operator-writable column (``app/models/policy.py``), and the handler writes the
+list straight into SQLite.
 
 The consequence is a model that is impossible to load and impossible to
 diagnose from the model page: the write succeeds, and the failure surfaces
@@ -59,9 +59,15 @@ def auth(client: TestClient, tmp_data_dir: Path) -> dict[str, str]:
     return {**jwt_login(client), **csrf_header(client)}
 
 
+# `tensor_parallel_size` travels with `gpu_indices` in every body below: the
+# PATCH validates the MERGED row, and register's cross-field check ties the two
+# (#262). Changing the placement without restating the parallel size used to be
+# a 200 that produced a row which could not load.
 def test_patch_rejects_gpu_indices_outside_the_allowlist(client: TestClient, auth):
     r = client.patch(
-        "/api/models/m1/settings", json={"gpu_indices": [0, 1, 2, 3]}, headers=auth
+        "/api/models/m1/settings",
+        json={"gpu_indices": [0, 1, 2, 3], "tensor_parallel_size": 4},
+        headers=auth,
     )
     assert r.status_code == 400, r.text
     assert "not in allowed_gpu_indices" in r.text.lower()
@@ -71,7 +77,9 @@ def test_patch_leaves_the_stored_value_untouched_on_rejection(
     client: TestClient, auth, tmp_data_dir: Path
 ):
     client.patch(
-        "/api/models/m1/settings", json={"gpu_indices": [2, 3]}, headers=auth
+        "/api/models/m1/settings",
+        json={"gpu_indices": [2, 3], "tensor_parallel_size": 2},
+        headers=auth,
     )
 
     async def _read():
@@ -83,6 +91,8 @@ def test_patch_leaves_the_stored_value_untouched_on_rejection(
 
 def test_patch_accepts_gpu_indices_inside_the_allowlist(client: TestClient, auth):
     r = client.patch(
-        "/api/models/m1/settings", json={"gpu_indices": [0, 1]}, headers=auth
+        "/api/models/m1/settings",
+        json={"gpu_indices": [0, 1], "tensor_parallel_size": 2},
+        headers=auth,
     )
     assert r.status_code == 200, r.text

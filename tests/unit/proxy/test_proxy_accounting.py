@@ -48,9 +48,9 @@ def _read_samples(db_path):
 
 
 def _make_fake_tokenizer(token_count_for):
-    """Return a TokenizerCache double whose .count(repo, text, *, trust_remote_code) returns the dict lookup."""
+    """Return a TokenizerCache double whose .count(repo, text) returns the dict lookup."""
     cache = MagicMock()
-    cache.count = AsyncMock(side_effect=lambda repo, text, *, trust_remote_code, fallback_repo=None: token_count_for(text))
+    cache.count = AsyncMock(side_effect=lambda repo, text, *, fallback_repo=None: token_count_for(text))
     return cache
 
 

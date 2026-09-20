@@ -101,6 +101,24 @@ def test_trust_remote_code():
     assert diag.recommended_max_model_len is None
 
 
+def test_trust_remote_code_advice_points_at_extra_args_not_the_column():
+    """#264 — the advice must name something that reaches the engine.
+
+    The `trust_remote_code` COLUMN is never emitted to argv (see
+    tests/unit/runtime/backends/test_launch_characterisation.py::
+    test_no_case_sets_trust_remote_code), so "enable trust_remote_code for this
+    model" sent the operator round a loop that ended in the identical failure.
+    `extra_args` is appended to argv verbatim, so `--trust-remote-code` there
+    is the only thing that fixes this error.
+    """
+    diag = diagnose_engine_log(_TRUST_REMOTE_CODE_LOG)
+    assert diag is not None
+    assert "--trust-remote-code" in diag.message
+    assert "extra_args" in diag.message
+    # And it must not tell the operator to flip the column instead.
+    assert "enable trust_remote_code" not in diag.message.lower()
+
+
 def test_no_match_returns_none():
     assert diagnose_engine_log(_UNRELATED_LOG) is None
 

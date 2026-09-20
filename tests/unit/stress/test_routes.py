@@ -806,3 +806,194 @@ def test_apply_refuses_a_measurement_from_different_hardware(env):
     )
     assert r.status_code == 409, r.text
     assert r.json()["detail"]["error_code"] == "fingerprint_changed"
+
+
+# ---------------------------------------------------------------------------
+# #265: applying goes through the one row writer
+#
+# `POST /{id}/stress/apply` wrote `max_model_len` with a raw `UPDATE models` and
+# then RESTARTED the engine off what it wrote. `plan_apply` bounds the number,
+# but nothing checked that the rest of the row it was about to serve still
+# satisfied its own rules -- it was the sixth producer of a ModelRow and the
+# only one that also started a process from it.
+# ---------------------------------------------------------------------------
+
+
+def _stub_restart_and_unload(monkeypatch):
+    """Stub the two destructive steps and COUNT them.
+
+    ``unload`` is counted as well as ``restart`` because the question the tests
+    below ask is not only "was the model left down" but "was it taken down at
+    all" -- a refusal that never touches the engine is the fix; a refusal that
+    unloads and then restarts is only the fallback.
+    """
+    from unittest.mock import AsyncMock
+
+    restart = AsyncMock(return_value="loaded")
+    unload = AsyncMock(return_value=None)
+    monkeypatch.setattr("app.runtime.watchdog._restart", restart)
+    monkeypatch.setattr("app.runtime.supervisor.Supervisor.unload", unload)
+    return restart, unload
+
+
+def _apply(env, run_id="rec"):
+    return env["client"].post(
+        "/api/models/qwen/stress/apply",
+        json={"run_id": run_id, "acknowledge_disruption": True},
+        headers={**env["headers"], **csrf_header(env["client"])},
+    )
+
+
+def _seed_recommendation(env, max_model_len=98304):
+    _seed_run(
+        env["db"],
+        run_id="rec",
+        fingerprint=_fingerprint(env["client"], env["headers"]),
+        limits=_MEASURED_LIMITS,
+        recommended_config={"max_model_len": max_model_len},
+    )
+
+
+def _status(db_path, model_id="qwen"):
+    with sqlite3.connect(db_path) as db:
+        return db.execute(
+            "SELECT status, prior_status, max_model_len FROM models WHERE id = ?",
+            (model_id,),
+        ).fetchone()
+
+
+def test_apply_writes_the_measured_context_and_restarts(env, monkeypatch):
+    restart, _ = _stub_restart_and_unload(monkeypatch)
+    _seed_recommendation(env)
+
+    r = _apply(env)
+    assert r.status_code == 200, r.text
+    assert r.json()["applied"] == {"max_model_len": 98304}
+    with sqlite3.connect(env["db"]) as db:
+        assert db.execute(
+            "SELECT max_model_len FROM models WHERE id = 'qwen'"
+        ).fetchone()[0] == 98304
+    assert restart.await_count == 1
+
+
+def test_apply_refuses_a_row_register_would_refuse_and_does_not_restart(
+    env, monkeypatch
+):
+    """A row carrying a value register never accepted cannot be written and
+    restarted: the engine would come back serving a configuration the API would
+    refuse to create."""
+    restart, unload = _stub_restart_and_unload(monkeypatch)
+    # Poisoned BEFORE the run is seeded: extra_env feeds the fingerprint, and a
+    # measurement taken under a different one is refused earlier, for an
+    # unrelated reason.
+    with sqlite3.connect(env["db"]) as db:
+        db.execute(
+            "UPDATE models SET extra_env = ? WHERE id = 'qwen'",
+            (json.dumps({"LD_PRELOAD": "/tmp/evil.so"}),),
+        )
+        db.commit()
+    _seed_recommendation(env)
+
+    r = _apply(env)
+    assert r.status_code == 422, r.text
+    assert "hard-locked" in r.text.lower()
+    with sqlite3.connect(env["db"]) as db:
+        assert db.execute(
+            "SELECT max_model_len FROM models WHERE id = 'qwen'"
+        ).fetchone()[0] == 32768
+    assert restart.await_count == 0
+    # And -- the point of the fix -- the engine was never touched. The refusal
+    # is raised while the model is still serving, so it costs the operator an
+    # error message and nothing else.
+    assert unload.await_count == 0
+    assert _status(env["db"]) == ("loaded", None, 32768)
+
+
+def test_apply_does_not_take_a_serving_model_down_to_report_a_stale_column(
+    env, monkeypatch
+):
+    """The finding, with the row shape that is live in the field.
+
+    A well-formed `extra_env` key that is simply not on the backend's allowlist
+    is the one poisoned shape #266's boot sweep deliberately leaves alone, and
+    `filter_extra_env` drops it silently at launch -- so the model loads and
+    serves perfectly well and nothing warns anybody. `apply_model_change`
+    validates the WHOLE merged row, so it refuses over that column even though
+    the request only changes `max_model_len`.
+
+    With the validation after the unload, clicking "Apply and reload" answered
+    422 with the engine already torn down, `status` committed as `pulled` and no
+    restart -- and the watchdog does not recover a `pulled` row with no
+    `prior_status`, because that is what a deliberate unload looks like. The
+    model stayed down until a human noticed.
+    """
+    restart, unload = _stub_restart_and_unload(monkeypatch)
+    with sqlite3.connect(env["db"]) as db:
+        db.execute(
+            "UPDATE models SET extra_env = ? WHERE id = 'qwen'",
+            (json.dumps({"FOO_BAR": "1"}),),
+        )
+        db.commit()
+    _seed_recommendation(env)
+
+    r = _apply(env)
+    assert r.status_code == 422, r.text
+    assert "FOO_BAR" in r.text
+    # Still serving, still at its old context, still recoverable by the
+    # watchdog if anything else kills it.
+    assert _status(env["db"]) == ("loaded", None, 32768)
+    assert unload.await_count == 0
+    assert restart.await_count == 0
+
+
+def test_a_refusal_that_lands_after_the_unload_still_restarts(env, monkeypatch):
+    """The fallback for the race the dry run cannot close.
+
+    The dry run reads the row, then the engine comes down, then the real write
+    re-reads it. Something else may have changed the row in between. If the
+    write refuses at that point the engine is already gone, so the route brings
+    it back on the configuration still in the row rather than leaving a dead
+    model behind a 422. Simulated by poisoning the row DURING the unload.
+    """
+    from unittest.mock import AsyncMock
+
+    restart = AsyncMock(return_value="loaded")
+    monkeypatch.setattr("app.runtime.watchdog._restart", restart)
+
+    async def _poison_then_unload(self, model_id, *, force=False):
+        with sqlite3.connect(env["db"]) as db:
+            db.execute(
+                "UPDATE models SET extra_env = ? WHERE id = 'qwen'",
+                (json.dumps({"FOO_BAR": "1"}),),
+            )
+            db.commit()
+
+    monkeypatch.setattr("app.runtime.supervisor.Supervisor.unload", _poison_then_unload)
+    _seed_recommendation(env)
+
+    r = _apply(env)
+    assert r.status_code == 422, r.text
+    assert "FOO_BAR" in r.text
+    # The context was not applied...
+    assert _status(env["db"])[2] == 32768
+    # ...but the engine was put back rather than left down.
+    assert restart.await_count == 1
+
+
+def test_the_unload_is_recorded_even_if_the_teardown_raises(env, monkeypatch):
+    """`Supervisor.unload` releases the handle, the port and the GPU claim in a
+    `finally` of its own, so the engine is gone whether it returned or raised.
+    The row must say so either way: a row claiming `loaded` with no process
+    behind it is the lie this write exists to prevent."""
+    from unittest.mock import AsyncMock
+
+    monkeypatch.setattr("app.runtime.watchdog._restart", AsyncMock(return_value="loaded"))
+    monkeypatch.setattr(
+        "app.runtime.supervisor.Supervisor.unload",
+        AsyncMock(side_effect=RuntimeError("teardown blew up")),
+    )
+    _seed_recommendation(env)
+
+    with pytest.raises(RuntimeError, match="teardown blew up"):
+        _apply(env)
+    assert _status(env["db"])[0] == "pulled"

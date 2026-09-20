@@ -31,6 +31,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/auth-fetch";
+import { detailOf as detailFromBody } from "@/lib/token-series";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { StressRunProgress } from "./stress-run-progress";
@@ -56,16 +57,20 @@ interface StressTestModalProps {
   pollIntervalMs?: number;
 }
 
-/** Pull a human message out of an error body, whatever shape it arrived in. */
+/** Pull a human message out of an error body, whatever shape it arrived in.
+ *
+ * Delegates to the shared `detailOf` rather than re-deriving the shapes. This
+ * helper used to know about strings and `{message}` only, so a 422 -- which
+ * `POST /{id}/stress/apply` can now answer, because the write validates the
+ * whole merged row -- rendered as a bare `HTTP 422` with nothing naming the
+ * column to fix, on the one request that touches a production engine. */
 async function detailOf(r: Response): Promise<string> {
   try {
-    const body = await r.json();
-    if (typeof body?.detail === "string") return body.detail;
-    if (typeof body?.detail?.message === "string") return body.detail.message;
+    return detailFromBody(await r.json()) ?? `HTTP ${r.status}`;
   } catch {
     /* non-JSON body — fall back to the status code */
+    return `HTTP ${r.status}`;
   }
-  return `HTTP ${r.status}`;
 }
 
 

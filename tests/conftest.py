@@ -21,11 +21,14 @@ scheduling, token-cache warm-up, etc.) without papering over real bugs
 """
 
 import asyncio
+import faulthandler
 import json
 import os
 import shutil
 import sqlite3
+import sys
 import tempfile
+import threading
 import time
 from pathlib import Path
 
@@ -52,6 +55,66 @@ Path(os.environ["HF_HOME"]).mkdir(parents=True, exist_ok=True)
 import bcrypt  # noqa: E402
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# Shutdown watchdog (#260)
+# ---------------------------------------------------------------------------
+#
+# A leaked non-daemon thread does not fail the run: pytest prints its summary,
+# the process then blocks forever inside CPython's ``threading._shutdown()``
+# joining that thread, and the only symptom is a job that burns its CI slot
+# until the runner's timeout kills it -- with no traceback, no summary line
+# about it and nothing to debug. #260 was exactly that (an aiosqlite
+# connection abandoned by a cancelled task; see app/db/database.py).
+#
+# So the last thing the session does is name any non-daemon thread it is about
+# to be joined against, and arm a faulthandler timer. If the interpreter has
+# not managed to exit within the grace period, every thread's stack -- C-level
+# included, so ``threading._shutdown`` and the parked worker are both visible
+# -- goes to the real stderr and the process dies with a non-zero status.
+#
+# The timer is armed *after* the last test, so the threshold has nothing to do
+# with how slow the suite is: the process it watches has only teardown, report
+# writing and interpreter exit left at this point. ``faulthandler_timeout`` in
+# pyproject.toml covers the other shape, a single test that hangs.
+#
+# ONLY in the process a CI job actually waits on. An xdist WORKER finishes its
+# session and then sits in execnet's `serve()` until the controller tells it to
+# shut down, which can be minutes on a loaded machine -- nothing is wrong, it
+# just has no work. Arming an `exit=True` timer there kills a healthy worker
+# and the controller reports a crashed node. Observed on this suite under load
+# (two workers dumped execnet's own read loop at exactly 60s), which is why the
+# timer is controller-only. A worker that genuinely wedges at exit still cannot
+# hide: the controller waits for it, and the controller's own timer fires.
+_SHUTDOWN_GRACE_SECONDS = 60.0
+
+
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    lingering = [
+        t
+        for t in threading.enumerate()
+        if t is not threading.main_thread() and t.is_alive() and not t.daemon
+    ]
+    if lingering:
+        names = ", ".join(
+            f"{t.name}({t.__class__.__module__}.{t.__class__.__name__})" for t in lingering
+        )
+        print(
+            f"\n[shutdown-watchdog] {len(lingering)} non-daemon thread(s) still alive; "
+            f"interpreter exit will block on them: {names}",
+            file=sys.stderr,
+        )
+    if hasattr(session.config, "workerinput"):
+        # An xdist worker: it has no idea how long the controller will keep it
+        # alive. Census only, no timer.
+        return
+    # ``file`` must be a real fd: pytest-xdist replaces sys.stderr in the
+    # controller too, with an object faulthandler cannot write to.
+    stderr = sys.__stderr__
+    if stderr is None:  # pragma: no cover - only under a stripped interpreter
+        return
+    faulthandler.dump_traceback_later(_SHUTDOWN_GRACE_SECONDS, file=stderr, exit=True)
+
 
 # ---------------------------------------------------------------------------
 # Suite-wide speed fixtures (perf/test-suite-speed)

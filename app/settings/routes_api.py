@@ -30,7 +30,6 @@ leaks the plaintext into the DB. See routing block in `patch_runtime`.
 Per-model settings (Task 3.3) live on a sibling router `model_settings_router`
 mounted under `/api/models/{model_id}/settings`.
 """
-import dataclasses
 import json
 import re
 from dataclasses import asdict
@@ -40,15 +39,13 @@ from urllib.parse import urlsplit
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from app.auth.deps import (
-    TRUST_REMOTE_CODE_SET_MESSAGE,
-    refuse_session_only,
-    require_jwt,
-)
+from app.auth.deps import refuse_session_only, require_jwt
+from app.auth.principal import principal_of
 from app.db.database import open_db
-from app.db.repos.models import ModelRepo, ModelRow
+from app.db.repos.models import ModelRepo
 from app.db.repos.settings import SettingsRepo
-from app.db.repos.setup import SetupRepo
+from app.models.policy import OPERATOR_FIELDS, TRISTATE_FIELDS
+from app.models.writer import apply_model_change, refuse_session_to_set
 from app.system.hf import validate_hf_token
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
@@ -491,80 +488,25 @@ async def patch_runtime(
 # Per-model settings (Task 3.3)
 # ---------------------------------------------------------------------------
 
-# #110 — Derived PATCH allowlist for /api/models/{id}/settings.
+# #110, restructured by the model-write-path step 0. The PATCH allowlist for
+# /api/models/{id}/settings is now READ OFF the per-column policy table in
+# app/models/policy.py rather than derived here.
 #
-# Historically `_PATCHABLE_MODEL_FIELDS` was hand-maintained, which let
-# new ModelRow columns (e.g. #85's filename / parallelism_strategy /
-# max_batch_size, #106's hf_config_repo / tokenizer_repo) silently fall
-# off the patchable surface even though every other layer treats them
-# as operator-tunable. The fix is to derive the allowlist from
-# `dataclasses.fields(ModelRow)` MINUS an explicit `_NEVER_PATCH`
-# blocklist that names lifecycle-owned and DB-managed columns. New
-# columns become patchable by default; locking one requires adding it
-# to `_NEVER_PATCH` with a comment explaining why.
+# History, because the shape matters: `_PATCHABLE_MODEL_FIELDS` started
+# hand-maintained and drifted from `ModelRow` every time a column was added
+# (#85's filename / parallelism_strategy / max_batch_size and #106's
+# hf_config_repo / tokenizer_repo were never wired up). #110 replaced it with
+# `dataclasses.fields(ModelRow)` MINUS a `_NEVER_PATCH` blocklist, which fixed
+# the rot by inverting the default: new columns became patchable unless someone
+# remembered to exclude them. That default is how `trust_remote_code` (#256) and
+# `prior_status` (#260) arrived on this surface.
 #
-# (The plan §S3 wording says `ModelRow.__fields__` — that's the
-# Pydantic accessor; ModelRow is a `@dataclass`, so we use
-# `dataclasses.fields` instead. Same semantics for our purpose: the
-# canonical field name registry.)
-_NEVER_PATCH: frozenset[str] = frozenset({
-    # Identifier — opaque, set at insert time.
-    "id",
-    # Lifecycle columns owned by the pull task / load runner. Mutating
-    # these out-of-band corrupts the state machine (#11, #29).
-    "status",
-    "pulled_bytes",
-    "pulled_total",
-    "last_error",
-    # DB-managed audit columns. `updated_at` is bumped by every UPDATE
-    # in this module; `created_at` lives in the SQL schema only (not
-    # in ModelRow today) but stays on the blocklist as belt-and-
-    # suspenders should it ever be promoted into the dataclass.
-    "updated_at",
-    "created_at",
-    # Watchdog CONTROL state, not a user setting (migration 0024). It records
-    # the status a serving engine was interrupted in, and it is the flag
-    # app/runtime/watchdog.py::wants_restart keys on -- its only writers are
-    # boot reconciliation and the crash path, and the restart sweep clears it.
-    # Making it operator-editable was how an admin token could arm the sweep on
-    # a `failed` row and have the watchdog call start_engine for it, which (with
-    # `trust_remote_code` patched on in the same breath) was remote code
-    # execution without ever calling /load. Nothing should PATCH it, session or
-    # token: the state machine owns it, exactly like `status`.
-    "prior_status",
-})
-
-
-def _derive_patchable_model_fields() -> frozenset[str]:
-    """Build the PATCH allowlist as (ModelRow fields) - _NEVER_PATCH.
-
-    Runs at import time. Asserts every name in `_NEVER_PATCH` that is
-    NOT one of the documented SQL-only exceptions matches a real
-    ModelRow field — so a future rename (e.g. `status` → `lifecycle`)
-    on the dataclass fails loudly here instead of silently letting the
-    old name through as patchable.
-    """
-    row_fields = {f.name for f in dataclasses.fields(ModelRow)}
-    # Names allowed in `_NEVER_PATCH` without a backing dataclass field —
-    # currently just `created_at`, which lives in SQL only.
-    SQL_ONLY_EXCEPTIONS = {"created_at"}
-    stale = [
-        n for n in _NEVER_PATCH
-        if n not in row_fields and n not in SQL_ONLY_EXCEPTIONS
-    ]
-    if stale:
-        raise RuntimeError(
-            f"_NEVER_PATCH contains names {stale} that are not ModelRow "
-            f"fields and not in SQL_ONLY_EXCEPTIONS={sorted(SQL_ONLY_EXCEPTIONS)}. "
-            f"Did a column get renamed? Update _NEVER_PATCH to match."
-        )
-    return frozenset(row_fields - _NEVER_PATCH)
-
-
-_PATCHABLE_MODEL_FIELDS: frozenset[str] = _derive_patchable_model_fields()
-
-# ModelRow fields persisted as JSON in the underlying column.
-_MODEL_JSON_FIELDS = frozenset({"gpu_indices", "extra_args", "extra_env"})
+# `MODEL_FIELD_POLICY` keeps #110's drift guard -- it must name every ModelRow
+# column or the import fails -- without the writable-by-default inversion: an
+# unclassified column is a hard startup failure, not a patchable field. The
+# per-column reasoning, including why `extra_args` / `engine_image` stay open and
+# why `prior_status` is locked to the state machine, lives there as `why=`.
+_PATCHABLE_MODEL_FIELDS: frozenset[str] = OPERATOR_FIELDS
 
 # Capability flags are TRI-state, not boolean: 1 = yes, 0 = no, NULL = "nobody
 # has stated an answer". The third state is load-bearing — app/chat2/catalog.py
@@ -577,66 +519,12 @@ _MODEL_JSON_FIELDS = frozenset({"gpu_indices", "extra_args", "extra_env"})
 #   * `null`            -> back to auto (NULL)
 #   * key omitted       -> left exactly as it was
 # The last of those is already how every other field on this endpoint behaves,
-# so there is no extra sentinel to learn. The body is an untyped dict, so the
-# value is normalised through `int(bool(v))` — the same coercion
-# `trust_remote_code` uses below — rather than being written raw.
-_MODEL_TRISTATE_FIELDS = frozenset({
-    "supports_tools", "supports_vision", "supports_reasoning",
-})
-
-
-def _coerce_tristate(field: str, v: Any) -> int | None:
-    """Validate one capability flag, or raise 400.
-
-    Deliberately NOT `int(bool(v))` (what `trust_remote_code` uses): that reads
-    the string `"no"` -- a perfectly plausible thing for a shell script to
-    send -- as an explicit YES, the exact opposite of what was asked, and
-    silently. Only real JSON booleans, their case-insensitive string spellings
-    (form-encoded clients and `curl` recipes), and null get through; anything
-    else is a loud 400.
-    """
-    if v is None:
-        return None
-    if isinstance(v, bool):  # must precede the int check -- bool IS an int
-        return int(v)
-    if isinstance(v, str) and v.strip().lower() in ("true", "false"):
-        return int(v.strip().lower() == "true")
-    raise HTTPException(
-        status_code=400,
-        detail=f"{field} must be true, false, or null (got {v!r})",
-    )
-
-
-def _coerce_backend(v: Any) -> str | None:
-    """Validate models.backend, or raise 400.
-
-    Necessary because the PATCH allowlist is DERIVED from ModelRow's fields, so
-    a new column is patchable the moment it exists. Without this, an operator
-    could write 'sglang' and the failure would surface from inside
-    Supervisor.load as an UnknownBackendError -- after the GPU claim, as an
-    opaque last_error, at load time rather than at write time.
-    ``registry.is_known`` is the single source of truth, so this can never
-    drift from what the build can actually run.
-
-    None is accepted: it is the D6 default (NULL decodes to 'vllm') and is how
-    an operator returns a row to the default without naming it. Note the
-    explicit ``v and`` -- ``is_known("")`` is True by design (it treats falsy
-    as "unset"), and letting an empty string through would write a value that
-    is neither NULL nor a backend name.
-    """
-    from app.runtime.backends import registry
-
-    if v is None:
-        return None
-    if isinstance(v, str) and v and registry.is_known(v):
-        return v
-    raise HTTPException(
-        status_code=400,
-        detail=(
-            f"backend must be null or one of {list(registry.available())} "
-            f"(got {v!r})"
-        ),
-    )
+# so there is no extra sentinel to learn.
+#
+# Which columns those are is a property of the column, so it is read off the
+# policy table's `tristate=True` entries. The coercion itself now lives in
+# app/models/writer.py, which every write path shares.
+_MODEL_TRISTATE_FIELDS = TRISTATE_FIELDS
 
 
 model_settings_router = APIRouter(prefix="/api/models", tags=["model-settings"])
@@ -671,112 +559,77 @@ async def patch_model_settings(
 ) -> dict[str, Any]:
     """Patch a model's persistent settings.
 
+    Every key is optional; an omitted key is left exactly as it was. The body is
+    merged into the current row and the RESULT is validated as a whole row by
+    `app/models/schemas.py::ModelSpec`, so this endpoint applies the same rules
+    `POST /api/models` does -- including the cross-field ones a partial body
+    cannot express, like `tensor_parallel_size` matching `len(gpu_indices)` and
+    `extra_env` matching the row's backend.
+
+    That is #262's fix. This route used to carry a hand-written subset of
+    register's validation: three coercers and a `gpu_indices` check, with
+    `json.dumps(v)` for the JSON columns and the raw JSON value for everything
+    else. A string `extra_args` therefore round-tripped as a string and
+    `args += extra_args` appended it to argv one CHARACTER at a time; slug
+    patterns, length bounds and numeric bounds were not applied at all; and a
+    `served_model_name` that collided with another row -- the column is UNIQUE
+    in SQL -- reached SQLite as an IntegrityError and came back as a 500.
+
+    Answers:
+
+    * 400 -- a key no operator may write (a `Writer.RUNTIME` or `Writer.DB`
+      column, or an unknown one), or one of the three untyped-body shapes this
+      endpoint has always answered 400 for (`gpu_indices`, `backend`, a
+      capability flag), or a GPU the host does not permit;
+    * 403 `session_only` -- an admin token setting `trust_remote_code` true;
+    * 404 -- no such model;
+    * 409 -- the model is loaded (unload first), or the new
+      `served_model_name` is taken;
+    * 422 -- a value that breaks a rule of the merged row.
+
     Refuses to mutate a model that is currently `status == 'loaded'` — that
     column is authoritative state set by the supervisor on transitions. The
-    operator must unload the model first, which is a 409.
-
-    One carve-out: a body whose keys are ALL capability flags is allowed
-    through on a loaded model. Those columns are inert metadata that the load
-    runner and the engine never read (only the chat2 catalog does, per
-    request), and the loaded model is precisely the one an operator is looking
-    at when they notice vision is set wrong — making them unload it to fix a
-    label is backwards. Mixing in any real engine setting puts the whole patch
-    back under the guard.
+    operator must unload the model first, which is a 409. One carve-out: a body
+    whose keys are ALL capability flags is allowed through on a loaded model.
+    Those columns are inert metadata that the load runner and the engine never
+    read (only the chat2 catalog does, per request), and the loaded model is
+    precisely the one an operator is looking at when they notice vision is set
+    wrong — making them unload it to fix a label is backwards. Mixing in any
+    real engine setting puts the whole patch back under the guard.
 
     ``trust_remote_code: true`` is session-only here (#256, C1), for exactly the
-    reason it is session-only on register and on load: the row is what a later
-    load — or the watchdog's restart sweep — reads, so patching the flag on is
-    the same code-execution grant by a different verb. Refused first, before
-    validation and before any write, so a refused PATCH changes nothing at all.
-    Turning the flag off, and every other setting, stays open to an admin token.
-    """
-    if body.get("trust_remote_code"):
-        # Truthy, not ``is True``: the write below coerces with ``int(bool(v))``,
-        # so anything truthy would have persisted a 1.
-        refuse_session_only(request, message=TRUST_REMOTE_CODE_SET_MESSAGE)
+    reason it is session-only on register and on load: patching the flag on
+    persists the same grant by a different verb. (#264: no engine ever reads
+    this column, so "the row is what a later load reads" was not the mechanism;
+    what read it was the warden's own proxy tokenizer, and that is gone too.
+    The refusal stays -- an admin token must not be able to write the grant.)
+    Refused first, before the database is even opened, so a refused PATCH
+    changes nothing at all -- not even a 404 lookup. Turning the flag off, and
+    every other setting, stays open to an admin token.
 
-    bad = [k for k in body if k not in _PATCHABLE_MODEL_FIELDS]
-    if bad:
-        raise HTTPException(
-            status_code=400,
-            detail=f"unknown or non-patchable keys: {sorted(bad)}",
-        )
-    capabilities_only = bool(body) and set(body) <= _MODEL_TRISTATE_FIELDS
+    Nothing is written unless every check passes: `apply_model_change` refuses
+    before it writes, never part-way through.
+    """
+    principal = principal_of(request)
+    # Before the DB is touched, so the answer to an admin token is the refusal
+    # rather than a 404 for a model it may not know exists. The writer runs the
+    # same check again on the merged change; this one is about ordering.
+    refuse_session_to_set(principal, body)
 
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
         m = await ModelRepo(db).get(model_id)
         if not m:
             raise HTTPException(status_code=404, detail="model not found")
-        if m.status == "loaded" and not capabilities_only:
-            raise HTTPException(
-                status_code=409,
-                detail="model must be unloaded before editing settings",
-            )
-
-        # Mirror the create-time and load-time allowlist checks. Without this
-        # the PATCH surface is the one write path that can persist a GPU index
-        # the host does not permit: `_derive_patchable_model_fields` made
-        # `gpu_indices` patchable by default, and the row below writes it
-        # verbatim. The row then loads nowhere -- the operator sees
-        # "gpu_indices [...] not subset of allowed [...]" at load time, far
-        # from the edit that caused it, on a page that offers no way to see
-        # the allowlist. Same 400 and same wording as POST /api/models so the
-        # frontend's existing handling applies unchanged.
-        if "gpu_indices" in body:
-            requested = body["gpu_indices"]
-            if not isinstance(requested, list) or not all(
-                isinstance(i, int) and not isinstance(i, bool) for i in requested
-            ):
-                raise HTTPException(
-                    status_code=400, detail="gpu_indices must be a list of integers"
-                )
-            if not requested:
-                raise HTTPException(
-                    status_code=400, detail="gpu_indices must name at least one GPU"
-                )
-            allowed = set((await SetupRepo(db).get()).draft.get("allowed_gpu_indices", []))
-            if not set(requested).issubset(allowed):
-                bad = sorted(set(requested) - allowed)
-                raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        f"GPU indices {bad} not in allowed_gpu_indices "
-                        f"{sorted(allowed)}"
-                    ),
-                )
-
-        # Build the SET clause from the allowlist intersected with the body.
-        # Iterating over `_PATCHABLE_MODEL_FIELDS` (not `body.items()`) makes
-        # the identifier source explicit — keys can't slip into the SQL string
-        # without passing through the allowlist constant.
-        set_parts: list[str] = []
-        values: list[Any] = []
-        for k in _PATCHABLE_MODEL_FIELDS:
-            if k not in body:
-                continue
-            v = body[k]
-            if k in _MODEL_JSON_FIELDS:
-                values.append(json.dumps(v))
-            elif k in _MODEL_TRISTATE_FIELDS:
-                # `null` is a deliberate reset to auto, not a missing value —
-                # only an omitted key means "don't touch". Validated (not
-                # coerced) so junk is a 400 before anything is written.
-                values.append(_coerce_tristate(k, v))
-            elif k == "backend":
-                values.append(_coerce_backend(v))
-            elif k == "trust_remote_code":
-                values.append(int(bool(v)))
-            else:
-                values.append(v)
-            set_parts.append(f"{k} = ?")
-        if set_parts:
-            values.append(model_id)
-            await db.execute(
-                f"UPDATE models SET {', '.join(set_parts)}, updated_at = datetime('now') "
-                f"WHERE id = ?",
-                tuple(values),
-            )
-            await db.commit()
+        await apply_model_change(
+            db,
+            principal=principal,
+            current=m,
+            changes=body,
+            # The body is raw JSON, so the three columns whose wire form is
+            # ambiguous (`gpu_indices`, `backend`, a capability flag) go through
+            # the writer's coercers and keep this endpoint's existing 400s.
+            from_untyped_body=True,
+        )
 
     return {"ok": True}

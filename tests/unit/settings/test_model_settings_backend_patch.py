@@ -1,8 +1,8 @@
 """PATCH /api/models/{id}/settings must validate ``backend`` at write time.
 
-``_derive_patchable_model_fields`` builds the allowlist as ModelRow's fields
-minus ``_NEVER_PATCH``, so ``backend`` became patchable the moment sub-project B
-added the column -- with no value check at all. Without one, an operator could
+The allowlist is read off ``app/models/policy.py`` (before that: ModelRow's
+fields minus ``_NEVER_PATCH``), and ``backend`` is an operator-writable column --
+with no value check of its own. Without one, an operator could
 write ``"sglang"``, the write would succeed, and the failure would surface much
 later as an ``UnknownBackendError`` raised from inside ``Supervisor.load``:
 after the GPU claim, as an opaque ``last_error``, at load time rather than at

@@ -660,3 +660,97 @@ describe("TryStackPanel unified Load", () => {
     expect(screen.queryByTestId("try-stack-retry-att-1")).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// #262/#265 — pinning an engine goes through the model write path now, so this
+// panel can receive FastAPI's LIST-shaped 422 detail as well as the string and
+// {message} shapes it already saw. `String(d.detail)` on a list renders
+// `[object Object]`, which is what the operator was shown.
+// ---------------------------------------------------------------------------
+
+describe("TryStackPanel error details", () => {
+  beforeEach(() => {
+    setAccessToken("test-jwt");
+    setCsrfToken("test-csrf");
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  /** Like installTryStackStub, but the try-stack POST fails with `failure`. */
+  function installFailingPin(modelId: string, failure: Response) {
+    const listUrl = `/api/models/${modelId}/try-stack`;
+    const mock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.toString();
+      const method = init?.method ?? "GET";
+      if (url === "/api/auth/refresh") return json({ access_token: "test-jwt-refreshed" });
+      if (url === "/api/csrf") return json({ csrf: "test-csrf" });
+      if (url === "/api/system/backends") return json(capableBackends("0.21.0"));
+      if (url.startsWith("/api/templates/engine-versions")) {
+        return json({
+          channel: "cuda-stable",
+          family: "vllm/vllm-openai",
+          versions: ["0.21.0", "0.20.0"],
+          error: null,
+        });
+      }
+      if (url === listUrl && method === "GET") return json({ attempts: [] });
+      if (url === listUrl && method === "POST") return failure.clone();
+      throw new Error(`unexpected fetch: ${method} ${url}`);
+    });
+    vi.stubGlobal("fetch", mock);
+  }
+
+  async function pin(modelId: string) {
+    renderPanel(modelId);
+    const field = await screen.findByTestId("try-stack-version");
+    fireEvent.change(field, { target: { value: "0.20.0" } });
+    await waitFor(() =>
+      expect(screen.getByTestId("try-stack-submit")).not.toBeDisabled(),
+    );
+    fireEvent.click(screen.getByTestId("try-stack-submit"));
+    return screen.findByTestId("try-stack-error");
+  }
+
+  it("renders a list-shaped 422 detail rather than [object Object]", async () => {
+    installFailingPin(
+      "e1",
+      new Response(
+        JSON.stringify({
+          detail: [
+            { loc: [], msg: "Value error, extra_env key 'FOO_BAR' is not in the allowlist", type: "value_error" },
+          ],
+        }),
+        { status: 422 },
+      ),
+    );
+    const err = await pin("e1");
+    expect(err.textContent).toMatch(/FOO_BAR/);
+    expect(err.textContent).not.toMatch(/object Object/);
+  });
+
+  it("still renders a string detail", async () => {
+    installFailingPin(
+      "e2",
+      new Response(
+        JSON.stringify({ detail: "model must be unloaded before editing settings" }),
+        { status: 409 },
+      ),
+    );
+    const err = await pin("e2");
+    expect(err.textContent).toMatch(/must be unloaded/);
+  });
+
+  it("renders a {message} detail", async () => {
+    installFailingPin(
+      "e3",
+      new Response(
+        JSON.stringify({ detail: { error_code: "session_only", message: "needs a signed-in session" } }),
+        { status: 403 },
+      ),
+    );
+    const err = await pin("e3");
+    expect(err.textContent).toMatch(/needs a signed-in session/);
+  });
+});

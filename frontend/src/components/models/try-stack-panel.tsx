@@ -22,6 +22,7 @@
 import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { authFetch, authFetchJSON } from "@/lib/auth-fetch";
+import { detailOf } from "@/lib/token-series";
 import { useBackendCapability } from "@/lib/system-backends";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -247,11 +248,12 @@ export function TryStackPanel({
         body: JSON.stringify({ channel, vllm_version: trimmedVersion }),
       });
       if (!r.ok) {
+        // `detailOf`, not `String(d.detail)`: pinning an engine goes through
+        // the model write path now (#265), so this can answer 422 with
+        // FastAPI's LIST of field errors -- which stringifies to
+        // `[object Object]` -- as well as the 409 it already could.
         const d = await r.json().catch(() => null);
-        setError(
-          (d && typeof d === "object" && "detail" in d ? String(d.detail) : null) ??
-            `Failed (HTTP ${r.status})`,
-        );
+        setError(detailOf(d) ?? `Failed (HTTP ${r.status})`);
         return;
       }
       // Pin succeeded — refresh attempts so the new "pending" row appears,
@@ -262,19 +264,7 @@ export function TryStackPanel({
       const lr = await authFetch(`/api/models/${modelId}/load`, { method: "POST" });
       if (!lr.ok) {
         const d = await lr.json().catch(() => null);
-        const detail =
-          d && typeof d === "object"
-            ? "detail" in d && typeof d.detail === "string"
-              ? d.detail
-              : "detail" in d &&
-                  d.detail !== null &&
-                  typeof d.detail === "object" &&
-                  "message" in d.detail &&
-                  typeof (d.detail as { message?: unknown }).message === "string"
-                ? String((d.detail as { message: string }).message)
-                : null
-            : null;
-        setError(detail ?? `Failed to start engine (HTTP ${lr.status})`);
+        setError(detailOf(d) ?? `Failed to start engine (HTTP ${lr.status})`);
         return;
       }
       setConfirmRepeat(false);
@@ -498,7 +488,11 @@ export function TryStackPanel({
         </div>
       )}
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-400" data-testid="try-stack-error">
+          {error}
+        </p>
+      )}
 
       <TryStackHistory
         attempts={attempts}

@@ -45,8 +45,9 @@ async def test_migrations_idempotent(tmp_data_dir):
         # + 0029 (stress_runs: measured operating limits, keyed on
         # (model_id, fingerprint) so the same model at two context sizes keeps
         # two valid rows; a separate table rather than `models` columns because
-        # _PATCHABLE_MODEL_FIELDS is derived and would make a machine-written
-        # measurement hand-editable) + 0030 (stress_runs.progress: mid-run
+        # a `models` column would land in MODEL_FIELD_POLICY and, classified
+        # as operator-writable, make a machine-written measurement
+        # hand-editable) + 0030 (stress_runs.progress: mid-run
         # phase and probe count, overwritten in place by the heartbeat, so a
         # multi-hour run is not a blank modal) + 0031 (request_history: one row
         # per completed /v1 request -- the proxy's own TTFT and duration, so

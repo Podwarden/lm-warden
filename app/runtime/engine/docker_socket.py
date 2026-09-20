@@ -21,7 +21,41 @@ from pathlib import Path
 from app.runtime.engine.run_marker import format_run_sentinel
 
 HFCACHE_VOLUME = "vllm-warden-hfcache"
-DATA_VOLUME = "vllm-warden-data"
+# Where the engine container sees the model cache. This is the path every
+# shipped deployment shape gives the WARDEN too (docker-compose.yml,
+# deploy/hub/compose.yaml, deploy/hub/template.json all mount the cache volume
+# here, and settings.hf_cache_dir defaults to it), which is what makes
+# HF_HUB_CACHE — set from settings.hf_cache_dir by the backend's env builder —
+# resolve to the same bytes on both sides. app/main.py says so out loud at
+# startup if a deployment has moved VW_HF_CACHE_DIR away from it.
+HFCACHE_MOUNT = "/root/.cache/huggingface"
+
+# THE WARDEN'S DATA VOLUME IS DELIBERATELY NOT MOUNTED HERE (#265).
+#
+# Until this change the driver mounted ``vllm-warden-data`` at ``/data`` with
+# mode "rw" in every engine container. That volume holds ``vllm-warden.db`` —
+# api tokens, the admin-token audit trail, models, sessions — and the
+# auto-minted ``jwt_secret`` (app/config.py). The engine container runs a
+# model's code, under an image an operator or an admin token names
+# (``engine_image``), with argv an admin token can extend (``extra_args``), so
+# that mount handed every engine read AND write access to the control plane's
+# own state: read the database, mint a session, edit the audit trail. It also
+# made the docker driver no more isolated from warden state than the
+# local-subprocess driver, which shares the warden's filesystem by nature.
+#
+# The engine needs nothing there. Its env carries no path under /data
+# (``HF_HUB_CACHE`` points at the cache volume above; see
+# app/runtime/backends/*/env.py), its argv names files only inside the model
+# cache (app/runtime/backends/paths.py), and the per-model log file under
+# ``<data_dir>/logs`` is written by the WARDEN — ``_start_log_pump`` below
+# streams ``container.logs()`` from outside and writes it, exactly as the
+# watchdog assembles crash bundles from outside. The container writes to its
+# own stdout/stderr and nothing else.
+#
+# The one path that ever did write there was the model cache, before the
+# 2026-06-15 ENOSPC incident pointed it at its own volume (the comment in
+# app/runtime/backends/vllm/env.py records it). Re-adding this mount would
+# re-open both.
 
 # vLLM tensor-parallel workers talk over POSIX shared memory (the
 # shm_broadcast message queue + custom-all-reduce CUDA-IPC handles). A
@@ -240,9 +274,10 @@ class DockerSocketDriver:
                 dict(spec.env), list(spec.gpu_indices)
             ),
             ports={f"{spec.port}/tcp": spec.port},
+            # The model cache and NOTHING ELSE — see HFCACHE_MOUNT above for
+            # why the warden's data volume is not here (#265).
             volumes={
-                HFCACHE_VOLUME: {"bind": "/root/.cache/huggingface", "mode": "rw"},
-                DATA_VOLUME: {"bind": "/data", "mode": "rw"},
+                HFCACHE_VOLUME: {"bind": HFCACHE_MOUNT, "mode": "rw"},
             },
             device_requests=_gpu_device_requests(list(spec.gpu_indices)),
             shm_size=ENGINE_SHM_SIZE,
