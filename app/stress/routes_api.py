@@ -14,9 +14,10 @@ Three things in here are load-bearing and are not plumbing:
 **Starting a run is an operator action, never a data-plane one.** A stress
 test deliberately crashes a production engine. An API token (``vw_…``) is a
 credential handed to a client application so it can send completions; it must
-never be able to take a GPU down. The design left this unstated. Note that
-``require_jwt`` would already reject a ``vw_`` token with a confusing "invalid
-token" 401 — ``require_operator`` turns that into a 403 that says why.
+never be able to take a GPU down. The design left this unstated. An admin
+token (``vwa_…``) is an operator credential and may start one. ``require_jwt``
+would reject a ``vw_`` token with a confusing "invalid token" 401 —
+``require_operator`` turns that into a 403 that says why.
 
 **``recommended_config`` never reaches ``/v1/models``.** It describes a
 configuration the model is *not currently running* (§6.2). Telling a client it
@@ -44,6 +45,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel
 
+from app.auth.bearer import INFERENCE_TOKEN_PREFIX, parse_bearer_header
 from app.auth.deps import require_jwt
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo, ModelRow
@@ -121,29 +123,30 @@ def cooldown_seconds() -> float:
 # ---------------------------------------------------------------------------
 
 
-def require_operator(request: Request) -> str:
-    """JWT operator only. An API token is refused with an explanation.
+async def require_operator(request: Request) -> str:
+    """A session JWT or an admin token. An inference token is refused with an
+    explanation.
 
-    ``require_jwt`` alone is already sufficient for security — a ``vw_`` token
-    is not a JWT and fails to decode. It is not sufficient for the operator
+    ``require_jwt`` alone is already sufficient for security -- a ``vw_`` token
+    is neither a JWT nor an admin token. It is not sufficient for the operator
     reading the response, who gets "invalid token" and reasonably concludes
     their token has expired rather than that this endpoint is off-limits to
     every token of that kind.
     """
-    auth = request.headers.get("authorization", "")
-    if auth.lower().startswith("bearer ") and auth[7:].strip().startswith("vw_"):
+    token = parse_bearer_header(request.headers.get("authorization"))
+    if token is not None and token.startswith(INFERENCE_TOKEN_PREFIX):
         raise HTTPException(
             403,
             detail={
                 "error_code": "operator_only",
                 "message": (
-                    "API tokens are data-plane credentials and cannot start a "
-                    "stress test: a run deliberately crashes the engine. Sign "
-                    "in as an operator."
+                    "Inference tokens (vw_...) are data-plane credentials and "
+                    "cannot start a stress test: a run deliberately crashes the "
+                    "engine. Sign in as an operator, or use an admin token (vwa_...)."
                 ),
             },
         )
-    return require_jwt(request)
+    return await require_jwt(request)
 
 
 # ---------------------------------------------------------------------------

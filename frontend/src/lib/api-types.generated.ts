@@ -778,6 +778,99 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin-tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Admin Tokens
+         * @description Live admin tokens first (active, or in a refresh's grace window), then
+         *     those revoked or expired within the last 30 days; newest first in each.
+         */
+        get: operations["list_admin_tokens_api_admin_tokens_get"];
+        put?: never;
+        /**
+         * Issue Admin Token
+         * @description Issue an admin token acting as the signed-in user. ``plaintext`` is in
+         *     this response and nowhere else, ever.
+         */
+        post: operations["issue_admin_token_api_admin_tokens_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin-tokens/{token_id}/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rotate Admin Token
+         * @description Refresh: a new secret with the same name, owner and term (starting
+         *     now); the old one keeps working for ``grace_hours``. 409 for a token that
+         *     was already refreshed, or that is revoked or expired -- a dead token is
+         *     not brought back by a refresh; issue a new one.
+         */
+        post: operations["rotate_admin_token_api_admin_tokens__token_id__rotate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin-tokens/{token_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke Admin Token
+         * @description Revoke now: the next request with it gets 401 and its open streams are
+         *     cancelled. The row stays (dimmed in the list) so its audit trail stays
+         *     readable. Revoking a revoked token is a no-op that keeps the original
+         *     time; revoking a predecessor in its grace window ends the grace.
+         */
+        delete: operations["revoke_admin_token_api_admin_tokens__token_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin-tokens/{token_id}/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Token Audit
+         * @description What an admin token has done, newest first (decision 7). Rows sharing a
+         *     timestamp are never split across pages.
+         */
+        get: operations["admin_token_audit_api_admin_tokens__token_id__audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stats/models": {
         parameters: {
             query?: never;
@@ -1304,7 +1397,8 @@ export interface paths {
          * @description Patch a subset of runtime settings.
          *
          *     Validation order (all checks run before ANY write — no partial writes):
-         *       1. Unknown keys → 400.
+         *       1. Unknown keys → 400. SESSION_ONLY_RUNTIME_KEYS from an admin token
+         *          → 403 ``session_only``.
          *       2. `hf_token` empty-string → 422 (clearing is not a supported op).
          *       3. `hf_token` non-empty → validated against the HF API; ValueError → 422.
          *       4. `admin_username` → must match `_USERNAME_RE` → 422 on failure.
@@ -1361,6 +1455,13 @@ export interface paths {
          *     at when they notice vision is set wrong — making them unload it to fix a
          *     label is backwards. Mixing in any real engine setting puts the whole patch
          *     back under the guard.
+         *
+         *     ``trust_remote_code: true`` is session-only here (#256, C1), for exactly the
+         *     reason it is session-only on register and on load: the row is what a later
+         *     load — or the watchdog's restart sweep — reads, so patching the flag on is
+         *     the same code-execution grant by a different verb. Refused first, before
+         *     validation and before any write, so a refused PATCH changes nothing at all.
+         *     Turning the flag off, and every other setting, stays open to an admin token.
          */
         patch: operations["patch_model_settings_api_models__model_id__settings_patch"];
         trace?: never;
@@ -2108,12 +2209,133 @@ export interface components {
             /** Count */
             count: number;
         };
+        /** AdminAuditPage */
+        AdminAuditPage: {
+            /** Items */
+            items: components["schemas"]["AdminAuditRow"][];
+            /**
+             * Next Before
+             * @description Pass as ?before= for the next, older page; null when there is none.
+             */
+            next_before: number | null;
+        };
+        /** AdminAuditRow */
+        AdminAuditRow: {
+            /** Id */
+            id: number;
+            /**
+             * Ts
+             * @description When the request arrived, epoch seconds.
+             */
+            ts: number;
+            /** Method */
+            method: string;
+            /**
+             * Path
+             * @description The route template, e.g. /api/models/{model_id}/load.
+             */
+            path: string;
+            /** Status */
+            status: number;
+            /** Duration Ms */
+            duration_ms: number;
+            /** Client Ip */
+            client_ip: string | null;
+            /**
+             * Peer Ip
+             * @description The socket peer (a reverse proxy's address when behind one); cannot be set by the client.
+             */
+            peer_ip: string | null;
+            /** Username */
+            username: string;
+        };
         /** AdminBody */
         AdminBody: {
             /** Username */
             username: string;
             /** Password */
             password: string;
+        };
+        /** AdminToken */
+        AdminToken: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Prefix */
+            prefix: string;
+            /** Created By */
+            created_by: string | null;
+            /** Created At */
+            created_at: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Expires At */
+            expires_at: string | null;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Rotated From */
+            rotated_from: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "grace" | "revoked" | "expired";
+        };
+        /** AdminTokenCreate */
+        AdminTokenCreate: {
+            /** Name */
+            name: string;
+            /** Expires In Days */
+            expires_in_days: (30 | 90 | 365) | null;
+        };
+        /** AdminTokenIssued */
+        AdminTokenIssued: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Prefix */
+            prefix: string;
+            /** Created By */
+            created_by: string | null;
+            /** Created At */
+            created_at: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Expires At */
+            expires_at: string | null;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Rotated From */
+            rotated_from: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "grace" | "revoked" | "expired";
+            /**
+             * Plaintext
+             * @description The secret. Returned only here, once; only its SHA-256 hash is stored.
+             */
+            plaintext: string;
+        };
+        /** AdminTokenList */
+        AdminTokenList: {
+            /** Items */
+            items: components["schemas"]["AdminToken"][];
+        };
+        /**
+         * AdminTokenRotate
+         * @description How long the old secret keeps working after a refresh (decision 6).
+         */
+        AdminTokenRotate: {
+            /**
+             * Grace Hours
+             * @default 1
+             * @enum {integer}
+             */
+            grace_hours: 0 | 1 | 24;
         };
         /** Body_upload_api_chat2_attachments_post */
         Body_upload_api_chat2_attachments_post: {
@@ -2470,6 +2692,95 @@ export interface components {
             mmproj_filename?: string | null;
             /** N Gpu Layers */
             n_gpu_layers?: number | null;
+        };
+        /**
+         * ModelEngine
+         * @description The pinned engine; ``null`` on a model until a channel is pinned.
+         */
+        ModelEngine: {
+            /** Channel */
+            channel: string;
+            /** Vllm Version */
+            vllm_version: string | null;
+            /** Image */
+            image: string | null;
+        };
+        /** ModelList */
+        ModelList: {
+            /** Models */
+            models: components["schemas"]["ModelOut"][];
+        };
+        /**
+         * ModelOut
+         * @description One model as GET /api/models and GET /api/models/{id} return it.
+         *
+         *     Mirrors app/models/serialisation.py::_serialise field for field
+         *     (tests/unit/models/test_model_serialisation.py compares the two), so the
+         *     OpenAPI spec types what clients actually receive. ``extra="allow"`` keeps
+         *     a column that _serialise publishes before it is declared here in the
+         *     response instead of silently dropping it -- the drift that module exists
+         *     to prevent.
+         */
+        ModelOut: {
+            /** Id */
+            id: string;
+            /** Served Model Name */
+            served_model_name: string;
+            /** Hf Repo */
+            hf_repo: string;
+            /** Hf Revision */
+            hf_revision: string;
+            /** Gpu Indices */
+            gpu_indices: number[];
+            /** Tensor Parallel Size */
+            tensor_parallel_size: number | null;
+            /** Dtype */
+            dtype: string | null;
+            /** Max Model Len */
+            max_model_len: number | null;
+            /** Gpu Memory Utilization */
+            gpu_memory_utilization: number;
+            /** Trust Remote Code */
+            trust_remote_code: boolean;
+            /** Extra Args */
+            extra_args: string[];
+            /** Status */
+            status: string;
+            /** Pulled Bytes */
+            pulled_bytes: number;
+            /** Pulled Total */
+            pulled_total: number | null;
+            /** Last Error */
+            last_error: string | null;
+            /** Extra Env */
+            extra_env: {
+                [key: string]: string;
+            };
+            /** Filename */
+            filename: string | null;
+            /** Parallelism Strategy */
+            parallelism_strategy: string;
+            /** Max Batch Size */
+            max_batch_size: number;
+            /** Hf Config Repo */
+            hf_config_repo: string | null;
+            /** Tokenizer Repo */
+            tokenizer_repo: string | null;
+            /** Supports Tools */
+            supports_tools: boolean | null;
+            /** Supports Vision */
+            supports_vision: boolean | null;
+            /** Supports Reasoning */
+            supports_reasoning: boolean | null;
+            /** Backend */
+            backend: string;
+            /** Mmproj Filename */
+            mmproj_filename: string | null;
+            /** N Gpu Layers */
+            n_gpu_layers: number | null;
+            engine: components["schemas"]["ModelEngine"] | null;
+        } & {
+            [key: string]: unknown;
         };
         /** PlaygroundEnsureResponse */
         PlaygroundEnsureResponse: {
@@ -3171,7 +3482,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ModelList"];
                 };
             };
         };
@@ -3226,7 +3537,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ModelOut"];
                 };
             };
             /** @description Validation Error */
@@ -3565,8 +3876,9 @@ export interface operations {
     };
     stream_logs_api_models__model_id__logs_stream_get: {
         parameters: {
-            query: {
-                ticket: string;
+            query?: {
+                /** @description Single-use ticket from POST /api/auth/sse-ticket (browsers). Omit it when sending `Authorization: Bearer vwa_...` (an admin token). */
+                ticket?: string | null;
             };
             header?: never;
             path: {
@@ -4160,6 +4472,158 @@ export interface operations {
             };
         };
     };
+    list_admin_tokens_api_admin_tokens_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTokenList"];
+                };
+            };
+        };
+    };
+    issue_admin_token_api_admin_tokens_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminTokenCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTokenIssued"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rotate_admin_token_api_admin_tokens__token_id__rotate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminTokenRotate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTokenIssued"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_admin_token_api_admin_tokens__token_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_token_audit_api_admin_tokens__token_id__audit_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                /** @description Epoch seconds; only rows strictly older are returned. */
+                before?: number | null;
+            };
+            header?: never;
+            path: {
+                token_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAuditPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     stats_models_api_stats_models_get: {
         parameters: {
             query?: {
@@ -4427,8 +4891,9 @@ export interface operations {
     };
     stream_live_api_stats_live_get: {
         parameters: {
-            query: {
-                ticket: string;
+            query?: {
+                /** @description Single-use ticket from POST /api/auth/sse-ticket (browsers). Omit it when sending `Authorization: Bearer vwa_...` (an admin token). */
+                ticket?: string | null;
             };
             header?: never;
             path?: never;
@@ -4805,10 +5270,11 @@ export interface operations {
     };
     godmode_stream_api_admin_godmode_stream_get: {
         parameters: {
-            query: {
+            query?: {
                 /** @description Comma-separated api_tokens ids, at most 20. Only those keys' events are replayed and streamed. Omit for every key. */
                 token_ids?: string | null;
-                ticket: string;
+                /** @description Single-use ticket from POST /api/auth/sse-ticket (browsers). Omit it when sending `Authorization: Bearer vwa_...` (an admin token). */
+                ticket?: string | null;
             };
             header?: never;
             path?: never;
@@ -4948,8 +5414,9 @@ export interface operations {
     };
     stream_metrics_api_header_metrics_stream_get: {
         parameters: {
-            query: {
-                ticket: string;
+            query?: {
+                /** @description Single-use ticket from POST /api/auth/sse-ticket (browsers). Omit it when sending `Authorization: Bearer vwa_...` (an admin token). */
+                ticket?: string | null;
             };
             header?: never;
             path?: never;

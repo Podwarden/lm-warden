@@ -26,8 +26,8 @@ import bcrypt
 
 from app.db.repos.tokens import hash_token
 
-# Seconds the fake gate is held shut. Only its RATIO to the measured
-# difference matters, never its relation to how fast the runner is.
+# Seconds the fake gate is held shut. With the fake clock below this is an
+# EXACT figure, not a margin: queued_s must come back as exactly this value.
 DELAY = 2.0
 
 
@@ -61,17 +61,56 @@ class _SlowScheduler:
     Stands in for a saturated engine: the real PriorityScheduler makes a
     waiter sit in a heap for exactly this reason, and routes.py cannot tell
     the difference between waiting on a heap and waiting on a sleep.
+
+    With a ``clock`` (a ``_FakeClock``), the gate advances that clock by
+    ``delay`` instead of actually sleeping -- see
+    ``test_a_request_that_waited_for_a_slot_records_the_wait`` below, which
+    needs the wait to land in a controlled clock rather than real wall time.
+    Without one, it sleeps for real, which is fine for the other tests in
+    this file: they only ever use ``delay=0.0``.
     """
 
-    def __init__(self, delay: float) -> None:
+    def __init__(self, delay: float, clock: "_FakeClock | None" = None) -> None:
         self.delay = delay
+        self.clock = clock
         self.seen: list[tuple[int, str]] = []
 
     @asynccontextmanager
     async def acquire(self, *, priority: int = 0, engine_key: str = ""):
         self.seen.append((priority, engine_key))
-        await asyncio.sleep(self.delay)
+        if self.clock is not None:
+            self.clock.advance(self.delay)
+            # Yield control without consuming real or fake time, so any
+            # other coroutine scheduled to run gets its turn.
+            await asyncio.sleep(0)
+        else:
+            await asyncio.sleep(self.delay)
         yield
+
+
+class _FakeClock:
+    """A monotonic clock that only moves when told to.
+
+    Patches ``app.proxy.routes._monotonic`` -- the module-level indirection
+    ``_forward`` reads for queue-wait / duration / TTFT timing -- NOT the
+    real ``time.monotonic``. Patching the real one would also freeze
+    asyncio's own event-loop clock (``loop.time()`` reads it too), which can
+    wedge any coroutine with a real scheduled callback (background writers,
+    retries, ...) rather than just this one code path.
+
+    Every read besides the gate's ``advance()`` above sees zero elapsed time,
+    which is what turns the assertions below into exact values instead of
+    wall-clock margins.
+    """
+
+    def __init__(self, start: float = 1_000_000.0) -> None:
+        self._t = start
+
+    def __call__(self) -> float:
+        return self._t
+
+    def advance(self, dt: float) -> None:
+        self._t += dt
 
 
 def _fake_tokenizer():
@@ -118,38 +157,53 @@ def _rows(db_path, n):
 
 
 def test_a_request_that_waited_for_a_slot_records_the_wait(tmp_data_dir, client):
+    """Deterministic by construction, not by a bigger margin.
+
+    This test is on its third design; the first two compared wall-clock
+    durations across two real requests and both failed in CI on runner
+    jitter -- most recently a ~1.4s stall from an unrelated xdist worker
+    landing inside the timed section of the second request (pipeline 25468,
+    job 286221; vllm-warden#253). Absolute thresholds do not work here
+    either: `duration_s < 0.25` assumed the request itself was fast, and
+    `duration_s < queued_s` assumed the request was faster than the injected
+    delay.
+
+    This design removes the runner from the picture entirely: `_forward`'s
+    own clock (`app.proxy.routes._monotonic`) is replaced with a `_FakeClock`
+    that only advances when `_SlowScheduler.acquire` tells it to, by exactly
+    DELAY. No real sleep happens, so nothing here is sensitive to how fast or
+    slow the machine running it is -- the assertions are exact values, not
+    margins.
+    """
     client.get("/healthz")
     db_path = tmp_data_dir / "vllm-warden.db"
     plaintext = _seed_loaded(db_path)
     client.app.state.supervisor._ports["qwen"] = 19099
     client.app.state.tokenizers = _fake_tokenizer()
 
-    # TWO runs on the same machine, moments apart: one through an open gate,
-    # one through a gate held shut for DELAY. Comparing them is what makes this
-    # independent of how fast the runner is.
-    #
-    # Absolute thresholds do not work here and both previous attempts at one
-    # failed in CI: `duration_s < 0.25` assumed the request itself was fast
-    # (it took 0.573s), and `duration_s < queued_s` assumed the request was
-    # faster than the injected delay (2.062s of work against a 2.0s delay).
-    # Only the DIFFERENCE between these two runs is a statement about where the
-    # clock is read rather than about the hardware.
-    client.app.state.scheduler = _SlowScheduler(0.0)
-    assert _post(client, plaintext).status_code == 200
+    clock = _FakeClock()
+    with patch("app.proxy.routes._monotonic", clock):
+        # An open gate (0.0) and a gate held shut for DELAY. Both requests run
+        # against the same fake clock, which advances only inside `acquire`.
+        client.app.state.scheduler = _SlowScheduler(0.0, clock=clock)
+        assert _post(client, plaintext).status_code == 200
 
-    client.app.state.scheduler = _SlowScheduler(DELAY)
-    assert _post(client, plaintext).status_code == 200
+        client.app.state.scheduler = _SlowScheduler(DELAY, clock=clock)
+        assert _post(client, plaintext).status_code == 200
 
     (base_queued, _, base_duration), (queued, _, duration) = _rows(db_path, 2)
 
-    # The wait itself is measured.
-    assert queued is not None and queued >= DELAY
-    assert base_queued is not None and base_queued < DELAY
+    # The wait itself is measured, exactly -- the fake clock advanced by
+    # precisely DELAY inside `acquire`, and by nothing on the open-gate run.
+    assert queued == DELAY
+    assert base_queued == 0.0
 
-    # ...and it did NOT land in duration_s. If `started_monotonic` were read
-    # above the acquire, the delayed request's duration would carry the whole
-    # extra DELAY. Half of it is the margin for run-to-run jitter.
-    assert duration < base_duration + DELAY / 2, (
+    # ...and it did NOT land in duration_s. `started_monotonic` is read AFTER
+    # the acquire, so the timed section spans zero fake seconds on both runs.
+    # If `started_monotonic` were read BEFORE the acquire, the delayed run's
+    # duration would carry the whole DELAY the gate advanced the clock by,
+    # and this would fail with `duration == DELAY` instead.
+    assert duration == base_duration, (
         f"duration grew by {duration - base_duration:.3f}s when the gate was "
         f"held {DELAY}s — the queue wait is inside duration_s"
     )

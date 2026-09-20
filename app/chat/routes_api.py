@@ -14,6 +14,12 @@ The proxy deliberately does **not** ship the bearer plaintext to the
 browser (the "do not put a bearer token in browser memory" risk in the
 S8 plan); the playground UI uses its session JWT to call this endpoint
 and the server does the rest.
+
+``POST /api/chat/completions`` streams, so it runs inside
+``app/auth/stream_guard.py``'s guard like every other token-authenticated
+stream (#258): a generation in flight ends when the credential that opened it
+does -- a logout for a session, a revoke or a zero-grace refresh for an admin
+token, which is also re-checked every 60 s while the stream is open.
 """
 
 from __future__ import annotations
@@ -28,7 +34,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.auth.bearer import generate_bearer_token
-from app.auth.deps import require_jwt
+from app.auth.deps import require_jwt, stream_key
+from app.auth.stream_guard import guard_stream
 from app.chat.playground_store import (
     PLAYGROUND_TOKEN_NAME,
     PlaygroundSecret,
@@ -205,6 +212,11 @@ async def chat_completions(
     payload = body.model_dump()
     payload["stream"] = True
 
+    # The stream-registry key of this request's credential (#258):
+    # ``admin_token:<id>`` or ``session:<username>``, set by require_jwt.
+    # Read here, on the request, not inside the generator.
+    key = stream_key(request)
+
     counter = request.app.state.chat_active_requests
     counter_token = await counter.enter()
 
@@ -247,8 +259,19 @@ async def chat_completions(
 
     async def _stream() -> Any:
         try:
-            async for chunk in resp.aiter_raw():
-                yield chunk
+            # #258 -- the guard every token-authenticated stream runs inside
+            # (app/auth/stream_guard.py): the generator's task is registered
+            # under this request's key, so revoking the admin token that
+            # opened it (or refreshing it with no grace, or logging the
+            # session out) ends the generation instead of letting it run on,
+            # and an admin token is re-checked every 60 s while it streams.
+            # Entered INSIDE the generator, so the task registered is the one
+            # that iterates it. The cleanup below stays outside the guard: by
+            # the time it runs the guard has already absorbed its own
+            # cancellation, so these closes are not racing one.
+            async with guard_stream(request, key):
+                async for chunk in resp.aiter_raw():
+                    yield chunk
         finally:
             # Always run, even when the consumer aborts (CancelledError)
             # or the connection is dropped. Closing the response sends a

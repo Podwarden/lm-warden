@@ -415,3 +415,214 @@ stream both answer **409** `god mode is disabled (VW_GODMODE_ENABLED)`.
 
 The stream is open only as long as you hold it. The page's dock works the same
 way: it connects when you open it and disconnects when you close it.
+
+---
+
+## Admin API
+
+Everything above signs in with the admin password and carries a CSRF token. A
+program that should not hold that password uses an **admin token**: a `vwa_…`
+secret that calls the control API (`/api/*`) with the same power as signing
+in — settings, model register/pull/load/unload, inference-token management,
+statistics, god mode, stress runs and the cache. Issue one in
+**Settings → Admin tokens**, or from a signed-in session:
+
+```bash
+curl -s -b jar -X POST $W/api/admin-tokens \
+     -H 'Content-Type: application/json' \
+     -H "Authorization: Bearer $JWT" -H "X-CSRF-Token: $CSRF" \
+     -d '{"name":"ci-deploy","expires_in_days":90}'
+# 201 {"id":"4f0c…","name":"ci-deploy","prefix":"vwa_k2x7","created_by":"admin",
+#      "expires_at":"2026-12-18 09:12:40","status":"active", …,
+#      "plaintext":"vwa_k2x7…"}
+```
+
+`expires_in_days` is required: `30`, `90` or `365`, or JSON `null` for a token
+that never expires — a value you have to send on purpose. **`plaintext` is
+shown exactly once**; only its SHA-256 hash is stored. The `vwa_` prefix
+(inference keys are `vw_`) tells a leaked secret's kind at a glance, and secret
+scanners can key on it.
+
+With the token there is no login, no cookie jar and no CSRF header:
+
+```bash
+export VW_ADMIN_TOKEN=vwa_k2x7…
+A=(-H "Authorization: Bearer $VW_ADMIN_TOKEN")
+
+# The whole API, described. Not public: it needs an admin token or a session.
+curl -s "${A[@]}" $W/api/openapi.json | jq '.paths | keys | length'
+
+# Anything the UI does.
+curl -s "${A[@]}" $W/api/models
+curl -s "${A[@]}" -X POST $W/api/models/9895a1829559533c/load     # 202
+
+# Streams take the header too -- no SSE ticket.
+curl -sN "${A[@]}" $W/api/stats/live
+```
+
+The token acts as the user that issued it (`created_by`). Neither changing
+the admin password nor renaming the operator revokes a token issued earlier
+— it keeps calling the API as the `created_by` username recorded at issue
+time. After a username change, revoke and reissue every admin token: it
+still gets `200` from routes that only check it is a known admin token
+(e.g. `/api/version`), but `401 unknown subject` from routes that resolve
+identity by name (e.g. the chat2 surface), which is confusing enough to
+avoid on purpose. FastAPI's own `/docs`, `/redoc` and `/openapi.json` are
+switched off; `GET /api/openapi.json` is the spec, with a `bearerAuth`
+scheme on every route except the public ones — `/healthz`, `/api/setup/*`,
+`/api/auth/login`, `/api/auth/refresh`, `/api/csrf`, and the signed chat2
+attachment download `GET /api/chat2/attachments/{attachment_id}` (it
+carries its own `?t=` signature) — and `/v1/*`, which marks them
+`security: []`.
+
+**Treat an admin token like the admin password.** The session-only routes
+below stop a leaked token from managing admin tokens *through the API* —
+they are an API-level guardrail, not containment. `trust_remote_code` is
+fenced the same way (#256), because that setting runs the target repository's
+Python inside the warden's engine process, and under the default
+local-subprocess driver that process shares the warden's filesystem. Four
+paths are refused for an admin token, which is every way the API has to put a
+`trust_remote_code` model in front of an engine:
+
+* `POST /api/models` — refused when the **effective** value is true, so a
+  `template_id` whose template carries the flag is refused too, builtin
+  templates included;
+* `POST /api/models/templates` — refused when the template being saved carries
+  the flag, so a token cannot leave the instruction lying around;
+* `PATCH /api/models/{id}/settings` — refused when it would turn the flag *on*
+  (turning it off is fine), because the row is what a later load, or the
+  watchdog's restart sweep, reads;
+* `POST /api/models/{id}/load` — refused when the row already has it, however
+  that row got there.
+
+`prior_status`, the column the watchdog's restart sweep keys on, is not
+patchable at all any more — by a token or by a session. It was the other half
+of the same hole: an admin token that could write it, and the flag, could have
+the watchdog start the engine for it without ever calling `/load`.
+
+Those four paths are closed, but the `trust_remote_code` **column** is not the
+only way to reach the same code execution, and closing it is not containment.
+`extra_args` is appended to the engine's argv verbatim and last, so an admin
+token can put `--trust-remote-code` there — and `--model <repo>` with it —
+through `POST /api/models` or `PATCH /api/models/{model_id}/settings`, then
+load the model normally: the column stays false, so the refusals above never
+fire. `engine_image` is the same shape wherever the driver runs a container
+image. Both are left open deliberately: `POST /api/models` already accepts
+them, so fencing only the PATCH would move the power one route over rather
+than remove it — if engine start-up inputs are to become session-only, that
+decision belongs at the register route. `extra_env`, by contrast, *is* fenced:
+keys are allowlisted by prefix, and `LD_PRELOAD`, `PYTHONPATH`, `HF_TOKEN`,
+`PATH` and friends are refused at write time.
+
+**Treat an admin token as equivalent to code execution in the warden
+container.** If a token leaks, revoke it immediately, then rotate
+`VW_JWT_SECRET`/`jwt_secret` — treat it exactly like you would a leaked
+admin password.
+
+**What an admin token cannot do through the API.** These are
+**session-only**, and answer an admin token with `403
+{"detail":{"error_code":"session_only", …}}`:
+
+| Route | Why |
+|---|---|
+| `GET/POST /api/admin-tokens`, `POST /api/admin-tokens/{id}/rotate`, `DELETE /api/admin-tokens/{id}`, `GET /api/admin-tokens/{id}/audit` | These are the only API routes that manage admin tokens, so requiring a session here is what makes "revoke it in the UI" an effective response to a leak: a leaked token cannot use *this* API to mint itself a sibling, extend its own life, or revoke or hide the trail of another admin token. It does not mean the token is contained — see the warning above. |
+| `POST /api/auth/logout`, `POST /api/auth/sse-ticket` | They belong to a browser session. A program sends the header to a stream directly. |
+| `PATCH /api/settings/runtime` when the body carries `admin_username`, `admin_password`, `session_access_ttl_minutes`, `session_refresh_ttl_days`, `sse_ticket_ttl_seconds` or `public_url` | A leaked token must not be able to change the operator's credentials or the session's lifetimes and lock the operator out of the UI, which is where it gets revoked. `public_url` is session-only too, as defence in depth: it is the host that client-facing URLs are built from, and a leaked token must not be able to steer it to a host it controls. (The curl examples shown next to a new admin secret use the page's own address and ignore it.) The refusal is on the whole request — nothing in the body is applied, not even its other keys. Every other runtime key stays open to an admin token. |
+| `POST /api/models` when the model's **effective** `trust_remote_code` is true — the body's value, or the template's when the body does not say | `trust_remote_code` runs the target repository's Python inside the warden container. Setting it needs a signed-in session, so a leaked token cannot register a model that will run arbitrary code once loaded. The check is on the merged value, not the body key, because the builtin `gpt-oss-20b` template carries the flag and a `template_id` would otherwise be a one-request way around it. Refused before any write — nothing is persisted. An explicit `trust_remote_code: false` still wins over a template that sets it, and registering without the flag is unaffected. |
+| `POST /api/models/templates` when the template being saved sets `trust_remote_code: true` | A template is a register-time prefill, so saving one is storing an instruction to set the flag on every model made from it. Refused before any write. Templates without it, and every other template field, stay open to an admin token. |
+| `PATCH /api/models/{id}/settings` when the body sets `trust_remote_code` to a true value | The row is what a later load — or the watchdog's restart sweep — reads, so patching the flag on is the same grant of code execution by a different verb. Checked first, before validation and before any write, so a refused PATCH changes nothing at all. Setting it to `false` is open to an admin token, as is every other setting on this route. |
+| `POST /api/models/{id}/load` when the row's `trust_remote_code` is true | The code runs at load time, and a row can predate this restriction, so the same repository-code risk is checked again here regardless of how the row was created. Every other model — and unload, list and everything else on a `trust_remote_code` model — stays open to an admin token. |
+
+The setup wizard (`/api/setup/*`) and `/api/auth/login` take no credential at
+all. An admin token is never a `/v1` credential (`401 invalid token format`).
+An inference key never opens `/api/*` either — `401` — except the three
+stress routes (`POST /api/models/{id}/stress`, `GET
+/api/models/{id}/capabilities`, `POST /api/models/{id}/stress/apply`), which
+name the reason: `403 {"detail":{"error_code":"operator_only", …}}`, because
+starting a stress run deliberately crashes an engine and an inference key is a
+data-plane credential.
+
+**Refusals** are the same ladder an inference key gets: `401
+{"detail":"token expired"}`, `401 {"detail":"token revoked"}`, `401
+{"detail":"unknown token"}`. There is no API to pause an admin token — pausing
+only ever touches an inference key — so an admin token never answers `403
+token paused`.
+
+**Refresh and revoke** (session-only):
+
+```bash
+# A new secret with the same name, owner and term, starting now. The old one
+# keeps working for grace_hours: 0, 1 (the default) or 24.
+curl -s -X POST $W/api/admin-tokens/4f0c…/rotate "${AUTH[@]}" -d '{"grace_hours":1}'
+# 201 {"id":"a81d…","name":"ci-deploy","rotated_from":"4f0c…", …, "plaintext":"vwa_…"}
+
+# Revoke now. The row stays, dimmed in the UI, so its trail stays readable;
+# its open streams are closed.
+curl -s -X DELETE $W/api/admin-tokens/4f0c… "${AUTH[@]}"     # 204
+```
+
+A refreshed, revoked or expired token cannot be refreshed again (`409`): issue
+a new one.
+
+Revoking a refreshed token does **not** end its predecessor's grace window —
+they are separate rows. If you refreshed `ci` and are now revoking it in
+response to a leak, also revoke `ci (old 1)` (or whatever the predecessor was
+renamed to); it is listed with status "grace" and stays usable, with the
+original secret, until its grace period ends.
+
+**Streams.** An admin token opens the same server-sent-event streams a session
+does by sending the header instead of a ticket — god mode, model logs, live
+stats, header metrics and model pull progress — plus the chat2 turn streams and
+the chat playground's completion proxy (`POST /api/chat/completions`), which
+always took a bearer header (never a ticket) and now accept an admin token too.
+While a stream is open, it is re-checked every 60 seconds: it ends when the
+token expires, is revoked, falls out of a refresh's grace window, or is
+deleted. Revoking a token, or refreshing it with `grace_hours: 0`, ends its
+open streams at once instead of waiting for the next check. That covers every
+stream the warden opens under a credential, an in-flight playground generation
+included — revoking a token stops the text mid-sentence rather than letting it
+run to the end.
+
+**Audit.** Every request an admin token makes to a route is recorded shortly
+after the response, never on the response path: the row is queued when the
+response is known and a background writer commits a batch of them — at most
+200 rows or one second behind, whichever comes first — so a polling script does
+not pay a database commit per call. Each row keeps the time the request
+*arrived*, so the trail reads in order regardless of how the batches fell. The
+queue is bounded (10 000 rows); if a stalled data volume ever overflowed it the
+rows are dropped and counted, and so is a batch the database refuses, so both
+kinds of gap show up in one number. Drops are logged from the enqueue side (at
+most once a minute) as well as at each flush, so a gap in a trail is visible in
+the log rather than silent even if the background writer itself is what
+stopped. A clean shutdown writes what is still queued, including a batch the
+writer had already picked up; a `kill -9` does not. What each row holds: time, method, the
+**route template**
+(`/api/models/{model_id}/load`, not the concrete URL), status, duration,
+`client_ip` (proxy-reported, from `X-Forwarded-For` — the holder of the token
+can forge it) and `peer_ip` (the TCP socket peer, which it cannot). A refused
+attempt is audited too, as soon as an auth dependency has identified the
+secret as a known admin token — an expired or revoked token still being
+tried, or one probing a session-only route, lands in its own trail, and so
+does a well-formed body that fails validation (`422`). A secret matching no
+admin token; anything refused before routing (an unmatched `404`/`405`) or by
+an outer layer (chat2's request-body-size `413`); and a malformed or
+undecodable JSON body — FastAPI rejects it before any dependency, including
+auth, runs — leave no row: no admin token was ever identified for that
+request. A stream's row is written once, when the stream closes, covering
+its whole open duration. Rows are kept 90 days, at most 20 000 per token, and
+at most 200 000 across all tokens (each pass drops the oldest rows first). The
+prune runs the 90-day window first, then the per-token cap, then the global
+cap. The per-token cap is what keeps one token generating a flood of requests
+from evicting anybody else's history: by the time the global cap is applied,
+the flood has already been trimmed to that token's own 20 000. Read them
+newest first, 50 at a time,
+passing `next_before` back as `before`:
+
+```bash
+curl -s $W/api/admin-tokens/4f0c…/audit?limit=50 -H "Authorization: Bearer $JWT"
+# {"items":[{"id":812,"ts":1758300000.25,"method":"POST",
+#            "path":"/api/models/{model_id}/load","status":202,
+#            "duration_ms":12,"client_ip":"198.51.100.7","peer_ip":"127.0.0.1",
+#            "username":"admin"}, …],
+#  "next_before":1758290000.0}
+```

@@ -218,7 +218,7 @@ def test_the_wordmark_and_page_titles_carry_the_new_name() -> None:
     assert f"title: '{PRODUCT_NAME}'" in layout
 
     main = (REPO_ROOT / "app/main.py").read_text(encoding="utf-8")
-    assert f'FastAPI(title="{PRODUCT_NAME}"' in main
+    assert re.search(rf'FastAPI\(\s*title="{re.escape(PRODUCT_NAME)}"', main)
 
     readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
     assert readme.startswith(f"# {PRODUCT_NAME}\n")

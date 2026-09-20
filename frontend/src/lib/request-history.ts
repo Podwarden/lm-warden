@@ -115,9 +115,8 @@ export const LATENCY_LAST_N = 500;
 // One mark per request: time on x, duration on a log y. Colour carries ONE
 // categorical field, chosen from the data (below); mark size carries generated
 // tokens; finish reason is carried by the mark's SHAPE, never by colour —
-// colour is already spoken for, and in retro-dark `--chat-positive` and
-// `--chat-warn` are the same amber anyway. Prompt tokens and TTFT ride in
-// the tooltip and the table.
+// colour is already spoken for. Prompt tokens and TTFT ride in the tooltip
+// and the table.
 
 /** How a request ended, folded to the three shapes the chart can draw. */
 export type FinishClass = "stop" | "length" | "other";

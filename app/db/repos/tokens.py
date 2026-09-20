@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 
 import aiosqlite
 
-from app.auth.bearer import generate_bearer_token
+from app.auth.bearer import generate_admin_token, generate_bearer_token
 
 _SQLITE_UTC_FMT = "%Y-%m-%d %H:%M:%S"
 
@@ -54,12 +54,15 @@ class TokenRow:
     # Token details page (0033) -- when the operator paused this key; None =
     # not paused. require_bearer answers a paused key with 403 "token paused".
     paused_at: str | None = None
+    # Admin tokens (0037) -- the user an admin token acts as; NULL on every
+    # inference row. Appended last, per the column-order rule above.
+    created_by: str | None = None
 
 
 _SELECT_COLS = (
     "id, name, prefix, scope, allowed_models, rate_limit_rpm, rate_limit_tpm, "
     "revoked_at, last_used_at, created_at, expires_at, rotated_at, rotated_from, "
-    "rate_limit_tps, priority, paused_at"
+    "rate_limit_tps, priority, paused_at, created_by"
 )
 
 
@@ -87,6 +90,20 @@ class _Unset:
 _UNSET = _Unset()
 
 
+# When an admin token stopped working: the earlier of its revocation and its
+# expiry, counting only those already past :now. NULL while it still works (a
+# FUTURE revoked_at is a refresh's grace window). Used by TokenRepo.list_admin.
+_DEAD_AT_SQL = (
+    "CASE"
+    " WHEN revoked_at IS NOT NULL AND revoked_at <= :now"
+    "  AND expires_at IS NOT NULL AND expires_at <= :now"
+    "  THEN MIN(revoked_at, expires_at)"
+    " WHEN revoked_at IS NOT NULL AND revoked_at <= :now THEN revoked_at"
+    " WHEN expires_at IS NOT NULL AND expires_at <= :now THEN expires_at"
+    " END"
+)
+
+
 class TokenRepo:
     def __init__(self, db: aiosqlite.Connection) -> None:
         self.db = db
@@ -100,12 +117,14 @@ class TokenRepo:
         allowed_models: list[str] | None = None,
         expires_in_days: int = 365,
         priority: int = 5,
+        created_by: str | None = None,
     ) -> None:
         """Insert a new API token row and commit.
 
         expires_in_days=0 (or any non-positive value) means 'never expires'.
         priority must be 0..9 (DB CHECK trigger enforces this, but we validate
         at the Pydantic layer too so users get a 422 instead of a 500).
+        created_by is the issuing user of an admin token; None for inference.
         """
         prefix = plaintext[:8]
         if expires_in_days > 0:
@@ -115,18 +134,19 @@ class TokenRepo:
         await self.db.execute(
             "INSERT INTO api_tokens"
             "(id, name, prefix, hash, scope, allowed_models, expires_at, "
-            " priority) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            " priority, created_by) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 token_id, name, prefix, hash_token(plaintext), scope,
                 ",".join(allowed_models) if allowed_models else None,
                 expires_at,
                 priority,
+                created_by,
             ),
         )
         await self.db.commit()
 
-    async def _next_old_suffix(self, base_name: str) -> int:
+    async def _next_old_suffix(self, base_name: str, scope: str = "inference") -> int:
         """Return the next available ``N`` such that ``"{base_name} (old N)"``
         is unused.
 
@@ -140,6 +160,9 @@ class TokenRepo:
         confused with a current rotation if a future rotation reused the
         slot).
 
+        Counted per scope: an admin ``ci`` and an inference ``ci`` number
+        their ``(old N)`` independently.
+
         Implementation: pull every row whose name LIKE ``"{base} (old %)"``,
         parse the integer between ``(old`` and ``)`` with a strict regex
         (rejects non-int garbage and stray spacing — defence against a hand-
@@ -152,8 +175,8 @@ class TokenRepo:
         # ESCAPE so a name containing those characters still matches literally.
         like_pat = base_name.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         cur = await self.db.execute(
-            "SELECT name FROM api_tokens WHERE name LIKE ? ESCAPE '\\'",
-            (f"{like_pat} (old %)",),
+            "SELECT name FROM api_tokens WHERE name LIKE ? ESCAPE '\\' AND scope = ?",
+            (f"{like_pat} (old %)", scope),
         )
         rows = await cur.fetchall()
         suffix_re = re.compile(
@@ -201,13 +224,9 @@ class TokenRepo:
           - 0              → successor never expires.
           - >0             → expires now + N days.
         """
-        new_plaintext = generate_bearer_token()
-        new_id = secrets.token_hex(16)
-        new_prefix = new_plaintext[:8]
-
         # Look up predecessor for inheritable fields + the current name.
         cur = await self.db.execute(
-            "SELECT name, expires_at, priority, rotated_at "
+            "SELECT name, expires_at, priority, rotated_at, scope, created_by "
             "FROM api_tokens WHERE id = ?",
             (old_id,),
         )
@@ -216,7 +235,7 @@ class TokenRepo:
             # rotate() is only called from routes after a list_all() existence
             # check, but guard anyway so future direct callers see a clean error.
             raise ValueError(f"token {old_id} not found")
-        pred_name, pred_expires, pred_priority, pred_rotated_at = row
+        pred_name, pred_expires, pred_priority, pred_rotated_at, pred_scope, pred_owner = row
 
         if pred_rotated_at is not None:
             # Predecessor was already rotated. Rotating again would chain
@@ -226,7 +245,17 @@ class TokenRepo:
             # returns 409.
             raise ValueError("already rotated")
 
-        renamed_to = f"{pred_name} (old {await self._next_old_suffix(pred_name)})"
+        # The successor is the same KIND of key, for the same owner: an admin
+        # token refreshes into an admin token (spec 2026-09-19, decision 6).
+        new_plaintext = (
+            generate_admin_token() if pred_scope == "admin" else generate_bearer_token()
+        )
+        new_id = secrets.token_hex(16)
+        new_prefix = new_plaintext[:8]
+
+        renamed_to = (
+            f"{pred_name} (old {await self._next_old_suffix(pred_name, pred_scope)})"
+        )
 
         if expires_in_days is None:
             new_expires_at = pred_expires
@@ -248,22 +277,36 @@ class TokenRepo:
         await self.db.execute(
             "INSERT INTO api_tokens"
             "(id, name, prefix, hash, scope, rotated_from, expires_at, "
-            " priority) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            " priority, created_by) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 new_id, pred_name, new_prefix, hash_token(new_plaintext),
-                "inference", old_id, new_expires_at,
-                pred_priority,
+                pred_scope, old_id, new_expires_at,
+                pred_priority, pred_owner,
             ),
         )
 
-        # 3) Mark predecessor as rotated + schedule its revocation.
+        # 3) Mark predecessor as rotated + schedule its revocation. Guarded
+        # with `AND rotated_at IS NULL` (M7, final-review 2026-09-19): the
+        # SELECT above and this UPDATE are not atomic, so a second rotate()
+        # racing this one could pass the `pred_rotated_at is not None` check
+        # too and reach here concurrently. Without the guard, both commit
+        # and the predecessor ends up with two successors -- a forked
+        # chain. With it, whichever UPDATE loses the race affects 0 rows;
+        # we roll back its rename + INSERT (steps 1-2 above, never
+        # committed) and raise the same "already rotated" ValueError the
+        # top-of-function check raises, which the routes already map to a
+        # 409.
         rotated_at = sqlite_utc_now()
         revoked_at = sqlite_utc_in(timedelta(hours=grace_hours))
-        await self.db.execute(
-            "UPDATE api_tokens SET rotated_at = ?, revoked_at = ? WHERE id = ?",
+        cur = await self.db.execute(
+            "UPDATE api_tokens SET rotated_at = ?, revoked_at = ? "
+            "WHERE id = ? AND rotated_at IS NULL",
             (rotated_at, revoked_at, old_id),
         )
+        if cur.rowcount != 1:
+            await self.db.rollback()
+            raise ValueError("already rotated")
 
         await self.db.commit()
         return new_id, new_plaintext, renamed_to
@@ -285,9 +328,33 @@ class TokenRepo:
         r = await cur.fetchone()
         return TokenRow(*r) if r else None
 
-    async def list_all(self) -> list[TokenRow]:
+    async def list_all(self, *, scope: str = "inference") -> list[TokenRow]:
+        """Every row of one scope, newest first. Inference by default: the
+        admin tokens sharing this table (0037) are not API keys, and the one
+        caller (the chat playground's duplicate sweep) must never touch them."""
         cur = await self.db.execute(
-            f"SELECT {_SELECT_COLS} FROM api_tokens ORDER BY created_at DESC"
+            f"SELECT {_SELECT_COLS} FROM api_tokens WHERE scope = ? "
+            "ORDER BY created_at DESC",
+            (scope,),
+        )
+        return [TokenRow(*r) for r in await cur.fetchall()]
+
+    async def list_admin(self, *, now: str, since: str) -> list[TokenRow]:
+        """Settings -> Admin tokens: the live admin tokens (active, or inside
+        a refresh's grace window) first, then those that stopped working at or
+        after ``since``; newest ``created_at`` first within each group.
+
+        ``now`` and ``since`` are SQLite UTC strings. A token "stopped working"
+        at the earlier of a past revoked_at and a past expires_at -- a future
+        revoked_at is a grace window, still live.
+        """
+        cur = await self.db.execute(
+            f"SELECT {_SELECT_COLS} FROM ("
+            f" SELECT {_SELECT_COLS}, {_DEAD_AT_SQL} AS dead_at"
+            " FROM api_tokens INDEXED BY idx_api_tokens_scope WHERE scope = 'admin'"
+            ") WHERE dead_at IS NULL OR dead_at >= :since"
+            " ORDER BY dead_at IS NOT NULL, created_at DESC, id DESC",
+            {"now": now, "since": since},
         )
         return [TokenRow(*r) for r in await cur.fetchall()]
 
@@ -515,10 +582,18 @@ def like_contains(needle: str) -> str:
 # are one predicate: expires within 30 days and has not expired yet.
 NEAR_EXPIRY_SQL = "t.expires_at > :now AND t.expires_at <= :in30"
 
+# Admin tokens (scope 'admin', 0037) share api_tokens but never appear in the
+# inference list, its counts, or any /api/tokens/{id} route (spec 2026-09-19,
+# decision 2). The unary + keeps this term off every index: the page CTE must
+# keep walking its 0035 sort index, not switch to 0037's idx_api_tokens_scope
+# and sort the result.
+INFERENCE_ONLY_SQL = "+t.scope = 'inference'"
+
 
 def _visible_where(search: bool, expiring: bool = False) -> str:
     return (
         TOKEN_LIST_VISIBLE_SQL
+        + f" AND {INFERENCE_ONLY_SQL}"
         + (_NAME_SEARCH_SQL if search else "")
         + (f" AND {NEAR_EXPIRY_SQL}" if expiring else "")
     )
@@ -566,6 +641,12 @@ def token_page_sql(
 _HIDDEN_SQL = "t.revoked_at IS NOT NULL AND t.rotated_at IS NULL"
 _HIDDEN_FROM = "api_tokens t INDEXED BY idx_api_tokens_hidden"
 
+# The admin keys the visibility rule would show, subtracted from the unsearched
+# all-rows arithmetic below. There are a handful; idx_api_tokens_scope (0037)
+# seeks exactly them.
+_ADMIN_VISIBLE_SQL = f"t.scope = 'admin' AND {TOKEN_LIST_VISIBLE_SQL}"
+_ADMIN_FROM = "api_tokens t INDEXED BY idx_api_tokens_scope"
+
 
 def token_counts_sql(search: bool = False, expiring: bool = False) -> str:
     """``(total, near_expiry)`` over the visible -- searched, filtered -- set.
@@ -581,6 +662,10 @@ def token_counts_sql(search: bool = False, expiring: bool = False) -> str:
     INDEXED BY because left alone the planner prefers 0007's
     idx_api_tokens_revoked, which is not covering and costs a table lookup
     per hidden key. The migration guarantees the index exists.
+
+    Admin rows are subtracted the same way, through idx_api_tokens_scope: all
+    rows − hidden rows (both scopes) − visible admin rows = visible
+    inference rows.
     """
     window = NEAR_EXPIRY_SQL
     if search:
@@ -592,12 +677,14 @@ def token_counts_sql(search: bool = False, expiring: bool = False) -> str:
     near = (
         f"(SELECT COUNT(*) FROM api_tokens t WHERE {window})"
         f" - (SELECT COUNT(*) FROM {_HIDDEN_FROM} WHERE {_HIDDEN_SQL} AND {window})"
+        f" - (SELECT COUNT(*) FROM {_ADMIN_FROM} WHERE {_ADMIN_VISIBLE_SQL} AND {window})"
     )
     if expiring:
         return f"SELECT {near}, {near}"
     return (
         "SELECT (SELECT COUNT(*) FROM api_tokens)"
-        f" - (SELECT COUNT(*) FROM {_HIDDEN_FROM} WHERE {_HIDDEN_SQL}),"
+        f" - (SELECT COUNT(*) FROM {_HIDDEN_FROM} WHERE {_HIDDEN_SQL})"
+        f" - (SELECT COUNT(*) FROM {_ADMIN_FROM} WHERE {_ADMIN_VISIBLE_SQL}),"
         f" {near}"
     )
 

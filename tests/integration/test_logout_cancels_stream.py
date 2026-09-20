@@ -113,7 +113,7 @@ async def test_logout_cancels_active_sse_stream(tmp_path, monkeypatch):
             async def wait_registered(deadline: float) -> bool:
                 loop = asyncio.get_running_loop()
                 while loop.time() < deadline:
-                    if registry.count("admin") >= 1:
+                    if registry.count("session:admin") >= 1:
                         return True
                     await asyncio.sleep(0.05)
                 return False
@@ -137,7 +137,7 @@ async def test_logout_cancels_active_sse_stream(tmp_path, monkeypatch):
             async def wait_unregistered(deadline: float) -> bool:
                 loop = asyncio.get_running_loop()
                 while loop.time() < deadline:
-                    if registry.count("admin") == 0:
+                    if registry.count("session:admin") == 0:
                         return True
                     await asyncio.sleep(0.05)
                 return False

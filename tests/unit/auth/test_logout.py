@@ -41,8 +41,9 @@ def test_logout_clears_cookie_and_cancels_streams(tmp_data_dir, client):
 
     # Pretend a stream is registered for this user.
     fake = _FakeTask()
-    client.app.state.stream_registry.register("admin", fake)
-    assert client.app.state.stream_registry.count("admin") == 1
+    # A session's streams register under session:<username> (app/auth/deps.py).
+    client.app.state.stream_registry.register("session:admin", fake)
+    assert client.app.state.stream_registry.count("session:admin") == 1
 
     r = client.post(
         "/api/auth/logout",
@@ -57,4 +58,4 @@ def test_logout_clears_cookie_and_cancels_streams(tmp_data_dir, client):
     assert 'vw_refresh=""' in set_cookie or "vw_refresh=;" in set_cookie or "max-age=0" in set_cookie
     assert fake.cancelled_called
     # User-visible contract: logout empties the user's stream bucket.
-    assert client.app.state.stream_registry.count("admin") == 0
+    assert client.app.state.stream_registry.count("session:admin") == 0

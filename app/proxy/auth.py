@@ -1,5 +1,7 @@
 from fastapi import HTTPException, Request
 
+from app.auth.bearer import INFERENCE_TOKEN_PREFIX, parse_bearer_header
+from app.auth.deps import token_refusal
 from app.db.database import open_db
 from app.db.repos.tokens import TokenRepo, TokenRow, sqlite_utc_now
 
@@ -10,38 +12,33 @@ async def require_bearer(request: Request) -> TokenRow:
     Raises 401 if missing/malformed/unknown/expired/revoked, and 403 if the
     key is paused (token details page, migration 0033).
     """
-    auth = request.headers.get("authorization", "")
-    if not auth.lower().startswith("bearer "):
+    # The same parser as the control API (app/auth/deps.py::bearer_token):
+    # the scheme is case-insensitive and any whitespace separates it from the
+    # credential.
+    plaintext = parse_bearer_header(request.headers.get("authorization"))
+    if not plaintext:
         raise HTTPException(401, "missing bearer token")
-    plaintext = auth[7:].strip()
-    if not plaintext.startswith("vw_"):
+    if not plaintext.startswith(INFERENCE_TOKEN_PREFIX):
         raise HTTPException(401, "invalid token format")
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
         repo = TokenRepo(db)
         row = await repo.find_by_plaintext(plaintext)
-        if row is None:
+        # An admin token is never a /v1 credential (spec 2026-09-19, decision
+        # 2). The vw_ prefix check above already refuses every vwa_ secret;
+        # this refuses any non-inference row whose secret happens to look like
+        # vw_ -- as "unknown", so a probe learns nothing.
+        if row is None or row.scope != "inference":
             raise HTTPException(401, "unknown token")
-        if row.expires_at is not None and row.expires_at <= sqlite_utc_now():
-            raise HTTPException(401, "token expired")
-        # `revoked_at` is set to a FUTURE timestamp by rotate() to implement
-        # a grace window during which the predecessor must keep working.
-        # Reject only once the grace window has elapsed (revoked_at <= now).
-        # The `<=` is load-bearing for immediate revoke (#185): rotate with
-        # grace_hours=0 writes revoked_at = now, and both sides are
-        # second-granularity strings, so a request landing in the same second
-        # compares EQUAL. Tightening this to `<` would silently give a
-        # hard-revoked token an up-to-1s admission window.
-        if row.revoked_at is not None and row.revoked_at <= sqlite_utc_now():
-            raise HTTPException(401, "token revoked")
-        # Paused by the operator. 403, not 401, so a client can tell "your key
-        # is paused" from "your key is wrong". Checked AFTER expiry and
-        # revocation so a key that is both dead and paused still gets the 401:
-        # the dead state wins. Requests already in flight are not touched, and
-        # there is no cache to flush -- this reads the row on every request.
-        # Raised before touch_last_used: a refused request is not a use.
-        if row.paused_at is not None:
-            raise HTTPException(403, "token paused")
+        # Expired / revoked (a FUTURE revoked_at is a rotation's grace window)
+        # / paused: the ladder the control API's admin tokens share, with its
+        # reasons (app/auth/deps.py::token_refusal). Requests already in
+        # flight are not touched, and there is no cache to flush -- this reads
+        # the row on every request. Raised before touch_last_used: a refused
+        # request is not a use.
+        refusal = token_refusal(row, sqlite_utc_now())
+        if refusal is not None:
+            raise refusal
         await repo.touch_last_used(row.id)
     return row
 

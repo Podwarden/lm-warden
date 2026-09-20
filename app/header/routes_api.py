@@ -59,6 +59,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
+from app.auth.stream_guard import guard_stream
 from app.db.database import open_db
 from app.models.routes_logs import require_sse_ticket
 from app.system.routes_gpus import _ProbeCache
@@ -234,71 +235,74 @@ def _payload(snap, actives: list[tuple[str, str, str]]) -> dict:
 
 @router.get("/metrics/stream")
 async def stream_metrics(
-    request: Request, _user: str = Depends(require_sse_ticket)
-):
+    request: Request, stream_key: str = Depends(require_sse_ticket)
+) -> StreamingResponse:
     """Stream live VRAM%, GPU utilisation, and active-model name as SSE events."""
     cache = _get_cache(request)
     settings = request.app.state.settings
     interval = _interval_seconds()
 
     async def gen():
-        last_yield_at = time.monotonic()
-        # Emit one immediate frame so the consumer doesn't sit blank for
-        # ``interval`` seconds waiting on the first tick.
-        try:
-            snap = await cache.get()
-            actives = await _active_models(settings.db_path)
-            yield f"data: {json.dumps(_payload(snap, actives))}\n\n"
+        # Registered for logout / revoke, and an admin token re-checked while
+        # the stream is open (app/auth/stream_guard.py).
+        async with guard_stream(request, stream_key):
             last_yield_at = time.monotonic()
-        except Exception:  # noqa: BLE001
-            # If the very first probe errors, fall through to the loop
-            # below; the next attempt will surface a probe_error payload.
-            pass
-
-        while True:
-            if await request.is_disconnected():
-                return
-            try:
-                await asyncio.sleep(interval)
-            except asyncio.CancelledError:
-                return
-            if await request.is_disconnected():
-                return
+            # Emit one immediate frame so the consumer doesn't sit blank for
+            # ``interval`` seconds waiting on the first tick.
             try:
                 snap = await cache.get()
                 actives = await _active_models(settings.db_path)
                 yield f"data: {json.dumps(_payload(snap, actives))}\n\n"
                 last_yield_at = time.monotonic()
-            except Exception as exc:  # noqa: BLE001
-                # A probe / DB failure shouldn't kill the stream — emit a
-                # probe_error event and keep ticking. The consumer renders
-                # the badge in a "degraded" state on probe_error != null.
-                err_payload = {
-                    "ts": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
-                    "gpus": [],
-                    # Nothing was measured: null, never 0 (#255).
-                    "vram_used_mib": None,
-                    "vram_total_mib": None,
-                    "vram_pct": None,
-                    "gpu_util_pct": None,
-                    # A list, matching the happy path. A client that maps over
-                    # active_models must not crash on the one frame shape it
-                    # only ever sees when something is already going wrong.
-                    "active_models": [],
-                    "active_model": None,
-                    "active_model_id": None,
-                    "active_model_status": None,
-                    "probe_error": str(exc) or exc.__class__.__name__,
-                }
-                yield f"data: {json.dumps(err_payload)}\n\n"
-                last_yield_at = time.monotonic()
-            # Belt-and-suspenders keepalive — when the emit interval is
-            # tuned shorter than KEEPALIVE_INTERVAL_S (the default 2s
-            # case) this never fires; it exists for the operator who
-            # bumps the env var to 30s for a quiet dashboard.
-            if time.monotonic() - last_yield_at >= KEEPALIVE_INTERVAL_S:
-                yield ": keepalive\n\n"
-                last_yield_at = time.monotonic()
+            except Exception:  # noqa: BLE001
+                # If the very first probe errors, fall through to the loop
+                # below; the next attempt will surface a probe_error payload.
+                pass
+
+            while True:
+                if await request.is_disconnected():
+                    return
+                try:
+                    await asyncio.sleep(interval)
+                except asyncio.CancelledError:
+                    return
+                if await request.is_disconnected():
+                    return
+                try:
+                    snap = await cache.get()
+                    actives = await _active_models(settings.db_path)
+                    yield f"data: {json.dumps(_payload(snap, actives))}\n\n"
+                    last_yield_at = time.monotonic()
+                except Exception as exc:  # noqa: BLE001
+                    # A probe / DB failure shouldn't kill the stream — emit a
+                    # probe_error event and keep ticking. The consumer renders
+                    # the badge in a "degraded" state on probe_error != null.
+                    err_payload = {
+                        "ts": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                        "gpus": [],
+                        # Nothing was measured: null, never 0 (#255).
+                        "vram_used_mib": None,
+                        "vram_total_mib": None,
+                        "vram_pct": None,
+                        "gpu_util_pct": None,
+                        # A list, matching the happy path. A client that maps over
+                        # active_models must not crash on the one frame shape it
+                        # only ever sees when something is already going wrong.
+                        "active_models": [],
+                        "active_model": None,
+                        "active_model_id": None,
+                        "active_model_status": None,
+                        "probe_error": str(exc) or exc.__class__.__name__,
+                    }
+                    yield f"data: {json.dumps(err_payload)}\n\n"
+                    last_yield_at = time.monotonic()
+                # Belt-and-suspenders keepalive — when the emit interval is
+                # tuned shorter than KEEPALIVE_INTERVAL_S (the default 2s
+                # case) this never fires; it exists for the operator who
+                # bumps the env var to 30s for a quiet dashboard.
+                if time.monotonic() - last_yield_at >= KEEPALIVE_INTERVAL_S:
+                    yield ": keepalive\n\n"
+                    last_yield_at = time.monotonic()
 
     return StreamingResponse(
         gen(),

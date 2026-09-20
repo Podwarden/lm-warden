@@ -14,7 +14,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field, model_validator
 
-from app.auth.deps import require_jwt
+from app.auth.deps import (
+    TRUST_REMOTE_CODE_LOAD_MESSAGE,
+    TRUST_REMOTE_CODE_SET_MESSAGE,
+    refuse_session_only,
+    require_jwt,
+    stream_key,
+)
+from app.auth.stream_guard import guard_stream
 from app.db.constants import ACTIVE_STATUSES
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo, ModelRow
@@ -39,6 +46,8 @@ from app.models.load_preflight import decide_preflight
 from app.models.pull_task import _snapshot_dir_size, run_pull
 from app.models.schemas import (
     ModelCreate,
+    ModelList,
+    ModelOut,
     TemplateCreate,
     TryStackRequest,
     TryStackResult,
@@ -62,6 +71,24 @@ from app.utils.sse import sse_headers
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/models")
+
+# #256 (final-review finding, v2026.09.19.3): trust_remote_code runs the
+# target Hugging Face repo's Python inside the warden container -- at
+# REGISTER time nothing runs yet (it's just a row), but a model loaded with
+# it runs arbitrary code with the warden's own privileges, able to read
+# VW_JWT_SECRET, mint a session, or edit api_tokens / admin_audit directly.
+# That would make the session-only fence around admin-token management
+# (docs/superpowers/specs/2026-09-19-admin-tokens-design.md) an API-level
+# guardrail only, not real containment. Every refusal in this module is
+# session-only -- an admin token is refused, a signed-in session is not -- and
+# reuses app/auth/deps.py::refuse_session_only for the "is this a session?"
+# check and the 403 shape; the two messages live there because the settings
+# PATCH refuses with the same words.
+#
+# Three refusals here, not one: the body key, the merged template value, and a
+# template create. The first pass at #256 guarded only the literal body key,
+# which a template_id walked straight past -- and a builtin template already
+# carries the flag (app/templates/registry.py).
 
 # In-process cache for discovery results. 60 s TTL mirrors the rationale in
 # ``app.system.routes_gpus._ProbeCache``: short enough that an operator
@@ -140,6 +167,14 @@ async def create_template(
     body: TemplateCreate, request: Request, _user: str = Depends(require_jwt)
 ):
     from app.templates.registry import ModelTemplate
+
+    # #256 / I1 -- refuse before any write. A template is a register-time
+    # prefill, so a saved trust_remote_code template is a stored instruction to
+    # persist the flag on every model made from it; ``create_model`` refuses
+    # the merged value as well, but a token must not be able to leave the
+    # instruction lying around for a session to trip over either.
+    if body.trust_remote_code:
+        refuse_session_only(request, message=TRUST_REMOTE_CODE_SET_MESSAGE)
 
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
@@ -698,6 +733,14 @@ async def fit_preview(
 async def create_model(
     body: ModelCreate, request: Request, _user: str = Depends(require_jwt)
 ):
+    # #256 -- refuse before any write, and before any DB work at all for the
+    # obvious case. ModelCreate.trust_remote_code defaults to False, so a True
+    # value here came from the body explicitly setting it. The EFFECTIVE value
+    # after the template merge is refused further down (I1): that is the check
+    # that actually matters, this one just answers the common case without
+    # opening the database.
+    if body.trust_remote_code:
+        refuse_session_only(request, message=TRUST_REMOTE_CODE_SET_MESSAGE)
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
         setup_state = await SetupRepo(db).get()
@@ -741,6 +784,13 @@ async def create_model(
             if "trust_remote_code" in body.model_fields_set
             else (tpl.trust_remote_code if tpl else body.trust_remote_code)
         )
+        # #256 / I1 -- the refusal that counts is on the MERGED value, because
+        # the row is what a later load reads. Without this a template_id was a
+        # one-request bypass of the body-key check above, and no template create
+        # was even needed: the builtin `gpt-oss-20b` carries the flag. Still
+        # before any write -- everything above this point is a read.
+        if trust:
+            refuse_session_only(request, message=TRUST_REMOTE_CODE_SET_MESSAGE)
         extra_args = (
             list(body.extra_args) if body.extra_args
             else (list(tpl.extra_args) if tpl else [])
@@ -810,7 +860,7 @@ async def create_model(
     return {"id": model_id, "served_model_name": body.served_model_name, "status": "registered"}
 
 
-@router.get("")
+@router.get("", response_model=ModelList)
 async def list_models(request: Request, _user: str = Depends(require_jwt)):
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
@@ -823,7 +873,7 @@ async def list_models(request: Request, _user: str = Depends(require_jwt)):
     return {"models": [model_summary(r) for r in rows]}
 
 
-@router.get("/{model_id}")
+@router.get("/{model_id}", response_model=ModelOut)
 async def get_model(model_id: str, request: Request, _user: str = Depends(require_jwt)):
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
@@ -1103,26 +1153,30 @@ async def stream_pull_progress(
     event so the FE can react), or when the client disconnects.
     """
     settings = request.app.state.settings
+    key = stream_key(request)
 
     async def gen():
-        while True:
-            if await request.is_disconnected():
-                return
-            async with open_db(settings.db_path) as db:
-                row = await ModelRepo(db).get(model_id)
-            if not row:
-                yield 'data: {"status": "missing"}\n\n'
-                return
-            payload = json.dumps({
-                "status": row.status,
-                "bytes": row.pulled_bytes,
-                "total": row.pulled_total,
-                "last_error": row.last_error,
-            })
-            yield f"data: {payload}\n\n"
-            if row.status not in ("pulling", "registered"):
-                return
-            await asyncio.sleep(1.0)
+        # Registered for logout / revoke, and an admin token re-checked while
+        # the stream is open (app/auth/stream_guard.py).
+        async with guard_stream(request, key):
+            while True:
+                if await request.is_disconnected():
+                    return
+                async with open_db(settings.db_path) as db:
+                    row = await ModelRepo(db).get(model_id)
+                if not row:
+                    yield 'data: {"status": "missing"}\n\n'
+                    return
+                payload = json.dumps({
+                    "status": row.status,
+                    "bytes": row.pulled_bytes,
+                    "total": row.pulled_total,
+                    "last_error": row.last_error,
+                })
+                yield f"data: {payload}\n\n"
+                if row.status not in ("pulling", "registered"):
+                    return
+                await asyncio.sleep(1.0)
 
     # Anti-buffering headers (X-Accel-Buffering, Cache-Control) — see
     # app.utils.sse.sse_headers and #50. Highest-UX-impact SSE endpoint:
@@ -1433,6 +1487,11 @@ async def load_model(model_id: str, request: Request, _user: str = Depends(requi
         model = await ModelRepo(db).get(model_id)
         if not model:
             raise HTTPException(404, "not found")
+        # #256 -- the row may predate this change, so this is checked at
+        # load time (when the repo's Python actually runs) rather than
+        # trusting that register-time refusal above ever ran for it.
+        if model.trust_remote_code:
+            refuse_session_only(request, message=TRUST_REMOTE_CODE_LOAD_MESSAGE)
         if model.status not in ("pulled", "failed"):
             raise HTTPException(409, f"cannot load from status '{model.status}'")
         allowed = (await SetupRepo(db).get()).draft.get("allowed_gpu_indices", [])

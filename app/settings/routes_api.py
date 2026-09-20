@@ -40,7 +40,11 @@ from urllib.parse import urlsplit
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from app.auth.deps import require_jwt
+from app.auth.deps import (
+    TRUST_REMOTE_CODE_SET_MESSAGE,
+    refuse_session_only,
+    require_jwt,
+)
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo, ModelRow
 from app.db.repos.settings import SettingsRepo
@@ -254,6 +258,49 @@ _COERCERS = {
 }
 
 
+#: Runtime keys only a signed-in session may change (spec 2026-09-19,
+#: decision 3). They are the session credential itself -- the operator's
+#: username and password -- and the lifetimes of the session's credentials
+#: (access JWT, refresh cookie, SSE ticket). An admin token that could change
+#: the password would lock the owner out of the session-only revoke that ends
+#: it, so a leaked token could keep itself alive. Every other runtime key is
+#: ordinary configuration an admin token may change.
+#:
+#: `public_url` joined this set after final-review finding I1 (2026-09-19),
+#: as defence in depth: it is the host client-facing URLs are built from, and
+#: a leaked admin token must not be able to steer it to a lookalike host it
+#: controls. (The admin-token reveal screen uses the page origin instead, so
+#: no stored setting can redirect a freshly revealed secret.)
+SESSION_ONLY_RUNTIME_KEYS: frozenset[str] = frozenset({
+    "admin_username",
+    "admin_password",
+    "session_access_ttl_minutes",
+    "session_refresh_ttl_days",
+    "sse_ticket_ttl_seconds",
+    "public_url",
+})
+
+
+def _refuse_session_only_keys(request: Request, body: dict[str, Any]) -> None:
+    """403 ``session_only`` when a non-session credential (an admin token)
+    sends any SESSION_ONLY_RUNTIME_KEYS key. Runs before any validation or
+    write, so a refused PATCH changes nothing at all. Delegates the
+    "is this a session?" check and the 403 shape to app/auth/deps.py::
+    refuse_session_only, shared with the trust_remote_code refusals (#256)."""
+    keys = sorted(SESSION_ONLY_RUNTIME_KEYS.intersection(body))
+    if keys:
+        refuse_session_only(
+            request,
+            message=(
+                f"{', '.join(keys)} can only be changed from a signed-in session. "
+                "Admin tokens cannot change the operator's credentials or session "
+                "lifetimes, so a leaked token cannot lock the owner out of revoking "
+                "it. Nothing in this request was applied."
+            ),
+            keys=keys,
+        )
+
+
 async def _first_admin_id(db) -> int | None:
     """Return the id of the single-admin row, or None if no admin exists yet."""
     cur = await db.execute("SELECT id FROM users ORDER BY id LIMIT 1")
@@ -301,7 +348,8 @@ async def patch_runtime(
     """Patch a subset of runtime settings.
 
     Validation order (all checks run before ANY write — no partial writes):
-      1. Unknown keys → 400.
+      1. Unknown keys → 400. SESSION_ONLY_RUNTIME_KEYS from an admin token
+         → 403 ``session_only``.
       2. `hf_token` empty-string → 422 (clearing is not a supported op).
       3. `hf_token` non-empty → validated against the HF API; ValueError → 422.
       4. `admin_username` → must match `_USERNAME_RE` → 422 on failure.
@@ -322,6 +370,9 @@ async def patch_runtime(
     bad = [k for k in body if k not in RUNTIME_KEYS]
     if bad:
         raise HTTPException(status_code=400, detail=f"unknown keys: {sorted(bad)}")
+    # Credentials and session lifetimes are session-only -- refused whole,
+    # before anything is validated or written.
+    _refuse_session_only_keys(request, body)
 
     # --- Pre-write validation ------------------------------------------------
 
@@ -471,6 +522,16 @@ _NEVER_PATCH: frozenset[str] = frozenset({
     # suspenders should it ever be promoted into the dataclass.
     "updated_at",
     "created_at",
+    # Watchdog CONTROL state, not a user setting (migration 0024). It records
+    # the status a serving engine was interrupted in, and it is the flag
+    # app/runtime/watchdog.py::wants_restart keys on -- its only writers are
+    # boot reconciliation and the crash path, and the restart sweep clears it.
+    # Making it operator-editable was how an admin token could arm the sweep on
+    # a `failed` row and have the watchdog call start_engine for it, which (with
+    # `trust_remote_code` patched on in the same breath) was remote code
+    # execution without ever calling /load. Nothing should PATCH it, session or
+    # token: the state machine owns it, exactly like `status`.
+    "prior_status",
 })
 
 
@@ -621,7 +682,19 @@ async def patch_model_settings(
     at when they notice vision is set wrong — making them unload it to fix a
     label is backwards. Mixing in any real engine setting puts the whole patch
     back under the guard.
+
+    ``trust_remote_code: true`` is session-only here (#256, C1), for exactly the
+    reason it is session-only on register and on load: the row is what a later
+    load — or the watchdog's restart sweep — reads, so patching the flag on is
+    the same code-execution grant by a different verb. Refused first, before
+    validation and before any write, so a refused PATCH changes nothing at all.
+    Turning the flag off, and every other setting, stays open to an admin token.
     """
+    if body.get("trust_remote_code"):
+        # Truthy, not ``is True``: the write below coerces with ``int(bool(v))``,
+        # so anything truthy would have persisted a 1.
+        refuse_session_only(request, message=TRUST_REMOTE_CODE_SET_MESSAGE)
+
     bad = [k for k in body if k not in _PATCHABLE_MODEL_FIELDS]
     if bad:
         raise HTTPException(

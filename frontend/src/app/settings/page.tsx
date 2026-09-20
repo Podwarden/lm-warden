@@ -7,9 +7,10 @@ import { NetworkingTab } from "@/components/settings/networking-tab";
 import { SessionsTab } from "@/components/settings/sessions-tab";
 import { MaintenanceTab } from "@/components/settings/maintenance-tab";
 import { ModelTab } from "@/components/settings/model-tab";
+import { AdminTokensTab } from "@/components/settings/admin-tokens-tab";
 
 // ---------------------------------------------------------------------------
-// Settings — five-tab shell (#154)
+// Settings — six-tab shell (#154)
 // ---------------------------------------------------------------------------
 //
 // Pre-redesign: a single 581-line Runtime tab + Model tab. The new IA
@@ -17,7 +18,7 @@ import { ModelTab } from "@/components/settings/model-tab";
 // do — so each pane stays under one screen-height.
 //
 // Tab order is the spec's:
-//   General → Networking → Sessions & Tokens → Maintenance → Model
+//   General → Networking → Sessions & Tokens → Maintenance → Model → Admin tokens
 //
 // Each of the four runtime sub-tabs owns its own useRuntimeSettings()
 // instance — SWR dedupes the GET across tabs, so we still issue exactly
@@ -29,7 +30,8 @@ type TabId =
   | "networking"
   | "sessions"
   | "maintenance"
-  | "model";
+  | "model"
+  | "admin-tokens";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "general", label: "General" },
@@ -37,6 +39,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "sessions", label: "Sessions & Tokens" },
   { id: "maintenance", label: "Maintenance" },
   { id: "model", label: "Model" },
+  { id: "admin-tokens", label: "Admin tokens" },
 ];
 
 export default function SettingsPage() {
@@ -57,6 +60,7 @@ export default function SettingsPage() {
         {activeTab === "sessions" && <SessionsTab />}
         {activeTab === "maintenance" && <MaintenanceTab />}
         {activeTab === "model" && <ModelTab />}
+        {activeTab === "admin-tokens" && <AdminTokensTab />}
       </Tabs>
     </div>
   );

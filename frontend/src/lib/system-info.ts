@@ -360,7 +360,7 @@ export interface GpuLiveResponse {
 
 /** The one string every "hardware did not report this" slot renders. Kept
  *  as words, not a glyph, so it cannot be mistaken for a value of 0 and
- *  reads the same in a theme where positive and warn share a colour. */
+ *  reads the same without colour. */
 export const NOT_REPORTED = "not reported";
 
 /** NVLink standing as a sentence. Each of the three real states gets its

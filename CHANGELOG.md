@@ -7,6 +7,139 @@ release ships.
 
 ## [Unreleased]
 
+## [v2026.09.19.4] — 2026-09-19
+
+### Changed
+
+- **Admin tokens can no longer set the `trust_remote_code` column, on any
+  route.** A final security review of the v2026.09.19.3 admin
+  tokens found that a leaked one could register a model with
+  `trust_remote_code: true` and load it, running that Hugging Face
+  repository's Python inside the warden container — from there it could
+  read `VW_JWT_SECRET`, mint a session, or edit `api_tokens` /
+  `admin_audit` directly, making the session-only fence around token
+  management an API-level guardrail rather than real containment (#256).
+  Four paths now answer `403 session_only` for an admin token, which is every
+  way the API has to put such a model in front of an engine, and each is
+  refused before any write:
+  - `POST /api/models`, when the model's **effective** `trust_remote_code` is
+    true — the body's value, or the template's when the body does not say. The
+    merged value is what matters, because the builtin `gpt-oss-20b` template
+    carries the flag, so a `template_id` alone would otherwise have been
+    enough. An explicit `trust_remote_code: false` still wins over a template
+    that sets it.
+  - `POST /api/models/templates`, when the template being saved carries the
+    flag.
+  - `PATCH /api/models/{id}/settings`, when it would turn the flag **on**;
+    turning it off, and every other setting on that route, stays open to an
+    admin token.
+  - `POST /api/models/{id}/load`, when the row already has it — checked at
+    load time, since a row can predate this change — while unload, list and
+    every other model stay open to an admin token.
+
+  `prior_status` is no longer patchable by anyone. It is the column the
+  watchdog's restart sweep keys on, and it was the other half of the same
+  hole: an admin token that could set it, and the flag, on a `failed` row
+  could have the watchdog start the engine for it without ever calling
+  `/load`. It belongs to the crash path and the restart sweep, like `status`.
+
+  Every refusal is session-only: a signed-in session is unaffected by all of
+  it, and each refused attempt lands in the token's audit trail.
+
+  This closes the column, not the capability: `extra_args` still reaches the
+  engine's argv verbatim and last, so an admin token can pass
+  `--trust-remote-code` that way, and `engine_image` names the image a
+  container driver runs. An admin token remains equivalent to code execution
+  in the warden container — see `documents/API.md`, "Admin API".
+- Admin-token audit pruning now caps each token at 20 000 rows as well as the
+  existing 200 000 rows overall. The prune runs the 90-day window first, then
+  the per-token cap, then the global cap. Previously the cap was global only,
+  so a single token making requests once a second could fill the table in
+  about 2.3 days and evict every other token's history along with its own; the
+  per-token pass trims that flood to its own 20 000 rows before the global cap
+  is applied, so a noisy or leaked token only evicts its own trail. (#257)
+- **The admin-token audit trail is written in batches, and a clean shutdown no
+  longer loses rows.** Each request used to open its own database connection
+  and commit its audit row once the response had finished, so a script polling
+  the API paid a commit per call, and anything still in flight when the warden
+  stopped was lost. The middleware now hands the finished row to an in-process
+  queue and one background writer commits a batch — at most 200 rows, or one
+  second behind, whichever comes first — with a final flush at shutdown. What
+  is recorded, and when a request counts as audited, is unchanged; a row is
+  durable up to a second after the response rather than immediately, and each
+  row still carries the time its request arrived, so the trail reads in order.
+  The queue is bounded at 10 000 rows: if a stalled data volume ever filled it,
+  the extra rows are dropped and counted — as is a batch the database refuses,
+  so both kinds of gap show up in one number. Drops are logged from the enqueue
+  side too, at most once a minute, not only at each flush, so a gap in a trail
+  shows up in the log instead of passing silently even if the background writer
+  is what stopped. The writer survives an unexpected error and keeps flushing
+  rather than ending its task; a clean shutdown writes what is still queued,
+  including a batch it had already picked up.
+- **Revoking a token now also ends an in-flight chat-playground generation.**
+  Six streams already ended when the credential that opened them did — god
+  mode, model logs, live stats, header metrics, model pull progress and the
+  chat2 turn streams — but the playground's own completion stream did not, so a
+  revoked admin token (or a signed-out session) kept generating to the end. It
+  is now registered and re-checked like the other six: a revoke, a refresh with
+  `grace_hours: 0`, an expiry or a logout stops it where it is. The streaming
+  payload the playground reads is unchanged. The chat2 turn route's replay of an
+  already-recorded turn is registered too, so "every stream the warden opens
+  under a credential" needs no footnote — there is nothing to cancel in a single
+  pre-computed frame, but the claim is easier to trust than to qualify.
+
+## [v2026.09.19.3] — 2026-09-19
+
+### Added
+
+- **Admin tokens: the whole control API for programs.** Settings → Admin
+  tokens issues `vwa_…` secrets that call `/api/*` with the same power as
+  signing in — settings, models, inference tokens, statistics, god mode,
+  stress runs and the cache — with no password, cookie jar or CSRF header.
+  Expiry is 30, 90 (default) or 365 days, or Never, which has to be chosen
+  explicitly and warns. The secret is shown once. Refresh issues a new secret
+  and keeps the old one working for 0, 1 or 24 hours (revoking the successor
+  does not end the predecessor's grace window — revoke both); revoke is
+  immediate and closes the token's open streams (god mode, model logs, live
+  stats, header metrics, pull progress and chat2 turns), which are otherwise
+  re-checked every 60 seconds. Every request an admin token makes to a route
+  is recorded — route template, status, duration, the proxy-reported
+  `client_ip` and the socket `peer_ip` — for 90 days (at most 200 000 rows
+  across all tokens), including refused attempts by a known token; requests
+  refused before routing, and oversize or malformed bodies, are not. The
+  Activity view pages through it. Issuing, refreshing, revoking and reading
+  the audit need a signed-in session, and so does changing the operator's own
+  credentials, a session's lifetimes, or `public_url` (the host client-facing
+  URLs are built from) through `PATCH /api/settings/runtime`:
+  a leaked token cannot use this API to copy, extend or hide itself, or lock
+  the operator out of the UI where it gets revoked, or steer the host
+  client-facing URLs point at. The curl examples next to a new admin secret
+  use the page's own address. That is an
+  API-level guardrail, not containment — an admin token is root-equivalent
+  (it can load a model with `trust_remote_code`), so treat a leaked one like
+  a leaked admin password: revoke it, then rotate `VW_JWT_SECRET`. An admin
+  token is never accepted on `/v1`, and the inference-token API never shows
+  admin tokens. See `documents/API.md`, "Admin API".
+- **`GET /api/openapi.json`** serves the API description to a session or an
+  admin token, with a `bearerAuth` scheme and `security: []` on the public
+  routes and `/v1`. `GET /api/models` and `GET /api/models/{id}` are now typed
+  in it.
+
+### Changed
+
+- **FastAPI's `/docs`, `/redoc` and `/openapi.json` are gone.** The API
+  description is no longer public; use `GET /api/openapi.json` with
+  credentials.
+- The SSE streams gated on a single-use ticket (`/api/models/{id}/logs/stream`,
+  `/api/admin/godmode/stream`, `/api/stats/live`,
+  `/api/header/metrics/stream`) accept `Authorization: Bearer vwa_…` in place
+  of `?ticket=`. `ticket` is therefore optional in the spec, and a request
+  with neither is `401 missing ticket` instead of `422`. Model pull progress
+  and the chat2 turn streams already took a bearer header for a session and
+  now also accept an admin token.
+- Stress runs accept an admin token; the `operator_only` refusal now names
+  inference tokens (`vw_…`) only.
+
 ## [v2026.09.19.2] — 2026-09-19
 
 ### Added

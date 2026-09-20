@@ -126,6 +126,14 @@ def _dead_state(r: TokenRow, now_str: str) -> str | None:
     return None
 
 
+async def _inference_row(repo: TokenRepo, token_id: str) -> TokenRow | None:
+    """The inference key ``token_id``, or None -- also for an admin token
+    (0037), which every /api/tokens route answers with the same 404 as a
+    missing row (spec 2026-09-19, decision 2)."""
+    row = await repo.get(token_id)
+    return row if row is not None and row.scope == "inference" else None
+
+
 def _enrich(
     r: TokenRow,
     *,
@@ -203,7 +211,7 @@ async def _token_detail(db: aiosqlite.Connection, token_id: str) -> dict[str, An
     """``GET /{id}``'s body: ``_enrich`` plus ``lineage``. None if unknown."""
     chain = await TokenRepo(db).lineage(token_id)
     ids = [r.id for r in chain]
-    if token_id not in ids:
+    if token_id not in ids or chain[ids.index(token_id)].scope != "inference":
         return None
     i = ids.index(token_id)
     now_minute = int(time.time() // 60)
@@ -281,7 +289,7 @@ async def update_token(
     raw = body.model_dump(exclude_unset=True)
     async with open_db(request.app.state.settings.db_path) as db:
         repo = TokenRepo(db)
-        row = await repo.get(token_id)
+        row = await _inference_row(repo, token_id)
         if row is None:
             raise HTTPException(404)
         if raw.get("paused") is True:
@@ -326,7 +334,7 @@ async def rotate_token(
     """
     async with open_db(request.app.state.settings.db_path) as db:
         repo = TokenRepo(db)
-        old = await repo.get(token_id)
+        old = await _inference_row(repo, token_id)
         if old is None:
             raise HTTPException(404)
         if old.rotated_at is not None:
@@ -541,7 +549,7 @@ async def get_token_usage(
         # Verify the token exists so we can return 404 instead of an
         # empty-bucket success that the UI would silently render as
         # "no usage" — clearer error surface.
-        if await TokenRepo(db).get(token_id) is None:
+        if await _inference_row(TokenRepo(db), token_id) is None:
             raise HTTPException(404)
         rollup = TokenUsageRepo(db)
         rows = await rollup.range(
@@ -626,9 +634,11 @@ async def get_token_series(
     from_minute, to_minute = series.minute_window(from_, to)
     async with open_db(request.app.state.settings.db_path) as db:
         lineage = await TokenRepo(db).lineage(token_id)
-        if not lineage:
+        if not lineage or lineage[0].scope != "inference":
             # A detail of its own, so a test can tell this 404 from a missing
-            # route's bare "Not Found" (#251).
+            # route's bare "Not Found" (#251). A rotation chain is one scope --
+            # rotate() inherits it -- so checking the chain's oldest row covers
+            # the whole chain.
             raise HTTPException(404, "token not found")
         ids = series.chain_token_ids(
             [r.id for r in lineage], token_id, include_earlier=bool(chain),
@@ -698,7 +708,7 @@ async def test_token(
     """
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
-        token_row = await TokenRepo(db).get(token_id)
+        token_row = await _inference_row(TokenRepo(db), token_id)
         if token_row is None:
             raise HTTPException(404)
         models = await ModelRepo(db).list_all()
@@ -753,7 +763,10 @@ async def delete_token(
     token_id: str, request: Request, _user: str = Depends(require_jwt)
 ):
     async with open_db(request.app.state.settings.db_path) as db:
-        deleted = await TokenRepo(db).delete(token_id)
+        repo = TokenRepo(db)
+        if await _inference_row(repo, token_id) is None:
+            raise HTTPException(404)
+        deleted = await repo.delete(token_id)
     if not deleted:
         raise HTTPException(404)
     return None

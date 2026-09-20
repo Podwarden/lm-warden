@@ -18,11 +18,11 @@ def test_logs_stream_rejects_without_ticket(tmp_data_dir, client):
     client.get("/healthz")
     _seed_admin(tmp_data_dir / "vllm-warden.db")  # mark setup done; otherwise gate_setup redirects
     r = client.get("/api/models/some-id/logs/stream")
-    # Pinned: rejection happens at FastAPI's Query(...) validator layer
-    # (missing required `ticket` query param) which returns 422. If a future
-    # middleware short-circuits earlier (e.g. an auth layer returning 401),
-    # this assertion will catch the silent layering change.
-    assert r.status_code == 422
+    # `ticket` became optional when admin tokens could authenticate a stream
+    # by header (spec 2026-09-19, decision 9), so a request with neither is
+    # refused by require_sse_ticket itself: 401, no longer FastAPI's 422.
+    assert r.status_code == 401
+    assert r.json()["detail"] == "missing ticket"
 
 
 def test_logs_stream_rejects_wrong_path_ticket(tmp_data_dir, client):

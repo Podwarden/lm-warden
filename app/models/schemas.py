@@ -195,3 +195,58 @@ class TryStackRequest(BaseModel):
 class TryStackResult(BaseModel):
     result: Literal["ok", "failed"]
     error: str | None = None
+
+
+class ModelEngine(BaseModel):
+    """The pinned engine; ``null`` on a model until a channel is pinned."""
+
+    channel: str
+    vllm_version: str | None
+    image: str | None
+
+
+class ModelOut(BaseModel):
+    """One model as GET /api/models and GET /api/models/{id} return it.
+
+    Mirrors app/models/serialisation.py::_serialise field for field
+    (tests/unit/models/test_model_serialisation.py compares the two), so the
+    OpenAPI spec types what clients actually receive. ``extra="allow"`` keeps
+    a column that _serialise publishes before it is declared here in the
+    response instead of silently dropping it -- the drift that module exists
+    to prevent.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    id: str
+    served_model_name: str
+    hf_repo: str
+    hf_revision: str
+    gpu_indices: list[int]
+    tensor_parallel_size: int | None
+    dtype: str | None
+    max_model_len: int | None
+    gpu_memory_utilization: float
+    trust_remote_code: bool
+    extra_args: list[str]
+    status: str
+    pulled_bytes: int
+    pulled_total: int | None
+    last_error: str | None
+    extra_env: dict[str, str]
+    filename: str | None
+    parallelism_strategy: str
+    max_batch_size: int
+    hf_config_repo: str | None
+    tokenizer_repo: str | None
+    supports_tools: bool | None
+    supports_vision: bool | None
+    supports_reasoning: bool | None
+    backend: str
+    mmproj_filename: str | None
+    n_gpu_layers: int | None
+    engine: ModelEngine | None
+
+
+class ModelList(BaseModel):
+    models: list[ModelOut]

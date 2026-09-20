@@ -284,6 +284,49 @@ def test_turn_idempotent_retry_and_in_flight_409(tmp_data_dir, client) -> None:
     client.app.state.chat2_turn_locks.release(chat["id"])
 
 
+def test_the_idempotent_replay_stream_runs_under_the_stream_guard(
+    tmp_data_dir, client
+) -> None:
+    """M5: the replay of a recorded turn was the one credentialed stream the app
+    opened outside ``guard_stream``, so "every stream the app opens under a
+    credential is one of them" was false as written.
+
+    It is a single pre-computed frame, so there was nothing to cancel -- but the
+    exception is not worth keeping: it costs one line, and the claim is easier
+    to trust than to qualify.
+    """
+    h = _auth(tmp_data_dir, client)
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _model(db_path)
+    chat = client.post("/api/chat2/chats", headers=h, json={"model": "qwen"}).json()
+    body = _sse({"id": "x", "choices": [{"index": 0, "delta": {"content": "ok"},
+                                         "finish_reason": "stop"}],
+                 "usage": {"prompt_tokens": 1, "completion_tokens": 1}})
+    with patch("httpx.AsyncClient.send", new=AsyncMock(return_value=_fake_stream(body))), \
+            patch(_NO_TITLE[0], new=_NO_TITLE[1]):
+        first = client.post(f"/api/chat2/chats/{chat['id']}/turns", headers=h,
+                            json={"request_id": "req-replay-guard",
+                                  "user_parts": [{"type": "text", "text": "a"}]})
+    assert first.status_code == 200, first.text
+
+    registry = client.app.state.stream_registry
+    registered: list[str] = []
+    real_register = registry.register
+    registry.register = lambda key, task: (  # type: ignore[method-assign]
+        registered.append(key), real_register(key, task)
+    )[1]
+    try:
+        replay = client.post(f"/api/chat2/chats/{chat['id']}/turns", headers=h,
+                             json={"request_id": "req-replay-guard",
+                                   "user_parts": [{"type": "text", "text": "a"}]})
+    finally:
+        registry.register = real_register  # type: ignore[method-assign]
+    assert [e["type"] for e in _events(replay.text)] == ["done"]
+    assert registered == ["session:admin"], registered
+    # And it let go of the registration when it finished.
+    assert registry.count("session:admin") == 0
+
+
 def test_turn_guard_finish_and_upstream_429_are_visible_errors(tmp_data_dir, client) -> None:
     h = _auth(tmp_data_dir, client)
     db_path = tmp_data_dir / "vllm-warden.db"

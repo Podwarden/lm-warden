@@ -68,6 +68,8 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from starlette.concurrency import run_in_threadpool
 
+from app.auth.deps import stream_key
+from app.auth.stream_guard import guarded
 from app.chat import routes_api as playground
 from app.chat.playground_store import PLAYGROUND_TOKEN_NAME, PlaygroundSecret
 from app.chat2 import catalog, storage
@@ -268,9 +270,14 @@ async def _turn_locked(
             # as a clean `stop`.
             outcome, message_id = recorded
             locks.release(chat_id)
+            # Guarded like every other credentialed stream, even though there is
+            # nothing here to cancel (one pre-computed frame): it is the only
+            # exception to "every stream the app opens under a credential runs
+            # under guard_stream", and one line is cheaper than a caveat.
             return StreamingResponse(
-                _once(frame({"type": "done", "messageId": message_id or "",
-                             "finishReason": _OUTCOME_FINISH.get(outcome, "stop")})),
+                guarded(request, stream_key(request), _once(
+                    frame({"type": "done", "messageId": message_id or "",
+                           "finishReason": _OUTCOME_FINISH.get(outcome, "stop")}))),
                 media_type="text/event-stream", headers=sse_headers(),
             )
         decision = await request.app.state.chat2_budget.check(user_id, None)
@@ -450,8 +457,13 @@ async def _turn_locked(
         upstream_url=upstream_url, upstream_headers=upstream_headers, content=content,
         secret_plaintext=secret.plaintext,
     ))
-    return StreamingResponse(registry.subscribe(live), media_type="text/event-stream",
-                             headers=sse_headers())
+    # Guarded: registered for logout / revoke and an admin token re-checked
+    # while open (app/auth/stream_guard.py). Ending it ends only this
+    # subscriber; the detached turn runs on.
+    return StreamingResponse(
+        guarded(request, stream_key(request), registry.subscribe(live)),
+        media_type="text/event-stream", headers=sse_headers(),
+    )
 
 
 async def _run_turn(
@@ -671,8 +683,13 @@ async def turn_live(
     live = registry.get(chat_id)
     if live is None:
         raise api_error(404, "not_found", "no live turn for this chat")
-    return StreamingResponse(registry.subscribe(live), media_type="text/event-stream",
-                             headers=sse_headers())
+    # Guarded: registered for logout / revoke and an admin token re-checked
+    # while open (app/auth/stream_guard.py). Ending it ends only this
+    # subscriber; the detached turn runs on.
+    return StreamingResponse(
+        guarded(request, stream_key(request), registry.subscribe(live)),
+        media_type="text/event-stream", headers=sse_headers(),
+    )
 
 
 async def _persist_turn(

@@ -63,6 +63,7 @@ import httpx
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
+from app.auth.stream_guard import guard_stream
 from app.db.database import open_db
 from app.models.routes_logs import require_sse_ticket
 from app.runtime.backends import registry
@@ -525,7 +526,9 @@ def envelope(blocks: list[dict]) -> dict:
     return {**lead, "models": blocks}
 
 @router.get("/live")
-async def stream_live(request: Request, _user: str = Depends(require_sse_ticket)):
+async def stream_live(
+    request: Request, stream_key: str = Depends(require_sse_ticket)
+) -> StreamingResponse:
     """Stream live engine metrics as SSE events (one JSON frame per tick).
 
     Structure mirrors the header-metrics SSE: an immediate first frame, then an
@@ -619,38 +622,41 @@ async def stream_live(request: Request, _user: str = Depends(require_sse_ticket)
         return envelope(blocks)
 
     async def gen():
-        prev: dict[str, RateState] = {}
-        last_yield_at = time.monotonic()
-        # Immediate first frame so the consumer isn't blank for ``interval``s.
-        try:
-            yield f"data: {json.dumps(await _one_frame(prev))}\n\n"
+        # Registered for logout / revoke, and an admin token re-checked while
+        # the stream is open (app/auth/stream_guard.py).
+        async with guard_stream(request, stream_key):
+            prev: dict[str, RateState] = {}
             last_yield_at = time.monotonic()
-        except Exception:  # noqa: BLE001 — first-tick failure falls through to the loop
-            pass
-
-        while True:
-            if await request.is_disconnected():
-                return
-            try:
-                await asyncio.sleep(interval)
-            except asyncio.CancelledError:
-                return
-            if await request.is_disconnected():
-                return
+            # Immediate first frame so the consumer isn't blank for ``interval``s.
             try:
                 yield f"data: {json.dumps(await _one_frame(prev))}\n\n"
                 last_yield_at = time.monotonic()
-            except Exception as exc:  # noqa: BLE001 — never let a frame error kill the stream
-                # `models: []`, NOT `[err]`: a block with no model_id would
-                # render as an anonymous panel in a per-model view. The error
-                # belongs to the tick, not to a model.
-                err = _null_frame(
-                    None, None, None, str(exc) or exc.__class__.__name__
-                )
-                yield f"data: {json.dumps({**err, 'models': []})}\n\n"
-                last_yield_at = time.monotonic()
-            if time.monotonic() - last_yield_at >= KEEPALIVE_INTERVAL_S:
-                yield ": keepalive\n\n"
-                last_yield_at = time.monotonic()
+            except Exception:  # noqa: BLE001 — first-tick failure falls through to the loop
+                pass
+
+            while True:
+                if await request.is_disconnected():
+                    return
+                try:
+                    await asyncio.sleep(interval)
+                except asyncio.CancelledError:
+                    return
+                if await request.is_disconnected():
+                    return
+                try:
+                    yield f"data: {json.dumps(await _one_frame(prev))}\n\n"
+                    last_yield_at = time.monotonic()
+                except Exception as exc:  # noqa: BLE001 — never let a frame error kill the stream
+                    # `models: []`, NOT `[err]`: a block with no model_id would
+                    # render as an anonymous panel in a per-model view. The error
+                    # belongs to the tick, not to a model.
+                    err = _null_frame(
+                        None, None, None, str(exc) or exc.__class__.__name__
+                    )
+                    yield f"data: {json.dumps({**err, 'models': []})}\n\n"
+                    last_yield_at = time.monotonic()
+                if time.monotonic() - last_yield_at >= KEEPALIVE_INTERVAL_S:
+                    yield ": keepalive\n\n"
+                    last_yield_at = time.monotonic()
 
     return StreamingResponse(gen(), media_type="text/event-stream", headers=sse_headers())

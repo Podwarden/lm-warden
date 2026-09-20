@@ -8,6 +8,15 @@ import aiofiles.os  # noqa: F401  # populates aiofiles.os.path for async stat
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
+from app.auth.deps import (
+    SESSION_PRINCIPAL,
+    authenticate_admin_token,
+    bearer_token,
+    is_admin_token,
+    session_stream_key,
+    stream_key,
+)
+from app.auth.stream_guard import guard_stream
 from app.utils.sse import sse_headers
 
 router = APIRouter(prefix="/api/models", tags=["logs"])
@@ -34,12 +43,41 @@ TAIL_POLL_S: float = 0.5
 
 
 async def require_sse_ticket(
-    request: Request, ticket: str = Query(...)
+    request: Request,
+    ticket: str | None = Query(
+        default=None,
+        description=(
+            "Single-use ticket from POST /api/auth/sse-ticket (browsers). Omit "
+            "it when sending `Authorization: Bearer vwa_...` (an admin token)."
+        ),
+    ),
 ) -> str:
+    """Authenticate an SSE stream; return the key its task registers under in
+    app.state.stream_registry (app/auth/stream_guard.py): ``admin_token:<id>``
+    or ``session:<username>`` (app/auth/deps.py::stream_key).
+
+    * ``Authorization: Bearer vwa_...`` -- an admin token (spec 2026-09-19,
+      decision 9): a program can send headers, so it skips the browser's
+      ticket dance. The key is the token's principal, not its owner's
+      session key, so a browser logout does not cut a script's stream and
+      revoking the token cuts exactly its own. The stream also re-checks the
+      token while it is open (stream_guard).
+    * otherwise ``?ticket=`` -- EventSource cannot send headers. A session JWT
+      header is NOT accepted here; browsers mint a ticket as before.
+    """
+    token = bearer_token(request)
+    if token is not None and is_admin_token(token):
+        await authenticate_admin_token(request, token)
+        return stream_key(request)
+    if ticket is None:
+        raise HTTPException(401, "missing ticket")
     try:
-        return request.app.state.sse_tickets.consume(ticket, request.url.path)
+        user = request.app.state.sse_tickets.consume(ticket, request.url.path)
     except ValueError as exc:
         raise HTTPException(401, str(exc)) from exc
+    request.state.principal = SESSION_PRINCIPAL
+    request.state.stream_key = session_stream_key(str(user))
+    return stream_key(request)
 
 
 # Sentinel object yielded by _tail every TAIL_POLL_S seconds when no log
@@ -118,12 +156,10 @@ async def stream_logs(
             500, f"log directory does not exist: {log_path.parent}"
         ) from exc
 
-    registry = request.app.state.stream_registry
-
     async def gen():
-        current = asyncio.current_task()
-        registry.register(user, current)
-        try:
+        # Registered for logout / revoke, and an admin token re-checked while
+        # the stream is open (app/auth/stream_guard.py).
+        async with guard_stream(request, user):
             async with aiofiles.open(log_path) as f:
                 content = await f.read()
             # Emit each log line as a JSON event so the FE useEventSource hook
@@ -149,8 +185,6 @@ async def stream_logs(
                 else:
                     yield f"data: {json.dumps({'line': item})}\n\n"
                     last_yield_at = time.monotonic()
-        finally:
-            registry.unregister(user, current)
 
     # Anti-buffering headers (X-Accel-Buffering, Cache-Control) live in
     # app.utils.sse so all SSE endpoints get them uniformly — see #50.

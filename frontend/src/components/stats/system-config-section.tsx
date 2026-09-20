@@ -43,10 +43,10 @@
 //   * Cards are heterogeneous. Each row reads ITS card's total / limit /
 //     ECC mode; nothing is shared across the fleet. A spec that disagrees
 //     with the other cards on the host is marked "differs".
-//   * Theme tokens only (chat-*). In retro-dark, positive and warn are the
-//     same amber, so every state also differs by wording or shape (a tick,
-//     a dashed line, a bordered chip, the "not reported" words), never by
-//     colour alone. The fault colour is reserved for genuine faults.
+//   * Theme tokens only (chat-*). Every state also differs by wording or
+//     shape (a tick, a dashed line, a bordered chip, the "not reported"
+//     words), never by colour alone, so the table reads without colour.
+//     The fault colour is reserved for genuine faults.
 
 import useSWR from "swr";
 import { authFetchJSON } from "@/lib/auth-fetch";

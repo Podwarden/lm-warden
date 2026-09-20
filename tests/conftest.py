@@ -258,6 +258,48 @@ def seed_admin_user(
 # Any non-401 response (422 malformed body, 500 server error, etc.)
 # surfaces immediately so we don't paper over real bugs.
 
+def seed_admin_token(
+    db_path: Path,
+    *,
+    name: str = "automation",
+    created_by: str = "admin",
+    scope: str = "admin",
+    plaintext: str | None = None,
+    expires_at: str | None = None,
+    revoked_at: str | None = None,
+    rotated_at: str | None = None,
+    paused_at: str | None = None,
+) -> tuple[str, str]:
+    """Insert an api_tokens row directly and return ``(token_id, plaintext)``.
+
+    For states the API cannot reach in one call (expired, paused, a vw_ secret
+    on an admin row, …). Timestamps are SQLite UTC strings -- build them with
+    ``app.db.repos.tokens.sqlite_utc_in``. Same PRAGMAs, transaction and WAL
+    checkpoint as ``seed_admin_user``, for the same reason (#55/#104).
+    """
+    import secrets
+
+    from app.auth.bearer import generate_admin_token
+    from app.db.repos.tokens import hash_token
+
+    secret = plaintext or generate_admin_token()
+    token_id = secrets.token_hex(16)
+    with sqlite3.connect(db_path, isolation_level=None) as db:
+        db.execute("PRAGMA foreign_keys = ON")
+        db.execute("PRAGMA journal_mode = WAL")
+        db.execute("BEGIN IMMEDIATE")
+        db.execute(
+            "INSERT INTO api_tokens(id, name, prefix, hash, scope, expires_at, "
+            " revoked_at, rotated_at, paused_at, created_by) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (token_id, name, secret[:8], hash_token(secret), scope, expires_at,
+             revoked_at, rotated_at, paused_at, created_by),
+        )
+        db.execute("COMMIT")
+        db.execute("PRAGMA wal_checkpoint(FULL)")
+    return token_id, secret
+
+
 LOGIN_RETRY_MAX = 5
 LOGIN_RETRY_BACKOFF_S = (0.01, 0.02, 0.05, 0.1, 0.2)
 
@@ -293,3 +335,62 @@ def jwt_login(
         f"jwt_login: POST /api/auth/login returned {last_status} after "
         f"{LOGIN_RETRY_MAX} attempts (last response: {last_text!r})"
     )
+
+
+# ---------------------------------------------------------------------------
+# Admin-token helpers (spec 2026-09-19): shared, never copied into test files
+# ---------------------------------------------------------------------------
+
+
+def bearer(secret: str) -> dict[str, str]:
+    """``Authorization: Bearer <secret>`` -- an admin (vwa_) or inference (vw_)
+    token, or a session JWT."""
+    return {"Authorization": f"Bearer {secret}"}
+
+
+@pytest.fixture
+def flush_audit(client: TestClient):
+    """Call it to write every queued admin-audit row NOW; returns the count.
+
+    The audit middleware enqueues and a background flusher batches (#258), so
+    a row is not in the table the instant a request returns. Rather than
+    sleeping past the flush interval, a test that reads ``admin_audit``
+    directly asks for the drain: ``flush_audit()`` runs the writer's
+    ``flush()`` on the app's own event loop through the TestClient's portal,
+    so the awaitable the app uses is the one the test awaits -- no second
+    loop, no sync write racing the async one.
+
+    An async test drives the app on its own loop (``live_app``) and awaits
+    ``live_app.state.admin_audit.flush()`` directly instead.
+    """
+    def _flush() -> int:
+        portal = getattr(client, "portal", None)
+        assert portal is not None, "flush_audit needs the client's lifespan running"
+        return int(portal.call(client.app.state.admin_audit.flush))
+
+    return _flush
+
+
+@pytest.fixture
+def seeded_db(client: TestClient, tmp_data_dir: Path) -> Path:
+    """The ``client`` app's database with the admin user seeded (setup done),
+    ready for ``jwt_login`` and ``seed_admin_token``."""
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    seed_admin_user(db_path)
+    return db_path
+
+
+@pytest.fixture
+async def live_app(tmp_data_dir: Path, migrated_db_template: Path):
+    """The real app with its lifespan running on the test's own event loop,
+    for tests that drive it over raw ASGI (tests/asgi_stream.py) -- the only
+    way to open an endless stream -- or call its dependencies directly. The
+    admin user is seeded."""
+    from app.main import build_app
+
+    shutil.copyfile(migrated_db_template, tmp_data_dir / "vllm-warden.db")
+    app = build_app()
+    async with app.router.lifespan_context(app):
+        seed_admin_user(tmp_data_dir / "vllm-warden.db")
+        yield app

@@ -10,8 +10,7 @@
 //           see pickColourField
 //   size    generated tokens (area ∝ count)
 //   shape   finish reason: filled = stop, hollow = length, cross = other/none.
-//           Never colour — colour is already carrying identity, and in
-//           retro-dark positive and warn are the same amber.
+//           Never colour — colour is already carrying identity.
 //   tooltip prompt tokens, TTFT, exact values
 //
 // Colour is painted through `text-chat-*` classes and `currentColor`, so the

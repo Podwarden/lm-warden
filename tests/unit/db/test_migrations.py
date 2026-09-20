@@ -65,8 +65,10 @@ async def test_migrations_idempotent(tmp_data_dir):
         # reads one page off an index instead of sorting the table) + 0036
         # (model_variants + token_model_usage_minute + request_history.variant_id:
         # the per-(key, model variant) minute rollup behind the token page's
-        # "Usage by model" card, no backfill).
-        assert count == 35
+        # "Usage by model" card, no backfill) + 0037 (api_tokens.created_by +
+        # idx_api_tokens_scope + admin_audit: admin tokens for the control API
+        # and the audit trail of every request they make).
+        assert count == 36
 
 
 async def test_migrations_create_all_v2_tables(tmp_data_dir):

@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.auth.bearer import ADMIN_TOKEN_PREFIX, parse_bearer_header
 from app.auth.cookies import cookie_secure
 
 
@@ -81,13 +82,26 @@ _BYPASS_PREFIXES = (
 )
 
 
+def _admin_bearer(request: Request) -> bool:
+    """``Authorization: Bearer vwa_...`` (spec 2026-09-19, decision 8).
+
+    CSRF defends the credentials a browser attaches by itself -- cookies. A
+    bearer header is not one: a cross-site page cannot set it without a CORS
+    preflight this server never grants. An invalid admin token is still
+    refused, by the auth dependency's 401. Admin tokens only: the browser UI's
+    session JWT is a header too, but that request keeps the check as before.
+    """
+    token = parse_bearer_header(request.headers.get("authorization"))
+    return token is not None and token.startswith(ADMIN_TOKEN_PREFIX)
+
+
 async def csrf_check(request: Request, call_next) -> Response:
     """Reject mutating requests that lack a valid CSRF token."""
     if request.method in _SAFE_METHODS:
         return await call_next(request)
 
     path = request.url.path
-    if any(path.startswith(p) for p in _BYPASS_PREFIXES):
+    if any(path.startswith(p) for p in _BYPASS_PREFIXES) or _admin_bearer(request):
         return await call_next(request)
 
     token = request.headers.get("X-CSRF-Token")

@@ -208,6 +208,16 @@ async def lifespan(app: FastAPI):
     request_history = RequestHistoryStore(settings.db_path)
     app.state.request_history = request_history
 
+    # Admin-token audit trail (#258). Same shape and the same reason as the
+    # history writer above: AdminAuditMiddleware enqueues a finished request
+    # and never touches the database on the response path; the flusher below
+    # drains the queue in batches, one transaction each, and flushes what is
+    # queued when it is cancelled at shutdown.
+    from app.auth.admin_audit import AdminAuditWriter
+
+    admin_audit = AdminAuditWriter(settings.db_path)
+    app.state.admin_audit = admin_audit
+
     from app.runtime.stats_pruner import run_pruner_forever
     from app.runtime.stats_sampler import run_sampler_forever
     from app.runtime.watchdog import run_watchdog_forever
@@ -216,6 +226,7 @@ async def lifespan(app: FastAPI):
     pruner_task = asyncio.create_task(run_pruner_forever(settings))
     watchdog_task = asyncio.create_task(run_watchdog_forever(settings, app.state))
     history_task = asyncio.create_task(request_history.run_forever())
+    audit_task = asyncio.create_task(admin_audit.run_forever())
 
     # Chat2 (2026-08-23) — orphan/TTL/LRU collector for attachments (spec §3).
     # Same "log and keep going" shape as the other background loops above.
@@ -232,14 +243,17 @@ async def lifespan(app: FastAPI):
         watchdog_task.cancel()
         gc_task.cancel()
         # The history writer flushes what is queued on cancellation, so a
-        # request that finished a moment before shutdown is not lost.
+        # request that finished a moment before shutdown is not lost. The
+        # admin-audit flusher does the same for its rows (#258).
         history_task.cancel()
+        audit_task.cancel()
         await asyncio.gather(
             sampler_task,
             pruner_task,
             watchdog_task,
             gc_task,
             history_task,
+            audit_task,
             return_exceptions=True,
         )
 
@@ -279,7 +293,16 @@ async def lifespan(app: FastAPI):
 
 
 def build_app() -> FastAPI:
-    app = FastAPI(title="LLM Warden", lifespan=lifespan)
+    app = FastAPI(
+        title="LLM Warden",
+        lifespan=lifespan,
+        # No anonymous API map (spec 2026-09-19, decision 11). The document is
+        # served at GET /api/openapi.json behind a session or an admin token
+        # (app/openapi_spec.py); CI still builds it in-process via app.openapi().
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+    )
 
     from app.setup import routes_api as setup_routes_api
 
@@ -295,9 +318,10 @@ def build_app() -> FastAPI:
 
     # Model stress test (docs/superpowers/specs/2026-09-03-model-stress-test-design.md).
     # Shares the /api/models prefix: POST /{id}/stress starts a run,
-    # GET /{id}/capabilities returns the measured record. Operator JWT only --
-    # a run deliberately crashes the engine, so it is not reachable with a /v1
-    # API token (see app/stress/routes_api.py::require_operator).
+    # GET /{id}/capabilities returns the measured record. A signed-in
+    # session or an admin token only -- a run deliberately crashes the
+    # engine, so it is not reachable with a /v1 API token (see
+    # app/stress/routes_api.py::require_operator).
     from app.stress import routes_api as stress_routes_api
 
     app.include_router(stress_routes_api.router)
@@ -316,6 +340,15 @@ def build_app() -> FastAPI:
     from app.tokens import routes_api as tokens_routes_api
 
     app.include_router(tokens_routes_api.router)
+
+    # Admin tokens (spec 2026-09-19): Settings -> Admin tokens. Session-only.
+    from app.admin_tokens import routes_api as admin_tokens_routes_api
+
+    app.include_router(admin_tokens_routes_api.router)
+
+    from app import openapi_spec
+
+    app.include_router(openapi_spec.router)
 
     from app.stats import routes_api as stats_routes_api
 
@@ -438,11 +471,14 @@ def build_app() -> FastAPI:
     #   Chat2BodyLimitMiddleware (outermost — reject an oversized declared
     #                             Content-Length on POST /api/chat2/attachments
     #                             before anything else, including CSRF, runs)
+    #   AdminAuditMiddleware     (wraps the CSRF pair; pure ASGI; reads
+    #                             request.state.admin_audit after the app
+    #                             returns)
     #   ensure_csrf_id           (populates request.state.csrf_id / csrf_token)
     #   csrf_check               (validates X-CSRF-Token after csrf_id is set)
     #
     # Therefore: csrf_check is added first (→ innermost), ensure_csrf_id next,
-    # Chat2BodyLimitMiddleware last (→ outermost).
+    # AdminAuditMiddleware next, Chat2BodyLimitMiddleware last (→ outermost).
 
     @app.middleware("http")
     async def _csrf_check(request: Request, call_next):
@@ -451,6 +487,14 @@ def build_app() -> FastAPI:
     @app.middleware("http")
     async def _ensure_csrf_id(request: Request, call_next):
         return await ensure_csrf_id(request, call_next)
+
+    # Admin-token audit trail (spec 2026-09-19, decision 7). Pure ASGI, so a
+    # streamed response passes through untouched and the row is written after
+    # its last byte. Added here: it wraps the CSRF pair, and the chat2 body
+    # limit below stays outermost.
+    from app.auth.admin_audit import AdminAuditMiddleware
+
+    app.add_middleware(AdminAuditMiddleware)
 
     # Chat2 (2026-08-23) — T5 fix round 2: FastAPI resolves route dependencies
     # (the UploadFile/Form parameters on POST /api/chat2/attachments) by
@@ -475,6 +519,10 @@ def build_app() -> FastAPI:
         from app.system.gpu import gpu_probe_health
 
         return {"ok": True, "gpu": gpu_probe_health().as_dict()}
+
+    # After every route exists: the bearer scheme and the public exemptions are
+    # computed from the mounted routes.
+    openapi_spec.install_openapi(app)
 
     return app
 

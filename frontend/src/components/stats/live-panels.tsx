@@ -9,9 +9,9 @@
 //   * absent metrics render as absent, never as 0 (design spec §9.3) — a
 //     llama.cpp engine that publishes no KV gauge gets "not reported", and a
 //     combined figure carries its provenance ("N of M models report this");
-//   * colour is never the only signal — in retro-dark `--chat-positive` and
-//     `--chat-warn` are the same amber, so states also differ by shape
-//     (pill vs rounded rect) or wording.
+//   * colour is never the only signal — states also differ by shape (pill vs
+//     rounded rect) or wording, so the encoding survives a colour-blind
+//     reader and a monochrome print.
 //
 // Everything here paints through the app's `--chat-*` theme tokens (the
 // `chat-*` Tailwind utilities from @podwarden/chat-ui's preset) — no literal
@@ -97,8 +97,7 @@ export function ScopeNote({ children }: { children: React.ReactNode }) {
 
 // Fill classes for the pressure meter. The numeric label beside every meter
 // carries the exact figure, and the threshold ticks stay visible, so the
-// encoding never rests on colour alone (retro-dark maps positive and warn to
-// the same amber on purpose).
+// encoding never rests on colour alone (shape and wording carry it too).
 const PRESSURE_FILL: Record<Pressure, string> = {
   healthy: "bg-chat-positive",
   warm: "bg-chat-warn",
@@ -202,8 +201,8 @@ export function engineStateOf(
 const STATE_META: Record<EngineState, { label: string; className: string; title: string }> = {
   healthy: {
     label: "Healthy",
-    // Rounded RECT — queueing is a pill. In retro-dark positive and warn are
-    // the same amber, so the shape has to carry the difference.
+    // Rounded RECT — queueing is a pill. Colour separates them too (green vs
+    // amber), but the shape carries it without colour.
     className:
       "rounded-md border border-chat-positive/50 bg-chat-positive/10 text-chat-positive",
     title: "Decode-bound and keeping up. No queue.",
@@ -561,7 +560,7 @@ function PhasePill({ phase }: { phase: string }) {
     <span
       className={cn(
         // Decode is a rounded rect, prefill a pill — shape as well as tone,
-        // because retro-dark's positive and warn are the same amber.
+        // so the pair reads without colour.
         "inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium",
         decode
           ? "rounded-md bg-chat-positive/15 text-chat-positive"

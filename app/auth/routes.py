@@ -4,7 +4,7 @@ from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from app.auth.cookies import cookie_secure
-from app.auth.deps import require_jwt
+from app.auth.deps import require_session, session_stream_key
 from app.auth.jwt import decode, mint_access, mint_refresh
 from app.auth.origin import origin_check_dep
 from app.db.database import open_db
@@ -55,8 +55,10 @@ async def login(body: LoginBody, request: Request, response: Response):
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT,
              dependencies=[Depends(origin_check_dep)])
 async def logout(request: Request, response: Response,
-                 user: str = Depends(require_jwt)):
-    request.app.state.stream_registry.cancel_user(user)
+                 user: str = Depends(require_session)):
+    # This session's streams (keyed session:<username>); an admin token's
+    # streams are keyed by the token and outlive a browser logout.
+    request.app.state.stream_registry.cancel_user(session_stream_key(user))
     # Match every attribute the cookie was SET with. A browser keys a cookie
     # on (name, domain, path), so the expiry alone does the deletion -- but a
     # deletion that disagrees on `secure`/`samesite` is rejected outright by
@@ -96,7 +98,7 @@ class TicketBody(BaseModel):
 
 @router.post("/sse-ticket")
 async def mint_sse_ticket(
-    body: TicketBody, request: Request, user: str = Depends(require_jwt)
+    body: TicketBody, request: Request, user: str = Depends(require_session)
 ):
     # God mode is the one stream that can be switched off at runtime. The
     # browser's EventSource can never read the stream endpoint's own 409

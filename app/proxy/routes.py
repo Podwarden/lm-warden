@@ -35,6 +35,7 @@ from app.runtime.variants import (
     mark_recorded,
     running_variant,
 )
+from app.utils.client_ip import client_ip as _client_ip
 
 logger = logging.getLogger(__name__)
 
@@ -53,16 +54,15 @@ _RUNAWAY_PATHS = ("/v1/chat/completions", "/v1/completions")
 # (no per-delta tokenize — see docs/live-stats-spec.md § "Plane B").
 _LIVE_UPDATE_INTERVAL_S = 0.5
 
-
-def _client_ip(request: Request) -> str | None:
-    """First X-Forwarded-For hop, else X-Real-Ip, else the socket peer."""
-    xff = request.headers.get("x-forwarded-for")
-    if xff:
-        return xff.split(",")[0].strip() or None
-    xri = request.headers.get("x-real-ip")
-    if xri:
-        return xri.strip() or None
-    return request.client.host if request.client else None
+# The single clock `_forward` reads for queue-wait / duration / TTFT timing
+# (request_start, the admission-gate span, started_monotonic, ttft, and the
+# `now` passed into `finished_record`). It is `time.monotonic` by another
+# name in production. Tests patch THIS name rather than `time.monotonic`
+# itself: monkeypatching the real `time.monotonic` also freezes asyncio's own
+# event-loop clock (loop.time() reads it too), which can wedge any coroutine
+# with a real scheduled callback (background writers, retries, ...) — see
+# tests/unit/proxy/test_queue_wait_recorded.py.
+_monotonic = time.monotonic
 
 
 async def _resolve_target(request: Request, served_name: str):
@@ -476,7 +476,7 @@ async def _forward(
     if variant is None:
         variant = running_variant(request.app.state, model)
     # Wall-clock origin for the server-side reaper (see settings.request_max_wall_s).
-    request_start = time.monotonic()
+    request_start = _monotonic()
 
     prompt_text = _extract_prompt(body_json)
     # fallback_repo: a GGUF-only repo ships no tokenizer.json, so counting
@@ -545,9 +545,9 @@ async def _forward(
     # subtracted from either. It is the WARDEN's queue only -- once admitted,
     # an engine keeps its own waiting queue (vLLM's continuous batching), and
     # THAT wait is inside ttft_s and invisible from here.
-    _queue_start = time.monotonic()
+    _queue_start = _monotonic()
     await slot_cm.__aenter__()
-    queued_s = time.monotonic() - _queue_start
+    queued_s = _monotonic() - _queue_start
     slot_released = False
 
     # #173 part B — push the token's priority into the engine itself. vLLM's
@@ -604,7 +604,7 @@ async def _forward(
                 path=path,
                 prompt_tokens=prompt_tokens,
                 max_model_len=model.max_model_len,
-                started_monotonic=time.monotonic(),
+                started_monotonic=_monotonic(),
                 started_iso=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
                 queued_s=queued_s,
             )
@@ -623,7 +623,7 @@ async def _forward(
         try:
             history = getattr(request.app.state, "request_history", None)
             if history is not None:
-                history.record(finished_record(live_req, now=time.monotonic()))
+                history.record(finished_record(live_req, now=_monotonic()))
         except Exception:  # noqa: BLE001 — bookkeeping must never fail a request
             logger.debug("stats: could not record finished request", exc_info=True)
         try:
@@ -711,7 +711,7 @@ async def _forward(
                     # break out: the `finally` below aclose()s the upstream
                     # response + httpx client, which makes vLLM abort the
                     # generation and free its KV blocks, and releases the slot.
-                    now = time.monotonic()
+                    now = _monotonic()
                     # (a) wall-clock backstop — pure arithmetic, checked always.
                     if max_wall > 0.0 and (now - request_start) >= max_wall:
                         if live_req is not None:
@@ -752,7 +752,7 @@ async def _forward(
                                 # and the only place every backend can be
                                 # measured the same way.
                                 if live_req.first_token_monotonic is None:
-                                    live_req.first_token_monotonic = time.monotonic()
+                                    live_req.first_token_monotonic = _monotonic()
                             except Exception:
                                 pass
                         # Cheap substring gate first: the hot path must not
@@ -1003,7 +1003,7 @@ async def _forward(
         # (vLLM aborts + frees KV) and releases the slot. 0.0 = disabled.
         max_wall = getattr(request.app.state.settings, "request_max_wall_s", 0.0) or 0.0
         if max_wall > 0.0:
-            remaining = max_wall - (time.monotonic() - request_start)
+            remaining = max_wall - (_monotonic() - request_start)
             content = await asyncio.wait_for(resp.aread(), timeout=max(remaining, 0.0))
         else:
             content = await resp.aread()

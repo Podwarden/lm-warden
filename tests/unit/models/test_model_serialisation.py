@@ -151,3 +151,13 @@ def test_engine_block_stays_none_until_a_channel_is_pinned():
         "vllm_version": "0.26.0",
         "image": "vllm/vllm-openai:v0.26.0",
     }
+
+
+def test_the_response_model_declares_every_serialised_field():
+    """ModelOut types GET /api/models(/{id}) in the OpenAPI spec. It must name
+    exactly what _serialise returns: a column added to ModelRow and published
+    by _serialise fails HERE until ModelOut declares it (extra="allow" keeps it
+    in the response meanwhile, so nothing is silently dropped)."""
+    from app.models.schemas import ModelOut
+
+    assert set(model_detail(_row()).keys()) == set(ModelOut.model_fields)

@@ -4,11 +4,13 @@ a successor with the ORIGINAL name.
 Direct ``TokenRepo.rotate()`` coverage so a regression in the repo layer
 shows up here before the higher-level endpoint tests get involved.
 """
+from datetime import timedelta
+
 import pytest
 
 from app.db.database import open_db
 from app.db.migrations import apply_migrations
-from app.db.repos.tokens import TokenRepo
+from app.db.repos.tokens import TokenRepo, sqlite_utc_in, sqlite_utc_now
 
 
 @pytest.fixture
@@ -111,3 +113,61 @@ async def test_special_chars_in_name_are_treated_as_literals(db):
     # next slot would be 10. With proper escaping, only literal
     # ``prod_bot (old N)`` matches and the next slot is 1.
     assert renamed_to == "prod_bot (old 1)"
+
+
+async def test_concurrent_rotate_does_not_fork_the_chain(db, monkeypatch):
+    """M7 (final-review 2026-09-19): a concurrent rotate can fork the chain.
+
+    ``rotate()``'s own top-of-function check (`pred_rotated_at is not
+    None`) only catches a rotation that had ALREADY committed by the time
+    our SELECT ran. It does nothing for two rotations racing past that
+    SELECT at the same time -- both see ``rotated_at IS NULL``, both then
+    rename the predecessor, INSERT a successor and mark it rotated. Without
+    a guard on the final UPDATE, both commit and the predecessor ends up
+    with two successors.
+
+    Simulated deterministically (no real second connection/thread needed):
+    ``_next_old_suffix`` is the last thing ``rotate()`` calls before its own
+    writes, i.e. exactly the gap between its SELECT and its write phase. We
+    monkeypatch it to run and COMMIT a full competing rotation right there,
+    reproducing the interleaving a real race would produce.
+    """
+    repo = TokenRepo(db)
+    await repo.create("old", "prod-bot", "vw_" + "1" * 32)
+    real_suffix = repo._next_old_suffix
+
+    async def racing_suffix(name: str, scope: str) -> int:
+        # A second, independent rotate() of the SAME predecessor lands and
+        # commits here -- before our own caller writes anything.
+        await db.execute(
+            "UPDATE api_tokens SET name = ? WHERE id = 'old'",
+            (f"{name} (old 1)",),
+        )
+        await db.execute(
+            "INSERT INTO api_tokens"
+            "(id, name, prefix, hash, scope, rotated_from, created_by) "
+            "VALUES ('racer-successor', ?, 'vwa_race', 'x', ?, 'old', 'admin')",
+            (name, scope),
+        )
+        await db.execute(
+            "UPDATE api_tokens SET rotated_at = ?, revoked_at = ? WHERE id = 'old'",
+            (sqlite_utc_now(), sqlite_utc_in(timedelta(hours=1))),
+        )
+        await db.commit()
+        return await real_suffix(name, scope)
+
+    monkeypatch.setattr(repo, "_next_old_suffix", racing_suffix)
+
+    with pytest.raises(ValueError, match="already rotated"):
+        await repo.rotate("old")
+
+    # The racer's successor is the ONLY one -- our own (losing) rename and
+    # INSERT must have been rolled back, not left half-applied.
+    cur = await db.execute("SELECT id FROM api_tokens WHERE rotated_from = 'old'")
+    successor_ids = [r[0] for r in await cur.fetchall()]
+    assert successor_ids == ["racer-successor"]
+
+    cur = await db.execute("SELECT name, rotated_at FROM api_tokens WHERE id = 'old'")
+    name, rotated_at = await cur.fetchone()
+    assert name == "prod-bot (old 1)"  # the racer's rename stuck
+    assert rotated_at is not None

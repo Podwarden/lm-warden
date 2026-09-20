@@ -3,6 +3,7 @@ import logging
 import time
 
 from app.db.database import open_db
+from app.db.repos import admin_audit
 from app.stats import request_history
 
 logger = logging.getLogger(__name__)
@@ -25,12 +26,22 @@ async def prune_once(settings) -> dict[str, int]:
         history = await request_history.prune(
             db, cutoff=history_cutoff, max_rows=history_max_rows
         )
+        # Admin-token audit (0037): 90 days, at most 200k rows total, and (#257)
+        # at most 20k rows per token so one noisy/leaked token can only evict
+        # its own history. Read through the module so a test can lower them.
+        audit = await admin_audit.prune(
+            db,
+            cutoff=time.time() - admin_audit.RETENTION_DAYS * 86400.0,
+            max_rows=admin_audit.MAX_ROWS,
+            per_token_max_rows=admin_audit.PER_TOKEN_MAX_ROWS,
+        )
         await db.commit()
         return {
             "model_samples": cur1.rowcount or 0,
             "gpu_samples": cur2.rowcount or 0,
             "power_samples": cur3.rowcount or 0,
             "request_history": history["by_age"] + history["by_count"],
+            "admin_audit": audit,
         }
 
 

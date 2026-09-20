@@ -30,6 +30,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response, StreamingResponse
 
 from app.auth.deps import require_jwt
+from app.auth.stream_guard import guard_stream
 from app.models.routes_logs import require_sse_ticket
 from app.proxy.godmode import MAX_TOKEN_IDS, event_matches, parse_token_ids
 from app.utils.sse import sse_headers
@@ -129,46 +130,45 @@ async def godmode_stream(
         raise HTTPException(422, str(exc)) from exc
 
     queue, snapshot = hub.subscribe()
-    registry = request.app.state.stream_registry
 
     async def gen():
-        current = asyncio.current_task()
-        registry.register(user, current)
         try:
-            yield CONNECTED_FRAME
-            # Replay the ring snapshot first so a freshly-opened page
-            # immediately shows the last few requests.
-            for event in snapshot:
-                if event_matches(event, wanted):
-                    yield f"data: {json.dumps(event)}\n\n"
-            # Live loop: block on the queue until the next keepalive is due;
-            # on timeout emit a comment frame and re-check the connection.
-            #
-            # The wait is the time REMAINING until that deadline, not a fresh
-            # KEEPALIVE_INTERVAL_S, and only a frame this client receives
-            # moves the deadline. A filtered stream can be busy with OTHER
-            # keys' events: each one wakes this loop without reaching the
-            # client, so a full-interval wait after it would let the gap grow
-            # to about twice the interval (#251). Unfiltered, every event is
-            # sent and resets the deadline, so the cadence is as before.
-            keepalive_due = time.monotonic() + KEEPALIVE_INTERVAL_S
-            while True:
-                if await request.is_disconnected():
-                    return
-                remaining = keepalive_due - time.monotonic()
-                try:
-                    if remaining <= 0:
-                        raise TimeoutError
-                    event = await asyncio.wait_for(queue.get(), timeout=remaining)
-                except TimeoutError:
-                    yield ": keepalive\n\n"
-                    keepalive_due = time.monotonic() + KEEPALIVE_INTERVAL_S
-                    continue
-                if event_matches(event, wanted):
-                    yield f"data: {json.dumps(event)}\n\n"
-                    keepalive_due = time.monotonic() + KEEPALIVE_INTERVAL_S
+            # Registered for logout / revoke, and an admin token re-checked
+            # while the stream is open (app/auth/stream_guard.py).
+            async with guard_stream(request, user):
+                yield CONNECTED_FRAME
+                # Replay the ring snapshot first so a freshly-opened page
+                # immediately shows the last few requests.
+                for event in snapshot:
+                    if event_matches(event, wanted):
+                        yield f"data: {json.dumps(event)}\n\n"
+                # Live loop: block on the queue until the next keepalive is due;
+                # on timeout emit a comment frame and re-check the connection.
+                #
+                # The wait is the time REMAINING until that deadline, not a fresh
+                # KEEPALIVE_INTERVAL_S, and only a frame this client receives
+                # moves the deadline. A filtered stream can be busy with OTHER
+                # keys' events: each one wakes this loop without reaching the
+                # client, so a full-interval wait after it would let the gap grow
+                # to about twice the interval (#251). Unfiltered, every event is
+                # sent and resets the deadline, so the cadence is as before.
+                keepalive_due = time.monotonic() + KEEPALIVE_INTERVAL_S
+                while True:
+                    if await request.is_disconnected():
+                        return
+                    remaining = keepalive_due - time.monotonic()
+                    try:
+                        if remaining <= 0:
+                            raise TimeoutError
+                        event = await asyncio.wait_for(queue.get(), timeout=remaining)
+                    except TimeoutError:
+                        yield ": keepalive\n\n"
+                        keepalive_due = time.monotonic() + KEEPALIVE_INTERVAL_S
+                        continue
+                    if event_matches(event, wanted):
+                        yield f"data: {json.dumps(event)}\n\n"
+                        keepalive_due = time.monotonic() + KEEPALIVE_INTERVAL_S
         finally:
-            registry.unregister(user, current)
             hub.unsubscribe(queue)
 
     return StreamingResponse(

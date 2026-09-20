@@ -78,18 +78,19 @@ def test_header_metrics_stream_requires_ticket(tmp_data_dir, client):
     SSE ticket (same as model log streams). Without a ticket query
     string the response should be rejected even with a valid Bearer.
 
-    FastAPI returns 422 (Unprocessable Entity) when the required
-    ``ticket`` query param is missing (validation layer fires before
-    our dependency runs). With an *invalid* ticket the response is
-    401. Either way the stream MUST NOT start — we assert both
-    branches to pin the contract.
+    Without a ticket require_sse_ticket answers 401 `missing ticket` --
+    a session JWT header does not replace the ticket (only an admin
+    token's does). With an *invalid* ticket the response is 401. Either
+    way the stream MUST NOT start — we assert both branches to pin the
+    contract.
     """
     client.get("/healthz")
     _seed_done(tmp_data_dir / "vllm-warden.db")
     auth = jwt_login(client)
-    # 1) Missing ticket → 422 from FastAPI Query(...) validation.
+    # 1) Missing ticket → 401 from require_sse_ticket (JWT header ignored).
     r = client.get("/api/header/metrics/stream", headers=auth)
-    assert r.status_code == 422, r.text
+    assert r.status_code == 401, r.text
+    assert r.json()["detail"] == "missing ticket"
     # 2) Bogus ticket → 401 from require_sse_ticket consume().
     r = client.get(
         "/api/header/metrics/stream?ticket=not-a-real-ticket", headers=auth

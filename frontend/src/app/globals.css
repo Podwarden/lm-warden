@@ -44,7 +44,7 @@
   --chat-warn-dim: 245 158 11;
   --chat-negative: 220 38 38;      /* #dc2626 */
   --chat-negative-dim: 254 226 226;
-  --chat-positive: 146 64 14;
+  --chat-positive: 4 120 87;      /* #047857 -- green, not amber: "healthy" must not read as a warning */
   --chat-code: 253 246 236;
   --chat-on-accent: 255 255 255;
 
@@ -230,7 +230,7 @@
   --chat-warn-dim: 245 158 11;
   --chat-negative: 248 113 113;
   --chat-negative-dim: 69 10 10;
-  --chat-positive: 245 158 11;
+  --chat-positive: 52 211 153;     /* #34d399 -- green, not amber: "healthy" must not read as a warning */
   --chat-code: 28 20 9;
   --chat-on-accent: 28 20 9;
 
