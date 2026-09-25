@@ -1,7 +1,16 @@
 [project]
-name = "vllm-warden"
+name = "lm-warden"
 version = "2.0.0"
+description = "Self-hosted, OpenAI-compatible LLM API on your own NVIDIA GPUs: vLLM and llama.cpp behind one port, with per-key auth, usage accounting and GPU observability."
+readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.11"
+
+[project.urls]
+Homepage = "https://lmwarden.com"
+Repository = "https://github.com/Podwarden/lm-warden"
+Issues = "https://github.com/Podwarden/lm-warden/issues"
+Changelog = "https://github.com/Podwarden/lm-warden/blob/main/CHANGELOG.md"
 
 [tool.ruff]
 line-length = 100

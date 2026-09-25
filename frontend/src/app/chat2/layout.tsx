@@ -3,7 +3,7 @@
 // component that does nothing but pass its children through.
 import type { ReactNode } from 'react';
 
-export const metadata = { title: 'Chat 2 · LLM Warden' };
+export const metadata = { title: 'Chat 2 · LM Warden' };
 
 export default function Chat2Layout({ children }: { children: ReactNode }) {
   return children;

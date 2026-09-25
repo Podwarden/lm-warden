@@ -21,7 +21,7 @@ The claims under test:
      wizard can be resumed rather than restarted.
   4. Posting out of order returns 400 "not at <x> step (current: <y>)".
   5. The HF token accepts JSON null.
-  6. The password must be >= 6 chars and <= 72 bytes.
+  6. The password must be >= 12 characters and <= 72 bytes.
   7. GET /api/csrf returns the key `csrf` -- NOT `csrf_token`.
   8. A minted API token's plaintext is returned once and never again.
 """
@@ -84,7 +84,7 @@ def test_documented_setup_sequence_completes_without_csrf(
 
     # 6. POST /api/setup/admin
     r = client.post(
-        "/api/setup/admin", json={"username": "admin", "password": "s3cret-pw"}
+        "/api/setup/admin", json={"username": "admin", "password": "s3cret-passphrase"}
     )
     assert r.status_code == 200, r.text
     assert r.json() == {"step": "done"}
@@ -105,7 +105,8 @@ def test_out_of_order_step_reports_where_you_actually_are(tmp_data_dir, client):
 @pytest.mark.parametrize(
     "password,detail",
     [
-        ("short", "password must be at least 6 chars"),
+        ("short", "password must be at least 12 characters"),
+        ("x" * 11, "password must be at least 12 characters"),
         ("x" * 73, "password must be at most 72 bytes"),
     ],
 )
@@ -153,12 +154,12 @@ def test_documented_token_mint_bootstrap(tmp_data_dir, client, two_gpus):
     client.post("/api/setup/welcome")
     client.post("/api/setup/gpus", json={"allowed_gpu_indices": [0]})
     client.post("/api/setup/hf_token", json={"hf_token": None})
-    client.post("/api/setup/admin", json={"username": "admin", "password": "s3cret-pw"})
+    client.post("/api/setup/admin", json={"username": "admin", "password": "s3cret-passphrase"})
 
     csrf = client.get("/api/csrf").json()["csrf"]
 
     login = client.post(
-        "/api/auth/login", json={"username": "admin", "password": "s3cret-pw"}
+        "/api/auth/login", json={"username": "admin", "password": "s3cret-passphrase"}
     )
     assert login.status_code == 200, login.text
     jwt = login.json()["access_token"]
@@ -196,11 +197,11 @@ def test_minted_token_gates_the_openai_endpoint(tmp_data_dir, client, two_gpus):
     client.post("/api/setup/welcome")
     client.post("/api/setup/gpus", json={"allowed_gpu_indices": [0]})
     client.post("/api/setup/hf_token", json={"hf_token": None})
-    client.post("/api/setup/admin", json={"username": "admin", "password": "s3cret-pw"})
+    client.post("/api/setup/admin", json={"username": "admin", "password": "s3cret-passphrase"})
 
     csrf = client.get("/api/csrf").json()["csrf"]
     jwt = client.post(
-        "/api/auth/login", json={"username": "admin", "password": "s3cret-pw"}
+        "/api/auth/login", json={"username": "admin", "password": "s3cret-passphrase"}
     ).json()["access_token"]
     key = client.post(
         "/api/tokens",

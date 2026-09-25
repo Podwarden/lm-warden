@@ -8,7 +8,7 @@ class GpuConflict(RuntimeError):
 class GpuOwnership:
     """In-memory exclusive GPU ownership: gpu_idx -> model_id.
 
-    LLM Warden runs at most ONE loaded model per GPU. That is a deliberate
+    LM Warden runs at most ONE loaded model per GPU. That is a deliberate
     exclusivity rule, not a capacity check -- a conflict is refused here,
     before the engine is ever spawned, so no amount of lowering
     ``gpu_memory_utilization`` will get past it. (It would not help anyway:
@@ -57,7 +57,7 @@ class GpuOwnership:
             head = f"GPUs {listed} are already serving other models"
         return (
             f"{head} — unload it first, or load this model on a free GPU. "
-            "LLM Warden runs one loaded model per GPU."
+            "LM Warden runs one loaded model per GPU."
         )
 
     def release(self, model_id: str) -> None:

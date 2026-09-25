@@ -1,4 +1,4 @@
-# LLM Warden E2E Tests
+# LM Warden E2E Tests
 
 End-to-end tests using Playwright. **Not run in CI** — exercised manually against a live `docker compose` stack to validate the operator's happy-path flow before each release.
 
@@ -6,7 +6,7 @@ End-to-end tests using Playwright. **Not run in CI** — exercised manually agai
 
 ```bash
 # 1. Bring the stack up
-cd /path/to/vllm-warden
+cd /path/to/lm-warden
 docker compose up -d
 
 # 2. Wait for the UI to be reachable

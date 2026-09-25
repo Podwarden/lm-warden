@@ -3,7 +3,11 @@
 // Dual-mode "stick to bottom / free scroll" helper for streaming lists.
 //
 // Used by:
-//   - models/log-stream.tsx       (v17.11 #75 — vLLM stdout/stderr tail)
+//   - models/log-stream.tsx       (vLLM stdout/stderr tail — a plain scroll
+//                                  container since fix/live-log-drag-select;
+//                                  it uses only `mode`, `onAtBottomStateChange`
+//                                  and `jumpToLatest`, and does its own follow)
+//   - godmode/godmode-viewer.tsx  (Virtuoso; also uses `followOutput`)
 //
 // Originally also driven the bench/events-tab tail; that consumer was
 // removed in epic/overhaul S1. The hook stays in `shared/` because the

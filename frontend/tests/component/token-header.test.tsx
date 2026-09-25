@@ -19,7 +19,7 @@ describe('TokenHeader', () => {
 
   it('renders the mockup header copy', () => {
     renderHeader();
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('opencode-ip-macbook');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('opencode-laptop');
     expect(screen.getByText('vw_6gqfa…')).toBeInTheDocument();
     expect(screen.getByText('Created Sep 6, 13:59')).toBeInTheDocument();
     expect(screen.getByText('Never expires')).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe('TokenHeader', () => {
     expect(screen.queryByRole('link', { name: 'API tokens' })).toBeNull();
     const first = container.firstElementChild!;
     expect(first.className).toBe('flex flex-wrap items-start justify-between gap-4');
-    expect(first.querySelector('h1')).toHaveTextContent('opencode-ip-macbook');
+    expect(first.querySelector('h1')).toHaveTextContent('opencode-laptop');
   });
 
   it('lays the pencil icon out inline on the baseline, like the mockup (preflight makes svg block + middle)', () => {
@@ -58,7 +58,7 @@ describe('TokenHeader', () => {
     const p = renderHeader();
     fireEvent.click(screen.getByRole('button', { name: 'Rename token' }));
     const input = screen.getByRole('textbox', { name: 'Token name' });
-    expect(input).toHaveValue('opencode-ip-macbook');
+    expect(input).toHaveValue('opencode-laptop');
     expect(input).toHaveFocus();
     expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
 

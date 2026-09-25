@@ -1,6 +1,8 @@
 import json
 import sqlite3
 
+import pytest
+
 from tests.conftest import csrf_header
 
 
@@ -57,7 +59,7 @@ def test_post_admin_creates_user_and_finalizes(tmp_data_dir, client):
     )
     r = client.post(
         "/api/setup/admin",
-        json={"username": "admin", "password": "hunter2"},
+        json={"username": "admin", "password": "hunter2-hunter2"},
         headers=csrf_header(client),
     )
     assert r.status_code == 200
@@ -80,3 +82,25 @@ def test_post_admin_rejects_short_password(tmp_data_dir, client):
         headers=csrf_header(client),
     )
     assert r.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "password,ok",
+    [
+        ("a" * 11, False),
+        ("a" * 12, True),
+        ("é" * 12, True),  # 12 characters, 24 bytes
+        ("é" * 36, True),  # 72 bytes exactly
+        ("é" * 37, False),  # 74 bytes: past bcrypt's limit
+    ],
+)
+def test_post_admin_password_bounds(tmp_data_dir, client, password, ok):
+    client.get("/healthz")
+    _seed_to_step(tmp_data_dir / "vllm-warden.db", "admin", {})
+    r = client.post(
+        "/api/setup/admin", json={"username": "admin", "password": password},
+        headers=csrf_header(client),
+    )
+    assert (r.status_code == 200) is ok, r.text
+    if not ok:
+        assert r.status_code == 400

@@ -14,7 +14,7 @@ export const RUNTIME_HINTS: Record<string, FieldHint> = {
   },
   admin_password: {
     label: 'Admin password',
-    hint: 'Updates the bcrypt hash. All sessions invalidated on change.',
+    hint: 'Updates the bcrypt hash. All sessions invalidated on change. At least 12 characters (at most 72 bytes).',
     restart: 'none',
   },
   hf_token: {

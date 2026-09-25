@@ -1,7 +1,7 @@
 # Hazards worth reading before you load anything
 
 Each of the following is a thing that costs an afternoon to diagnose and one
-paragraph to prevent. They are true of LLM Warden however it was deployed.
+paragraph to prevent. They are true of LM Warden however it was deployed.
 
 ## Shared memory: tensor-parallel models need 2 GiB of `/dev/shm`
 
@@ -46,7 +46,7 @@ card is refused:
 
 ```
 GPU 0 is already serving 'qwen2.5-1.5b' — unload it first, or load this model
-on a free GPU. LLM Warden runs one loaded model per GPU.
+on a free GPU. LM Warden runs one loaded model per GPU.
 ```
 
 **This is an ownership claim, not a VRAM check.** It is decided in the control

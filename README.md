@@ -1,13 +1,15 @@
-# LLM Warden
+# LM Warden
 
-**Your own OpenAI-compatible API, on your own NVIDIA GPUs. Two mainline engines
+**Your own OpenAI-compatible LLM API, on your own NVIDIA GPUs. Two mainline engines
 — vLLM and llama.cpp — behind one control plane, one port, and a browser UI.**
+
+> LM Warden was formerly called LLM Warden (and, before that, vLLM Warden); existing installs upgrade in place — see [documents/OPERATING.md](documents/OPERATING.md#day-to-day). Website: [lmwarden.com](https://lmwarden.com).
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Engines](https://img.shields.io/badge/engines-vLLM%200.26.0%20%C2%B7%20llama.cpp%20b10731-4b8bbe.svg)](#two-engines-and-the-model-that-made-us-add-the-second)
 [![Deploy](https://img.shields.io/badge/deploy-Docker%20Compose-2496ed.svg)](documents/INSTALL.md)
 
-![LLM Warden stats — host VRAM, GPU utilisation and power, and a week of GPU utilisation and power draw](assets/screenshots/01-stats-overview.jpg)
+![LM Warden's Stats page under load, stepping through its 1 h, 6 h and 24 h windows: host VRAM, GPU utilisation, power draw and tokens per minute](app/landing/assets/demo-stats.gif)
 
 You have NVIDIA GPUs — in a rack, in a workstation, or two cards bought
 eighteen months apart in a box under a desk. You want what is on them to be
@@ -19,7 +21,7 @@ hardware is doing — without one container per model, a
 `--tensor-parallel-size` you arrived at by bisection, and `nvidia-smi` open in
 a second terminal to find out why a request is slow.
 
-LLM Warden is the control plane around the engines. Pull a model from
+LM Warden is the control plane around the engines. Pull a model from
 HuggingFace, load it, mint a key, open that key's page to see what it spent
 and how long its requests waited, watch what the card is actually doing. One
 published port, so your own TLS terminator, ingress, SSO or network policy
@@ -139,11 +141,28 @@ A Linux host with Docker, Docker Compose v2.24+ (v5.x is fine), an NVIDIA GPU,
 the NVIDIA Container Toolkit, and 40 GB free where Docker keeps its images:
 
 ```bash
-git clone https://github.com/Podwarden/vllm-warden.git
-cd vllm-warden
+git clone https://github.com/Podwarden/lm-warden.git
+cd lm-warden
 ./install.sh
 make smoke      # 200s across / /_landing /ui/ /api/csrf /healthz
 ```
+
+Or without a clone — the installer downloads the source tree into the
+directory you name, then proceeds exactly as above:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Podwarden/lm-warden/main/install.sh | sh -s -- --dir /opt/vllm-warden
+```
+
+Any directory works; add `--yes` for automation.
+[documents/INSTALL.md](documents/INSTALL.md) covers both routes flag by flag.
+
+> **Upgrading an install from before the rename to `lm-warden`?** Keep its
+> existing directory and `.env` (which pins `COMPOSE_PROJECT_NAME=vllm-warden`,
+> the name your volumes live under); a fresh clone into `lm-warden/` without
+> that line would start on new, empty volumes. The old image names
+> (`vllm-warden`, `llm-warden`) are still published until 2026-12-31. Details:
+> [documents/OPERATING.md](documents/OPERATING.md#day-to-day).
 
 The installer checks the host, lets you pick GPUs, generates the secrets, pulls
 the release images and offers to start the stack — every route, every flag and
@@ -254,7 +273,7 @@ A bare engine is a single-model process. This is what sits around it — and
 once the hardware is bought, a request costs electricity rather than a
 per-token line on someone's invoice.
 
-| A bare engine | With LLM Warden |
+| A bare engine | With LM Warden |
 |---|---|
 | One model per container, restart to switch | Register, pull, load and unload from the browser |
 | One engine, take it or leave it | vLLM **and** llama.cpp, chosen per model |
@@ -316,6 +335,8 @@ per-token line on someone's invoice.
   the stack contacting huggingface.co at all. See
   [Offline / air-gapped install](documents/INSTALL.md#a7-offline--air-gapped-install).
 
+![LM Warden requests chart — a week of requests plotted by duration, coloured by API key, sized by generated tokens and shaped by how each one finished](app/landing/assets/shot-requests-7d.webp)
+
 <table>
 <tr>
 <td width="50%"><img src="assets/screenshots/05-quant-fit.jpg" alt="Add model: every quant of a 35B GGUF repo, each marked fits or won't fit"><br>
@@ -365,7 +386,7 @@ response — per key, median and 95th percentile, next to the tokens and request
 it sent. A bin with no requests is left empty rather than drawn as zero.</td>
 </tr>
 <tr>
-<td colspan="2"><img src="assets/screenshots/12-token-godmode-dock.jpg" alt="The god-mode dock open at the bottom of a key's page, live, replaying that key's recent requests and streaming a response as it is generated"><br>
+<td colspan="2"><img src="app/landing/assets/demo-token-poster.webp" alt="The god-mode dock open at the bottom of a key's page, live, replaying that key's recent requests and streaming a response as it is generated"><br>
 <b>God mode, one key at a time.</b> Open the dock at the bottom of a key's page to
 watch that key's prompts and responses as they happen, earlier keys included.
 Close it and the stream stops — nothing is watched in the background. Off by
@@ -419,14 +440,29 @@ Each of these is one hop from here and says what it holds.
   long that takes and how to make it shorter, the dev targets, and how to add a
   third backend.
 
+## Contributing
+
+Bug reports, feature requests and pull requests are welcome on
+[GitHub](https://github.com/Podwarden/lm-warden/issues). Building from source,
+running the tests and the one rule a change cannot break are in
+[.github/CONTRIBUTING.md](.github/CONTRIBUTING.md). Everyone taking part is
+expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Security
+
+Please do not report a vulnerability in a public issue. Use GitHub's
+[private vulnerability reporting](https://github.com/Podwarden/lm-warden/security/advisories/new)
+instead; [SECURITY.md](SECURITY.md) says what to include and what happens next.
+
 ## License
 
-[Apache License 2.0](LICENSE).
+[Apache License 2.0](LICENSE). Third-party components and their licences are
+listed in [NOTICE](NOTICE).
 
 ## Trademarks
 
 vLLM is a project of the [vLLM team](https://github.com/vllm-project/vllm).
 llama.cpp is a project of
 [ggml.ai and its contributors](https://github.com/ggml-org/llama.cpp). PodWarden
-is a trademark of its operators. LLM Warden is not affiliated with or endorsed
+is a trademark of its operators. LM Warden is not affiliated with or endorsed
 by any of them.

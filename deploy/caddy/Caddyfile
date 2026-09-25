@@ -1,4 +1,4 @@
-# vllm-warden unified-port front-door (issue #155).
+# LM Warden unified-port front-door (issue #155).
 #
 # Caddy listens on :8080 (the sole host-published port) and fans out to
 # the internal api + ui containers. External reverse proxies (e.g.
@@ -7,6 +7,8 @@
 #
 # Routing map (see docs/superpowers/specs/2026-05-23-unified-port-architecture-design.md):
 #   GET /            → api:8080 /_landing   (public landing HTML, gated by setting)
+#   /_landing/*      → api:8080             (the landing page's video, images, fonts)
+#   /robots.txt, /sitemap.xml, /llms.txt, /llms-full.txt → api:8080
 #   /ui/*            → ui:3000              (Next.js basePath '/ui')
 #   /_next/*         → ui:3000              (safety net — Next emits /ui/_next under basePath)
 #   /api/*           → api:8080
@@ -21,6 +23,19 @@
     # admin API off (default :2019 not published, but be explicit so a future
     # network change can't accidentally expose it).
     admin off
+
+    # When THIS Caddy sits behind another proxy (Traefik on a cluster, a TLS
+    # terminator on the host), believe the X-Forwarded-For / -Proto that
+    # proxy sends and append to it, instead of replacing it with the proxy's
+    # own address. Without this every visitor reaches the api as the outer
+    # proxy's IP; the api then cannot tell them apart, so it never locks that
+    # address and brute-force protection falls back to slowing failed logins
+    # down (docs/operating.md). Only private-range peers are trusted, so a client
+    # connecting from the internet still cannot write the header.
+    # The api applies the same rule on its side (VW_TRUSTED_PROXIES).
+    servers {
+        trusted_proxies static private_ranges
+    }
     log {
         output stderr
         format console
@@ -41,6 +56,21 @@
     }
 
     handle /_landing {
+        reverse_proxy api:8080
+    }
+
+    # The landing page's own assets (video, screenshots, fonts). Served from
+    # a filename allowlist by the api with Range support and year-long
+    # immutable caching (URLs carry a content hash). Same setting gate.
+    handle /_landing/* {
+        reverse_proxy api:8080
+    }
+
+    # Crawler and language-model entry points. robots.txt is disallow-all
+    # unless VW_LANDING_CANONICAL_URL makes this instance indexable; the
+    # sitemap exists only then. See app/landing/routes.py.
+    @landing_text path /robots.txt /sitemap.xml /llms.txt /llms-full.txt
+    handle @landing_text {
         reverse_proxy api:8080
     }
 

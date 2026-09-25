@@ -1,7 +1,7 @@
 'use client';
 // Nav shell — matches PodWarden Core / Hub design language.
 //
-// - left brand block: Shield + "LLM Warden" in emerald
+// - left brand block: Shield + "LM Warden" in emerald
 // - right cluster: ThemeSwitcher + emerald hamburger button
 // - dropdown menu with user-style menu rows + version footer
 // Hidden entirely on /login and /setup so the unauthenticated flows render
@@ -194,7 +194,7 @@ export function NavBar() {
   return (
     <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur relative z-20">
       <nav className="container mx-auto px-4 flex h-14 items-center justify-between">
-        {/* Brand block — Shield + "LLM Warden" in emerald. The product name
+        {/* Brand block — Shield + "LM Warden" in emerald. The product name
             is engine-neutral: it serves vLLM and llama.cpp, so the wordmark
             must not name one of them. Identity strings (the `vllm-warden`
             slug, image names, `VW_` env vars) are deliberately unchanged. */}
@@ -203,7 +203,7 @@ export function NavBar() {
           className="flex items-center gap-2 text-lg font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
         >
           <Shield className="h-5 w-5" aria-hidden="true" />
-          <span>LLM Warden</span>
+          <span>LM Warden</span>
         </Link>
 
         <div className="flex items-center gap-2">

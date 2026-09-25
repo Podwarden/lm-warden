@@ -24,6 +24,7 @@ function setup(p: Partial<UsageSectionProps> = {}) {
   const props: UsageSectionProps = {
     sel: { kind: 'preset', preset: '7d' }, window: WIN, bounds: { from: START, to: NOW },
     showChainToggle: true, chain: true, onChainChange: vi.fn(), onPreset: vi.fn(), onCustom: vi.fn(),
+    onReset: vi.fn(), resetDisabled: true,
     onWindowChange: vi.fn(), onApply: vi.fn(), rangeError: null,
     strip: { chain: null, own: null, rotations: [NOW - 12 * 86400] },
     series: seriesFixture(), ...p,
@@ -269,6 +270,29 @@ describe('UsageSection', () => {
     const b2 = screen.getByRole('slider');
     expect(parseFloat(b2.style.left) + parseFloat(b2.style.width)).toBeLessThanOrEqual(800);
     expect(parseFloat(b2.style.left)).toBeGreaterThanOrEqual(0);
+  });
+
+  it('Reset is disabled at the default period and reports up otherwise', () => {
+    setup();
+    expect(screen.getByRole('button', { name: 'Reset' })).toBeDisabled();
+    cleanup();
+    const { props } = setup({ resetDisabled: false });
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    expect(props.onReset).toHaveBeenCalledTimes(1);
+  });
+
+  it('zoomed: the strip draws the view, says so, and typed times still clamp to the lifetime', () => {
+    const view = { from: NOW - 2 * 86400, to: NOW - 86400 };
+    const { props } = setup({ sel: { kind: 'custom', ...view }, window: view, view, zoomed: true });
+    const slider = screen.getByRole('slider');
+    expect(slider).toHaveAttribute('aria-valuemin', String(view.from));
+    expect(slider).toHaveAttribute('aria-valuemax', String(view.to));
+    expect(screen.getByText(/^Zoomed to the applied period/)).toBeInTheDocument();
+    // Earlier than the zoomed view but inside the key's life: not clamped.
+    fireEvent.change(screen.getByLabelText('From'), { target: { value: toInputValue(NOW - 10 * 86400) } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(props.onApply).toHaveBeenLastCalledWith({ from: NOW - 10 * 86400, to: view.to });
+    expect(screen.queryByText(/Adjusted to this key/)).not.toBeInTheDocument();
   });
 
   it('shows the server 422 text in the custom row', () => {

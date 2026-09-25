@@ -23,7 +23,7 @@ class BudgetPolicy(Protocol):
 
 
 class AlwaysAllow:
-    """LLM Warden never charges; the Hub wires its rolling windows here."""
+    """LM Warden never charges; the Hub wires its rolling windows here."""
 
     async def check(self, user_id: int, org_id: str | None) -> BudgetDecision:
         return BudgetDecision(allowed=True)

@@ -28,6 +28,20 @@ def verify_csrf_token(token: str, session_id: str, *, secret: str) -> bool:
 _CSRF_COOKIE = "vw_csrf_id"
 _SESSION_COOKIE = "vw_session"
 
+# The public landing page and its companions (app/landing/routes.py) never
+# carry a form or a mutating call, so an anonymous visitor there gets no
+# cookie. Minting one made every response -- including the year-long
+# immutable video and image assets -- carry Set-Cookie, which a CDN in front
+# of a public instance treats as "do not cache", and handed a cookie to every
+# ad click that never goes near the console. The UI mints its own through
+# /api/csrf.
+_NO_MINT_PATHS = frozenset({"/_landing", "/robots.txt", "/sitemap.xml", "/llms.txt", "/llms-full.txt"})
+_NO_MINT_PREFIXES = ("/_landing/",)
+
+
+def _mints_cookie(path: str) -> bool:
+    return path not in _NO_MINT_PATHS and not path.startswith(_NO_MINT_PREFIXES)
+
 
 async def ensure_csrf_id(request: Request, call_next) -> Response:
     """Populate request.state.csrf_id / csrf_token; auto-mint vw_csrf_id when needed."""
@@ -51,7 +65,7 @@ async def ensure_csrf_id(request: Request, call_next) -> Response:
 
     response: Response = await call_next(request)
 
-    if minted_new:
+    if minted_new and _mints_cookie(request.url.path):
         # Same derivation as the refresh cookie (app/auth/cookies.py). These
         # two used to disagree -- refresh hardcoded Secure, this one hardcoded
         # not-Secure -- so on the documented plain-HTTP quick start the

@@ -6,7 +6,7 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import {
-  binLabel, fillBins, PRESETS, spanWords,
+  binLabel, DEFAULT_RANGE, fillBins, PRESETS, spanWords,
   type Preset, type RangeSel, type TokenSeries,
 } from "@/lib/token-series";
 import { compact, day, fromInputValue, hhmm, toInputValue } from "@/lib/token-format";
@@ -17,12 +17,22 @@ import { btn } from "./styles";
 export interface UsageSectionProps {
   sel: RangeSel;
   window: StripWindow;
+  /** The key's lifetime: typed times are clamped to it. */
   bounds: StripWindow;
+  /** The strip's drawn axis. Omitted → `bounds` (the whole life). A custom
+   *  Apply zooms it to the applied period. */
+  view?: StripWindow;
+  /** The strip is zoomed in (its copy says so and how to get back). */
+  zoomed?: boolean;
   showChainToggle: boolean;
   chain: boolean;
   onChainChange: (on: boolean) => void;
   onPreset: (p: Preset) => void;
   onCustom: () => void;
+  /** Back to the default period, zoomed out. */
+  onReset: () => void;
+  /** Already at the default period, zoomed out: Reset has nothing to do. */
+  resetDisabled: boolean;
   onWindowChange: (w: StripWindow) => void;
   /** The custom row's Apply. Unlike a drag it must always refetch, even for
    *  an unchanged window (the page does that). */
@@ -170,12 +180,25 @@ export function UsageSection(p: UsageSectionProps) {
               Custom
             </button>
           </div>
+          <button
+            type="button"
+            className={btn("default", "py-1.5 font-normal")}
+            disabled={p.resetDisabled}
+            title={`Back to the ${spanWords(DEFAULT_RANGE)}, whole history`}
+            onClick={p.onReset}
+          >
+            Reset
+          </button>
         </div>
       </div>
 
       <div className="mt-3.5 rounded-lg border border-vw-rule-soft/50 bg-chat-surface px-3 pb-2 pt-2.5">
         <div className="mb-1.5 flex flex-wrap justify-between gap-3 text-[12px] text-chat-dim">
-          <span>Whole history of this key. Drag the window or its edges, or choose Custom to type exact times.</span>
+          <span>
+            {p.zoomed
+              ? "Zoomed to the applied period. Drag the window's edges to narrow it, or Reset to see the whole history."
+              : "Whole history of this key. Drag the window or its edges, or choose Custom to type exact times."}
+          </span>
           <span className="font-medium tabular-nums text-chat-fg">{windowText(p.window)}</span>
         </div>
 
@@ -227,8 +250,8 @@ export function UsageSection(p: UsageSectionProps) {
         )}
 
         <HistoryStrip
-          startSec={p.bounds.from}
-          endSec={p.bounds.to}
+          startSec={(p.view ?? p.bounds).from}
+          endSec={(p.view ?? p.bounds).to}
           chain={p.strip.chain}
           own={p.strip.own}
           showChain={p.chain}

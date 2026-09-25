@@ -31,6 +31,7 @@ from fastapi import HTTPException, Request, status
 from app.auth.admin_audit import STATE_KEY, AdminAuditContext
 from app.auth.bearer import ADMIN_TOKEN_PREFIX, parse_bearer_header
 from app.auth.jwt import decode
+from app.auth.throttle import bearer_throttle, check_bearer
 from app.db.database import open_db
 from app.db.repos.tokens import TokenRepo, TokenRow, sqlite_utc_now
 from app.utils.client_ip import client_ip
@@ -218,14 +219,23 @@ async def identify_admin_token(
     Identification only -- the row may be expired, revoked or paused (see
     ``token_refusal``). A secret matching no row, a row whose scope is not
     'admin' (an inference key never unlocks /api) and an ownerless row are
-    all 401 "unknown token", so a probe learns nothing.
+    all 401 "unknown token", so a probe learns nothing. An address that keeps
+    presenting secrets matching no row is answered 429 with Retry-After
+    before the lookup (app/auth/throttle.py::BearerThrottle).
 
     Sets the request's audit context (app/auth/admin_audit.py): from here on
     the secret is a known admin token, so even a refused attempt belongs in
     its trail.
     """
+    # Unknown-secret throttle (app/auth/throttle.py): 429 before the lookup
+    # for an address that keeps presenting secrets that match nothing.
+    address = check_bearer(request, plaintext)
     row = await repo.find_by_plaintext(plaintext)
-    if row is None or row.scope != "admin" or not row.created_by:
+    if row is None:
+        bearer_throttle(request).unknown(address)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "unknown token")
+    bearer_throttle(request).matched(plaintext)
+    if row.scope != "admin" or not row.created_by:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "unknown token")
     setattr(
         request.state,

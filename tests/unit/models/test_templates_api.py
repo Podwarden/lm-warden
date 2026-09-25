@@ -57,3 +57,26 @@ def test_list_templates_requires_auth(tmp_data_dir, client):
     _seed_done(tmp_data_dir / "vllm-warden.db")
     r = client.get("/api/models/templates")
     assert r.status_code == 401
+
+
+def test_qwen38_27b_fp8_template_shape(tmp_data_dir, client):
+    client.get("/healthz")
+    _seed_done(tmp_data_dir / "vllm-warden.db")
+    auth = _jwt_login(client)
+    r = client.get("/api/models/templates", headers=auth)
+    assert r.status_code == 200
+    t = next(x for x in r.json() if x["id"] == "qwen3.8-27b-fp8")
+    assert t["hf_repo"] == "Qwen/Qwen3.8-27B-FP8"
+    assert t["max_model_len"] == 262144
+    assert t["tensor_parallel_size"] == 4
+    assert t["gpu_memory_utilization"] == 0.95
+    assert t["trust_remote_code"] is False
+    assert t["extra_args"] == [
+        "--enable-prefix-caching",
+        "--kv-cache-dtype", "fp8",
+        "--reasoning-parser", "qwen3",
+        "--enable-auto-tool-choice",
+        "--tool-call-parser", "qwen3_xml",
+    ]
+    assert t["engine"] is None
+    assert t["source"] == "builtin"

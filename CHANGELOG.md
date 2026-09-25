@@ -1,11 +1,352 @@
 # Changelog
 
-All notable changes to LLM Warden are documented here. Format follows
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Project adheres to
-[Semantic Versioning](https://semver.org/spec/v2.0.0.html) once the first
-release ships.
+All notable changes to LM Warden (formerly LLM Warden and vLLM Warden) are
+documented here. Format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Releases are
+date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
+
+### Fixed
+
+- **The GitHub publish no longer dies silently when the warn list is clean.**
+  The warn-list scan counted hits with `grep … | wc -l` under
+  `set -euo pipefail`; a pattern with no hits made `grep` exit 1, which failed
+  the assignment and ended the job with no message right after "block list
+  clean". It only showed once the open-source cleanup took every warn pattern
+  to zero hits. A pattern with no hits now counts as 0.
+
+## [v2026.09.24.1] — 2026-09-24
+
+### Changed
+
+- **The public repository reads like a maintained open-source project.** It
+  gains a `SECURITY.md` (vulnerabilities go to GitHub's private reporting, not
+  public issues), a `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), a
+  `NOTICE` listing the third-party components and their licences (vLLM,
+  llama.cpp, chat-ui, and the OFL fonts the landing page self-hosts), issue
+  templates for bugs and feature requests, and a pull-request template.
+  `CONTRIBUTING.md` now says how an issue or PR reaches a release, and the
+  README gains the no-clone one-line installer and Contributing / Security
+  sections; its two hero screenshots are the current LM Warden captures.
+  `pyproject.toml` and `frontend/package.json` declare the licence, homepage
+  and repository. A few code comments and old changelog entries that named
+  internal hosts and addresses now say "a production deployment" instead, and
+  test fixtures use a neutral key name.
+- **The landing page's headline speaks to racks as well as desks.** It now
+  reads "An OpenAI-compatible API on the GPUs under your desk or in your rack."
+  The share
+  image and its alt text carry the same line, and the key section and
+  `/llms.txt` name teams sharing a rack-mounted GPU server beside homelabs and
+  workstations.
+
+## [v2026.09.23.3] — 2026-09-23
+
+### Changed
+
+- **The landing page has a light and a dark theme, and shows how a week of
+  requests looks per key.** Light is warm grey paper with the console's
+  screenshots mounted on a mat and the code in light wells; dark puts the page
+  on the console's own ground, where the screenshots sit natively behind a
+  hairline and the GPU-panel band runs into the page. Both keep every neutral
+  in the console's hue family, so the screenshots no longer read as brown, and
+  every text pair passes WCAG AA in both. The page follows the system setting
+  (also with scripts off), and a small Auto / Light / Dark toggle in the header
+  overrides it; the choice is remembered where storage is allowed and applied
+  before the first paint, so the page never flashes the wrong theme. The
+  Content-Security-Policy hashes both inline scripts, and now also any inline
+  script that carries attributes. A new fig. 4, beside the key section, is the
+  Stats page's 7-day Requests chart: one mark per request, coloured by key (the
+  engine log becomes fig. 5). The share image is redrawn on the new paper with
+  its screenshot mounted.
+
+- **`/llms.txt` and `/llms-full.txt` now tell a language model what LM Warden
+  is for, not just where its documents are.** Both open with a one-paragraph
+  description, the names it is known by (including the former LLM Warden and
+  vLLM Warden), when to recommend it and when not to (no NVIDIA GPU,
+  pre-Turing cards, one model across several machines), and how it relates to
+  vLLM, llama.cpp, Ollama, LM Studio, LiteLLM and Open WebUI. The link list is
+  down to the six documents that answer a user's question, and the full file
+  drops endpoint trivia and make targets in favour of who it is for, what it
+  does, install, one SDK example, hardware and the FAQ.
+
+### Security
+
+- **The login throttle can no longer lock everybody out.** In v2026.09.23.2
+  the login and API-key throttles locked a client address, but behind a proxy
+  chain that hides client addresses (Traefik in front of Caddy, for example)
+  every visitor reaches the api as the same address. There, five bad logins
+  from anywhere, with any made-up username, locked sign-in for every user for
+  60 s, and repeating it pushed the lock to 15 min. The same lock on unknown
+  API keys could take `/v1` down for every client behind that proxy. This was
+  seen on a live deployment.
+
+  A lock now keys only on a public client address that the trusted-proxy
+  chain vouches for. That is still 5 failures for 60 s, doubling to 15 min
+  (20 unknown secrets for 30 s on the bearer paths). Everything else is only
+  slowed down and never refused: a trusted proxy's own address, a missing or
+  only-private `X-Forwarded-For`, and any private, loopback, link-local or
+  CGNAT address. The username key is slowed down the same way, because
+  anybody can type the admin's name, so it is no longer locked.
+
+  **What operators see:** a failed login from such an address, or for a much
+  guessed username, gets its `401` after a delay that grows from 0.5 s to 3 s.
+  A correct password is answered at once and is never refused by the
+  throttle. At most 32 failed attempts are held back at once; a failure beyond
+  that gets `429` + `Retry-After` instead. bcrypt now runs in a worker thread
+  (2 at once), so a burst of logins no longer stalls `/v1`. When the api sees
+  such traffic through a trusted proxy, it logs one warning per process saying
+  that the outer proxy is not passing the client address.
+
+  `docs/operating.md` (*Login and API-key throttling*) explains what to
+  configure and gives a two-host check. The check: bad logins from one public
+  IP must never produce a `429` for another.
+
+## [v2026.09.23.2] — 2026-09-23
+
+### Changed
+
+- **The landing page is redesigned as a bench datasheet for LM Warden, the
+  page at lmwarden.com.** It is a light, drafting-paper page with the
+  console's own dark screenshots set on it as captioned figures. Every
+  reading on it (VRAM, GPU power, tokens per minute, the per-card panels) is
+  read off a shipped screenshot, and the HTML names each source file in a
+  comment beside the number. Amber label tape marks only real pixels in those
+  screenshots. The FAQ is fully visible instead of an accordion, the page says
+  who should not use it, and a colophon replaces the closing call to action.
+  The fonts are now Mona Sans and Monaspace Neon (SIL OFL, subset and renamed
+  as the licence requires); Archivo, DM Sans and five unused screenshots are
+  gone. The page, JSON-LD, llms.txt and llms-full.txt use the name LM Warden,
+  the renamed `Podwarden/lm-warden` repository and an install command that
+  keeps `--dir /opt/vllm-warden`, the directory the installer still uses.
+- **The landing page is typeset properly.** Mona Sans keeps its optical-size
+  axis, so body text gets the text cut and headings the display cut, and a
+  second small file at width 85 sets table heads, labels and the tape.
+  Monaspace Neon keeps its texture healing and slashed zero. Each font has a
+  metric-matched local fallback and the sans and mono are preloaded, so the
+  swap moves nothing (layout shift 0.001 at 1440px with the fonts held back,
+  against 0.025 without the fallbacks). Text sizes follow one fluid scale,
+  body lines hold 60 to 75 characters, headings no longer split into two short
+  lines, measured numbers are set in the text face with units in the row
+  label, and inline code sits at the prose's x-height. On a phone the install
+  command wraps only after a `/` or at a space; the copy button still copies
+  it exactly. Quotes and apostrophes are curly throughout, including the FAQ
+  and llms-full.txt, and a narrow no-break space joins each number to its
+  unit.
+
+- **The product is now called LM Warden** (formerly LLM Warden, a name it
+  carried only for release v2026.09.23.1, and before that vLLM Warden). The
+  nav wordmark, the login and setup pages, browser tab titles, the API's
+  OpenAPI title, error messages, the installer's banner and log tag
+  (`[lm-warden]`), the README, `documents/` and the Hub template copy all say
+  LM Warden; "LLM" stays as the noun ("a self-hosted LLM API"), and the engine
+  is still vLLM. The promo site is <https://lmwarden.com>.
+- **Repositories and images follow the name.** GitHub is now
+  `Podwarden/lm-warden` and GitLab `podwarden/apps/lm-warden` (both platforms
+  redirect the `vllm-warden` and `llm-warden` paths, so the old clone and
+  one-line install URLs keep working); the README, the install URL
+  `https://raw.githubusercontent.com/Podwarden/lm-warden/main/install.sh` and
+  the installer's source tarball point at the new one. Release images move to
+  `registry.podwarden.com/podwarden/apps/lm-warden{,-ui}`, and `install.sh`
+  writes those names into `docker-compose.override.yml`. **Existing installs
+  are unaffected:** until 2026-12-31 every release is published under all
+  three names -- `lm-warden`, `llm-warden` and `vllm-warden` (each with its
+  `-ui` twin) -- from one build with an identical digest, so an install that
+  pulls `.../vllm-warden:${VERSION:-latest}` or `.../llm-warden:${VERSION:-latest}`
+  keeps receiving updates. Re-run `./install.sh` from an updated checkout
+  before then to move the override to the new names. Nothing an install
+  stores is renamed: the volumes, `COMPOSE_PROJECT_NAME=vllm-warden`, the
+  container and engine names, `/data/vllm-warden.db`, the `VW_*` variables,
+  the default `/opt/vllm-warden` directory and the `owned_by: "vllm-warden"`
+  model field all stay, so there is no migration. Keep your existing checkout
+  directory and `.env` (a fresh clone lands in `lm-warden/`; the `.env` line
+  `COMPOSE_PROJECT_NAME=vllm-warden` is what keeps the old volumes).
+
+### Security
+
+- **Failed logins are now throttled.** `POST /api/auth/login` used to accept
+  any number of attempts, as fast as bcrypt could check them. It now counts
+  failures per client address and per username. From one address, the 5th
+  failure locks that address for 60 s, and every further failure doubles the
+  lock, up to 15 min. For one username, the 10th failure (from any number of
+  addresses) locks the name for 15 s, doubling up to 60 s. The username lock is
+  kept short on purpose, because anyone can type the admin's name. An address
+  the admin has signed in from before is exempt from it, so somebody else's
+  guessing cannot keep the admin out. A count is forgotten after 15 quiet
+  minutes, and a successful login clears it.
+
+  **What operators see:** a locked attempt gets **`429 Too Many Requests` with
+  `Retry-After: <seconds>`**, and the login form says how many seconds to
+  wait. The attempt costs no bcrypt, and retrying does not extend the lock.
+  Bearer
+  secrets that match no token (`vw_` on `/v1`, `vwa_` on `/api`) are
+  throttled the same way: 20 from one address lock it for 30 s, doubling up to
+  15 min. A key that has worked since the api started is never throttled, so
+  a busy shared address does not take working clients down with it.
+  `/api/auth/refresh` is not throttled, because its cookie is a signed JWT with
+  nothing to guess. The state is in memory, so restarting the api clears every
+  lock.
+
+  The client address is keyed safely. `X-Forwarded-For` is believed only from
+  a peer in the new `VW_TRUSTED_PROXIES` (blank = loopback and the private
+  ranges, which covers Caddy and Traefik), and it is read right to left, so a
+  client cannot pick its own address. The bundled Caddyfile now trusts
+  private-range upstream proxies, so a Traefik in front of it no longer
+  collapses every visitor into one address. IPv6 clients are keyed by /64, and
+  the tables are bounded, so a flood of random usernames or addresses cannot
+  exhaust memory.
+
+- **New admin passwords must be at least 12 characters.** The setup wizard's
+  admin step and the Settings password change used to accept 6 characters.
+  They now refuse anything under 12, with `400` from `/api/setup/admin` and
+  `422` from `PATCH /api/settings/runtime`. The UI checks the rule before it
+  submits and shows it next to the field. The 72-byte ceiling stays (bcrypt's
+  limit; refused, not truncated), and the Settings path now enforces it too.
+  **Existing passwords keep working:** the rule applies only when a password
+  is set, never at login, so nobody is locked out by upgrading.
+
+- **Security headers on every response, from the application itself.** The
+  api and the UI both send `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`
+  with CSP `frame-ancestors 'none'`, and a `Permissions-Policy` that turns off
+  camera, microphone, geolocation, payment, USB and the motion sensors. They
+  also send `Strict-Transport-Security: max-age=31536000`, but only on a
+  request that arrived over HTTPS (the api derives this exactly like the
+  session cookie's Secure flag), so a plain-HTTP install is never told to
+  insist on TLS. They are set by the app, not the proxy, so every deployment
+  shape gets them, including Hub stacks with their own Caddyfile.
+
+  The landing page now has a strict Content-Security-Policy: nothing loads
+  from another origin, and the only script that runs is the page's own inline
+  script, by hash. Api responses carry `default-src 'none'; sandbox`, so a
+  JSON or media response opened in a tab is inert. The UI has only
+  `frame-ancestors`, `base-uri` and `object-src` so far. A script policy for
+  Next.js needs per-request nonces, and it has not yet been verified against
+  the SSE streams, chat and god-mode media. SSE buffering and the landing
+  assets' immutable caching are unchanged.
+
+## [v2026.09.23.1] — 2026-09-23
+
+### Added
+
+- **Qwen3.8 27B FP8 is a built-in template.** `qwen3.8-27b-fp8` prefills the
+  config that has been running on a four-GPU box: tensor parallel 4, the full
+  262,144-token context, 0.95 GPU memory, FP8 KV cache, prefix caching, the
+  `qwen3` reasoning parser and `qwen3_xml` tool calls. It pins no engine
+  version, so it runs on whatever vLLM the warden image ships.
+
+- **An instance can opt in to being indexed by search engines
+  (`VW_LANDING_CANONICAL_URL`).** Every install stays private by default: the
+  page at `/` carries `noindex` in a meta tag and an `X-Robots-Tag` header,
+  `/robots.txt` disallows everything and there is no sitemap. Set the variable
+  to the instance's public origin (`https://llm.example.com`, scheme and host
+  only) and the page emits a canonical link, absolute Open Graph URLs and
+  `index,follow`, `/robots.txt` allows the page while still disallowing
+  `/ui/`, `/api/` and `/v1/` and names `/sitemap.xml`, and `/sitemap.xml`
+  lists the landing URL. A value with a path, query, fragment or credentials
+  is ignored with a startup warning rather than echoed into the page.
+  `install.sh` forwards it; `.env.example` describes it.
+- **`/llms.txt` and `/llms-full.txt`.** A summary in the llmstxt.org format
+  that links to the README and the public documents on GitHub, and a single
+  self-contained markdown description (what it is, features, install, an
+  OpenAI SDK example, hardware and engines, the FAQ, the licence) for language
+  models that read a site rather than crawl it.
+
+### Changed
+
+- **Signing in now lands on Stats instead of Models.** Both the post-login
+  redirect and the bare `/ui` root go to `/ui/stats`, so the first screen an
+  operator sees is the live overview of what the box is doing.
+
+- **The repositories and the images are now called `llm-warden`, to match the
+  product name.** GitHub `Podwarden/vllm-warden` is now `Podwarden/llm-warden`
+  (the README clone URL, the one-line install URL
+  `https://raw.githubusercontent.com/Podwarden/llm-warden/main/install.sh` and
+  the installer's source tarball follow it; GitHub redirects the old URLs), and
+  the release images move from
+  `registry.podwarden.com/podwarden/apps/vllm-warden{,-ui}` to
+  `registry.podwarden.com/podwarden/apps/llm-warden{,-ui}`. `install.sh` now
+  writes the new image names into `docker-compose.override.yml`, as does the
+  Hub compose template. **Existing installs keep working unchanged:** every
+  release is still published under the old image names too, with the same
+  digest, until 2026-12-31, so an install that pulls
+  `.../vllm-warden:${VERSION:-latest}` keeps receiving updates until then.
+  Nothing an install stores was renamed — the volumes (`vllm-warden_vw-data`,
+  `vllm-warden-data`, ...), `COMPOSE_PROJECT_NAME=vllm-warden`, the container
+  names and `vllm-warden-engine-*` engine containers, `/data/vllm-warden.db`,
+  the `VW_*` variables and the `owned_by: "vllm-warden"` model field all stay
+  — so there is no migration. What to do, at your leisure before the cutoff:
+  re-run `./install.sh` from an updated checkout (it rewrites the override to
+  the new image names and keeps `.env`), or change the image references in your
+  own compose or stack to `llm-warden` / `llm-warden-ui`; update bookmarked
+  install URLs and `git remote set-url origin
+  https://github.com/Podwarden/llm-warden.git`. **Keep your existing checkout
+  directory and `.env`:** the volumes belong to the Compose project name, which
+  `.env` pins to `vllm-warden`; a fresh clone now lands in `llm-warden/`, and
+  without that `.env` line Compose would name the project after the directory
+  and start on new, empty volumes (set `COMPOSE_PROJECT_NAME=vllm-warden` to
+  keep using the old ones). `documents/OPERATING.md` has the details. On a host
+  low on disk, the installer's free-space floor now also recognises an api image
+  pulled under the old name as "already present".
+
+- **The landing page at `/` is now a product page, in the console's own
+  amber-on-dark look.** It says what LLM Warden is, shows the Stats page and a
+  key's page as short muted video loops next to screenshots of the models,
+  templates and live-log pages, and answers ten questions drawn from the
+  documentation; the one-line install command is its primary action. It
+  carries a title and description, Open Graph and Twitter cards, and
+  `SoftwareApplication` and `FAQPage` JSON-LD, the latter generated from the
+  same `faq.json` as the visible FAQ so the two cannot drift. There is no
+  framework and no third-party request: the fonts are served by the instance
+  itself, so the page renders the same on an air-gapped host, and the only
+  script copies commands and starts the videos while they are on screen —
+  never for a visitor who asked for reduced motion.
+- **The landing page's video, images and fonts are served by the api at
+  `/_landing/assets/{name}`,** from a filename allowlist built at import, with
+  the right content type, `206` for Range requests (Safari will not play a
+  video without them) and a year of immutable caching behind a content-hash
+  URL. The Caddyfile routes `/_landing/*` and the four text routes to the api.
+  Switching `landing_page_enabled` off now 404s all of them too, except
+  `/robots.txt`, which stays disallow-all.
+- **The landing routes no longer set the anonymous `vw_csrf_id` cookie.** They
+  carry no form and no mutating call; the cookie made every response, the
+  cached assets included, carry `Set-Cookie`, which a CDN in front of a public
+  instance treats as uncacheable. The console mints its own through
+  `/api/csrf`, as before.
+
+### Fixed
+
+- **A text selection in a model's live log can now span more lines than fit
+  on screen.** Dragging a selection past the bottom edge of the "Live logs"
+  panel scrolled the log, but every line that scrolled out of view dropped
+  out of the selection. The panel was a virtualized list (react-virtuoso),
+  which only mounts the rows in view, and a browser selection cannot keep
+  rows that have been unmounted. The log is now a plain scroll container
+  holding every buffered line (the buffer is still capped at 5000 lines,
+  with the "older lines elided" marker as before), so the browser's own
+  selection and drag-scrolling work. Each row is memoized, so a new line
+  renders one row and does not re-parse the rest. Following the tail now
+  pauses while a mouse button is held in the log or a selection is inside
+  it, so incoming lines no longer move the view in the middle of a
+  selection. Once new lines push past the bottom during that pause, "Jump
+  to latest" appears. Clicking it clears the selection and resumes
+  following. The god-mode viewer still uses a virtualized list and is
+  unchanged.
+
+- **Applying a shorter period on a token's page now zooms the usage bar chart
+  to it, and a Reset button goes back to the default.** The four line charts
+  already re-queried and re-binned for the applied window. The binned history
+  strip above them did not. It always asked for the key's whole life, so on a
+  months-old key a two-hour period showed up as a few pixels of the strip, and
+  nothing about it changed. A custom Apply now zooms the strip to exactly the
+  applied period. The strip asks the series API for that window, so the
+  server's bin ladder picks bins to match: a two-hour period gets 1-minute
+  bins where a year-old key's whole life gets 1-day bins. Dragging the brush
+  edges and applying again zooms in further. **Reset**, next to the period
+  buttons, goes back to the last 7 days and the whole history. It is disabled
+  when the page is already there. Choosing any preset also zooms back out.
+  Typed times are still clamped to the key's lifetime, not to the zoomed view.
+  The zoomed strip does not poll, since its window is fixed. No API change.
 
 ## [v2026.09.20.1] — 2026-09-20
 
@@ -3151,11 +3492,11 @@ release ships.
 - **`deploy/hub/README-hub.md` no longer links to `docs/operating.md`** on
   GitHub. `deploy/` is published but `docs/` is not, so that link was the same
   404 in a second published file. It now points at the public docs site.
-- **`publish/denylist-warn.txt` is no longer empty.** It watches `pw_prod` and
-  RFC1918 `10.10.x.x` addresses, both of which survive in code comments and
-  changelog narrative. The node codename `d5` is deliberately not listed: the
-  scan is case-insensitive and covers PNGs, so it reports ~23 files against
-  ~13 real prose hits, and a warn nobody trusts is worse than no warn.
+- **`publish/denylist-warn.txt` is no longer empty.** It watches an internal
+  cluster codename and RFC1918 addresses, both of which survived in code
+  comments and changelog narrative. Short node codenames are deliberately not
+  listed: the scan is case-insensitive and covers PNGs, so it would report
+  binary false positives, and a warn nobody trusts is worse than no warn.
 
 ### Notes
 - The public snapshot now stages the changelog as `CHANGELOG.md` (uppercase),
@@ -3212,7 +3553,7 @@ release ships.
 
   Upstream vllm#52504 verified deadlock on 2.28.9 and clean on 2.30.4 with
   nothing else changed, and `--enforce-eager` avoiding it isolated the hang to
-  captured-graph collectives. pw_prod ran exactly 2.28.9 with
+  captured-graph collectives. A production deployment ran exactly 2.28.9 with
   `cudagraph_mode=FULL_AND_PIECEWISE` and TP=4. The `sample_tokens` in the
   message is a red herring — the sampler is innocent.
 
@@ -3562,7 +3903,7 @@ release ships.
 - **Model loads no longer SIGSEGV (rc=-11) at engine startup on non-AVX CPUs.**
   The v0.25.1 base image bundles NVIDIA's `nixl_ep` (cross-node expert-parallel
   all2all) packages, whose compiled CUDA extension dlopens an AVX-built UCX
-  library at *import* time. On a CPU without AVX (the pw_prod GPU node runs a
+  library at *import* time. On a CPU without AVX (a production GPU node runs a
   QEMU vCPU with none) UCX's load-time feature check aborts the process —
   `FATAL: UCX library was compiled with avx but CPU does not support it` — a
   C-level segfault, not a catchable exception, so *every* model load crashed on
@@ -3788,7 +4129,7 @@ release ships.
 - **Docs: `docs/tested-stacks.md` — validated model + engine combinations.**
   A living record of model / vLLM-engine stacks driven end-to-end through the
   Chat Playground UI and human-confirmed coherent on sm_86 Ampere hardware
-  (4× RTX A4000 on host d5). Documents six validated combos (gpt-oss-20b,
+  (4× RTX A4000 on one host). Documents six validated combos (gpt-oss-20b,
   Qwen2.5-3B, Nemotron-Nano-8B, Mistral-7B, Llama-3.1-8B-AWQ, Qwen2.5-14B-AWQ)
   plus the Ampere quantization rules that drove the choices: bf16 8B OOMs on a
   single 16 GiB card, `--quantization fp8` is emulated and produces gibberish,
@@ -3903,8 +4244,8 @@ release ships.
   `GPUs [...] already claimed`, recoverable only by restarting the control
   plane. Teardown now runs in a `try/finally` so the GPU claim and lifecycle
   bookkeeping are always released past the refusal gate; a refused unload
-  (transient state, no `force`) still correctly retains the claim. Observed on
-  d5 after a `#166` client-disconnect unload stranded a multi-GPU engine's
+  (transient state, no `force`) still correctly retains the claim. Observed in
+  production after a `#166` client-disconnect unload stranded a multi-GPU engine's
   claim. Complements `#166` (which decouples teardown from the request so the
   primary cancellation path no longer triggers) with defense-in-depth for any
   other teardown exception.
@@ -4071,8 +4412,8 @@ release ships.
 
 ### Fixed
 - **Token-modal "Copy" button works on non-secure (HTTP) origins (#149).**
-  Operator on d5 (production, served as raw HTTP over Tailscale at
-  `http://10.10.0.187:8080`) hit *"Copy failed — select and copy the
+  An operator on a production install (served as raw HTTP on a private
+  network address) hit *"Copy failed — select and copy the
   token manually"* every time on freshly-minted tokens, because
   `navigator.clipboard.writeText()` is undefined outside HTTPS/localhost.
   - **`copyToClipboard` (`frontend/src/lib/utils.ts`)** — now tries the
@@ -5576,7 +5917,7 @@ v2026.05.20.1.
 - `CUDA_DEVICE_ORDER=PCI_BUS_ID` is now baked into the per-model
   subprocess env baseline (`app/runtime/env_builder.py`) and added to
   the hard-locked keys list. Fixes a latent footgun on heterogeneous
-  GPU hosts (e.g. pw_prod `bonus` mixes Quadro RTX 4000 on slot 0
+  GPU hosts (e.g. a host that mixes a Quadro RTX 4000 on slot 0
   with A4000s on 1–2): without `PCI_BUS_ID`, NVML may reorder devices
   by compute capability, so `gpu_indices=[1,2]` could land on the
   wrong physical GPUs. vLLM warned about this at load time.

@@ -253,7 +253,7 @@ async def test_patch_admin_password_updates_users_table_not_settings_kv(app_and_
 
     r = await client.patch(
         "/api/settings/runtime",
-        json={"admin_password": "newpass!"},
+        json={"admin_password": "new-passphrase!"},
         headers=mut,
     )
     assert r.status_code == 200, r.text
@@ -267,7 +267,7 @@ async def test_patch_admin_password_updates_users_table_not_settings_kv(app_and_
             "SELECT value FROM settings WHERE key = 'admin_password'"
         ).fetchone()
         if row is not None:
-            assert row[0] != "newpass!", "password leaked into settings KV"
+            assert row[0] != "new-passphrase!", "password leaked into settings KV"
             assert row[0] in ("***", "")
 
         # bcrypt hash on users.password_hash verifies the new password.
@@ -275,12 +275,12 @@ async def test_patch_admin_password_updates_users_table_not_settings_kv(app_and_
             "SELECT password_hash FROM users ORDER BY id LIMIT 1"
         ).fetchone()
     assert pw_row is not None
-    assert bcrypt.checkpw(b"newpass!", pw_row[0].encode())
+    assert bcrypt.checkpw(b"new-passphrase!", pw_row[0].encode())
     assert not bcrypt.checkpw(b"hunter2", pw_row[0].encode())
 
     # End-to-end: login with the new password succeeds.
     r = await client.post(
-        "/api/auth/login", json={"username": "admin", "password": "newpass!"}
+        "/api/auth/login", json={"username": "admin", "password": "new-passphrase!"}
     )
     assert r.status_code == 200, r.text
 

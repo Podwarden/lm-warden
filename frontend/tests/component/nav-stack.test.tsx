@@ -1,6 +1,6 @@
 // NavStackProvider (src/lib/nav-stack.tsx) + useBreadcrumb — ported from
 // PodWarden Core's contexts/NavStackContext.test.tsx (#1187 AC-3) and extended
-// for the LLM Warden adaptations: goBack (pop, restore scroll, fall back to
+// for the LM Warden adaptations: goBack (pop, restore scroll, fall back to
 // Home), the no-shell routes, the stack cap and override clean-up.
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

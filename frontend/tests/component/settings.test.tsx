@@ -323,6 +323,75 @@ describe('SettingsPage — General tab (Identity / HF / Defaults)', () => {
   });
 });
 
+describe('SettingsPage — admin password rule (>= 12 characters, <= 72 bytes)', () => {
+  beforeEach(() => {
+    setAccessToken('test-jwt');
+    setCsrfToken('test-csrf');
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  async function typePassword(value: string, save = true) {
+    const fetchMock = mockFetch({
+      'GET /api/settings/runtime': () =>
+        new Response(JSON.stringify(fakeRuntime()), { status: 200 }),
+      'GET /api/system/gpus': () =>
+        new Response(JSON.stringify({ gpus: [] }), { status: 200 }),
+      'PATCH /api/settings/runtime': () =>
+        new Response(
+          JSON.stringify({ ok: true, requires_restart: [], requires_restart_kinds: [] }),
+          { status: 200 },
+        ),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderPage();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    fireEvent.click(await screen.findByRole('button', { name: /^edit$/i }));
+    const input = await screen.findByLabelText(/Admin password/i);
+    fireEvent.change(input, { target: { value } });
+    if (!save) return fetchMock;
+    const saveBtn = screen.getByRole('button', { name: /^save/i });
+    await waitFor(() => expect(saveBtn).not.toBeDisabled());
+    await act(async () => {
+      fireEvent.click(saveBtn);
+    });
+    return fetchMock;
+  }
+
+  const patches = (m: ReturnType<typeof vi.fn>) =>
+    m.mock.calls.filter((c) => (c[1] as RequestInit | undefined)?.method === 'PATCH');
+
+  it('shows the rule in the field hint', async () => {
+    await typePassword('', false);
+    expect(screen.getByText(/At least 12 characters \(at most 72 bytes\)/)).toBeInTheDocument();
+  });
+
+  it('refuses an 11-character password without sending it', async () => {
+    const fetchMock = await typePassword('a'.repeat(11));
+    const alerts = await screen.findAllByRole('alert');
+    expect(alerts.some((el) => /at least 12 characters/.test(el.textContent ?? ''))).toBe(true);
+    expect(patches(fetchMock)).toHaveLength(0);
+  });
+
+  it('refuses a password over 72 bytes without sending it', async () => {
+    const fetchMock = await typePassword('é'.repeat(37)); // 37 chars, 74 bytes
+    const alerts = await screen.findAllByRole('alert');
+    expect(alerts.some((el) => /at most 72 bytes/.test(el.textContent ?? ''))).toBe(true);
+    expect(patches(fetchMock)).toHaveLength(0);
+  });
+
+  it('sends a 12-character password', async () => {
+    const fetchMock = await typePassword('twelve-chars');
+    await waitFor(() => expect(patches(fetchMock)).toHaveLength(1));
+    const body = JSON.parse((patches(fetchMock)[0][1] as RequestInit).body as string);
+    expect(body.admin_password).toBe('twelve-chars');
+  });
+});
+
 describe('SettingsPage — Sessions & Tokens tab', () => {
   beforeEach(() => {
     setAccessToken('test-jwt');

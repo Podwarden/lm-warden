@@ -132,7 +132,9 @@ export type RangeSel =
   | { kind: "preset"; preset: Preset }
   | { kind: "custom"; from: number; to: number };
 
-export const DEFAULT_RANGE: RangeSel = { kind: "preset", preset: "7d" };
+/** The page's default period, and what the usage section's Reset goes back to. */
+export const DEFAULT_PRESET: Preset = "7d";
+export const DEFAULT_RANGE: RangeSel = { kind: "preset", preset: DEFAULT_PRESET };
 
 export function parseRange(sp: { get(name: string): string | null } | null): RangeSel {
   if (!sp) return DEFAULT_RANGE;

@@ -291,7 +291,7 @@ def build_subprocess_env(
     env = {
         "VLLM_LOGGING_LEVEL": "INFO",
         # Pin device ordering to PCI bus so vLLM's logical 0..N matches
-        # gpu_indices on heterogeneous-GPU hosts (e.g. pw_prod `bonus` mixes
+        # gpu_indices on heterogeneous-GPU hosts (e.g. a host that mixes a
         # Quadro RTX 4000 + A4000). Without this, NVML may reorder by SM count
         # and break gpu_indices semantics.
         "CUDA_DEVICE_ORDER": "PCI_BUS_ID",

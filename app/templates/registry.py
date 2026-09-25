@@ -84,8 +84,34 @@ _GPT_OSS_20B = ModelTemplate(
 )
 
 
+# Verified on a production deployment (4x A4000-class TP=4, vLLM 0.26.0 in-container driver,
+# 2026-09-23): full 256k context, FP8 KV cache, prefix caching, reasoning and
+# XML tool calls. No engine pin — the in-container driver refuses pins, and
+# the config has no known version sensitivity beyond needing a vLLM new
+# enough to ship the qwen3_xml tool parser.
+_QWEN38_27B_FP8 = ModelTemplate(
+    id="qwen3.8-27b-fp8",
+    label="Qwen3.8 27B FP8 (battle-tested, TP=4, 256k ctx, tools + reasoning)",
+    hf_repo="Qwen/Qwen3.8-27B-FP8",
+    hf_revision="main",
+    dtype="auto",
+    max_model_len=262144,
+    tensor_parallel_size=4,
+    gpu_memory_utilization=0.95,
+    trust_remote_code=False,
+    extra_args=[
+        "--enable-prefix-caching",
+        "--kv-cache-dtype", "fp8",
+        "--reasoning-parser", "qwen3",
+        "--enable-auto-tool-choice",
+        "--tool-call-parser", "qwen3_xml",
+    ],
+)
+
+
 _TEMPLATES: dict[str, ModelTemplate] = {
     _GPT_OSS_20B.id: _GPT_OSS_20B,
+    _QWEN38_27B_FP8.id: _QWEN38_27B_FP8,
 }
 
 

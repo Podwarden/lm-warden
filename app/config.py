@@ -1,7 +1,11 @@
 import logging
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlsplit
+
+from app.utils.client_ip import DEFAULT_TRUSTED_PROXIES, parse_trusted_proxies
 
 log = logging.getLogger("vllm_warden.config")
 
@@ -14,6 +18,61 @@ _RUNAWAY_MODES = {"off", "log", "enforce"}
 
 def _truthy(raw: str) -> bool:
     return raw.strip().lower() in _TRUTHY
+
+
+_HOST_RE = re.compile(r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
+
+
+def parse_canonical_origin(raw: str) -> str:
+    """Normalise VW_LANDING_CANONICAL_URL to `scheme://host[:port]`, or "".
+
+    The value is echoed into the public landing page (`<link rel=canonical>`,
+    Open Graph URLs, robots.txt, sitemap.xml), so it is held to the shape of
+    an http(s) ORIGIN and nothing else: no path beyond "/", no query, no
+    fragment, no userinfo, a plain DNS name (or IPv4) and a valid port.
+    Anything else returns "" -- the page then stays noindex, exactly as if
+    the variable were unset. A trailing slash is tolerated and dropped.
+    """
+    value = raw.strip()
+    if not value:
+        return ""
+    try:
+        parts = urlsplit(value)
+        port = parts.port  # raises ValueError on a non-numeric/out-of-range port
+    except ValueError:
+        return ""
+    host = (parts.hostname or "").lower()
+    if (
+        parts.scheme.lower() not in ("http", "https")
+        or not host
+        or not _HOST_RE.match(host)
+        or parts.username is not None
+        or parts.password is not None
+        or parts.path not in ("", "/")
+        or parts.query
+        or parts.fragment
+        or "@" in parts.netloc
+    ):
+        return ""
+    netloc = host if port is None else f"{host}:{port}"
+    return f"{parts.scheme.lower()}://{netloc}"
+
+
+def _parse_trusted_proxies(raw: str) -> tuple[str, ...]:
+    """VW_TRUSTED_PROXIES: comma-separated CIDRs. Blank = the built-in
+    default (loopback + private ranges); "none" = trust no peer. A malformed
+    entry raises, so a typo fails start-up instead of changing who is
+    trusted."""
+    if not raw.strip():
+        return DEFAULT_TRUSTED_PROXIES
+    if raw.strip().lower() == "none":
+        return ()
+    specs = tuple(p.strip() for p in raw.split(",") if p.strip())
+    try:
+        parse_trusted_proxies(specs)
+    except ValueError as exc:
+        raise ValueError(f"VW_TRUSTED_PROXIES: {exc}") from exc
+    return specs
 
 
 def _parse_origins(raw: str) -> tuple[str, ...]:
@@ -54,6 +113,12 @@ class Settings:
     session_refresh_ttl_days: int = 7
     allowed_origins: tuple[str, ...] = ("http://localhost:3000",)
     trust_proxy_origin: bool = False
+    # Peers (CIDRs) whose X-Forwarded-For is believed when a security decision
+    # is keyed on the client's address -- today the login and bearer throttles
+    # (app/auth/throttle.py, app/utils/client_ip.py::trusted_client_ip).
+    # VW_TRUSTED_PROXIES; blank = loopback + private ranges, "none" = trust no
+    # peer (key on the socket address only).
+    trusted_proxies: tuple[str, ...] = DEFAULT_TRUSTED_PROXIES
     # When no origin is configured, accept the origin this request was actually
     # addressed to (see app/auth/origin.py). Defaults False so the documented
     # Settings-level guarantee below still holds: constructing
@@ -169,6 +234,14 @@ class Settings:
     request_history_retention_days: int = 30
     request_history_max_rows: int = 200_000
 
+    # --- Public landing page (app/landing) ---------------------------------
+    # The public origin this instance's landing page may be indexed under,
+    # e.g. "https://lmwarden.com". Empty (the default, and every normal
+    # self-hosted install) keeps the page noindex, robots.txt disallow-all
+    # and no sitemap. Validated by parse_canonical_origin: an invalid value
+    # is ignored with a warning rather than echoed into the page.
+    landing_canonical_url: str = ""
+
     @property
     def db_path(self) -> Path:
         return self.data_dir / "vllm-warden.db"
@@ -229,6 +302,7 @@ def load_settings() -> Settings:
     derive_origin_from_request = not configured
     allowed_origins = configured or ("http://localhost:3000",)
     trust_proxy_origin = _truthy(os.environ.get("VW_TRUST_PROXY_ORIGIN", ""))
+    trusted_proxies = _parse_trusted_proxies(os.environ.get("VW_TRUSTED_PROXIES", ""))
     warmup_probe_timeout_s = float(
         os.environ.get("VW_WARMUP_PROBE_TIMEOUT_S", "600.0")
     )
@@ -332,6 +406,15 @@ def load_settings() -> Settings:
     request_history_max_rows = int(
         os.environ.get("VW_REQUEST_HISTORY_MAX_ROWS", "200000")
     )
+    _canonical_raw = os.environ.get("VW_LANDING_CANONICAL_URL", "")
+    landing_canonical_url = parse_canonical_origin(_canonical_raw)
+    if _canonical_raw.strip() and not landing_canonical_url:
+        log.warning(
+            "VW_LANDING_CANONICAL_URL=%r is not an http(s) origin such as "
+            "https://llm.example.com (no path, query or credentials); ignored, "
+            "so the landing page stays noindex.",
+            _canonical_raw,
+        )
     return Settings(
         data_dir=data_dir,
         hf_cache_dir=hf_cache_dir,
@@ -339,6 +422,7 @@ def load_settings() -> Settings:
         container_gpu_count=gpu_count,
         allowed_origins=allowed_origins,
         trust_proxy_origin=trust_proxy_origin,
+        trusted_proxies=trusted_proxies,
         derive_origin_from_request=derive_origin_from_request,
         warmup_probe_timeout_s=warmup_probe_timeout_s,
         engine_driver=engine_driver,
@@ -373,4 +457,5 @@ def load_settings() -> Settings:
         chat_attachment_ttl_days=chat_attachment_ttl_days,
         request_history_retention_days=request_history_retention_days,
         request_history_max_rows=request_history_max_rows,
+        landing_canonical_url=landing_canonical_url,
     )

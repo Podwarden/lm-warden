@@ -1,4 +1,4 @@
-IMAGE := vllm-warden:dev
+IMAGE := lm-warden:dev
 # The Python base image is no longer named here: scripts/ci-deps-image.sh owns
 # it (PYTHON_IMAGE, default python:3.11-slim) so the Makefile and .gitlab-ci.yml
 # cannot drift apart on it.

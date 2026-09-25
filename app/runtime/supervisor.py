@@ -166,7 +166,7 @@ class Supervisor:
                     f"engine version pin ({engine_image}) cannot be honored: "
                     "this deployment runs the in-container subprocess engine, "
                     "whose vLLM version is fixed by the warden image. Clear the "
-                    "engine pin on this model, or run LLM Warden with "
+                    "engine pin on this model, or run LM Warden with "
                     "VW_ENGINE_DRIVER=docker to select engine versions."
                 )
             # Pass the served name so a refusal can say which model is in the

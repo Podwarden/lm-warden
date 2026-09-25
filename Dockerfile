@@ -280,7 +280,7 @@ RUN python3 -c "import inspect; from vllm_gguf_plugin.quantization.config import
 # AVX-built UCX library (libucs/libucp) at *import* time; on a CPU without AVX
 # the UCX load-time feature check aborts the process:
 #   "FATAL: UCX library was compiled with avx but CPU does not support it."
-# That is a C-level SIGSEGV, not a catchable Python exception. The pw_prod GPU
+# That is a C-level SIGSEGV, not a catchable Python exception. A production GPU
 # node runs a QEMU vCPU with no AVX, so *every* model load segfaulted (rc=-11)
 # on 0.25.1 until this. vLLM only guards the crashing import with
 # has_nixl_ep() (a bare importlib.find_spec presence check in
@@ -302,7 +302,7 @@ RUN rm -rf /usr/local/lib/python3.12/dist-packages/nixl_ep* && \
 # else changed; `--enforce-eager` also avoids it, which is what isolated the
 # hang to captured-graph collectives rather than the collectives themselves.
 #
-# pw_prod ran exactly 2.28.9 with cudagraph_mode=FULL_AND_PIECEWISE and TP=4,
+# A production deployment ran exactly 2.28.9 with cudagraph_mode=FULL_AND_PIECEWISE and TP=4,
 # and died with that signature three times (2026-08-02, and twice on
 # 2026-08-18). Note the `sample_tokens` in the message is a red herring — the
 # sampler is innocent; the hang is upstream of it in the collective.

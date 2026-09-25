@@ -51,7 +51,8 @@ def is_session_only(method: str, path: str) -> bool:
 
 #: No control-plane credential at all. The setup wizard runs before an admin
 #: exists; login and refresh are how a session starts; /api/csrf mints the
-#: anonymous CSRF token; the landing page is for anonymous browsers; a chat2
+#: anonymous CSRF token; the landing page, its assets, robots.txt,
+#: sitemap.xml and llms*.txt are for anonymous browsers and crawlers; a chat2
 #: attachment is fetched with its own signed URL (?t=).
 PUBLIC_ROUTES: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/setup/state"),
@@ -65,5 +66,10 @@ PUBLIC_ROUTES: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/csrf"),
     ("GET", "/healthz"),
     ("GET", "/_landing"),
+    ("GET", "/_landing/assets/{name}"),
+    ("GET", "/robots.txt"),
+    ("GET", "/sitemap.xml"),
+    ("GET", "/llms.txt"),
+    ("GET", "/llms-full.txt"),
     ("GET", "/api/chat2/attachments/{attachment_id}"),
 })

@@ -18,7 +18,7 @@
  *
  * Adapted from PodWarden: stored hrefs are app-router paths (no `/ui`
  * basePath — `router.push` adds it), the inner-pane scroll registry
- * (`useRestorableScroll`) is left out because no LLM Warden page needs it,
+ * (`useRestorableScroll`) is left out because no LM Warden page needs it,
  * and `goBack` navigates outside the state updater (an updater must stay
  * pure; StrictMode runs it twice).
  */

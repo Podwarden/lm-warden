@@ -34,7 +34,9 @@ cat > "$STUBS/docker" <<'EOF'
 # nvidia runtime in `docker info --format`; STUB_DOCKER_ROOT is the data root
 # `docker info --format {{.DockerRootDir}}` reports (set it empty to model a
 # daemon that reports none); STUB_HAVE_IMAGE=1 makes `docker images -q` find
-# an api image already in the store; STUB_DOCKER_CDI=1 lists CDI spec dirs
+# an api image already in the store (=legacy: only under the first pre-rename
+# vllm-warden name; =legacy-llm: only under the intermediate llm-warden name,
+# as on an install from before either image rename); STUB_DOCKER_CDI=1 lists CDI spec dirs
 # (CDI enabled); STUB_CGROUP is the cgroup driver (cgroupfs). Every call is
 # appended to $CALLS.
 printf '%s\n' "docker $*" >> "$CALLS"
@@ -54,7 +56,11 @@ case "$1" in
     fi
     exit 0 ;;
   images)
-    [ "${STUB_HAVE_IMAGE:-0}" = 1 ] && echo 6cf7aca99527
+    case "${STUB_HAVE_IMAGE:-0}" in
+      1) echo 6cf7aca99527 ;;
+      legacy) case "${3:-}" in */vllm-warden) echo 6cf7aca99527 ;; esac ;;
+      legacy-llm) case "${3:-}" in */llm-warden) echo 6cf7aca99527 ;; esac ;;
+    esac
     exit 0 ;;
   compose)
     case "$2" in
@@ -250,6 +256,18 @@ assert_rc "15 GB free with an api image present: exits 0" 0 "$RC" "$OUT"
 assert_grep "15 GB free with image: explains the shared layers" 'already in Docker.s store' "$OUT"
 [ -f "$D/.env" ] && pass "15 GB free with image: install proceeds" || fail "15 GB free with image: no .env"
 
+# Same again, but the store holds only the pre-rename vllm-warden image (an
+# install from before both image renames): still counts as present.
+run disk_floor_legacyimage STUB_GPUS=0 STUB_DF_AVAIL_KB=14650000 STUB_HAVE_IMAGE=legacy -- --gpus none --yes
+assert_rc "15 GB free with only the legacy-named image: exits 0" 0 "$RC" "$OUT"
+assert_grep "15 GB free with legacy image: explains the shared layers" 'already in Docker.s store' "$OUT"
+
+# And only the intermediate llm-warden image (installed from v2026.09.23.1,
+# before the rename to lm-warden): also counts as present.
+run disk_floor_llmimage STUB_GPUS=0 STUB_DF_AVAIL_KB=14650000 STUB_HAVE_IMAGE=legacy-llm -- --gpus none --yes
+assert_rc "15 GB free with only the llm-warden image: exits 0" 0 "$RC" "$OUT"
+assert_grep "15 GB free with llm-warden image: explains the shared layers" 'already in Docker.s store' "$OUT"
+
 # Same disk, --no-pull: nothing is pulled, so nothing to refuse; the note names make load-images.
 run disk_floor_nopull STUB_GPUS=0 STUB_DF_AVAIL_KB=14650000 -- --gpus none --yes --no-pull
 assert_rc "15 GB free with --no-pull: exits 0" 0 "$RC" "$OUT"
@@ -278,6 +296,7 @@ assert_grep "no data root: says the check was skipped" 'Could not find the Docke
 
 run none STUB_GPUS=0 -- --gpus none --yes
 assert_rc "--gpus none --yes on a GPU-less host exits 0" 0 "$RC" "$OUT"
+assert_grep "log lines carry the product tag" '^\[lm-warden\] ' "$OUT"
 secret=$(env_val VW_COOKIE_SECRET "$D/.env")
 [ "${#secret}" -eq 64 ] && pass "VW_COOKIE_SECRET generated (64 hex chars)" || fail "VW_COOKIE_SECRET is '$secret'"
 echo "$secret" | grep -qE '^[0-9a-f]{64}$' && pass "VW_COOKIE_SECRET is hex" || fail "VW_COOKIE_SECRET not hex"
@@ -285,8 +304,8 @@ echo "$secret" | grep -qE '^[0-9a-f]{64}$' && pass "VW_COOKIE_SECRET is hex" || 
 [ "$(env_val VERSION "$D/.env")" = v2026.01.02.3 ] && pass "VERSION pinned to the changelog release" || fail "VERSION=$(env_val VERSION "$D/.env")"
 assert_grep "override clears the GPU reservation" 'devices: !override \[\]' "$D/docker-compose.override.yml"
 assert_grep "override hides GPUs from the runtime" 'NVIDIA_VISIBLE_DEVICES: "none"' "$D/docker-compose.override.yml"
-assert_grep "override pins the api image to VERSION" 'vllm-warden:\$\{VERSION:-latest\}' "$D/docker-compose.override.yml"
-assert_grep "override pins the ui image to VERSION" 'vllm-warden-ui:\$\{VERSION:-latest\}' "$D/docker-compose.override.yml"
+assert_grep "override pins the api image to VERSION" '/lm-warden:\$\{VERSION:-latest\}' "$D/docker-compose.override.yml"
+assert_grep "override pins the ui image to VERSION" '/lm-warden-ui:\$\{VERSION:-latest\}' "$D/docker-compose.override.yml"
 assert_grep "override guards the secret with :?" 'VW_COOKIE_SECRET:\?' "$D/docker-compose.override.yml"
 assert_grep "override overrides the front-door port" 'ports: !override' "$D/docker-compose.override.yml"
 assert_grep "images were pulled" '^docker compose pull' "$CALLS"

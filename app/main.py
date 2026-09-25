@@ -330,7 +330,7 @@ async def lifespan(app: FastAPI):
 
 def build_app() -> FastAPI:
     app = FastAPI(
-        title="LLM Warden",
+        title="LM Warden",
         lifespan=lifespan,
         # No anonymous API map (spec 2026-09-19, decision 11). The document is
         # served at GET /api/openapi.json behind a session or an admin token
@@ -467,6 +467,8 @@ def build_app() -> FastAPI:
     # NOT JWT-gated (the whole point is that an anonymous browser hitting
     # the unified-port root sees a useful page). Opt-out via the
     # `landing_page_enabled` runtime setting → route returns 404.
+    # The same router carries the page's assets (/_landing/assets/*) and the
+    # crawler / LLM text routes (/robots.txt, /sitemap.xml, /llms*.txt).
     from app.landing import routes as landing_routes
 
     app.include_router(landing_routes.router)
@@ -491,6 +493,14 @@ def build_app() -> FastAPI:
     # frames live here so a disconnected client can re-attach and the runner
     # survives navigation/reload.
     app.state.chat2_turn_locks = TurnLocks()
+
+    # Brute-force throttles for login and bearer secrets (app/auth/throttle.py).
+    # In-process by design: one uvicorn worker, and a restart clearing every
+    # lock is the operator's escape hatch.
+    from app.auth.throttle import BearerThrottle, LoginThrottle
+
+    app.state.login_throttle = LoginThrottle()
+    app.state.bearer_throttle = BearerThrottle()
     app.state.chat2_budget = AlwaysAllow()
     app.state.chat2_live_turns = LiveTurns()
 
@@ -504,7 +514,8 @@ def build_app() -> FastAPI:
     # request).
     #
     # Desired request-path order:
-    #   Chat2BodyLimitMiddleware (outermost — reject an oversized declared
+    #   SecurityHeadersMiddleware (outermost — adds headers to every response)
+    #   Chat2BodyLimitMiddleware (reject an oversized declared
     #                             Content-Length on POST /api/chat2/attachments
     #                             before anything else, including CSRF, runs)
     #   AdminAuditMiddleware     (wraps the CSRF pair; pure ASGI; reads
@@ -514,7 +525,8 @@ def build_app() -> FastAPI:
     #   csrf_check               (validates X-CSRF-Token after csrf_id is set)
     #
     # Therefore: csrf_check is added first (→ innermost), ensure_csrf_id next,
-    # AdminAuditMiddleware next, Chat2BodyLimitMiddleware last (→ outermost).
+    # AdminAuditMiddleware next, Chat2BodyLimitMiddleware next,
+    # SecurityHeadersMiddleware last (→ outermost).
 
     @app.middleware("http")
     async def _csrf_check(request: Request, call_next):
@@ -527,7 +539,7 @@ def build_app() -> FastAPI:
     # Admin-token audit trail (spec 2026-09-19, decision 7). Pure ASGI, so a
     # streamed response passes through untouched and the row is written after
     # its last byte. Added here: it wraps the CSRF pair, and the chat2 body
-    # limit below stays outermost.
+    # limit below stays outside it.
     from app.auth.admin_audit import AdminAuditMiddleware
 
     app.add_middleware(AdminAuditMiddleware)
@@ -540,6 +552,14 @@ def build_app() -> FastAPI:
     # disk/into memory. This raw-ASGI middleware runs ahead of FastAPI's
     # routing entirely, so it can reject on the header alone.
     app.add_middleware(Chat2BodyLimitMiddleware)
+
+    # Security headers (nosniff, Referrer-Policy, framing, Permissions-Policy,
+    # a default CSP, HSTS over HTTPS only) on every response -- including the
+    # body limit's 413 -- so it is outermost. Pure ASGI: streams untouched.
+    # See app/utils/security_headers.py.
+    from app.utils.security_headers import SecurityHeadersMiddleware
+
+    app.add_middleware(SecurityHeadersMiddleware)
 
     @app.get("/api/csrf")
     async def get_csrf_token(request: Request) -> dict:

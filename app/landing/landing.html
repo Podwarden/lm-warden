@@ -3,251 +3,1044 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
-  <title>LLM Warden</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>{{title}}</title>
+  <meta name="description" content="{{description}}">
+  {{head}}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="LM Warden">
+  <meta property="og:title" content="{{title}}">
+  <meta property="og:description" content="{{description}}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{title}}">
+  <meta name="twitter:description" content="{{description}}">
+  <meta name="theme-color" content="#EFECE7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1C1409" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+  <!-- Theme, resolved before the first paint: a stored Light or Dark choice
+       wins over the system setting; Auto (nothing stored) is left to the CSS
+       media query, so the page also follows the system with scripts off. -->
+  <script>
+    (function () {
+      var root = document.documentElement, pick = null;
+      root.classList.add("js");
+      try { pick = window.localStorage.getItem("lmw-theme"); } catch (e) { /* storage blocked */ }
+      if (pick !== "light" && pick !== "dark") return;
+      root.setAttribute("data-theme", pick);
+      var metas = document.querySelectorAll('meta[name="theme-color"]');
+      for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", pick === "dark" ? "#1C1409" : "#EFECE7");
+    })();
+  </script>
+  <link rel="icon" href="/ui/icon.svg" type="image/svg+xml">
+  <link rel="preload" href="{{a:font-sans.woff2}}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{a:font-mono.woff2}}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{a:demo-stats-poster.webp}}" as="image" fetchpriority="high">
+  {{jsonld}}
   <style>
+    /* Direction: a bench datasheet. Warm grey paper, the console's own dark
+       screenshots set on it as mounted figures, and amber label-maker tape
+       used only where it points at a real pixel in a real screenshot. A dark
+       variant puts the page on the console's own ground instead, where the
+       screenshots sit natively behind a hairline.
+
+       Fonts are served by this instance, not a font CDN: the page makes no
+       third-party request and renders the same on an air-gapped host.
+       font-sans is Mona Sans with its optical-size axis kept (text cut at
+       18px, display cut at 46px, from one file), font-sans-cond the same
+       family at width 85 for labels, font-mono Monaspace Neon with texture
+       healing and a slashed zero. All SIL OFL 1.1 and renamed as the licence
+       requires for modified copies: /_landing/assets/fonts-license.txt */
+    @font-face {
+      font-family: "LMW Sans";
+      src: url("{{a:font-sans.woff2}}") format("woff2");
+      font-weight: 400 700; font-stretch: 100%; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: "LMW Sans";
+      src: url("{{a:font-sans-cond.woff2}}") format("woff2");
+      font-weight: 500 620; font-stretch: 85%; font-style: normal; font-display: swap;
+      unicode-range: U+0020-007E, U+00A0, U+00B0, U+00B5, U+00D7, U+2009, U+2011, U+2013, U+2018-2019,
+                     U+201C-201D, U+2026, U+202F, U+2190-2193, U+2212, U+2248, U+2260, U+2264-2265;
+    }
+    @font-face {
+      font-family: "LMW Mono";
+      src: url("{{a:font-mono.woff2}}") format("woff2");
+      font-weight: 350 600; font-style: normal; font-display: swap;
+    }
+    /* Metric-matched stand-ins for the moment before the web fonts arrive, so
+       the swap moves nothing: size-adjust is calibrated against this page's
+       own copy, the overrides are the web font's metrics over that factor.
+       Arial covers macOS and Windows, Liberation Sans and Arimo are its
+       metric clones on Linux. Safari applies size-adjust and ignores the
+       overrides; every role sets its own line-height, so nothing reflows. */
+    @font-face {
+      font-family: "LMW Sans Fallback";
+      src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Arimo");
+      font-weight: 400 500;
+      size-adjust: 103.68%; ascent-override: 105.13%; descent-override: 30.86%; line-gap-override: 0%;
+    }
+    @font-face {
+      font-family: "LMW Sans Fallback";
+      src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("Arimo Bold");
+      font-weight: 600 700;
+      size-adjust: 94.88%; ascent-override: 114.88%; descent-override: 33.73%; line-gap-override: 0%;
+    }
+    @font-face {
+      font-family: "LMW Sans Fallback Android";
+      src: local("Roboto");
+      size-adjust: 103.1%; ascent-override: 105.72%; descent-override: 31.04%; line-gap-override: 0%;
+    }
+    @font-face {
+      font-family: "LMW Mono Fallback";
+      src: local("Menlo"), local("Menlo-Regular");
+      size-adjust: 102.98%; ascent-override: 91.76%; descent-override: 19.42%; line-gap-override: 9.71%;
+    }
+    @font-face {
+      font-family: "LMW Mono Fallback 2";
+      src: local("Courier New"), local("CourierNewPSMT"), local("Liberation Mono"), local("Cousine");
+      size-adjust: 103.32%; ascent-override: 91.47%; descent-override: 19.36%; line-gap-override: 9.68%;
+    }
+
+    /* Colour: two complete themes, every colour on the page a token below.
+       Light ("warm bench paper") is the default; dark ("native dark page")
+       follows prefers-color-scheme, and a stored choice from the header
+       toggle sets data-theme on <html> before the first paint (the script at
+       the top of <head>). Every neutral sits in the console's own hue family
+       (OKLCH hue 67 to 85, chroma 0.015 or less), so the screenshots read as
+       black, not brown. Every text pair passes WCAG AA in both themes; the
+       ratios are in the comments. Keep the two blocks' token lists equal. */
     :root {
+      color-scheme: light;
+      --paper: #EFECE7;      /* page ground: warm grey paper, oklch(0.944 0.007 81) */
+      --paper-2: #E3DFD8;    /* plate, code wells, figure mats, oklch(0.905 0.010 82) */
+      --ink: #1D1913;        /* text, the button: warm black, 14.8:1 on paper */
+      --ink-2: #565049;      /* secondary text, 6.8:1 on paper, 6.0:1 on paper-2 */
+      --ink-hover: #352F29;  /* the button, hovered */
+      --rule: #CBC7BF;       /* hairlines: data rules, the mat edge, the well edge */
+      --tape: #F2A516;       /* label tape, leader lines, selection: the console's own amber */
+      --tape-ink: #1D1913;   /* text on tape, 8.5:1 */
+      --link-line: #F2A516;  /* link underline */
+      --screen: #1C1409;     /* the Fig. 2 band and a figure's ground: the edge colour of the static crops */
+      --well: #E3DFD8;       /* code wells: light here, dark is kept for product pixels */
+      --well-ink: #1D1913;
+      --well-dim: #565049;   /* the $ prompt, the transcript's dim parts */
+      --well-edge: #CBC7BF;
+      --diff-add: #1D1913;   /* added lines, also set heavier */
+      --diff-del: #565049;   /* removed lines, marked by their "-" */
+      --diff-ctx: #565049;
+      --code-weight: 400;
+      --code-smoothing: auto;
+      --plate: #E3DFD8;
+      --plate-edge: #CBC7BF;
+      --mat: #E3DFD8;        /* passe-partout round a figure, drawn outside its box */
+      --mat-edge: #CBC7BF;
+      --mat-w: 6px;          /* mat width; the hairline outside it adds 1px */
+      --selection: #F2A516;
+      --selection-ink: #1D1913;
+      --focus: #1D1913;
+      --scroll-thumb: #565049;
+      --scroll-track: #E3DFD8;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --paper: #1C1409;      /* page ground: the console's own, oklch(0.198 0.024 75) */
+        --paper-2: #2C251A;    /* plate and wells, lifted to L 0.27 so the edge reads: oklch(0.269 0.022 79) */
+        --ink: #EAE5DC;        /* 14.5:1 on paper */
+        --ink-2: #ACA397;      /* 7.3:1 on paper, 6.1:1 on paper-2 */
+        --ink-hover: #FFFCF6;
+        --rule: #433C31;
+        --tape: #F2A516;
+        --tape-ink: #1C1409;   /* dark text on the amber, 8.8:1 */
+        --link-line: #A8761D;  /* a quieter amber: on a dark field the full one crowds the tape */
+        --screen: #1C1409;     /* the Fig. 2 band dissolves into the page */
+        --well: #2C251A;
+        --well-ink: #EAE5DC;
+        --well-dim: #ACA397;
+        --well-edge: #433C31;
+        --diff-add: #EAE5DC;
+        --diff-del: #ACA397;
+        --diff-ctx: #ACA397;
+        --code-weight: 370;    /* light text on dark reads heavier than it is */
+        --code-smoothing: antialiased;
+        --plate: #2C251A;
+        --plate-edge: #433C31;
+        --mat: #433C31;        /* a native figure needs only a hairline */
+        --mat-edge: #433C31;
+        --mat-w: 0px;
+        --selection: #F2A516;
+        --selection-ink: #1C1409;
+        --focus: #EAE5DC;
+        --scroll-thumb: #6B6256;
+        --scroll-track: #1C1409;
+      }
+    }
+    :root[data-theme="dark"] {
       color-scheme: dark;
-      /* podwarden.com retro-dark palette */
-      --bg: #020617;         /* slate-950 */
-      --fg: #f1f5f9;         /* slate-100 */
-      --muted: #94a3b8;      /* slate-400 */
-      --accent: #34d399;     /* emerald-400 */
-      --accent-hover: #6ee7b7; /* emerald-300 */
-      --border: #1e293b;     /* slate-800 */
-      --card-bg: #0b1220;
+      --paper: #1C1409;      /* page ground: the console's own, oklch(0.198 0.024 75) */
+      --paper-2: #2C251A;    /* plate and wells, lifted to L 0.27 so the edge reads: oklch(0.269 0.022 79) */
+      --ink: #EAE5DC;        /* 14.5:1 on paper */
+      --ink-2: #ACA397;      /* 7.3:1 on paper, 6.1:1 on paper-2 */
+      --ink-hover: #FFFCF6;
+      --rule: #433C31;
+      --tape: #F2A516;
+      --tape-ink: #1C1409;   /* dark text on the amber, 8.8:1 */
+      --link-line: #A8761D;  /* a quieter amber: on a dark field the full one crowds the tape */
+      --screen: #1C1409;     /* the Fig. 2 band dissolves into the page */
+      --well: #2C251A;
+      --well-ink: #EAE5DC;
+      --well-dim: #ACA397;
+      --well-edge: #433C31;
+      --diff-add: #EAE5DC;
+      --diff-del: #ACA397;
+      --diff-ctx: #ACA397;
+      --code-weight: 370;    /* light text on dark reads heavier than it is */
+      --code-smoothing: antialiased;
+      --plate: #2C251A;
+      --plate-edge: #433C31;
+      --mat: #433C31;        /* a native figure needs only a hairline */
+      --mat-edge: #433C31;
+      --mat-w: 0px;
+      --selection: #F2A516;
+      --selection-ink: #1C1409;
+      --focus: #EAE5DC;
+      --scroll-thumb: #6B6256;
+      --scroll-track: #1C1409;
     }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: var(--bg);
-      color: var(--fg);
-      font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
-                   Roboto, "Helvetica Neue", Arial, sans-serif;
-      font-size: 16px;
-      line-height: 1.55;
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+    :root {
+      --sans: "LMW Sans", "LMW Sans Fallback", "LMW Sans Fallback Android", ui-sans-serif, system-ui, sans-serif;
+      --mono: "LMW Mono", "LMW Mono Fallback", "LMW Mono Fallback 2", ui-monospace, monospace;
+
+      /* One fluid scale from 360 to 1440px. Every clamp keeps a rem term and
+         a max under 1.5x its min, so browser zoom still scales the text. */
+      --t-h1:    clamp(1.875rem, 1.5417rem + 1.4815vw, 2.875rem);    /* 30 to 46: "OpenAI-compatible" fits a 320px phone unbroken */
+      --t-h2:    clamp(1.5625rem, 1.375rem + 0.833vw, 2.125rem);     /* 25 to 34 */
+      --t-h3:    clamp(1.1875rem, 1.125rem + 0.278vw, 1.375rem);     /* 19 to 22 */
+      --t-lede:  clamp(1.1875rem, 1.135rem + 0.231vw, 1.34375rem);   /* 19 to 21.5 */
+      --t-body:  clamp(1.0625rem, 1.042rem + 0.0926vw, 1.125rem);    /* 17 to 18 */
+      --t-ui:    1rem;                                               /* 16: nav, button, FAQ answers, colophon */
+      --t-table: clamp(0.96875rem, 0.958rem + 0.0463vw, 1rem);       /* 15.5 to 16 */
+      --t-small: clamp(0.90625rem, 0.896rem + 0.0463vw, 0.9375rem);  /* 14.5 to 15: captions, notes */
+      --t-label: clamp(0.84375rem, 0.833rem + 0.0463vw, 0.875rem);   /* 13.5 to 14: heads, labels, tape */
+      --t-code:  clamp(0.84375rem, 0.823rem + 0.0926vw, 0.90625rem); /* 13.5 to 14.5: code blocks */
+
+      --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+      --s7: 48px; --s8: 64px; --s9: 96px; --s10: 128px; --s11: 160px;
+
+      --gutter: 20px;
+      --max: 1320px;
+      --r: 4px;
     }
-    a { color: inherit; }
-    header {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 1.5rem 1.5rem 0;
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
+    @media (min-width: 768px) { :root { --gutter: 32px; } }
+    /* Phones get the same rhythm, compressed: the big gaps stay the big ones. */
+    @media (max-width: 699px) { :root { --s9: 64px; --s10: 88px; --s11: 104px; --s8: 48px; } }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; font-synthesis: none; overflow-x: clip; scrollbar-color: var(--scroll-thumb) var(--scroll-track); }
+    body {
+      margin: 0; overflow-x: clip;
+      background: var(--paper); color: var(--ink);
+      font-family: var(--sans); font-size: var(--t-body); line-height: 1.5;
+      font-optical-sizing: auto;      /* opsz follows the font size: text cut for text, display cut for headings */
+      font-feature-settings: "ss03";  /* l with a tail, so Il1, vLLM and llama read apart */
+      font-kerning: normal; hyphens: manual;
+      caret-color: var(--ink);
+      -webkit-tap-highlight-color: transparent;
     }
-    .wordmark {
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      font-size: 1rem;
+    @media (min-width: 700px) { body { line-height: 1.55; } }
+    @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+    ::selection { background: var(--selection); color: var(--selection-ink); }
+    strong, b { font-weight: 620; }
+
+    h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; overflow-wrap: break-word; min-width: 0;
+                 text-box: trim-both cap alphabetic; }
+    h1 { font-size: var(--t-h1); font-weight: 640; line-height: 1.1; letter-spacing: -0.012em; max-width: 15em; }
+    h2 { font-size: var(--t-h2); font-weight: 620; line-height: 1.15; letter-spacing: -0.008em; max-width: 22em; }
+    h3 { font-size: var(--t-h3); line-height: 1.25; letter-spacing: -0.003em; max-width: 30em; }
+    @media (min-width: 700px) { h2 { line-height: 1.12; } }
+    @media (min-width: 1100px) { h1 { line-height: 1.06; } }
+    /* The H1 breaks after "API", not after "An"; the nbsps keep "under your desk"
+       and "or in your rack" whole. Under 375px "An OpenAI-compatible" is wider
+       than the column at 30px, so there it may break at the hyphen. */
+    @media (min-width: 375px) { h1 .nw { white-space: nowrap; } }
+    p { margin: 0; max-width: 34em; }
+    p, li, dd, figcaption, td { text-wrap: pretty; }
+    p + p { margin-top: 0.9em; }
+    [id] { scroll-margin-top: var(--s5); }
+
+    a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--link-line);
+        text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
+    a:hover { text-decoration-color: var(--ink); }
+    :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
+
+    /* Mono only for literal machine strings. cv01 2 is the slashed zero, and
+       ligatures stay on because that also keeps calt, Monaspace's texture
+       healing; the file carries no coding ligatures to turn "->" into an arrow. */
+    code, kbd, samp, pre { font-family: var(--mono); font-feature-settings: "cv01" 2; font-variant-ligatures: normal; }
+    /* Inline code at the prose's own x-height, whichever mono renders it. */
+    :where(p, li, dd, td, th, figcaption, h2, h3) code { font-size: 1em; font-size-adjust: ex-height 0.47; }
+    /* Inline code never breaks: the page's longest token is 22 characters,
+       which fits a 320px phone, and a break after the first hyphen of
+       "--enforce-eager" reads as a different flag. */
+    :where(p, li, dd, td, th, figcaption, h2, h3) code { white-space: nowrap; }
+    /* Code wells are light on the light page. On the dark one, light text
+       reads heavier than it is: a lighter weight and greyscale smoothing (the
+       two --code tokens) bring it back to the page's colour. */
+    pre {
+      font-size: var(--t-code); font-size-adjust: none; line-height: 1.6; font-weight: var(--code-weight);
+      -webkit-font-smoothing: var(--code-smoothing); tab-size: 4;
     }
-    .shield {
-      color: var(--accent);
-      width: 1.25rem;
-      height: 1.25rem;
-      display: inline-block;
-      flex-shrink: 0;
+    :root[data-theme="dark"] pre { -moz-osx-font-smoothing: grayscale; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) pre { -moz-osx-font-smoothing: grayscale; } }
+
+    .wrap { width: min(100% - 2 * var(--gutter), var(--max)); margin-inline: auto; }
+    .skip { position: absolute; left: var(--s4); top: -100px; background: var(--ink); color: var(--paper);
+            padding: var(--s2) var(--s4); border-radius: var(--r); z-index: 2; }
+    .skip:focus { top: var(--s4); }
+    .topic { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+
+    /* --- Masthead: static, no blur, no sticky -------------------------------- */
+    .masthead .bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s5); min-height: 64px; }
+    .brand { display: inline-flex; align-items: center; gap: var(--s2); text-decoration: none; line-height: 1;
+             font-weight: 650; font-size: var(--t-body); letter-spacing: -0.005em; white-space: nowrap; }
+    .brand svg { width: 20px; height: 20px; flex: none; }
+    .masthead ul { display: flex; align-items: center; gap: var(--s5); list-style: none; margin: 0; padding: 0; }
+    .masthead li { line-height: 1; }
+    .masthead nav a { text-decoration: none; font-size: var(--t-ui); font-weight: 450; white-space: nowrap; padding-block: var(--s2); }
+    .masthead nav a:hover { text-decoration: underline; text-decoration-color: var(--tape); }
+    .masthead .signin { padding-left: var(--s5); border-left: 1px solid var(--rule); }
+    .masthead .signin a { color: var(--ink-2); font-size: var(--t-small); }
+    @media (max-width: 559px) { .masthead .wide { display: none; } .masthead ul { gap: var(--s4); } .masthead .signin { padding-left: var(--s4); } }
+    .bar-end { display: flex; align-items: center; gap: var(--s5); }
+    /* Theme toggle: Auto, Light, Dark. Needs the script, so it is hidden
+       without it (the page then just follows the system). */
+    .theme-toggle { display: none; }
+    .js .theme-toggle {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 32px; min-width: 32px; padding: 0 10px 0 8px;
+      border: 1px solid var(--rule); border-radius: var(--r); background: transparent; color: var(--ink-2);
+      font: 450 var(--t-small)/1 var(--sans); cursor: pointer; touch-action: manipulation;
     }
-    main {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: clamp(2.5rem, 8vh, 5.5rem) 1.5rem 4rem;
+    .theme-toggle:hover { color: var(--ink); border-color: var(--ink-2); }
+    .theme-toggle svg { width: 16px; height: 16px; flex: none; }
+    .theme-toggle [data-icon] { display: none; }
+    .theme-toggle[data-pref="auto"] [data-icon="auto"], .theme-toggle[data-pref="light"] [data-icon="light"],
+    .theme-toggle[data-pref="dark"] [data-icon="dark"] { display: block; }
+    .vh { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+    @media (max-width: 559px) {
+      .bar-end { gap: var(--s4); }
+      .js .theme-toggle { padding: 0; justify-content: center; }
+      .theme-toggle .label { display: none; }
     }
-    .hero { margin-bottom: 4rem; }
-    h1 {
-      margin: 0 0 1.25rem;
-      font-size: clamp(1.85rem, 4.5vw, 2.75rem);
-      line-height: 1.15;
-      letter-spacing: -0.025em;
-      font-weight: 700;
-      max-width: 28ch;
+    /* 320px: the toggle joins the row only if the separator before Sign in goes. */
+    @media (max-width: 359px) { .masthead .bar, .bar-end, .masthead ul { gap: var(--s2); } .masthead .signin { padding-left: 0; border-left: 0; } }
+
+    /* --- Hero ----------------------------------------------------------------- */
+    .hero { padding-top: var(--s7); padding-bottom: var(--s9); }
+    .hero-text > * + * { margin-top: var(--s5); }
+    .lede { font-size: var(--t-lede); line-height: 1.42; letter-spacing: -0.003em; max-width: 27em; }
+    .install { margin-top: var(--s6) !important; }
+    .cmd { display: flex; gap: var(--s2); align-items: flex-start; }
+    /* The one wrapped code block: it breaks only at the <wbr> after each "/"
+       and at spaces, never inside a word. */
+    .cmd pre {
+      flex: 1; min-width: 0; margin: 0; padding: var(--s3) var(--s4);
+      background: var(--well); color: var(--well-ink); border: 1px solid var(--well-edge); border-radius: var(--r);
+      white-space: pre-wrap; overflow-wrap: break-word;
     }
-    .subtitle {
-      color: var(--muted);
-      margin: 0 0 2rem;
-      font-size: 1.0625rem;
-      max-width: 62ch;
+    .cmd pre::before { content: "$ "; color: var(--well-dim); }
+    .cmd .nw { white-space: nowrap; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+      min-height: 44px; padding: 0 var(--s4); border: 0; border-radius: var(--r);
+      background: var(--ink); color: var(--paper); font: 600 var(--t-ui)/1 var(--sans); letter-spacing: 0.005em;
+      white-space: nowrap; cursor: pointer; touch-action: manipulation;
+      transition: background-color 120ms ease-out;
     }
-    .cta-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
+    .btn span { text-box: trim-both cap alphabetic; }
+    .btn:hover { background: var(--ink-hover); }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn[data-state="done"] { background: var(--ink-hover); }
+    .guide { font-size: var(--t-ui); }
+    .req, .src, .plate-note { font-size: var(--t-small); line-height: 1.45; letter-spacing: 0.003em; color: var(--ink-2); max-width: 40em; }
+    @media (max-width: 559px) {
+      .cmd { flex-direction: column; }
+      .cmd pre { align-self: stretch; }
+      .cmd .btn { width: 100%; }
     }
-    a.btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.6rem 1.1rem;
-      border-radius: 0.5rem;
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 0.95rem;
-      transition: background-color 120ms ease, border-color 120ms ease,
-                  color 120ms ease, transform 120ms ease;
-      border: 1px solid transparent;
+
+    figure { margin: 0; }
+    figcaption { font-size: var(--t-small); line-height: 1.45; letter-spacing: 0.003em; color: var(--ink-2); max-width: 35em; margin-top: calc(var(--s3) + var(--mat-w) + 1px); }
+    figcaption b { color: var(--ink); font-weight: 600; margin-right: 0.4em; }
+    video, img { display: block; max-width: 100%; height: auto; }
+    /* Light: a passe-partout, a mat in paper-2 and a hairline, so a dark
+       figure is an object on the sheet, not a hole in it. Dark: the hairline
+       alone. Drawn outside the box, so the tape and leader geometry inside
+       is untouched. */
+    .shot { background: var(--screen); border-radius: var(--r); overflow: hidden;
+            box-shadow: 0 0 0 var(--mat-w) var(--mat), 0 0 0 calc(var(--mat-w) + 1px) var(--mat-edge); }
+    .shot video, .shot img { width: 100%; }
+
+    .hero-fig { margin-top: calc(var(--s7) + var(--mat-w) + 1px); }
+    @media (max-width: 699px) {
+      .hero-fig .shot { border-radius: 0; margin-inline: calc(-1 * var(--gutter)); }
     }
-    a.btn-primary {
-      background: var(--accent);
-      color: #022c22;
+    @media (min-width: 1100px) {
+      .hero {
+        display: grid; align-items: start;
+        grid-template-columns: max(var(--gutter), calc((100% - var(--max)) / 2)) minmax(0, 40rem) var(--s8) minmax(0, 1fr);
+        padding-top: var(--s8);
+      }
+      .hero-text { grid-column: 2; width: auto; margin: 0; }
+      .hero-fig { grid-column: 4; margin-top: calc(var(--s2) + var(--mat-w) + 1px); }
+      /* The figure runs to the viewport edge: square on the right, where it bleeds. */
+      .hero-fig .shot { border-radius: var(--r) 0 0 var(--r); }
+      .hero-fig figcaption { padding-right: var(--gutter); }
     }
-    a.btn-primary:hover,
-    a.btn-primary:focus {
-      background: var(--accent-hover);
-      outline: none;
-      transform: translateY(-1px);
+
+    /* --- Sections: the spacing is not uniform on purpose ----------------------- */
+    .sec { padding-block: var(--s9); }
+    .sec-head > * + * { margin-top: var(--s4); }
+    /* A trimmed heading measures its gap from the baseline, so the text under
+       it needs a little more than the gap between two paragraphs. */
+    :is(.sec-head, .keys-text, .note-text) > :is(h2, h3) + * { margin-top: var(--s5); }
+    .tight { padding-top: var(--s7); }
+    .plate-sec { padding-bottom: 0; }
+
+    /* Tables: text left, numbers right under right-aligned heads, units in
+       the row label instead of every cell, one light rule. Measured numbers
+       are set in the text face, not in mono. Tabular figures only in the
+       numeric columns, where they line up: Mona's tabular zero is its slashed
+       one, which reads as noise in running text like "RTX A4000". */
+    table { border-collapse: collapse; width: 100%; font-size: var(--t-table); line-height: 1.35; }
+    caption { text-align: left; font-size: var(--t-body); font-weight: 600; padding-bottom: var(--s3); text-wrap: balance; }
+    thead th { border-bottom: 1px solid var(--rule); }
+    thead th, .spec dt {
+      font-size: var(--t-label); font-weight: 560; font-stretch: 85%; line-height: 1.3;
+      letter-spacing: 0.01em; color: var(--ink-2);
     }
-    a.btn-secondary {
-      border-color: var(--border);
-      color: var(--fg);
+    th, td { text-align: left; vertical-align: top; padding: 0.45em 1em 0.45em 0; }
+    th:last-child, td:last-child { padding-right: 0; }
+    thead th { vertical-align: bottom; }
+    tbody th { font-weight: 500; }
+    td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+    td.n { white-space: nowrap; }
+    .muted { color: var(--ink-2); font-size: var(--t-small); }
+
+    /* Reference-host plate */
+    .plate { margin-top: var(--s6); background: var(--plate); border: 1px solid var(--plate-edge); border-radius: var(--r); padding: var(--s5) var(--s4); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
+    @media (min-width: 560px) { .plate { padding: var(--s5); } }
+    .table-scroll { overflow-x: auto; }
+    @media (min-width: 960px) { .plate { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); padding: var(--s6); gap: var(--s7); } }
+    .spec { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: baseline; gap: var(--s3) var(--s5);
+            font-size: var(--t-table); line-height: 1.4; }
+    .spec dd { margin: 0; }
+    @media (max-width: 419px) { .spec { grid-template-columns: minmax(0, 1fr); gap: 0; } .spec dd + dt { margin-top: var(--s3); } }
+    /* Phones: each reading becomes a row label over three values. */
+    @media (max-width: 479px) {
+      .readings thead { display: none; }
+      .readings, .readings tbody, .readings caption { display: block; }
+      .readings tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding-block: var(--s3); }
+      .readings tr + tr { border-top: 1px solid var(--rule); }
+      .readings tbody th { grid-column: 1 / -1; padding: 0 0 var(--s1); }
+      .readings td { text-align: left; padding: 0; }
+      .readings td::before { content: attr(data-h); display: block; font: 560 var(--t-label)/1.4 var(--sans); font-stretch: 85%; letter-spacing: 0.01em; color: var(--ink-2); }
     }
-    a.btn-secondary:hover,
-    a.btn-secondary:focus {
-      border-color: var(--accent);
-      color: var(--accent);
-      outline: none;
+    .plate-note { margin-top: var(--s4); }
+
+    /* Full-bleed moment: the four GPU panels at 1:1, taped */
+    .cards-sec { padding-top: var(--s11); }
+    .bleed { margin-top: var(--s7); background: var(--screen); padding-block: 84px; }
+    .stage { position: relative; width: min(100% - 2 * var(--gutter), 1246px); margin-inline: auto; }
+    .stage img { width: 100%; }
+    svg.leads { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+    .leads path, .leads line { fill: none; stroke: var(--tape); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+    .leads circle { fill: none; stroke: var(--tape); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+    @media (max-width: 799px) {
+      .bleed { overflow-x: auto; overscroll-behavior-x: contain; }
+      .stage { width: 1000px; margin-inline: var(--gutter); }
+      .stage::after { content: ""; position: absolute; right: calc(-1 * var(--gutter)); width: var(--gutter); height: 1px; }
     }
-    .btn-icon {
-      width: 1.05rem;
-      height: 1.05rem;
-      display: inline-block;
+    .scroll-hint { display: none; }
+    @media (max-width: 799px) { .scroll-hint { display: block; } }
+
+    /* Label-maker tape. Positioned in % of the image box, so it tracks the
+       pixel it names at any width. The condensed face, and a box trimmed to
+       cap height and baseline, so equal padding reads as centred. */
+    .tape {
+      position: absolute; z-index: 1;
+      background: var(--tape); color: var(--tape-ink);
+      font: 600 var(--t-label)/1.2 var(--sans); font-stretch: 85%; letter-spacing: 0.01em;
+      padding: 0.5em 0.65em; text-box: trim-both cap alphabetic;
+      border-radius: 1px; white-space: nowrap;
     }
-    section.features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1rem;
+    .tape.up   { bottom: calc(100% + 18px); }
+    .tape.down { top: calc(100% + 18px); }
+    .tape.l { right: calc(100% - var(--x)); transform: translateX(1px) rotate(var(--rot, -0.6deg)); transform-origin: right center; }
+    .tape.r { left: var(--x); transform: translateX(-1px) rotate(var(--rot, 0.5deg)); transform-origin: left center; }
+    /* the stub between tape and image edge */
+    .tape.up::after, .tape.down::after { content: ""; position: absolute; width: 2px; height: 18px; background: var(--tape); }
+    .tape.up::after { top: 100%; } .tape.down::after { bottom: 100%; }
+    .tape.l::after { right: -1px; } .tape.r::after { left: -1px; }
+    .tape.side { top: var(--y); left: var(--x); transform: translateY(-50%) rotate(var(--rot, -0.4deg));
+                 white-space: normal; width: max-content; max-width: min(15rem, calc(100% - var(--x) - 12px)); }
+
+    .per { margin-top: var(--s7); max-width: 60rem; }
+    .per th[scope="row"] { width: 9rem; white-space: nowrap; }
+    @media (max-width: 599px) {
+      .per, .per tbody, .per tr, .per th, .per td { display: block; width: auto; }
+      .per th[scope="row"] { padding-bottom: 0; }
+      .per caption { display: block; }
+      .per td { padding-top: var(--s1); padding-bottom: var(--s4); }
     }
-    .card {
-      border: 1px solid var(--border);
-      background: var(--card-bg);
-      border-radius: 0.75rem;
-      padding: 1.25rem 1.25rem 1.4rem;
-      transition: border-color 160ms ease;
+
+    /* Keys: figure on the left, narrower */
+    .keys { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s7); }
+    @media (min-width: 1100px) {
+      .keys { grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--s8); align-items: start; }
+      .keys .keys-text { grid-column: 2; grid-row: 1; }
+      .keys .keys-fig { grid-column: 1; grid-row: 1; }
     }
-    .card:hover { border-color: var(--accent); }
-    .card h3 {
-      margin: 0 0 0.5rem;
-      font-size: 1rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      color: var(--fg);
+    .keys-text > * + * { margin-top: var(--s4); }
+    /* The transcript and the diff never wrap mid-token: they scroll instead. */
+    pre.term, pre.diff {
+      margin: 0; padding: var(--s4) var(--s5); background: var(--well); color: var(--well-ink); border: 1px solid var(--well-edge);
+      border-radius: var(--r); overflow-x: auto; white-space: pre;
     }
-    .card p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.92rem;
-      line-height: 1.5;
+    .term .dim { color: var(--well-dim); }
+    .diff .ctx { color: var(--diff-ctx); }
+    .diff .del { color: var(--diff-del); }
+    .diff .add { color: var(--diff-add); font-weight: 520; }
+
+    .leave-code { margin-top: var(--s6); }
+
+    /* Incident notes */
+    .note { margin-top: var(--s8); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
+    .note > .note-text > * + * { margin-top: var(--s4); }
+    @media (min-width: 1100px) {
+      .note.with-fig { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--s8); align-items: start; }
     }
-    footer {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 1.5rem;
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      color: var(--muted);
-      font-size: 0.85rem;
+    .logs-stage { position: relative; }
+    /* Phones: a wide figure keeps a readable size and scrolls sideways; the
+       padding leaves room for the mat on every side. */
+    @media (max-width: 799px) {
+      .logs-scroll, .wide-scroll { overflow-x: auto; overscroll-behavior-x: contain; margin-inline: calc(-1 * var(--gutter));
+                                   padding: calc(var(--mat-w) + 1px) var(--gutter); }
+      .logs-scroll .logs-stage { width: 760px; }
+      .wide-scroll .req-stage { width: 900px; }
     }
-    footer .spacer { flex: 1; }
-    footer a.icon-link {
-      display: inline-flex;
-      align-items: center;
-      color: var(--muted);
-      transition: color 120ms ease;
+    .req-fig { margin-top: var(--s9); }
+    .fits { margin-top: var(--s2); }
+    .fits-wrap { overflow-x: auto; }
+    .fits-wrap .src { margin-top: var(--s3); }
+    @media (max-width: 699px) {
+      .fits thead { display: none; }
+      .fits, .fits tbody, .fits tr, .fits th, .fits td { display: block; width: auto; padding-right: 0; }
+      .fits tr { padding-block: var(--s3); }
+      .fits tr + tr { border-top: 1px solid var(--rule); }
+      .fits td::before { content: attr(data-h) ": "; font-weight: 560; font-stretch: 85%; letter-spacing: 0.01em; color: var(--ink-2); }
+      .fits tbody th { font-weight: 600; }
     }
-    footer a.icon-link:hover,
-    footer a.icon-link:focus {
-      color: var(--accent);
-      outline: none;
+
+    /* Smaller things: a definition list, no icons */
+    .small-things { margin: var(--s6) 0 0; max-width: 60rem; }
+    .small-things > div + div { margin-top: var(--s5); }
+    .small-things dt { font-weight: 600; }
+    .small-things dd { margin: var(--s1) 0 0; max-width: 34em; }
+    @media (min-width: 900px) {
+      .small-things > div { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: var(--s6); }
+      .small-things dd { margin: 0; }
     }
-    footer .icon-link svg {
-      width: 1.1rem;
-      height: 1.1rem;
-    }
-    @media (max-width: 480px) {
-      .cta-row { flex-direction: column; align-items: stretch; }
-      a.btn { justify-content: center; }
-    }
+
+    .dont { padding-top: var(--s11); }
+    .dont ul { margin: var(--s5) 0 0; padding-left: 1.2em; max-width: 35.2em; }
+    .dont li + li { margin-top: var(--s3); }
+    .dont li::marker { color: var(--ink-2); }
+
+    /* FAQ: every answer visible, two columns on desktop, each column about
+       65 characters wide */
+    .faq-list { margin-top: var(--s6); max-width: 66rem; }
+    @media (min-width: 1000px) { .faq-list { columns: 2; column-gap: var(--s8); } }
+    .qa { break-inside: avoid; padding-bottom: var(--s6); }
+    .qa h3 { font-size: var(--t-body); line-height: 1.35; letter-spacing: 0; margin-bottom: var(--s3); }
+    .qa p { font-size: var(--t-ui); line-height: 1.55; max-width: 36em; }
+
+    /* Colophon */
+    .colophon { border-top: 1px solid var(--rule); padding-block: var(--s8) var(--s9); font-size: var(--t-ui); line-height: 1.55; }
+    .colophon .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s7); }
+    @media (min-width: 960px) { .colophon .grid { grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--s8); } }
+    .colophon h2 { font-size: var(--t-h3); letter-spacing: -0.003em; }
+    .colophon .cmd { margin-top: var(--s5); }
+    .colophon ul { list-style: none; margin: var(--s5) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); }
+    .colophon li { white-space: nowrap; }
+    .colophon p { color: var(--ink-2); max-width: 36em; }
+    .colophon p a { color: var(--ink-2); }
   </style>
 </head>
 <body>
-  <header>
-    <svg class="shield" aria-hidden="true" viewBox="0 0 24 24" fill="none"
-         stroke="currentColor" stroke-width="2" stroke-linecap="round"
-         stroke-linejoin="round">
-      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
-    </svg>
-    <span class="wordmark">LLM Warden</span>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="masthead">
+    <div class="wrap bar">
+      <a class="brand" href="/" aria-label="LM Warden home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+        <span>LM Warden</span>
+      </a>
+      <div class="bar-end">
+        <nav aria-label="Primary">
+          <ul>
+            <li><a href="{{repo}}" rel="noopener">GitHub</a></li>
+            <li class="wide"><a href="{{repo}}#readme" rel="noopener">Docs</a></li>
+            <li class="wide"><a href="#install">Install</a></li>
+            <li class="signin"><a href="/ui/login">Sign in</a></li>
+          </ul>
+        </nav>
+        <!-- Cycles Auto, then the opposite of the system theme, then the same
+             as it, so the first press always changes what you see. -->
+        <button class="theme-toggle" type="button" data-pref="auto" aria-label="Colour theme: Auto" title="Colour theme: Auto, follows your system">
+          <svg data-icon="auto" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.75a6.25 6.25 0 0 1 0 12.5z" fill="currentColor"/></svg>
+          <svg data-icon="light" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.4 1.4M11.55 11.55l1.4 1.4M3.05 12.95l1.4-1.4M11.55 4.45l1.4-1.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <svg data-icon="dark" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.6A5.75 5.75 0 0 1 6.4 2.5a5.75 5.75 0 1 0 7.1 7.1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          <span class="label">Auto</span>
+        </button>
+        <span class="vh" role="status" aria-live="polite" data-theme-status></span>
+      </div>
+    </div>
   </header>
 
-  <main>
-    <section class="hero">
-      <h1>Self-host your own LLM API, with the operator surface you actually wanted.</h1>
-      <p class="subtitle">
-        LLM Warden is the operator console for serving large language models
-        from a single GPU host. It manages model lifecycle, exposes an
-        OpenAI-compatible API at /v1, schedules across multiple GPUs, and
-        gives you per-consumer API tokens with priorities — all from one
-        self-hosted appliance, no external control plane.
-      </p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="/ui/">Open console</a>
-        <a class="btn btn-secondary"
-           href="https://github.com/Podwarden/vllm-warden"
-           rel="noopener noreferrer">
-          <svg class="btn-icon" aria-hidden="true" viewBox="0 0 24 24"
-               fill="currentColor">
-            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
-          </svg>
-          View on GitHub
-        </a>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-text wrap">
+        <h1 id="hero-title"><span class="nw">An OpenAI-compatible</span> API on the GPUs under&nbsp;your&nbsp;desk or&nbsp;in&nbsp;your&nbsp;rack.</h1>
+        <p class="lede">
+          LM Warden runs vLLM and llama.cpp on your NVIDIA cards behind one port.
+          Each app gets its own key, and each card reports for itself.
+        </p>
+        <div class="install" id="install">
+          <div class="cmd">
+            <pre id="cmd-hero" tabindex="0" aria-label="Install command">{{install}}</pre>
+            <button class="btn" type="button" data-copy="cmd-hero"><span>Copy</span></button>
+          </div>
+        </div>
+        <p class="guide"><a href="{{repo}}/blob/main/documents/INSTALL.md" rel="noopener">Read the install guide</a>: every command, and what it printed.</p>
+        <!-- src: README.md, "Quick start" (Compose v2.24+) and "Will it run on my hardware?" (Turing floor) -->
+        <p class="req">Needs Linux x86_64, Docker Compose&nbsp;v2.24+, the NVIDIA Container Toolkit and a Turing or newer card.</p>
+      </div>
+
+      <figure class="hero-fig wrap">
+        <div class="shot">
+          <video data-autoplay controls muted loop playsinline preload="metadata"
+                 width="1280" height="800"
+                 poster="{{a:demo-stats-poster.webp}}"
+                 aria-label="The Stats page of a busy instance switching between its 1 hour, 6 hour and 24 hour windows, then scrolling to the live generation rate, latency histograms and the requests in flight">
+            <source src="{{a:demo-stats.webm}}" type="video/webm">
+            <source src="{{a:demo-stats.mp4}}" type="video/mp4">
+          </video>
+        </div>
+        <!-- date: the same session as demo-token-poster.webp, whose window reads "Sep 23 16:06 to Sep 23 17:06" -->
+        <!-- src: demo-stats.mp4 (IN FLIGHT "10 active", every row "demo-agent") -->
+        <figcaption><b>Fig.&nbsp;1</b>The Stats page of our four-card box while ten of our own streaming requests ran on it, stepping through its 1&#8239;h, 6&#8239;h and 24&#8239;h windows. Recorded on 23&nbsp;September 2026.</figcaption>
+      </figure>
+    </section>
+
+    <hr class="topic">
+
+    <section class="sec plate-sec" aria-labelledby="box-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <h2 id="box-title">Every reading on this page comes from one box.</h2>
+          <p>
+            Four RTX&nbsp;A4000s in one workstation, with a single model loaded across all of
+            them, busy with our own test traffic. These are the numbers the console showed while we recorded figs.&nbsp;1 and&nbsp;2.
+          </p>
+        </div>
+
+        <div class="plate">
+          <dl class="spec">
+            <dt>GPUs</dt>
+            <!-- src: shot-gpu-cards.webp (GPU 0 to 3: "NVIDIA RTX A4000", "Ampere · compute 8.6", "/ 16.0 GiB") -->
+            <dd>4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000, 16&#8239;GiB each (Ampere, compute&nbsp;8.6)</dd>
+            <dt>VRAM in use</dt>
+            <!-- src: demo-stats-poster.webp (VRAM "59.4 / 64.0 GiB", "93% used · host") -->
+            <dd>59.4 of 64.0&#8239;GiB, one model across all four cards</dd>
+            <dt>PCIe</dt>
+            <!-- src: shot-gpu-cards.webp ("Link Gen 4 · x16 of x16", every panel) -->
+            <dd>Gen&nbsp;4 x16 per card</dd>
+            <dt>Driver</dt>
+            <!-- src: shot-gpu-cards.webp ("Driver 610.57.04", "CUDA 13.3") -->
+            <dd><code>610.57.04</code>, CUDA&nbsp;13.3</dd>
+          </dl>
+
+          <div class="table-scroll">
+            <table class="readings">
+              <caption>GPU load, power and tokens, read off fig.&nbsp;1</caption>
+              <thead>
+                <tr><th scope="col">Reading</th><th scope="col" class="n">At capture</th><th scope="col" class="n">24&#8239;h busy median</th><th scope="col" class="n">24&#8239;h peak</th></tr>
+              </thead>
+              <tbody>
+                <!-- src: demo-stats-poster.webp (GPU UTIL "100 % max across GPUs · host"; GPU UTILISATION "24h busy median 100% · peak 100%") -->
+                <tr><th scope="row">GPU utilisation, busiest card&nbsp;(%)</th><td class="n" data-h="At capture">100</td><td class="n" data-h="24&#8239;h median">100</td><td class="n" data-h="24&#8239;h peak">100</td></tr>
+                <!-- src: demo-stats-poster.webp (POWER "548 W sum across GPUs · host"; POWER DRAW "24h busy median 530 W · peak 559 W") -->
+                <tr><th scope="row">GPU power, four cards summed&nbsp;(W)</th><td class="n" data-h="At capture">548</td><td class="n" data-h="24&#8239;h median">530</td><td class="n" data-h="24&#8239;h peak">559</td></tr>
+                <!-- src: demo-stats-poster.webp (TOKENS / MINUTE "24h busy median 190k · peak 880k"; no live tile, so "not shown") -->
+                <tr><th scope="row">Tokens per minute</th><td class="n" data-h="At capture"><span class="muted">not shown</span></td><td class="n" data-h="24&#8239;h median">190k</td><td class="n" data-h="24&#8239;h peak">880k</td></tr>
+              </tbody>
+            </table>
+            <p class="plate-note">Your numbers will be different. That is the point of measuring them.</p>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section class="features" aria-label="Capabilities">
-      <article class="card">
-        <h3>OpenAI-compatible /v1</h3>
-        <p>Drop-in for any client that already talks to OpenAI.</p>
-      </article>
-      <article class="card">
-        <h3>Multi-GPU scheduling</h3>
-        <p>Let LLM Warden pick the right GPU for each model.</p>
-      </article>
-      <article class="card">
-        <h3>Per-consumer API tokens</h3>
-        <p>Per-consumer keys, scheduling priority, usage telemetry.</p>
-      </article>
-      <article class="card">
-        <h3>Single-node appliance</h3>
-        <p>One Docker compose stack, no external control plane.</p>
-      </article>
+    <section class="cards-sec" aria-labelledby="cards-title">
+      <div class="wrap sec-head">
+        <h2 id="cards-title">A number it can’t measure reads “not reported”.</h2>
+        <!-- src: README.md ("eighteen months apart"; "not reported", never 0) -->
+        <p>
+          Most GPU dashboards average four cards into one line and draw a missing value
+          as&nbsp;0. This one gives each card its own panel: temperature against the throttle
+          point its driver reports, power against the card’s own cap, clocks, fan, the PCIe
+          link as it is negotiated right now, and ECC and NVLink when the card has them.
+          Two cards bought eighteen months apart stay two cards, and a value the driver
+          doesn’t give is labelled as missing instead of drawn as zero.
+        </p>
+      </div>
+
+      <figure>
+        <div class="bleed">
+          <div class="stage">
+            <img src="{{a:shot-gpu-cards.webp}}" width="2492" height="854" loading="lazy" decoding="async"
+                 alt="Four GPU panels from the Stats page under load, one per RTX A4000: 99 to 100 percent utilisation in power state P2, temperatures from 79 to 94 degrees against a 100 degree throttle mark, a thermal slowdown warning on three cards, power at 134 to 138 of a 140 watt cap, clocks, driver and CUDA version, PCIe link, NVLink and ECC">
+            <!-- Leader lines in the image's own pixel space (2492 x 854). Each
+                 runs down the gap between two panels, then across to its pixel. -->
+            <svg class="leads" viewBox="0 0 2492 854" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M625 0 V314 H560"/>   <circle cx="548" cy="314" r="11"/>
+              <path d="M1869 0 V390 H1849"/> <circle cx="1838" cy="390" r="11"/>
+              <path d="M1247 854 V424 H1234"/> <circle cx="1223" cy="424" r="11"/>
+              <path d="M1869 854 V786 H1721"/> <circle cx="1710" cy="786" r="11"/>
+            </svg>
+            <!-- src: shot-gpu-cards.webp ("100° throttle" marker, GPU 0) -->
+            <span class="tape up l" style="--x:25.08%">Throttle point from the driver, not a guess</span>
+            <!-- src: shot-gpu-cards.webp ("Thermal slowdown — clock at 76% of max", GPU 2) -->
+            <span class="tape up l" style="--x:75%;--rot:0.4deg">Why the clock is down, as the driver reports it</span>
+            <!-- src: shot-gpu-cards.webp ("134 / 140 W", GPU 1) -->
+            <span class="tape down l" style="--x:50.04%;--rot:0.5deg">Power against its own 140&#8239;W cap</span>
+            <!-- src: shot-gpu-cards.webp ("NVLink none on this card", "ECC off", GPU 2) -->
+            <span class="tape down r" style="--x:75%;--rot:-0.5deg">NVLink and ECC, as the card reports them</span>
+          </div>
+        </div>
+        <div class="wrap">
+          <!-- src: shot-gpu-cards.webp ("P2" badge and 99% or 100% load on every panel; 90, 79, 94, 94 °C; "Thermal slowdown — clock at 84% / 76% / 77% of max" on GPUs 0, 2, 3) -->
+          <figcaption><b>Fig.&nbsp;2</b>The four GPU panels from the same Stats page, at full size, taken during the same load. Every card is at 99 or 100% in power state P2, and three of them, at 90 to 94&#8239;°C, are held by the driver to between 76 and 84% of their top clock.<span class="scroll-hint"> Scroll the image sideways to see all four.</span></figcaption>
+        </div>
+      </figure>
+
+      <div class="wrap">
+          <table class="per">
+            <caption>What is read where</caption>
+            <tbody>
+              <tr><th scope="row">Per card</th><td>Temperature and throttle point, power and its cap, core and memory clocks, fan, PCIe generation and width, ECC, NVLink, and the engine process using the card</td></tr>
+              <tr><th scope="row">Per host</th><td>VRAM in use, GPU utilisation (the busiest card), power (the sum of the cards) and tokens per minute</td></tr>
+              <tr><th scope="row">Per request</th><td>Time to first token, inter-token latency and duration, measured at the proxy the same way for both engines</td></tr>
+            </tbody>
+          </table>
+      </div>
+    </section>
+
+    <section class="sec" aria-labelledby="keys-title">
+      <div class="wrap keys">
+        <div class="keys-text">
+          <h2 id="keys-title">One key per app, and a page for every key.</h2>
+          <!-- src: demo-token-poster.webp ("P0 … P9", "Strict: a waiting P9 request always goes before a P8 one") -->
+          <p>
+            Give each colleague, laptop, CI job and agent its own key. A key’s page shows
+            what it spent and how long its requests waited in the queue, median and p95,
+            over any window you drag or type. Rotate a key with a grace window, and set
+            its priority from P0&nbsp;to&nbsp;P9: a waiting P9 request always goes before a P8 one.
+          </p>
+          <p>Pause it, and new requests are refused while the ones already running finish:</p>
+          <!-- captured 2026-09-23 against a local build of this branch; key and host replaced -->
+          <pre class="term" tabindex="0" aria-label="A request with a paused key and its response"><span class="dim">$</span> curl -i http://gpu-box:8080/v1/chat/completions \
+    -H "Authorization: Bearer vw_…" -d '{…}'
+HTTP/1.1 403 Forbidden
+content-type: application/json
+
+{"detail":"token paused"}</pre>
+          <p class="src">From a local instance on 23&nbsp;September 2026. Host and key replaced, other headers cut.</p>
+        </div>
+
+        <figure class="keys-fig">
+          <div class="shot">
+            <video data-autoplay controls muted loop playsinline preload="none"
+                   width="1280" height="800"
+                   poster="{{a:demo-token-poster.webp}}"
+                   aria-label="An API key’s page during a load test: its priority from P0 to P9, a strip of its whole history, tokens and requests per minute over the last hour, then the god-mode dock opening on its prompts and responses as they stream">
+              <source src="{{a:demo-token.webm}}" type="video/webm">
+              <source src="{{a:demo-token.mp4}}" type="video/mp4">
+            </video>
+          </div>
+          <!-- src: demo-token-poster.webp ("37 requests", "43k generation tokens", "last hour"; God mode "demo-agent · replayed the last requests, now streaming") -->
+          <figcaption><b>Fig.&nbsp;3</b>The page of <code>demo-agent</code>, the key that ran the load in fig.&nbsp;1: 37 requests and 43k generated tokens in the hour on screen. Then its god-mode dock opens and its replies stream in as they are written. The prompts are ours.</figcaption>
+        </figure>
+      </div>
+
+      <figure class="wrap req-fig">
+        <div class="wide-scroll"><div class="shot req-stage">
+          <img src="{{a:shot-requests-7d.webp}}" width="2464" height="884" loading="lazy" decoding="async"
+               alt="The Requests chart from the Stats page over the last 7 days, 16 to 23 September: one mark per request, coloured by API key, sized by generated tokens and shaped by finish reason, against duration on a log scale from 100&#8239;ms to 10,000&#8239;s. Most marks sit between 3 and 100 seconds; one key shows two dense columns reaching from under a second to several hundred seconds.">
+        </div></div>
+        <!-- date: the same recording day as figs. 1 and 3; the header reads "last 7 days · 28,906 requests · drawing every 15th". Key names in the image are stand-ins. -->
+        <!-- src: shot-requests-7d.webp ("28,906 requests", "drawing every 15th"; legend "opencode-laptop 966", "research-notebook 588", "ui-refactor-agent 194", "agent-sandbox 161", "load-test-filler 6", "demo-agent 4", "other 9"; "newest 25 of 1,928 fetched") -->
+        <figcaption><b>Fig.&nbsp;4</b>Every key’s requests on one chart, from the same Stats page: the last 7 days, 28,906 requests, one in fifteen drawn. A mark is one request, coloured by its key, sized by the tokens it generated and shaped by how it finished, at the height of its duration on a log scale. The steady amber is <code>opencode-laptop</code>, the two dense pink columns are <code>research-notebook</code>. Recorded on 23&nbsp;September 2026; the key names are replaced.<span class="scroll-hint"> Scroll the image sideways to see the whole week.</span></figcaption>
+      </figure>
+    </section>
+
+    <section class="sec tight" aria-labelledby="leave-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <h2 id="leave-title">Leaving is a <code>base_url</code> change.</h2>
+          <p>
+            It speaks <code>/v1/chat/completions</code> and <code>/v1/models</code>, and
+            <code>/v1/models</code> reports each model’s <code>max_model_len</code>. The weights sit
+            in an ordinary HuggingFace cache that <code>make export-hf-cache</code> hands you as a
+            tarball, and the exact argv each engine was started with is one GET away, so a
+            working setup can be rebuilt without us. Read the diff below backwards and
+            that is how you leave.
+          </p>
+        </div>
+        <pre class="diff leave-code" tabindex="0" aria-label="The change to an OpenAI SDK client"><span class="ctx">  import os
+  from openai import OpenAI
+
+  client = OpenAI(</span>
+<span class="del">-     base_url="https://api.openai.com/v1",
+-     api_key=os.environ["OPENAI_API_KEY"],</span>
+<span class="add">+     base_url="http://gpu-box:8080/v1",
++     api_key=os.environ["LM_WARDEN_KEY"],   # a vw_ key from API tokens</span>
+<span class="ctx">  )
+
+  reply = client.chat.completions.create(</span>
+<span class="del">-     model="gpt-4o-mini",</span>
+<span class="add">+     model="gpt-oss-20b",   # the served name of a model you loaded</span>
+<span class="ctx">      messages=[{"role": "user", "content": "What is a KV cache?"}],
+  )</span></pre>
+      </div>
+    </section>
+
+    <hr class="topic">
+
+    <section class="sec" aria-labelledby="lessons-title">
+      <div class="wrap">
+        <h2 id="lessons-title">Two things we learned the hard way.</h2>
+
+        <article class="note with-fig">
+          <div class="note-text">
+            <!-- src: README.md ("the engine core died four times in one day") -->
+            <h3>The engine died four times in one day, and the proxy kept forwarding to it.</h3>
+            <p>
+              The vLLM engine core crashed while the <code>vllm serve</code> wrapper around it
+              stayed up, so the process looked alive and requests went on being sent to it.
+              Now a watchdog asks the engine’s own <code>/health</code> endpoint instead of the
+              process table. When the engine stops answering, it keeps the evidence, including
+              a bounded tail of the log, and reloads the model.
+            </p>
+          </div>
+          <figure>
+            <div class="logs-scroll"><div class="shot logs-stage">
+              <img src="{{a:shot-engine-log.webp}}" width="1700" height="660" loading="lazy" decoding="async"
+                   alt="A model’s live log panel under load: vLLM API server lines answering GET /metrics, POST /v1/chat/completions from a client, engine lines reporting 10 requests running and 0 waiting, and one GET /health line, all returning 200 OK">
+              <svg class="leads" viewBox="0 0 1700 660" preserveAspectRatio="none" aria-hidden="true">
+                <line x1="1242" y1="193" x2="1300" y2="193"/>
+              </svg>
+              <!-- src: shot-engine-log.webp ("GET /health HTTP/1.1" 200 OK line) -->
+              <span class="tape side" style="--x:76.5%;--y:29.24%">The watchdog’s probe, answered by the engine</span>
+            </div></div>
+            <!-- src: shot-engine-log.webp ("Running: 10 reqs, Waiting: 0 reqs", "POST /v1/chat/completions") -->
+            <figcaption><b>Fig.&nbsp;5</b>The live log on a model’s page during the same load: scrapes of <code>/metrics</code>, chat completions coming in, the engine’s own count of 10 requests running and none waiting, and one <code>/health</code> probe between them.</figcaption>
+          </figure>
+        </article>
+
+        <article class="note">
+          <div class="note-text">
+            <h3>A 16&#8239;GiB card holds less than the arithmetic says.</h3>
+            <p>
+              The weights of a bf16 8B model are about 15&#8239;GiB on their own, and it runs out
+              of memory while loading. We tried each row below on 16&#8239;GiB RTX&nbsp;A4000 and
+              Quadro RTX&nbsp;5000 cards and judged it by reading the model’s answers in the chat
+              playground, not by trusting a health check.
+            </p>
+          </div>
+          <div class="fits-wrap">
+            <!-- src: documents/HAZARDS.md, "What fits on what" (validated against vLLM 0.20.0) -->
+            <table class="fits">
+              <thead><tr><th scope="col">Model</th><th scope="col">What works</th><th scope="col">What does not</th></tr></thead>
+              <tbody>
+                <tr><th scope="row"><code>openai/gpt-oss-20b</code></th><td data-h="Works">Two cards, tensor parallel 2, <code>max_model_len</code> 32000, <code>gpu_memory_utilization</code> 0.7&nbsp;to&nbsp;0.9</td><td data-h="Does not">One card: the 20B MoE doesn’t fit</td></tr>
+                <tr><th scope="row">Llama 3.1 8B, Mistral 7B class</th><td data-h="Works">One card, with an AWQ-INT4 checkpoint, <code>--enforce-eager</code> and <code>gpu_memory_utilization</code> 0.9</td><td data-h="Does not">The bf16 repo: about 15&#8239;GiB of weights, out of memory during load</td></tr>
+                <tr><th scope="row">Two models at once</th><td data-h="Works">One model per card, each fitting its own card</td><td data-h="Does not">Two models sharing one card</td></tr>
+              </tbody>
+            </table>
+            <p class="src">Checked against vLLM&nbsp;0.20.0. The full table and the reasons behind it are in <a href="{{repo}}/blob/main/documents/HAZARDS.md#what-fits-on-what" rel="noopener">HAZARDS.md</a>.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="sec tight" aria-labelledby="small-title">
+      <div class="wrap">
+        <h2 id="small-title">Smaller things you’ll find once it’s running.</h2>
+        <dl class="small-things">
+          <div><dt>God mode</dt><dd>Watch one key’s prompts and responses as they happen, from a dock on its page. Held in memory only, streamed only while the dock is open, and off unless you set <code>VW_GODMODE_ENABLED</code>.</dd></div>
+          <div><dt>Admin tokens</dt><dd><code>vwa_</code> tokens let scripts, CI and agents drive the control API without the admin password, a cookie jar or a CSRF header. Shown once, stored as a SHA-256 hash.</dd></div>
+          <div><dt>A HuggingFace cache manager</dt><dd>What is on disk and which model owns it. Garbage-collect orphans, and export or import the whole cache as a tarball.</dd></div>
+          <div><dt>One port</dt><dd>The UI, the control API and <code>/v1</code> share <code>:8080</code>. Your own TLS terminator, ingress or SSO goes in front of it unchanged.</dd></div>
+          <div><dt>No route out needed</dt><dd>Three image tarballs and an optional model-cache tarball are the whole transport for an air-gapped host. <code>HF_HUB_OFFLINE=1</code> stops even the weight downloads.</dd></div>
+          <div><dt>A chat playground</dt><dd>Talk to a loaded model in the browser, images included, before you hand anyone a key.</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="dont" aria-labelledby="dont-title">
+      <div class="wrap">
+        <h2 id="dont-title">Don’t use this if…</h2>
+        <ul>
+          <li><strong>You have no NVIDIA GPU.</strong> There is no ROCm, Apple Silicon or CPU path.</li>
+          <li><strong>You need one model served across several machines.</strong> This is one host. Several GPUs in one box, yes; several boxes, no.</li>
+          <li><strong>You want several models resident on one card.</strong> One loaded model per GPU is enforced before an engine starts.</li>
+          <li><strong>You need an engine other than vLLM or llama.cpp.</strong> TensorRT-LLM, SGLang, MLX and Ollama’s runtime are not shipped.</li>
+          <li><strong>You want a hosted API.</strong> Nobody runs this for you. You supply the hardware, the driver and the electricity.</li>
+          <li><strong>Your host isn’t Linux x86_64.</strong></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="sec" id="faq" aria-labelledby="faq-title">
+      <div class="wrap">
+        <h2 id="faq-title">What people ask before they install it.</h2>
+        <div class="faq-list">
+{{faq}}
+        </div>
+      </div>
     </section>
   </main>
 
-  <footer>
-    <span>Apache-2.0</span>
-    <span class="spacer"></span>
-    <a class="icon-link" href="https://github.com/Podwarden/vllm-warden"
-       rel="noopener noreferrer" aria-label="GitHub repository">
-      <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
-      </svg>
-    </a>
-    <a class="icon-link" href="https://podwarden.com"
-       rel="noopener noreferrer" aria-label="PodWarden">
-      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2" stroke-linecap="round"
-           stroke-linejoin="round">
-        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
-      </svg>
-    </a>
+  <footer class="colophon">
+    <div class="wrap grid">
+      <div>
+        <h2>Install it on the GPU host.</h2>
+        <div class="cmd">
+          <pre id="cmd-end" tabindex="0" aria-label="Install command">{{install}}</pre>
+          <button class="btn" type="button" data-copy="cmd-end"><span>Copy</span></button>
+        </div>
+        <ul>
+          <li><a href="{{repo}}" rel="noopener">Source on GitHub</a></li>
+          <li><a href="{{repo}}/blob/main/changelog.md" rel="noopener">Changelog</a></li>
+          <li><a href="{{repo}}/blob/main/LICENSE" rel="noopener">Apache-2.0 licence</a></li>
+          <li><a href="/llms.txt">llms.txt</a></li>
+        </ul>
+      </div>
+      <div>
+        <p>
+          LM Warden is free software under the Apache License 2.0, made by the team behind
+          <a href="https://podwarden.com" rel="noopener">PodWarden</a> and listed in its Hub catalogue.
+          vLLM is a project of the vLLM team, and llama.cpp of ggml.ai and its contributors.
+          We run both unmodified and are not affiliated with either.
+        </p>
+        <p>
+          This page is served by LM Warden itself and makes no third-party requests. It is set
+          in Mona Sans and Monaspace Neon, both under the SIL Open Font License
+          (<a href="{{a:fonts-license.txt}}">licences</a>).
+        </p>
+      </div>
+    </div>
   </footer>
+
+  <script>
+    (function () {
+      "use strict";
+      // Copy buttons: the command text is the element named by data-copy.
+      function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          return navigator.clipboard.writeText(text);
+        }
+        return new Promise(function (resolve, reject) {
+          var ta = document.createElement("textarea");
+          ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+          document.body.appendChild(ta); ta.select();
+          try { document.execCommand("copy") ? resolve() : reject(); } catch (e) { reject(e); }
+          document.body.removeChild(ta);
+        });
+      }
+      document.querySelectorAll("button[data-copy]").forEach(function (btn) {
+        var label = btn.querySelector("span");
+        btn.addEventListener("click", function () {
+          var src = document.getElementById(btn.getAttribute("data-copy"));
+          copyText(src.textContent).then(function () {
+            btn.setAttribute("data-state", "done"); label.textContent = "Copied";
+            setTimeout(function () { btn.removeAttribute("data-state"); label.textContent = "Copy"; }, 1800);
+          }, function () { label.textContent = "Press Ctrl+C"; });
+        });
+      });
+
+      // Theme toggle. The head script already applied a stored choice; this
+      // only changes it. Storage may be blocked: the choice then lasts the page.
+      var KEY = "lmw-theme", root = document.documentElement;
+      var toggle = document.querySelector(".theme-toggle");
+      var status = document.querySelector("[data-theme-status]");
+      var dark = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : { matches: false };
+      var NAMES = { auto: "Auto", light: "Light", dark: "Dark" };
+      var GROUND = { light: "#EFECE7", dark: "#1C1409" };
+      var pref = root.getAttribute("data-theme") || "auto";
+      function system() { return dark.matches ? "dark" : "light"; }
+      function render() {
+        var desc = pref === "auto" ? "Auto, follows your system (now " + system() + ")" : NAMES[pref];
+        toggle.setAttribute("data-pref", pref);
+        toggle.setAttribute("aria-label", "Colour theme: " + NAMES[pref]);
+        toggle.title = "Colour theme: " + desc;
+        toggle.querySelector(".label").textContent = NAMES[pref];
+      }
+      function apply(next, announce) {
+        pref = next;
+        if (pref === "auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", pref);
+        document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+          var own = /dark/.test(m.getAttribute("media") || "") ? "dark" : "light";
+          m.setAttribute("content", GROUND[pref === "auto" ? own : pref]);
+        });
+        render();
+        if (announce) status.textContent = "Colour theme: " + NAMES[pref];
+      }
+      if (toggle) {
+        render();
+        toggle.addEventListener("click", function () {
+          var sys = system(), other = sys === "dark" ? "light" : "dark";
+          var next = pref === "auto" ? other : pref === other ? sys : "auto";
+          apply(next, true);
+          try {
+            if (next === "auto") window.localStorage.removeItem(KEY); else window.localStorage.setItem(KEY, next);
+          } catch (e) { /* storage blocked: the choice lasts this page view */ }
+        });
+        if (dark.addEventListener) dark.addEventListener("change", render);
+        window.addEventListener("storage", function (e) {
+          if (e.key === KEY) apply(e.newValue === "light" || e.newValue === "dark" ? e.newValue : "auto", false);
+        });
+      }
+
+      // Videos play only while on screen, and never for a visitor who asked
+      // for reduced motion: they keep their controls and poster instead.
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var videos = document.querySelectorAll("video[data-autoplay]");
+      if (reduce || !("IntersectionObserver" in window)) return;
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          var v = entry.target;
+          if (entry.isIntersecting) {
+            var p = v.play();
+            if (p && p.catch) p.catch(function () { v.setAttribute("controls", ""); });
+          } else {
+            v.pause();
+          }
+        });
+      }, { threshold: 0.25 });
+      videos.forEach(function (v) { v.muted = true; v.removeAttribute("controls"); io.observe(v); });
+    })();
+  </script>
 </body>
 </html>

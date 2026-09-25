@@ -1,4 +1,4 @@
-# Driving LLM Warden from the API
+# Driving LM Warden from the API
 
 The browser UI is a client of the control API and nothing more. Everything it
 does — the first-run wizard, minting a key, registering, pulling and loading a
@@ -51,11 +51,11 @@ curl -s -X POST $W/api/setup/hf_token -H 'Content-Type: application/json' \
      -d '{"hf_token":null}'
 
 # 6. Create the admin account.                          -> {"step":"done"}
-#    Password rules: at least 6 characters and at most 72 BYTES. The upper
+#    Password rules: at least 12 characters and at most 72 BYTES. The upper
 #    bound is bcrypt's, and it is rejected rather than silently truncated —
 #    worth knowing before you generate a long passphrase.
 curl -s -X POST $W/api/setup/admin -H 'Content-Type: application/json' \
-     -d '{"username":"admin","password":"CHANGE-ME"}'
+     -d '{"username":"admin","password":"CHANGE-ME-to-12-plus-chars"}'
 ```
 
 `GET /api/setup/gpus` returns `404` once setup is done — deliberate, so a
@@ -74,7 +74,7 @@ CSRF=$(curl -s -c jar $W/api/csrf | jq -r .csrf)
 
 JWT=$(curl -s -b jar -c jar -X POST $W/api/auth/login \
         -H 'Content-Type: application/json' \
-        -d '{"username":"admin","password":"CHANGE-ME"}' | jq -r .access_token)
+        -d '{"username":"admin","password":"CHANGE-ME-to-12-plus-chars"}' | jq -r .access_token)
 
 curl -s -b jar -X POST $W/api/tokens \
      -H 'Content-Type: application/json' \

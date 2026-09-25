@@ -12,7 +12,7 @@ import useSWR from "swr";
 import { authFetch, authFetchJSON } from "@/lib/auth-fetch";
 import { parseSqliteUtc } from "@/lib/token-format";
 import {
-  fetchSeries, parseRange, pollIntervalMs, resolveWindow, SeriesError, seriesUrl,
+  DEFAULT_PRESET, fetchSeries, parseRange, pollIntervalMs, resolveWindow, SeriesError, seriesUrl,
   type Preset, type RangeSel, type TokenDetail, type TokenSeries,
 } from "@/lib/token-series";
 import { RotateTokenDialog } from "@/components/tokens/rotate-token-dialog";
@@ -111,7 +111,23 @@ async function seriesFetcher([, id, kind, chain, maxBins, from, to]: SeriesKey):
 // (unlike fix round 1's page-local `bounds`) — a floored `to` could sit
 // behind the committed preset window's own (unfloored) `to`, which drew the
 // selection brush hanging off the strip's right edge.
-type StripKey = readonly [tag: "strip", id: string, chain: boolean];
+//
+// Zoom: a custom Apply zooms the strip to the applied period (Reset, or any
+// preset, zooms back out). The zoomed strip asks for exactly that window, so
+// the server's bin ladder picks finer bins for it (`pick_bin_minutes`: a 2 h
+// window gets 1 min bins where a year-old key's whole life gets 1 day). A
+// zoomed window is fixed, so it rides in the key (0, 0 = not zoomed) and the
+// zoomed strip does not poll.
+type StripKey = readonly [tag: "strip", id: string, chain: boolean, zoomFrom: number, zoomTo: number];
+
+/** What the strip fetcher returns: the series, and whether it was asked for a
+ *  zoomed window. SWR's `keepPreviousData` hands back the previous key's data
+ *  while the next one loads, so without the tag a whole-life response could
+ *  not be told from a zoomed one when drawing the strip's axis. */
+interface StripData {
+  zoomed: boolean;
+  series: TokenSeries;
+}
 
 // `from`, extracted so the fetcher below is a plain inline arrow function
 // (ESLint's exhaustive-deps needs that shape to check `lineageStart` itself,
@@ -204,6 +220,10 @@ function TokenDetailView({ id }: { id: string }) {
 
   // ---- token set --------------------------------------------------------------
   const [chainOn, setChainOn] = useState(true);
+  // The strip's zoom (see StripKey). Remembered per token, like `goneKey`, so
+  // navigating to another token starts zoomed out.
+  const [zoomState, setZoomState] = useState<{ key: string; w: StripWindow } | null>(null);
+  const zoom = zoomState?.key === key ? zoomState.w : null;
   const lineage = token?.lineage ?? [];
   const selfIdx = lineage.findIndex((e) => e.is_self);
   const predecessors = selfIdx > 0 ? lineage.slice(0, selfIdx) : [];
@@ -225,17 +245,23 @@ function TokenDetailView({ id }: { id: string }) {
   // timings (`timings=0`, #251) and the per-model split (`by_model=0`). See the `stripFetcher` below for how the key
   // and window are resolved.
   const stripFetcher = useCallback(
-    async ([, tid, chain]: StripKey): Promise<TokenSeries> => {
+    async ([, tid, chain, zoomFrom, zoomTo]: StripKey): Promise<StripData> => {
+      const opts = { chain, maxBins: STRIP_MAX_BINS, timings: false, byModel: false };
+      if (zoomTo > 0) return { zoomed: true, series: await fetchSeries(seriesUrl(tid, { from: zoomFrom, to: zoomTo, ...opts })) };
       const to = Math.floor(Date.now() / 1000);
-      return fetchSeries(seriesUrl(tid, { from: stripFrom(lineageStart, to), to, chain, maxBins: STRIP_MAX_BINS, timings: false, byModel: false }));
+      return { zoomed: false, series: await fetchSeries(seriesUrl(tid, { from: stripFrom(lineageStart, to), to, ...opts })) };
     },
     [lineageStart],
   );
-  const stripOpts = { keepPreviousData: true, revalidateOnFocus: false, shouldRetryOnError: false, refreshInterval: 60_000 };
-  const stripKeyChain: StripKey | null = token && !gone && predecessors.length > 0 ? ["strip", id, true] : null;
-  const stripKeyOwn: StripKey | null = token && !gone ? ["strip", id, false] : null;
-  const { data: stripChain, mutate: mutateStripChain } = useSWR<TokenSeries, Error, StripKey | null>(stripKeyChain, stripFetcher, stripOpts);
-  const { data: stripOwn, mutate: mutateStripOwn } = useSWR<TokenSeries, Error, StripKey | null>(stripKeyOwn, stripFetcher, stripOpts);
+  const stripOpts = { keepPreviousData: true, revalidateOnFocus: false, shouldRetryOnError: false, refreshInterval: zoom ? 0 : 60_000 };
+  const zf = zoom?.from ?? 0;
+  const zt = zoom?.to ?? 0;
+  const stripKeyChain: StripKey | null = token && !gone && predecessors.length > 0 ? ["strip", id, true, zf, zt] : null;
+  const stripKeyOwn: StripKey | null = token && !gone ? ["strip", id, false, zf, zt] : null;
+  const { data: stripChainRes, mutate: mutateStripChain } = useSWR<StripData, Error, StripKey | null>(stripKeyChain, stripFetcher, stripOpts);
+  const { data: stripOwnRes, mutate: mutateStripOwn } = useSWR<StripData, Error, StripKey | null>(stripKeyOwn, stripFetcher, stripOpts);
+  const stripChain = stripChainRes?.series;
+  const stripOwn = stripOwnRes?.series;
   // Drawn from the strip's OWN response (`own` is always requested, `chain`
   // only when there are earlier keys) — never from a page-local "now", so
   // the strip's drawn axis always matches the window it actually fetched
@@ -246,9 +272,16 @@ function TokenDetailView({ id }: { id: string }) {
     from: Math.min(Math.max(lineageStart, fallbackTo - MAX_SPAN_S), fallbackTo - 60),
     to: fallbackTo,
   };
-  const bounds: StripWindow = stripOwn
-    ? { from: stripOwn.from_minute * 60, to: stripOwn.to_minute * 60 }
-    : fallbackBounds;
+  // The key's lifetime: what the custom row clamps typed times to. Zoomed,
+  // there is no whole-life response to read it from, so it is resolved the
+  // way the strip fetcher resolves its own window, from the page's "now".
+  const lifetime: StripWindow = zoom
+    ? { from: stripFrom(lineageStart, nowSec), to: nowSec }
+    : stripOwnRes && !stripOwnRes.zoomed
+      ? { from: stripOwnRes.series.from_minute * 60, to: stripOwnRes.series.to_minute * 60 }
+      : fallbackBounds;
+  // The strip's drawn axis: the zoomed period, else the key's whole life.
+  const view: StripWindow = zoom ?? lifetime;
 
   const committed = resolveWindow(sel, nowSec);
   const replaceQuery = useCallback(
@@ -283,11 +316,33 @@ function TokenDetailView({ id }: { id: string }) {
   // window refetches through its new series key; an unchanged one is
   // revalidated here. The strip is refetched either way, so its "now" end —
   // and so the lifetime the next Apply clamps to — is fresh too.
+  //
+  // Apply also zooms the strip to the applied period. A new zoom is a new
+  // strip key, which fetches by itself; revalidating here as well would
+  // re-ask the OLD key (the bound `mutate` still points at it), so the strip
+  // is only revalidated when the zoom stays the same.
   const onApply = useCallback((w: StripWindow) => {
-    if (!applyWindow(w)) mutateSeries().catch(() => {});
-    mutateStripOwn().catch(() => {});
-    mutateStripChain().catch(() => {});
-  }, [applyWindow, mutateSeries, mutateStripOwn, mutateStripChain]);
+    const next = { from: Math.round(w.from), to: Math.round(w.to) };
+    if (!applyWindow(next)) mutateSeries().catch(() => {});
+    if (zoom && zoom.from === next.from && zoom.to === next.to) {
+      mutateStripOwn().catch(() => {});
+      mutateStripChain().catch(() => {});
+    } else {
+      setZoomState({ key, w: next });
+    }
+  }, [applyWindow, mutateSeries, mutateStripOwn, mutateStripChain, zoom, key]);
+
+  // A preset is a period ending now, which the zoomed strip may not show.
+  const onPresetZoomOut = useCallback((p: Preset) => {
+    setZoomState(null);
+    onPreset(p);
+  }, [onPreset]);
+  // Reset: back to the default period, zoomed out.
+  const atDefault = !zoom && shownSel.kind === "preset" && shownSel.preset === DEFAULT_PRESET;
+  const onReset = useCallback(() => {
+    setZoomState(null);
+    onPreset(DEFAULT_PRESET);
+  }, [onPreset]);
 
   // ---- dock ---------------------------------------------------------------------------
   const gmEnabled = useGodModeEnabled();
@@ -391,12 +446,16 @@ function TokenDetailView({ id }: { id: string }) {
         <UsageSection
           sel={shownSel}
           window={shownWindow}
-          bounds={bounds}
+          bounds={lifetime}
+          view={view}
+          zoomed={zoom != null}
           showChainToggle={predecessors.length > 0}
           chain={chainOn}
           onChainChange={setChainOn}
-          onPreset={onPreset}
+          onPreset={onPresetZoomOut}
           onCustom={onCustom}
+          onReset={onReset}
+          resetDisabled={atDefault}
           onWindowChange={onWindowChange}
           onApply={onApply}
           rangeError={rangeError}

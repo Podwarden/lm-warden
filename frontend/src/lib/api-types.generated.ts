@@ -1452,7 +1452,7 @@ export interface paths {
          *       2. `hf_token` empty-string → 422 (clearing is not a supported op).
          *       3. `hf_token` non-empty → validated against the HF API; ValueError → 422.
          *       4. `admin_username` → must match `_USERNAME_RE` → 422 on failure.
-         *       5. `admin_password` → must be non-empty string → 422 on failure.
+         *       5. `admin_password` → non-empty, >= 12 characters, <= 72 bytes → 422.
          *       6. Every other supplied key → run its coercer (type + bounds) → 422 on failure.
          *
          *     Routing:
@@ -4178,6 +4178,13 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
+            /** @description Invalid credentials. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -4186,6 +4193,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+            /** @description Too many failed logins from this (public, proxy-vouched) address, or a failed login while too many others are being held back. Never the answer to a correct password unless the address is locked. Wait for the Retry-After header (seconds). See app/auth/throttle.py for the limits. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

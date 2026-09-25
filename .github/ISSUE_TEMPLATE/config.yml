@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/Podwarden/lm-warden/security/advisories/new
+    about: Please report vulnerabilities privately, not as a public issue.
+  - name: Documentation and website
+    url: https://lmwarden.com
+    about: The install manual, API guide and hazards are also in documents/.

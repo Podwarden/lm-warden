@@ -71,7 +71,7 @@ export default function GpusPage() {
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold">Select GPUs</h1>
       <p className="text-sm text-slate-400">
-        Choose which GPUs LLM Warden may schedule models on.
+        Choose which GPUs LM Warden may schedule models on.
       </p>
       <ul className="space-y-2">
         {gpus.map((g) => {

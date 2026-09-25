@@ -16,7 +16,7 @@ trap 'echo "FAILED at line $LINENO" >&2' ERR
 : "${VW_BASE:?VW_BASE must be set, e.g. http://localhost:8080}"
 
 ADMIN_USER="admin"
-ADMIN_PASS="e2e-pass-$$"
+ADMIN_PASS="e2e-password-$$"
 COOKIES=$(mktemp)
 trap 'rm -f $COOKIES' EXIT
 

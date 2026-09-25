@@ -1,7 +1,7 @@
 "use client";
 
 // God-mode live viewer — real-time prompts + model output flowing through the
-// LLM Warden proxy for ONE key (and optionally its earlier keys). Admin-only
+// LM Warden proxy for ONE key (and optionally its earlier keys). Admin-only
 // (the SSE endpoint gates on require_jwt). Its only consumer is the token
 // page's dock (components/tokens/detail/godmode-dock.tsx, spec 2026-09-18 D7).
 //

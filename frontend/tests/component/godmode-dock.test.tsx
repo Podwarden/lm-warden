@@ -19,7 +19,7 @@ function Harness({ includesEarlier = true }: { includesEarlier?: boolean }) {
   const [open, setOpen] = useState(false);
   const [h, setH] = useState(300);
   return (
-    <GodModeDock tokenName="opencode-ip-macbook" tokenIds={['old1', 'self']} includesEarlier={includesEarlier}
+    <GodModeDock tokenName="opencode-laptop" tokenIds={['old1', 'self']} includesEarlier={includesEarlier}
       open={open} onOpenChange={setOpen} height={h} onHeightChange={(px) => setH(px)} />
   );
 }
@@ -31,7 +31,7 @@ function ResizingHarness() {
   const [open, setOpen] = useState(true);
   const [h, setH] = useDockHeight();
   return (
-    <GodModeDock tokenName="opencode-ip-macbook" tokenIds={['self']} includesEarlier={false}
+    <GodModeDock tokenName="opencode-laptop" tokenIds={['self']} includesEarlier={false}
       open={open} onOpenChange={setOpen} height={h} onHeightChange={setH} />
   );
 }
@@ -83,7 +83,7 @@ describe('GodModeDock', () => {
     expect(bar()).toHaveAttribute('aria-expanded', 'true');
     expect(FakeES.all).toHaveLength(1);
     expect(FakeES.all[0].url).toBe('/api/admin/godmode/stream?token_ids=old1%2Cself&ticket=t1');
-    expect(screen.getByText('opencode-ip-macbook and its earlier keys · replayed the last requests, now streaming')).toBeInTheDocument();
+    expect(screen.getByText('opencode-laptop and its earlier keys · replayed the last requests, now streaming')).toBeInTheDocument();
     expect(screen.getByText('Live')).toBeInTheDocument();
     expect(screen.getByText('0 requests · 0 running')).toBeInTheDocument();
 
@@ -111,7 +111,7 @@ describe('GodModeDock', () => {
     fireEvent.keyDown(bar(), { key: 'Enter' });
     await flush();
     expect(bar()).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText('opencode-ip-macbook · replayed the last requests, now streaming')).toBeInTheDocument();
+    expect(screen.getByText('opencode-laptop · replayed the last requests, now streaming')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
     fireEvent.click(screen.getByRole('button', { name: 'Following' }));
     expect(bar()).toHaveAttribute('aria-expanded', 'true');

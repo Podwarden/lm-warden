@@ -148,7 +148,7 @@ CASES: list[Case] = [
 # Transcribe rows EXACTLY. A "tidied" value silently converts an oracle into
 # another self-referential case.
 LIVE_CASES: list[Case] = [
-    # home (podwarden.h) -- Qwen3.8-27B-FP8, TP=4 across all four GPUs.
+    # home install -- Qwen3.8-27B-FP8, TP=4 across all four GPUs.
     # The most configured row in the fleet and the only multi-GPU one.
     _c("live_home_qwen3_8_27b_fp8", StubModel(
         id="e29871dc4eeb0850",

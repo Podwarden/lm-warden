@@ -64,6 +64,25 @@ describe('LoginPage', () => {
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/setup/welcome'));
   });
 
+  it('says how long to wait when the login is throttled (429 + Retry-After)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      fetchMockFor({
+        login: new Response('{"detail":"too many failed login attempts; retry later"}', {
+          status: 429,
+          headers: { 'Retry-After': '60' },
+        }),
+      }),
+    );
+    render(<LoginPage />);
+    const btn = await screen.findByRole('button', { name: /log in/i });
+    fireEvent.click(btn);
+    await waitFor(() =>
+      expect(screen.getByText('Too many failed attempts. Try again in 60 seconds.')).toBeInTheDocument(),
+    );
+    expect(screen.queryByText('Invalid credentials')).not.toBeInTheDocument();
+  });
+
   it('renders the sign-in form once setup is done', async () => {
     vi.stubGlobal('fetch', fetchMockFor({ setup: { body: { step: 'done', done: true } } }));
     render(<LoginPage />);
@@ -99,6 +118,6 @@ describe('LoginPage', () => {
       ),
     );
     // Successful login still navigates to /models (preserved behavior).
-    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/models'));
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/stats'));
   });
 });

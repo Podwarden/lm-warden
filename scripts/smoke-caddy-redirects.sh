@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Verify Caddy bare-path + wildcard + favicon redirects.
+# Verify Caddy bare-path + wildcard + favicon redirects, and that the landing
+# page's assets and text routes are proxied to the api.
 # Runs caddy:2-alpine + hashicorp/http-echo mocks, curls each path, asserts
 # the Location header is exactly /ui/<path> (NOT /ui/<path>/<path>).
 # Exits non-zero on any mismatch. Safe to run from CI or QA harness.
@@ -60,5 +61,23 @@ check /chat/bar/baz      308 /ui/chat/bar/baz
 
 # Favicon -> 301 /ui/icon.svg
 check /favicon.ico 301 /ui/icon.svg
+
+# Landing companions are PROXIED to the api (no redirect): the page's
+# assets and the crawler / LLM text routes. The mock api answers every path
+# with "mock-api", so the body says which backend Caddy picked.
+proxied() {
+  local path="$1" got_status got_body
+  got_status=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:18080$path")
+  got_body=$(curl -s "http://localhost:18080$path")
+  if [[ "$got_status" == 200 && "$got_body" == mock-api* ]]; then
+    printf "PASS %-30s -> %s api\n" "$path" "$got_status"
+  else
+    printf "FAIL %-30s -> %s %q (expected 200 from api)\n" "$path" "$got_status" "$got_body"
+    fail=1
+  fi
+}
+for p in / /_landing /_landing/assets/shot-stats.webp /robots.txt /sitemap.xml /llms.txt /llms-full.txt; do
+  proxied "$p"
+done
 
 exit $fail

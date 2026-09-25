@@ -5,6 +5,7 @@ import bcrypt
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from app.auth.passwords import new_password_problem
 from app.db.database import open_db
 from app.db.repos.setup import SetupRepo
 from app.db.repos.users import UserRepo
@@ -130,11 +131,11 @@ class AdminBody(BaseModel):
 
 @router.post("/admin")
 async def post_admin(body: AdminBody, request: Request):
-    if len(body.password) < 6:
-        raise HTTPException(400, "password must be at least 6 chars")
-    # bcrypt silently truncates inputs longer than 72 bytes; reject explicitly.
-    if len(body.password.encode("utf-8")) > 72:
-        raise HTTPException(400, "password must be at most 72 bytes")
+    # >= 12 characters, <= 72 bytes (bcrypt's limit; refused, not truncated).
+    # See app/auth/passwords.py.
+    problem = new_password_problem(body.password)
+    if problem is not None:
+        raise HTTPException(400, problem)
     if not body.username or not body.username.strip():
         raise HTTPException(400, "username required")
 

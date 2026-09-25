@@ -1,0 +1,42 @@
+[
+  {
+    "q": "What is LM Warden?",
+    "a": "A control plane around two inference engines, vLLM and llama.cpp. You pull a model from HuggingFace, load it onto your own NVIDIA GPUs, mint an API key and call it through an OpenAI-compatible <code>/v1</code> endpoint. A browser UI covers loading and unloading models, live engine logs, a chat playground, GPU and token statistics, and a page per API key. It does not make models faster and does not modify the engines. It adds the parts a bare engine does not ship."
+  },
+  {
+    "q": "Which GPUs and operating systems does it run on?",
+    "a": "NVIDIA GPUs on a Linux x86_64 host. The floor is Turing (sm_75): the base image ships CUDA 13, which dropped Maxwell, Pascal and Volta, so a GTX 1080 Ti, a Titan X or a V100 will not work. Turing through Blackwell is covered, including Ada, Hopper and the RTX 50-series. There is no ROCm, Apple Silicon or CPU path. Several GPUs in one box are supported; one model split across several machines is not."
+  },
+  {
+    "q": "Will my existing OpenAI client work with it?",
+    "a": "Yes. The gateway at <code>/v1/*</code> is OpenAI-compatible, so the <code>openai</code> SDK, LangChain, OpenWebUI and your own agents work unchanged once you change the <code>base_url</code> and the key. <code>GET /v1/models</code> also reports each model’s <code>max_model_len</code>, so a client does not have to guess the context window."
+  },
+  {
+    "q": "Which inference engines does it use?",
+    "a": "Mainline vLLM and llama.cpp, chosen per model and run unmodified: no patched image, no fork, no monkeypatching. Picking a <code>.gguf</code> file selects llama.cpp, which fits larger models onto smaller cards with GGUF quantisation and keeps older GPUs useful. TensorRT-LLM, SGLang, MLX and Ollama’s runtime are not shipped."
+  },
+  {
+    "q": "Does anything leave my machine?",
+    "a": "No part of a request leaves the host, and there is no account, licence check or analytics. The stack only calls out when you ask it to: huggingface.co to pull weights (<code>HF_HUB_OFFLINE=1</code> stops even that), Docker Hub when you open the engine-version picker, and the registry for the release images, which <code>docker load</code> replaces in an offline or air-gapped install."
+  },
+  {
+    "q": "Are prompts and responses stored?",
+    "a": "Not by default. The request history behind the charts and per-key usage holds metadata only and has no column for prompt or completion text. Two diagnostic features can capture content, and both are off unless you turn them on: god mode (<code>VW_GODMODE_ENABLED</code>), a bounded in-memory view of one key’s traffic, and the content log (<code>VW_CONTENT_LOG_ENABLED</code>), which writes to disk only for the token ids you list."
+  },
+  {
+    "q": "How do API keys work for a team?",
+    "a": "Every app or person gets its own <code>vw_</code> key with its own page. Set a priority from P0&nbsp;to&nbsp;P9 (a waiting P9 request always goes before a P8 one), pause a key so its clients get <code>403 token paused</code> while running requests finish, or rotate it with a grace window in which the old secret keeps working. Requests, prompt tokens and completion tokens are counted against the key and the client IP, with queue wait and latency per key. Scripts, CI and agents that drive the control API use separate <code>vwa_</code> admin tokens instead of the admin password."
+  },
+  {
+    "q": "Can I run several models on one GPU?",
+    "a": "No. One loaded model per GPU is a rule enforced before an engine starts. You can load different models on different cards of the same host, and split one model across several cards with vLLM’s tensor parallelism."
+  },
+  {
+    "q": "What does installing it take?",
+    "a": "A Linux host with Docker, Docker Compose&nbsp;v2.24 or newer, an NVIDIA GPU, the NVIDIA Container Toolkit and about 40&#8239;GB free where Docker keeps its images. The installer checks the host, lets you pick GPUs, generates the secrets, pulls the release images and offers to start the stack. A first-run wizard in the browser then asks for the GPUs to use, a HuggingFace token and your admin account."
+  },
+  {
+    "q": "What does it cost?",
+    "a": "Nothing. LM Warden is licensed under Apache-2.0. It is software you run, not a hosted API: you supply the hardware, the driver, the disk and the electricity, and once the hardware is paid for a request costs electricity, not a per-token fee."
+  }
+]

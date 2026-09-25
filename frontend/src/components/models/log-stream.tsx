@@ -2,27 +2,30 @@
 
 // Live vLLM stdout/stderr tail with dual-mode "stick / free" scrolling.
 //
-// What changed in v17.11 #75:
-//   - Switched from a plain scroll-container <pre> to <Virtuoso>, so the
-//     5000-line ring buffer renders only the visible window. Pre-#75 the
-//     full join('\n') was passed to dangerouslySetInnerHTML on every new
-//     line, which spent ~80ms in HTML parsing on a 5k-line buffer under
-//     a 200-line/s vLLM startup burst.
-//   - Added an `elided_count` so the operator knows when the FIFO has
-//     evicted lines. A 1-row "… N older lines elided" banner replaces
-//     the silent drop.
-//   - Sticky-bottom is delegated to `shared/use-sticky-bottom.ts` so the
-//     "Jump to latest" semantics stay consistent across future streaming
-//     views. (The original sibling consumer, bench/events-tab.tsx, was
-//     removed in epic/overhaul S1.)
+// History:
+//   - v17.11 #75 moved the tail from a plain <pre> fed by
+//     dangerouslySetInnerHTML(lines.join('\n')) to <Virtuoso>, because
+//     re-parsing the whole 5000-line buffer as HTML on every new line cost
+//     ~80ms per line during a 200-line/s vLLM startup burst. It also added
+//     `elided_count` so the operator knows when the FIFO has evicted lines.
+//   - fix/live-log-drag-select moved it back to a plain scroll container,
+//     but one keyed, memoized row per line. Virtuoso mounts only the rows
+//     in view, so a drag-selection that auto-scrolled past the bottom edge
+//     lost every line that scrolled away: a DOM selection cannot survive
+//     its nodes being unmounted. With every buffered line (<= MAX_LINES) in
+//     the DOM, native selection and drag-autoscroll just work. The #75 cost
+//     does not come back: each line's ANSI->HTML is parsed once, when it
+//     arrives, and React only diffs the keyed rows.
 //
-// Each log line is its own row in Virtuoso. We render ANSI escapes per
-// line (not per buffer) — small per-line work, but it means each row is
-// independently memoizable and Virtuoso can hand the operator a steady
-// 60 fps even during a vLLM module-import burst.
+// Sticky-bottom: the "stick / free" latch comes from
+// `shared/use-sticky-bottom.ts` and only drives the "Jump to latest"
+// button. Following is done here: after new lines render, the view is
+// pinned to the bottom if it was at the bottom, unless the operator is
+// mid-selection (mouse button held in the log, or a live selection inside
+// it). A drag-select near the bottom edge therefore never gets yanked by
+// incoming lines.
 
-import { forwardRef, useCallback, useRef, useState } from "react";
-import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { AnsiLog } from "@/components/ansi-log";
 import { Button } from "@/components/ui/button";
@@ -123,7 +126,7 @@ function renderStatusMessage(s: SseState): { text: string; tone: "info" | "warn"
 // Row state
 // ---------------------------------------------------------------------------
 
-/** Internal log line — every row carries a stable id so Virtuoso doesn't
+/** Internal log line — every row carries a stable id so React doesn't
  *  re-mount existing rows when the FIFO evicts the head. The id is a
  *  monotonically-increasing counter; the row's index in the array shifts
  *  on eviction, but its `id` does not. */
@@ -187,9 +190,67 @@ export function LogStream({ modelId, status, className, heightPx = 480 }: LogStr
     enabled: streamEligible,
   });
 
-  // Sticky-bottom hook + virtuoso ref for programmatic re-stick.
+  // Sticky-bottom latch (drives "Jump to latest") + the follow machinery.
   const sticky = useStickyBottom("stick");
-  const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const { onAtBottomStateChange, jumpToLatest: restick } = sticky;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // Last known "is the view at the bottom" — the gate for following.
+  const atBottomRef = useRef(true);
+  // True from a primary-button mousedown inside the log until the next
+  // mouseup anywhere: a drag-select (or scrollbar drag) is in progress.
+  const pointerHeldRef = useRef(false);
+
+  const setAtBottom = useCallback(
+    (atBottom: boolean) => {
+      if (atBottomRef.current === atBottom) return;
+      atBottomRef.current = atBottom;
+      onAtBottomStateChange(atBottom);
+    },
+    [onAtBottomStateChange],
+  );
+
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (el) setAtBottom(distanceFromBottom(el) <= AT_BOTTOM_THRESHOLD_PX);
+  }, [setAtBottom]);
+
+  useEffect(() => {
+    const release = () => {
+      pointerHeldRef.current = false;
+    };
+    window.addEventListener("mouseup", release);
+    window.addEventListener("blur", release);
+    return () => {
+      window.removeEventListener("mouseup", release);
+      window.removeEventListener("blur", release);
+    };
+  }, []);
+
+  // Follow the tail after each append, before paint. Pin to the bottom if
+  // we were there — unless the operator is selecting, in which case the
+  // view holds still and, once the new lines push the bottom out of view,
+  // the latch flips to "free" so "Jump to latest" appears.
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !atBottomRef.current) return;
+    if (!pointerHeldRef.current && !selectionInside(el)) {
+      el.scrollTop = el.scrollHeight;
+    } else if (distanceFromBottom(el) > AT_BOTTOM_THRESHOLD_PX) {
+      setAtBottom(false);
+    }
+  }, [state.lines, setAtBottom]);
+
+  const jumpToLatest = useCallback(() => {
+    const el = scrollRef.current;
+    if (el) {
+      // "Jump to latest" means "resume tailing": drop a selection left
+      // in the log, otherwise it would keep following paused.
+      if (selectionInside(el)) document.getSelection()?.removeAllRanges();
+      el.scrollTop = el.scrollHeight;
+    }
+    atBottomRef.current = true;
+    restick();
+  }, [restick]);
 
   if (!streamEligible) {
     // Non-log-producing placeholder (registered / unloading).
@@ -272,7 +333,7 @@ export function LogStream({ modelId, status, className, heightPx = 480 }: LogStr
       )}
 
       {state.elided > 0 && (
-        // Eviction marker. Lives outside the virtuoso list (as a fixed
+        // Eviction marker. Lives outside the log scroller (as a fixed
         // header row above the scroll region) so it's always visible
         // regardless of scroll position — the operator should never be
         // surprised that older lines were dropped silently.
@@ -290,32 +351,26 @@ export function LogStream({ modelId, status, className, heightPx = 480 }: LogStr
           state.elided > 0 ? "rounded-t-none border-t-0" : undefined,
         )}
       >
-        <Virtuoso
-          ref={virtuosoRef}
-          // role="log" applied via Components.List so screen readers see
-          // the virtualized inner scroll container as the live region
-          // (implicit aria-live=polite, aria-atomic=false). Without this
-          // override Virtuoso wraps everything in a plain <div>.
-          components={{
-            List: LogList,
+        {/* One native scroll container holding every buffered line, so a
+            drag-selection keeps lines that scroll out of view (see the
+            header comment). role="log" is an implicit polite live region
+            (aria-live=polite, aria-atomic=false). overflow-anchor keeps the
+            view steady when the FIFO evicts the head while scrolled up. */}
+        <div
+          ref={scrollRef}
+          role="log"
+          aria-label="Model log stream"
+          className="overflow-y-auto"
+          style={{ height: heightPx, overflowAnchor: "auto" }}
+          onScroll={onScroll}
+          onMouseDown={(e) => {
+            if (e.button === 0) pointerHeldRef.current = true;
           }}
-          style={{ height: heightPx }}
-          data={state.lines}
-          followOutput={sticky.followOutput}
-          // Generous bottom tolerance (default is 4px; a log row is ~20px).
-          // During a fast append burst a freshly-rendered row briefly sits
-          // below the viewport before the follow-scroll lands; without slack
-          // Virtuoso would report not-at-bottom for that frame and pop the
-          // "Jump to latest" button on/off. ~3 rows of tolerance swallows it.
-          atBottomThreshold={64}
-          atBottomStateChange={sticky.onAtBottomStateChange}
-          computeItemKey={(_idx, line) => line.id}
-          itemContent={(_idx, line) => (
-            <div className="px-3 py-0 font-mono text-xs leading-5">
-              <AnsiLog text={line.text} />
-            </div>
-          )}
-        />
+        >
+          {state.lines.map((line) => (
+            <LogRow key={line.id} text={line.text} />
+          ))}
+        </div>
 
         {sticky.mode === "free" && state.lines.length > 0 && (
           <Button
@@ -323,13 +378,7 @@ export function LogStream({ modelId, status, className, heightPx = 480 }: LogStr
             size="sm"
             variant="secondary"
             className="absolute bottom-2 right-2 shadow-lg"
-            onClick={() => {
-              virtuosoRef.current?.scrollToIndex({
-                index: state.lines.length - 1,
-                behavior: "smooth",
-              });
-              sticky.jumpToLatest();
-            }}
+            onClick={jumpToLatest}
           >
             Jump to latest
           </Button>
@@ -339,20 +388,28 @@ export function LogStream({ modelId, status, className, heightPx = 480 }: LogStr
   );
 }
 
-// Virtuoso's `List` component override. We stamp role="log" + aria-label
-// onto the scroll container so screen readers identify it as a polite
-// live region, matching the pre-#75 component contract.
-const LogList = forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { context?: unknown }
->(function LogListImpl(props, ref) {
-  const { context: _context, ...rest } = props;
+// Bottom tolerance for "at the bottom" (a log row is ~20px). ~3 rows of
+// slack so sub-row rounding and a just-appended row don't count as the
+// operator having scrolled up.
+const AT_BOTTOM_THRESHOLD_PX = 64;
+
+function distanceFromBottom(el: HTMLElement): number {
+  return el.scrollHeight - el.scrollTop - el.clientHeight;
+}
+
+/** True when the document has a non-empty selection touching `el`. */
+function selectionInside(el: HTMLElement): boolean {
+  const sel = typeof document !== "undefined" ? document.getSelection() : null;
+  if (!sel || sel.isCollapsed || sel.rangeCount === 0) return false;
+  return el.contains(sel.anchorNode) || el.contains(sel.focusNode);
+}
+
+// Memoized so an append re-renders only the new row; existing rows keep
+// their already-parsed ANSI HTML.
+const LogRow = memo(function LogRow({ text }: { text: string }) {
   return (
-    <div
-      ref={ref}
-      role="log"
-      aria-label="Model log stream"
-      {...rest}
-    />
+    <div data-log-line className="px-3 py-0 font-mono text-xs leading-5">
+      <AnsiLog text={text} />
+    </div>
   );
 });

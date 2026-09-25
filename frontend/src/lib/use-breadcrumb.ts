@@ -22,7 +22,7 @@ import { NavStackContext } from "@/lib/nav-stack";
  * provider (a page rendered on its own in a unit test) this is a no-op.
  *
  * Ported from PodWarden Core's `hooks/use-breadcrumb.ts`; `path`, reading the
- * pathname from the provider and the provider-less no-op are LLM Warden
+ * pathname from the provider and the provider-less no-op are LM Warden
  * additions.
  */
 export function useBreadcrumb(opts: {

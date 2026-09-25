@@ -40,6 +40,7 @@ import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.auth.deps import refuse_session_only, require_jwt
+from app.auth.passwords import new_password_problem
 from app.auth.principal import principal_of
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo
@@ -350,7 +351,7 @@ async def patch_runtime(
       2. `hf_token` empty-string → 422 (clearing is not a supported op).
       3. `hf_token` non-empty → validated against the HF API; ValueError → 422.
       4. `admin_username` → must match `_USERNAME_RE` → 422 on failure.
-      5. `admin_password` → must be non-empty string → 422 on failure.
+      5. `admin_password` → non-empty, >= 12 characters, <= 72 bytes → 422.
       6. Every other supplied key → run its coercer (type + bounds) → 422 on failure.
 
     Routing:
@@ -396,14 +397,18 @@ async def patch_runtime(
                 ),
             )
 
-    # admin_password: non-empty string. (No max bound here — bcrypt truncates
-    # at 72 bytes regardless, and the login Field caps incoming attempts at 256.)
+    # admin_password: the new-password rule (app/auth/passwords.py) -- at
+    # least 12 characters, at most 72 bytes. The ceiling is bcrypt's: past it
+    # the hash would silently ignore the tail (or, on newer bcrypt, raise).
     if "admin_password" in body:
         v = body["admin_password"]
         if not isinstance(v, str) or v == "":
             raise HTTPException(
                 status_code=422, detail="admin_password cannot be empty"
             )
+        problem = new_password_problem(v)
+        if problem is not None:
+            raise HTTPException(status_code=422, detail=f"admin_password: {problem}")
 
     # Coerce every other key. Build the dict of canonical TEXT values to write
     # so the inner DB block can stay short.

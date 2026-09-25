@@ -1,4 +1,4 @@
-# Operating LLM Warden day to day
+# Operating LM Warden day to day
 
 Everything here assumes an install that already passes `make smoke`.
 Getting there is [INSTALL.md](INSTALL.md); the things to read before the
@@ -27,6 +27,36 @@ first model is loaded are [HAZARDS.md](HAZARDS.md).
 changed, `git pull && ./install.sh` refreshes `docker-compose.yml` and the
 override and re-pins `VERSION`; `.env` is kept.
 
+**Upgrading across the rename to `lm-warden`.** The product is now called
+LM Warden (formerly LLM Warden and, before that, vLLM Warden). The repository
+moved from `Podwarden/vllm-warden` (and briefly `Podwarden/llm-warden`) to
+`Podwarden/lm-warden`, and the images from
+`registry.podwarden.com/podwarden/apps/vllm-warden{,-ui}` (and briefly
+`.../llm-warden{,-ui}`) to `.../lm-warden{,-ui}`. Nothing an install stores
+was renamed: the volumes, container names and the `/data/vllm-warden.db`
+database keep their `vllm-warden` names, so an existing install upgrades in
+place.
+
+- Every release is still published under both old image names as well (same
+  digest) until **2026-12-31**, so an install that keeps pulling
+  `.../vllm-warden:${VERSION:-latest}` or `.../llm-warden:${VERSION:-latest}`
+  keeps getting updates until then. Re-run
+  `./install.sh` from an updated checkout at your leisure before that date: it
+  rewrites `docker-compose.override.yml` to the new image names and keeps `.env`.
+- `git pull` keeps working (GitHub redirects the old URL); point the remote at
+  the new one when convenient:
+  `git remote set-url origin https://github.com/Podwarden/lm-warden.git`.
+- **Keep your existing checkout directory.** The volumes belong to the Compose
+  project name. `install.sh` writes `COMPOSE_PROJECT_NAME=vllm-warden` into
+  `.env`, which pins the names (`vllm-warden_vw-data`, `vllm-warden_vw-hfcache`,
+  `vllm-warden_caddy-*`) whatever the directory is called. Without that line --
+  an `.env` written by hand, or plain `docker compose up` in a checkout with no
+  `.env` -- Compose names the project after the directory, and a fresh
+  `git clone` now lands in `lm-warden/`: that stack would start on new, empty
+  volumes. Check with `docker compose config | head -1` (it prints
+  `name: vllm-warden`), and if it does not, add `COMPOSE_PROJECT_NAME=vllm-warden`
+  to `.env` before the first `make start`.
+
 Once running:
 
 - **UI** — `http://YOUR-HOST:8080/ui/`
@@ -46,6 +76,19 @@ tell the warden its public URL with
 `./install.sh --origin https://llm.example.com`; the cookies then carry
 `Secure`. If your proxy sets `X-Forwarded-Proto`, set `VW_TRUST_PROXY_ORIGIN=1`
 in `.env` so the warden believes it.
+
+**The page at `/`.** Every install serves a public landing page at its root,
+with its own video, screenshots and fonts under `/_landing/assets/` and a
+`/robots.txt`, `/llms.txt` and `/llms-full.txt` beside it. It is private by
+default: the page is marked `noindex` and `robots.txt` disallows everything.
+Turn it off entirely with the `landing_page_enabled` setting (**Settings**),
+and every one of those routes 404s except `robots.txt`, which stays
+disallow-all. Only if this instance should be found by search engines, set
+`VW_LANDING_CANONICAL_URL` in `.env` to its public origin, e.g.
+`VW_LANDING_CANONICAL_URL=https://llm.example.com`, and re-run `./install.sh`
+or `make restart`: the page then carries a canonical link and `index,follow`,
+and `robots.txt` points at a `/sitemap.xml`. A value with a path, query or
+credentials is ignored rather than half-applied.
 
 ---
 

@@ -1,21 +1,21 @@
 // Shared fixtures for the token details tests: the mockup's
-// "opencode-ip-macbook" key after two rotations, at the mockup's NOW.
+// "opencode-laptop" key after two rotations, at the mockup's NOW.
 import type { ModelUsage, ModelVariantUsage, TokenDetail, TokenSeries } from '@/lib/token-series';
 
 export const NOW = Date.UTC(2026, 8, 18, 13, 21) / 1000;
 
 export function tokenDetail(o: Partial<TokenDetail> = {}): TokenDetail {
   return {
-    id: 'tok-self', name: 'opencode-ip-macbook', prefix: 'vw_6gqfa', preview: 'vw_6gqfa',
+    id: 'tok-self', name: 'opencode-laptop', prefix: 'vw_6gqfa', preview: 'vw_6gqfa',
     created_at: '2026-09-06 13:59:00', last_used_at: '2026-09-18 13:19:00', expires_at: null,
     rotated_at: null, rotated_from: 'tok-old2', successor_id: null, successor_deleted: false,
     is_expired: false, is_near_expiry: false, revoked_at: null, is_revoked: false,
     paused_at: null, is_paused: false, priority: 9,
     usage_24h: { requests: 1500, prompt_tokens: 108_000_000, completion_tokens: 2_000_000, total_tokens: 110_000_000 },
     lineage: [
-      { id: 'tok-old1', name: 'opencode-ip-macbook (old 1)', created_at: '2026-09-05 12:16:00', rotated_at: '2026-09-05 13:55:00', is_revoked: true, in_grace: false, is_self: false },
-      { id: 'tok-old2', name: 'opencode-ip-macbook (old 2)', created_at: '2026-09-05 13:55:00', rotated_at: '2026-09-06 13:59:00', is_revoked: true, in_grace: false, is_self: false },
-      { id: 'tok-self', name: 'opencode-ip-macbook', created_at: '2026-09-06 13:59:00', rotated_at: null, is_revoked: false, in_grace: false, is_self: true },
+      { id: 'tok-old1', name: 'opencode-laptop (old 1)', created_at: '2026-09-05 12:16:00', rotated_at: '2026-09-05 13:55:00', is_revoked: true, in_grace: false, is_self: false },
+      { id: 'tok-old2', name: 'opencode-laptop (old 2)', created_at: '2026-09-05 13:55:00', rotated_at: '2026-09-06 13:59:00', is_revoked: true, in_grace: false, is_self: false },
+      { id: 'tok-self', name: 'opencode-laptop', created_at: '2026-09-06 13:59:00', rotated_at: null, is_revoked: false, in_grace: false, is_self: true },
     ],
     ...o,
   };

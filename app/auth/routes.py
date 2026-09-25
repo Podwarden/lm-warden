@@ -1,3 +1,6 @@
+import asyncio
+import weakref
+
 import bcrypt
 import jwt as pyjwt
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
@@ -7,6 +10,12 @@ from app.auth.cookies import cookie_secure
 from app.auth.deps import require_session, session_stream_key
 from app.auth.jwt import decode, mint_access, mint_refresh
 from app.auth.origin import origin_check_dep
+from app.auth.throttle import (
+    LOGIN_THROTTLED_MESSAGE,
+    login_throttle,
+    throttle_client,
+    too_many_attempts,
+)
 from app.db.database import open_db
 from app.db.repos.users import UserRepo
 
@@ -17,24 +26,76 @@ _DUMMY_HASH = bcrypt.hashpw(b"timing-equalizer", bcrypt.gensalt()).decode()
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
+#: bcrypt checks running at once. Each takes a CPU for a quarter of a second
+#: or so; they run in worker threads (bcrypt releases the GIL) so a burst of
+#: logins no longer stalls the event loop -- and with it /v1 -- and this cap
+#: keeps a burst from taking every core.
+BCRYPT_SLOTS = 2
+_bcrypt_slots: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Semaphore] = (
+    weakref.WeakKeyDictionary()
+)
+
+
+async def check_password(password: str, password_hash: str) -> bool:
+    """``bcrypt.checkpw`` off the event loop, at most BCRYPT_SLOTS at once."""
+    loop = asyncio.get_running_loop()
+    slots = _bcrypt_slots.get(loop)
+    if slots is None:
+        slots = _bcrypt_slots[loop] = asyncio.Semaphore(BCRYPT_SLOTS)
+    async with slots:
+        return await asyncio.to_thread(
+            bcrypt.checkpw, password.encode("utf-8"), password_hash.encode("utf-8")
+        )
+
 
 class LoginBody(BaseModel):
     username: str = Field(min_length=1, max_length=64)
     password: str = Field(min_length=1, max_length=256)
 
 
-@router.post("/login")
+@router.post(
+    "/login",
+    responses={
+        401: {"description": "Invalid credentials."},
+        429: {
+            "description": (
+                "Too many failed logins from this (public, proxy-vouched) "
+                "address, or a failed login while too many others are being "
+                "held back. Never the answer to a correct password unless "
+                "the address is locked. Wait for the Retry-After header "
+                "(seconds). See app/auth/throttle.py for the limits."
+            ),
+        },
+    },
+)
 async def login(body: LoginBody, request: Request, response: Response):
     settings = request.app.state.settings
+    # Brute-force throttle (app/auth/throttle.py). The LOCK is checked before
+    # the database and bcrypt, so a locked caller costs nothing -- and only a
+    # public client address the trusted proxies vouch for can be locked. It
+    # answers the same for a known and an unknown username, so it leaks
+    # nothing the timing equalizer below hides.
+    throttle = login_throttle(request)
+    client = throttle_client(request)
+    wait = throttle.retry_after(client)
+    if wait > 0:
+        raise too_many_attempts(wait, LOGIN_THROTTLED_MESSAGE)
     async with open_db(settings.db_path) as db:
         user = await UserRepo(db).get_by_username(body.username)
-    if user is None:
-        bcrypt.checkpw(body.password.encode("utf-8"), _DUMMY_HASH.encode("utf-8"))
+    # An unknown user is checked against a constant hash, so the response
+    # time matches "user exists, wrong password" (and is refused whatever
+    # the constant's password).
+    ok = await check_password(
+        body.password, user.password_hash if user is not None else _DUMMY_HASH
+    )
+    if user is None or not ok:
+        # The THROTTLE: a failed attempt is answered late (escalating, capped
+        # at a few seconds), or 429 when too many are already being held.
+        # Only failures ever get here, so no throttle state refuses a correct
+        # password.
+        await throttle.failed(client, body.username)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid credentials")
-    if not bcrypt.checkpw(
-        body.password.encode("utf-8"), user.password_hash.encode("utf-8")
-    ):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid credentials")
+    throttle.success(client, body.username)
     secret = request.app.state.jwt_secret
     access_ttl = settings.session_access_ttl_minutes
     refresh_ttl = settings.session_refresh_ttl_days

@@ -70,12 +70,15 @@ function renderPage() {
 
 // The history strip's own requests start at the fixture lineage's oldest
 // created_at (it no longer waits for a measured width, so it fetches under
-// jsdom too, and again whenever the clock crosses a minute). The page's
+// jsdom too, and again whenever the clock crosses a minute) -- unless a custom
+// Apply zoomed it. Every strip request asks for `timings=0`; the page's
 // preset/custom series requests are everything else.
 const STRIP_FROM = Date.UTC(2026, 8, 5, 12, 16) / 1000;
+const isStripUrl = (u: string) => new URL(u, 'http://x').searchParams.get('timings') === '0';
+const stripUrls = (m: ReturnType<typeof vi.fn>) =>
+  m.mock.calls.map(([u]) => String(u)).filter((u) => u.includes('/series?')).filter(isStripUrl);
 const seriesCalls = (m: ReturnType<typeof vi.fn>) =>
-  m.mock.calls.map(([u]) => String(u)).filter((u) => u.includes('/series?'))
-    .filter((u) => Number(new URL(u, 'http://x').searchParams.get('from')) !== STRIP_FROM);
+  m.mock.calls.map(([u]) => String(u)).filter((u) => u.includes('/series?')).filter((u) => !isStripUrl(u));
 
 // The server window a request asks for: `[floor(from/60), ceil(to/60))` in minutes.
 const serverMinutes = (q: URLSearchParams) => Math.ceil(Number(q.get('to')) / 60) - Math.floor(Number(q.get('from')) / 60);
@@ -126,9 +129,9 @@ describe('token details page', () => {
     const crumbs = screen.getByRole('navigation', { name: 'Breadcrumb' });
     await waitFor(() => {
       const current = crumbs.querySelector('ol [aria-current="page"]');
-      expect(current).toHaveTextContent('opencode-ip-macbook');
+      expect(current).toHaveTextContent('opencode-laptop');
     });
-    expect(crumbs.querySelector('ol')).toHaveTextContent(/^HomeAPI tokensopencode-ip-macbook$/);
+    expect(crumbs.querySelector('ol')).toHaveTextContent(/^HomeAPI tokensopencode-laptop$/);
     // One trail only: the page itself draws no second breadcrumb.
     expect(screen.getAllByRole('navigation', { name: 'Breadcrumb' })).toHaveLength(1);
   });
@@ -181,7 +184,7 @@ describe('token details page', () => {
       renderPage();
       await act(async () => { await vi.advanceTimersByTimeAsync(0); });
       await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-      expect(screen.getByRole('heading', { level: 1, name: 'opencode-ip-macbook' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'opencode-laptop' })).toBeInTheDocument();
 
       gone = true;
       await act(async () => { await vi.advanceTimersByTimeAsync(11_000); }); // the next token poll 404s
@@ -215,7 +218,7 @@ describe('token details page', () => {
       renderPage();
       await act(async () => { await vi.advanceTimersByTimeAsync(0); });
       await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-      expect(screen.getByRole('heading', { level: 1, name: 'opencode-ip-macbook' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'opencode-laptop' })).toBeInTheDocument();
       const tokenGets = () => m.mock.calls.filter(([u, init]) =>
         String(u) === '/api/tokens/tok-self' && (init as RequestInit | undefined)?.method !== 'PATCH').length;
 
@@ -235,7 +238,7 @@ describe('token details page', () => {
   it('defaults to 7d with earlier keys and asks the server for ≤360 bins', async () => {
     const m = installFetch();
     renderPage();
-    expect(await screen.findByRole('heading', { level: 1, name: 'opencode-ip-macbook' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'opencode-laptop' })).toBeInTheDocument();
     await waitFor(() => expect(seriesCalls(m).length).toBeGreaterThan(0));
     const u = new URL(seriesCalls(m)[0], 'http://x');
     expect(u.searchParams.get('chain')).toBe('1');
@@ -298,6 +301,105 @@ describe('token details page', () => {
     expect(nav.replace).not.toHaveBeenCalled(); // nothing to write: the URL already says this
   });
 
+  // The bug: Apply narrowed the charts' window but the binned history strip
+  // stayed on the key's whole life, so a small period was a sliver of it.
+  // Apply now zooms the strip to the applied period, asking the server for
+  // exactly that window (its bin ladder then picks finer bins), and Reset
+  // goes back to the default period, zoomed out.
+  it('Apply zooms the strip to the applied period; Reset zooms out to the default 7d', async () => {
+    Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get: () => 800 });
+    const from = Date.UTC(2026, 8, 12, 9, 0) / 1000;
+    const to = Date.UTC(2026, 8, 14, 18, 30) / 1000;
+    const zFrom = Date.UTC(2026, 8, 13, 9, 0) / 1000;
+    const zTo = Date.UTC(2026, 8, 13, 11, 0) / 1000;
+    nav.search = `from=${from}&to=${to}`;
+    const m = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === '/api/auth/refresh') return json({ access_token: 'jwt' });
+      if (url === '/api/csrf') return json({ csrf: 'csrf' });
+      if (url === '/api/admin/godmode/status') return json({ enabled: true });
+      if (url.startsWith('/api/tokens/tok-self/series')) {
+        // Mirrors the server's window, and its bin ladder closely enough:
+        // a 2 h window gets 1 min bins, anything longer 30 min.
+        const q = new URL(url, 'http://x').searchParams;
+        const f = Number(q.get('from'));
+        const t = Number(q.get('to'));
+        return json(seriesFixture({ from_minute: Math.floor(f / 60), to_minute: Math.ceil(t / 60), bin_minutes: t - f <= 7200 ? 1 : 30 }));
+      }
+      if (url === '/api/tokens/tok-self') return json(tokenDetail());
+      return json({ detail: 'unexpected ' + url }, 404);
+    });
+    vi.stubGlobal('fetch', m);
+    const page = () => (
+      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+        <Suspense fallback={<div>loading</div>}>
+          <TokenDetailPage params={syncResolved({ id: 'tok-self' })} />
+        </Suspense>
+      </SWRConfig>
+    );
+    const { rerender } = render(page());
+    await screen.findByLabelText('From');
+    await waitFor(() => expect(stripUrls(m)).toHaveLength(2)); // own + chain, whole life
+    for (const u of stripUrls(m)) expect(Number(new URL(u, 'http://x').searchParams.get('from'))).toBe(STRIP_FROM);
+    // A custom period is not the default, so Reset is on even before a zoom.
+    expect(screen.getByRole('button', { name: 'Reset' })).toBeEnabled();
+    expect(screen.getByText(/^Whole history of this key/)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-09-13T09:00' } });
+    fireEvent.change(screen.getByLabelText('To'), { target: { value: '2026-09-13T11:00' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(nav.replace).toHaveBeenLastCalledWith(`/tokens/tok-self?from=${zFrom}&to=${zTo}`, { scroll: false });
+    nav.search = `from=${zFrom}&to=${zTo}`;
+    rerender(page());
+
+    // The strip asks for exactly the applied window, both variants, once each.
+    await waitFor(() => expect(stripUrls(m)).toHaveLength(4));
+    for (const u of stripUrls(m).slice(2)) {
+      const q = new URL(u, 'http://x').searchParams;
+      expect([Number(q.get('from')), Number(q.get('to'))]).toEqual([zFrom, zTo]);
+      expect(q.get('max_bins')).toBe('360');
+    }
+    // ...and draws it: the strip's axis is the applied window, not the key's life.
+    await waitFor(() => expect(screen.getByRole('slider')).toHaveAttribute('aria-valuemin', String(zFrom)));
+    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuemax', String(zTo));
+    expect(screen.getByText(/^Zoomed to the applied period/)).toBeInTheDocument();
+    // The charts' own series re-bins for the window too.
+    const last = new URL(seriesCalls(m).at(-1)!, 'http://x').searchParams;
+    expect([Number(last.get('from')), Number(last.get('to'))]).toEqual([zFrom, zTo]);
+    expect(await screen.findByText(/1 min bins · 120 points/)).toBeInTheDocument();
+    // Nothing re-asked the whole-life strip on the way in.
+    expect(stripUrls(m)).toHaveLength(4);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    expect(nav.replace).toHaveBeenLastCalledWith('/tokens/tok-self?range=7d', { scroll: false });
+    nav.search = 'range=7d';
+    rerender(page());
+    // Zoomed out: the strip is back on the key's whole life, and Reset is off.
+    await waitFor(() => expect(stripUrls(m).length).toBeGreaterThanOrEqual(6));
+    for (const u of stripUrls(m).slice(4)) expect(Number(new URL(u, 'http://x').searchParams.get('from'))).toBe(STRIP_FROM);
+    await waitFor(() => expect(screen.getByRole('slider')).toHaveAttribute('aria-valuemin', String(STRIP_FROM)));
+    expect(screen.getByRole('button', { name: 'Reset' })).toBeDisabled();
+    expect(screen.getByText(/^Whole history of this key/)).toBeInTheDocument();
+  }, 20_000);
+
+  it('Reset is off at the default 7d and on for any other preset', async () => {
+    const m = installFetch();
+    const { rerender } = renderPage();
+    expect(await screen.findByRole('button', { name: 'Reset' })).toBeDisabled();
+    await waitFor(() => expect(stripUrls(m)).toHaveLength(2));
+    nav.search = 'range=24h';
+    rerender(
+      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+        <Suspense fallback={<div>loading</div>}>
+          <TokenDetailPage params={syncResolved({ id: 'tok-self' })} />
+        </Suspense>
+      </SWRConfig>,
+    );
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Reset' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    expect(nav.replace).toHaveBeenLastCalledWith('/tokens/tok-self?range=7d', { scroll: false });
+  });
+
   it('Apply with new custom times writes the URL at once', async () => {
     nav.search = `from=${Date.UTC(2026, 8, 12, 9, 0) / 1000}&to=${Date.UTC(2026, 8, 14, 18, 30) / 1000}`;
     installFetch();
@@ -323,7 +425,7 @@ describe('token details page', () => {
       nav.search = 'range=1h';
       renderPage();
       await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-      expect(screen.getByRole('heading', { level: 1, name: 'opencode-ip-macbook' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'opencode-laptop' })).toBeInTheDocument();
       await act(async () => { await vi.advanceTimersByTimeAsync(0); });
       const before = seriesCalls(m).length;
       expect(before).toBeGreaterThan(0);
@@ -364,7 +466,7 @@ describe('token details page', () => {
       );
       await act(async () => { await vi.advanceTimersByTimeAsync(0); });
       await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-      expect(screen.getByRole('heading', { level: 1, name: 'opencode-ip-macbook' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'opencode-laptop' })).toBeInTheDocument();
 
       const stripCalls = (calls: ReturnType<typeof vi.fn>['mock']['calls']) =>
         calls.filter(([u]) => {
@@ -424,7 +526,7 @@ describe('token details page', () => {
           return json(tokenDetail({
             created_at: created,
             lineage: [
-              { id: 'tok-self', name: 'opencode-ip-macbook', created_at: created, rotated_at: null, is_revoked: false, in_grace: false, is_self: true },
+              { id: 'tok-self', name: 'opencode-laptop', created_at: created, rotated_at: null, is_revoked: false, in_grace: false, is_self: true },
             ],
           }));
         }
@@ -436,7 +538,7 @@ describe('token details page', () => {
       await act(async () => { await vi.advanceTimersByTimeAsync(0); });
       await act(async () => { await vi.advanceTimersByTimeAsync(0); });
       await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-      expect(screen.getByRole('heading', { level: 1, name: 'opencode-ip-macbook' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'opencode-laptop' })).toBeInTheDocument();
 
       const noOverhang = () => {
         const slider = screen.getByRole('slider');
@@ -474,12 +576,12 @@ describe('token details page', () => {
         token: {
           created_at: created,
           lineage: [
-            { id: 'tok-self', name: 'opencode-ip-macbook', created_at: created, rotated_at: null, is_revoked: false, in_grace: false, is_self: true },
+            { id: 'tok-self', name: 'opencode-laptop', created_at: created, rotated_at: null, is_revoked: false, in_grace: false, is_self: true },
           ],
         },
       });
       renderPage();
-      await screen.findByRole('heading', { level: 1, name: 'opencode-ip-macbook' });
+      await screen.findByRole('heading', { level: 1, name: 'opencode-laptop' });
       const stripCall = await waitFor(() => {
         // The strip's request is the one over the key's life (here one
         // minute), not the 7d preset; it asks for the server's finest bins.
@@ -588,7 +690,7 @@ describe('token details page', () => {
   ])('has no dock when god mode is %s', async (_label, opts) => {
     installFetch(opts);
     renderPage();
-    await screen.findByRole('heading', { level: 1, name: 'opencode-ip-macbook' });
+    await screen.findByRole('heading', { level: 1, name: 'opencode-laptop' });
     await new Promise((r) => setTimeout(r, 50));
     expect(screen.queryByRole('region', { name: 'God mode for this token' })).toBeNull();
     expect(screen.queryByRole('button', { name: /God mode/ })).toBeNull();

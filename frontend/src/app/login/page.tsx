@@ -56,6 +56,17 @@ export default function LoginPage() {
       headers: { 'Content-Type': 'application/json', 'Origin': window.location.origin },
       body: JSON.stringify({ username, password }),
     });
+    if (r.status === 429) {
+      // Brute-force throttle (app/auth/throttle.py): too many failures from
+      // this address or for this username. Retry-After is in seconds.
+      const wait = Number(r.headers.get('Retry-After'));
+      setError(
+        Number.isFinite(wait) && wait > 0
+          ? `Too many failed attempts. Try again in ${wait} seconds.`
+          : 'Too many failed attempts. Try again later.',
+      );
+      return;
+    }
     if (!r.ok) { setError('Invalid credentials'); return; }
     const { access_token, expires_in } = await r.json();
     // Pass expires_in (#97) so auth-fetch schedules the proactive refresh
@@ -66,14 +77,14 @@ export default function LoginPage() {
       access_token,
       typeof expires_in === 'number' ? expires_in : undefined,
     );
-    router.replace('/models');
+    router.replace('/stats');
   }
 
   if (!setupChecked) return null;
 
   return (
     <form onSubmit={submit} className="max-w-sm mx-auto mt-20 space-y-4">
-      <h1 className="text-xl font-semibold">LLM Warden</h1>
+      <h1 className="text-xl font-semibold">LM Warden</h1>
       <label className="block">Username<Input name="username" value={username} onChange={(e) => setUsername(e.target.value)} /></label>
       <label className="block">Password<Input name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
       {error && <p className="text-red-500 text-sm">{error}</p>}

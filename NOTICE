@@ -1,0 +1,34 @@
+LM Warden
+Copyright 2026 The LM Warden Authors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Formerly published as LLM Warden and vLLM Warden. https://lmwarden.com
+
+----------------------------------------------------------------------
+Third-party components
+----------------------------------------------------------------------
+
+The source tree includes the following third-party material, each under its
+own licence:
+
+* app/landing/assets/font-sans.woff2, font-sans-cond.woff2 -- modified
+  versions of Mona Sans (https://github.com/github/mona-sans),
+  Copyright 2022 The Mona Sans Project Authors.
+* app/landing/assets/font-mono.woff2 -- a modified version of Monaspace Neon
+  (https://github.com/githubnext/monaspace), Copyright (c) 2023, GitHub.
+  Both fonts are licensed under the SIL Open Font License, Version 1.1; the
+  full licence texts are in app/landing/assets/fonts-license.txt.
+
+The container images built from this repository additionally contain, unmodified:
+
+* vLLM (https://github.com/vllm-project/vllm), via the upstream
+  vllm/vllm-openai base image -- Apache License 2.0.
+* llama.cpp (https://github.com/ggml-org/llama.cpp), compiled from an upstream
+  release tag -- MIT License.
+* @podwarden/chat-ui (https://github.com/Podwarden/chat-ui), compiled from a
+  pinned upstream commit -- Apache License 2.0.
+
+together with the Python (requirements.txt) and npm (frontend/package-lock.json)
+dependencies those files pin, each under its own licence. No part of vLLM or
+llama.cpp is modified: LM Warden launches them as upstream publishes them.

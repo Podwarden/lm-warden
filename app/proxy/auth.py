@@ -2,6 +2,7 @@ from fastapi import HTTPException, Request
 
 from app.auth.bearer import INFERENCE_TOKEN_PREFIX, parse_bearer_header
 from app.auth.deps import token_refusal
+from app.auth.throttle import bearer_throttle, check_bearer
 from app.db.database import open_db
 from app.db.repos.tokens import TokenRepo, TokenRow, sqlite_utc_now
 
@@ -9,8 +10,10 @@ from app.db.repos.tokens import TokenRepo, TokenRow, sqlite_utc_now
 async def require_bearer(request: Request) -> TokenRow:
     """Validate Bearer token, return the full TokenRow, update last_used_at.
 
-    Raises 401 if missing/malformed/unknown/expired/revoked, and 403 if the
-    key is paused (token details page, migration 0033).
+    Raises 401 if missing/malformed/unknown/expired/revoked, 403 if the key
+    is paused (token details page, migration 0033), and 429 with Retry-After
+    when this address has presented too many unknown secrets
+    (app/auth/throttle.py).
     """
     # The same parser as the control API (app/auth/deps.py::bearer_token):
     # the scheme is case-insensitive and any whitespace separates it from the
@@ -20,10 +23,18 @@ async def require_bearer(request: Request) -> TokenRow:
         raise HTTPException(401, "missing bearer token")
     if not plaintext.startswith(INFERENCE_TOKEN_PREFIX):
         raise HTTPException(401, "invalid token format")
+    # Unknown-secret throttle (app/auth/throttle.py): an address spraying
+    # secrets that match no row gets 429 + Retry-After before the lookup. A
+    # secret already seen to match a row is never throttled.
+    address = check_bearer(request, plaintext)
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
         repo = TokenRepo(db)
         row = await repo.find_by_plaintext(plaintext)
+        if row is None:
+            bearer_throttle(request).unknown(address)
+        else:
+            bearer_throttle(request).matched(plaintext)
         # An admin token is never a /v1 credential (spec 2026-09-19, decision
         # 2). The vw_ prefix check above already refuses every vwa_ secret;
         # this refuses any non-inference row whose secret happens to look like

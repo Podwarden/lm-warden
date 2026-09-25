@@ -1,6 +1,6 @@
-# Installing LLM Warden
+# Installing LM Warden
 
-This is a step-by-step manual for getting LLM Warden onto your own hardware. It
+This is a step-by-step manual for getting LM Warden onto your own hardware. It
 is written from two recorded installs on a real machine, not from what the
 software is supposed to do. Every command below was run; every block of output
 is what the terminal actually printed. Where something went wrong, the error is
@@ -87,8 +87,8 @@ Measured on the host, for one release:
 
 | Image | On disk | On the wire |
 |---|---|---|
-| `vllm-warden` (api) | 28.9 GB | 9.22 GB |
-| `vllm-warden-ui` | 313 MB | 75.5 MB |
+| `lm-warden` (api) | 28.9 GB | 9.22 GB |
+| `lm-warden-ui` | 313 MB | 75.5 MB |
 | `caddy:2-alpine` | 88.7 MB | 24.3 MB |
 
 The 28.9 GB is not a mistake and not a redundant copy you can avoid: the image
@@ -142,8 +142,8 @@ setting explicitly to share or rotate one across hosts.
 ## A1. Clone the repository
 
 ```
-$ git clone https://github.com/Podwarden/vllm-warden.git
-$ cd vllm-warden && git rev-parse HEAD
+$ git clone https://github.com/Podwarden/lm-warden.git
+$ cd lm-warden && git rev-parse HEAD
 00ff68dd5815677c101c507075cf88a1de86a55d
 ```
 
@@ -160,24 +160,24 @@ because it is the one most people will hit:
 ```
 $ ./install.sh --check
 
-LLM Warden installer
+LM Warden installer
 
-[vllm-warden] Checking this host...
-[vllm-warden] Docker OK, Compose 5.5.0.
-[vllm-warden] Disk OK: 632 GB free on /var/lib/docker (Docker data root).
-[vllm-warden] Detected 2 NVIDIA GPU(s):
+[lm-warden] Checking this host...
+[lm-warden] Docker OK, Compose 5.5.0.
+[lm-warden] Disk OK: 632 GB free on /var/lib/docker (Docker data root).
+[lm-warden] Detected 2 NVIDIA GPU(s):
     [0] NVIDIA RTX A4000 (16376 MiB)
     [1] Quadro RTX 5000 (15360 MiB)
-[vllm-warden] No terminal to ask on: passing through all 2 GPUs (restrict with --gpus).
-[vllm-warden] Passing through all 2 GPU(s).
-[vllm-warden] NVIDIA GPUs are present, but Docker cannot pass them to containers:
-[vllm-warden]   the NVIDIA Container Toolkit is installed but not registered with Docker.
-[vllm-warden]   Starting the stack as-is fails with:
-[vllm-warden]     could not select device driver "nvidia" with capabilities: [[gpu]]
-[vllm-warden] Skipping. Install it yourself and re-run ./install.sh (or: make preflight):
-[vllm-warden]   https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
-[vllm-warden]   Unattended: GPU_TOOLKIT_INSTALL=yes ./install.sh ...
-[vllm-warden] Preflight failed: Docker cannot use the GPUs (see above).
+[lm-warden] No terminal to ask on: passing through all 2 GPUs (restrict with --gpus).
+[lm-warden] Passing through all 2 GPU(s).
+[lm-warden] NVIDIA GPUs are present, but Docker cannot pass them to containers:
+[lm-warden]   the NVIDIA Container Toolkit is installed but not registered with Docker.
+[lm-warden]   Starting the stack as-is fails with:
+[lm-warden]     could not select device driver "nvidia" with capabilities: [[gpu]]
+[lm-warden] Skipping. Install it yourself and re-run ./install.sh (or: make preflight):
+[lm-warden]   https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+[lm-warden]   Unattended: GPU_TOOLKIT_INSTALL=yes ./install.sh ...
+[lm-warden] Preflight failed: Docker cannot use the GPUs (see above).
 EXIT: 1
 ```
 
@@ -271,7 +271,7 @@ the GPUs. `Failed to initialize NVML: Unknown Error` there means the grant was
 revoked. `docker compose up -d --force-recreate api` restores it; re-running
 `./install.sh` switches to CDI so that it stays.
 
-LLM Warden reports this itself as well. The header gauges read `--` and their
+LM Warden reports this itself as well. The header gauges read `--` and their
 tooltip opens with `GPU telemetry unavailable:` and the error. `/stats` shows a
 banner and puts `—` in its VRAM, GPU and power tiles. `/healthz` stays `200`
 (it is the liveness probe), but its body carries the state. Its shape (not a
@@ -297,39 +297,39 @@ $ GPU_TOOLKIT_INSTALL=yes ./install.sh --gpus all --yes --start
 ```
 ### START
 
-LLM Warden installer
+LM Warden installer
 
-[vllm-warden] Checking this host...
-[vllm-warden] Docker OK, Compose 5.5.0.
-[vllm-warden] Disk OK: 632 GB free on /var/lib/docker (Docker data root).
-[vllm-warden] Detected 2 NVIDIA GPU(s):
+[lm-warden] Checking this host...
+[lm-warden] Docker OK, Compose 5.5.0.
+[lm-warden] Disk OK: 632 GB free on /var/lib/docker (Docker data root).
+[lm-warden] Detected 2 NVIDIA GPU(s):
     [0] NVIDIA RTX A4000 (16376 MiB)
     [1] Quadro RTX 5000 (15360 MiB)
-[vllm-warden] Passing through all 2 GPU(s).
+[lm-warden] Passing through all 2 GPU(s).
 …
 level=info msg="Wrote updated config to /etc/docker/daemon.json"
 level=info msg="It is recommended that docker daemon be restarted."
-[vllm-warden] Restarting Docker so it picks up the nvidia runtime...
-[vllm-warden] NVIDIA Container Toolkit is ready; Docker can now use the GPUs.
-[vllm-warden] Created .env from .env.example.
-[vllm-warden] Generated 1 secret(s) in .env.
-[vllm-warden] Pinned VERSION=v2026.09.06.4, the release this source tree documents (override with --version).
-[vllm-warden] Wrote docker-compose.override.yml (release v2026.09.06.4, GPUs: 2 (indices 0,1), port 8080).
-[vllm-warden] Compose configuration validates.
-[vllm-warden] Pulling release images (v2026.09.06.4)...
+[lm-warden] Restarting Docker so it picks up the nvidia runtime...
+[lm-warden] NVIDIA Container Toolkit is ready; Docker can now use the GPUs.
+[lm-warden] Created .env from .env.example.
+[lm-warden] Generated 1 secret(s) in .env.
+[lm-warden] Pinned VERSION=v2026.09.06.4, the release this source tree documents (override with --version).
+[lm-warden] Wrote docker-compose.override.yml (release v2026.09.06.4, GPUs: 2 (indices 0,1), port 8080).
+[lm-warden] Compose configuration validates.
+[lm-warden] Pulling release images (v2026.09.06.4)...
 …
-[vllm-warden] Starting...
+[lm-warden] Starting...
 …
  Container vllm-warden-api-1     Started
  Container vllm-warden-ui-1      Started
  Container vllm-warden-caddy-1   Started
 
-LLM Warden is installed in /home/you/vllm-warden
+LM Warden is installed in /home/you/lm-warden
 
   UI:      http://localhost:8080/ui/    (first run opens the setup wizard)
   API:     http://localhost:8080/v1/chat/completions
-  Logs:    cd /home/you/vllm-warden && make logs
-  Config:  /home/you/vllm-warden/.env   (release: v2026.09.06.4, port: 8080, GPUs: 2 (indices 0,1))
+  Logs:    cd /home/you/lm-warden && make logs
+  Config:  /home/you/lm-warden/.env   (release: v2026.09.06.4, port: 8080, GPUs: 2 (indices 0,1))
   Help:    make help
 
 ### EXIT=0
@@ -387,9 +387,9 @@ and
 ```
 $ make status
 NAME                  IMAGE                                    SERVICE   STATUS
-vllm-warden-api-1     …/vllm-warden:v2026.09.06.4              api       Up 10 minutes (healthy)
+vllm-warden-api-1     …/lm-warden:v2026.09.06.4               api       Up 10 minutes (healthy)
 vllm-warden-caddy-1   caddy:2-alpine                           caddy     Up 10 minutes
-vllm-warden-ui-1      …/vllm-warden-ui:v2026.09.06.4           ui        Up 10 minutes
+vllm-warden-ui-1      …/lm-warden-ui:v2026.09.06.4            ui        Up 10 minutes
 ```
 
 ### If `make smoke` fails immediately after starting the stack
@@ -441,7 +441,7 @@ about `GPU_TOOLKIT_INSTALL=yes` restarting every container on the host.
 ## A6. Without a clone
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Podwarden/vllm-warden/main/install.sh | sh -s -- --dir /opt/vllm-warden
+curl -fsSL https://raw.githubusercontent.com/Podwarden/lm-warden/main/install.sh | sh -s -- --dir /opt/vllm-warden
 ```
 
 Downloads the source tree into `--dir`, then proceeds exactly as above. Prompts
@@ -459,12 +459,12 @@ On a machine **with** internet access:
 
 ```bash
 VERSION=v2026.09.06.2                                   # pick a release from changelog.md
-git clone https://github.com/Podwarden/vllm-warden.git && cd vllm-warden
+git clone https://github.com/Podwarden/lm-warden.git && cd lm-warden
 
 # 1. Stage an install (no GPU needed here) and save its images:
-#    vllm-warden, vllm-warden-ui and caddy:2-alpine, all at $VERSION.
+#    lm-warden, lm-warden-ui and caddy:2-alpine, all at $VERSION.
 ./install.sh --dir /tmp/vw-stage --version "$VERSION" --gpus none --yes
-make -C /tmp/vw-stage save-images IMAGES_FILE=/tmp/llm-warden-$VERSION.tar
+make -C /tmp/vw-stage save-images IMAGES_FILE=/tmp/lm-warden-$VERSION.tar
 
 # 2. (Optional) pre-seed the model cache. The api pulls with
 #    snapshot_download(cache_dir=<volume root>), so download with the same
@@ -475,13 +475,13 @@ tar -C /tmp/hf-seed -cf /tmp/hf-cache.tar .
 ```
 
 Copy the source tree (this checkout or the GitHub tarball),
-`llm-warden-$VERSION.tar` and `hf-cache.tar` to the isolated host. There:
+`lm-warden-$VERSION.tar` and `hf-cache.tar` to the isolated host. There:
 
 ```bash
 # Docker, Compose 2.24+, the NVIDIA driver and the NVIDIA Container Toolkit
 # come from your own OS mirrors -- the installer cannot download them here.
-cd vllm-warden
-make load-images IMAGES_FILE=/path/llm-warden-$VERSION.tar
+cd lm-warden
+make load-images IMAGES_FILE=/path/lm-warden-$VERSION.tar
 ./install.sh --version "$VERSION" --no-pull --gpus all --yes
 make import-hf-cache CACHE_FILE=/path/hf-cache.tar        # optional
 echo 'HF_HUB_OFFLINE=1' >> .env                           # never contact huggingface.co
@@ -564,7 +564,7 @@ $ curl -s -X POST $W/api/setup/admin -H 'Content-Type: application/json' \
 {"step":"done"}
 ```
 
-Password rules are enforced and are not obvious: **at least 6 characters and at
+Password rules are enforced and are not obvious: **at least 12 characters and at
 most 72 bytes.** The upper bound is bcrypt's, and it is rejected outright rather
 than silently truncated — worth knowing before you generate a long passphrase.
 
@@ -778,13 +778,13 @@ fraction, no `max_model_len` tuning.
 
 ### Failure: `GPU 0 is already serving '…'` — this is not a VRAM problem
 
-![The Models page with a second model in the failed state, its error explaining that GPU 0 is already serving another model and that LLM Warden runs one loaded model per GPU](../assets/screenshots/install/gpu-already-claimed.jpg)
+![The Models page with a second model in the failed state, its error explaining that GPU 0 is already serving another model and that LM Warden runs one loaded model per GPU](../assets/screenshots/install/gpu-already-claimed.jpg)
 
 Register a second model on a GPU that already has one loaded and you get:
 
 ```
 GPU 0 is already serving 'qwen2.5-1.5b' — unload it first, or load this model on a free
-GPU. LLM Warden runs one loaded model per GPU.
+GPU. LM Warden runs one loaded model per GPU.
 ```
 
 **Read that literally.** It is an exclusive ownership claim, enforced in
@@ -878,8 +878,8 @@ private registry in the build. Every input is public: Docker Hub, PyPI,
 The whole sequence is four commands:
 
 ```bash
-git clone https://github.com/Podwarden/vllm-warden.git
-cd vllm-warden
+git clone https://github.com/Podwarden/lm-warden.git
+cd lm-warden
 
 # .env + docker-compose.override.yml, without touching any registry:
 # --no-pull and --no-start mean nothing is downloaded and nothing is started.
@@ -897,24 +897,24 @@ The rest of this section is what each of those actually prints.
 ```
 $ ./install.sh --gpus all --no-pull --no-start -y
 
-LLM Warden installer
+LM Warden installer
 
-[vllm-warden] Checking this host...
-[vllm-warden] Docker OK, Compose 5.5.0.
-[vllm-warden] Disk OK: 672 GB free on /var/lib/docker (Docker data root).
-[vllm-warden] Detected 2 NVIDIA GPU(s):
+[lm-warden] Checking this host...
+[lm-warden] Docker OK, Compose 5.5.0.
+[lm-warden] Disk OK: 672 GB free on /var/lib/docker (Docker data root).
+[lm-warden] Detected 2 NVIDIA GPU(s):
     [0] NVIDIA RTX A4000 (16376 MiB)
     [1] Quadro RTX 5000 (15360 MiB)
-[vllm-warden] Passing through all 2 GPU(s).
-[vllm-warden] NVIDIA Container Toolkit OK: Docker exposes the nvidia runtime.
-[vllm-warden] Created .env from .env.example.
-[vllm-warden] Generated 1 secret(s) in .env.
-[vllm-warden] Pinned VERSION=v2026.09.06.5, the release this source tree documents (override with --version).
-[vllm-warden] Wrote docker-compose.override.yml (release v2026.09.06.5, GPUs: 2 (indices 0,1), port 8080).
-[vllm-warden] Compose configuration validates.
-[vllm-warden] --no-pull: not pulling images; the stack expects them to be loaded already (make load-images).
+[lm-warden] Passing through all 2 GPU(s).
+[lm-warden] NVIDIA Container Toolkit OK: Docker exposes the nvidia runtime.
+[lm-warden] Created .env from .env.example.
+[lm-warden] Generated 1 secret(s) in .env.
+[lm-warden] Pinned VERSION=v2026.09.06.5, the release this source tree documents (override with --version).
+[lm-warden] Wrote docker-compose.override.yml (release v2026.09.06.5, GPUs: 2 (indices 0,1), port 8080).
+[lm-warden] Compose configuration validates.
+[lm-warden] --no-pull: not pulling images; the stack expects them to be loaded already (make load-images).
 
-LLM Warden is installed in /home/you/vllm-warden
+LM Warden is installed in /home/you/lm-warden
 ```
 
 Exit 0. Nothing downloaded, nothing started, exactly as documented.
@@ -1033,8 +1033,8 @@ support.
 
 ```
 $ docker images --format "{{.Repository}}:{{.Tag}}\t{{.Size}}" | grep 2026.09.06.5
-registry.podwarden.com/podwarden/apps/vllm-warden:v2026.09.06.5      28.9GB
-registry.podwarden.com/podwarden/apps/vllm-warden-ui:v2026.09.06.5   313MB
+registry.podwarden.com/podwarden/apps/lm-warden:v2026.09.06.5       28.9GB
+registry.podwarden.com/podwarden/apps/lm-warden-ui:v2026.09.06.5    313MB
 ```
 
 This is intentional — `docker-compose.yml` carries `build:` and the generated
@@ -1198,7 +1198,7 @@ To build against a fork or an unreleased chat-ui, override the args — no repo
 edit needed:
 
 ```bash
-docker build -t vllm-warden-ui \
+docker build -t lm-warden-ui \
   --build-arg CHATUI_REPO=https://github.com/you/chat-ui.git \
   --build-arg CHATUI_REF=<40-char sha> \
   --build-arg CHATUI_VERSION=<version> \
@@ -1249,7 +1249,7 @@ Two things were broken in earlier published releases and are fixed from
 
 ```
 $ make uninstall
-This stops LLM Warden and deletes its data volumes (database, HF model cache).
+This stops LM Warden and deletes its data volumes (database, HF model cache).
 Type yes to continue: yes
 docker compose down -v --remove-orphans
 [+] down 8/8
@@ -1261,7 +1261,7 @@ docker compose down -v --remove-orphans
  ✔ Volume vllm-warden_vw-data      Removed                                  0.0s
  ✔ Network vllm-warden_default     Removed                                  0.7s
  ✔ Volume vllm-warden_vw-hfcache   Removed                                  0.5s
-Volumes removed. Delete this directory to finish: rm -rf /home/you/vllm-warden
+Volumes removed. Delete this directory to finish: rm -rf /home/you/lm-warden
 ```
 
 That part is clean. All four volumes went, the network went, both GPUs were
@@ -1275,7 +1275,7 @@ non-interactive escape hatch — no `-y`, no `ASSUME_YES`. Over
 
 ```
 $ echo yes | make uninstall
-This stops LLM Warden and deletes its data volumes (database, HF model cache).
+This stops LM Warden and deletes its data volumes (database, HF model cache).
 Type yes to continue: /bin/sh: 1: cannot open /dev/tty: No such device or address
 aborted
 make: *** [make/operator.mk:60: uninstall] Error 1
@@ -1296,9 +1296,9 @@ after:   /dev/nvme0n1p2  915G  242G  627G  28% /
 
 | Survives | Size |
 |---|---|
-| `vllm-warden:v2026.09.06.4` image | 28.9 GB |
-| `vllm-warden:v2026.09.04.2` image | 28.9 GB |
-| `vllm-warden-ui` images ×2 | 313 MB each |
+| `lm-warden:v2026.09.06.4` image | 28.9 GB |
+| `lm-warden:v2026.09.04.2` image | 28.9 GB |
+| `lm-warden-ui` images ×2 | 313 MB each |
 | `vllm/vllm-openai` base image | 28.8 GB |
 | BuildKit cache (if you took Path B) | 31.13 GB |
 | the checkout, **including `.env` with your generated secret** | ~500 KB |
@@ -1309,7 +1309,7 @@ directory. To actually reclaim the space, look at what is there and remove what
 you no longer want:
 
 ```bash
-docker images                 # find the vllm-warden and vllm/vllm-openai entries
+docker images                 # find the lm-warden (pre-rename: llm-warden, vllm-warden) and vllm/vllm-openai entries
 docker rmi <image>:<tag>      # remove a release you no longer run
 ```
 

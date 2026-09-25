@@ -100,7 +100,7 @@ describe('LineageCard', () => {
   it('renders the mockup timeline, linking earlier keys', () => {
     render(<LineageCard lineage={tokenDetail().lineage} nowSec={NOW} />);
     expect(screen.getByText('Rotation history')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'opencode-ip-macbook (old 1)' })).toHaveAttribute('href', '/tokens/tok-old1');
+    expect(screen.getByRole('link', { name: 'opencode-laptop (old 1)' })).toHaveAttribute('href', '/tokens/tok-old1');
     expect(screen.getByText('Created Sep 5 · rotated Sep 5, 13:55 · cut off')).toBeInTheDocument();
     expect(screen.getByText('This token')).toBeInTheDocument();
     expect(screen.getByText('Created Sep 6, 13:59 · in use')).toBeInTheDocument();

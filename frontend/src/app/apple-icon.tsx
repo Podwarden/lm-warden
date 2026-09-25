@@ -1,4 +1,4 @@
-// Apple touch icon for LLM Warden (#152).
+// Apple touch icon for LM Warden (#152).
 //
 // Next.js App Router only accepts `.jpg`, `.jpeg`, or `.png` for the
 // `apple-icon` file convention — SVG is rejected, so we cannot reuse

@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import withBundleAnalyzer from '@next/bundle-analyzer';
+import { securityHeaders } from './src/lib/security-headers';
 
 const config: NextConfig = {
   output: 'standalone',
@@ -23,6 +24,12 @@ const config: NextConfig = {
   // surfaces as ECONNRESET. Issue #13.
   experimental: {
     proxyTimeout: 600_000,
+  },
+  // nosniff, Referrer-Policy, no framing, Permissions-Policy, HSTS over
+  // HTTPS only -- see src/lib/security-headers.ts. Response headers only:
+  // nothing here touches buffering or compression, so SSE is unaffected.
+  async headers() {
+    return securityHeaders();
   },
   async rewrites() {
     // /healthz is the k8s/operator-convention liveness path; alias it to

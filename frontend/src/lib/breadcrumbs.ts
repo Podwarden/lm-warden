@@ -2,7 +2,7 @@
  * Breadcrumb route registry — maps URL patterns to human-readable labels.
  *
  * Ported from PodWarden Core (`frontend/src/lib/breadcrumbs.ts`, #1187 /
- * #1687) and adapted to LLM Warden's routes.
+ * #1687) and adapted to LM Warden's routes.
  *
  * Static segments (e.g. `/settings`) get a fixed label here. Dynamic
  * segments (e.g. `/tokens/[id]`) need a resolved name from the page itself;

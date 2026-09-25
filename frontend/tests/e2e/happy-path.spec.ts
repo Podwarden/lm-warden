@@ -49,7 +49,7 @@ test('login → add tiny model → auto-pull → load → completion → rotate 
   await page.fill('input[name=username]', 'admin');
   await page.fill('input[name=password]', process.env.E2E_ADMIN_PW || 'change-me');
   await page.click('button:has-text("Log in")');
-  await expect(page).toHaveURL(/\/models/);
+  await expect(page).toHaveURL(/\/stats/);
 
   await page.click('button:has-text("Add model")');
   await page.fill('input[name=served_model_name]', 'opt-125m');

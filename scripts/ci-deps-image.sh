@@ -100,11 +100,11 @@ VW_PY_TAG="$VW_PY_TAG-$VW_ARCH"
 
 case "$VW_PY_FLAVOR" in
   pynode)
-    VW_DEPS_IMAGE="$REGISTRY_NS/vllm-warden/ci-pynode:$VW_PY_TAG"
+    VW_DEPS_IMAGE="$REGISTRY_NS/lm-warden/ci-pynode:$VW_PY_TAG"
     VW_BASE_IMAGE="$PYNODE_IMAGE"
     ;;
   *)
-    VW_DEPS_IMAGE="$REGISTRY_NS/vllm-warden/ci-py:$VW_PY_TAG"
+    VW_DEPS_IMAGE="$REGISTRY_NS/lm-warden/ci-py:$VW_PY_TAG"
     VW_BASE_IMAGE="$PYTHON_IMAGE"
     ;;
 esac
@@ -173,10 +173,14 @@ export VW_PY_TAG VW_DEPS_IMAGE VW_BASE_IMAGE VW_RUN_IMAGE VW_PIP
 # on $CI so a workstation's images are never touched, and `rm -f` on an image a
 # concurrent job is still running only untags it -- that container keeps going,
 # and a job that has not started yet re-pulls.
+#
+# The pre-rename `vllm-warden/ci-*` and `llm-warden/ci-*` repositories (renamed
+# to lm-warden/ci-* in 2026-09) are matched too and never kept: nothing reads
+# them any more, so every such tag on a runner is dead weight.
 if [ -n "${CI:-}" ]; then
   docker images --format '{{.Repository}}:{{.Tag}}' 2>/dev/null \
-    | grep -E "^$REGISTRY_NS/vllm-warden/ci-(py|pynode):" \
-    | grep -v ":$VW_PY_TAG\$" \
+    | grep -E "^$REGISTRY_NS/(v?llm|lm)-warden/ci-(py|pynode):" \
+    | grep -vE "^$REGISTRY_NS/lm-warden/ci-(py|pynode):$VW_PY_TAG\$" \
     | xargs -r -n1 docker image rm -f >/dev/null 2>&1 || true
 fi
 

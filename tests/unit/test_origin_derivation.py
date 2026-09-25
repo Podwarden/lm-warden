@@ -1,6 +1,6 @@
 """An unconfigured deployment must accept its own public origin, not localhost.
 
-Behind any reverse proxy — which is how LLM Warden is normally deployed —
+Behind any reverse proxy — which is how LM Warden is normally deployed —
 `VW_FRONTEND_ORIGIN` is usually unset, because nothing in the deploy flow knows
 the public URL at container-build time. `load_settings` then falls back to
 `("http://localhost:3000",)`, which is never the browser's origin, so

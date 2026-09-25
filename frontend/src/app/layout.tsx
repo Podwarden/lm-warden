@@ -5,7 +5,7 @@ import { SessionGate } from '@/components/session-gate';
 import { BreadcrumbHeader } from '@/components/breadcrumb-header';
 import { NavStackProvider } from '@/lib/nav-stack';
 
-export const metadata = { title: 'LLM Warden', description: 'LLM operator UI' };
+export const metadata = { title: 'LM Warden', description: 'LLM operator UI' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

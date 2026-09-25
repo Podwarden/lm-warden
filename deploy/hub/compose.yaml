@@ -1,6 +1,6 @@
 services:
   api:
-    image: registry.podwarden.com/podwarden/apps/vllm-warden:${VERSION:-latest}
+    image: registry.podwarden.com/podwarden/apps/lm-warden:${VERSION:-latest}
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -44,7 +44,7 @@ services:
               capabilities: [gpu]
 
   ui:
-    image: registry.podwarden.com/podwarden/apps/vllm-warden-ui:${VERSION:-latest}
+    image: registry.podwarden.com/podwarden/apps/lm-warden-ui:${VERSION:-latest}
     restart: unless-stopped
     ports:
       - "${WARDEN_PORT:-3000}:3000"

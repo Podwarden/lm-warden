@@ -35,7 +35,7 @@ export default function WelcomePage() {
 
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">Welcome to LLM Warden</h1>
+      <h1 className="text-2xl font-semibold">Welcome to LM Warden</h1>
       <p className="text-sm text-slate-400">
         This wizard will configure your GPUs, HuggingFace token, and admin account.
       </p>

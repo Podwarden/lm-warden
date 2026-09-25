@@ -1,6 +1,6 @@
 // NavBar — pins the contract:
 //   - hidden on /login and /setup
-//   - emerald brand "LLM Warden" + Shield icon
+//   - emerald brand "LM Warden" + Shield icon
 //   - dropdown contains Models / Tokens / Stats / Settings
 //     (Benchmarks entry removed in epic/overhaul S1 along with the page)
 //   - version footer fetched from GET /api/version; fallback on error
@@ -77,7 +77,7 @@ describe('NavBar', () => {
   it('renders the emerald brand on a non-auth route', async () => {
     stubVersionFetch({ version: '2026.05.13.1', sha: 'abcdef1234567890' });
     renderNav();
-    expect(screen.getByText('LLM Warden')).toBeInTheDocument();
+    expect(screen.getByText('LM Warden')).toBeInTheDocument();
   });
 
   it('returns null on /login', () => {
@@ -195,14 +195,14 @@ describe('NavBar', () => {
     mockPath = '/login-help';
     stubVersionFetch({ version: '2026.05.13.1', sha: 'abcdef1' });
     renderNav();
-    expect(screen.getByText('LLM Warden')).toBeInTheDocument();
+    expect(screen.getByText('LM Warden')).toBeInTheDocument();
   });
 
   it('renders normally on /login.json (exact-match guard)', () => {
     mockPath = '/login.json';
     stubVersionFetch({ version: '2026.05.13.1', sha: 'abcdef1' });
     renderNav();
-    expect(screen.getByText('LLM Warden')).toBeInTheDocument();
+    expect(screen.getByText('LM Warden')).toBeInTheDocument();
   });
 
   it('still hides on the trailing-slash /login/ variant', () => {
@@ -216,7 +216,7 @@ describe('NavBar', () => {
     mockPath = '/setup-guide';
     stubVersionFetch({ version: '2026.05.13.1', sha: 'abcdef1' });
     renderNav();
-    expect(screen.getByText('LLM Warden')).toBeInTheDocument();
+    expect(screen.getByText('LM Warden')).toBeInTheDocument();
   });
 
   it('still hides on /setup/<step> wizard subroutes', () => {

@@ -1,4 +1,6 @@
-# LLM Warden
+# LM Warden
+
+LM Warden was formerly called LLM Warden (and, before that, vLLM Warden). Website: [lmwarden.com](https://lmwarden.com).
 
 Self-hosted, OpenAI-compatible LLM inference with a guided setup wizard. Deploy any model from HuggingFace and expose it on your network in minutes — no command-line tuning required.
 
@@ -21,7 +23,7 @@ v2 splits this into two services:
 
 4. **Re-log-in once** — v2 replaces the old SessionMiddleware with JWT auth. All active browser sessions are invalidated on first boot. Existing API/MCP bearer tokens (`sk-...`) remain valid.
 
-Full operator runbook: [podwarden.com/docs/apps/vllm-warden](https://www.podwarden.com/docs/apps/vllm-warden)
+Full operator runbook: [documents/OPERATING.md](https://github.com/Podwarden/lm-warden/blob/main/documents/OPERATING.md)
 
 ## What you get
 
@@ -43,5 +45,5 @@ The default reservation (1 GPU, 24 GiB VRAM, 2 CPU, 16 GiB RAM) is sized for a 7
 
 ## Documentation
 
-Full docs: [podwarden.com/docs/apps/vllm-warden](https://www.podwarden.com/docs/apps/vllm-warden)
-Source: [github.com/Podwarden/vllm-warden](https://github.com/Podwarden/vllm-warden)
+Full docs: [github.com/Podwarden/lm-warden/documents](https://github.com/Podwarden/lm-warden/tree/main/documents)
+Source: [github.com/Podwarden/lm-warden](https://github.com/Podwarden/lm-warden)

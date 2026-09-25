@@ -1,8 +1,35 @@
-# Contributing to LLM Warden
+# Contributing to LM Warden
 
-Issues and pull requests are welcome. Please run `make lint`, `make typecheck`
-and `make test` before opening a PR; all three run in containers, so a working
-Docker install is the only prerequisite. `make typecheck` compares
+Issues and pull requests are welcome.
+LM Warden, formerly LLM Warden and vLLM Warden, is developed in the open at
+[github.com/Podwarden/lm-warden](https://github.com/Podwarden/lm-warden); the
+product site is [lmwarden.com](https://lmwarden.com). Everyone taking part is
+expected to follow the [Code of Conduct](../CODE_OF_CONDUCT.md).
+
+## How changes get in
+
+- **Bugs and ideas** — open an
+  [issue](https://github.com/Podwarden/lm-warden/issues/new/choose). A bug
+  report is most useful with the version (menu footer, or `GET /api/version`),
+  the GPU and driver, the engine and model, and the engine log.
+- **Security problems** — never in a public issue; see
+  [SECURITY.md](../SECURITY.md).
+- **Pull requests** — fork, branch from `main`, and open a PR against `main`.
+  Keep one change per PR, add or update tests for it, and add a line under
+  `## [Unreleased]` in `CHANGELOG.md` if a user would notice the change.
+- **How a PR lands** — `main` on GitHub advances one squashed commit per
+  release. A PR that is accepted is applied by a maintainer to the next
+  release rather than merged with the merge button, so it reaches `main` as
+  part of that release commit and is credited in `CHANGELOG.md`. The PR is
+  closed with a note naming the release that carries it.
+
+## Checks to run
+
+Please run `make lint`, `make typecheck` and `make test` before opening a PR;
+all three run in containers, so a working Docker install is the only
+prerequisite. For a UI change, also run `npm ci && npm test && npm run
+typecheck` in `frontend/` (Node 20+; no token needed — every dependency is on
+public npm). `make typecheck` compares
 `mypy --strict` against the committed `mypy-baseline.txt`, so it is green on a
 clean checkout and red only for errors you introduced (or baseline entries you
 fixed — run `make typecheck-baseline` and commit the shrunken file).
@@ -32,8 +59,8 @@ name: `make restart` then runs your build, and `make pull` puts the published
 image back.
 
 ```bash
-git clone https://github.com/Podwarden/vllm-warden.git
-cd vllm-warden
+git clone https://github.com/Podwarden/lm-warden.git
+cd lm-warden
 
 # .env + docker-compose.override.yml. --no-pull/--no-start keep this step
 # registry-free: nothing is downloaded, nothing is started.
@@ -150,7 +177,7 @@ tags. To build against a fork or an unreleased chat-ui, override the args — no
 repo edit needed:
 
 ```bash
-docker build -t vllm-warden-ui \
+docker build -t lm-warden-ui \
   --build-arg CHATUI_REPO=https://github.com/you/chat-ui.git \
   --build-arg CHATUI_REF=<sha> --build-arg CHATUI_VERSION=<version> \
   frontend/
@@ -175,5 +202,5 @@ Every dev target runs in Docker — no host Python or Node required:
 | `make lint` / `make format` | `ruff check` / `ruff format` |
 | `make typecheck` | `mypy app/` gated on `mypy-baseline.txt` — fails on new errors and on stale baseline entries |
 | `make typecheck-baseline` | regenerate `mypy-baseline.txt` after fixing (or deliberately accepting) mypy errors |
-| `make docker-build` | build the api image as `vllm-warden:dev` |
+| `make docker-build` | build the api image as `lm-warden:dev` |
 | `make generate-api-types` | regenerate frontend types from the FastAPI OpenAPI schema |

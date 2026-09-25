@@ -1,5 +1,5 @@
 #!/bin/sh
-# LLM Warden installer.
+# LM Warden installer.
 #
 # Installs the stack described by docker-compose.yml onto this host using the
 # published release images, and writes the two files that are specific to
@@ -15,7 +15,7 @@
 #   ./install.sh --check               host preflight only, writes nothing
 #
 # Or without a checkout (downloads the source tree into --dir first):
-#   curl -fsSL https://raw.githubusercontent.com/Podwarden/vllm-warden/main/install.sh | sh -s -- --dir /opt/vllm-warden
+#   curl -fsSL https://raw.githubusercontent.com/Podwarden/lm-warden/main/install.sh | sh -s -- --dir /opt/vllm-warden
 #
 # The script is POSIX sh (dash, busybox ash and bash all run it) and reads
 # every prompt from /dev/tty, so it behaves the same piped from curl as it
@@ -28,9 +28,24 @@
 
 set -eu
 
+# VW_APP stays "vllm-warden" although the product and repository are now
+# LM Warden / lm-warden: it names the default install directory
+# (/opt/vllm-warden, ~/vllm-warden), and an existing install must be found
+# where it already is. The compose project name (COMPOSE_PROJECT_NAME in
+# .env.example) is likewise still vllm-warden, which is what keeps the volumes.
 VW_APP="vllm-warden"
-VW_SOURCE_URL="${VW_SOURCE_URL:-https://github.com/Podwarden/vllm-warden/archive/refs/heads/main.tar.gz}"
+# The tag on every installer log line. Cosmetic only (nothing parses it), so
+# it follows the product name; VW_APP above is the identity and does not.
+VW_LOG_TAG="lm-warden"
+VW_SOURCE_URL="${VW_SOURCE_URL:-https://github.com/Podwarden/lm-warden/archive/refs/heads/main.tar.gz}"
 VW_REGISTRY="${VW_REGISTRY:-registry.podwarden.com/podwarden/apps}"
+# Release image names. Renamed from vllm-warden{,-ui} and then llm-warden{,-ui}
+# in 2026-09; CI still publishes every release under both legacy names too
+# (until 2026-12-31), so a host that already holds any of VW_IMAGE_API_LEGACY
+# (a space-separated list) is an existing install.
+VW_IMAGE_API="lm-warden"
+VW_IMAGE_UI="lm-warden-ui"
+VW_IMAGE_API_LEGACY="llm-warden vllm-warden"
 COMPOSE_MIN_MAJOR=2
 COMPOSE_MIN_MINOR=24
 # Free space the stack needs on the Docker data root, in GB (10^9 bytes, the
@@ -56,14 +71,14 @@ if [ -t 2 ] && [ "$TERM" != "dumb" ]; then
 else
   C_GREEN=""; C_YELLOW=""; C_RED=""; C_BOLD=""; C_DIM=""; C_OFF=""
 fi
-log()  { printf '%s[%s]%s %s\n' "$C_GREEN" "$VW_APP" "$C_OFF" "$*" >&2; }
-warn() { printf '%s[%s]%s %s\n' "$C_YELLOW" "$VW_APP" "$C_OFF" "$*" >&2; }
-err()  { printf '%s[%s]%s %s\n' "$C_RED" "$VW_APP" "$C_OFF" "$*" >&2; }
+log()  { printf '%s[%s]%s %s\n' "$C_GREEN" "$VW_LOG_TAG" "$C_OFF" "$*" >&2; }
+warn() { printf '%s[%s]%s %s\n' "$C_YELLOW" "$VW_LOG_TAG" "$C_OFF" "$*" >&2; }
+err()  { printf '%s[%s]%s %s\n' "$C_RED" "$VW_LOG_TAG" "$C_OFF" "$*" >&2; }
 die()  { err "$@"; exit 1; }
 
 usage() {
   cat <<EOF
-LLM Warden installer
+LM Warden installer
 
 Usage: install.sh [options]
 
@@ -93,7 +108,7 @@ Environment:
                                asking when Docker lacks the nvidia runtime
                                (yes), or never (no). Unset: ask on a terminal.
                                "yes" RESTARTS THE DOCKER DAEMON, bouncing every
-                               container on this host, not only LLM Warden's.
+                               container on this host, not only LM Warden's.
   GPU_REQUEST=auto|cdi|nvidia  How the engine asks Docker for its GPUs. auto
                                (default) uses CDI when Docker has it enabled and
                                the NVIDIA CDI spec names the GPUs, else the
@@ -237,8 +252,13 @@ preflight_docker() {
 # 0 when some release of the api image is already in Docker's store. Pulling
 # another release on top of it shares the base layers, which are nearly all
 # of the ~29 GB, so the free-space floor below only applies to a first pull.
+# Any name counts: an install from before an image rename holds only a
+# legacy one, and the renamed image is the same layers under a new tag.
 api_image_present() {
-  [ -n "$(docker images -q "$VW_REGISTRY/vllm-warden" 2>/dev/null)" ]
+  for _img in "$VW_IMAGE_API" $VW_IMAGE_API_LEGACY; do
+    [ -n "$(docker images -q "$VW_REGISTRY/$_img" 2>/dev/null)" ] && return 0
+  done
+  return 1
 }
 
 # Free space where the images will land: the Docker data root, not / --
@@ -408,7 +428,7 @@ ensure_nvidia_runtime() {
   # answer is informed, and before the unattended run so the log records it.
   warn "  Doing that RESTARTS the Docker daemon: every container on this host"
   warn "  stops and starts again, including ones that have nothing to do with"
-  warn "  LLM Warden. Containers with a restart policy come back; anything"
+  warn "  LM Warden. Containers with a restart policy come back; anything"
   warn "  started without one does not."
 
   _do=$GPU_TOOLKIT_INSTALL
@@ -533,7 +553,7 @@ ensure_nvidia_dev_char() {
   command -v nvidia-ctk >/dev/null 2>&1 || { warn "nvidia-ctk not found; cannot create the NVIDIA /dev/char symlinks systemd needs."; return 0; }
   _rule="${VW_HOST_ROOT:-}$NVIDIA_DEV_CHAR_RULE"
   if [ ! -f "$_rule" ]; then
-    _body='# Installed by the LLM Warden installer (#254). systemd grants container
+    _body='# Installed by the LM Warden installer (#254). systemd grants container
 # devices through /dev/char/<major>:<minor> symlinks, which the NVIDIA driver
 # does not create; without them a systemd reload can revoke GPU access from
 # running containers. Recreate them whenever the driver binds.
@@ -580,7 +600,7 @@ resolve_gpus() {
         if interactive && ask_yn "  Continue with a CPU-only control plane? Models cannot be loaded without a GPU." n; then
           GPU_SELECTED=""; GPU_MODE=none
         else
-          die "LLM Warden needs an NVIDIA GPU. Install the driver and re-run, or pass --gpus none for a CPU-only control plane (evaluation, CI)."
+          die "LM Warden needs an NVIDIA GPU. Install the driver and re-run, or pass --gpus none for a CPU-only control plane (evaluation, CI)."
         fi
       elif [ "$GPU_TOTAL" -gt 1 ] && interactive; then
         printf '  GPUs to pass to the engine, e.g. 0,1 (blank = all): ' >&2
@@ -716,7 +736,7 @@ write_override() {
     echo "# Requires Compose v2.24+ (install.sh checks)."
     echo "services:"
     echo "  api:"
-    echo "    image: $VW_REGISTRY/vllm-warden:\${VERSION:-latest}"
+    echo "    image: $VW_REGISTRY/$VW_IMAGE_API:\${VERSION:-latest}"
     echo "    pull_policy: missing"
     echo "    restart: unless-stopped"
     echo "    # vLLM's tensor-parallel workers talk over /dev/shm; the 64 MiB default"
@@ -727,6 +747,10 @@ write_override() {
     echo "      VW_JWT_SECRET: \"\${VW_JWT_SECRET:-}\""
     echo "      VW_FRONTEND_ORIGIN: \"\${VW_FRONTEND_ORIGIN:-}\""
     echo "      VW_TRUST_PROXY_ORIGIN: \"\${VW_TRUST_PROXY_ORIGIN:-0}\""
+    # Blank = trust loopback + private-range peers' X-Forwarded-For.
+    echo "      VW_TRUSTED_PROXIES: \"\${VW_TRUSTED_PROXIES:-}\""
+    # Blank = the landing page stays noindex (the default for every install).
+    echo "      VW_LANDING_CANONICAL_URL: \"\${VW_LANDING_CANONICAL_URL:-}\""
     echo "      VW_CONTAINER_GPU_COUNT: \"\${VW_CONTAINER_GPU_COUNT:-$_sel}\""
     echo "      VW_WARMUP_PROBE_TIMEOUT_S: \"\${VW_WARMUP_PROBE_TIMEOUT_S:-600.0}\""
     echo "      VW_STATS_SAMPLER_INTERVAL_S: \"\${VW_STATS_SAMPLER_INTERVAL_S:-5.0}\""
@@ -800,7 +824,7 @@ write_override() {
     echo "      retries: 10"
     echo "      start_period: 60s"
     echo "  ui:"
-    echo "    image: $VW_REGISTRY/vllm-warden-ui:\${VERSION:-latest}"
+    echo "    image: $VW_REGISTRY/$VW_IMAGE_UI:\${VERSION:-latest}"
     echo "    pull_policy: missing"
     echo "    restart: unless-stopped"
     echo "  caddy:"
@@ -815,7 +839,7 @@ write_override() {
 # main
 # ---------------------------------------------------------------------------
 
-printf '\n%s%sLLM Warden%s %sinstaller%s\n\n' "$C_BOLD" "$C_GREEN" "$C_OFF" "$C_DIM" "$C_OFF" >&2
+printf '\n%s%sLM Warden%s %sinstaller%s\n\n' "$C_BOLD" "$C_GREEN" "$C_OFF" "$C_DIM" "$C_OFF" >&2
 
 log "Checking this host..."
 preflight_docker || exit 1
@@ -964,7 +988,7 @@ fi
 
 STARTED=0
 if [ -z "$INCOMPLETE" ]; then
-  if [ "$START" = 1 ] || { [ -z "$START" ] && interactive && ask_yn "Start LLM Warden now?" y; }; then
+  if [ "$START" = 1 ] || { [ -z "$START" ] && interactive && ask_yn "Start LM Warden now?" y; }; then
     log "Starting..."
     docker compose up -d --no-build --remove-orphans
     STARTED=1
@@ -981,7 +1005,7 @@ if [ -n "$INCOMPLETE" ]; then
   exit 2
 fi
 
-printf '%s%sLLM Warden is installed in %s%s\n\n' "$C_BOLD" "$C_GREEN" "$DIR" "$C_OFF" >&2
+printf '%s%sLM Warden is installed in %s%s\n\n' "$C_BOLD" "$C_GREEN" "$DIR" "$C_OFF" >&2
 if [ "$STARTED" -eq 1 ]; then
   printf '  UI:      http://localhost:%s/ui/    (first run opens the setup wizard)\n' "$WARDEN_PORT" >&2
   printf '  API:     http://localhost:%s/v1/chat/completions\n' "$WARDEN_PORT" >&2

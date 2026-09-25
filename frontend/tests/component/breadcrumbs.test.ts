@@ -1,5 +1,5 @@
 // Breadcrumb route registry (src/lib/breadcrumbs.ts) — ported from PodWarden
-// Core's lib/breadcrumbs.test.ts (#1187 / #1687) and adapted to LLM Warden's
+// Core's lib/breadcrumbs.test.ts (#1187 / #1687) and adapted to LM Warden's
 // routes: resolution, labels, the navigable rule, per-page overrides, and the
 // routes where the strip is hidden.
 import { describe, expect, it } from 'vitest';

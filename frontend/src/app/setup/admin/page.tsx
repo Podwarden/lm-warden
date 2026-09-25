@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { PASSWORD_RULE_HINT, newPasswordProblem } from '@/lib/password-policy';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -16,12 +17,10 @@ export default function AdminPage() {
     e.preventDefault();
     setError(null);
     if (!username.trim()) { setError('Username required'); return; }
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
-    // bcrypt silently truncates passwords longer than 72 bytes — reject up front.
-    if (new TextEncoder().encode(password).length > 72) {
-      setError('Password must be at most 72 bytes');
-      return;
-    }
+    // >= 12 characters, <= 72 bytes (bcrypt's limit) — the server's rule,
+    // checked here first so the operator is told before a round trip.
+    const problem = newPasswordProblem(password);
+    if (problem) { setError(problem); return; }
     if (password !== confirm) { setError('Passwords do not match'); return; }
 
     setBusy(true);
@@ -60,7 +59,9 @@ export default function AdminPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="new-password"
+          aria-describedby="password-rule"
         />
+        <span id="password-rule" className="block text-xs text-slate-400">{PASSWORD_RULE_HINT}</span>
       </label>
       <label className="block space-y-1">
         <span className="text-sm">Confirm password</span>

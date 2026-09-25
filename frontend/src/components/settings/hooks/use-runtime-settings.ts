@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { authFetch, authFetchJSON } from "@/lib/auth-fetch";
 import { detailOf } from "@/lib/token-series";
+import { newPasswordProblem } from "@/lib/password-policy";
 
 // ---------------------------------------------------------------------------
 // useRuntimeSettings — extracted from the now-deleted runtime-tab.tsx so
@@ -343,6 +344,16 @@ export function useRuntimeSettings(
     if (!data || !draft) return;
     const dirtyNow = dirtyKeysFor(draft, snapshotToDraft(data), scope);
     if (dirtyNow.length === 0) return;
+    // A new admin password must meet the server's rule (>= 12 characters,
+    // <= 72 bytes); say so before sending anything. The server refuses it
+    // too (422, nothing written), this just spares the round trip.
+    if (dirtyNow.includes("admin_password")) {
+      const problem = newPasswordProblem(draft.admin_password);
+      if (problem) {
+        setSaveError(problem);
+        return;
+      }
+    }
     setSaving(true);
     setSaveError(null);
     try {

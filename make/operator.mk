@@ -1,4 +1,4 @@
-# LLM Warden -- operator targets.
+# LM Warden -- operator targets.
 #
 # This file is the day-to-day surface for running an installed stack. It is
 # self-contained on purpose: install.sh copies it verbatim as the `Makefile`
@@ -56,7 +56,7 @@ preflight: ## Re-run the installer's host checks without writing anything
 	@if [ -x ./install.sh ]; then ./install.sh --check; else sh ./install.sh --check; fi
 
 uninstall: ## Stop the stack and DELETE its volumes (models, database) -- asks first
-	@echo "This stops LLM Warden and deletes its data volumes (database, HF model cache)."
+	@echo "This stops LM Warden and deletes its data volumes (database, HF model cache)."
 	@printf 'Type yes to continue: '; read ans </dev/tty; [ "$$ans" = "yes" ] || { echo "aborted"; exit 1; }
 	$(COMPOSE) down -v --remove-orphans
 	@echo "Volumes removed. Delete this directory to finish: rm -rf $$(pwd)"
@@ -67,7 +67,7 @@ uninstall: ## Stop the stack and DELETE its volumes (models, database) -- asks f
 # address the same images and volume names the stack uses, so nothing has to
 # be typed twice.
 
-IMAGES_FILE ?= llm-warden-images.tar
+IMAGES_FILE ?= lm-warden-images.tar
 CACHE_FILE  ?= hf-cache.tar
 
 # The HF cache volume is `<project>_vw-hfcache`; the project name is the
@@ -75,7 +75,7 @@ CACHE_FILE  ?= hf-cache.tar
 # is ever changed in .env.
 _hf_volume = $$($(COMPOSE) config 2>/dev/null | sed -n 's/^name: //p' | head -1)_vw-hfcache
 
-save-images: ## docker save the images of the release in .env to IMAGES_FILE (default llm-warden-images.tar)
+save-images: ## docker save the images of the release in .env to IMAGES_FILE (default lm-warden-images.tar)
 	@imgs=$$($(COMPOSE) config --images); echo "saving: $$imgs"; docker save -o "$(IMAGES_FILE)" $$imgs && ls -lh "$(IMAGES_FILE)"
 
 load-images: ## docker load the images saved by save-images from IMAGES_FILE
