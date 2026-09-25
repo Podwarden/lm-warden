@@ -22,8 +22,8 @@ from app.runtime.engine.run_marker import format_run_sentinel
 
 HFCACHE_VOLUME = "vllm-warden-hfcache"
 # Where the engine container sees the model cache. This is the path every
-# shipped deployment shape gives the WARDEN too (docker-compose.yml,
-# deploy/hub/compose.yaml, deploy/hub/template.json all mount the cache volume
+# shipped deployment shape gives the WARDEN too (docker-compose.yml and the
+# PodWarden Hub catalogue template's compose both mount the cache volume
 # here, and settings.hf_cache_dir defaults to it), which is what makes
 # HF_HUB_CACHE — set from settings.hf_cache_dir by the backend's env builder —
 # resolve to the same bytes on both sides. app/main.py says so out loud at

@@ -77,7 +77,6 @@ PRODUCT_NAME = "LM Warden"
 SCANNED_TREES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("app", (".py", ".html")),
     ("frontend/src", (".ts", ".tsx", ".html", ".svg", ".css")),
-    ("deploy/hub", (".md", ".json")),
     ("publish", (".md", ".txt", ".sh")),
     # The public documentation folder (INSTALL, API, HAZARDS, OPERATING,
     # ARCHITECTURE today). Published verbatim to GitHub, so it is the largest
@@ -258,9 +257,6 @@ def test_the_wordmark_and_page_titles_carry_the_new_name() -> None:
 
     readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
     assert readme.startswith(f"# {PRODUCT_NAME}\n")
-
-    hub = (REPO_ROOT / "deploy/hub/README-hub.md").read_text(encoding="utf-8")
-    assert hub.startswith(f"# {PRODUCT_NAME}\n")
 
     # The first-run pages and the login heading are the name a new operator
     # meets before the nav bar exists.

@@ -16,8 +16,8 @@ it need the same words:
     this script assembles into `docs/catalog-shared-regions.md`.
 
 Kept as two hand-written copies they drift, and the copy that is wrong is
-always the one somebody is reading when it matters. `deploy/hub/` is this
-repo's worked example of that failure: an unpublished mirror of the live
+always the one somebody is reading when it matters. `deploy/hub/` was this
+repo's worked example of that failure (deleted 2026-09-24): an unpublished mirror of the live
 catalogue row that quietly fell to 5 `env_schema` entries against the row's 16.
 One fragment per hazard under `docs/shared/`, pulled into both surfaces, is the
 fix.

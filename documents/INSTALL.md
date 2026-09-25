@@ -778,8 +778,6 @@ fraction, no `max_model_len` tuning.
 
 ### Failure: `GPU 0 is already serving '…'` — this is not a VRAM problem
 
-![The Models page with a second model in the failed state, its error explaining that GPU 0 is already serving another model and that LM Warden runs one loaded model per GPU](../assets/screenshots/install/gpu-already-claimed.jpg)
-
 Register a second model on a GPU that already has one loaded and you get:
 
 ```

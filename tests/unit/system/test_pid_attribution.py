@@ -2,7 +2,7 @@
 # the supervisor live in the same PID namespace. In production that
 # invariant holds because the api container is started with
 # `pid: host` (compose) / `hostPID: true` (K8s); see docker-compose.yml,
-# deploy/hub/compose.yaml and the Phase 1 entry in changelog.md. Without
+# the Hub catalogue compose and the Phase 1 entry in changelog.md. Without
 # that flag, nvidia-smi returns host PIDs while the supervisor stores
 # in-container PIDs and `attribute_pid_to_model` correctly falls back to
 # returning None (callers then label the holder kind: external). The

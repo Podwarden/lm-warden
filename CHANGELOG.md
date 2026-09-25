@@ -7,6 +7,24 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+### Changed
+
+- **Docs screenshots no longer show the old name.** The README and install
+  guide screenshots had the "LLM Warden" wordmark in their top bar; that bar is
+  cropped off, and the one whose error text itself read "LLM Warden" is gone
+  from the install guide. Two unused old captures are deleted. `NOTICE` now
+  names "The LM Warden Team" as the copyright holder.
+
+### Removed
+
+- **`deploy/hub/` is gone.** It was a hand-kept copy of the PodWarden Hub
+  catalogue entry (compose file, template JSON, README and placeholder
+  images) that nothing deployed or published from, and it had drifted far
+  behind the live row: an older pre-Caddy layout with 5 env settings against
+  the row's 23. The live catalogue template is the only source; re-read it
+  instead of diffing against a checked-in copy. The two tests that read the
+  folder now check the files that are actually used.
+
 ### Fixed
 
 - **The GitHub publish no longer dies silently when the warn list is clean.**
