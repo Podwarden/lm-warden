@@ -59,6 +59,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 # No background DP /metrics scraper inside tests: it would land in a test's patched httpx.
 os.environ.setdefault("VW_DP_RANK_SCRAPER", "0")
+os.environ.setdefault("VW_BLOCK_SIZE_LEARNER", "0")
 
 # ---------------------------------------------------------------------------
 # Shutdown watchdog (#260)

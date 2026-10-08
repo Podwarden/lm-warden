@@ -7,6 +7,29 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.08.1] — 2026-10-08
+
+### Fixed
+
+- **Prompt cache outcomes allow for the engine's block size.** vLLM caches whole
+  KV blocks only, and hybrid attention/Mamba models such as Qwen3.5 run
+  784-token blocks, so a perfect hit on a short prompt read "partial" and a
+  prefix under one block read "lost". The warden now learns each engine run's
+  block size from `vllm:cache_config_info` in the background and rounds the
+  reusable count down to whole blocks before applying the 90% / 10% thresholds;
+  a prefix under one block reads "nothing to reuse". Engines with 16-token
+  blocks, llama.cpp, and engines whose block size is not yet known classify
+  exactly as before. Efficiency stays the raw token ratio. (#301)
+- **Prompt cache: a request with `cache_salt` no longer reads "lost" or "other
+  replica" by mistake.** vLLM never shares cached blocks across salts, but the
+  prefix index ignored the salt, so a salted request matched other salts'
+  prompts that the engine could never serve. A salt now becomes the root of the
+  prompt's chain, so it matches only the same salt, and a new salt reads
+  "nothing to reuse". Only a digest of the salt is kept. Unsalted prompts hash
+  exactly as before, so the existing index still matches. On llama.cpp, which
+  ignores `cache_salt`, the salt still plays no part (new backend capability
+  `honours_cache_salt`). (#300)
+
 ## [v2026.10.07.3] — 2026-10-07
 
 ### Added

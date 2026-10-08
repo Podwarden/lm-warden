@@ -12,6 +12,15 @@ chunk's key chains the previous one (like vLLM's block hash), so a key means
 "this exact prefix", never "this block anywhere". blake2b, never hash(): keys
 must agree across processes and, later, nodes. Fields that do not reach the
 prompt (model, temperature, ...) are ignored.
+
+``cache_salt`` is the one non-prompt field that counts (#300). vLLM puts it in
+the first block's hash (``kv_cache_utils.py`` L579-580 @v0.26.0), so requests
+with different salts never share a block. A non-empty string salt becomes the
+chain's root, the parent of the first chunk and a prefix of every message
+digest, so a salted prefix matches only the same salt. Only its digest is kept.
+No salt gives an empty root, and the keys are byte-identical to the unsalted
+cobs1 chain. The caller passes ``honour_salt=False`` for an engine that ignores
+the field (llama.cpp), which really does reuse a prefix across salts.
 """
 
 from __future__ import annotations
@@ -125,7 +134,18 @@ def _elements(body: dict[str, Any]) -> tuple[list[bytes], int, int] | None:
     return None
 
 
-def chain_of(body: object) -> Chain | None:
+def _root(body: dict[str, Any], honour_salt: bool) -> bytes:
+    """b"" without a salt; otherwise a digest of it. vLLM 400s an empty or
+    non-string salt (chat_completion/protocol.py L927-935), so that is no salt."""
+    salt = body.get("cache_salt") if honour_salt else None
+    if not isinstance(salt, str) or not salt:
+        return b""
+    return hashlib.blake2b(
+        SCHEMA + b"salt" + salt.encode("utf-8", "surrogatepass"), digest_size=16
+    ).digest()
+
+
+def chain_of(body: object, *, honour_salt: bool = True) -> Chain | None:
     if not isinstance(body, dict):
         return None
     try:
@@ -145,13 +165,14 @@ def chain_of(body: object) -> Chain | None:
     if pos > MAX_CHAIN_BYTES:
         return None
     stream = _SEP.join(elems)
+    root = _root(body, honour_salt)
     keys: list[bytes] = []
-    prev = b""
+    prev = root
     for i in range(0, len(stream), CHUNK_BYTES):
         prev = hashlib.blake2b(SCHEMA + prev + stream[i : i + CHUNK_BYTES], digest_size=16).digest()
         keys.append(prev)
     msg_hashes = tuple(
-        hashlib.blake2b(SCHEMA + b"m" + e, digest_size=16).digest()
+        hashlib.blake2b(SCHEMA + root + b"m" + e, digest_size=16).digest()
         for e in elems[offset : offset + n_msgs]
     )
     return Chain(tuple(keys), len(stream), tuple(starts), offset, msg_hashes)

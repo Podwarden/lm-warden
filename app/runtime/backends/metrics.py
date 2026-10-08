@@ -45,6 +45,9 @@ class EngineReading:
     # exactly the kind of dialect-specific derivation that belongs in a backend
     # rather than in build_frame().
     kv_tokens_total: float | None = None
+    # Tokens per KV block, the granularity prefix caching serves in (#301):
+    # 16 by default on vLLM, 784 on a hybrid attention/Mamba model.
+    kv_block_size: float | None = None
     engine_sleep_state: float | None = None
     # --- cumulative counters (the stats layer differentiates these) ------
     prompt_tokens_total: float | None = None

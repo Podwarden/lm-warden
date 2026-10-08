@@ -665,6 +665,15 @@ def _note_no_cached(model_id: str) -> None:
     )
 
 
+def _honours_cache_salt(model: Any) -> bool:
+    """Whether the backend isolates its prefix cache by cache_salt (#300).
+    True when unknown: the vLLM default, and a salted chain errs to cold."""
+    try:
+        return backend_registry.get(getattr(model, "backend", None)).capabilities.honours_cache_salt
+    except Exception:  # noqa: BLE001
+        return True
+
+
 def _cached_reporting(model: Any) -> str:
     """The backend's cached_tokens_reporting; "usage" when unknown (fail-open)."""
     try:
@@ -1018,7 +1027,7 @@ async def _forward(
         if cache_index is not None:
             from app.cache_obs.canonical import chain_of
 
-            obs_chain = chain_of(body_json)
+            obs_chain = chain_of(body_json, honour_salt=_honours_cache_salt(model))
             if obs_chain is not None:
                 gen = getattr(request.app.state.supervisor, "get_generation", None)
                 obs_epoch = f"{variant.id if variant else ''}:{gen(model.id) if gen else 0}"
@@ -1167,6 +1176,9 @@ async def _forward(
                     else None
                 )
                 learned = getattr(request.app.state, "prefill_model", None)
+                # #301: the engine's KV block size for this run, a dict read
+                # (learned off-path by app/cache_obs/block_size.py).
+                sizes = getattr(request.app.state, "engine_block_sizes", None)
                 live_req.cache_obs = observe_fields(
                     prompt=_acct_prompt(),
                     cached=live_req.cached_tokens,
@@ -1177,6 +1189,7 @@ async def _forward(
                     match_own=obs_own if served else None,
                     rank=dp_rank,
                     rank_known=rank_known,
+                    block_size=sizes.get(model.id, obs_epoch) if sizes is not None else None,
                 )
         except Exception:  # noqa: BLE001 — bookkeeping must never fail a request
             logger.debug("cache-obs: observe failed", exc_info=True)

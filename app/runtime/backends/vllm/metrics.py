@@ -10,6 +10,11 @@ not have been enough:
 
 * ``kv_tokens_total`` is composed from the LABELS of vllm:cache_config_info
   (block_size * num_gpu_blocks), not read from a series.
+* ``kv_block_size`` is the same info series' ``block_size`` label. It is the
+  EFFECTIVE block size: vLLM's EngineCore overwrites cache_config.block_size
+  with the smallest KV-group block after hybrid page alignment and ships it to
+  the API server in its ready handshake (v0.26.0 v1/engine/core.py), so a
+  hybrid Qwen3.5 reads 784, not the 16 default and not mamba_block_size.
 * several counters have two spellings across vLLM versions -- 0.25.1 renamed
   gpu_cache_usage_perc to kv_cache_usage_perc and appended _total to others --
   so the lookups go through Metrics.value_any and take whichever exists. That
@@ -62,6 +67,16 @@ def _kv_tokens_total(m: Metrics, engines: int) -> float | None:
         return None
 
 
+def _kv_block_size(m: Metrics) -> float | None:
+    """Tokens per KV block from the cache_config_info labels, or None."""
+    info = m.info("vllm:cache_config_info")
+    try:
+        block = int(info["block_size"]) if info is not None else 0
+    except (KeyError, ValueError):
+        return None
+    return float(block) if block > 0 else None
+
+
 def read(body: str) -> EngineReading | None:
     """Parse vLLM exposition text into an EngineReading, or None if unusable."""
     if not body or not body.strip():
@@ -81,6 +96,7 @@ def read(body: str) -> EngineReading | None:
         waiting_deferred=m.value("vllm:num_requests_waiting_by_reason", reason="deferred"),
         kv_cache_usage_perc=kv_usage / engines if kv_usage is not None else None,
         kv_tokens_total=_kv_tokens_total(m, engines),
+        kv_block_size=_kv_block_size(m),
         engine_sleep_state=m.value("vllm:engine_sleep_state"),
         prompt_tokens_total=m.value("vllm:prompt_tokens_total"),
         generation_tokens_total=m.value("vllm:generation_tokens_total"),

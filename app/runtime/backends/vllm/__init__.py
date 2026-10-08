@@ -36,6 +36,10 @@ CAPABILITIES = BackendCapabilities(
     supports_tensor_parallel=True,
     supports_data_parallel=True,
     cached_tokens_reporting="usage",
+    kv_block_size_in_metrics=True,
+    # cache_salt goes into the first block's extra keys
+    # (v1/core/kv_cache_utils.py L579-580 @v0.26.0)
+    honours_cache_salt=True,
     supports_pipeline_parallel=True,
     max_gpus=None,
     openai_paths=frozenset({"/v1/chat/completions", "/v1/completions", "/v1/models"}),

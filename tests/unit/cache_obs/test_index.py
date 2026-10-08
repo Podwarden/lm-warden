@@ -1,5 +1,6 @@
 # tests/unit/cache_obs/test_index.py
 from app.cache_obs.canonical import chain_of
+from app.cache_obs.classify import bytes_to_tokens, classify
 from app.cache_obs.index import PrefixIndex
 
 
@@ -126,3 +127,41 @@ def test_chunk_entries_hold_a_compact_rank_mask():
     idx = PrefixIndex()
     idx.observe("m", "e", 3, _chat(SYS), None)
     assert all(v is None or isinstance(v, int) for v in idx._d.values())
+
+
+# --- #300: a salted prefix only matches the same salt ------------------------
+
+
+def _salted(salt, *contents):
+    return chain_of(
+        {"messages": [{"role": "user", "content": c} for c in contents], "cache_salt": salt}
+    )
+
+
+def _outcome(m, cached):
+    r = bytes_to_tokens(m.best_bytes, m.total_bytes, 1000)
+    return classify(cached=cached, reusable=r, reusable_fleet=r, diverged_at=m.diverged_at)
+
+
+def test_different_salt_does_not_match_and_reads_cold():
+    idx = PrefixIndex()
+    idx.observe("m", "e", 0, _salted("a", SYS, "q1", "q2", "q3"), "tok")
+    for other in (_salted("b", SYS, "q1", "q2", "q3"), _chat(SYS, "q1", "q2", "q3")):
+        for m in (idx.match("m", "e", other), idx.match("m", "e", other, token_id="tok")):
+            assert m.best_bytes == 0 and m.by_rank == {} and m.diverged_at is None
+            # the engine served nothing, and rightly: cold, never lost or misrouted
+            assert _outcome(m, 0) == "cold"
+
+
+def test_unsalted_history_does_not_match_a_salted_request():
+    idx = PrefixIndex()
+    idx.observe("m", "e", 0, _chat(SYS, "q"), "tok")
+    assert idx.match("m", "e", _salted("a", SYS, "q")).best_bytes == 0
+
+
+def test_same_salt_matches():
+    idx = PrefixIndex()
+    idx.observe("m", "e", 2, _salted("a", SYS, "first"), "tok")
+    m = idx.match("m", "e", _salted("a", SYS, "second"))
+    assert m.by_rank.get(2, 0) >= 2816
+    assert _outcome(m, 900) == "hit"

@@ -225,6 +225,10 @@ async def lifespan(app: FastAPI):
     from app.proxy.routes_dp import RankScrapeCache
 
     app.state.dp_rank_scrape_cache = RankScrapeCache()
+    from app.cache_obs.block_size import BlockSizes
+
+    # #301 -- the engine's KV block size per engine run, learned off-path.
+    app.state.engine_block_sizes = BlockSizes()
 
     # #287 — Claude Code model router: in-process rule cache / breakers /
     # counters (single worker, like the two above) and the ONE shared httpx
@@ -334,6 +338,9 @@ async def lifespan(app: FastAPI):
     from app.stats import prefill_model as _prefill_model
 
     rank_scraper_task = asyncio.create_task(run_rank_scraper(app.state))
+    from app.cache_obs.block_size import run_block_size_learner
+
+    block_size_task = asyncio.create_task(run_block_size_learner(app.state))
     prefill_task = asyncio.create_task(
         _prefill_model.run_forever(app.state.prefill_model, settings.db_path)
     )
@@ -398,6 +405,7 @@ async def lifespan(app: FastAPI):
         ledger_task.cancel()
         prefill_task.cancel()
         rank_scraper_task.cancel()
+        block_size_task.cancel()
         audit_task.cancel()
         await asyncio.gather(
             sampler_task,
@@ -408,6 +416,7 @@ async def lifespan(app: FastAPI):
             ledger_task,
             prefill_task,
             rank_scraper_task,
+            block_size_task,
             audit_task,
             return_exceptions=True,
         )

@@ -142,3 +142,25 @@ def test_diverged_at_own_comes_from_the_own_match():
     assert out["diverged_at"] == 3 and out["diverged_at_own"] is None
     out = f(cached=9_000, match_all=m({None: 9_500}, div=3), match_own=m({None: 9_500}, div=2))
     assert out["diverged_at_own"] == 2
+
+
+def test_block_size_applies_to_both_lenses():
+    # #301: 2 x 784 cached of a 2,000-token potential is everything a
+    # 784-token-block engine can serve; the own lens follows the same rule.
+    kw = dict(
+        prompt=2_000,
+        cached=1_568,
+        match_all=m({None: 2_000}, total=2_000),
+        match_own=m({None: 2_000}, total=2_000),
+    )
+    assert f(**kw)["cache_outcome"] == "partial"
+    out = f(block_size=784, **kw)
+    assert out["cache_outcome"] == "hit" and out["cache_outcome_own"] == "hit"
+    short = f(
+        prompt=500,
+        cached=0,
+        block_size=784,
+        match_all=m({None: 500}, total=500),
+        match_own=m({None: 500}, total=500),
+    )
+    assert short["cache_outcome"] == "cold" and short["cache_outcome_own"] == "cold"

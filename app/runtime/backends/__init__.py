@@ -139,6 +139,18 @@ class BackendCapabilities:
     # routes the cache fact through the TTFT estimate (app/cache_obs/record.py)
     # instead -- an estimate is labelled as one, never stored as measured.
     cached_tokens_reporting: Literal["usage", "none"] = "usage"
+    # Does the metrics exposition carry the engine's KV block size (#301)?
+    # vLLM's cache_config_info does; llama.cpp has no prefix blocks in that
+    # sense. False means cache observation never scrapes for it and keeps the
+    # block-unaware rules (app/cache_obs/classify.py).
+    kv_block_size_in_metrics: bool = False
+    # Does a request's ``cache_salt`` isolate the engine's prefix cache? vLLM
+    # yes (it enters the first block hash); llama.cpp has no such field and
+    # reuses a slot's prefix whatever the salt. app/cache_obs/canonical.py
+    # salts the chain only when this is True, so the index tracks what the
+    # engine can actually serve (#300). Defaulted: an engine that predates the
+    # field is assumed to ignore it.
+    honours_cache_salt: bool = False
 
 
 @dataclass(frozen=True)

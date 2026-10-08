@@ -174,3 +174,91 @@ def test_usage_backend_without_cached_tokens_logs_once_per_minute(
         _post(client, _body("alice-user-1", "q3"), resp=_resp(_usage(1000, 0)))
     hits = [r for r in caplog.records if "no cached_tokens" in r.getMessage()]
     assert len(hits) == 1 and "qwen" in hits[0].getMessage()
+
+
+def _seed_block_size(client, tmp_data_dir, block):
+    """Seed B exactly where the background learner puts it: app.state's
+    BlockSizes, keyed by the engine run the proxy is serving."""
+    from app.db.database import open_db
+    from app.db.repos.models import ModelRepo
+    from app.proxy.routes_dp import engine_epoch
+
+    async def go():
+        async with open_db(str(tmp_data_dir / "vllm-warden.db")) as db:
+            return await ModelRepo(db).get("qwen")
+
+    model = client.portal.call(go)
+    client.app.state.engine_block_sizes.set("qwen", engine_epoch(client.app.state, model), block)
+
+
+def test_block_size_makes_a_whole_block_hit_read_hit(tmp_data_dir, client):
+    # #301: one 784-token block cached of a ~1,000-token potential is all a
+    # 784-block engine can serve. Block-unaware it reads partial.
+    _ready(client, tmp_data_dir, dp=1)
+    _spy_registry(client)
+    _post(client, _body("alice-user-1", "q1"), resp=_resp(_usage(1000, 0)))
+    _post(client, _body("alice-user-1", "q2"), resp=_resp(_usage(1000, 784)))
+    _seed_block_size(client, tmp_data_dir, 784)
+    _post(client, _body("alice-user-1", "q3"), resp=_resp(_usage(1000, 784)))
+    _post(client, _body("alice-user-1", "q4"), resp=_resp(_usage(500, 0)))
+    _, unaware, aware, short = _records(client)
+    assert unaware["reusable_tokens"] > 871  # 784 < 0.9 * R
+    assert unaware["cache_outcome"] == "partial"
+    assert aware["cache_outcome"] == "hit" and aware["cache_outcome_own"] == "hit"
+    # under one block: nothing reusable at this engine's granularity
+    assert short["reusable_tokens"] >= 256 and short["cache_outcome"] == "cold"
+
+
+def test_block_size_from_another_engine_run_is_ignored(tmp_data_dir, client):
+    _ready(client, tmp_data_dir, dp=1)
+    _spy_registry(client)
+    client.app.state.engine_block_sizes.set("qwen", "some-old-run:0", 784)
+    _post(client, _body("alice-user-1", "q1"), resp=_resp(_usage(1000, 0)))
+    _post(client, _body("alice-user-1", "q2"), resp=_resp(_usage(1000, 784)))
+    assert _records(client)[1]["cache_outcome"] == "partial"
+
+
+# --- #300: cache_salt ---------------------------------------------------------
+
+
+def _salted(user, q, salt):
+    return {**_body(user, q), "cache_salt": salt}
+
+
+def test_different_salt_reads_cold_not_lost(tmp_data_dir, client):
+    # vLLM never shares a block across salts, so C = 0 there is no loss
+    _ready(client, tmp_data_dir, dp=1)
+    _spy_registry(client)
+    _post(client, _salted("alice-user-1", "q1", "salt-a"), resp=_resp(_usage(1000, 0)))
+    _post(client, _salted("alice-user-1", "q2", "salt-b"), resp=_resp(_usage(1000, 0)))
+    _post(client, _body("alice-user-1", "q3"), resp=_resp(_usage(1000, 0)))
+    _, other_salt, unsalted = _records(client)
+    for rec in (other_salt, unsalted):
+        assert rec["reusable_tokens"] == 0 and rec["cache_outcome"] == "cold"
+
+
+def test_same_salt_reads_hit(tmp_data_dir, client):
+    _ready(client, tmp_data_dir, dp=1)
+    _spy_registry(client)
+    _post(client, _salted("alice-user-1", "q1", "salt-a"), resp=_resp(_usage(1000, 0)))
+    _post(client, _salted("alice-user-1", "q2", "salt-a"), resp=_resp(_usage(1000, 950)))
+    rec = _records(client)[1]
+    assert rec["reusable_tokens"] > 0 and rec["cache_outcome"] == "hit"
+
+
+def test_salt_is_ignored_for_a_backend_that_ignores_it(tmp_data_dir, client, monkeypatch):
+    # llama.cpp reuses a slot's prefix whatever the salt: C = 0 is a real loss
+    _ready(client, tmp_data_dir, dp=1)
+    _spy_registry(client)
+    monkeypatch.setattr(routes, "_honours_cache_salt", lambda model: False)
+    _post(client, _salted("alice-user-1", "q1", "salt-a"), resp=_resp(_usage(1000, 0)))
+    _post(client, _salted("alice-user-1", "q2", "salt-b"), resp=_resp(_usage(1000, 0)))
+    rec = _records(client)[1]
+    assert rec["reusable_tokens"] > 0 and rec["cache_outcome"] == "lost"
+
+
+def test_honours_cache_salt_follows_the_backend():
+    from types import SimpleNamespace
+
+    assert routes._honours_cache_salt(SimpleNamespace(backend="vllm")) is True
+    assert routes._honours_cache_salt(SimpleNamespace(backend="llamacpp")) is False

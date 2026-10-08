@@ -210,3 +210,66 @@ def test_max_chain_bytes_is_two_mib():
     import app.cache_obs.canonical as can
 
     assert can.MAX_CHAIN_BYTES == 2 * 1024 * 1024
+
+
+# --- #300: cache_salt isolates the chain the way it isolates vLLM's blocks ----
+
+_GOLDEN_BODY = {
+    "messages": [{"role": "system", "content": "S" * 700}, {"role": "user", "content": "hi"}],
+    "tools": [{"type": "function", "function": {"name": "f"}}],
+}
+
+
+def test_unsalted_chain_is_byte_identical_to_cobs1():
+    # Digests taken before #300. An unsalted body must keep these exact keys,
+    # or every index entry recorded so far stops matching.
+    for c in (chain_of(_GOLDEN_BODY), chain_of(_GOLDEN_BODY, honour_salt=False)):
+        assert len(c.chunks) == 4
+        assert c.chunks[0].hex() == "d12a6448f1f803678f39a3fe8068e954"
+        assert c.chunks[-1].hex() == "9fb87ea966ab76f25d36a107727e6672"
+        assert c.message_hashes[-1].hex() == "606cced217dbc12146e73bc3b0819733"
+    p = chain_of({"prompt": "hello world"})
+    assert p.chunks[-1].hex() == "9313350de43d8204958755ec85330409"
+
+
+def _salted(salt, body=_GOLDEN_BODY):
+    return chain_of({**body, "cache_salt": salt})
+
+
+def test_different_salts_share_no_chunk_or_message():
+    a, b, plain = _salted("tenant-a"), _salted("tenant-b"), chain_of(_GOLDEN_BODY)
+    for x, y in ((a, b), (a, plain), (b, plain)):
+        assert not set(x.chunks) & set(y.chunks)
+        assert not set(x.message_hashes) & set(y.message_hashes)
+    # the salt changes the keys only, never the layout
+    assert (a.total_bytes, a.elem_starts, a.msg_offset) == (
+        plain.total_bytes,
+        plain.elem_starts,
+        plain.msg_offset,
+    )
+
+
+def test_same_salt_gives_the_same_chain():
+    assert _salted("s1") == _salted("s1")
+    p = {"prompt": "hello world"}
+    assert _salted("s1", p) == _salted("s1", p)
+    assert _salted("s1", p).chunks != chain_of(p).chunks
+
+
+def test_salt_is_ignored_when_the_engine_ignores_it():
+    # llama.cpp b10731 has no cache_salt: its slots reuse a prefix across salts
+    salted = {**_GOLDEN_BODY, "cache_salt": "x"}
+    assert chain_of(salted, honour_salt=False) == chain_of(_GOLDEN_BODY)
+
+
+def test_salt_vllm_would_reject_counts_as_no_salt():
+    # vLLM answers 400 to an empty or non-string salt, so nothing is cached under it
+    for bad in ("", None, 7, ["x"]):
+        assert _salted(bad) == chain_of(_GOLDEN_BODY)
+
+
+def test_raw_salt_is_not_kept():
+    secret = "do-not-store-me-" + "k" * 27
+    c = _salted(secret)
+    assert secret.encode() not in b"".join(c.chunks + c.message_hashes)
+    assert secret not in repr(c)

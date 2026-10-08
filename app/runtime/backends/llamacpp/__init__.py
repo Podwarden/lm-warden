@@ -41,6 +41,9 @@ CAPABILITIES = BackendCapabilities(
     supports_tensor_parallel=False,
     supports_data_parallel=False,
     cached_tokens_reporting="usage",
+    # b10731 never reads cache_salt (no "salt" anywhere under tools/server or
+    # common): slots match on the longest common prefix whatever the salt.
+    honours_cache_salt=False,
     supports_pipeline_parallel=True,
     max_gpus=None,
     openai_paths=frozenset({"/v1/chat/completions", "/v1/completions", "/v1/models"}),

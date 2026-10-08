@@ -49,6 +49,7 @@ def observe_fields(
     match_own: Match | None,
     rank: int | None,
     rank_known: bool,
+    block_size: int | None = None,
 ) -> dict[str, Any]:
     est = None
     if reporting == "none":
@@ -68,6 +69,7 @@ def observe_fields(
             reusable_fleet=fleet if rank_known else None,
             diverged_at=match_all.diverged_at if match_all else None,
             cached_is_estimate=source == "estimated",
+            block_size=block_size,
         ),
         "cache_outcome_own": classify(
             cached=fact,
@@ -76,6 +78,7 @@ def observe_fields(
             diverged_at=match_own.diverged_at if match_own else None,
             allow_misrouted=False,
             cached_is_estimate=source == "estimated",
+            block_size=block_size,
         ),
         "diverged_at": match_all.diverged_at if match_all else None,
         "diverged_at_own": match_own.diverged_at if match_own else None,

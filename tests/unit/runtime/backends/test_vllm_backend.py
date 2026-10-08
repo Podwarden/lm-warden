@@ -224,3 +224,30 @@ def test_plan_filters_extra_env_through_the_backends_own_allowlist():
     plan = BACKEND.plan(model, port=1, bind_host="127.0.0.1", hf_token="t", hf_cache_dir="/c")
     assert plan.env["VLLM_LOGGING_LEVEL"] == "DEBUG"
     assert "LLAMA_ARG_N_GPU_LAYERS" not in plan.env
+
+
+#: pw-prod's hybrid Qwen3.5 on vLLM 0.26.0, 2026-10-08 (research report, #301).
+_HYBRID_CACHE_INFO = (
+    'vllm:cache_config_info{block_size="784",mamba_block_size="16",'
+    'mamba_cache_mode="align",num_gpu_blocks="382",kv_cache_size_tokens="293662",'
+    'enable_prefix_caching="True",engine="0"} 1.0\n'
+)
+
+
+def test_parse_metrics_reads_the_effective_block_size_of_a_hybrid_model():
+    """#301: the ``block_size`` label is the engine's effective block size --
+    EngineCore sets it to the smallest KV-group block after page alignment and
+    ships it to the API server in its ready handshake -- not mamba_block_size."""
+    r = BACKEND.parse_metrics(_HYBRID_CACHE_INFO)
+    assert r is not None
+    assert r.kv_block_size == 784
+    assert r.kv_tokens_total == 784 * 382
+
+
+def test_parse_metrics_block_size_is_none_without_cache_config_info():
+    r = BACKEND.parse_metrics('vllm:num_requests_running{model_name="m"} 1\n')
+    assert r is not None and r.kv_block_size is None
+
+
+def test_vllm_advertises_block_size_in_metrics():
+    assert BACKEND.capabilities.kv_block_size_in_metrics is True

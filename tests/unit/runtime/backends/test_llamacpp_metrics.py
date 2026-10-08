@@ -82,6 +82,7 @@ def test_unreported_concepts_are_none_not_zero():
     for absent in (
         "kv_cache_usage_perc",
         "kv_tokens_total",
+        "kv_block_size",
         "engine_sleep_state",
         "preemptions_total",
         "waiting_capacity",
