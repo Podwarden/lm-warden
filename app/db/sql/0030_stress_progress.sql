@@ -1,0 +1,14 @@
+-- Mid-run progress for a stress test.
+--
+-- Observations are written once, at finish. A thorough run takes hours, so
+-- until then the modal had nothing to show: it displayed "0 probe(s)", "No
+-- probes recorded yet", and a bar rendered FULL — which reads as "finished"
+-- rather than "unknown", the worst of the three possible wrong answers.
+--
+-- A column rather than a table: exactly one row of progress exists per run, it
+-- is overwritten in place by the heartbeat that already ticks for the lease,
+-- and it is worthless once `finished_at` is set. A join would buy nothing.
+--
+-- Nullable with no backfill. Runs that finished before this shipped have no
+-- progress and never will; readers treat NULL as "not reported".
+ALTER TABLE stress_runs ADD COLUMN progress TEXT;

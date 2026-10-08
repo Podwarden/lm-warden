@@ -1,0 +1,100 @@
+{
+  "first_frame": {
+    "cache": {
+      "external_prefix_hit_rate_cumulative": null,
+      "mm_hit_rate_cumulative": null,
+      "prefix_hit_rate": null,
+      "prefix_hit_rate_cumulative": 0.55
+    },
+    "engine": {
+      "engine_sleep_state": 0,
+      "kv_cache_usage_perc": 0.5,
+      "kv_tokens_total": 224800,
+      "kv_tokens_used": 112400,
+      "num_requests_running": 3,
+      "num_requests_waiting": 2,
+      "preemptions_per_s": null,
+      "preemptions_total": 12,
+      "waiting_by_reason": {
+        "capacity": 2,
+        "deferred": 0
+      }
+    },
+    "finished": {
+      "abort": 33,
+      "length": 118,
+      "stop": 40210
+    },
+    "latency": {
+      "e2e_p50": 8.75,
+      "e2e_p90": 30.0,
+      "e2e_p99": 60.0,
+      "itl_p50": 0.025,
+      "itl_p99": 0.095,
+      "tpot_p50": 0.0225,
+      "ttft_mean": 0.34,
+      "ttft_p50": 0.2,
+      "ttft_p90": 0.8333333333333333,
+      "ttft_p99": 1.8
+    },
+    "max_model_len": 4096,
+    "model": "m",
+    "model_id": "mid",
+    "scrape_error": null,
+    "throughput": {
+      "generation_tokens_per_s": null,
+      "generation_tokens_total": 500000,
+      "prompt_tokens_per_s": null,
+      "prompt_tokens_total": 1000000
+    }
+  },
+  "rate_frame": {
+    "cache": {
+      "external_prefix_hit_rate_cumulative": null,
+      "mm_hit_rate_cumulative": null,
+      "prefix_hit_rate": null,
+      "prefix_hit_rate_cumulative": 0.55
+    },
+    "engine": {
+      "engine_sleep_state": 0,
+      "kv_cache_usage_perc": 0.5,
+      "kv_tokens_total": 224800,
+      "kv_tokens_used": 112400,
+      "num_requests_running": 3,
+      "num_requests_waiting": 2,
+      "preemptions_per_s": 1.0,
+      "preemptions_total": 12,
+      "waiting_by_reason": {
+        "capacity": 2,
+        "deferred": 0
+      }
+    },
+    "finished": {
+      "abort": 33,
+      "length": 118,
+      "stop": 40210
+    },
+    "latency": {
+      "e2e_p50": 8.75,
+      "e2e_p90": 30.0,
+      "e2e_p99": 60.0,
+      "itl_p50": 0.025,
+      "itl_p99": 0.095,
+      "tpot_p50": 0.0225,
+      "ttft_mean": 0.34,
+      "ttft_p50": 0.2,
+      "ttft_p90": 0.8333333333333333,
+      "ttft_p99": 1.8
+    },
+    "max_model_len": 4096,
+    "model": "m",
+    "model_id": "mid",
+    "scrape_error": null,
+    "throughput": {
+      "generation_tokens_per_s": 10000.0,
+      "generation_tokens_total": 500000,
+      "prompt_tokens_per_s": 10000.0,
+      "prompt_tokens_total": 1000000
+    }
+  }
+}

@@ -1,0 +1,98 @@
+[
+ {
+  "type": "response.created",
+  "sequence_number": 0,
+  "response": {
+   "id": "resp_01",
+   "object": "response",
+   "created_at": 0,
+   "status": "in_progress",
+   "model": "qwen",
+   "output": [],
+   "usage": null,
+   "incomplete_details": null,
+   "error": null,
+   "parallel_tool_calls": true,
+   "tool_choice": "auto",
+   "store": false,
+   "instructions": null,
+   "metadata": {}
+  }
+ },
+ {
+  "type": "response.in_progress",
+  "sequence_number": 1,
+  "response": {
+   "id": "resp_01",
+   "object": "response",
+   "created_at": 0,
+   "status": "in_progress",
+   "model": "qwen",
+   "output": [],
+   "usage": null,
+   "incomplete_details": null,
+   "error": null,
+   "parallel_tool_calls": true,
+   "tool_choice": "auto",
+   "store": false,
+   "instructions": null,
+   "metadata": {}
+  }
+ },
+ {
+  "type": "response.output_item.added",
+  "sequence_number": 2,
+  "output_index": 0,
+  "item": {
+   "id": "msg_02",
+   "type": "message",
+   "role": "assistant",
+   "status": "in_progress",
+   "content": []
+  }
+ },
+ {
+  "type": "response.content_part.added",
+  "sequence_number": 3,
+  "item_id": "msg_02",
+  "output_index": 0,
+  "content_index": 0,
+  "part": {
+   "type": "output_text",
+   "text": "",
+   "annotations": []
+  }
+ },
+ {
+  "type": "response.output_text.delta",
+  "sequence_number": 4,
+  "item_id": "msg_02",
+  "output_index": 0,
+  "content_index": 0,
+  "delta": "par",
+  "logprobs": []
+ },
+ {
+  "type": "response.failed",
+  "sequence_number": 5,
+  "response": {
+   "id": "resp_01",
+   "object": "response",
+   "created_at": 0,
+   "status": "failed",
+   "model": "qwen",
+   "output": [],
+   "usage": null,
+   "incomplete_details": null,
+   "error": {
+    "code": "server_error",
+    "message": "engine died"
+   },
+   "parallel_tool_calls": true,
+   "tool_choice": "auto",
+   "store": false,
+   "instructions": null,
+   "metadata": {}
+  }
+ }
+]

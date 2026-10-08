@@ -1,0 +1,83 @@
+<svg class="flow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 942" width="340" height="942" role="img" aria-labelledby="d1n-title d1n-desc">
+  <title id="d1n-title">Where a request from Claude Code goes</title>
+  <desc id="d1n-desc">The same flow as the wide drawing, top to bottom. Claude Code sends a request to LM Warden with its own login in Authorization and the warden key in X-LMWarden-Key. LM Warden tries its rules in order; a request for claude-haiku or claude-sonnet is answered by your local model and goes down through the local leg (translate, scheduler, replica router) to one of four vLLM replicas, where the conversation stays. A request that matches no rule goes down the right-hand line to api.anthropic.com, with the login forwarded and the warden key removed. A dashed line from the local leg to Anthropic is the fallback when the local leg fails before the first byte; the rule can instead refuse with a 529 that Claude Code retries.</desc>
+  <defs>
+    <marker id="d1n-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head"/></marker>
+  </defs>
+
+  <!-- Claude Code -->
+  <rect class="box" x="0.75" y="0.75" width="338.5" height="118" rx="3"/>
+  <text class="h" x="14" y="28">Claude Code</text>
+  <text class="m" x="14" y="56">Authorization</text>
+  <text class="s" x="160" y="56">your own login</text>
+  <text class="m" x="14" y="80">X-LMWarden-Key</text>
+  <text class="s" x="160" y="80">the warden key</text>
+  <text class="m" x="14" y="104">ANTHROPIC_BASE_URL</text>
+  <text class="s" x="182" y="104">= the warden</text>
+
+  <!-- request arrow -->
+  <path class="edge" d="M40 120 V170" marker-end="url(#d1n-head)"/>
+  <text class="s" x="54" y="150">POST /v1/messages</text>
+
+  <!-- LM Warden -->
+  <rect class="box" x="0.75" y="172.75" width="338.5" height="200" rx="3"/>
+  <text class="h" x="14" y="200">LM Warden</text>
+  <text class="s" x="14" y="222">rules, first match wins</text>
+  <rect class="row" x="14" y="234" width="312" height="32" rx="2"/>
+  <text class="m" x="24" y="255">claude-haiku*</text>
+  <text x="316" y="255" text-anchor="end">your local model</text>
+  <rect class="row" x="14" y="272" width="312" height="32" rx="2"/>
+  <text class="m" x="24" y="293">claude-sonnet*</text>
+  <text x="316" y="293" text-anchor="end">your local model</text>
+  <rect class="row" x="14" y="310" width="312" height="32" rx="2"/>
+  <text x="24" y="331">anything else</text>
+  <text x="316" y="331" text-anchor="end">pass through</text>
+  <text class="s" x="14" y="362">reads the warden key, never forwards it</text>
+
+  <!-- match: down to the local leg -->
+  <path class="edge" d="M40 374 V420" marker-end="url(#d1n-head)"/>
+  <text class="s" x="54" y="402">match</text>
+
+  <!-- local leg (narrower: the right-hand rail carries the pass-through) -->
+  <rect class="box" x="0.75" y="422.75" width="262.5" height="170" rx="3"/>
+  <text class="h" x="14" y="450">Local leg</text>
+  <line class="rule" x1="14" x2="250" y1="464" y2="464"/>
+  <text x="14" y="487">translate to the engine</text>
+  <line class="rule" x1="14" x2="250" y1="498" y2="498"/>
+  <text x="14" y="521">scheduler, key priority</text>
+  <line class="rule" x1="14" x2="250" y1="532" y2="532"/>
+  <text x="14" y="555">replica router</text>
+  <text class="s" x="14" y="580">breaker: 3 failures, open 60&#8239;s</text>
+
+  <!-- replicas, two by two -->
+  <path class="edge" d="M40 594 V636" marker-end="url(#d1n-head)"/>
+  <text class="s" x="54" y="620">session id picks the replica</text>
+  <rect class="box" x="0.75" y="638.75" width="126.5" height="38" rx="3"/>
+  <text x="14" y="663">vLLM replica 0</text>
+  <rect class="box" x="136.75" y="638.75" width="126.5" height="38" rx="3"/>
+  <text x="150" y="663">vLLM replica 1</text>
+  <rect class="box" x="0.75" y="684.75" width="126.5" height="38" rx="3"/>
+  <text x="14" y="709">vLLM replica 2</text>
+  <rect class="box" x="136.75" y="684.75" width="126.5" height="38" rx="3"/>
+  <text x="150" y="709">vLLM replica 3</text>
+  <text class="s" x="0" y="744">a conversation stays on its replica</text>
+
+  <!-- pass-through: the right-hand rail, from the "anything else" row -->
+  <path class="edge" d="M326 342 V826" marker-end="url(#d1n-head)"/>
+  <text class="s" transform="translate(320 600) rotate(-90)" text-anchor="middle">no match: Opus, any other /v1 path</text>
+
+  <!-- fallback: the one dashed stroke -->
+  <path class="edge dash" d="M264 508 H290 V826" marker-end="url(#d1n-head)"/>
+  <text class="s" x="0" y="764">dashed: the local leg failed before</text>
+  <text class="s" x="0" y="781">its first byte, so the rule falls</text>
+  <text class="s" x="0" y="798">back, or refuses with a 529</text>
+  <text class="s" x="0" y="815">that Claude Code retries</text>
+
+  <!-- Anthropic -->
+  <rect class="box" x="0.75" y="828.75" width="338.5" height="62" rx="3"/>
+  <text class="h" x="14" y="854">api.anthropic.com</text>
+  <text class="s" x="14" y="877">your login forwarded, the warden key removed</text>
+
+  <text class="s" x="0" y="914">Off by default. Only a key with</text>
+  <text class="s" x="0" y="934">“May relay to Anthropic” is passed through.</text>
+</svg>

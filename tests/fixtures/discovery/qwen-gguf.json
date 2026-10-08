@@ -1,0 +1,103 @@
+{
+  "_comment": "Snapshot of the DiscoveryResult wire shape for the unsloth/Qwen3.6-27B-MTP-GGUF repo. Modeled on the real HfApi.model_info() output (sibling rfilename + size + lfs). Used by tests/unit/models/test_discover_route.py and reused by dev-2 in #86 for the FE wizard mock. If the wire shape drifts, the contract test breaks loudly.",
+  "_source": "Hand-built fixture mirroring the file list visible on https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF on 2026-05-18. Real model_info() capture was not feasible from the test harness (no live HF token, no host network); follow-up if a CI-time capture script is needed.",
+  "files": [
+    {
+      "filename": ".gitattributes",
+      "size": 1519,
+      "kind": "other",
+      "quant": null,
+      "params": null
+    },
+    {
+      "filename": "README.md",
+      "size": 12480,
+      "kind": "other",
+      "quant": null,
+      "params": null
+    },
+    {
+      "filename": "config.json",
+      "size": 1124,
+      "kind": "config",
+      "quant": null,
+      "params": null
+    },
+    {
+      "filename": "tokenizer.json",
+      "size": 11422962,
+      "kind": "tokenizer",
+      "quant": null,
+      "params": null
+    },
+    {
+      "filename": "tokenizer_config.json",
+      "size": 7203,
+      "kind": "tokenizer",
+      "quant": null,
+      "params": null
+    },
+    {
+      "filename": "Qwen3.6-27B-Q2_K.gguf",
+      "size": 10277773504,
+      "kind": "gguf",
+      "quant": "Q2_K",
+      "params": 27000000000
+    },
+    {
+      "filename": "Qwen3.6-27B-Q3_K_M.gguf",
+      "size": 13282184896,
+      "kind": "gguf",
+      "quant": "Q3_K_M",
+      "params": 27000000000
+    },
+    {
+      "filename": "Qwen3.6-27B-Q4_K_M.gguf",
+      "size": 16414994624,
+      "kind": "gguf",
+      "quant": "Q4_K_M",
+      "params": 27000000000
+    },
+    {
+      "filename": "Qwen3.6-27B-Q5_K_M.gguf",
+      "size": 19262890688,
+      "kind": "gguf",
+      "quant": "Q5_K_M",
+      "params": 27000000000
+    },
+    {
+      "filename": "Qwen3.6-27B-Q6_K.gguf",
+      "size": 22272376896,
+      "kind": "gguf",
+      "quant": "Q6_K",
+      "params": 27000000000
+    },
+    {
+      "filename": "Qwen3.6-27B-Q8_0.gguf",
+      "size": 28845945600,
+      "kind": "gguf",
+      "quant": "Q8_0",
+      "params": 27000000000
+    }
+  ],
+  "config": {
+    "hidden_size": 5120,
+    "num_hidden_layers": 64,
+    "num_attention_heads": 40,
+    "num_key_value_heads": 8,
+    "max_position_embeddings": 32768,
+    "torch_dtype": "bfloat16",
+    "quantization_config": null,
+    "head_dim": null,
+    "sliding_window": null,
+    "layer_types": null
+  },
+  "repo": {
+    "id": "unsloth/Qwen3.6-27B-MTP-GGUF",
+    "revision": "main",
+    "private": false,
+    "gated": false
+  },
+  "errors": [],
+  "warnings": []
+}

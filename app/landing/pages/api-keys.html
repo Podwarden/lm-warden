@@ -1,0 +1,83 @@
+    <section class="sec" aria-labelledby="keys-title">
+      <div class="wrap keys">
+        <div class="keys-text">
+          <h1 id="keys-title" class="as-h2">One key per app, and a page for every key.</h1>
+          <!-- src: demo-token-poster.webp ("P0 … P9", "Strict: a waiting P9 request always goes before a P8 one") -->
+          <p>
+            Give each colleague, laptop, CI job and agent its own key. A key’s page shows
+            what it spent and how long its requests waited in the queue, median and p95,
+            over any window you drag or type. Rotate a key with a grace window, and set
+            its priority from P0&nbsp;to&nbsp;P9: a waiting P9 request always goes before a P8 one.
+          </p>
+          <p>Pause it, and new requests are refused while the ones already running finish:</p>
+          <!-- captured 2026-09-23 against a local build of this branch; key and host replaced -->
+          <pre class="term" tabindex="0" aria-label="A request with a paused key and its response"><span class="dim">$</span> curl -i http://gpu-box:8080/v1/chat/completions \
+    -H "Authorization: Bearer vw_…" -d '{…}'
+HTTP/1.1 403 Forbidden
+content-type: application/json
+
+{"detail":"token paused"}</pre>
+          <p class="src">From a local instance on 23&nbsp;September 2026. Host and key replaced, other headers cut.</p>
+        </div>
+
+        <figure class="keys-fig">
+          <div class="shot">
+            <video data-autoplay controls muted loop playsinline preload="none"
+                   width="1280" height="800"
+                   poster="{{a:demo-token-poster.webp}}"
+                   aria-label="An API key’s page during a load test: its priority from P0 to P9, a strip of its whole history, tokens and requests per minute over the last hour, then the god-mode dock opening on its prompts and responses as they stream">
+              <source src="{{a:demo-token.webm}}" type="video/webm">
+              <source src="{{a:demo-token.mp4}}" type="video/mp4">
+            </video>
+          </div>
+          <!-- src: demo-token-poster.webp ("37 requests", "43k generation tokens", "last hour"; God mode "demo-agent · replayed the last requests, now streaming") -->
+          <figcaption><b>Fig.&nbsp;13</b>The page of <code>demo-agent</code>, the key that ran the load in fig.&nbsp;1: 37 requests and 43k generated tokens in the hour on screen. Then its god-mode dock opens (an opt-in live view of one key’s prompts and replies, off by default) and its replies stream in as they are written. The prompts are ours.</figcaption>
+        </figure>
+      </div>
+
+      <figure class="wrap req-fig">
+        <div class="wide-scroll"><div class="shot req-stage">
+          <img src="{{a:shot-requests-7d.webp}}" width="2464" height="884" loading="lazy" decoding="async"
+               alt="The Requests chart from the Stats page over the last 7 days, 16 to 23 September: one mark per request, coloured by API key, sized by generated tokens and shaped by finish reason, against duration on a log scale from 100&#8239;ms to 10,000&#8239;s. Most marks sit between 3 and 100 seconds; one key shows two dense columns reaching from under a second to several hundred seconds.">
+        </div></div>
+        <!-- date: the same recording day as fig. 1; the header reads "last 7 days · 28,906 requests · drawing every 15th". Key names in the image are stand-ins. -->
+        <!-- src: shot-requests-7d.webp ("28,906 requests", "drawing every 15th"; legend "opencode-laptop 966", "research-notebook 588", "ui-refactor-agent 194", "agent-sandbox 161", "load-test-filler 6", "demo-agent 4", "other 9"; "newest 25 of 1,928 fetched") -->
+        <figcaption><b>Fig.&nbsp;14</b>Every key’s requests on one chart, from the same Stats page: the last 7 days, 28,906 requests, one in fifteen drawn. A mark is one request, coloured by its key, sized by the tokens it generated and shaped by how it finished, at the height of its duration on a log scale. The steady amber is <code>opencode-laptop</code>, the two dense pink columns are <code>research-notebook</code>. Recorded on 23&nbsp;September 2026; the key names are replaced.<span class="scroll-hint"> Scroll the image sideways to see the whole week.</span></figcaption>
+      </figure>
+    </section>
+
+    <section class="sec tight" aria-labelledby="leave-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <h2 id="leave-title">Leaving is a <code>base_url</code> change.</h2>
+          <p>
+            It speaks <code>/v1/chat/completions</code> and <code>/v1/models</code>, and
+            <code>/v1/models</code> reports each model’s <code>max_model_len</code>. It also
+            speaks the Anthropic Messages API at <code>/v1/messages</code>, so Claude Code
+            points <code>ANTHROPIC_BASE_URL</code> at a warden’s root URL (Claude Code adds the
+            <code>/v1/messages</code> path itself), and the OpenAI Responses API at
+            <code>/v1/responses</code>, so Codex&nbsp;CLI can use a model you loaded. The weights sit
+            in an ordinary HuggingFace cache that <code>make export-hf-cache</code> hands you as a
+            tarball, and the exact argv each engine was started with is one GET away, so a
+            working setup can be rebuilt without us. Read the diff below backwards and
+            that is how you leave.
+          </p>
+        </div>
+        <pre class="diff leave-code" tabindex="0" aria-label="The change to an OpenAI SDK client"><span class="ctx">  import os
+  from openai import OpenAI
+
+  client = OpenAI(</span>
+<span class="del">-     base_url="https://api.openai.com/v1",
+-     api_key=os.environ["OPENAI_API_KEY"],</span>
+<span class="add">+     base_url="http://gpu-box:8080/v1",
++     api_key=os.environ["LM_WARDEN_KEY"],   # a vw_ key from API tokens</span>
+<span class="ctx">  )
+
+  reply = client.chat.completions.create(</span>
+<span class="del">-     model="gpt-4o-mini",</span>
+<span class="add">+     model="gpt-oss-20b",   # the served name of a model you loaded</span>
+<span class="ctx">      messages=[{"role": "user", "content": "What is a KV cache?"}],
+  )</span></pre>
+      </div>
+    </section>
+    <div class="wrap related-wrap"><p class="related">Related: <a href="/coding-agents">coding agents</a> · <a href="/gpu-monitoring">GPU monitoring</a> · <a href="/faq">FAQ</a></p></div>

@@ -1,0 +1,54 @@
+[project]
+name = "lm-warden"
+version = "2.0.0"
+description = "Self-hosted, OpenAI-compatible LLM API on your own NVIDIA GPUs: vLLM and llama.cpp behind one port, with per-key auth, usage accounting and GPU observability."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+
+[project.urls]
+Homepage = "https://lmwarden.com"
+Repository = "https://github.com/Podwarden/lm-warden"
+Issues = "https://github.com/Podwarden/lm-warden/issues"
+Changelog = "https://github.com/Podwarden/lm-warden/blob/main/CHANGELOG.md"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "ASYNC"]
+ignore = ["E501"]
+
+[tool.ruff.lint.flake8-bugbear]
+# fastapi.Depends()/File()/Form() are always safe in function-parameter
+# defaults -- File/Form added for chat2 attachment multipart uploads (T5).
+extend-immutable-calls = ["fastapi.Depends", "Depends", "fastapi.File", "File", "fastapi.Form", "Form"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers -m \"not live\""
+# #260: a test that hangs for 300 s (setup+call+teardown) dumps every thread's
+# stack, so a wedged run leaves a diagnosis behind instead of nothing at all.
+# It does NOT end the run: pytest 8.3.4 arms the timer without `exit=True`
+# (_pytest/faulthandler.py) and cancels it after each item, so the test goes on
+# hanging until CI's job timeout -- the dump is the whole benefit. The guard
+# that actually exits is the session-end watchdog in tests/conftest.py, which
+# covers the other shape, a hang *after* the last test (a leaked non-daemon
+# thread blocking interpreter shutdown). 300 s cannot fire on a healthy run:
+# the slowest single test in the tree is seconds, even eight workers deep on a
+# loaded machine.
+faulthandler_timeout = 300
+markers = [
+    "integration: requires real subprocess + filesystem",
+    "perf: scale sanity checks (seconds, not minutes); deselect with -m 'not perf'",
+    "fresh_db: the `client` fixture must let the lifespan migrate an empty DB instead of copying the pre-migrated template",
+    "live: talks to a real deployment; opt-in with -m live (see tests/live/README.md)",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true

@@ -1,0 +1,118 @@
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-text wrap">
+        <h1 id="hero-title"><span class="nw">An OpenAI-compatible</span> API on the GPUs under&nbsp;your&nbsp;desk or&nbsp;in&nbsp;your&nbsp;rack.</h1>
+        <p class="lede">
+          LM Warden runs vLLM and llama.cpp on your NVIDIA cards behind one port.
+          Each app gets its own key, and each card reports for itself.
+          Point Claude Code, Codex&nbsp;CLI, OpenCode or another coding agent at it; with Claude Code, a model on your cards can answer for the Claude models you choose, under their names, while the rest go to Anthropic on your own login.
+        </p>
+        <div class="install" id="install">
+          <div class="cmd">
+            <pre id="cmd-hero" tabindex="0" aria-label="Install command">{{install}}</pre>
+            <button class="btn" type="button" data-copy="cmd-hero"><span>Copy</span></button>
+          </div>
+        </div>
+        <p class="guide"><a href="{{repo}}/blob/main/documents/INSTALL.md" rel="noopener">Read the install guide</a>: every command, and what it printed.</p>
+        <!-- src: README.md, "Quick start" (Compose v2.24+) and "Will it run on my hardware?" (Turing floor) -->
+        <p class="req">Needs Linux x86_64, Docker Compose&nbsp;v2.24+, the NVIDIA Container Toolkit and a card of the Turing generation (RTX&nbsp;20-series, Quadro&nbsp;RTX) or newer.</p>
+        <!-- src: install.sh (VW_APP="vllm-warden", DIR="/opt/$VW_APP"); app/auth/bearer.py (INFERENCE_TOKEN_PREFIX "vw_", ADMIN_TOKEN_PREFIX "vwa_") -->
+        <p class="req">LM Warden was formerly vLLM Warden. The install directory and the <code>vw_</code> key prefix keep the old name, so existing installs and keys keep working.</p>
+      </div>
+
+      <figure class="hero-fig wrap">
+        <div class="shot">
+          <video data-autoplay controls muted loop playsinline preload="metadata"
+                 width="1280" height="800"
+                 poster="{{a:demo-stats-poster.webp}}"
+                 aria-label="The Stats page of a busy instance switching between its 1 hour, 6 hour and 24 hour windows, then scrolling to the live generation rate, latency histograms and the requests in flight">
+            <source src="{{a:demo-stats.webm}}" type="video/webm">
+            <source src="{{a:demo-stats.mp4}}" type="video/mp4">
+          </video>
+        </div>
+        <!-- date: the same session as demo-token-poster.webp, whose window reads "Sep 23 16:06 to Sep 23 17:06" -->
+        <!-- src: demo-stats.mp4 (IN FLIGHT "10 active", every row "demo-agent") -->
+        <figcaption><b>Fig.&nbsp;1</b>The Stats page of our four-card box while ten of our own streaming requests ran on it, stepping through its 1&#8239;h, 6&#8239;h and 24&#8239;h windows. Recorded on 23&nbsp;September 2026.</figcaption>
+      </figure>
+    </section>
+
+    <hr class="topic">
+
+    <section class="sec what-sec" aria-labelledby="what-title">
+      <div class="wrap what">
+        <h2 id="what-title">What it is.</h2>
+        <div class="what-text">
+          <!-- adapted from faq.json, "What is LM Warden?" -->
+          <p>
+            LM Warden is a control plane around two inference engines, vLLM and llama.cpp, that you
+            install on one Linux host with NVIDIA GPUs. You pull a model from HuggingFace, load it
+            onto your cards, give each app its own key, and call it through an OpenAI-compatible
+            <code>/v1</code> endpoint, through the Anthropic Messages API if the app is Claude Code,
+            or through the OpenAI Responses API if it is Codex&nbsp;CLI.
+            A browser console covers loading and unloading models, live engine logs, a chat
+            playground, GPU and token statistics, and a page per key. It does not make models faster
+            and does not modify the engines. It adds the parts a bare engine does not ship.
+          </p>
+          <p>
+            There is no hosted service and no account. Every warden serves this page itself, and
+            the Console sign-in link at the top opens that warden’s own console.
+            Nothing leaves your host unless you turn on the Claude Code router described next.
+          </p>
+        </div>
+{{flow_generic}}      </div>
+    </section>
+
+    <hr class="topic">
+
+    <section class="sec teasers" aria-labelledby="teasers-title">
+      <div class="wrap">
+        <h2 id="teasers-title">What you get.</h2>
+        <ul class="cards-list">
+          <li><a href="/coding-agents"><h3>Coding agents</h3><p>Claude Code, Codex&nbsp;CLI, OpenCode, Aider, Cline, Cursor and four more. The console writes each one’s config for you.</p></a></li>
+          <li><a href="/agent-tuning"><h3>Agent tuning</h3><p>Give Claude Code or Codex an admin token and let it choose the model, the engine and the flags for your cards.</p></a></li>
+          <li><a href="/gpu-monitoring"><h3>GPU monitoring</h3><p>One panel per card: temperature against its own throttle point, power against its own cap, and every request in flight.</p></a></li>
+          <li><a href="/cache-aware-routing"><h3>Cache-aware routing</h3><p>Each agent session goes back to the replica that already holds its prompt in cache.</p></a></li>
+          <li><a href="/api-keys"><h3>API keys</h3><p>A key per app, with its own priority, usage and queue times. Leaving is a <code>base_url</code> change.</p></a></li>
+          <li><a href="/features"><h3>More features</h3><p>God mode, admin tokens, the engine watchdog, and the lessons behind them.</p></a></li>
+        </ul>
+      </div>
+    </section>
+
+    <hr class="topic">
+
+    <section class="dont" aria-labelledby="dont-title">
+      <div class="wrap">
+        <h2 id="dont-title">Don’t use this if…</h2>
+        <ul>
+          <li><strong>You have no NVIDIA GPU.</strong> Today it runs on NVIDIA cards with CUDA only. There is no ROCm, Apple silicon, Intel GPU or CPU path yet; see the roadmap below.</li>
+          <li><strong>You need one model served across several machines.</strong> This is one host. Several GPUs in one box, yes; several boxes, no.</li>
+          <li><strong>You want several models resident on one card.</strong> One loaded model per GPU is enforced before an engine starts.</li>
+          <li><strong>You need an engine other than vLLM or llama.cpp.</strong> TensorRT-LLM, SGLang, MLX and Ollama’s runtime are not shipped.</li>
+          <li><strong>You want a hosted API.</strong> Nobody runs this for you. You supply the hardware, the driver and the electricity.</li>
+          <li><strong>Your host isn’t Linux x86_64.</strong></li>
+        </ul>
+
+        <div class="roadmap" id="roadmap">
+          <h3>Other GPUs are next on the roadmap.</h3>
+          <p>
+            Apple silicon (Macs), AMD Radeon and Intel GPUs are on our immediate roadmap, with no
+            dates. Which comes first depends on who asks, so tell us which one you would run it on:
+          </p>
+          <ul>
+            <li><a href="{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Mac" rel="noopener">Mac, Apple silicon</a></li>
+            <li><a href="{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon" rel="noopener">AMD Radeon</a></li>
+            <li><a href="{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel" rel="noopener">Intel GPUs</a></li>
+          </ul>
+          <p class="src">Each link opens a new post in the Ideas category of the project’s GitHub Discussions, titled “Hardware support:” and the platform. A GitHub account is needed to post.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="topic">
+
+    <section class="sec family" aria-labelledby="family-title">
+      <div class="wrap">
+        <h2 id="family-title">Part of the PodWarden family.</h2>
+        <p>LM Warden is one of the open-source apps from PodWarden, which runs fleets of servers as a product: self-host anything on bare metal, VMs or LXC without becoming a Kubernetes company.</p>
+        <p><a href="https://podwarden.com" rel="noopener">podwarden.com</a> · <a href="https://github.com/Podwarden" rel="noopener">PodWarden on GitHub</a></p>
+      </div>
+    </section>

@@ -1,0 +1,17 @@
+-- Machine-readable "this model was serving when it died" flag.
+--
+-- Recovery used to key on last_error matching an exact sentinel string
+-- ("process not running after restart (was loaded)"). That made one column
+-- carry two jobs: a human-facing message AND the machine state recovery
+-- depends on. Any diagnosis written on the crash path displaced the sentinel
+-- and silently disabled auto-restart -- which is exactly what happened on
+-- 2026-08-18: the engine died a few seconds BEFORE the warden, so on_exit
+-- wrote a diagnosed error first, boot reconciliation skipped the already
+-- 'failed' row, the sentinel was never written, and the model stayed dead
+-- for hours with every request 404ing.
+--
+-- prior_status records the status that was interrupted. It is set when a
+-- serving model dies (either path) and cleared once it is serving again or
+-- an operator deliberately unloads it, so a hand-unloaded model is never
+-- resurrected against the operator's intent.
+ALTER TABLE models ADD COLUMN prior_status TEXT;

@@ -1,0 +1,72 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # #155 unified-port: api is no longer host-published. Caddy fronts both
+    # api and ui on :8080. `expose` keeps the port reachable on the internal
+    # compose network so Caddy can `reverse_proxy api:8080` without any
+    # host-side mapping.
+    expose: ["8080"]
+    # Share the host PID namespace so /api/system/gpus can attribute
+    # nvidia-smi compute holders (host PIDs) to supervisor-tracked vLLM
+    # processes. Without this, supervisor stores in-container PIDs and
+    # attribution silently falls back to kind: external. See vllm-warden#42.
+    pid: host
+    environment:
+      VW_JWT_SECRET: ""
+      # #155 unified-port: browser hits Caddy on :8080, so the frontend
+      # origin for the CSRF check is now the same :8080 URL the operator
+      # types into their address bar (not the ui container's :3000).
+      # Accepts a comma-separated allow-list of exact origins.
+      VW_FRONTEND_ORIGIN: http://localhost:8080
+      # Behind a trusted reverse proxy that sets X-Forwarded-Proto/-Host,
+      # set this to 1 to also accept the proxy-derived origin (so a reload
+      # doesn't log the user out when the public URL isn't pinned above).
+      # Off by default — only enable when a trusted proxy fronts the warden.
+      # VW_TRUST_PROXY_ORIGIN: "1"
+    volumes:
+      - vw-data:/data
+      - vw-hfcache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  ui:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    # #155 unified-port: ui is no longer host-published either; Caddy
+    # proxies /ui/* and /_next/* to ui:3000 over the compose network.
+    expose: ["3000"]
+    environment:
+      # SSR fetches inside the standalone server still talk to api:8080
+      # directly. NEXT_PUBLIC_BACKEND_URL is gone — the browser is now
+      # same-origin with Caddy, so client-side fetches use relative paths.
+      BACKEND_URL: http://api:8080
+    depends_on: [api]
+
+  # #155 — Caddy reverse-proxy front-door. Only host-published port in
+  # the stack. See deploy/caddy/Caddyfile for the routing map.
+  caddy:
+    # Pinned, not floating: Caddy 2.11 changed a server timeout default
+    # (read_body_idle, see deploy/caddy/Caddyfile) and cut every stream at
+    # 60 s on a plain restart. Bump deliberately and re-test long streams.
+    image: caddy:2.11.6-alpine
+    ports: ["8080:8080"]
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [api, ui]
+    restart: unless-stopped
+
+volumes:
+  vw-data:
+  vw-hfcache:
+  caddy-data:
+  caddy-config:

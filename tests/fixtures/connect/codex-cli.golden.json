@@ -1,0 +1,10 @@
+{
+  "vars": {
+    "origin": "https://lmwarden.com",
+    "key": "vw_YOUR_KEY",
+    "model": "qwen3.8-27b-fp8-model",
+    "header": "X-LMWarden-Key",
+    "context": "131072"
+  },
+  "config_toml": "model = \"qwen3.8-27b-fp8-model\"\nmodel_provider = \"lmwarden\"\n# Codex assumes a 272k window for models it does not know; set the real one.\nmodel_context_window = 131072\n\n[model_providers.lmwarden]\nname = \"LM Warden\"\nbase_url = \"https://lmwarden.com/v1\"\nenv_key = \"LMWARDEN_KEY\"\nwire_api = \"responses\""
+}

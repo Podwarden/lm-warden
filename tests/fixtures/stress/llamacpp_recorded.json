@@ -1,0 +1,51 @@
+{
+  "_source": "Captured from llama-server build b10731 on pw-bonus, 2026-09-03, serving qwen3.8-27b (GGUF, ctx 131072). These are verbatim recordings, not invented shapes: every field below was observed. Re-record against a new build rather than editing by hand.",
+
+  "health": {"status": 200, "body": {"status": "ok"}},
+
+  "models": {
+    "_note": "Ollama-shaped, NOT OpenAI's {\"object\":\"list\",\"data\":[...]}. A uniform /v1/models parser breaks here.",
+    "status": 200,
+    "body": {"models": [{"name": "qwen3.8-27b", "model": "qwen3.8-27b", "type": "model",
+                         "capabilities": ["completion", "multimodal"],
+                         "details": {"format": "gguf"}}]}
+  },
+
+  "stream_first_frame": {"choices": [{"finish_reason": null, "index": 0, "delta": {"role": "assistant", "content": null}}], "object": "chat.completion.chunk"},
+  "stream_reasoning_frame": {"choices": [{"finish_reason": null, "index": 0, "delta": {"reasoning_content": "/"}}], "object": "chat.completion.chunk"},
+  "stream_usage_frame": {
+    "_note": "Final frame carries usage with choices EMPTY. cached_tokens exposes prefix-cache reuse, which is how the unique-preamble defeat can be verified rather than trusted.",
+    "choices": [],
+    "object": "chat.completion.chunk",
+    "usage": {"completion_tokens": 8, "prompt_tokens": 54, "total_tokens": 62,
+              "prompt_tokens_details": {"cached_tokens": 50}}
+  },
+
+  "refusal_over_context": {
+    "_note": "error.type is STRUCTURED and machine-readable. Definitive refusal evidence — no confirmation probe needed. n_prompt_tokens/n_ctx are exact.",
+    "status": 400,
+    "body": {"error": {"code": 400,
+                       "message": "request (144052 tokens) exceeds the available context size (131072 tokens), try increasing it",
+                       "type": "exceed_context_size_error",
+                       "n_prompt_tokens": 144052, "n_ctx": 131072}}
+  },
+
+  "error_invalid_request": {
+    "status": 400,
+    "body": {"error": {"code": 400, "message": "messages must be an array", "type": "invalid_request_error"}}
+  },
+
+  "unknown_model_is_NOT_an_error": {
+    "_note": "THE TRAP. An unknown model name returns 200 and serves the loaded model anyway, with empty content and finish_reason=length. That trips REASONING_ONLY and ABRUPT, so a harness bug reads as model degradation. The runner MUST send the real served_model_name.",
+    "status": 200,
+    "body": {"choices": [{"finish_reason": "length", "index": 0,
+                          "message": {"role": "assistant", "content": "", "reasoning_content": "////"}}]}
+  },
+
+  "metrics_namespace": "llamacpp:",
+  "metrics_present": ["llamacpp:requests_processing", "llamacpp:requests_deferred",
+                      "llamacpp:n_busy_slots_per_decode", "llamacpp:prompt_tokens_total",
+                      "llamacpp:tokens_predicted_total", "llamacpp:n_tokens_max"],
+  "metrics_absent": ["vllm:num_preemptions_total", "vllm:gpu_cache_usage_perc",
+                     "preemptions_total", "kv_cache_usage_perc"]
+}

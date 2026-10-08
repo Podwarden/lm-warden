@@ -1,0 +1,166 @@
+[
+ {
+  "type": "response.created",
+  "sequence_number": 0,
+  "response": {
+   "id": "resp_01",
+   "object": "response",
+   "created_at": 0,
+   "status": "in_progress",
+   "model": "qwen",
+   "output": [],
+   "usage": null,
+   "incomplete_details": null,
+   "error": null,
+   "parallel_tool_calls": true,
+   "tool_choice": "auto",
+   "store": false,
+   "instructions": null,
+   "metadata": {}
+  }
+ },
+ {
+  "type": "response.in_progress",
+  "sequence_number": 1,
+  "response": {
+   "id": "resp_01",
+   "object": "response",
+   "created_at": 0,
+   "status": "in_progress",
+   "model": "qwen",
+   "output": [],
+   "usage": null,
+   "incomplete_details": null,
+   "error": null,
+   "parallel_tool_calls": true,
+   "tool_choice": "auto",
+   "store": false,
+   "instructions": null,
+   "metadata": {}
+  }
+ },
+ {
+  "type": "response.output_item.added",
+  "sequence_number": 2,
+  "output_index": 0,
+  "item": {
+   "id": "fc_02",
+   "type": "function_call",
+   "call_id": "call_0",
+   "name": "a",
+   "arguments": "",
+   "status": "in_progress"
+  }
+ },
+ {
+  "type": "response.function_call_arguments.delta",
+  "sequence_number": 3,
+  "item_id": "fc_02",
+  "output_index": 0,
+  "delta": "{\"x\":1}"
+ },
+ {
+  "type": "response.function_call_arguments.done",
+  "sequence_number": 4,
+  "item_id": "fc_02",
+  "output_index": 0,
+  "arguments": "{\"x\":1}"
+ },
+ {
+  "type": "response.output_item.done",
+  "sequence_number": 5,
+  "output_index": 0,
+  "item": {
+   "id": "fc_02",
+   "type": "function_call",
+   "call_id": "call_0",
+   "name": "a",
+   "arguments": "{\"x\":1}",
+   "status": "completed"
+  }
+ },
+ {
+  "type": "response.output_item.added",
+  "sequence_number": 6,
+  "output_index": 1,
+  "item": {
+   "id": "ctc_03",
+   "type": "custom_tool_call",
+   "call_id": "call_1",
+   "name": "b",
+   "input": ""
+  }
+ },
+ {
+  "type": "response.custom_tool_call_input.delta",
+  "sequence_number": 7,
+  "item_id": "ctc_03",
+  "output_index": 1,
+  "delta": "{\"y\":2}"
+ },
+ {
+  "type": "response.custom_tool_call_input.done",
+  "sequence_number": 8,
+  "item_id": "ctc_03",
+  "output_index": 1,
+  "input": "{\"y\":2}"
+ },
+ {
+  "type": "response.output_item.done",
+  "sequence_number": 9,
+  "output_index": 1,
+  "item": {
+   "id": "ctc_03",
+   "type": "custom_tool_call",
+   "call_id": "call_1",
+   "name": "b",
+   "input": "{\"y\":2}"
+  }
+ },
+ {
+  "type": "response.completed",
+  "sequence_number": 10,
+  "response": {
+   "id": "resp_01",
+   "object": "response",
+   "created_at": 0,
+   "status": "completed",
+   "model": "qwen",
+   "output": [
+    {
+     "id": "fc_02",
+     "type": "function_call",
+     "call_id": "call_0",
+     "name": "a",
+     "arguments": "{\"x\":1}",
+     "status": "completed"
+    },
+    {
+     "id": "ctc_03",
+     "type": "custom_tool_call",
+     "call_id": "call_1",
+     "name": "b",
+     "input": "{\"y\":2}"
+    }
+   ],
+   "usage": {
+    "input_tokens": 12,
+    "input_tokens_details": {
+     "cached_tokens": 0
+    },
+    "output_tokens": 4,
+    "output_tokens_details": {
+     "reasoning_tokens": 0
+    },
+    "total_tokens": 16
+   },
+   "incomplete_details": null,
+   "error": null,
+   "parallel_tool_calls": true,
+   "tool_choice": "auto",
+   "store": false,
+   "instructions": null,
+   "metadata": {}
+  }
+ }
+]

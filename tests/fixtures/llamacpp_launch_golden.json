@@ -1,0 +1,167 @@
+{
+  "minimal_single_gpu": {
+    "argv": [
+      "llama-server",
+      "--model", "/cache/models--org--repo/snapshots/abc123/model-IQ3_XXS.gguf",
+      "--host", "127.0.0.1",
+      "--port", "10001",
+      "--alias", "qwen",
+      "--split-mode", "none",
+      "--main-gpu", "0",
+      "--metrics",
+      "--no-webui"
+    ],
+    "env": {
+      "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+      "CUDA_VISIBLE_DEVICES": "0",
+      "PATH": "/usr/local/bin:/usr/bin:/bin"
+    }
+  },
+  "vision_with_mmproj": {
+    "argv": [
+      "llama-server",
+      "--model", "/cache/models--org--repo/snapshots/abc123/model-IQ3_XXS.gguf",
+      "--host", "127.0.0.1",
+      "--port", "10001",
+      "--alias", "qwen",
+      "--mmproj", "/cache/models--org--repo/snapshots/abc123/mmproj-BF16.gguf",
+      "--split-mode", "none",
+      "--main-gpu", "0",
+      "--metrics",
+      "--no-webui"
+    ],
+    "env": {
+      "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+      "CUDA_VISIBLE_DEVICES": "0",
+      "PATH": "/usr/local/bin:/usr/bin:/bin"
+    }
+  },
+  "context_and_slots": {
+    "argv": [
+      "llama-server",
+      "--model", "/cache/models--org--repo/snapshots/abc123/model-IQ3_XXS.gguf",
+      "--host", "127.0.0.1",
+      "--port", "10001",
+      "--alias", "qwen",
+      "--ctx-size", "8192",
+      "--parallel", "2",
+      "--split-mode", "none",
+      "--main-gpu", "0",
+      "--metrics",
+      "--no-webui"
+    ],
+    "env": {
+      "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+      "CUDA_VISIBLE_DEVICES": "0",
+      "PATH": "/usr/local/bin:/usr/bin:/bin"
+    }
+  },
+  "partial_offload": {
+    "argv": [
+      "llama-server",
+      "--model", "/cache/models--org--repo/snapshots/abc123/model-IQ3_XXS.gguf",
+      "--host", "127.0.0.1",
+      "--port", "10001",
+      "--alias", "qwen",
+      "--n-gpu-layers", "40",
+      "--split-mode", "none",
+      "--main-gpu", "0",
+      "--metrics",
+      "--no-webui"
+    ],
+    "env": {
+      "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+      "CUDA_VISIBLE_DEVICES": "0",
+      "PATH": "/usr/local/bin:/usr/bin:/bin"
+    }
+  },
+  "two_gpus": {
+    "argv": [
+      "llama-server",
+      "--model", "/cache/models--org--repo/snapshots/abc123/model-IQ3_XXS.gguf",
+      "--host", "127.0.0.1",
+      "--port", "10001",
+      "--alias", "qwen",
+      "--split-mode", "layer",
+      "--metrics",
+      "--no-webui"
+    ],
+    "env": {
+      "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+      "CUDA_VISIBLE_DEVICES": "0,1",
+      "PATH": "/usr/local/bin:/usr/bin:/bin"
+    }
+  },
+  "tp_strategy_still_layer_split": {
+    "argv": [
+      "llama-server",
+      "--model", "/cache/models--org--repo/snapshots/abc123/model-IQ3_XXS.gguf",
+      "--host", "127.0.0.1",
+      "--port", "10001",
+      "--alias", "qwen",
+      "--split-mode", "layer",
+      "--metrics",
+      "--no-webui"
+    ],
+    "env": {
+      "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+      "CUDA_VISIBLE_DEVICES": "0,1",
+      "PATH": "/usr/local/bin:/usr/bin:/bin"
+    }
+  },
+  "extra_args_last": {
+    "argv": [
+      "llama-server",
+      "--model", "/cache/models--org--repo/snapshots/abc123/model-IQ3_XXS.gguf",
+      "--host", "127.0.0.1",
+      "--port", "10001",
+      "--alias", "qwen",
+      "--split-mode", "none",
+      "--main-gpu", "0",
+      "--metrics",
+      "--no-webui",
+      "--cache-type-k", "q8_0"
+    ],
+    "env": {
+      "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+      "CUDA_VISIBLE_DEVICES": "0",
+      "PATH": "/usr/local/bin:/usr/bin:/bin"
+    }
+  },
+  "docker_driver_binds_wide": {
+    "argv": [
+      "llama-server",
+      "--model", "/cache/models--org--repo/snapshots/abc123/model-IQ3_XXS.gguf",
+      "--host", "0.0.0.0",
+      "--port", "10001",
+      "--alias", "qwen",
+      "--split-mode", "none",
+      "--main-gpu", "0",
+      "--metrics",
+      "--no-webui"
+    ],
+    "env": {
+      "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+      "CUDA_VISIBLE_DEVICES": "0",
+      "PATH": "/usr/local/bin:/usr/bin:/bin"
+    }
+  },
+  "sharded_first_shard": {
+    "argv": [
+      "llama-server",
+      "--model", "/cache/models--org--repo/snapshots/abc123/model-IQ3_XXS-00001-of-00003.gguf",
+      "--host", "127.0.0.1",
+      "--port", "10001",
+      "--alias", "qwen",
+      "--split-mode", "none",
+      "--main-gpu", "0",
+      "--metrics",
+      "--no-webui"
+    ],
+    "env": {
+      "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+      "CUDA_VISIBLE_DEVICES": "0",
+      "PATH": "/usr/local/bin:/usr/bin:/bin"
+    }
+  }
+}

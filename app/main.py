@@ -1,0 +1,769 @@
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
+
+from app.auth.csrf import csrf_check, ensure_csrf_id
+from app.config import load_settings
+from app.db.database import open_db
+from app.db.migrations import apply_migrations
+from app.db.repos.models import ModelRepo
+from app.db.repos.runtime import RuntimeRepo
+from app.db.repos.stress_runs import StressRunRepo
+from app.runtime.backends.vllm.env import warn_if_shm_undersized
+from app.runtime.boot_reconcile import (
+    reconcile_legacy_data_parallel_rows,
+    reconcile_legacy_template_parallel_flags,
+    reconcile_poisoned_extra_fields,
+    reconcile_stranded_models,
+)
+from app.runtime.port_alloc import PortAllocator
+from app.runtime.supervisor import Supervisor
+
+
+def _build_engine_driver(settings):
+    """Pick the engine driver from settings (#160). Default is the
+    in-container subprocess driver. The docker driver is opt-in and, until
+    image-channel resolution lands in P2 (#161), requires an explicit
+    VLLM_ENGINE_IMAGE so it never guesses an image."""
+    from pathlib import Path
+
+    if settings.engine_driver == "docker":
+        import os
+
+        import docker
+
+        from app.runtime.engine.docker_socket import HFCACHE_MOUNT, DockerSocketDriver
+
+        # #265 — the engine container is given the model-cache volume and
+        # nothing else; the warden's data volume (SQLite DB + jwt_secret) is no
+        # longer mounted into it. The cache volume lands at a FIXED path, so a
+        # deployment that moved VW_HF_CACHE_DIR elsewhere hands the engine an
+        # HF_HUB_CACHE that nothing is mounted at: it would re-download every
+        # model into the container's writable layer. Say so while the operator
+        # is still reading the startup log rather than after the first 40 GB.
+        # This is a warning, not a refusal — the warden serves fine, and a
+        # deployment whose cache path merely differs by a symlink should not be
+        # taken down by a string comparison.
+        if str(settings.hf_cache_dir) != HFCACHE_MOUNT:
+            logging.getLogger(__name__).warning(
+                "VW_HF_CACHE_DIR is %s, but the docker engine driver mounts the "
+                "model-cache volume at %s inside the engine container. The "
+                "engine's HF_HUB_CACHE will point at a path with no volume "
+                "behind it and every model will be re-downloaded into the "
+                "container's writable layer. Move the cache back to %s, or use "
+                "the local engine driver.",
+                settings.hf_cache_dir,
+                HFCACHE_MOUNT,
+                HFCACHE_MOUNT,
+            )
+
+        image = os.environ.get("VLLM_ENGINE_IMAGE")
+        if not image:
+            raise RuntimeError(
+                "VW_ENGINE_DRIVER=docker requires VLLM_ENGINE_IMAGE to be set "
+                "(the engine container image). Channel-based image resolution "
+                "lands in P2/#161; until then the image must be explicit."
+            )
+        # Pass the same per-model logs dir the subprocess driver uses so the
+        # docker driver mirrors the engine container's stdout+stderr into
+        # <data_dir>/logs/<model_id>.log — the only place routes_logs.py reads
+        # from. Without it the UI Live-logs panel is stale/empty under the
+        # docker driver. (#177 follow-up)
+        return DockerSocketDriver(
+            client=docker.from_env(),
+            image=image,
+            log_dir=str(Path(settings.data_dir) / "logs"),
+        )
+    from app.runtime.engine.local_subprocess import LocalSubprocessDriver
+
+    return LocalSubprocessDriver(
+        log_dir=str(Path(settings.data_dir) / "logs"),
+        log_max_bytes=settings.engine_log_max_bytes,
+    )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    settings = load_settings()
+    settings.data_dir.mkdir(parents=True, exist_ok=True)
+    settings.logs_dir.mkdir(parents=True, exist_ok=True)
+    settings.hf_cache_dir.mkdir(parents=True, exist_ok=True)
+    app.state.settings = settings
+
+    from app.auth.jwt_secret import load_jwt_secret
+
+    app.state.jwt_secret = load_jwt_secret(settings.db_path)
+
+    from app.auth.sse_tickets import TicketStore
+
+    app.state.sse_tickets = TicketStore(
+        secret=app.state.jwt_secret,
+        ttl_seconds=settings.sse_ticket_ttl_seconds,
+    )
+
+    from app.auth.stream_registry import StreamRegistry
+
+    app.state.stream_registry = StreamRegistry()
+
+    async with open_db(settings.db_path) as db:
+        await apply_migrations(db)
+
+    # #210 — under the local-subprocess driver the vLLM engine inherits this
+    # process's /dev/shm. On Kubernetes that is 64 MiB unless the pod spec asks
+    # for more, which is far too little for tensor-parallel workers and shows
+    # up as an uncatchable SIGBUS minutes into serving rather than as a startup
+    # failure. Say so in the log while the operator is still reading it.
+    warn_if_shm_undersized(settings.engine_driver)
+
+    # #278 slice 3 — the watchdog's session ledger must learn each wrapper pid
+    # at spawn time: the ledger's per-tick sample misses a wrapper that dies
+    # and is replaced within one interval (a double spawn), and the orphans
+    # the first wrapper left are then unattributable to this warden.
+    from app.runtime.watchdog import record_wrapper_pid
+
+    app.state.supervisor = Supervisor(
+        app.state.settings,
+        driver=_build_engine_driver(app.state.settings),
+        on_wrapper_spawn=record_wrapper_pid,
+    )
+    app.state.port_allocator = PortAllocator(start=10000, end=10999)
+
+    # #236 — a row left in a transient status ('loading'/'unloading'/'pulling')
+    # by a warden that died mid-operation describes an in-process object that
+    # no longer exists, and BOTH routes out of those statuses 409. Demote them
+    # to something an operator can act on before anything else touches the
+    # table.
+    #
+    # ORDER MATTERS TWICE:
+    #   * after the supervisor exists, because "is this load real?" is
+    #     answered by the supervisor holding a handle — at boot it never does,
+    #     nothing has been spawned yet, but keying on the handle is what makes
+    #     the function safe to reuse outside boot;
+    #   * before mark_runtime_dead_on_startup, which would otherwise have
+    #     already swept every transient row into 'failed' and left this with
+    #     nothing to see.
+    # Rows that were genuinely SERVING ('loaded', or a watchdog restore in
+    # flight) are deliberately left to the call below, which records
+    # prior_status so the watchdog restores them.
+    await reconcile_stranded_models(settings, app.state.supervisor)
+
+    # #266 — a settings PATCH could, before tonight's fix, write an
+    # extra_env/extra_args value POST /api/models would have refused (a
+    # hard-locked key, or either column in a shape register never allowed).
+    # Independent of the transient-status sweep above: the poisoning has
+    # nothing to do with whether a process is or was live, so this checks
+    # every row. Runs here — before the app accepts its first HTTP request —
+    # so the log naming the affected model arrives before any load attempt
+    # or models-list poll can hit the failure it explains. See the module
+    # comment in app/runtime/boot_reconcile.py for why this strips rather
+    # than only logs.
+    await reconcile_poisoned_extra_fields(settings)
+    # #286: promote a legacy --data-parallel-size flag in extra_args into the columns.
+    await reconcile_legacy_data_parallel_rows(settings)
+    # Same for saved user templates (they would otherwise 422 every register).
+    await reconcile_legacy_template_parallel_flags(settings)
+
+    async with open_db(settings.db_path) as db:
+        await ModelRepo(db).mark_runtime_dead_on_startup()
+        await RuntimeRepo(db).clear_all()
+        # A stress run is an in-process asyncio task, so it dies with the
+        # warden. A row left 'running' would block the cooldown forever AND
+        # carry a search bracket that was never confirmed -- publishing its
+        # lower bound would understate the limit at full confidence.
+        #
+        # Deliberately AFTER reconcile_stranded_models (#236): a run that died
+        # mid-load leaves both a stress row and a model row stranded, and the
+        # model is the one an operator will look at first.
+        interrupted = await StressRunRepo(db).mark_interrupted_on_startup()
+        if interrupted:
+            logging.getLogger(__name__).warning(
+                "stress: marked %d run(s) interrupted -- the warden restarted "
+                "while they were in progress",
+                interrupted,
+            )
+
+    # The watchdog stands down for a model under a live lease
+    # (``watchdog.wants_restart`` reads ``app_state.stress_leases``), so this
+    # must exist before ``run_watchdog_forever`` starts below. Cleared
+    # explicitly rather than relying on the registry being fresh: leases are
+    # in-memory precisely because nothing that outlives this process may hold
+    # one, and boot is where that is asserted.
+    from app.stress.lease import LeaseRegistry
+
+    app.state.stress_leases = LeaseRegistry()
+    app.state.stress_leases.clear_all()
+
+    from app.proxy.tokenizers import TokenizerCache
+
+    app.state.tokenizers = TokenizerCache()
+
+    # S5 (#104) — STRICT priority scheduler. An in-process singleton because
+    # the warden runs a single uvicorn worker per pod; if we ever scale
+    # workers, swap for a Redis-backed implementation (see
+    # app/proxy/scheduler.py module docstring).
+    from app.proxy.scheduler import PriorityScheduler
+
+    app.state.scheduler = PriorityScheduler()
+
+    # #286 — per-rank in-flight counts + routing counters for data-parallel
+    # models. In-process for the same single-worker reason as the scheduler.
+    from app.proxy.dp_affinity import DpRoutingState
+
+    app.state.dp_routing = DpRoutingState()
+    from app.proxy.dp_affinity import PrefixMemory
+
+    app.state.prefix_memory = PrefixMemory()
+    from app.cache_obs.index import PrefixIndex
+
+    # Content prefix index for cache observation (spec 2026-10-07 §2).
+    app.state.cache_index = PrefixIndex()
+    from app.stats.prefill_model import PrefillModelState
+
+    app.state.prefill_model = PrefillModelState()
+    from app.proxy.routes_dp import RankScrapeCache
+
+    app.state.dp_rank_scrape_cache = RankScrapeCache()
+
+    # #287 — Claude Code model router: in-process rule cache / breakers /
+    # counters (single worker, like the two above) and the ONE shared httpx
+    # client its passthrough leg uses. Long generations are legitimate, so only
+    # connect is bounded; no redirects, no proxy env surprises.
+    from app.router.passthrough import make_relay_client
+    from app.router.state import RouterState
+
+    app.state.router = RouterState()
+    app.state.router_http = make_relay_client()
+
+    # #279 stage 2 -- one pooled httpx client per engine run for the /v1 proxy.
+    from app.proxy.upstream import UpstreamClients
+
+    app.state.upstream_clients = UpstreamClients()
+
+    # S8 (#117) — chat playground singletons. ``playground_store`` caches
+    # the `vw-playground` bearer plaintext server-side (browser never sees
+    # it). ``chat_active_requests`` is a counter the Playwright suite polls
+    # to verify abort-cleanup. Both are process-local for the same reason
+    # the scheduler is — single uvicorn worker.
+    from app.chat.active_requests import ActiveRequestCounter
+    from app.chat.playground_store import PlaygroundStore
+
+    app.state.playground_store = PlaygroundStore()
+    app.state.chat_active_requests = ActiveRequestCounter()
+
+    # God mode (live prompt/output viewer) — in-memory broadcast hub. Always
+    # instantiated (cheap); the proxy taps only publish when
+    # settings.godmode_enabled is true, so when off the hot path never touches
+    # it. Bounds are read once here from settings.
+    from app.proxy.godmode import GodModeHub
+
+    app.state.godmode_hub = GodModeHub(
+        ring_events=settings.godmode_ring_events,
+        ring_chars=settings.godmode_ring_chars,
+    )
+
+    # God-mode media store (inline images) — out-of-band blob store so image
+    # payloads never inflate the event ring. Always instantiated (cheap);
+    # only written when settings.godmode_enabled is true.
+    from app.proxy.godmode import GodModeMediaStore
+
+    app.state.godmode_media = GodModeMediaStore(
+        store_chars=settings.godmode_media_store_chars,
+        max_item_chars=settings.godmode_max_image_chars,
+    )
+
+    # Live request registry (feature/live-stats-dashboard, Plane B). In-process,
+    # single-worker, lock-light — tracks every in-flight /v1 request with token
+    # name + client IP + context tokens for GET /api/stats/requests. dev-2 hooks
+    # register/deregister into app/proxy/routes.py::_forward (fail-open).
+    from app.proxy.request_registry import RequestRegistry
+
+    app.state.request_registry = RequestRegistry()
+    from app.proxy.session_turns import SessionTurns
+
+    app.state.session_turns = SessionTurns()
+
+    # Requests that have COMPLETED. The registry holds only in-flight ones and
+    # drops each in the streaming `finally`, taking its duration, TTFT and
+    # finish reason with it. They go to SQLite (request_history) through a
+    # queue: the proxy enqueues from `_deregister` and never touches the DB
+    # on the slot-release path; the writer task below drains in batches. This
+    # replaced an in-memory ring that kept 15 minutes and died with the
+    # process -- see app/stats/request_history.py for why.
+    from app.stats.request_history import RequestHistoryStore
+
+    request_history = RequestHistoryStore(settings.db_path)
+    app.state.request_history = request_history
+
+    # #279 stage 3 -- request/usage counters and token last-used accumulate in
+    # memory and are written once a second (and at shutdown, below).
+    from app.proxy.ledger import Ledger
+
+    app.state.ledger = Ledger(settings.db_path)
+
+    from app.proxy.token_cache import TokenCache
+
+    app.state.token_cache = TokenCache()
+
+    # #293 -- the models table, so /v1 resolves a model without a DB read.
+    from app.proxy.model_cache import ModelCache
+
+    app.state.model_cache = ModelCache()
+
+    # Admin-token audit trail (#258). Same shape and the same reason as the
+    # history writer above: AdminAuditMiddleware enqueues a finished request
+    # and never touches the database on the response path; the flusher below
+    # drains the queue in batches, one transaction each, and flushes what is
+    # queued when it is cancelled at shutdown.
+    from app.auth.admin_audit import AdminAuditWriter
+
+    admin_audit = AdminAuditWriter(settings.db_path)
+    app.state.admin_audit = admin_audit
+
+    from app.runtime.stats_pruner import run_pruner_forever
+    from app.runtime.stats_sampler import run_sampler_forever
+    from app.runtime.watchdog import run_watchdog_forever
+
+    sampler_task = asyncio.create_task(run_sampler_forever(settings))
+    pruner_task = asyncio.create_task(run_pruner_forever(settings))
+    watchdog_task = asyncio.create_task(run_watchdog_forever(settings, app.state))
+    history_task = asyncio.create_task(request_history.run_forever())
+    ledger_task = asyncio.create_task(app.state.ledger.run_forever())
+    from app.proxy.routes_dp import run_rank_scraper
+    from app.stats import prefill_model as _prefill_model
+
+    rank_scraper_task = asyncio.create_task(run_rank_scraper(app.state))
+    prefill_task = asyncio.create_task(
+        _prefill_model.run_forever(app.state.prefill_model, settings.db_path)
+    )
+    audit_task = asyncio.create_task(admin_audit.run_forever())
+
+    # Chat2 (2026-08-23) — orphan/TTL/LRU collector for attachments (spec §3).
+    # Same "log and keep going" shape as the other background loops above.
+    from app.chat2.gc import run_gc_forever
+
+    gc_task = asyncio.create_task(run_gc_forever(settings))
+    app.state.chat2_gc_task = gc_task
+
+    # CI audit A1 (#270) — the model routes' background runners (the pull,
+    # start_engine and unload runners in app/models/routes_api.py) register
+    # themselves here. A bare asyncio.create_task is only weakly referenced,
+    # so without this set the finally below could not reach them.
+    app.state.model_bg_tasks = set()
+
+    try:
+        yield
+    finally:
+        # CI audit A1 (#270) — cancel + gather the model routes' background
+        # runners BEFORE the DB-using loops stop. A shutdown mid-unload used
+        # to abandon the runner: it outlived the app, kept polling (or
+        # holding an open_db connection) after the loop closed — the "Event
+        # loop is closed" flakes — and skipped the terminal row write and the
+        # port release. Finished runners have already discarded themselves
+        # via their done callback; the rest are cancelled and awaited here
+        # so none of them outlives the lifespan.
+        bg_tasks = list(app.state.model_bg_tasks)
+        if bg_tasks:
+            for task in bg_tasks:
+                task.cancel()
+            await asyncio.gather(*bg_tasks, return_exceptions=True)
+        for _closer in (app.state.router_http.aclose, app.state.upstream_clients.aclose_all):
+            try:
+                await _closer()
+            except Exception:  # noqa: BLE001 -- one failed close must not skip the rest
+                logging.getLogger(__name__).warning(
+                    "shutdown: http client close failed", exc_info=True
+                )
+        # #279 stage 3 -- write what the ledger still holds while the DB is
+        # usable, before the loops stop. The loop cancel below also makes one
+        # last bounded (2 s) flush, for records that settle after this one.
+        # Bounded (asyncio.timeout, not wait_for: see database.py on wait_for
+        # swallowing a cancel): the ledger connection waits a held write lock
+        # for its 2 s busy_timeout per attempt, and shutdown must not run past
+        # the container's grace period.
+        try:
+            async with asyncio.timeout(5):
+                await app.state.ledger.flush()
+        except Exception:  # noqa: BLE001 -- shutdown must proceed (TimeoutError included)
+            logging.getLogger(__name__).warning("ledger: final flush failed", exc_info=True)
+        sampler_task.cancel()
+        pruner_task.cancel()
+        watchdog_task.cancel()
+        gc_task.cancel()
+        # The history writer flushes what is queued on cancellation, so a
+        # request that finished a moment before shutdown is not lost. The
+        # admin-audit flusher does the same for its rows (#258).
+        history_task.cancel()
+        ledger_task.cancel()
+        prefill_task.cancel()
+        rank_scraper_task.cancel()
+        audit_task.cancel()
+        await asyncio.gather(
+            sampler_task,
+            pruner_task,
+            watchdog_task,
+            gc_task,
+            history_task,
+            ledger_task,
+            prefill_task,
+            rank_scraper_task,
+            audit_task,
+            return_exceptions=True,
+        )
+
+        # Chat2 detached turns — cancel still-running turn runners FIRST so
+        # their CancelledError path persists an 'aborted' tail (shielded, so
+        # this really waits for the persist) and releases the chat locks
+        # while the loop is still alive. Runs before the _BACKGROUND grace
+        # below because the runners live in that same set.
+        live_turns = getattr(app.state, "chat2_live_turns", None)
+        if live_turns is not None:
+            await live_turns.shutdown()
+
+        # Chat2 (2026-08-23) review finding — the turn endpoint's fire-and-forget
+        # persistence tasks (app.chat2.routes_turn._BACKGROUND) are kept alive by
+        # a strong ref specifically so they survive their originating request's
+        # cancellation (see that module's docstring). Nothing else awaits them,
+        # so without this the app can shut down mid-persist and drop an
+        # assistant row/ledger entry. Give them a short grace period to finish
+        # instead of hanging shutdown on them forever. Note `asyncio.wait_for`
+        # DOES cancel what it is waiting on when the timeout fires: a task
+        # still running after 5s is cancelled, not left alone — the warning
+        # below is the record that a persist may have been cut short.
+        from app.chat2.routes_turn import _BACKGROUND
+
+        if _BACKGROUND:
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(*_BACKGROUND, return_exceptions=True),
+                    timeout=5.0,
+                )
+            except TimeoutError:
+                logging.getLogger(__name__).warning(
+                    "chat2: %d background turn-persistence task(s) still running "
+                    "at shutdown after 5s grace period",
+                    len(_BACKGROUND),
+                )
+
+
+def build_app() -> FastAPI:
+    app = FastAPI(
+        title="LM Warden",
+        lifespan=lifespan,
+        # No anonymous API map (spec 2026-09-19, decision 11). The document is
+        # served at GET /api/openapi.json behind a session or an admin token
+        # (app/openapi_spec.py); CI still builds it in-process via app.openapi().
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+    )
+
+    from app.setup import routes_api as setup_routes_api
+
+    app.include_router(setup_routes_api.router)
+
+    from app.models import routes_api as models_routes_api
+
+    app.include_router(models_routes_api.router)
+
+    # #286 — GET /api/models/{id}/dp-routing (replica routing + per-rank metrics).
+    from app.proxy import routes_dp as proxy_routes_dp
+
+    app.include_router(proxy_routes_dp.router)
+
+    from app.models import routes_logs as models_routes_logs
+
+    app.include_router(models_routes_logs.router)
+
+    # Model stress test (docs/superpowers/specs/2026-09-03-model-stress-test-design.md).
+    # Shares the /api/models prefix: POST /{id}/stress starts a run,
+    # GET /{id}/capabilities returns the measured record. A signed-in
+    # session or an admin token only -- a run deliberately crashes the
+    # engine, so it is not reachable with a /v1 API token (see
+    # app/stress/routes_api.py::require_operator).
+    from app.stress import routes_api as stress_routes_api
+
+    app.include_router(stress_routes_api.router)
+
+    # #177: engine-version dropdown — GET /api/templates/engine-versions.
+    # Backs the try-stack vLLM-version field with the published
+    # vllm/vllm-openai semver tags (6h family-keyed cache over Docker Hub).
+    from app.templates import routes_api as templates_routes_api
+
+    app.include_router(templates_routes_api.router)
+
+    from app.auth.routes import router as auth_router
+
+    app.include_router(auth_router)
+
+    from app.tokens import routes_api as tokens_routes_api
+
+    app.include_router(tokens_routes_api.router)
+
+    # Claude Code model router control API (#287).
+    from app.router import routes_api as router_routes_api
+
+    app.include_router(router_routes_api.router)
+
+    # Connect a client: GET /api/connect/clients, the per-tool setup recipes
+    # (docs/superpowers/plans/2026-10-04-connect-clients.md).
+    from app.connect import routes_api as connect_routes_api
+
+    app.include_router(connect_routes_api.router)
+
+    # Admin tokens (spec 2026-09-19): Settings -> Admin tokens. Session-only.
+    from app.admin_tokens import routes_api as admin_tokens_routes_api
+
+    app.include_router(admin_tokens_routes_api.router)
+
+    from app import openapi_spec
+
+    app.include_router(openapi_spec.router)
+
+    from app.stats import routes_api as stats_routes_api
+
+    app.include_router(stats_routes_api.router)
+
+    from app.stats import routes_forest as stats_routes_forest
+
+    app.include_router(stats_routes_forest.router)
+
+    # Live realtime stats dashboard (feature/live-stats-dashboard). Two
+    # independent planes behind a fixed API contract (docs/live-stats-spec.md):
+    #   Plane A — engine /metrics scraper SSE:  GET /api/stats/live
+    #   Plane B — live per-request registry:     GET /api/stats/requests
+    # Registered here up front so the two backend slices never collide in
+    # main.py. Both surface on the NEW /ui/stats/live page; /stats is untouched.
+    from app.stats import live_engine as stats_live_engine
+    from app.stats import live_requests as stats_live_requests
+
+    app.include_router(stats_live_engine.router)
+    app.include_router(stats_live_requests.router)
+
+    # HF cache management — vllm-warden#114. Lives next to stats because
+    # the UI surfaces it as a section on /stats; the routes are
+    # JWT-gated like every other /api/*.
+    from app.cache import routes_api as cache_routes_api
+
+    app.include_router(cache_routes_api.router)
+
+    from app.settings import routes_api as settings_routes_api
+
+    app.include_router(settings_routes_api.router)
+    app.include_router(settings_routes_api.model_settings_router)
+
+    from app.proxy import routes as proxy_routes
+
+    app.include_router(proxy_routes.router)
+
+    # OpenAI Responses API (Codex CLI): the same forward, Responses-shaped.
+    # BEFORE routes_messages, whose /v1/{rest:path} catch-all would shadow it.
+    from app.proxy import routes_responses as proxy_routes_responses
+
+    app.include_router(proxy_routes_responses.router)
+
+    # Anthropic Messages API (#281): the same forward, Anthropic-shaped.
+    from app.proxy import routes_messages as proxy_routes_messages
+
+    app.include_router(proxy_routes_messages.router)
+
+    from app.proxy import routes_godmode as proxy_routes_godmode
+
+    app.include_router(proxy_routes_godmode.router)
+
+    from app.system import routes_version as system_routes_version
+
+    app.include_router(system_routes_version.router)
+
+    from app.system import routes_gpus as system_routes_gpus
+
+    app.include_router(system_routes_gpus.router)
+
+    # #177: active engine-driver capability (can it swap the engine image to a
+    # pinned vLLM version?). Consumed by the Try-stack panel to disable +
+    # explain the version selector under the in-container subprocess driver.
+    from app.system import routes_engine as system_routes_engine
+
+    app.include_router(system_routes_engine.router)
+
+    # #148: static system inventory (CPU/RAM/GPU/OS/Docker) consumed by
+    # the /stats System Configuration panel. 60s in-process cache lives
+    # on app.state.system_info_cache (lazy-init on first request).
+    from app.system import routes_info as system_routes_info
+
+    app.include_router(system_routes_info.router)
+
+    from app.header import routes_api as header_routes_api
+
+    app.include_router(header_routes_api.router)
+
+    # S4: built-in tuning presets ("Apply preset" dropdown on /settings).
+    # Read-only — FE applies preset.settings via the existing PATCH
+    # /api/models/{id}/settings endpoint, no new write path.
+    from app.presets import routes_api as presets_routes_api
+
+    app.include_router(presets_routes_api.router)
+
+    # S8 (#117): /chat playground — JWT-authed SSE proxy + admin
+    # active-requests diagnostic. Mounts /api/chat/* and
+    # /api/admin/active-requests; routes are in app/chat/routes_api.py.
+    from app.chat import routes_api as chat_routes_api
+
+    app.include_router(chat_routes_api.router)
+
+    # #155 — Unified-port architecture: public landing page at /_landing
+    # served behind Caddy's `handle /` rewrite. Route is intentionally
+    # NOT JWT-gated (the whole point is that an anonymous browser hitting
+    # the unified-port root sees a useful page). Opt-out via the
+    # `landing_page_enabled` runtime setting → route returns 404.
+    # The same router carries the page's assets (/_landing/assets/*) and the
+    # crawler / LLM text routes (/robots.txt, /sitemap.xml, /llms*.txt).
+    from app.landing import routes as landing_routes
+
+    app.include_router(landing_routes.router)
+
+    # Unknown website paths get the site's own HTML 404 (when the website is
+    # on); everything else, the API included, keeps FastAPI's JSON body.
+    from fastapi.exception_handlers import http_exception_handler
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+    from starlette.responses import Response
+
+    async def _site_404(request: Request, exc: Exception) -> Response:
+        assert isinstance(exc, StarletteHTTPException)
+        if exc.status_code == 404:
+            page = await landing_routes.not_found_response(request)
+            if page is not None:
+                return page
+        return await http_exception_handler(request, exc)
+
+    app.add_exception_handler(StarletteHTTPException, _site_404)
+
+    # Chat2 (2026-08-23) — T5 image attachments (upload/serve/delete under
+    # /api/chat2/attachments) + T13 chats CRUD/fork/defaults/models/budget
+    # under /api/chat2/chats, /defaults, /models, /budget, /_whoami + T14 the
+    # streaming turn (POST /api/chat2/chats/{id}/turns).
+    from app.chat2 import routes_attachments as chat2_routes_attachments
+    from app.chat2 import routes_chats as chat2_routes_chats
+    from app.chat2 import routes_turn as chat2_routes_turn
+    from app.chat2.body_limit import Chat2BodyLimitMiddleware
+    from app.chat2.budget import AlwaysAllow
+    from app.chat2.live import LiveTurns
+    from app.chat2.locks import TurnLocks
+
+    # In-process singletons — single uvicorn worker, same rationale as
+    # the scheduler above. TurnLocks enforces one turn in flight
+    # per chat; AlwaysAllow is the warden's no-op budget policy (the Hub
+    # wires its rolling-window budget checker in here instead). LiveTurns is
+    # the detached-turn registry (feat/chat2-detached-turns): a turn's SSE
+    # frames live here so a disconnected client can re-attach and the runner
+    # survives navigation/reload.
+    app.state.chat2_turn_locks = TurnLocks()
+
+    # Brute-force throttles for login and bearer secrets (app/auth/throttle.py).
+    # In-process by design: one uvicorn worker, and a restart clearing every
+    # lock is the operator's escape hatch.
+    from app.auth.throttle import BearerThrottle, LoginThrottle
+
+    app.state.login_throttle = LoginThrottle()
+    app.state.bearer_throttle = BearerThrottle()
+    app.state.chat2_budget = AlwaysAllow()
+    app.state.chat2_live_turns = LiveTurns()
+
+    app.include_router(chat2_routes_attachments.router)
+    app.include_router(chat2_routes_chats.router)
+    app.include_router(chat2_routes_turn.router)
+
+    # Middleware registration order matters: in Starlette the LAST-added middleware
+    # (whether via @app.middleware("http") or app.add_middleware() — the decorator
+    # is sugar for the latter) is the OUTERMOST wrapper (first to run on every
+    # request).
+    #
+    # Desired request-path order:
+    #   SecurityHeadersMiddleware (outermost — adds headers to every response)
+    #   Chat2BodyLimitMiddleware (reject an oversized declared
+    #                             Content-Length on POST /api/chat2/attachments
+    #                             before anything else, including CSRF, runs)
+    #   AdminAuditMiddleware     (wraps the CSRF pair; pure ASGI; reads
+    #                             request.state.admin_audit after the app
+    #                             returns)
+    #   PathBypass               (/v1/* skips the CSRF pair below -- bearer
+    #                             authenticated, no cookie, and the pair's
+    #                             BaseHTTPMiddleware re-wraps every streamed
+    #                             chunk; everything else goes through it)
+    #   ensure_csrf_id           (populates request.state.csrf_id / csrf_token)
+    #   csrf_check               (validates X-CSRF-Token after csrf_id is set)
+    #
+    # Therefore: the CSRF stack is added first (→ innermost; inside it
+    # csrf_check is built first, ensure_csrf_id wraps it), AdminAuditMiddleware
+    # next, Chat2BodyLimitMiddleware next, SecurityHeadersMiddleware last
+    # (→ outermost).
+
+    from starlette.middleware.base import BaseHTTPMiddleware
+    from starlette.types import ASGIApp
+
+    from app.proxy.asgi_bypass import PathBypass
+
+    def _csrf_stack(app: ASGIApp) -> ASGIApp:
+        # Names are looked up at call time so tests can wrap them.
+        inner = BaseHTTPMiddleware(app, dispatch=lambda r, n: csrf_check(r, n))
+        inner = BaseHTTPMiddleware(inner, dispatch=lambda r, n: ensure_csrf_id(r, n))
+        return PathBypass(app, inner=inner, prefixes=("/v1/",))
+
+    app.add_middleware(_csrf_stack)
+
+    # Admin-token audit trail (spec 2026-09-19, decision 7). Pure ASGI, so a
+    # streamed response passes through untouched and the row is written after
+    # its last byte. Added here: it wraps the CSRF pair, and the chat2 body
+    # limit below stays outside it.
+    from app.auth.admin_audit import AdminAuditMiddleware
+
+    app.add_middleware(AdminAuditMiddleware)
+
+    # Chat2 (2026-08-23) — T5 fix round 2: FastAPI resolves route dependencies
+    # (the UploadFile/Form parameters on POST /api/chat2/attachments) by
+    # awaiting Request.form(), which spools the ENTIRE multipart body before
+    # the route function body ever runs — an in-route Content-Length check
+    # alone is too late to stop a huge declared upload from being read onto
+    # disk/into memory. This raw-ASGI middleware runs ahead of FastAPI's
+    # routing entirely, so it can reject on the header alone.
+    app.add_middleware(Chat2BodyLimitMiddleware)
+
+    # Security headers (nosniff, Referrer-Policy, framing, Permissions-Policy,
+    # a default CSP, HSTS over HTTPS only) on every response -- including the
+    # body limit's 413 -- so it is outermost. Pure ASGI: streams untouched.
+    # See app/utils/security_headers.py.
+    from app.utils.security_headers import SecurityHeadersMiddleware
+
+    app.add_middleware(SecurityHeadersMiddleware)
+
+    @app.get("/api/csrf")
+    async def get_csrf_token(request: Request) -> dict:
+        return {"csrf": request.state.csrf_token}
+
+    @app.get("/healthz")
+    async def healthz() -> dict[str, object]:
+        # Always 200 while the control plane is up: this is the container's
+        # liveness probe, and failing it over lost GPU telemetry would get a
+        # still-serving engine restarted. The GPU state rides along for
+        # operators and the Hub to read (#255) -- the last-known result of
+        # the GPU probe, from memory, never a fresh nvidia-smi call.
+        from app.system.gpu import gpu_probe_health
+
+        return {"ok": True, "gpu": gpu_probe_health().as_dict()}
+
+    # After every route exists: the bearer scheme and the public exemptions are
+    # computed from the mounted routes.
+    openapi_spec.install_openapi(app)
+
+    # #287: the /v1 catch-all must stay the last /v1 route. Cheap guard, logs only.
+    shadowed = proxy_routes_messages.find_routes_after_catch_all(app)
+    if shadowed:
+        logging.getLogger(__name__).error(
+            "router: /v1 routes registered after the catch-all are unreachable: %s", shadowed
+        )
+
+    return app
+
+
+app = build_app()

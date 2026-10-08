@@ -1,0 +1,1 @@
+ALTER TABLE models ADD COLUMN extra_env TEXT NOT NULL DEFAULT '{}';

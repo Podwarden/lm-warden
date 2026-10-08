@@ -1,0 +1,14 @@
+-- Which inference program serves this model (sub-project B, decision D1).
+--
+-- NULLABLE ON PURPOSE, and deliberately NOT backfilled (decision D6). Every
+-- row written before this migration has backend = NULL, and
+-- app/db/repos/models.py::_decode_row maps NULL -> 'vllm' through
+-- app/runtime/backends/registry.get(None). That is the same discipline the
+-- 0014/0015/0022 columns already use, and it means this migration cannot
+-- change the behaviour of a single existing row: there is no UPDATE, so there
+-- is nothing to get wrong on a volume holding a live database.
+--
+-- The value is a backend NAME, not an engine version. The engine version axis
+-- is engine_channel / engine_vllm_version / engine_image from 0022 and is
+-- generalised separately (sub-project F).
+ALTER TABLE models ADD COLUMN backend TEXT;

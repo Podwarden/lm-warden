@@ -1,0 +1,9 @@
+node_modules/
+.next/
+out/
+tsconfig.tsbuildinfo
+*.log
+.env.local
+.env.production
+next-env.d.ts
+.svg-dumps/

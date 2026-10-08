@@ -1,0 +1,17 @@
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+aiosqlite==0.20.0
+bcrypt==4.2.1
+aiofiles==24.1.0
+httpx==0.28.1
+python-multipart==0.0.20
+PyJWT[crypto]==2.9.0
+# Python Docker SDK — required by the DockerSocketDriver (#160) to run the
+# vLLM engine as a sibling container over the mounted host docker socket.
+# GPUs are mapped via docker.types.DeviceRequest (the SDK has no `gpus=`
+# kwarg; that's a CLI-only flag). Only imported when engine_driver=="docker";
+# the default local-subprocess path never touches it.
+docker==7.1.0
+# Chat2 image attachments (#chat2 T5) — server-side re-encode strips EXIF/
+# ancillary chunks and rejects polyglots before anything touches disk.
+Pillow==11.0.0

@@ -1,0 +1,112 @@
+    <section class="sec plate-sec" aria-labelledby="router-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <h2 id="router-title">One <code>ANTHROPIC_BASE_URL</code>, two places an answer can come from.</h2>
+          <p>
+            Every request Claude Code sends to Anthropic counts against your plan’s usage limits, or
+            is billed per token on an API key, and takes its prompt, your code included, off your
+            machine. Many of those requests are small. Answer them on cards you already own and they
+            cost electricity, they don’t count toward your limits, and their prompts stay on your host.
+          </p>
+          <p>
+            Claude itself never runs here. A rule names the Claude models this box answers for,
+            <code>claude-haiku*</code> for example, and a model you loaded answers in their place, under
+            the name Claude Code asked for. Anything else, Opus included, is passed to Anthropic byte
+            for byte on your own login, streaming and all. Your warden key rides in its own header, so
+            the login is never touched, and nothing is relayed for a key without the flag
+            “May relay to Anthropic”.
+          </p>
+          <p>
+            Is a small model good enough? We have not measured answer quality, so this is judgement,
+            not a benchmark. Claude Code uses its Haiku-class model for lighter background work, and a
+            small local model is a reasonable stand-in there and for simple, well-specified edits.
+            For changes across many files, debugging and long plans, keep Sonnet and Opus on
+            Anthropic, which is what the catch-all does unless you add a rule. A bigger model on bigger
+            cards moves that line; our Claude Code and replica measurements below used a 4B.
+          </p>
+          <p>
+            Size the context for Claude Code, not for chat: its first turn in our session was 38,167
+            tokens, so the local model needs well over 40k tokens of context.
+          </p>
+        </div>
+
+        <figure class="diagram-fig">
+          <div class="diagram swap-1200">
+            <div class="v-wide">
+{{fig:d1-flow}}
+            </div>
+            <div class="v-narrow">
+{{fig:d1-flow-narrow}}
+            </div>
+          </div>
+          <!-- src: docs/operating.md, "Claude Code model router (#287)": two headers, rules first match wins, passthrough strips x-lmwarden-*, fallback before the first byte or a 529, breaker 3 failures and 60 s -->
+          <figcaption><b>Fig.&nbsp;2</b>Where a request goes. Rules are tried in order and the first match wins. A local answer passes the same scheduler and replica router as any other request; a replica is one full copy of the model, here one per GPU. A local failure before the first byte goes to Anthropic, or comes back as a 529 that Claude Code retries, and after 3 failures in a row the model’s breaker opens: for 60&#8239;s nothing is sent to it.</figcaption>
+        </figure>
+        <p class="vh">In words: Claude Code sends the request to the warden with its own Anthropic login in Authorization and the warden key in X-LMWarden-Key. The warden tries its rules in order. A request for a model a rule names is translated, queued by the scheduler and sent by the replica router to one vLLM replica. Any other request, such as Opus, is passed on to api.anthropic.com with the login forwarded and the warden key removed. If the local leg fails before its first byte, the request goes to Anthropic, or the rule refuses it with a 529 that Claude Code retries.</p>
+
+        <div class="connect">
+          <!-- src: docs/operating.md, "Setting up Claude Code" (host replaced) -->
+          <pre class="term" tabindex="0" aria-label="Three shell lines that point Claude Code at a warden">export ANTHROPIC_BASE_URL=<wbr>https://<wbr>warden.example
+export ANTHROPIC_CUSTOM_HEADERS=<wbr><span class="nw">"X-LMWarden-Key:</span> vw_…"
+claude</pre>
+          <p class="src">Claude Code 2.1.227 or newer. Keep your normal <code>claude</code> login; the key goes in its own header, not in <code>ANTHROPIC_API_KEY</code>.</p>
+        </div>
+
+      </div>
+
+        <figure>
+          <div class="bleed">
+            <div class="stage">
+              <img src="{{a:shot-router-rules.webp}}" width="1270" height="500" loading="lazy" decoding="async"
+                   alt="The Router page of the console. A green banner reads “Routing normally” and “96% answered locally since 13:38”. Under “Where each Claude model goes. First match wins”, rule 1 sends claude-haiku* to the loaded model qwen3-4b-dp4, with “If it fails: Anthropic” and “Thinking off”. The last row is the catch-all: every other Claude model and /v1 path goes to Anthropic on the user’s own login and needs a key with “May relay to Anthropic”. The Traffic panel counts 107 local, 2 Anthropic pass-through, 0 fell back to Anthropic and 2 refused or error, and lists two reasons, no_upstream_credential and relay_not_allowed, one each.">
+              <svg class="leads" viewBox="0 0 1270 500" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M9 0 V286 H31"/>   <circle cx="48" cy="286" r="17"/>
+                <path d="M9 500 V367 H31"/> <circle cx="48" cy="367" r="17"/>
+              </svg>
+              <!-- src: shot-router-rules.webp (rule number "1" beside "claude-haiku* → qwen3-4b-dp4"; the "*" chip on "Every other Claude model and /v1 path → Anthropic on the user's own login") -->
+              <span class="tape up r" style="--x:0.71%">First match wins; every other model goes to Anthropic</span>
+              <!-- src: shot-router-rules.webp ("Anthropic on the user's own login", "Needs a key with May relay to Anthropic") -->
+              <span class="tape down r" style="--x:0.71%;--rot:-0.5deg">Anthropic is reached on the user’s own login</span>
+            </div>
+          </div>
+          <!-- date: recorded 4 October 2026 on the box described below, from a real Claude Code 2.1.289 session; the key names in the panel are test keys. -->
+          <div class="wrap">
+            <figcaption><b>Fig.&nbsp;3</b>The Router page after the warden had been running since 13:38: “Routing normally”, with 96% of requests answered locally since the restart. One rule sends <code>claude-haiku*</code> to a local model and the catch-all passes everything else to Anthropic; rules are numbered in the order they are tried. The Traffic panel counts 107 local, 2 passed through, 0 fell back and 2 refused.<span class="scroll-hint"> Scroll the image sideways to see the whole page.</span></figcaption>
+          </div>
+        </figure>
+
+        <div class="wrap">
+        <p class="reading">
+          Expect the first turn to be the slow one. In an earlier session, Claude Code’s first turn
+          was 38,167 tokens and the local model was loaded with a 32,768-token context, so the engine
+          refused it (<code>status_400</code>) and the request went to Anthropic instead. With the
+          context raised to 65,536 tokens and an fp8 KV cache (the attention cache kept at 8 bits,
+          half the memory), the 4B model on 16&#8239;GiB cards answered that same turn locally in
+          28&#8239;s, with the whole 38k-token prompt read from cold and nothing in the cache yet. Later turns
+          of a conversation find most of their prompt already in the engine’s cache: the median time
+          to first byte for the <code>claude-haiku*</code> rule in fig.&nbsp;4 is 290&#8239;ms.
+        </p>
+        <!-- src: documents/ROUTING.md ("Router smoke test": live session Claude Code 2.1.289, local 200 in 28.0 s for a 38,167-token first prompt, max_model_len 65536 with fp8 KV; status_400 at 32,768); shot-router-stats.webp (rule claude-haiku* TTFB "290 / 31,897 ms"); shot-router-rules.webp ("Routing normally"; "96% answered locally"; Traffic 107 / 2 / 0 / 2) -->
+        </div>
+
+        <figure>
+          <div class="bleed">
+            <div class="stage">
+              <img src="{{a:shot-router-stats.webp}}" width="1270" height="650" loading="lazy" decoding="async"
+                   alt="The Router activity page. Four counters: local 107, Anthropic pass-through 2, fell back 0, and refused · errors 2 · 0. A table “By rule” gives the rule claude-haiku* to qwen3-4b-dp4 with its local, fell-back and refused counts, latency and time to first byte at p50 and p95, and its breaker state, closed; the pass-through row gives the same timings for the requests passed to Anthropic. A table of local models shows qwen3-4b-dp4 with its breaker closed, and a panel “Fallback reasons” lists no_upstream_credential and relay_not_allowed, one each.">
+              <svg class="leads" viewBox="0 0 1270 650" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M1260 0 V309 H1195"/> <rect x="1127" y="297" width="68" height="24" rx="3"/>
+                <path d="M9 650 V621 H33"/>    <rect x="33" y="607" width="353" height="28" rx="3"/>
+              </svg>
+              <!-- src: shot-router-stats.webp ("closed" breaker pill on the claude-haiku* row) -->
+              <span class="tape up l" style="--x:99.2%;--rot:0.4deg">The breaker for this model: closed</span>
+              <!-- src: shot-router-stats.webp (the "Fallback reasons" panel) -->
+              <span class="tape down r" style="--x:0.71%;--rot:-0.5deg">Why a rule went to Anthropic or was refused, by reason</span>
+            </div>
+          </div>
+          <div class="wrap">
+            <!-- src: shot-router-stats.webp (KPIs 107 / 2 / 0 / 2 · 0; "745 / 32,498 ms", "290 / 31,897 ms", "1,103 / 4,410 ms", "1,100 / 4,364 ms") -->
+            <figcaption><b>Fig.&nbsp;4</b>Router activity for the same period: 107 requests answered locally, 2 passed through to Anthropic, 0 fell back, and 2 refused with 0 errors. Below, latency and time to first byte per rule at p50 and p95, the breaker per local model, and the reasons a rule went to Anthropic or refused. Counters are per process; a restart zeroes them. Recorded on 4&nbsp;October&nbsp;2026.<span class="scroll-hint"> Scroll the image sideways to see the whole page.</span></figcaption>
+          </div>
+        </figure>
+    </section>

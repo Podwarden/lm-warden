@@ -1,0 +1,34 @@
+-- 0021_public_url_setting.sql
+--
+-- Issue #154 — Settings redesign (Phase 2). Subsumes #151.
+--
+-- Adds the `public_url` runtime setting. Used by the frontend's
+-- `getPublicBaseUrl()` helper to render the warden's externally-reachable
+-- base URL inside user-facing snippets (curl examples, OpenAI client
+-- configs, install hints) when the deployment is behind a reverse proxy
+-- and `window.location.origin` doesn't already point at the canonical URL.
+--
+-- This migration is intentionally a no-op at the row level. The
+-- conservative default is "absent row" — when the key isn't set, the FE
+-- falls back to `window.location.origin`, which is the right answer for
+-- every direct-access deployment. Seeding a placeholder would either
+-- be wrong (an arbitrary URL) or noisy (a sentinel the FE then has to
+-- recognise as "treat-as-unset"). The migration file exists to:
+--   * document the new key for grepability;
+--   * serve as a marker for the migration test (`test_migration_0021.py`);
+--   * keep the migration numbering contiguous so future migrations don't
+--     have to reason about a numeric gap.
+--
+-- Validation lives on the FastAPI side in `app/settings/routes_api.py`:
+-- `_url` coercer enforces http(s) scheme + non-empty netloc, strips the
+-- trailing slash before persist, and the route layer wires the new key
+-- into RUNTIME_KEYS with restart_kind `none` (the FE re-reads on every
+-- snippet render — no warden bounce needed).
+--
+-- Rollback: `DELETE FROM settings WHERE key = 'public_url';` returns the
+-- warden to "use origin" behaviour transparently.
+
+-- No-op statement so executescript has something to run. SQLite's
+-- executescript dispatcher tolerates a comment-only file in practice,
+-- but a documented no-op is cheaper than relying on that.
+SELECT 1 WHERE 0;

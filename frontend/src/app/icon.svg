@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Favicon for LM Warden (#152).
+
+  Visual identity matches the navbar brand block: emerald Shield (lucide's
+  `Shield` silhouette, which is also rendered at the top-left of every
+  page) with a white "W" wordmark centred inside it. Using a single SVG
+  keeps the icon sharp on retina; Next.js App Router auto-emits the
+  `<link rel="icon">` tag pointing here. The companion `apple-icon.svg`
+  is a 180×180 reframe of the same composition for iOS home-screen.
+
+  Colours pinned to the Tailwind `emerald-500` we already use throughout
+  the warden chrome (#10b981, RGB 16 185 129). The shield is filled
+  (vs. the outline-only navbar rendering) so the icon reads at 16×16 in
+  the browser-tab strip without the W floating in empty space.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Filled shield silhouette, derived from Lucide's `Shield` path with
+       a closing Z so it can be flood-filled. -->
+  <path fill="#10b981" d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+  <!-- "W" wordmark — drawn as four straight strokes so it stays legible
+       at 16×16. Filled white on the emerald field gives an unambiguous
+       silhouette in both light and dark OS tab strips. -->
+  <path
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="1.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    d="M8.4 9.5 L9.9 14.5 L12 11 L14.1 14.5 L15.6 9.5"
+  />
+</svg>

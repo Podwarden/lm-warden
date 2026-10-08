@@ -1,0 +1,64 @@
+    <section class="sec client" aria-labelledby="tuning-title">
+      <div class="wrap">
+        <h1 id="tuning-title" class="as-h2">Let your coding agent pick the model.</h1>
+        <p class="lede">Choosing a model for your cards means choosing a quantisation, an engine (vLLM or llama.cpp), how to split it across GPUs, how much context to give it, the KV-cache type and whether speculative decoding helps. Each guess costs a download and a load. A coding agent can run that search for you while you do something else, because everything the console does is an API call.</p>
+
+        <h2>Set it up in three steps</h2>
+        <ol>
+          <li><strong>Install LM Warden</strong> on the GPU host (the command is at the bottom of this page) and finish the setup wizard.</li>
+          <li><strong>Issue an admin token</strong> in Settings → Admin tokens, with an expiry of 30 days. Export it as <code>VW_ADMIN_TOKEN</code> and the warden’s address as <code>W</code> in the shell your agent uses.</li>
+          <li><strong>Start your agent</strong>: <a href="/coding-agents/claude-code">Claude Code</a>, <a href="/coding-agents/codex-cli">Codex&nbsp;CLI</a> or another one that can run shell commands. It can use a hosted model for this job; the model it is tuning is the one on your cards.</li>
+        </ol>
+
+        <h2>What the agent uses</h2>
+        <div class="table-wrap"><table class="clients">
+          <thead><tr><th scope="col">Step</th><th scope="col">Endpoint</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">See the cards</th><td><code>GET /api/system/gpus</code></td></tr>
+            <tr><th scope="row">Check a model fits, before downloading</th><td><code>POST /api/models/fit-preview</code></td></tr>
+            <tr><th scope="row">Register, get a starting config</th><td><code>POST /api/models</code>, <code>GET /api/models/{model_id}/suggest-config</code></td></tr>
+            <tr><th scope="row">Pull and load</th><td><code>POST /api/models/{model_id}/pull</code>, <code>POST /api/models/{model_id}/load</code></td></tr>
+            <tr><th scope="row">Measure the real context ceiling</th><td><code>POST /api/models/{model_id}/stress</code>, then <code>POST /api/models/{model_id}/stress/apply</code></td></tr>
+            <tr><th scope="row">Read the warden’s numbers</th><td><code>GET /api/stats/v2/throughput</code>, <code>GET /api/stats/v2/latency</code></td></tr>
+            <tr><th scope="row">Send test traffic</th><td>an inference key from <code>POST /api/tokens</code>, on <code>/v1/chat/completions</code></td></tr>
+          </tbody>
+        </table></div>
+        <p>The agent reads <a href="/agent-guide.md">the agent guide</a> first: a short description of these calls written for a language model, with the mistakes to avoid.</p>
+
+        <h2>Prompts to paste</h2>
+        <p>Replace <code>https://your-warden</code> with your warden’s address, and the capitalised names with models you have in mind.</p>
+
+        <h3>1. Survey the hardware and shortlist models</h3>
+        <div class="cmd"><pre id="prompt-1" tabindex="0">Read https://your-warden/agent-guide.md and follow it. My admin token is in $VW_ADMIN_TOKEN and the warden is at $W.
+List the GPUs this warden may use. Then shortlist three open-weight models from Hugging Face that fit them, for agentic coding with tool calling.
+Check each with POST /api/models/fit-preview and keep only those that fit with at least 65536 tokens of context.
+Show me a table: model, quantisation, engine, GPUs, context, and why. Do not download anything yet.</pre><button class="btn" type="button" data-copy="prompt-1"><span>Copy</span></button></div>
+
+        <h3>2. Choose the engine and layout for one model</h3>
+        <div class="cmd"><pre id="prompt-2" tabindex="0">Read https://your-warden/agent-guide.md and follow it. Credentials are in $VW_ADMIN_TOKEN and $W.
+For the model MODEL_REPO, decide between vLLM and llama.cpp, and between tensor parallel and data parallel replicas on my GPUs.
+Use fit-preview for every layout you consider. Register and load the best two layouts one after the other, send each the same 20 streaming requests through an inference key you issue, and compare time to first token and tokens per second at concurrency 1 and 8.
+Keep the winner loaded, unload the other, revoke the key, and report the numbers.</pre><button class="btn" type="button" data-copy="prompt-2"><span>Copy</span></button></div>
+
+        <h3>3. Find the real limits and apply them</h3>
+        <div class="cmd"><pre id="prompt-3" tabindex="0">Read https://your-warden/agent-guide.md and follow it. Credentials are in $VW_ADMIN_TOKEN and $W.
+The loaded model is MODEL_NAME. Nobody else is using this warden right now.
+Run a quick stress run on it, wait for it to finish, read its capabilities and apply the measured context.
+Then benchmark it at concurrency 1, 4 and 16 with prompts of about 2k and 30k tokens, and give me a table of time to first token and tokens per second.</pre><button class="btn" type="button" data-copy="prompt-3"><span>Copy</span></button></div>
+
+        <h3>4. Compare two candidates on my workload</h3>
+        <div class="cmd"><pre id="prompt-4" tabindex="0">Read https://your-warden/agent-guide.md and follow it. Credentials are in $VW_ADMIN_TOKEN and $W.
+Compare MODEL_A and MODEL_B for my workload: the prompts in ./workload/*.txt.
+Load each in turn with its best layout, replay the prompts at concurrency 4, and record latency, tokens per second, and whether each answer is correct by your judgement.
+Write the results to ./model-comparison.md with a recommendation, and leave the recommended model loaded.</pre><button class="btn" type="button" data-copy="prompt-4"><span>Copy</span></button></div>
+
+        <h2>Before you start</h2>
+        <ul>
+          <li>An admin token has full admin rights over the warden: models, keys and settings. There are no narrower scopes yet. Give it a short expiry.</li>
+          <li>A stress run deliberately crashes an engine to find its limit. Run these prompts on a warden nobody else depends on.</li>
+          <li>Downloads are large. The prompts ask the agent to check fit before pulling, but watch your disk.</li>
+          <li>Revoke the admin token in Settings → Admin tokens when the job is done.</li>
+        </ul>
+        <p class="related">Related: <a href="/coding-agents">coding agents</a> · <a href="/gpu-monitoring">GPU monitoring</a> · <a href="/faq">FAQ</a></p>
+      </div>
+    </section>

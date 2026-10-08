@@ -1,0 +1,14 @@
+{
+  "attempt_id": "att_deadbeef",
+  "cell_id": "phase2-4k-c8-m512",
+  "concurrency": 8,
+  "concurrency_slot": 3,
+  "length_axis": "4k",
+  "max_new": 512,
+  "phase": "phase2",
+  "prompt_idx": 7,
+  "prompt_size": "4k",
+  "request_id": "req-abc123def456",
+  "ts_monotonic": 0.0,
+  "type": "request_started"
+}

@@ -1,0 +1,18 @@
+0.00.009.717 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.010.136 W srv  llama_server: -----------------
+0.00.010.145 W srv  llama_server: CORS is set to allow all origins ('*') and no API key is set
+0.00.010.145 W srv  llama_server: this can be a security risk (cross-origin attacks)
+0.00.010.145 W srv  llama_server: more info: https://github.com/ggml-org/llama.cpp/pull/25655
+0.00.010.145 W srv  llama_server: -----------------
+0.00.011.590 I srv    load_model: loading model '/models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf'
+0.00.186.423 W common_fit_params: failed to fit params to free device memory: was unable to fit model into system memory by reducing context, abort
+0.01.861.393 W llama_context: n_ctx_seq (1000192) > n_ctx_train (2048) -- possible training context overflow
+0.02.084.373 E ggml_aligned_malloc: insufficient memory (attempted to allocate 21488.50 MB)
+0.02.084.385 E ggml_backend_cpu_buffer_type_alloc_buffer: failed to allocate buffer of size 22532325376
+0.02.084.386 E alloc_tensor_range: failed to allocate CPU buffer of size 22532325376
+0.02.084.471 E llama_init_from_model: failed to initialize the context: failed to allocate buffer for kv cache
+0.02.084.475 E cmn  common_init_: failed to create context with model '/models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf'
+0.02.084.479 E cmn  common_init_: failed to create context with model '/models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf'
+0.02.084.484 E srv    load_model: failed to create_context with model '/models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf'
+0.02.084.492 I srv    operator(): operator(): cleaning up before exit...
+0.02.085.240 E srv  llama_server: exiting due to model loading error

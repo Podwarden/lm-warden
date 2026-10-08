@@ -1,0 +1,76 @@
+    <section class="sec tight" aria-labelledby="small-title">
+      <div class="wrap">
+        <h1 id="small-title" class="as-h2">Smaller things you’ll find once it’s running.</h1>
+        <dl class="small-things">
+          <div><dt>God mode</dt><dd>Watch one key’s prompts and responses as they happen, from a dock on its page. Held in memory only, streamed only while the dock is open, and off unless you set <code>VW_GODMODE_ENABLED</code>.</dd></div>
+          <div><dt>Admin tokens</dt><dd><code>vwa_</code> tokens let scripts, CI and agents drive the control API without the admin password, a cookie jar or a CSRF header. Shown once, stored as a SHA-256 hash.</dd></div>
+          <div><dt>A HuggingFace cache manager</dt><dd>What is on disk and which model owns it. Garbage-collect orphans, and export or import the whole cache as a tarball.</dd></div>
+          <div><dt>One port</dt><dd>The UI, the control API and <code>/v1</code> share <code>:8080</code>. Your own TLS terminator, ingress or SSO goes in front of it unchanged.</dd></div>
+          <div><dt>No route out needed</dt><dd>Three image tarballs and an optional model-cache tarball are the whole transport for an air-gapped host. <code>HF_HUB_OFFLINE=1</code> stops even the weight downloads.</dd></div>
+          <div><dt>Router stats</dt><dd>Every decision on <code>/router/stats</code>: local, passed through, fell back, refused, with the reason, per rule and per target, and the breaker state. Per process, never a header or a body.</dd></div>
+          <div><dt>A setup page per client</dt><dd><b>Connect</b> writes the setup for Claude Code, Codex&nbsp;CLI, OpenCode, Aider, Grok&nbsp;CLI, the Anthropic and OpenAI SDKs and three editors, with this warden’s address, a key and a loaded model, and sends a test request.</dd></div>
+          <div><dt>Codex CLI</dt><dd>Run against a warden on 5&nbsp;October 2026 with Codex&nbsp;0.160: shell tool calls, a file edit, the session kept on one replica. Thinking is on by default; <code>model_reasoning_effort = "none"</code> turns it off. Local models only: router rules do not apply.</dd></div>
+          <div><dt>A chat playground</dt><dd>Talk to a loaded model in the browser, images included, before you hand anyone a key.</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <hr class="topic">
+
+    <section class="sec" aria-labelledby="lessons-title">
+      <div class="wrap">
+        <h2 id="lessons-title">Two things we learned the hard way.</h2>
+
+        <article class="note with-fig">
+          <div class="note-text">
+            <!-- src: README.md ("the engine core died four times in one day") -->
+            <h3>The engine died four times in one day, and the proxy kept forwarding to it.</h3>
+            <p>
+              The vLLM engine core crashed while the <code>vllm serve</code> wrapper around it
+              stayed up, so the process looked alive and requests went on being sent to it.
+              Now a watchdog asks the engine’s own <code>/health</code> endpoint instead of the
+              process table. When the engine stops answering, it keeps the evidence, including
+              a bounded tail of the log, and reloads the model.
+            </p>
+          </div>
+          <figure>
+            <div class="logs-scroll"><div class="shot logs-stage">
+              <img src="{{a:shot-engine-log.webp}}" width="1700" height="660" loading="lazy" decoding="async"
+                   alt="A model’s live log panel under load: vLLM API server lines answering GET /metrics, POST /v1/chat/completions from a client, engine lines reporting 10 requests running and 0 waiting, and one GET /health line, all returning 200 OK">
+              <svg class="leads" viewBox="0 0 1700 660" preserveAspectRatio="none" aria-hidden="true">
+                <line x1="1242" y1="193" x2="1300" y2="193"/>
+              </svg>
+              <!-- src: shot-engine-log.webp ("GET /health HTTP/1.1" 200 OK line) -->
+              <span class="tape side" style="--x:76.5%;--y:29.24%">The watchdog’s probe, answered by the engine</span>
+            </div></div>
+            <!-- src: shot-engine-log.webp ("Running: 10 reqs, Waiting: 0 reqs", "POST /v1/chat/completions") -->
+            <figcaption><b>Fig.&nbsp;15</b>The live log on a model’s page during the same load: scrapes of <code>/metrics</code>, chat completions coming in, the engine’s own count of 10 requests running and none waiting, and one <code>/health</code> probe between them.<span class="scroll-hint"> Scroll the image sideways to read the full lines.</span></figcaption>
+          </figure>
+        </article>
+
+        <article class="note">
+          <div class="note-text">
+            <h3>A 16&#8239;GiB card holds less than the arithmetic says.</h3>
+            <p>
+              The weights of a bf16 8B model are about 15&#8239;GiB on their own, and it runs out
+              of memory while loading. We tried each row below on 16&#8239;GiB RTX&nbsp;A4000 and
+              Quadro RTX&nbsp;5000 cards and judged it by reading the model’s answers in the chat
+              playground, not by trusting a health check.
+            </p>
+          </div>
+          <div class="fits-wrap">
+            <!-- src: documents/HAZARDS.md, "What fits on what" (validated against vLLM 0.20.0) -->
+            <table class="fits">
+              <thead><tr><th scope="col">Model</th><th scope="col">What works</th><th scope="col">What does not</th></tr></thead>
+              <tbody>
+                <tr><th scope="row"><code>openai/gpt-oss-20b</code></th><td data-h="Works">Two cards, tensor parallel 2, <code>max_model_len</code> 32000, <code>gpu_memory_utilization</code> 0.7&nbsp;to&nbsp;0.9</td><td data-h="Does not">One card: the 20B MoE doesn’t fit</td></tr>
+                <tr><th scope="row">Llama 3.1 8B, Mistral 7B class</th><td data-h="Works">One card, with an AWQ-INT4 checkpoint, <code>--enforce-eager</code> and <code>gpu_memory_utilization</code> 0.9</td><td data-h="Does not">The bf16 repo: about 15&#8239;GiB of weights, out of memory during load</td></tr>
+                <tr><th scope="row">Two models at once</th><td data-h="Works">One model per card, each fitting its own card</td><td data-h="Does not">Two models sharing one card</td></tr>
+              </tbody>
+            </table>
+            <p class="src">Checked against vLLM&nbsp;0.20.0, before the engine moved to 0.26.0, the version this release ships and the replica measurements above used. The rules have held across those upgrades; the exact numbers are worth rechecking on your engine. The full table and the reasons behind it are in <a href="{{repo}}/blob/main/documents/HAZARDS.md#what-fits-on-what" rel="noopener">HAZARDS.md</a>. Not on NVIDIA? <a href="/#roadmap">Other GPUs are on the roadmap</a>.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+    <div class="wrap related-wrap"><p class="related">Related: <a href="/gpu-monitoring">GPU monitoring</a> · <a href="/cache-aware-routing">cache-aware routing</a> · <a href="/api-keys">API keys</a></p></div>

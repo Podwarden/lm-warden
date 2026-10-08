@@ -1,0 +1,479 @@
+@import '@podwarden/chat-ui/theme.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Tutorial glow animation ──────────────────────────── */
+@keyframes tutorial-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25); }
+}
+@keyframes tutorial-glow-retro {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.3); }
+}
+.animate-tutorial-glow {
+  animation: tutorial-glow 2s ease-in-out 3;
+}
+[data-theme="retro"] .animate-tutorial-glow,
+[data-theme="retro-dark"] .animate-tutorial-glow {
+  animation: tutorial-glow-retro 2s ease-in-out 3;
+}
+
+/* ── Theme CSS variables ─────────────────────────────────── */
+
+:root {
+  --background: 25 20% 8%;
+  --foreground: 39 56% 96%;
+}
+
+/* ── Retro Light ────────────────────────────────────────── */
+[data-theme="retro"] {
+  /* chat-ui semantic tokens (space-separated R G B, no rgb() wrapper) */
+  --chat-page: 253 246 236;        /* #FDF6EC */
+  --chat-surface: 255 255 255;
+  --chat-surface-2: 254 243 199;   /* #fef3c7 */
+  --chat-rule: 253 230 138;
+  --chat-fg: 28 25 23;             /* #1c1917 */
+  --chat-muted: 68 64 60;          /* #44403c */
+  --chat-dim: 101 96 90;           /* #65605a */
+  --chat-accent: 180 83 9;         /* #b45309 */
+  --chat-accent-strong: 146 64 14; /* #92400e */
+  --chat-user: 217 119 6;          /* #d97706 */
+  --chat-warn: 217 119 6;
+  --chat-warn-dim: 245 158 11;
+  --chat-negative: 220 38 38;      /* #dc2626 */
+  --chat-negative-dim: 254 226 226;
+  --chat-positive: 4 120 87;      /* #047857 -- green, not amber: "healthy" must not read as a warning */
+  --chat-code: 253 246 236;
+  --chat-on-accent: 255 255 255;
+
+  .bg-slate-950 { background-color: #FDF6EC !important; }
+  .bg-slate-950\/50 { background-color: rgba(253,246,236,0.85) !important; }
+  .bg-slate-950\/20 { background-color: rgba(253,246,236,0.5) !important; }
+  .bg-slate-900 { background-color: #ffffff !important; }
+  .bg-slate-900\/50 { background-color: rgba(255,255,255,0.8) !important; }
+  .bg-slate-900\/80 { background-color: rgba(255,255,255,0.9) !important; }
+  .bg-slate-800\/30 { background-color: rgba(253,246,236,0.5) !important; }
+  .bg-slate-800\/40 { background-color: rgba(253,246,236,0.6) !important; }
+  .bg-slate-800\/50 { background-color: rgba(255,251,235,0.6) !important; }
+  .bg-slate-800\/60 { background-color: rgba(255,251,235,0.7) !important; }
+  .bg-slate-800\/80 { background-color: rgba(255,251,235,0.8) !important; }
+  .bg-slate-800 { background-color: #fef3c7 !important; }
+  .bg-slate-700 { background-color: #f5e6c8 !important; }
+
+  .text-white { color: #1c1917 !important; }
+  .text-slate-100 { color: #1c1917 !important; }
+  .text-slate-200 { color: #292524 !important; }
+  .text-slate-300 { color: #44403c !important; }
+  .text-slate-400 { color: #4a4540 !important; }
+  .text-slate-500 { color: #65605a !important; }
+
+  .text-emerald-300 { color: #b45309 !important; }
+  .text-emerald-400 { color: #92400e !important; }
+  .text-emerald-500 { color: #b45309 !important; }
+
+  .bg-emerald-500\/10 { background-color: rgba(245,158,11,0.1) !important; }
+  .bg-emerald-600 { background-color: #d97706 !important; }
+  .bg-emerald-600\/20 { background-color: rgba(217,119,6,0.15) !important; }
+  .hover\:bg-emerald-600\/30:hover { background-color: rgba(217,119,6,0.22) !important; }
+  .hover\:bg-emerald-500:hover { background-color: #fbbf24 !important; }
+  .hover\:bg-emerald-600:hover { background-color: #d97706 !important; }
+  .hover\:text-emerald-300:hover { color: #b45309 !important; }
+  .hover\:text-emerald-400:hover { color: #92400e !important; }
+
+  .border-emerald-500\/20 { border-color: rgba(245,158,11,0.2) !important; }
+  .border-emerald-500\/30 { border-color: rgba(245,158,11,0.3) !important; }
+  .focus-visible\:ring-emerald-500:focus-visible { --tw-ring-color: #f59e0b !important; }
+  .focus-visible\:ring-offset-slate-950:focus-visible { --tw-ring-offset-color: #FDF6EC !important; }
+  .focus\:ring-emerald-400:focus { --tw-ring-color: rgba(180,83,9,0.4) !important; }
+  .focus\:ring-offset-slate-950:focus { --tw-ring-offset-color: #FDF6EC !important; }
+
+  .border-slate-700 { border-color: rgba(253,230,138,0.5) !important; }
+  .border-slate-800 { border-color: rgba(253,230,138,0.6) !important; }
+
+  .hover\:bg-slate-800:hover { background-color: #fef3c7 !important; }
+  .hover\:text-white:hover { color: #1c1917 !important; }
+  .hover\:text-slate-300:hover { color: #44403c !important; }
+
+  /* Canvas panel/legend extras */
+  .bg-slate-900\/90 { background-color: rgba(255,255,255,0.95) !important; }
+  .bg-slate-900\/95 { background-color: rgba(255,255,255,0.97) !important; }
+  .bg-slate-900\/20 { background-color: rgba(255,255,255,0.3) !important; }
+  .text-slate-600 { color: #65605a !important; }
+  .text-slate-700 { color: #78716c !important; }
+  .hover\:bg-slate-700:hover { background-color: #f0ddb5 !important; }
+  .hover\:bg-slate-800\/50:hover { background-color: rgba(255,251,235,0.6) !important; }
+  .border-slate-700\/60 { border-color: rgba(218,200,160,0.4) !important; }
+  .border-slate-700\/40 { border-color: rgba(218,200,160,0.3) !important; }
+  .border-slate-700\/80 { border-color: rgba(218,200,160,0.6) !important; }
+  .bg-slate-500 { background-color: #a8a29e !important; }
+
+  .bg-red-950\/10 { background-color: rgba(254,226,226,0.4) !important; }
+  .text-red-400 { color: #dc2626 !important; }
+  .hover\:text-red-400:hover { color: #dc2626 !important; }
+
+  /* Destructive button — warm amber-red */
+  .bg-red-600 { background-color: #92400E !important; }
+  .hover\:bg-red-500:hover { background-color: #A84D10 !important; }
+
+  body {
+    background-color: #FDF6EC !important;
+    color: #1c1917 !important;
+  }
+
+  /* Preserve white text on solid accent-colored buttons (NOT low-opacity variants) */
+  .bg-emerald-600 .text-white,
+  button.bg-emerald-600,
+  .bg-emerald-600,
+  .bg-red-600 { color: #ffffff !important; }
+
+  /* ── Light theme contrast fixes (WCAG AA) ── */
+
+  /* Blue links & icons: darken for light backgrounds */
+  .text-blue-400 { color: #1d4ed8 !important; }
+  .hover\:text-blue-300:hover { color: #2563eb !important; }
+
+  /* Blue info boxes / ENV badges: dark text on light effective bg */
+  .text-blue-200 { color: #1e3a5f !important; }
+  .text-blue-200\/80 { color: rgba(30,58,95,0.85) !important; }
+  .text-blue-300 { color: #1e3a5f !important; }
+  .bg-blue-900\/20 { background-color: rgba(191,219,254,0.35) !important; }
+  .bg-blue-900\/40 { background-color: rgba(191,219,254,0.5) !important; }
+  .border-blue-800 { border-color: rgba(30,64,175,0.3) !important; }
+
+  /* Network badges: darker text on light backgrounds */
+  .text-purple-300 { color: #6b21a8 !important; }
+  .text-amber-300 { color: #92400e !important; }
+  .text-blue-300:not(.border *) { color: #1e40af !important; }
+  .bg-purple-900\/50 { background-color: rgba(147,51,234,0.12) !important; }
+  .bg-amber-900\/50 { background-color: rgba(245,158,11,0.12) !important; }
+  .bg-blue-900\/50 { background-color: rgba(59,130,246,0.12) !important; }
+
+  /* ── Status colors: darken for light backgrounds ── */
+
+  /* Red (errors, blocked, revoked) */
+  .text-red-300 { color: #b91c1c !important; }
+  .text-red-300\/80 { color: rgba(185,28,28,0.9) !important; }
+  .text-red-400\/80 { color: #dc2626 !important; }
+  .text-red-500 { color: #b91c1c !important; }
+  .bg-red-950\/10 { background-color: rgba(254,226,226,0.4) !important; }
+  .bg-red-950\/20 { background-color: rgba(254,202,202,0.35) !important; }
+  .bg-red-950\/30 { background-color: rgba(254,202,202,0.4) !important; }
+  .bg-red-950\/40 { background-color: rgba(254,202,202,0.5) !important; }
+  .bg-red-950\/50 { background-color: rgba(254,202,202,0.5) !important; }
+  .border-red-800 { border-color: rgba(220,38,38,0.3) !important; }
+  .border-red-800\/30 { border-color: rgba(220,38,38,0.2) !important; }
+  .border-red-800\/40 { border-color: rgba(220,38,38,0.25) !important; }
+  .border-red-500 { border-color: rgba(220,38,38,0.4) !important; }
+  .border-red-500\/30 { border-color: rgba(220,38,38,0.25) !important; }
+
+  /* Emerald/green (success, active) — mapped to amber in retro */
+  .text-emerald-400\/80 { color: #92400e !important; }
+  .text-emerald-400\/60 { color: rgba(146,64,14,1) !important; }
+  .text-emerald-500\/50 { color: rgba(180,83,9,0.7) !important; }
+  .text-emerald-500\/60 { color: rgba(180,83,9,0.8) !important; }
+  .text-emerald-500\/70 { color: rgba(180,83,9,0.9) !important; }
+  .text-emerald-600 { color: #92400e !important; }
+  .bg-emerald-500\/15 { background-color: rgba(245,158,11,0.12) !important; }
+  .bg-emerald-900\/30 { background-color: rgba(245,158,11,0.1) !important; }
+  .bg-emerald-900\/40 { background-color: rgba(245,158,11,0.12) !important; }
+  .bg-emerald-950\/40 { background-color: rgba(254,243,199,0.5) !important; }
+  .border-emerald-700\/40 { border-color: rgba(180,83,9,0.25) !important; }
+  .border-emerald-800\/40 { border-color: rgba(180,83,9,0.25) !important; }
+  .border-emerald-600 { border-color: rgba(180,83,9,0.4) !important; }
+  .border-emerald-600\/50 { border-color: rgba(180,83,9,0.3) !important; }
+
+  /* Amber (warnings, pending) */
+  .text-amber-400 { color: #92400e !important; }
+  .text-amber-400\/70 { color: rgba(146,64,14,0.85) !important; }
+  .text-amber-400\/80 { color: rgba(146,64,14,0.9) !important; }
+  .text-amber-500\/60 { color: rgba(146,64,14,0.8) !important; }
+  .text-amber-500\/70 { color: rgba(146,64,14,0.85) !important; }
+  .text-amber-600 { color: #78350f !important; }
+  .bg-amber-500\/20 { background-color: rgba(252,211,77,0.3) !important; }
+  .bg-amber-950\/20 { background-color: rgba(254,243,199,0.4) !important; }
+  .bg-amber-950\/40 { background-color: rgba(254,243,199,0.5) !important; }
+  .bg-amber-950\/50 { background-color: rgba(254,243,199,0.5) !important; }
+  .border-amber-500\/30 { border-color: rgba(217,119,6,0.3) !important; }
+  .border-amber-800\/20 { border-color: rgba(146,64,14,0.2) !important; }
+  .border-amber-800\/30 { border-color: rgba(146,64,14,0.25) !important; }
+  .border-amber-800\/40 { border-color: rgba(146,64,14,0.3) !important; }
+
+  /* Selected row / overlay backgrounds — remap dark overlays to light */
+  .bg-slate-800\/70 { background-color: rgba(253,230,138,0.5) !important; }
+  .bg-slate-900\/30 { background-color: rgba(253,246,236,0.6) !important; }
+
+  /* Blue (selected states) */
+  .bg-blue-950\/20 { background-color: rgba(219,234,254,0.4) !important; }
+  .border-blue-500\/50 { border-color: rgba(59,130,246,0.4) !important; }
+
+  body, h1, h2, h3, h4, h5, h6, p, span, a, button, input, select, textarea {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* ── Retro Dark ─────────────────────────────────────────── */
+[data-theme="retro-dark"] {
+  /* chat-ui semantic tokens (space-separated R G B, no rgb() wrapper) */
+  --chat-page: 28 20 9;            /* #1C1409 */
+  --chat-surface: 42 31 14;        /* #2A1F0E */
+  --chat-surface-2: 62 46 22;      /* #3E2E16 */
+  --chat-rule: 74 56 32;           /* #4A3820 */
+  --chat-fg: 255 251 235;          /* #FFFBEB */
+  --chat-muted: 196 180 154;       /* #C4B49A */
+  --chat-dim: 154 140 116;         /* #9A8C74 — 5.5:1 on page, 4.9:1 on surface, 3.97:1 on surface-2 (no small text there) */
+  --chat-accent: 251 191 36;       /* #fbbf24 */
+  --chat-accent-strong: 245 158 11;/* #f59e0b */
+  --chat-user: 217 119 6;
+  --chat-warn: 245 158 11;
+  --chat-warn-dim: 245 158 11;
+  --chat-negative: 248 113 113;
+  --chat-negative-dim: 69 10 10;
+  --chat-positive: 52 211 153;     /* #34d399 -- green, not amber: "healthy" must not read as a warning */
+  --chat-code: 28 20 9;
+  --chat-on-accent: 28 20 9;
+
+  .bg-slate-950 { background-color: #1C1409 !important; }
+  .bg-slate-900 { background-color: #2A1F0E !important; }
+  .bg-slate-900\/50 { background-color: rgba(42,31,14,0.7) !important; }
+  .bg-slate-900\/80 { background-color: rgba(42,31,14,0.9) !important; }
+  .bg-slate-800\/30 { background-color: rgba(62,46,22,0.4) !important; }
+  .bg-slate-800\/40 { background-color: rgba(62,46,22,0.5) !important; }
+  .bg-slate-800\/50 { background-color: rgba(62,46,22,0.6) !important; }
+  .bg-slate-800\/60 { background-color: rgba(62,46,22,0.7) !important; }
+  .bg-slate-800\/80 { background-color: rgba(62,46,22,0.8) !important; }
+  .bg-slate-800 { background-color: #3E2E16 !important; }
+  .bg-slate-700 { background-color: #4A3820 !important; }
+
+  .text-white { color: #FFFBEB !important; }
+  .text-slate-100 { color: #FFFBEB !important; }
+  .text-slate-200 { color: #E8DCC8 !important; }
+  .text-slate-300 { color: #C4B49A !important; }
+  .text-slate-400 { color: #B5A48A !important; }
+  .text-slate-500 { color: #8A7C66 !important; }
+
+  .text-emerald-300 { color: #fbbf24 !important; }
+  .text-emerald-400 { color: #f59e0b !important; }
+  .text-emerald-500 { color: #d97706 !important; }
+
+  .bg-emerald-500\/10 { background-color: rgba(245,158,11,0.1) !important; }
+  .bg-emerald-600 { background-color: #b45309 !important; }
+  .bg-emerald-600\/20 { background-color: rgba(180,83,9,0.15) !important; }
+  .hover\:bg-emerald-500:hover { background-color: #d97706 !important; }
+  .hover\:bg-emerald-600:hover { background-color: #b45309 !important; }
+  .hover\:text-emerald-300:hover { color: #fbbf24 !important; }
+  .hover\:text-emerald-400:hover { color: #f59e0b !important; }
+
+  .border-emerald-500\/20 { border-color: rgba(245,158,11,0.2) !important; }
+  .border-emerald-500\/30 { border-color: rgba(245,158,11,0.3) !important; }
+  .focus-visible\:ring-emerald-500:focus-visible { --tw-ring-color: #f59e0b !important; }
+  .focus-visible\:ring-offset-slate-950:focus-visible { --tw-ring-offset-color: #1C1409 !important; }
+  .focus\:ring-emerald-400:focus { --tw-ring-color: rgba(245,158,11,0.4) !important; }
+  .focus\:ring-offset-slate-950:focus { --tw-ring-offset-color: #1C1409 !important; }
+
+  .border-slate-700 { border-color: rgba(92,69,32,0.6) !important; }
+  .border-slate-800 { border-color: rgba(92,69,32,0.5) !important; }
+
+  .hover\:bg-slate-800:hover { background-color: #3E2E16 !important; }
+  .hover\:text-white:hover { color: #FFFBEB !important; }
+  .hover\:text-slate-300:hover { color: #C4B49A !important; }
+
+  /* Canvas panel/legend extras */
+  .bg-slate-900\/90 { background-color: rgba(42,31,14,0.95) !important; }
+  .bg-slate-900\/95 { background-color: rgba(42,31,14,0.97) !important; }
+  .bg-slate-900\/20 { background-color: rgba(42,31,14,0.3) !important; }
+  .text-slate-600 { color: #8A7C66 !important; }
+  .text-slate-700 { color: #6A5C48 !important; }
+  .hover\:bg-slate-700:hover { background-color: #4A3820 !important; }
+  .hover\:bg-slate-800\/50:hover { background-color: rgba(62,46,22,0.5) !important; }
+  .border-slate-700\/60 { border-color: rgba(92,69,32,0.4) !important; }
+  .border-slate-700\/40 { border-color: rgba(92,69,32,0.3) !important; }
+  .border-slate-700\/80 { border-color: rgba(92,69,32,0.65) !important; }
+
+  .bg-red-950\/10 { background-color: rgba(127,29,29,0.2) !important; }
+  .text-red-400 { color: #f87171 !important; }
+  .hover\:text-red-400:hover { color: #f87171 !important; }
+
+  /* Destructive button — warm amber-red */
+  .bg-red-600 { background-color: #92400E !important; }
+  .hover\:bg-red-500:hover { background-color: #A84D10 !important; }
+
+  body {
+    background-color: #1C1409 !important;
+    color: #FFFBEB !important;
+  }
+
+  /* Preserve white text on solid accent-colored buttons */
+  .bg-emerald-600 .text-white,
+  button.bg-emerald-600,
+  .bg-emerald-600,
+  .bg-red-600 { color: #ffffff !important; }
+
+  /* Emerald badge bg overrides for dark theme */
+  .bg-emerald-900\/30 { background-color: rgba(120,53,15,0.2) !important; }
+  .bg-emerald-900\/40 { background-color: rgba(120,53,15,0.25) !important; }
+  .border-emerald-700\/40 { border-color: rgba(245,158,11,0.25) !important; }
+
+  body, h1, h2, h3, h4, h5, h6, p, span, a, button, input, select, textarea {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* ── Fade-in animation (support chat messages) ─────────── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 150ms ease-out;
+}
+
+/* ── Thin scrollbar (support panel, etc.) ──────────────── */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgb(71 85 105); /* slate-600 */
+  border-radius: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgb(100 116 139); /* slate-500 */
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* ── Baseline override row deep-link flash (#713) ───────── */
+@keyframes row-flash-emerald-kf {
+  0%   { background-color: rgba(52, 211, 153, 0.30); } /* emerald-400/30 */
+  100% { background-color: transparent; }
+}
+.row-flash-emerald {
+  animation: row-flash-emerald-kf 2s ease-out 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .row-flash-emerald {
+    animation: none;
+    outline: 2px solid rgb(52, 211, 153); /* emerald-400 */
+    outline-offset: 2px;
+  }
+}
+
+/* ── Token details page (spec 2026-09-18 §4.6) ─────────────────────────────
+   Colours the approved mockup uses that the chat-* scale has no token for.
+   Space-separated R G B so Tailwind can add alpha (`bg-vw-amber-bg/35`).
+   retro-dark values are copied verbatim from the mockup; `:root` carries them
+   too because retro-dark is the default before ThemeProvider sets data-theme. */
+/* vw-tokens: dark */
+:root,
+[data-theme="retro-dark"] {
+  --vw-rule-soft: 92 69 32;       /* #5c4520 — the mockup's --rule-soft is this at .5 */
+  --vw-btn: 180 83 9;             /* #b45309 */
+  --vw-btn-hover: 194 97 15;      /* #c2610f */
+  --vw-on-btn: 255 251 235;       /* #fffbeb */
+  --vw-danger: 248 113 113;       /* #f87171 */
+  --vw-danger-fg: 252 165 165;    /* #fca5a5 */
+  --vw-danger-bg: 127 29 29;      /* #7f1d1d */
+  --vw-amber-bg: 120 53 15;       /* #78350f */
+  --vw-amber-fg: 252 211 77;      /* #fcd34d */
+  --vw-band-fg: 253 230 138;      /* #fde68a */
+  --vw-ok-bg: 6 78 59;            /* #064e3b */
+  --vw-ok-fg: 110 231 183;        /* #6ee7b7 */
+  --vw-live: 52 211 153;          /* #34d399 */
+  --vw-info-bg: 30 58 138;        /* #1e3a8a */
+  --vw-info-fg: 147 197 253;      /* #93c5fd */
+  --vw-low-bg: 92 58 24;          /* #5c3a18 */
+  --vw-low-fg: 252 217 182;       /* #fcd9b6 */
+  --vw-dock: 21 15 6;             /* #150f06 */
+  --vw-prompt: 167 139 250;       /* #a78bfa */
+  --vw-completion: 52 211 153;    /* #34d399 */
+  --vw-requests: 245 158 11;      /* #f59e0b */
+  --vw-queue: 251 191 36;         /* #fbbf24 */
+  --vw-ttft: 125 211 252;         /* #7dd3fc */
+  --vw-dur: 249 168 212;          /* #f9a8d4 */
+  --vw-strip-chain: 107 85 48;    /* #6b5530 */
+  --vw-strip-own: 161 129 47;     /* #a1812f */
+  /* Categorical palette for per-model lines (the tokens chart, the usage-by-
+     model card). Six hues far apart from each other and bright enough on the
+     #1e160a page; a seventh model reuses model-1. */
+  --vw-model-1: 56 189 248;       /* #38bdf8 sky */
+  --vw-model-2: 244 114 182;      /* #f472b6 pink */
+  --vw-model-3: 163 230 53;       /* #a3e635 lime */
+  --vw-model-4: 251 146 60;       /* #fb923c orange */
+  --vw-model-5: 167 139 250;      /* #a78bfa violet */
+  --vw-model-6: 45 212 191;       /* #2dd4bf teal */
+  --vw-color-scheme: dark;
+}
+/* vw-tokens: light */
+[data-theme="retro"] {
+  --vw-rule-soft: 218 200 160;
+  --vw-btn: 180 83 9;
+  --vw-btn-hover: 146 64 14;
+  --vw-on-btn: 255 255 255;
+  --vw-danger: 220 38 38;
+  --vw-danger-fg: 185 28 28;
+  --vw-danger-bg: 254 202 202;
+  --vw-amber-bg: 254 243 199;
+  --vw-amber-fg: 146 64 14;
+  --vw-band-fg: 120 53 15;
+  --vw-ok-bg: 209 250 229;
+  --vw-ok-fg: 4 120 87;
+  --vw-live: 5 150 105;
+  --vw-info-bg: 219 234 254;
+  --vw-info-fg: 30 64 175;
+  --vw-low-bg: 245 230 200;
+  --vw-low-fg: 120 72 30;
+  --vw-dock: 255 251 240;
+  --vw-prompt: 124 58 237;
+  --vw-completion: 5 150 105;
+  --vw-requests: 217 119 6;
+  --vw-queue: 180 83 9;
+  --vw-ttft: 2 132 199;
+  --vw-dur: 219 39 119;
+  --vw-strip-chain: 230 210 170;
+  --vw-strip-own: 180 130 40;
+  --vw-model-1: 2 132 199;
+  --vw-model-2: 219 39 119;
+  --vw-model-3: 77 124 15;
+  --vw-model-4: 234 88 12;
+  --vw-model-5: 124 58 237;
+  --vw-model-6: 13 148 136;
+  --vw-color-scheme: light;
+}
+/* vw-tokens: end */
+
+/* Mockup: `:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }`,
+   scoped to the page root so the rest of the app keeps its ring styles. */
+.vw-td :focus-visible {
+  outline: 2px solid rgb(var(--chat-accent));
+  outline-offset: 2px;
+}
+
+/* Mockup `.live::before` — the dock's pulsing Live dot. */
+@keyframes vw-pulse {
+  70% { box-shadow: 0 0 0 6px rgb(var(--vw-live) / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(var(--vw-live) / 0); }
+}
+.vw-live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgb(var(--vw-live));
+  box-shadow: 0 0 0 0 rgb(var(--vw-live) / .6);
+  animation: vw-pulse 1.6s infinite;
+}
+/* Mockup `.caret` — block cursor after a streaming response. */
+@keyframes vw-blink { 50% { opacity: 0; } }
+.vw-caret {
+  display: inline-block; width: 7px; height: 13px;
+  background: rgb(var(--chat-accent));
+  vertical-align: -2px; margin-left: 1px;
+  animation: vw-blink 1s steps(2) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vw-live-dot, .vw-caret { animation: none; }
+}

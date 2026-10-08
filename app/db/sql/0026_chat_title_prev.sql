@@ -1,0 +1,27 @@
+-- 0026_chat_title_prev.sql
+--
+-- Keep the auto-title a chat's generated title displaced.
+--
+-- chat2 named a chat once, from its first exchange, and never looked again.
+-- That is wrong for the way people actually use a thread: the opening
+-- question ("how do I mount this?") stays in the sidebar long after the
+-- conversation has moved on to something else entirely, so the sidebar stops
+-- being a usable index of what is in each chat.
+--
+-- The turn endpoint now re-runs the title generator periodically (turn 1,
+-- then every fourth user turn) while `title_source` is still 'auto'. A
+-- rename the user did not ask for needs to be reversible and, more
+-- importantly, visible: `title_prev` holds the title the generated one
+-- replaced, so the UI can offer "renamed from X — undo" instead of silently
+-- swapping the sidebar entry out from under someone mid-read.
+--
+-- Only ever written alongside a new `title`, and never cleared to NULL by an
+-- unrelated update (Chat2Repo.update_chat's dynamic SET only touches the
+-- fields it is passed), so a settings PATCH cannot erase the undo target.
+--
+-- NULL means "nothing was displaced yet" — the state every existing chat is
+-- in, which is why this is a plain nullable ALTER with no backfill.
+--
+-- Rollback: SQLite cannot DROP COLUMN before 3.35 and the app tolerates the
+-- column being present but unused, so a rollback is a code revert only.
+ALTER TABLE chats ADD COLUMN title_prev TEXT;

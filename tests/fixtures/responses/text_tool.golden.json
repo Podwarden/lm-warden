@@ -1,0 +1,206 @@
+[
+ {
+  "type": "response.created",
+  "sequence_number": 0,
+  "response": {
+   "id": "resp_01",
+   "object": "response",
+   "created_at": 0,
+   "status": "in_progress",
+   "model": "qwen",
+   "output": [],
+   "usage": null,
+   "incomplete_details": null,
+   "error": null,
+   "parallel_tool_calls": true,
+   "tool_choice": "auto",
+   "store": false,
+   "instructions": null,
+   "metadata": {}
+  }
+ },
+ {
+  "type": "response.in_progress",
+  "sequence_number": 1,
+  "response": {
+   "id": "resp_01",
+   "object": "response",
+   "created_at": 0,
+   "status": "in_progress",
+   "model": "qwen",
+   "output": [],
+   "usage": null,
+   "incomplete_details": null,
+   "error": null,
+   "parallel_tool_calls": true,
+   "tool_choice": "auto",
+   "store": false,
+   "instructions": null,
+   "metadata": {}
+  }
+ },
+ {
+  "type": "response.output_item.added",
+  "sequence_number": 2,
+  "output_index": 0,
+  "item": {
+   "id": "msg_02",
+   "type": "message",
+   "role": "assistant",
+   "status": "in_progress",
+   "content": []
+  }
+ },
+ {
+  "type": "response.content_part.added",
+  "sequence_number": 3,
+  "item_id": "msg_02",
+  "output_index": 0,
+  "content_index": 0,
+  "part": {
+   "type": "output_text",
+   "text": "",
+   "annotations": []
+  }
+ },
+ {
+  "type": "response.output_text.delta",
+  "sequence_number": 4,
+  "item_id": "msg_02",
+  "output_index": 0,
+  "content_index": 0,
+  "delta": "Running.",
+  "logprobs": []
+ },
+ {
+  "type": "response.output_text.done",
+  "sequence_number": 5,
+  "item_id": "msg_02",
+  "output_index": 0,
+  "content_index": 0,
+  "text": "Running.",
+  "logprobs": []
+ },
+ {
+  "type": "response.content_part.done",
+  "sequence_number": 6,
+  "item_id": "msg_02",
+  "output_index": 0,
+  "content_index": 0,
+  "part": {
+   "type": "output_text",
+   "text": "Running.",
+   "annotations": []
+  }
+ },
+ {
+  "type": "response.output_item.done",
+  "sequence_number": 7,
+  "output_index": 0,
+  "item": {
+   "id": "msg_02",
+   "type": "message",
+   "role": "assistant",
+   "status": "completed",
+   "content": [
+    {
+     "type": "output_text",
+     "text": "Running.",
+     "annotations": []
+    }
+   ]
+  }
+ },
+ {
+  "type": "response.output_item.added",
+  "sequence_number": 8,
+  "output_index": 1,
+  "item": {
+   "id": "fc_03",
+   "type": "function_call",
+   "call_id": "call_0",
+   "name": "shell",
+   "arguments": "",
+   "status": "in_progress"
+  }
+ },
+ {
+  "type": "response.function_call_arguments.delta",
+  "sequence_number": 9,
+  "item_id": "fc_03",
+  "output_index": 1,
+  "delta": "{\"cmd\":\"ls\"}"
+ },
+ {
+  "type": "response.function_call_arguments.done",
+  "sequence_number": 10,
+  "item_id": "fc_03",
+  "output_index": 1,
+  "arguments": "{\"cmd\":\"ls\"}"
+ },
+ {
+  "type": "response.output_item.done",
+  "sequence_number": 11,
+  "output_index": 1,
+  "item": {
+   "id": "fc_03",
+   "type": "function_call",
+   "call_id": "call_0",
+   "name": "shell",
+   "arguments": "{\"cmd\":\"ls\"}",
+   "status": "completed"
+  }
+ },
+ {
+  "type": "response.completed",
+  "sequence_number": 12,
+  "response": {
+   "id": "resp_01",
+   "object": "response",
+   "created_at": 0,
+   "status": "completed",
+   "model": "qwen",
+   "output": [
+    {
+     "id": "msg_02",
+     "type": "message",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "text": "Running.",
+       "annotations": []
+      }
+     ]
+    },
+    {
+     "id": "fc_03",
+     "type": "function_call",
+     "call_id": "call_0",
+     "name": "shell",
+     "arguments": "{\"cmd\":\"ls\"}",
+     "status": "completed"
+    }
+   ],
+   "usage": {
+    "input_tokens": 12,
+    "input_tokens_details": {
+     "cached_tokens": 0
+    },
+    "output_tokens": 4,
+    "output_tokens_details": {
+     "reasoning_tokens": 0
+    },
+    "total_tokens": 16
+   },
+   "incomplete_details": null,
+   "error": null,
+   "parallel_tool_calls": true,
+   "tool_choice": "auto",
+   "store": false,
+   "instructions": null,
+   "metadata": {}
+  }
+ }
+]

@@ -1,0 +1,180 @@
+    <section class="sec" aria-labelledby="replica-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <h1 id="replica-title" class="as-h2">The next turn lands where the last one left its cache.</h1>
+          <p>
+            An agent resends its whole history every turn, so a long conversation is mostly a prefix
+            the engine has already read. vLLM keeps that work in its prefix cache (the attention state
+            of prompts it has seen) and skips it the next time the same prefix arrives, but only on the
+            replica that did the work: each full copy of the model has its own cache. vLLM’s own
+            balancer sends each turn to whichever replica has the shortest queue, which usually has
+            never seen the conversation, so it reads the whole history again. LM Warden places each
+            new conversation on the least-loaded replica (requests in flight, how full its cache is,
+            and how many live conversations it holds) and keeps it there, using the session id
+            Claude Code already sends. It moves a request only when that replica has 8 requests in
+            flight (the spill threshold).
+          </p>
+        </div>
+
+        <figure class="diagram-fig">
+          <div class="diagram swap-1000">
+            <div class="v-wide">
+{{fig:d2}}
+            </div>
+            <div class="v-narrow">
+{{fig:d2-narrow}}
+            </div>
+          </div>
+          <figcaption><b>Fig.&nbsp;6</b>Four turns of one conversation on a four-replica model. With vLLM’s balancer, each turn is prefilled (its prompt read into the cache) almost from scratch on whichever replica got it. With LM Warden, the conversation stays on replica&nbsp;2 and only the new turn is prefilled. A drawing of the mechanism, not a measurement.</figcaption>
+        </figure>
+
+        <!-- src: assets/bench/dp-affinity-ab.json (ramp[]: prefix_hit_pct 56.2 to 86.4 at 4; ttfb_p50 2.05 to 0.38 at 4; output tokens/min higher at all five steps; ttfb_p95 lower at all five; replicas busy 2.71 to 2.83 at 4) -->
+        <div class="reading lead">
+          <p>
+            Measured on the four-card box: with conversations pinned, the share of prompt tokens served
+            from the cache rose from 56 to 86% at 4 concurrent sessions, and the median time to first
+            byte fell from 2.05 to 0.38&#8239;s. Output tokens a minute were higher at every step we ran,
+            and the p95 time to first byte (the slowest 5%) was lower at every step. The number of
+            replicas doing work barely moved (2.71 against 2.83 of four at 4 sessions): the gain is
+            reuse of the cache, not more cards working.
+          </p>
+          <p>
+            The 24 and 32 session steps are a deliberate overload of four small cards, where waits run
+            to tens of seconds with or without affinity. There the trade-off shows: the tail is still
+            shorter with affinity, but the median is longer. The numbers follow.
+          </p>
+        </div>
+
+        <div class="plate ab">
+          <dl class="spec">
+            <dt>GPUs</dt>
+            <dd>4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000, 16&#8239;GiB each</dd>
+            <dt>Model</dt>
+            <dd>qwen3-4b-dp4 (Qwen/Qwen3-4B-Instruct-2507), bf16</dd>
+            <dt>Layout</dt>
+            <dd>data_parallel_size 4, tensor_parallel_size 1</dd>
+            <dt>vLLM</dt>
+            <dd>0.26.0</dd>
+            <dt>LM Warden</dt>
+            <dd>This release</dd>
+            <dt>Captured</dt>
+            <dd>4&nbsp;October 2026, both arms back to back</dd>
+            <!-- src: assets/bench/dp-affinity-ab.json (workload: 6 turns, system prompt 3500 tokens, first message 6000 nominal, 400 per follow-up, max_tokens 256, 180 s per step; first_prompt_tokens_range 10712 to 11039 is system prompt plus first message); the harness run config in both arms' summary.json -->
+            <dt>Load</dt>
+            <dd class="span">Synthetic Claude Code-style sessions from our own harness, not Claude Code itself: a shared system prompt of about 3.5k tokens, a first message unique to the session (6k nominal, about 7.2k to 7.5k measured), then five more turns of about 400 new tokens each, at most 256 tokens out per turn. Closed loop: a session starts its next turn when the last one ends. 3&nbsp;minutes per step.</dd>
+          </dl>
+
+          <figure class="chart plate-wide swap-1000">
+            <div class="v-wide">
+{{fig:c1}}
+            </div>
+            <div class="v-narrow">
+{{fig:c1-narrow}}
+            </div>
+            <figcaption><b>Fig.&nbsp;7</b>Time to first byte at 4 to 32 concurrent sessions, median and p95, on a log scale so the sub-second steps read beside the minute-long ones. With affinity the median is far lower up to 16 sessions (0.38 against 2.05&#8239;s at 4) and higher at 24 and 32; the p95 is lower at every step, though at 16 the gap (24.9 against 26.2&#8239;s) is within the noise of one run per arm. Measured at the client, over the internet, to the first streamed token.</figcaption>
+          </figure>
+
+          <div class="plate-wide table-scroll">
+{{fig:t1-ramp}}
+            <p class="plate-note">Measured on our four-card box with a small model, affinity off first, then on, without restarting vLLM in between: the second arm started with a warm prefix cache, and both arms drew their prompts from the same seed. Each step lasts 3&nbsp;minutes, so it completes only 9 to 31 sessions and one session more or less moves sessions an hour by 20; output tokens a minute is the steadier column. Your model, cards and workload will differ; the replica card on a model’s page shows the same counters for yours.</p>
+          </div>
+        </div>
+
+        <!-- src: assets/bench/dp-affinity-ab.json (ramp[], same numbers as the table above); spill-threshold-4 run: median TTFB 13.1 s at 24 sessions and 30.4 s at 32 -->
+        <p class="reading">
+          Up to 16 sessions, affinity is ahead at every step on throughput, prefix-cache hits
+          and both time-to-first-byte columns: hits go from 56 to 86% at 4 sessions, the
+          median time to first byte from 2.05 to 0.38&#8239;s, and output from 5,886 to 6,744
+          tokens a minute (sessions an hour from 180 to 240).
+          At 24 and 32 sessions, the overload steps, every replica is saturated. Output is still
+          higher (11,178 against 9,048 and 16,638 against 14,760 tokens a minute) and the slow tail is
+          much shorter (p95 38 against 59&#8239;s, and 39 against 83&#8239;s), but the median time to
+          first byte is worse with affinity: 13.1 against 5.1&#8239;s at 24 sessions, 27.7 against
+          12.3&#8239;s at 32. We have not isolated why, and lowering the spill threshold from 8 to 4
+          did not change it. The advantage is largest while there is headroom; a box that runs at
+          its limit should measure both settings, and affinity can be switched off per model.
+        </p>
+
+        <div class="pair">
+          <figure class="chart swap-700">
+            <div class="v-wide">
+{{fig:c2}}
+            </div>
+            <div class="v-narrow">
+{{fig:c2-narrow}}
+            </div>
+            <figcaption><b>Fig.&nbsp;8</b>Replicas busy, of four: replicas with requests running at each poll, averaged over a step. Not GPU utilisation. Affinity barely changes it; the gain is in fig.&nbsp;9.</figcaption>
+          </figure>
+          <!-- src: assets/bench/dp-affinity-ab.json (ramp[].off/on.prefix_hit_pct: 56.2 to 86.4, 44.3 to 86.1, 33.2 to 48.6, 32.8 to 37.9, 31.6 to 31.6) -->
+          <figure class="chart swap-700">
+            <div class="v-wide">
+{{fig:c3}}
+            </div>
+            <div class="v-narrow">
+{{fig:c3-narrow}}
+            </div>
+            <figcaption><b>Fig.&nbsp;9</b>Prefix-cache hit rate in each step: prompt tokens served from the cache over prompt tokens asked for, all four replicas pooled, from the change in vLLM’s own counters over the step. The gain holds while there is headroom and is gone at 32 sessions, where conversations spill.</figcaption>
+          </figure>
+        </div>
+
+      </div>
+
+        <figure>
+          <div class="bleed">
+            <div class="stage">
+              <img src="{{a:shot-dp-card.webp}}" width="1270" height="256" loading="lazy" decoding="async"
+                   alt="The Data-parallel routing card on a model’s page, with the pills Affinity on, Spill threshold 8 (auto), Sticky 100.0% and In flight 0. A table lists replicas 0 to 3 with in flight, sticky (38, 21, 19 and 29), spilled in, client-pinned, running and waiting, KV used and prefix-cache hit rate (82.2, 86.0, 69.0 and 80.0 percent), and a line saying the counters run since the warden started.">
+              <svg class="leads" viewBox="0 0 1270 256" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M1022 0 V21"/>  <rect x="804" y="21" width="436" height="28" rx="3"/>
+                <path d="M1060 201 V256"/> <rect x="1027" y="101" width="66" height="100" rx="3"/>
+              </svg>
+              <!-- src: shot-dp-card.webp (pills "Affinity on", "Spill threshold 8 (auto)", "Sticky 100.0%", "In flight 0") -->
+              <span class="tape up l" style="--x:80.5%;--rot:0.4deg">Affinity on, spill threshold 8 (auto)</span>
+              <!-- src: shot-dp-card.webp (column "Prefix-cache hit": 82.2%, 86.0%, 69.0%, 80.0%) -->
+              <span class="tape down l" style="--x:83.5%;--rot:-0.5deg">Hit rate per replica, from vLLM’s own counters</span>
+            </div>
+          </div>
+          <div class="wrap">
+            <figcaption><b>Fig.&nbsp;10</b>The same counters on a model’s page: one row per replica with the requests it holds, how many conversations stayed (<code>sticky</code>) or arrived by spilling, what is running and waiting, KV cache in use and the prefix-cache hit rate. Recorded on 4&nbsp;October&nbsp;2026 with affinity on and the spill threshold at 8 (auto): sticky 100%, 38, 21, 19 and 29 sticky requests on replicas 0 to 3, and a prefix-cache hit rate of 82.2, 86.0, 69.0 and 80.0%. The counters run since the warden restart, and all traffic in that window ran with affinity on: synthetic agent sessions plus real Claude Code turns. It is the card, not a result.<span class="scroll-hint"> Scroll the image sideways to see every column.</span></figcaption>
+          </div>
+        </figure>
+
+
+        <div class="wrap">
+        <!-- src: documents/ROUTING.md ("The same box since": 26 sessions of about 58k tokens, 81 % to 28 % in about 35 minutes, KV up to 93 %, cap cut to 16, 78 to 79 % over the next hour; the 28 % and 78 to 79 % observation on the seven-GPU box, 2026-10-05); shot-tokens-cached.webp ("cache hit 78% (last hour)") -->
+        <div class="reading lead">
+          <p>
+            The box that first prompted replica routing has run with it since. It has seven
+            RTX&nbsp;5090s serving a 27B model as seven one-card replicas to a farm of headless
+            Claude Code agents. Our first placement rule hashed the session id, which was sticky
+            but blind to load. With 26 agent sessions of about 58k tokens each, three replicas sat
+            idle while others ran their cache up to 93%, and the share of prompt tokens served from
+            the cache fell from 81% after a restart to 28% within about 35 minutes. We then cut the
+            farm to 16 sessions, about two per replica, so the working sets fit the cache, and
+            placed new conversations on the least-loaded replica. Over the next hour it was 78 to
+            79%. That is an observation, not an A/B: one workload and two changes made together,
+            so the gain is not placement’s alone. The rule of thumb it suggests: keep concurrent
+            sessions times their typical context under the box’s total cache.
+          </p>
+        </div>
+        </div>
+
+        <figure>
+          <div class="bleed">
+            <div class="stage">
+              <img src="{{a:shot-tokens-cached.webp}}" width="1270" height="392" loading="lazy" decoding="async"
+                   alt="The Tokens per second chart from the Stats page over one hour. The prompt bars are split into cached, measured, in blue and computed in purple, between about 15k and 45k tokens a second, most of each bar blue, with the summary cache hit 78% over the last hour. Completion tokens per second, between about 70 and 420, are drawn in green below.">
+              <svg class="leads" viewBox="0 0 1270 392" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M350 0 V38"/> <rect x="280" y="38" width="140" height="22" rx="3"/>
+              </svg>
+              <!-- src: shot-tokens-cached.webp ("cached (measured)", "computed", "cache hit 78% (last hour)") -->
+              <span class="tape up r" style="--x:27.56%">Measured by the engine, per request</span>
+            </div>
+          </div>
+          <div class="wrap">
+            <!-- src: shot-tokens-cached.webp ("24h peak minute 45.6k tok/s"; "qwen3.8-27b · last hour · 1 min buckets") -->
+            <figcaption><b>Fig.&nbsp;11</b>Prompt tokens a second on the seven-GPU box, split into what each replica read from its prefix cache and what it had to compute, with the share for the last hour: 78%. The cached part is the engine’s own count for each finished request, not an estimate; a request it did not measure counts as computed. Recorded on 5&nbsp;October 2026.<span class="scroll-hint"> Scroll the image sideways to see the whole hour.</span></figcaption>
+          </div>
+        </figure>
+    </section>
+    <div class="wrap related-wrap"><p class="related">Related: <a href="/gpu-monitoring">GPU monitoring</a> · <a href="/coding-agents/claude-code">Claude Code</a> · <a href="/coding-agents">coding agents</a></p></div>

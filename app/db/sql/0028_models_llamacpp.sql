@@ -1,0 +1,21 @@
+-- Sub-project C: the two llama.cpp knobs no existing column carries.
+--
+-- mmproj_filename -- the multimodal projector GGUF that sits beside the weights
+-- in the same repo (e.g. mmproj-Qwen3.8-27B-BF16.gguf). llama.cpp takes it as a
+-- SEPARATE --mmproj file; there is no vLLM analogue, because vLLM's vision
+-- tower is inside the checkpoint. NULL on every row that is not a llama.cpp
+-- vision model.
+--
+-- n_gpu_layers -- how many transformer layers to offload to the GPU. NULL means
+-- "omit the flag", which lets llama.cpp's own default (auto) and its --fit
+-- auto-sizing choose; that is the mainline behaviour and the one we want by
+-- default. An explicit integer is an operator asking for PARTIAL offload, i.e.
+-- deliberately spilling layers to CPU RAM to fit a model that does not fit the
+-- card. It works and it is llama.cpp's genuine differentiator, but it is a
+-- performance cliff, so it is never chosen for the operator.
+--
+-- Deliberately NOT added (decision D4): a split_mode column. The number of GPUs
+-- is already tensor_parallel_size == len(gpu_indices), and which llama.cpp flag
+-- that maps to is the backend's job, not the schema's.
+ALTER TABLE models ADD COLUMN mmproj_filename TEXT;
+ALTER TABLE models ADD COLUMN n_gpu_layers INTEGER;

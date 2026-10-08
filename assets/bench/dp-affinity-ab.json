@@ -1,0 +1,199 @@
+{
+  "captured": "2026-10-04",
+  "box": {
+    "gpus": "4 x NVIDIA RTX A4000, 16 GiB each",
+    "model_hf": "Qwen/Qwen3-4B-Instruct-2507",
+    "served_name": "qwen3-4b-dp4",
+    "quant": "bf16",
+    "layout": "data_parallel_size 4, tensor_parallel_size 1",
+    "vllm": "0.26.0",
+    "lm_warden": "this release",
+    "max_num_seqs": 32,
+    "max_model_len": 32768
+  },
+  "workload": {
+    "description": "Synthetic load from our own harness, not Claude Code itself: closed-loop Claude Code-style sessions over streaming /v1/messages, 6 turns each, a shared system prompt of about 3500 tokens, a session-unique first message (6000 tokens nominal), about 400 tokens of new input per follow-up turn, max_tokens 256, 180 s per step",
+    "first_prompt_tokens_range": [
+      10712,
+      11039
+    ],
+    "step_minutes": 3.0
+  },
+  "spill_threshold": 8,
+  "ramp": [
+    {
+      "workers": 4,
+      "off": {
+        "tasks_per_h": 180.0,
+        "ttfb_p50_s": 2.05,
+        "ttfb_p95_s": 3.5,
+        "gpus_busy_avg": 2.71,
+        "prefix_hit_pct": 56.2,
+        "tokens_per_min": 5886
+      },
+      "on": {
+        "tasks_per_h": 240.1,
+        "ttfb_p50_s": 0.38,
+        "ttfb_p95_s": 2.84,
+        "gpus_busy_avg": 2.83,
+        "prefix_hit_pct": 86.4,
+        "tokens_per_min": 6744,
+        "sticky_pct": 100.0,
+        "spilled_pct": 0.0
+      }
+    },
+    {
+      "workers": 8,
+      "off": {
+        "tasks_per_h": 300.0,
+        "ttfb_p50_s": 2.33,
+        "ttfb_p95_s": 6.32,
+        "gpus_busy_avg": 3.74,
+        "prefix_hit_pct": 44.3,
+        "tokens_per_min": 8364
+      },
+      "on": {
+        "tasks_per_h": 380.0,
+        "ttfb_p50_s": 0.48,
+        "ttfb_p95_s": 5.03,
+        "gpus_busy_avg": 3.74,
+        "prefix_hit_pct": 86.1,
+        "tokens_per_min": 10752,
+        "sticky_pct": 100.0,
+        "spilled_pct": 0.0
+      }
+    },
+    {
+      "workers": 16,
+      "off": {
+        "tasks_per_h": 300.0,
+        "ttfb_p50_s": 3.25,
+        "ttfb_p95_s": 26.24,
+        "gpus_busy_avg": 3.91,
+        "prefix_hit_pct": 33.2,
+        "tokens_per_min": 9558
+      },
+      "on": {
+        "tasks_per_h": 360.0,
+        "ttfb_p50_s": 0.85,
+        "ttfb_p95_s": 24.88,
+        "gpus_busy_avg": 3.69,
+        "prefix_hit_pct": 48.6,
+        "tokens_per_min": 12204,
+        "sticky_pct": 100.0,
+        "spilled_pct": 0.0
+      }
+    },
+    {
+      "workers": 24,
+      "off": {
+        "tasks_per_h": 300.0,
+        "ttfb_p50_s": 5.06,
+        "ttfb_p95_s": 58.82,
+        "gpus_busy_avg": 3.91,
+        "prefix_hit_pct": 32.8,
+        "tokens_per_min": 9048
+      },
+      "on": {
+        "tasks_per_h": 420.0,
+        "ttfb_p50_s": 13.14,
+        "ttfb_p95_s": 38.34,
+        "gpus_busy_avg": 4,
+        "prefix_hit_pct": 37.9,
+        "tokens_per_min": 11178,
+        "sticky_pct": 89.1,
+        "spilled_pct": 10.9
+      }
+    },
+    {
+      "workers": 32,
+      "off": {
+        "tasks_per_h": 520.0,
+        "ttfb_p50_s": 12.32,
+        "ttfb_p95_s": 82.84,
+        "gpus_busy_avg": 4,
+        "prefix_hit_pct": 31.6,
+        "tokens_per_min": 14760
+      },
+      "on": {
+        "tasks_per_h": 620.0,
+        "ttfb_p50_s": 27.66,
+        "ttfb_p95_s": 38.92,
+        "gpus_busy_avg": 4,
+        "prefix_hit_pct": 31.6,
+        "tokens_per_min": 16638,
+        "sticky_pct": 67.3,
+        "spilled_pct": 32.7
+      }
+    }
+  ],
+  "router_smoke": {
+    "haiku_local": {
+      "requests": 5,
+      "route": "local",
+      "ttfb_p50_s": 0.108
+    },
+    "opus_passthrough": {
+      "requests": 1,
+      "route": "passthrough",
+      "ttfb_p50_s": 0.607
+    },
+    "fallback_forced": {
+      "requests": 1,
+      "route": "fallback",
+      "reason": "status_400"
+    },
+    "refused_no_relay": {
+      "requests": 1,
+      "status": 403,
+      "reason": "relay_not_allowed"
+    }
+  },
+  "before_7gpu": {
+    "note": "Issue #286, 2026-10-04: 7x RTX 5090, qwen3.8-27b NVFP4 as DP7 x TP1, vLLM 0.26.0, LM Warden v2026.10.03.1, BEFORE #286 (vLLM balancer). Different host and model from the A/B above.",
+    "rows": [
+      {
+        "workers": 16,
+        "tasks_per_h": 158,
+        "ttfb_p50_s": 12,
+        "ttfb_p95_s": 39,
+        "gpus_busy_avg": 2.1,
+        "gpu_util_avg_pct": 28
+      },
+      {
+        "workers": 20,
+        "tasks_per_h": 179,
+        "ttfb_p50_s": 12,
+        "ttfb_p95_s": 35,
+        "gpus_busy_avg": 2.3,
+        "gpu_util_avg_pct": 30
+      },
+      {
+        "workers": 24,
+        "tasks_per_h": 200,
+        "ttfb_p50_s": 15,
+        "ttfb_p95_s": 44,
+        "gpus_busy_avg": 2.8,
+        "gpu_util_avg_pct": 37
+      },
+      {
+        "workers": 30,
+        "tasks_per_h": 197,
+        "ttfb_p50_s": 20,
+        "ttfb_p95_s": 50,
+        "gpus_busy_avg": 3.3,
+        "gpu_util_avg_pct": 42
+      },
+      {
+        "workers": 44,
+        "tasks_per_h": 189,
+        "ttfb_p50_s": 26,
+        "ttfb_p95_s": 78,
+        "gpus_busy_avg": 3.3,
+        "gpu_util_avg_pct": 42
+      }
+    ],
+    "single_tp4_tasks_per_h": 93,
+    "tp4_prefix_hit_pct": 82
+  }
+}

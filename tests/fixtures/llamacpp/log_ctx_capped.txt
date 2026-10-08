@@ -1,0 +1,13 @@
+0.00.009.123 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.009.601 W srv  llama_server: -----------------
+0.00.009.610 W srv  llama_server: CORS is set to allow all origins ('*') and no API key is set
+0.00.009.611 W srv  llama_server: this can be a security risk (cross-origin attacks)
+0.00.009.611 W srv  llama_server: more info: https://github.com/ggml-org/llama.cpp/pull/25655
+0.00.009.611 W srv  llama_server: -----------------
+0.00.011.008 I srv    load_model: loading model '/models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf'
+0.01.875.661 W llama_context: n_ctx_seq (8192) > n_ctx_train (2048) -- possible training context overflow
+0.01.979.227 I cmn          init: llama threadpool init, n_threads = 8
+0.02.023.758 W srv    load_model: the slot context (8192) exceeds the training context of the model (2048) - capping
+0.02.068.256 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 2048, kv_unified = 'true'
+0.02.077.902 I srv  llama_server: model loaded
+0.02.077.917 I srv  llama_server: listening on http://0.0.0.0:18080

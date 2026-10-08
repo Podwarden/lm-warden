@@ -1,0 +1,59 @@
+# Build artifacts
+/bin/
+*.test
+*.out
+
+# Local config / data
+# `.env` holds live tokens on developer machines (NPM_TOKEN for the chat-ui
+# registry, smoke-test credentials) — never committed.
+.env
+/data/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Docker buildx cache
+/.buildx-cache/
+
+# Local Go build cache (used by docker-run-with-cache flow)
+/.gocache/
+
+# Python tooling
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+*.py[cod]
+
+# pytest scratch dirs (R30 flake repro runs left basetemps here in-repo, and
+# the boundary's salvage `git add -A` committed them): keep them out
+.r30-tmp/
+
+# CI artifact: live OpenAPI schema dump from typecheck:api-types
+/openapi.json
+
+# Local-only compose overrides — never committed. Compose auto-loads
+# `docker-compose.override.yml` and operators use it to inject smoke-test
+# secrets, disable GPU reservations on CPU-only dev boxes, etc. The real
+# stack contract lives in `docker-compose.yml` alone.
+/docker-compose.override.yml
+
+# Local-only UI-test scaffolding (Playwright). The compose override and the
+# installed browser deps are operator conveniences — never part of the stack
+# contract or the published image. Committing node_modules/ once swept in
+# ~10MB of vendored Playwright; keep it out.
+/docker-compose.uitest.yml
+/node_modules/
+/test-results/
+
+
+# Scratch install directory the installer CI job (installer:stack-up) and
+# scripts/installer-selftest.sh write into. Never a source of truth.
+/.ci-install/
+/.loop/

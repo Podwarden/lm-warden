@@ -1,0 +1,161 @@
+# LM Warden unified-port front-door (issue #155).
+#
+# Caddy listens on :8080 (the sole host-published port) and fans out to
+# the internal api + ui containers. External reverse proxies (e.g.
+# vllm.example.com) point at this listener — no need to expose api:8080
+# and ui:3000 separately to the host.
+#
+# Routing map (see docs/superpowers/specs/2026-05-23-unified-port-architecture-design.md):
+#   GET /            → api:8080 /_landing   (public website home, gated by setting;
+#                                            redirects to /ui/ when the website is off)
+#   /_landing/*      → api:8080             (the landing page's video, images, fonts)
+#   /robots.txt, /sitemap.xml, /llms.txt, /llms-full.txt → api:8080
+#   /ui/*            → ui:3000              (Next.js basePath '/ui')
+#   /_next/*         → ui:3000              (safety net — Next emits /ui/_next under basePath)
+#   /api/*           → api:8080
+#   /v1/*            → api:8080             (OpenAI-compatible proxy, flush_interval -1 for SSE)
+#   /healthz         → api:8080
+#   anything else    → api:8080             (website pages such as /faq and
+#                                            /coding-agents/*, gated by setting; 404 otherwise)
+#
+# Caddy auto-detects WebSocket Upgrade headers, so HMR (`/ui/_next/webpack-hmr`)
+# and the warden's SSE streams work without per-handler websocket directives.
+
+{
+    # admin API off (default :2019 not published, but be explicit so a future
+    # network change can't accidentally expose it).
+    admin off
+
+    # When THIS Caddy sits behind another proxy (Traefik on a cluster, a TLS
+    # terminator on the host), believe the X-Forwarded-For / -Proto that
+    # proxy sends and append to it, instead of replacing it with the proxy's
+    # own address. Without this every visitor reaches the api as the outer
+    # proxy's IP; the api then cannot tell them apart, so it never locks that
+    # address and brute-force protection falls back to slowing failed logins
+    # down (docs/operating.md). Only private-range peers are trusted, so a client
+    # connecting from the internet still cannot write the header.
+    # The api applies the same rule on its side (VW_TRUSTED_PROXIES).
+    servers {
+        trusted_proxies static private_ranges
+
+        # Caddy 2.11 defaults read_body_idle to 1m and aborts the connection
+        # 60 s into a streamed response (Claude Code, SSE). Disable it.
+        timeouts {
+            read_body_idle -1s
+        }
+    }
+    log {
+        output stderr
+        format console
+    }
+}
+
+:8080 {
+    encode gzip
+
+    # Static landing page — FastAPI gates by the `landing_page_enabled`
+    # setting. When opted out the warden returns 404, which Caddy propagates
+    # verbatim. Both the bare `/` and the canonical `/_landing` are public;
+    # the spec requires the smoke probe to hit both directly.
+    handle / {
+        reverse_proxy api:8080 {
+            rewrite /_landing
+        }
+    }
+
+    handle /_landing {
+        reverse_proxy api:8080
+    }
+
+    # The landing page's own assets (video, screenshots, fonts). Served from
+    # a filename allowlist by the api with Range support and year-long
+    # immutable caching (URLs carry a content hash). Same setting gate.
+    handle /_landing/* {
+        reverse_proxy api:8080
+    }
+
+    # Crawler and language-model entry points. robots.txt is disallow-all
+    # unless VW_LANDING_CANONICAL_URL makes this instance indexable; the
+    # sitemap exists only then. See app/landing/routes.py.
+    @landing_text path /robots.txt /sitemap.xml /llms.txt /llms-full.txt
+    handle @landing_text {
+        reverse_proxy api:8080
+    }
+
+    # Next.js UI (basePath '/ui'). All UI navigation lives here; the empty
+    # path is owned by the landing handler above.
+    handle /ui* {
+        reverse_proxy ui:3000
+    }
+
+    # Next.js asset safety net. With basePath '/ui' the framework emits
+    # /ui/_next/* URLs, but keep bare /_next/* routed too so any third-party
+    # asset path that bypasses the basePath transformer (rare, but possible
+    # with custom rewrites or external embeds) still resolves.
+    handle /_next/* {
+        reverse_proxy ui:3000
+    }
+
+    # Backend warden API. flush_interval -1 ensures SSE byte-streaming
+    # (live logs, stats) flushes per-chunk instead of buffering.
+    handle /api/* {
+        reverse_proxy api:8080 {
+            flush_interval -1
+        }
+    }
+
+    # OpenAI-compatible proxy. flush_interval -1 is critical for streaming
+    # completions — without it Caddy buffers SSE frames until the upstream
+    # closes the connection, breaking real-time clients.
+    handle /v1/* {
+        reverse_proxy api:8080 {
+            flush_interval -1
+        }
+    }
+
+    handle /healthz {
+        reverse_proxy api:8080
+    }
+
+    # v1-era bookmark / browser-typed bare paths. UI is mounted under
+    # basePath '/ui' (see frontend/next.config.ts), so /login, /models,
+    # /settings etc. would otherwise hit the 404 fallthrough. 308
+    # preserves method (matters if any of these ever take POST).
+    #
+    # Note on {uri}: in Caddy 2, {uri} expands to the FULL request URI
+    # (including the path that matched). So `redir /login/* /ui/login{uri}`
+    # produces /ui/login/login/foo — the path segment gets doubled. For
+    # wildcard rules we therefore prepend just /ui and let {uri} carry the
+    # full original path (e.g. /login/foo -> /ui{uri} -> /ui/login/foo).
+    # Bare-path rules use a literal target since there's no suffix to carry.
+    # Verified via curl against Caddy 2 on 2026-05-24 (QA report);
+    # smoke harness lives at scripts/smoke-caddy-redirects.sh.
+    redir /login        /ui/login         308
+    redir /login/*      /ui{uri}          308
+    redir /models       /ui/models        308
+    redir /models/*     /ui{uri}          308
+    redir /settings     /ui/settings      308
+    redir /settings/*   /ui{uri}          308
+    redir /setup        /ui/setup         308
+    redir /setup/*      /ui{uri}          308
+    redir /stats        /ui/stats         308
+    redir /stats/*      /ui{uri}          308
+    redir /tokens       /ui/tokens        308
+    redir /tokens/*     /ui{uri}          308
+    redir /cache        /ui/cache         308
+    redir /cache/*      /ui{uri}          308
+    redir /chat         /ui/chat          308
+    redir /chat/*       /ui{uri}          308
+
+    # Browsers auto-request /favicon.ico from the landing page; alias it
+    # to the Next.js icon that the UI already ships.
+    redir /favicon.ico  /ui/icon.svg      301
+
+    # Everything no handler above claims goes to the api: the public
+    # website's pages (/faq, /coding-agents/..., gated by
+    # landing_page_enabled) and its 404. New pages need no Caddy change.
+    # /api/*, /v1/*, /ui* and the v1 bookmark redirects above keep priority.
+    handle {
+        reverse_proxy api:8080
+    }
+}

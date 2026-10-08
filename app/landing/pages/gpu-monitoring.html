@@ -1,0 +1,144 @@
+    <section class="sec plate-sec" aria-labelledby="box-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <h1 id="box-title" class="as-h2">GPU monitoring: the box behind these numbers.</h1>
+          <p>
+            Unless a caption says otherwise, the readings on this page come from one workstation:
+            four RTX&nbsp;A4000s, with a single model loaded across all of them, busy with our own test
+            traffic. These are the numbers the console showed while we recorded figs.&nbsp;1 and&nbsp;5.
+            The fit tests further down also used a Quadro&nbsp;RTX&nbsp;5000, and say so.
+          </p>
+        </div>
+
+        <div class="plate">
+          <dl class="spec">
+            <dt>GPUs</dt>
+            <!-- src: shot-gpu-cards.webp (GPU 0 to 3: "NVIDIA RTX A4000", "Ampere · compute 8.6", "/ 16.0 GiB") -->
+            <dd>4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000, 16&#8239;GiB each (Ampere, compute&nbsp;8.6)</dd>
+            <dt>VRAM in use</dt>
+            <!-- src: demo-stats-poster.webp (VRAM "59.4 / 64.0 GiB", "93% used · host") -->
+            <dd>59.4 of 64.0&#8239;GiB, one model across all four cards</dd>
+            <dt>PCIe</dt>
+            <!-- src: shot-gpu-cards.webp ("Link Gen 4 · x16 of x16", every panel) -->
+            <dd>Gen&nbsp;4 x16 per card</dd>
+            <dt>Driver</dt>
+            <!-- src: shot-gpu-cards.webp ("Driver 610.57.04", "CUDA 13.3") -->
+            <dd><code>610.57.04</code>, CUDA&nbsp;13.3</dd>
+          </dl>
+
+          <div class="table-scroll">
+            <table class="readings">
+              <caption>GPU load, power and tokens, read off fig.&nbsp;1</caption>
+              <thead>
+                <tr><th scope="col">Reading</th><th scope="col" class="n">At capture</th><th scope="col" class="n">24&#8239;h busy median</th><th scope="col" class="n">24&#8239;h peak</th></tr>
+              </thead>
+              <tbody>
+                <!-- src: demo-stats-poster.webp (GPU UTIL "100% max across GPUs · host"; GPU UTILISATION "24h busy median 100% · peak 100%") -->
+                <tr><th scope="row">GPU utilisation, busiest card&nbsp;(%)</th><td class="n" data-h="At capture">100</td><td class="n" data-h="24&#8239;h median">100</td><td class="n" data-h="24&#8239;h peak">100</td></tr>
+                <!-- src: demo-stats-poster.webp (POWER "548 W sum across GPUs · host"; POWER DRAW "24h busy median 530 W · peak 559 W") -->
+                <tr><th scope="row">GPU power, four cards summed&nbsp;(W)</th><td class="n" data-h="At capture">548</td><td class="n" data-h="24&#8239;h median">530</td><td class="n" data-h="24&#8239;h peak">559</td></tr>
+                <!-- src: demo-stats-poster.webp (TOKENS / MINUTE "24h busy median 190k · peak 880k"; no live tile, so "not shown") -->
+                <tr><th scope="row">Tokens per minute</th><td class="n" data-h="At capture"><span class="muted">not shown</span></td><td class="n" data-h="24&#8239;h median">190k</td><td class="n" data-h="24&#8239;h peak">880k</td></tr>
+              </tbody>
+            </table>
+            <p class="plate-note">Your numbers will be different. That is the point of measuring them.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cards-sec" aria-labelledby="cards-title">
+      <div class="wrap sec-head">
+        <h2 id="cards-title">A number it can’t measure reads “not reported”.</h2>
+        <!-- src: README.md ("eighteen months apart"; "not reported", never 0) -->
+        <p>
+          Most GPU dashboards average four cards into one line and draw a missing value
+          as&nbsp;0. This one gives each card its own panel: temperature against the throttle
+          point its driver reports, power against the card’s own cap, clocks, fan, the PCIe
+          link as it is negotiated right now, and ECC and NVLink when the card has them.
+          Two cards bought eighteen months apart stay two cards, and a value the driver
+          doesn’t give is labelled as missing instead of drawn as zero.
+        </p>
+      </div>
+
+      <figure>
+        <div class="bleed">
+          <div class="stage">
+            <img src="{{a:shot-gpu-cards.webp}}" width="2492" height="854" loading="lazy" decoding="async"
+                 alt="Four GPU panels from the Stats page under load, one per RTX A4000: 99 to 100 percent utilisation in power state P2, temperatures from 79 to 94 degrees against a 100 degree throttle mark, a thermal slowdown warning on three cards, power at 134 to 138 of a 140 watt cap, clocks, driver and CUDA version, PCIe link, NVLink and ECC">
+            <!-- Leader lines in the image's own pixel space (2492 x 854). Each
+                 runs down the gap between two panels, then across to its pixel. -->
+            <svg class="leads" viewBox="0 0 2492 854" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M625 0 V314 H560"/>   <circle cx="548" cy="314" r="11"/>
+              <path d="M1869 0 V390 H1849"/> <circle cx="1838" cy="390" r="11"/>
+              <path d="M1247 854 V424 H1234"/> <circle cx="1223" cy="424" r="11"/>
+              <path d="M1869 854 V786 H1721"/> <circle cx="1710" cy="786" r="11"/>
+            </svg>
+            <!-- src: shot-gpu-cards.webp ("100° throttle" marker, GPU 0) -->
+            <span class="tape up l" style="--x:25.08%">Throttle point from the driver, not a guess</span>
+            <!-- src: shot-gpu-cards.webp ("Thermal slowdown — clock at 76% of max", GPU 2) -->
+            <span class="tape up l" style="--x:75%;--rot:0.4deg">Why the clock is down, as the driver reports it</span>
+            <!-- src: shot-gpu-cards.webp ("134 / 140 W", GPU 1) -->
+            <span class="tape down l" style="--x:50.04%;--rot:0.5deg">Power against its own 140&#8239;W cap</span>
+            <!-- src: shot-gpu-cards.webp ("NVLink none on this card", "ECC off", GPU 2) -->
+            <span class="tape down r" style="--x:75%;--rot:-0.5deg">NVLink and ECC, as the card reports them</span>
+          </div>
+        </div>
+        <div class="wrap">
+          <!-- src: shot-gpu-cards.webp ("P2" badge and 99% or 100% load on every panel; 90, 79, 94, 94 °C; "Thermal slowdown — clock at 84% / 76% / 77% of max" on GPUs 0, 2, 3) -->
+          <figcaption><b>Fig.&nbsp;5</b>The four GPU panels from the same Stats page, at full size, taken during the same load. Every card is at 99 or 100% in power state P2, and three of them, at 90 to 94&#8239;°C, are held by the driver to between 76 and 84% of their top clock.<span class="scroll-hint"> Scroll the image sideways to see all four.</span></figcaption>
+        </div>
+      </figure>
+
+      <div class="wrap">
+          <table class="per">
+            <caption>What is read where</caption>
+            <tbody>
+              <tr><th scope="row">Per card</th><td>Temperature and throttle point, power and its cap, core and memory clocks, fan, PCIe generation and width, ECC, NVLink, and the engine process using the card</td></tr>
+              <tr><th scope="row">Per host</th><td>VRAM in use, GPU utilisation (the busiest card), power (the sum of the cards) and tokens per minute</td></tr>
+              <tr><th scope="row">Per request</th><td>Time to first token, inter-token latency and duration, measured at the proxy the same way for both engines</td></tr>
+            </tbody>
+          </table>
+      </div>
+    </section>
+
+    <section class="sec" aria-labelledby="inflight-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <h2 id="inflight-title">What each request is waiting for.</h2>
+          <!-- src: shot-inflight.webp (phases "tool call", "answering", "prefill"; badges "evict?", "1·r0", "1·r4"; "Prefill model 439 tok/s learned from 1132 requests") -->
+          <p>
+            The Stats page lists every request in flight with the client’s session and where the
+            request is in its life: queued at the warden, prefill (the engine reading the prompt),
+            thinking, writing a tool call, or answering. A badge gives the share of the prompt
+            likely to be in the replica’s cache. A prefill that runs longer than this box’s
+            learned prefill rate predicts says why it probably waits: behind other prompts on the same
+            replica, a cache that was probably evicted, or slow for no reason the warden can see.
+            The session comes from the id each tool already sends: Claude Code, Codex, OpenCode and
+            pi out of the box, Hermes and Aider with one line of setup.
+          </p>
+        </div>
+      </div>
+
+        <figure>
+          <div class="bleed">
+            <div class="stage">
+              <img src="{{a:shot-inflight.webp}}" width="1270" height="757" loading="lazy" decoding="async"
+                   alt="The In flight table with 14 active requests, all from the key agent-farm at one client address. Columns: token, client IP, session, model, phase, context window and elapsed. Six rows are in tool call or answering and eight in prefill, most with a badge estimating 94 to 100% of the prompt cached; three prefills carry an evict? badge and two an hourglass badge, 1·r0 and 1·r4. Below the table: prefill model 439 tok/s learned from 1132 requests, cache estimate right 57% of the time, and the hit rate by idle gap, 68% after up to 30 seconds falling to 18% after 5 to 15 minutes.">
+              <svg class="leads" viewBox="0 0 1270 757" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M566 0 V333"/> <rect x="541" y="333" width="52" height="21" rx="3"/>
+                <path d="M562 757 V715"/> <rect x="543" y="694" width="38" height="21" rx="3"/>
+              </svg>
+              <!-- src: shot-inflight.webp ("evict?" badges on three prefill rows) -->
+              <span class="tape up l" style="--x:44.57%">No token yet, cache probably evicted</span>
+              <!-- src: shot-inflight.webp ("1·r4" badge on the last row) -->
+              <span class="tape down r" style="--x:44.25%;--rot:-0.5deg">One prompt ahead of it on replica 4</span>
+            </div>
+          </div>
+          <div class="wrap">
+            <!-- src: shot-inflight.webp ("14 active"; "cache estimate right 57% of the time (4939)"; "idle gap → hit: 0-30s 68% · 30-120s 33% · 2-5m 20% · 5-15m 18%") -->
+            <figcaption><b>Fig.&nbsp;12</b>Fourteen requests in flight on the seven-GPU box. Under the table is what the warden has learned from finished requests: this box prefills about 439 tokens a second per request, its cache estimate was right 57% of the time, and a conversation idle for more than two minutes usually finds its cache gone (20% hit after 2 to 5 minutes). The key name is a stand-in and the address a documentation address. Below 768 pixels wide the table becomes a list of cards. Recorded on 5&nbsp;October 2026.<span class="scroll-hint"> Scroll the image sideways to see every column.</span></figcaption>
+          </div>
+        </figure>
+    </section>
+    <div class="wrap related-wrap"><p class="related">Related: <a href="/cache-aware-routing">cache-aware routing</a> · <a href="/api-keys">API keys</a> · <a href="/coding-agents">coding agents</a></p></div>

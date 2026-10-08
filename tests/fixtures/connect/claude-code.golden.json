@@ -1,0 +1,9 @@
+{
+  "origin": "https://warden.example",
+  "header": "X-LMWarden-Key",
+  "key": "vw_YOUR_KEY",
+  "model": "qwen",
+  "env": "export ANTHROPIC_BASE_URL=https://warden.example\nexport ANTHROPIC_CUSTOM_HEADERS=\"X-LMWarden-Key: vw_YOUR_KEY\"\nclaude",
+  "settings_json": "{\n  \"env\": {\n    \"ANTHROPIC_BASE_URL\": \"https://warden.example\",\n    \"ANTHROPIC_CUSTOM_HEADERS\": \"X-LMWarden-Key: vw_YOUR_KEY\"\n  }\n}",
+  "local_only": "export ANTHROPIC_BASE_URL=https://warden.example\nexport ANTHROPIC_AUTH_TOKEN=vw_YOUR_KEY\nexport ANTHROPIC_MODEL=qwen\nexport ANTHROPIC_DEFAULT_OPUS_MODEL=qwen\nexport ANTHROPIC_DEFAULT_SONNET_MODEL=qwen\nexport ANTHROPIC_DEFAULT_HAIKU_MODEL=qwen"
+}

@@ -1,0 +1,29 @@
+# Trimmed vLLM 0.26 /metrics scrape from a data-parallel engine (dp=3): every
+# per-rank series carries engine="0".."2" and one endpoint serves all three.
+# HELP vllm:num_requests_running Number of requests in model execution batches.
+# TYPE vllm:num_requests_running gauge
+vllm:num_requests_running{engine="0",model_name="qwen"} 2.0
+vllm:num_requests_running{engine="1",model_name="qwen"} 5.0
+vllm:num_requests_running{engine="2",model_name="qwen"} 0.0
+# HELP vllm:num_requests_waiting Number of requests waiting to be processed.
+# TYPE vllm:num_requests_waiting gauge
+vllm:num_requests_waiting{engine="0",model_name="qwen"} 0.0
+vllm:num_requests_waiting{engine="1",model_name="qwen"} 3.0
+vllm:num_requests_waiting{engine="2",model_name="qwen"} 0.0
+# HELP vllm:kv_cache_usage_perc KV-cache usage. 1 means 100 percent usage.
+# TYPE vllm:kv_cache_usage_perc gauge
+vllm:kv_cache_usage_perc{engine="0",model_name="qwen"} 0.25
+vllm:kv_cache_usage_perc{engine="1",model_name="qwen"} 0.5
+vllm:kv_cache_usage_perc{engine="2",model_name="qwen"} 0.0
+# HELP vllm:prefix_cache_queries_total Prefix cache queries, in terms of number of queried tokens.
+# TYPE vllm:prefix_cache_queries_total counter
+vllm:prefix_cache_queries_total{engine="0",model_name="qwen"} 1500.0
+vllm:prefix_cache_queries_total{engine="1",model_name="qwen"} 800.0
+vllm:prefix_cache_queries_total{engine="2",model_name="qwen"} 0.0
+# HELP vllm:prefix_cache_hits_total Prefix cache hits, in terms of number of cached tokens.
+# TYPE vllm:prefix_cache_hits_total counter
+vllm:prefix_cache_hits_total{engine="0",model_name="qwen"} 1234.0
+vllm:prefix_cache_hits_total{engine="1",model_name="qwen"} 400.0
+vllm:prefix_cache_hits_total{engine="2",model_name="qwen"} 0.0
+# An unlabeled line (process-level) must be ignored by the per-rank read.
+vllm:num_requests_running 99.0

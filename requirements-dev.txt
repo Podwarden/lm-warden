@@ -1,0 +1,31 @@
+-r requirements.txt
+# transformers + huggingface_hub are supplied by the vllm/vllm-openai base
+# image in production (currently transformers 5.6.2, hub 1.12.0). Tests run
+# in python:3.11-slim which has nothing installed, so pin floors here that
+# match what vllm 0.20.0 expects (needs Gemma3Config, added in transformers
+# 4.50; matching huggingface_hub). Upper bounds tightened after a CI
+# regression: transformers 5.7.0 + huggingface_hub 1.16.x broke
+# pytest-asyncio fixture collection (`tests/unit/system/test_hf.py`
+# AttributeError: 'function' object has no attribute '__func__'). Keep
+# the ceiling at-or-below what the prod base image ships (5.6.2 / 1.12.0).
+transformers>=4.55,<5.7
+huggingface_hub>=0.30,<1.16
+pytest==8.3.4
+pytest-asyncio==0.25.0
+pytest-httpx==0.35.0
+# pytest-xdist — `make test-unit` and the CI unit-tests job run `-n auto`.
+# Every unit test already owns its data dir (tmp_path-scoped SQLite, no fixed
+# ports); the per-worker cost is one extra app import (~1 s). Measured
+# 2026-09-03 on the 2035-test suite after the fixture-level fixes in
+# tests/conftest.py: serial 60.6 s -> 25.8 s at -n 4 -> 21.3 s at -n 8.
+pytest-xdist==3.8.0
+ruff==0.8.4
+mypy==1.13.0
+types-aiofiles==24.1.0.20240626
+aiohttp==3.10.11
+requests==2.32.3
+responses==0.25.3
+# tiktoken — used by app/bench/corpus/_generate.py (#81) to size long-tier
+# prompts (64k/+) with the cl100k_base reference tokenizer. Not imported at
+# runtime by the bench itself; only the corpus regeneration CLI needs it.
+tiktoken>=0.7

@@ -1,0 +1,167 @@
+[
+ {
+  "type": "response.created",
+  "sequence_number": 0,
+  "response": {
+   "id": "resp_01",
+   "object": "response",
+   "created_at": 0,
+   "status": "in_progress",
+   "model": "qwen",
+   "output": [],
+   "usage": null,
+   "incomplete_details": null,
+   "error": null,
+   "parallel_tool_calls": true,
+   "tool_choice": "auto",
+   "store": false,
+   "instructions": null,
+   "metadata": {}
+  }
+ },
+ {
+  "type": "response.in_progress",
+  "sequence_number": 1,
+  "response": {
+   "id": "resp_01",
+   "object": "response",
+   "created_at": 0,
+   "status": "in_progress",
+   "model": "qwen",
+   "output": [],
+   "usage": null,
+   "incomplete_details": null,
+   "error": null,
+   "parallel_tool_calls": true,
+   "tool_choice": "auto",
+   "store": false,
+   "instructions": null,
+   "metadata": {}
+  }
+ },
+ {
+  "type": "response.output_item.added",
+  "sequence_number": 2,
+  "output_index": 0,
+  "item": {
+   "id": "msg_02",
+   "type": "message",
+   "role": "assistant",
+   "status": "in_progress",
+   "content": []
+  }
+ },
+ {
+  "type": "response.content_part.added",
+  "sequence_number": 3,
+  "item_id": "msg_02",
+  "output_index": 0,
+  "content_index": 0,
+  "part": {
+   "type": "output_text",
+   "text": "",
+   "annotations": []
+  }
+ },
+ {
+  "type": "response.output_text.delta",
+  "sequence_number": 4,
+  "item_id": "msg_02",
+  "output_index": 0,
+  "content_index": 0,
+  "delta": "a",
+  "logprobs": []
+ },
+ {
+  "type": "response.output_text.delta",
+  "sequence_number": 5,
+  "item_id": "msg_02",
+  "output_index": 0,
+  "content_index": 0,
+  "delta": "b",
+  "logprobs": []
+ },
+ {
+  "type": "response.output_text.done",
+  "sequence_number": 6,
+  "item_id": "msg_02",
+  "output_index": 0,
+  "content_index": 0,
+  "text": "ab",
+  "logprobs": []
+ },
+ {
+  "type": "response.content_part.done",
+  "sequence_number": 7,
+  "item_id": "msg_02",
+  "output_index": 0,
+  "content_index": 0,
+  "part": {
+   "type": "output_text",
+   "text": "ab",
+   "annotations": []
+  }
+ },
+ {
+  "type": "response.output_item.done",
+  "sequence_number": 8,
+  "output_index": 0,
+  "item": {
+   "id": "msg_02",
+   "type": "message",
+   "role": "assistant",
+   "status": "completed",
+   "content": [
+    {
+     "type": "output_text",
+     "text": "ab",
+     "annotations": []
+    }
+   ]
+  }
+ },
+ {
+  "type": "response.completed",
+  "sequence_number": 9,
+  "response": {
+   "id": "resp_01",
+   "object": "response",
+   "created_at": 0,
+   "status": "completed",
+   "model": "qwen",
+   "output": [
+    {
+     "id": "msg_02",
+     "type": "message",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "text": "ab",
+       "annotations": []
+      }
+     ]
+    }
+   ],
+   "usage": {
+    "input_tokens": 12,
+    "input_tokens_details": {
+     "cached_tokens": 0
+    },
+    "output_tokens": 2,
+    "output_tokens_details": {
+     "reasoning_tokens": 0
+    },
+    "total_tokens": 14
+   },
+   "incomplete_details": null,
+   "error": null,
+   "parallel_tool_calls": true,
+   "tool_choice": "auto",
+   "store": false,
+   "instructions": null,
+   "metadata": {}
+  }
+ }
+]

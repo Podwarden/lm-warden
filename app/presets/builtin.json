@@ -1,0 +1,51 @@
+[
+  {
+    "id": "a4000-tight-awq",
+    "name": "A4000 tight (AWQ)",
+    "description": "Conservative VRAM budget for a single RTX A4000 (16 GB). Caps the KV cache to keep paged-attention warmup under 14 GB, prefers FP16 weights, and uses AWQ quantization to fit 7B models with room for batching.",
+    "target_archetype": "1x A4000 16GB",
+    "settings": {
+      "gpu_memory_utilization": 0.82,
+      "max_model_len": 8192,
+      "dtype": "float16",
+      "trust_remote_code": false
+    }
+  },
+  {
+    "id": "h100-single-shot",
+    "name": "H100 single-shot",
+    "description": "Generous batch/context budget for a single H100 80GB. Targets latency-sensitive single-conversation workloads — long context, BF16 weights, gpu_memory_utilization 0.92. Tune max_num_seqs upward for batched serving.",
+    "target_archetype": "1x H100 80GB",
+    "settings": {
+      "gpu_memory_utilization": 0.92,
+      "max_model_len": 32768,
+      "dtype": "bfloat16",
+      "trust_remote_code": false
+    }
+  },
+  {
+    "id": "dev-tiny",
+    "name": "Dev (tiny)",
+    "description": "Minimal settings for dev/test on small models (Qwen-0.5B, opt-125m). Short context, gpu_memory_utilization 0.5 so this process fits alongside other workloads, eager mode so failures surface fast.",
+    "target_archetype": "any GPU >= 6GB",
+    "settings": {
+      "gpu_memory_utilization": 0.5,
+      "max_model_len": 4096,
+      "dtype": "auto",
+      "trust_remote_code": false,
+      "extra_args": ["--enforce-eager"]
+    }
+  },
+  {
+    "id": "moe-balanced",
+    "name": "MoE balanced (2x A4000)",
+    "description": "Tensor-parallel split for MoE models like Mixtral 8x7B across two A4000s. Tunes gpu_memory_utilization (0.86), max_model_len (16K), and dtype (BF16). After applying, set tensor_parallel_size to 2 manually and ensure gpu_indices lists both target GPUs.",
+    "target_archetype": "2x A4000 16GB",
+    "settings": {
+      "gpu_memory_utilization": 0.86,
+      "max_model_len": 16384,
+      "dtype": "bfloat16",
+      "trust_remote_code": false
+    }
+  }
+]
