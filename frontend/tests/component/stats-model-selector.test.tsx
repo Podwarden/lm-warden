@@ -19,9 +19,6 @@ import { setAccessToken, setCsrfToken } from "@/lib/auth-fetch";
 import { __resetLiveStatsStreamForTests } from "@/lib/live-stats-stream";
 import { MODEL_SELECTION_KEY } from "@/lib/model-selection";
 
-// The session forest card (three.js, its own poller) is covered by forest-card.test.tsx.
-vi.mock("@/components/forest/ForestCard", () => ({ default: () => null }));
-
 class FakeResizeObserver {
   observe() {}
   unobserve() {}

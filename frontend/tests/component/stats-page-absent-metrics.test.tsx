@@ -31,9 +31,6 @@ import {
   setFrame,
 } from "./stats-merged-harness";
 
-// The session forest card (three.js, its own poller) is covered by forest-card.test.tsx.
-vi.mock("@/components/forest/ForestCard", () => ({ default: () => null }));
-
 const VLLM = block("model-a-8b", {
   engine: {
     num_requests_running: 3,

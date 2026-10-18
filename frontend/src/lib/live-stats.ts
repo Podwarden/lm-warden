@@ -303,8 +303,9 @@ export interface LiveRequestRow {
   session_source?: string | null;
   /** Parent session of a subagent; tooltip only. */
   parent_session_id?: string | null;
-  /** The session forest's id for this session (hashed; the forest's tree sessions use it). Null = no session. The
-   *  forest view's row hover and click match on it, never on the raw `session_id`. */
+  /** The keyed hash of this session, as `GET /api/stats/forest` and the request
+   *  history store it. Null = no session. No view reads it today; kept so the
+   *  type matches the wire. */
   forest_session?: string | null;
   /** ESTIMATED prompt tokens in the replica's prefix cache, from this session's
    *  previous request on the same replica. The engine reports the real figure

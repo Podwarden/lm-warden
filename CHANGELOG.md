@@ -7,6 +7,50 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.18.2] — 2026-10-18
+
+### Changed
+
+- **Engines bumped to vLLM v0.32.0 and llama.cpp b11719** (from v0.26.0 and
+  b10731). The image base moves to Ubuntu 24.04 and CUDA 13.0.3. Six vLLM
+  minors changed the defaults listed below; check them before you upgrade a
+  deployment that relied on the old ones.
+  - **Model Runner V2 is the default runner for all models** (vLLM v0.29). The
+    previous runner stays the default only for a few ROCm models. Scheduling,
+    metrics and prefix-cache behaviour follow it.
+  - **`--api-server-count` defaults to the data-parallel size.** A
+    data-parallel model now starts one API worker per rank, not one. Set
+    `--api-server-count` in the model's extra arguments to keep the old count.
+  - **GLM-5.x on Blackwell datacenter GPUs defaults to an FP8 KV cache.** It
+    halves KV memory; the upstream PR's benchmark reports a 7 to 11% TTFT cost.
+    Pin `--kv-cache-dtype` in the model's extra arguments to keep the old
+    behaviour.
+  - **`fp8` is no longer an online quantization shorthand.** vLLM v0.31 renamed
+    it to `fp8_per_tensor`. The warden passes `quantization` through unchanged,
+    so a row that quantizes an unquantized checkpoint online must use
+    `fp8_per_tensor`. Not yet checked on a live engine.
+  - **`max_tokens` is no longer reserved from the context window** (v0.32).
+    That moves the threshold at which a request gets a 400.
+
+## [v2026.10.18.1] — 2026-10-18
+
+### Removed
+
+- **The session forest view is gone.** The 3D trees on the Stats page, the
+  full-window /ui/forest page with its key-holder sign-in page, and the Forest
+  item in the navigation are removed, along with the three.js dependency. The
+  forest data stays: `GET /api/stats/forest` still serves the session trees,
+  `POST /api/forest/login` still issues key-holder tokens, and in-flight rows
+  still carry `forest_session`, for any future view.
+
+## [v2026.10.13.1] — 2026-10-13
+
+### Fixed
+
+- **The request-flow diagram on the home page is full width again.** It sat in the
+  narrow heading column of the "What it is" section, so it rendered as a small
+  thumbnail beside an empty space; it now spans the whole section.
+
 ## [v2026.10.08.1] — 2026-10-08
 
 ### Fixed

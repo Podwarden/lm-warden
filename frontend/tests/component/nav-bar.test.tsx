@@ -1,7 +1,7 @@
 // NavBar — pins the contract:
 //   - hidden on /login and /setup
 //   - emerald brand "LM Warden" + Shield icon
-//   - dropdown contains Models / API Keys / Stats / Forest / Settings
+//   - dropdown contains Models / API Keys / Stats / Settings
 //     (Benchmarks entry removed in epic/overhaul S1 along with the page)
 //   - version footer fetched from GET /api/version; fallback on error
 //   - hamburger opens/closes the menu
@@ -114,9 +114,6 @@ describe('NavBar', () => {
     const labels = screen.getAllByRole('menuitem').map((el) => el.textContent?.trim());
     expect(labels.indexOf('Connect')).toBe(labels.indexOf('Router') + 1);
     expect(screen.getByRole('menuitem', { name: /^connect$/i })).toHaveAttribute('href', '/connect');
-    // Session forest (plan 3, 2026-10-06): right after Stats.
-    expect(labels.indexOf('Forest')).toBe(labels.indexOf('Stats') + 1);
-    expect(screen.getByRole('menuitem', { name: /^forest$/i })).toHaveAttribute('href', '/forest');
   });
 
   it('renders the version footer from /api/version', async () => {
@@ -231,26 +228,5 @@ describe('NavBar', () => {
     stubVersionFetch({ version: '2026.05.13.1', sha: 'abcdef1' });
     const { container } = renderNav();
     expect(container).toBeEmptyDOMElement();
-  });
-
-  // Task 8: the forest pages are chromeless. /forest/login is for key holders with no admin session; /forest may be
-  // opened by one with only a forest token, so no admin chrome and no admin-only fetch (version, header metrics).
-  it.each(['/forest', '/forest/', '/forest/login', '/forest/login/'])(
-    'hides on %s and fires no admin fetch',
-    async (path) => {
-      mockPath = path;
-      const fetchMock = stubVersionFetch({ version: '2026.05.13.1', sha: 'abcdef1' });
-      const { container } = renderNav();
-      expect(container).toBeEmptyDOMElement();
-      await new Promise((r) => setTimeout(r, 20));
-      expect(fetchMock).not.toHaveBeenCalled();
-    },
-  );
-
-  it.each(['/forest-help', '/forest/login-help', '/forest/x'])('renders normally on %s (exact-match guard)', (path) => {
-    mockPath = path;
-    stubVersionFetch({ version: '2026.05.13.1', sha: 'abcdef1' });
-    renderNav();
-    expect(screen.getByText('LM Warden')).toBeInTheDocument();
   });
 });

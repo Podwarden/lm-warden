@@ -10,7 +10,7 @@ of what the cards are doing.**
 > Website: [lmwarden.com](https://lmwarden.com).
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Engines](https://img.shields.io/badge/engines-vLLM%200.26.0%20%C2%B7%20llama.cpp%20b10731-4b8bbe.svg)](#two-engines-and-the-model-that-made-us-add-the-second)
+[![Engines](https://img.shields.io/badge/engines-vLLM%200.32.0%20%C2%B7%20llama.cpp%20b11719-4b8bbe.svg)](#two-engines-and-the-model-that-made-us-add-the-second)
 [![Deploy](https://img.shields.io/badge/deploy-Docker%20Compose-2496ed.svg)](documents/INSTALL.md)
 
 ![LM Warden's Stats page under load, stepping through its 1 h, 6 h and 24 h windows: host VRAM, GPU utilisation, power draw and tokens per minute](app/landing/assets/demo-stats.gif)
@@ -113,7 +113,7 @@ tokens and emits garbage. The product warns about that rather than letting you
 discover it.
 
 Above the floor, the question is what fits. Measured on 16 GiB cards against
-vLLM 0.20.0 (this release ships 0.26.0; the rules have held across the
+vLLM 0.20.0 (this release ships 0.32.0; the rules have held across the
 upgrades, the exact numbers are worth rechecking),
 [What fits on what](documents/HAZARDS.md#what-fits-on-what) says which model
 classes run on one card, which need two, and which quantisations to avoid; the
@@ -551,7 +551,7 @@ measurements (TTFT at the first streamed frame, duration at the end of the
 stream), at the price of the engine's per-token resolution. A number an engine
 does not report renders as **"not reported"**, never as `0`: on llama.cpp that
 means KV-cache usage, sleep state, preemptions and MFU are blank rather than
-reassuring. llama.cpp's version is fixed by the warden image (`b10731`); vLLM's
+reassuring. llama.cpp's version is fixed by the warden image (`b11719`); vLLM's
 can be pinned per model under the Docker engine driver. A GGUF-only repository
 ships no tokenizer, so token accounting falls back to a character estimate
 until you set `tokenizer_repo`; the degradation is reported rather than hidden.

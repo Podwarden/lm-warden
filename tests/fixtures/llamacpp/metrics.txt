@@ -6,13 +6,13 @@ llamacpp:prompt_tokens_total 2
 llamacpp:prompt_tokens_cached_total 0
 # HELP llamacpp:prompt_seconds_total Total time spent processing prompts
 # TYPE llamacpp:prompt_seconds_total counter
-llamacpp:prompt_seconds_total 0.041606
+llamacpp:prompt_seconds_total 0.046123
 # HELP llamacpp:tokens_predicted_total Number of generation tokens processed
 # TYPE llamacpp:tokens_predicted_total counter
 llamacpp:tokens_predicted_total 16
 # HELP llamacpp:tokens_predicted_seconds_total Total time spent generating tokens
 # TYPE llamacpp:tokens_predicted_seconds_total counter
-llamacpp:tokens_predicted_seconds_total 0.394354
+llamacpp:tokens_predicted_seconds_total 0.335198
 # HELP llamacpp:n_decode_total Total number of llama_decode() calls, excluding speculative decoding and multimodal decoding
 # TYPE llamacpp:n_decode_total counter
 llamacpp:n_decode_total 16
@@ -30,10 +30,10 @@ llamacpp:spec_decode_num_accepted_tokens_total 0
 llamacpp:spec_decode_num_drafts_total 0
 # HELP llamacpp:prompt_tokens_seconds Average prompt throughput in tokens/s
 # TYPE llamacpp:prompt_tokens_seconds gauge
-llamacpp:prompt_tokens_seconds 48.07
+llamacpp:prompt_tokens_seconds 43.3623
 # HELP llamacpp:predicted_tokens_seconds Average generation throughput in tokens/s
 # TYPE llamacpp:predicted_tokens_seconds gauge
-llamacpp:predicted_tokens_seconds 38.0369
+llamacpp:predicted_tokens_seconds 44.7497
 # HELP llamacpp:requests_processing Number of requests processing
 # TYPE llamacpp:requests_processing gauge
 llamacpp:requests_processing 0

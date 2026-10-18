@@ -440,6 +440,9 @@
     .what { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); }
     .what h2 { font-size: var(--t-h3); }
     @media (min-width: 900px) { .what { grid-template-columns: 15rem minmax(0, 1fr); gap: var(--s6); } }
+    /* The request-flow figure is a third child of .what: span both columns, or
+       it auto-places into the 15rem heading column and shrinks to a thumbnail. */
+    .what > .diagram-fig { grid-column: 1 / -1; }
     .plate-sec { padding-bottom: 0; }
 
     /* Tables: text left, numbers right under right-aligned heads, units in

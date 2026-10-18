@@ -68,3 +68,14 @@ def test_every_diagram_has_a_phone_cut_and_unique_ids(client: TestClient) -> Non
         assert body.count('class="v-wide"') == body.count('class="v-narrow"'), path
         ids = re.findall(r'\bid="([^"]+)"', body)
         assert len(ids) == len(set(ids)), path
+
+
+def test_home_figure_spans_the_what_grid(client: TestClient) -> None:
+    """On Home the figure is a third child of the two-column .what grid; without
+    a full-row span it auto-places into the 15rem heading column and renders as
+    a thumbnail beside empty space (reported on lmwarden.com, 2026-10-09)."""
+    body = client.get("/").text
+    main = _main(body)
+    what = main.index('class="wrap what"')
+    assert what < main.index('aria-labelledby="flow-generic-title"')
+    assert re.search(r"\.what\s*>\s*\.diagram-fig\s*\{\s*grid-column:\s*1\s*/\s*-1", body)

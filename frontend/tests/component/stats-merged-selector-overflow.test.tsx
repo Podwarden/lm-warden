@@ -21,9 +21,6 @@ import {
   setFrame,
 } from "./stats-merged-harness";
 
-// The session forest card (three.js, its own poller) is covered by forest-card.test.tsx.
-vi.mock("@/components/forest/ForestCard", () => ({ default: () => null }));
-
 const NAMES = [
   "model-b-27b-fp8",
   "gpt-oss-20b-gguf",

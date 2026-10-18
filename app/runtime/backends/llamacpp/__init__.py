@@ -41,8 +41,9 @@ CAPABILITIES = BackendCapabilities(
     supports_tensor_parallel=False,
     supports_data_parallel=False,
     cached_tokens_reporting="usage",
-    # b10731 never reads cache_salt (no "salt" anywhere under tools/server or
-    # common): slots match on the longest common prefix whatever the salt.
+    # llama.cpp never reads cache_salt (checked at b11719: no "salt" anywhere
+    # under tools/server or common): slots match on the
+    # longest common prefix whatever the salt.
     honours_cache_salt=False,
     supports_pipeline_parallel=True,
     max_gpus=None,
@@ -77,7 +78,7 @@ CAPABILITIES = BackendCapabilities(
     env_prefixes=ALLOWED_ENV_PREFIXES,
     env_exact=ALLOWED_ENV_EXACT,
     # llama-server has no gpu_memory_utilization analogue -- verified against
-    # `llama-server --help` in the shipped b10731 image, which offers only
+    # `llama-server --help` in the shipped image (checked at b11719), which offers only
     # `-ngl/--n-gpu-layers` (a layer count). Applying vLLM's 0.9 to a llama.cpp
     # row hid 10% of the card from the verdict and reported "won't fit" for
     # models that fit.

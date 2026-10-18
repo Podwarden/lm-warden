@@ -38,7 +38,7 @@ CAPABILITIES = BackendCapabilities(
     cached_tokens_reporting="usage",
     kv_block_size_in_metrics=True,
     # cache_salt goes into the first block's extra keys
-    # (v1/core/kv_cache_utils.py L579-580 @v0.26.0)
+    # (v1/core/kv_cache_utils.py L647-649 @v0.32.0, generate_block_hash_extra_keys)
     honours_cache_salt=True,
     supports_pipeline_parallel=True,
     max_gpus=None,

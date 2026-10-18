@@ -6,22 +6,24 @@
 # same reason, as frontend/Dockerfile.
 #
 # TODO(release): replace the digest in VW_BASE_DIGEST below by running
-# `docker pull vllm/vllm-openai:v0.26.0` and copying the sha256 from
+# `docker pull vllm/vllm-openai:v0.32.0` and copying the sha256 from
 # `docker images --digests vllm/vllm-openai`.
 #
-# v0.26.0 (was v0.25.1, sha256:e4f88a83...). Upgraded 2026-08-17 to diagnose an
-# EngineCore that dies mid-serving with NO traceback, NO CUDA error and no OOM
-# kill (node-wide /proc/vmstat oom_kill stayed 0 across nine deaths). v0.26.0
-# adds "log worker exit code when a process dies unexpectedly" (#38641), which
-# names the fatal signal instead of leaving us to infer it. Also carries a
-# DSv3.2 + MTP sequence-parallel accuracy fix; this deployment runs MTP.
+# v0.32.0 (was v0.26.0, sha256:ffb2d59b...). Upgraded 2026-10-18: six minor
+# releases behind (v0.27 through v0.32), so the Blackwell work (NVFP4 KV cache
+# and XQA decode on SM12x, GLM-5.2 SM100 sparse MLA, GLM-5.3-NVFP4 on B200) and
+# the GLM-5.x improvements land here. The base moves to Ubuntu 24.04 and CUDA
+# 13.0.3. The operator-visible defaults that changed (Model Runner V2, the
+# --api-server-count default for data parallel, the FP8 KV default for GLM-5.x
+# on Blackwell datacenter GPUs) are in the changelog entry for this bump. The
+# v0.26.0 history (worker exit-code logging, #38641) is in git.
 #
 # Declared as an ARG, not inlined into FROM, so this line is the SINGLE place
 # the base digest lives. CI's post-build cleanup greps it out of this file to
 # decide which vllm/vllm-openai layer sets are superseded and safe to evict
 # (vllm-warden#208). Inlining it would let the Dockerfile and the cleanup drift,
 # and a cleanup that reads a stale digest deletes the base you are still using.
-ARG VW_BASE_DIGEST=sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52
+ARG VW_BASE_DIGEST=sha256:befccf0e7e4089aa23926bb6f887a85c0d46c2a99e6de5c5ffdf5cb7957c5b34
 
 # llama.cpp build, pinned. Sub-project C, decision D2: llama-server is baked
 # into this image and launched by the existing in-container subprocess driver,
@@ -34,20 +36,23 @@ ARG VW_BASE_DIGEST=sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befd
 # the SINGLE place the pin lives, so CI and the docs cannot read a stale value.
 #
 # WHY WE BUILD RATHER THAN COPY. ghcr.io/ggml-org/llama.cpp:server-cuda is
-# mainline and prebuilt, and it does not work here: it is built on Ubuntu 24.04
-# and needs GLIBC_2.38 / GLIBCXX_3.4.32, while this base is Ubuntu 22.04 (glibc
-# 2.35, GLIBCXX_3.4.30). Its `server-cuda` tag is also CUDA 12.8 against this
-# image's CUDA 13.0.2, so its libggml-cuda.so wants libcudart.so.12 sonames we
-# do not ship; carrying the CUDA 12.8 runtime to satisfy it would add ~2.4 GiB.
+# mainline and prebuilt, and it does not work here, for CUDA rather than glibc.
+# The base has been Ubuntu 24.04 (glibc 2.39) since vLLM v0.28 (v0.26.0 was
+# Ubuntu 22.04, glibc 2.35), which meets the GLIBC_2.38 floor the prebuilt
+# needs. Its CUDA is the blocker: the `server-cuda` tag is CUDA 12.8 (upstream's
+# CUDA 13 artifact is 13.4, and no 13.0 build exists) against this image's CUDA
+# 13.0.3, so its libggml-cuda.so wants libcudart.so.12 sonames we do not ship;
+# carrying the CUDA 12.8 runtime to satisfy it would add ~2.4 GiB.
 # Building in the base image itself makes glibc, libstdc++ and CUDA match by
 # construction. Nothing about the source is modified -- spec §2 -- this is
 # upstream's own CMake on an upstream tag.
-ARG LLAMACPP_BUILD=b10731
+ARG LLAMACPP_BUILD=b11719
 
 # CUDA architectures llama.cpp is compiled for. The default is EVERY
 # architecture this image's toolchain can target. Not asserted -- measured:
-# `nvcc --list-gpu-arch` inside vllm/vllm-openai@${VW_BASE_DIGEST} (CUDA 13.0,
-# V13.0.88) answers exactly
+# `nvcc --list-gpu-arch` inside the v0.26.0 base (vllm/vllm-openai@sha256:ffb2d59b...,
+# CUDA 13.0.2, V13.0.88) answers exactly. NOT RE-MEASURED on the v0.32.0 base
+# (CUDA 13.0.3): re-run it there before trusting the list.
 #   compute_75 80 86 87 88 89 90 100 103 110 120 121
 # and that list is the hard ceiling. CUDA 13 dropped Maxwell, Pascal and
 # Volta, so 75 (Turing) is the floor and there is nothing below it to add.
@@ -240,16 +245,19 @@ WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     pip install vllm-gguf-plugin==0.0.4
 
-# vLLM 0.25.1's ModelConfig init calls override_quantization_method(quant_cfg,
+# vLLM's ModelConfig init calls override_quantization_method(quant_cfg,
 # user_quant, hf_config=self.hf_config) for EVERY registered quantization method
-# (vllm/config/model.py:1064 _verify_quantization). Core's base signature grew a
-# third param `hf_config` (base_config.py) but the plugin's GGUFConfig classmethod
+# (vllm/config/model.py:1064 in v0.25.1; vllm/config/model.py:1419 in v0.32.0).
+# Core's base signature grew a third param `hf_config` (base_config.py) but the plugin's GGUFConfig classmethod
 # is stuck on the old 2-arg signature, so the hf_config kwarg is a TypeError —
 # raised during init for ALL models (even non-GGUF FP8 rows), breaking 100% of
 # loads with rc=1. Plugin 0.0.4 is the latest on PyPI (no fixed release), so we
 # patch the signature at build time to accept and ignore the extra kwarg. The
 # body already discards hf_quant_cfg, so ignoring hf_config too is safe. The
 # `s2 != s` guard fails the build loudly if the upstream line ever changes.
+# NOT re-verified on the v0.32.0 base (Ubuntu 24.04, Python 3.12 path): the
+# find_spec/assert pair below is the check; if either the path or the plugin's
+# signature moved, the build fails here rather than at a model load.
 #
 # The write and the verification run in SEPARATE python processes on purpose:
 # resolving the module path with find_spec imports the plugin package, which
@@ -291,7 +299,9 @@ RUN python3 -c "import inspect; from vllm_gguf_plugin.quantization.config import
 RUN rm -rf /usr/local/lib/python3.12/dist-packages/nixl_ep* && \
     python3 -c "import importlib.util as u; assert u.find_spec('nixl_ep') is None, 'nixl_ep still importable after removal'"
 
-# Bump NCCL 2.28.9 -> 2.30.4 (the base image ships 2.28.9).
+# Bump NCCL to 2.30.4. The v0.26.0 base shipped 2.28.9; the v0.32.0 base ships
+# 2.30.7, so this step now moves it back to 2.30.4. Re-decide before release
+# (2.30.4 is the version verified against the deadlock below; 2.30.7 is not).
 #
 # NCCL 2.28.9 deadlocks on CUDA-graph replay containing NCCL collectives:
 # the collective never returns, the TP worker stops answering, and vLLM's

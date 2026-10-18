@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import os
 
-# What the Dockerfile stamps. A bNNNNN upstream build tag, e.g. "b10731".
+# What the Dockerfile stamps. A bNNNNN upstream build tag, e.g. "b11719".
 BUILD_ENV_VAR = "VW_LLAMACPP_BUILD"
 
 

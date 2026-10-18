@@ -139,6 +139,9 @@ REWRITTEN = {
     "go to Anthropic on your own login.": "multi-agent hero, spec §3",
     # Promoted to the GPU page's <h1> with the topic in front, for search.
     "The box behind these numbers.": "GPU monitoring: the box behind these numbers.",
+    # Engine-bump: the features page's source-of-truth sentence was rewritten
+    # (the old one named the shipped version explicitly; the new one does not).
+    'Checked against vLLM&nbsp;0.20.0, before the engine moved to 0.26.0, the version this release ships and the replica measurements above used. The rules have held across those upgrades; the exact numbers are worth rechecking on your engine. The full table and the reasons behind it are in <a href="https://github.com/Podwarden/lm-warden/blob/main/documents/HAZARDS.md#what-fits-on-what" rel="noopener">HAZARDS.md</a>. Not on NVIDIA? <a href="#roadmap">Other GPUs are on the roadmap</a>.': "engine-bump: features.html source sentence rewritten to drop the version pin",
 }
 
 

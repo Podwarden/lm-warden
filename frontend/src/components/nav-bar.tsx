@@ -31,7 +31,6 @@ import {
   Route,
   Settings,
   Shield,
-  Trees,
 } from 'lucide-react';
 import { authFetch, authFetchJSON } from '@/lib/auth-fetch';
 import { HeaderMetrics } from './header-metrics';
@@ -56,19 +55,6 @@ const UNAUTH_EXACT_PATHS: ReadonlySet<string> = new Set([
   '/setup/',
 ]);
 
-// The session forest's pages are chromeless too (Task 8), exact match as
-// above. /forest/login is the key holder's sign-in (no admin session);
-// /forest may be open with only a key holder's forest token, so neither the
-// nav nor its admin-only requests (/api/version, the header-metrics stream)
-// may appear there. The forest's full window covers the page for an admin
-// anyway, so hiding it in session mode costs nothing.
-const FOREST_EXACT_PATHS: ReadonlySet<string> = new Set([
-  '/forest',
-  '/forest/',
-  '/forest/login',
-  '/forest/login/',
-]);
-
 function isUnauthRoute(path: string): boolean {
   // The wizard owns the entire /setup/* subtree (multiple steps).
   // /login has no subroutes today, so it gets the exact-match
@@ -77,8 +63,7 @@ function isUnauthRoute(path: string): boolean {
   // closes #39 by rejecting /login-help, /login.json, etc.
   return (
     UNAUTH_EXACT_PATHS.has(path) ||
-    path.startsWith('/setup/') ||
-    FOREST_EXACT_PATHS.has(path)
+    path.startsWith('/setup/')
   );
 }
 
@@ -96,7 +81,6 @@ const MENU_ITEMS: readonly MenuItem[] = [
   { href: '/router', label: 'Router', Icon: Route },
   { href: '/connect', label: 'Connect', Icon: Plug },
   { href: '/stats', label: 'Stats', Icon: Activity },
-  { href: '/forest', label: 'Forest', Icon: Trees },
   { href: '/cache', label: 'Cache', Icon: HardDrive },
   { href: '/settings', label: 'Settings', Icon: Settings },
 ];

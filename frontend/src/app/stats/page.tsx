@@ -18,7 +18,7 @@
 //      and preemptions.
 //   4. Live — 5-minute rolling timeline, per-model context & cache (never
 //      combined: each engine has its own pool and its own max_model_len),
-//      preemptions, then the session forest card (last 6 h, lazy three.js).
+//      preemptions.
 //   5. Latency — TTFT / mean ITL / duration distributions from the persisted
 //      per-request history, on the window or on the last N requests (the
 //      toggle says which).
@@ -110,8 +110,6 @@ import {
   Timeline,
   engineStateOf,
 } from "@/components/stats/live-panels";
-// The session forest card: light here — three.js loads only when it scrolls into view (ForestCard's next/dynamic).
-import ForestCard from "@/components/forest/ForestCard";
 import { BasisToggle, LatencyPanels } from "@/components/stats/latency-panels";
 import { ThroughputPanel } from "@/components/stats/throughput-panel";
 import { RequestsPanel } from "@/components/stats/requests-panel";
@@ -925,10 +923,6 @@ export default function StatsPage() {
             </div>
           </>
         )}
-
-        {/* The session forest (the selected window, live): not tied to a loaded model, so it shows in both branches. Last in Live,
-            the closest it can sit above the in-flight table while staying in this section. */}
-        <ForestCard range={range} />
       </section>
 
       {/* 5 ── LATENCY — from the persisted per-request history ----------- */}

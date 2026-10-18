@@ -6,13 +6,13 @@ llamacpp:prompt_tokens_total 2
 llamacpp:prompt_tokens_cached_total 0
 # HELP llamacpp:prompt_seconds_total Total time spent processing prompts
 # TYPE llamacpp:prompt_seconds_total counter
-llamacpp:prompt_seconds_total 0.041606
+llamacpp:prompt_seconds_total 0.046123
 # HELP llamacpp:tokens_predicted_total Number of generation tokens processed
 # TYPE llamacpp:tokens_predicted_total counter
 llamacpp:tokens_predicted_total 16
 # HELP llamacpp:tokens_predicted_seconds_total Total time spent generating tokens
 # TYPE llamacpp:tokens_predicted_seconds_total counter
-llamacpp:tokens_predicted_seconds_total 0.394354
+llamacpp:tokens_predicted_seconds_total 0.335198
 # HELP llamacpp:n_decode_total Total number of llama_decode() calls, excluding speculative decoding and multimodal decoding
 # TYPE llamacpp:n_decode_total counter
 llamacpp:n_decode_total 16

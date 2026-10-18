@@ -21,12 +21,6 @@ import {
 } from "@testing-library/react";
 import { SWRConfig } from "swr";
 
-// The session forest card (three.js, its own poller) has its own coverage in
-// forest-card.test.tsx; here only its placement is pinned.
-vi.mock("@/components/forest/ForestCard", () => ({
-  default: ({ range }: { range: string }) => <div data-testid="forest-card-stub" data-range={range} />,
-}));
-
 import StatsPage from "@/app/stats/page";
 import { setAccessToken, setCsrfToken } from "@/lib/auth-fetch";
 import { __resetLiveStatsStreamForTests } from "@/lib/live-stats-stream";
@@ -429,32 +423,6 @@ describe("StatsPage", () => {
     });
     expect(screen.queryByText(/GPU telemetry unavailable/)).toBeNull();
     expect(screen.getByTestId("tile-vram-value").textContent).toContain("11.7");
-  });
-
-  it("places the session forest card in the Live section, above the in-flight table", async () => {
-    installFetchStub({ overview: FIXTURE_OVERVIEW, tokensPerKey: FIXTURE_TPK });
-    renderPage();
-    const live = screen.getByRole("region", { name: "Live" });
-    const card = within(live).getByTestId("forest-card-stub");
-    const inflight = await screen.findByTestId("live-requests");
-    expect(card.compareDocumentPosition(inflight) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
-  it("the forest card follows the page's range switch (follow-up C)", async () => {
-    installFetchStub({ overview: FIXTURE_OVERVIEW, tokensPerKey: FIXTURE_TPK });
-    renderPage();
-    const card = () => within(screen.getByRole("region", { name: "Live" })).getByTestId("forest-card-stub");
-    expect(card()).toHaveAttribute("data-range", "1h");
-    await waitFor(() => expect(screen.getByTestId("range-selector")).toBeInTheDocument());
-    fireEvent.click(within(screen.getByTestId("range-selector")).getByRole("button", { name: "24h" }));
-    await waitFor(() => expect(card()).toHaveAttribute("data-range", "24h"));
-  });
-
-  it("keeps the forest card when no model is loaded (it shows the page's range)", async () => {
-    installFetchStub({ overview: { ...FIXTURE_OVERVIEW, active_models: [] } });
-    renderPage();
-    await waitFor(() => expect(screen.getByTestId("tile-vram-value")).toBeInTheDocument());
-    expect(within(screen.getByRole("region", { name: "Live" })).getByTestId("forest-card-stub")).toBeInTheDocument();
   });
 
   it("hides the selector entirely when no model is loaded", async () => {

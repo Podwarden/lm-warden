@@ -14,7 +14,7 @@ must agree across processes and, later, nodes. Fields that do not reach the
 prompt (model, temperature, ...) are ignored.
 
 ``cache_salt`` is the one non-prompt field that counts (#300). vLLM puts it in
-the first block's hash (``kv_cache_utils.py`` L579-580 @v0.26.0), so requests
+the first block's hash (``kv_cache_utils.py`` L647-649 @v0.32.0), so requests
 with different salts never share a block. A non-empty string salt becomes the
 chain's root, the parent of the first chunk and a prefix of every message
 digest, so a salted prefix matches only the same salt. Only its digest is kept.

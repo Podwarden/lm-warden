@@ -895,9 +895,10 @@ retries for several seconds before it reports the error.
 
 ## Session forest
 
-`GET /api/stats/forest?range=48h[&since=<cursor>]` — trees of agent sessions for the forest view.
+`GET /api/stats/forest?range=48h[&since=<cursor>]` — trees of agent sessions (the data only: the UI has no view
+of it at present).
 Ranges: `1h`, `6h`, `24h`, `48h`, `7d` (anything else, `30d` included, is a 400: the forest never holds more
-than 7 days). The forest view offers `1h`, `6h`, `24h` and `7d`. The range picks the trees with a turn finished in `[now − range, now]`; each tree is sent whole (every
+than 7 days). The range picks the trees with a turn finished in `[now − range, now]`; each tree is sent whole (every
 turn of the last 7 days), never cut at the window edge, so `t0` is about `now − 7 d` for every range up to `7d`. Admins see every key; a key holder sees only their key.
 
 `POST /api/forest/login` with `Authorization: Bearer <your API key>` returns a 12-hour token for the forest
@@ -909,8 +910,8 @@ wood), `models` (per variant: `prefill_tps`, `decode_tps` — 7-day p75 —
 `n`, the number of requests sampled, and `max_model_len`), `trees`, `flowers`, `ids`, `cursor`, `full`.
 The body is gzip-compressed when the request sends `Accept-Encoding: gzip`. The server rebuilds at most
 every 3 s per (range, viewer); requests in between get the same data, but `now` is always the time of the
-request itself (absolute unix seconds), so the data can be up to 3 s older than `now`. The forest view runs
-its clock on the browser and uses `now` only to estimate the clock skew.
+request itself (absolute unix seconds), so the data can be up to 3 s older than `now`. A client that animates
+the data should run its own clock and use `now` only to estimate the clock skew.
 
 Client contract:
 

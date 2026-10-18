@@ -119,9 +119,9 @@ docker compose build ui         # UI image: chat-ui from source + Next.js build
 ### The `api` image
 
 It starts from the digest-pinned `vllm/vllm-openai` base
-(currently v0.26.0), installs `requirements.txt` and `vllm-gguf-plugin` from
+(currently v0.32.0), installs `requirements.txt` and `vllm-gguf-plugin` from
 PyPI, and compiles llama.cpp from `github.com/ggml-org/llama.cpp` at the tag
-pinned in `ARG LLAMACPP_BUILD` (currently `b10731`).
+pinned in `ARG LLAMACPP_BUILD` (currently `b11719`).
 
 It compiles llama.cpp rather than copying upstream's published server image for
 a concrete reason: that image is built on Ubuntu 24.04 against CUDA 12.8, while

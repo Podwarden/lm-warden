@@ -39,7 +39,6 @@
  *   /cache                  — page.tsx  navigable
  *   /settings               — page.tsx  navigable
  *   /templates              — page.tsx  navigable
- *   /forest                 — page.tsx  navigable (session forest full window, 2026-10-06)
  *   /login, /setup, /setup/* — no app shell → breadcrumb hidden
  * No intermediate segment without a page.tsx exists today, so no entry
  * carries `navigable: false`; the flag stays for the next one that does.
@@ -114,7 +113,6 @@ const STATIC_ROUTES: StaticRoute[] = [
   { pattern: "/connect", label: "Connect" },
   { pattern: "/cache", label: "Cache" },
   { pattern: "/settings", label: "Settings" },
-  { pattern: "/forest", label: "Session forest" },
 
   // Dynamic detail pages — the label is a placeholder; the real name comes
   // from the page via `useBreadcrumb`. Model served names and token names
@@ -132,9 +130,8 @@ const STATIC_ROUTES: StaticRoute[] = [
  * test pins the three together. Kept as data here so this module stays free
  * of the auth-fetch import chain.
  */
-// The forest pages are chromeless (Task 8): a key holder there has no admin session, so no admin trail either.
 const HIDE_EXACT_PATHS: ReadonlySet<string> = new Set([
-  "/login", "/login/", "/setup", "/setup/", "/forest", "/forest/", "/forest/login", "/forest/login/",
+  "/login", "/login/", "/setup", "/setup/",
 ]);
 const HIDE_PREFIXES = ["/setup/"];
 

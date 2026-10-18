@@ -30,9 +30,6 @@ import {
   setFrame,
 } from "./stats-merged-harness";
 
-// The session forest card (three.js, its own poller) is covered by forest-card.test.tsx.
-vi.mock("@/components/forest/ForestCard", () => ({ default: () => null }));
-
 /** Exactly what app/stats/live_engine.py::_null_frame emits. */
 function nullFrame(name: string): LiveEngineFrame {
   return {

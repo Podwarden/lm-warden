@@ -101,7 +101,7 @@ def test_oom_is_checked_before_context():
 def test_a_cuda_oom_matches_the_same_rule():
     """log_oom.txt is a CPU-side allocation failure -- see the fixture README's
     known gap: the only NVIDIA host in scope was read-only until acceptance. The
-    CUDA spellings come from the same pinned b10731 tree
+    CUDA spellings come from the same pinned b11719 tree
     (ggml/src/ggml-cuda/ggml-cuda.cu), and they have to match the same rule or
     the diagnoser is untested for the case it exists to catch."""
     cuda = (

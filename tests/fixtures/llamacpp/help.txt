@@ -82,15 +82,8 @@
                                         (env: LLAMA_ARG_CACHE_TYPE_V)
 -dt,   --defrag-thold N                 KV cache defragmentation threshold (DEPRECATED)
                                         (env: LLAMA_ARG_DEFRAG_THOLD)
---mlock                                 DEPRECATED in favor of `--load-mode`: force system to keep model in
-                                        RAM rather than swapping or compressing
-                                        (env: LLAMA_ARG_MLOCK)
---mmap, --no-mmap                       DEPRECATED in favor of `--load-mode`: whether to memory-map model. (if
-                                        mmap disabled, slower load but may reduce pageouts if not using mlock)
-                                        (env: LLAMA_ARG_MMAP)
--dio,  --direct-io, -ndio, --no-direct-io
-                                        DEPRECATED in favor of `--load-mode`: use DirectIO if available
-                                        (env: LLAMA_ARG_DIO)
+--rpc SERVERS                           comma-separated list of RPC servers (host:port)
+                                        (env: LLAMA_ARG_RPC)
 -lm,   --load-mode MODE                 model loading mode (default: auto)
                                         - auto: mmap, unless a device does not support it
                                         - none: no special loading mode
@@ -132,6 +125,10 @@
 -ncmoe, --n-cpu-moe N                   keep the Mixture of Experts (MoE) weights of the first N layers in the
                                         CPU
                                         (env: LLAMA_ARG_N_CPU_MOE)
+--moe-cache-mib N                       GPU cache size in MiB for the MoE experts kept in the CPU. with
+                                        multiple GPUs, it is split among them like the layers (--tensor-split)
+                                        (default: 0, disabled)
+                                        (env: LLAMA_ARG_MOE_CACHE_MIB)
 -ncffn, --n-cpu-ffn N                   keep the dense FFN weights of the first N layers in the CPU
                                         (dense models; for MoE expert weights use --n-cpu-moe)
                                         (env: LLAMA_ARG_N_CPU_FFN)
@@ -207,6 +204,9 @@
 --log-disable                           Log disable
 --log-file FNAME                        Log to file
                                         (env: LLAMA_ARG_LOG_FILE)
+--log-jsonl, --no-log-jsonl             Log as JSONL (one JSON object per line) to stdout, this also disables
+                                        colored logging (default: disabled)
+                                        (env: LLAMA_ARG_LOG_JSONL)
 --log-colors [on|off|auto]              Set colored logging ('on', 'off', or 'auto', default: 'auto')
                                         'auto' enables colors when output is to a terminal
                                         (env: LLAMA_ARG_LOG_COLORS)
@@ -254,18 +254,24 @@
 --ignore-eos                            ignore end of stream token and continue generating (implies
                                         --logit-bias EOS-inf)
 --temp, --temperature N                 temperature (default: 0.80)
+                                        (env: LLAMA_ARG_TEMPERATURE)
 --top-k N                               top-k sampling (default: 40, 0 = disabled)
                                         (env: LLAMA_ARG_TOP_K)
 --top-p N                               top-p sampling (default: 0.95, 1.0 = disabled)
+                                        (env: LLAMA_ARG_TOP_P)
 --min-p N                               min-p sampling (default: 0.05, 0.0 = disabled)
+                                        (env: LLAMA_ARG_MIN_P)
 --top-nsigma, --top-n-sigma N           top-n-sigma sampling (default: -1.00, -1.0 = disabled)
 --xtc-probability N                     xtc probability (default: 0.00, 0.0 = disabled)
 --xtc-threshold N                       xtc threshold (default: 0.10, 1.0 = disabled)
 --typical, --typical-p N                locally typical sampling, parameter p (default: 1.00, 1.0 = disabled)
 --repeat-last-n N                       last n tokens to consider for penalize (default: 64, 0 = disabled)
 --repeat-penalty N                      penalize repeat sequence of tokens (default: 1.00, 1.0 = disabled)
+                                        (env: LLAMA_ARG_REPEAT_PENALTY)
 --presence-penalty N                    repeat alpha presence penalty (default: 0.00, 0.0 = disabled)
+                                        (env: LLAMA_ARG_PRESENCE_PENALTY)
 --frequency-penalty N                   repeat alpha frequency penalty (default: 0.00, 0.0 = disabled)
+                                        (env: LLAMA_ARG_FREQUENCY_PENALTY)
 --dry-multiplier N                      set DRY sampling multiplier (default: 0.00, 0.0 = disabled)
 --dry-base N                            set DRY sampling base value (default: 1.75)
 --dry-allowed-length N                  set allowed length for DRY sampling (default: 2)
@@ -293,13 +299,10 @@
                                         dir)
 --grammar-file FNAME                    file to read grammar from
 -j,    --json-schema SCHEMA             JSON schema to constrain generations (https://json-schema.org/), e.g.
-                                        `{}` for any JSON object
-                                        For schemas w/ external $refs, use --grammar +
-                                        example/json_schema_to_grammar.py instead
+                                        `{"type": "object"}` for any JSON object
 -jf,   --json-schema-file FILE          File containing a JSON schema to constrain generations
-                                        (https://json-schema.org/), e.g. `{}` for any JSON object
-                                        For schemas w/ external $refs, use --grammar +
-                                        example/json_schema_to_grammar.py instead
+                                        (https://json-schema.org/), e.g. `{"type": "object"}` for any JSON
+                                        object
 -bs,   --backend-sampling               enable backend sampling (experimental) (default: disabled)
                                         (env: LLAMA_ARG_BACKEND_SAMPLING)
 
@@ -351,6 +354,9 @@
 --spec-draft-n-min N                    minimum number of draft tokens to use for speculative decoding
                                         (default: 0)
                                         (env: LLAMA_ARG_SPEC_DRAFT_N_MIN)
+--spec-draft-n-ubatch N                 physical maximum batch size of the draft context, use a smaller value
+                                        to spare VRAM (default: 0 - same as --n-ubatch)
+                                        (env: LLAMA_ARG_SPEC_DRAFT_N_UBATCH)
 --spec-synth-len L                      target mean synthetic acceptance length, including the target token
                                         (benchmarking only)
                                         (env: LLAMA_ARG_SPEC_SYNTH_LEN)
@@ -365,9 +371,14 @@
 --spec-draft-backend-sampling, --no-spec-draft-backend-sampling
                                         offload draft sampling to the backend (default: enabled)
                                         (env: LLAMA_ARG_SPEC_DRAFT_BACKEND_SAMPLING)
+--spec-draft-sampling {greedy,probabilistic}
+                                        how the draft is sampled: greedy takes its argmax, probabilistic
+                                        samples it and has the target verify by rejection sampling (default:
+                                        greedy)
+                                        (env: LLAMA_ARG_SPEC_DRAFT_SAMPLING)
 --spec-draft-device, -devd, --device-draft <dev1,dev2,..>
                                         comma-separated list of devices to use for offloading the draft model
-                                        (none = don't offload)
+                                        (none = don't offload, default: follows --device)
                                         use --list-devices to see a list of available devices
 --spec-draft-ngl, -ngld, --gpu-layers-draft, --n-gpu-layers-draft N
                                         max. number of draft model layers to store in VRAM, either an exact
@@ -432,8 +443,8 @@
 -cms,  --checkpoint-min-step N          minimum spacing between context checkpoints in tokens (default: 8192,
                                         0 = no minimum)
                                         (env: LLAMA_ARG_CHECKPOINT_MIN_SPACING_NT)
--cram, --cache-ram N                    set the maximum cache size in MiB (default: 8192, -1 - no limit, 0 -
-                                        disable)[(more
+-cram, --cache-ram N                    set the maximum cache size in MiB (default: 8192, 0 for decision
+                                        models, -1 - no limit, 0 - disable)[(more
                                         info)](https://github.com/ggml-org/llama.cpp/pull/16391)
                                         (env: LLAMA_ARG_CACHE_RAM)
 -kvu,  --kv-unified, -no-kvu, --no-kv-unified
@@ -473,7 +484,7 @@
                                         enabled)
                                         (env: LLAMA_ARG_MMPROJ_OFFLOAD)
 -mmdev, --mmproj-device DEVICE          device to use for multimodal projector (none = don't offload, default:
-                                        auto)
+                                        follows --device)
                                         use --list-devices to see a list of available devices
                                         (env: MTMD_BACKEND_DEVICE)
 --image-min-tokens N                    minimum number of tokens each image can take, only used by vision
@@ -498,10 +509,12 @@
                                         (env: LLAMA_ARG_TAGS)
 --embd-normalize N                      normalisation for embeddings (default: 2) (-1=none, 0=max absolute
                                         int16, 1=taxicab, 2=euclidean, >2=p-norm)
---host HOST                             ip address to listen, or bind to an UNIX socket if the address ends
-                                        with .sock (default: 127.0.0.1)
+--host HOST                             IP addresses to listen on, comma-separated, or UNIX socket paths
+                                        ending in .sock; with multiple TCP addresses, :: binds IPv6 only;
+                                        overlapping addresses result in undefined behavior (default:
+                                        127.0.0.1)
                                         (env: LLAMA_ARG_HOST)
---port PORT                             port to listen (default: 8080)
+--port PORT                             port to listen (default: 9931)
                                         (env: LLAMA_ARG_PORT)
 --reuse-port                            allow multiple sockets to bind to the same port (default: disabled)
                                         (env: LLAMA_ARG_REUSE_PORT)
@@ -609,6 +622,7 @@
 --slots, --no-slots                     expose slots monitoring endpoint (default: enabled)
                                         (env: LLAMA_ARG_ENDPOINT_SLOTS)
 --slot-save-path PATH                   path to save slot kv cache (default: disabled)
+                                        (env: LLAMA_ARG_SLOT_SAVE_PATH)
 --media-path PATH                       directory for loading local media files; files can be accessed via
                                         file:// URLs using relative paths (default: disabled)
 --models-dir PATH                       directory containing models for the router server (default: disabled)
@@ -649,7 +663,7 @@
                                         (env: LLAMA_ARG_THINK_BUDGET_MESSAGE)
 --reasoning-preserve, --no-reasoning-preserve
                                         preserve reasoning trace in the full history, not just the last
-                                        assistant message (default: template default)
+                                        assistant message (default: enabled)
                                         compatible with certain templates having 'supports_preserve_reasoning'
                                         capability
                                         example:

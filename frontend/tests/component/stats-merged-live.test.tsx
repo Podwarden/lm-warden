@@ -33,9 +33,6 @@ import {
   setFrame,
 } from "./stats-merged-harness";
 
-// The session forest card (three.js, its own poller) is covered by forest-card.test.tsx.
-vi.mock("@/components/forest/ForestCard", () => ({ default: () => null }));
-
 describe("merged stats — selection scoping", () => {
   beforeEach(() => {
     window.localStorage.clear();

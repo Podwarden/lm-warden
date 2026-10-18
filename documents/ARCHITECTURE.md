@@ -162,7 +162,7 @@ rather than reassuring.
 
 Two more limits worth knowing before you pick it:
 
-- **llama.cpp's version is fixed by the warden image** (`b10731`). Bumping it is
+- **llama.cpp's version is fixed by the warden image** (`b11719`). Bumping it is
   a warden release, not a per-model choice. vLLM's version can be pinned per
   model, but only under the Docker engine driver — the UI disables the control
   and says which of the two reasons applies rather than offering a switch that

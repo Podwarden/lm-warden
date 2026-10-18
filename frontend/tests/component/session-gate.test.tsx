@@ -17,10 +17,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 
 let mockPath = '/models';
-const mockRouterReplace = vi.fn();
 vi.mock('next/navigation', () => ({
   usePathname: () => mockPath,
-  useRouter: () => ({ replace: mockRouterReplace }),
 }));
 
 import { SessionGate } from '@/components/session-gate';
@@ -115,7 +113,7 @@ describe('SessionGate', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it.each(['/login', '/setup', '/setup/welcome', '/forest/login', '/forest/login/'])(
+  it.each(['/login', '/setup', '/setup/welcome'])(
     'renders %s immediately without any session check',
     (path) => {
       mockPath = path;
@@ -133,75 +131,6 @@ describe('SessionGate', () => {
     mockPath = '/login-help';
     stubRefresh(200, JSON.stringify({ access_token: 't', expires_in: 900 }));
     render(<SessionGate>{CHILD}</SessionGate>);
-    expect(screen.queryByTestId('page-body')).toBeNull();
-  });
-
-  it('does not treat /forest/login-help as an unauthenticated route', () => {
-    mockPath = '/forest/login-help';
-    stubRefresh(200, JSON.stringify({ access_token: 't', expires_in: 900 }));
-    render(<SessionGate>{CHILD}</SessionGate>);
-    expect(screen.queryByTestId('page-body')).toBeNull();
-  });
-
-  it('opens /forest for a forest token holder without an admin session check', async () => {
-    mockPath = '/forest';
-    sessionStorage.setItem('vw-forest-token', 'jwt');
-    sessionStorage.setItem('vw-forest-exp', String(Date.now() + 60_000));
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
-    render(<SessionGate>{CHILD}</SessionGate>);
-    await waitFor(() => expect(screen.getByTestId('page-body')).toBeTruthy());
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it('sends /forest to /forest/login (not /login) when there is neither token nor session', async () => {
-    mockPath = '/forest';
-    mockRouterReplace.mockClear();
-    const replace = stubWindowLocation('/forest');
-    stubRefresh(401, 'Unauthorized');
-    render(<SessionGate>{CHILD}</SessionGate>);
-    await waitFor(() => expect(mockRouterReplace).toHaveBeenCalledWith('/forest/login'));
-    expect(replace).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('page-body')).toBeNull();
-  });
-
-  // m1: a forest-token opening is good for the forest page only, and only while the token holds
-  it('a token-opened /forest does not open an admin page after a client navigation', async () => {
-    mockPath = '/forest';
-    sessionStorage.setItem('vw-forest-token', 'jwt');
-    sessionStorage.setItem('vw-forest-exp', String(Date.now() + 60_000));
-    const replace = stubWindowLocation('/forest');
-    const fetchMock = stubRefresh(401, 'Unauthorized');
-    const view = render(<SessionGate>{CHILD}</SessionGate>);
-    await waitFor(() => expect(screen.getByTestId('page-body')).toBeTruthy());
-    expect(fetchMock).not.toHaveBeenCalled();
-
-    mockPath = '/models';
-    view.rerender(<SessionGate>{CHILD}</SessionGate>);
-    // the admin page must not paint on the strength of the forest token
-    expect(screen.queryByTestId('page-body')).toBeNull();
-    await waitFor(() => expect(replace).toHaveBeenCalledWith('/login'));
-    expect(screen.queryByTestId('page-body')).toBeNull();
-  });
-
-  it('back to /forest after the token is gone re-checks (no stale opening)', async () => {
-    mockPath = '/forest';
-    mockRouterReplace.mockClear();
-    sessionStorage.setItem('vw-forest-token', 'jwt');
-    sessionStorage.setItem('vw-forest-exp', String(Date.now() + 60_000));
-    stubWindowLocation('/forest');
-    stubRefresh(401, 'Unauthorized');
-    const view = render(<SessionGate>{CHILD}</SessionGate>);
-    await waitFor(() => expect(screen.getByTestId('page-body')).toBeTruthy());
-
-    // signed out: /forest/login, then (browser back) /forest again with no token
-    sessionStorage.clear();
-    mockPath = '/forest/login';
-    view.rerender(<SessionGate>{CHILD}</SessionGate>);
-    mockPath = '/forest';
-    view.rerender(<SessionGate>{CHILD}</SessionGate>);
-    expect(screen.queryByTestId('page-body')).toBeNull();
-    await waitFor(() => expect(mockRouterReplace).toHaveBeenCalledWith('/forest/login'));
     expect(screen.queryByTestId('page-body')).toBeNull();
   });
 });

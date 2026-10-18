@@ -31,20 +31,11 @@
 // first run. The route list mirrors `isUnauthRoute` in nav-bar.tsx — the same
 // question ("is this page for someone not signed in?") asked by the two
 // components that both have to know the answer.
-//
-// The session forest has its own door for key holders (Task 8):
-//   - /forest/login is public, like /login.
-//   - /forest opens without an admin session when this tab holds an unexpired
-//     forest token (no admin session check is made at all). An expired token,
-//     or `?key=1` with none, goes straight to /forest/login with no request.
-//     With neither token nor session, /forest goes to /forest/login, never to
-//     the admin /login.
 
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { ensureSession, getAccessToken, redirectToLogin } from '@/lib/auth-fetch';
-import { forestKeyRequested, forestTokenState } from '@/lib/forest/token';
 
 // Exact match, not `startsWith('/login')` — see nav-bar.tsx's #39 note: a
 // hypothetical /login-help page must NOT inherit the unauthenticated
@@ -54,60 +45,28 @@ const UNAUTH_EXACT_PATHS: ReadonlySet<string> = new Set([
   '/login/',
   '/setup',
   '/setup/',
-  '/forest/login',
-  '/forest/login/',
 ]);
 
 export function isUnauthRoute(path: string): boolean {
   return UNAUTH_EXACT_PATHS.has(path) || path.startsWith('/setup/');
 }
 
-/** The forest page, which a forest token holder may open without an admin session. Exact match, as above. */
-const FOREST_EXACT_PATHS: ReadonlySet<string> = new Set(['/forest', '/forest/']);
-const FOREST_LOGIN = '/forest/login';
-
 export function SessionGate({ children }: { children: React.ReactNode }) {
   // `usePathname` reports the path WITHOUT the '/ui' basePath, so these
   // compare against '/login', not '/ui/login'.
   const path = usePathname() ?? '';
-  const router = useRouter();
   const openToEveryone = isUnauthRoute(path);
-  const forestPage = FOREST_EXACT_PATHS.has(path);
-  // What opened the gate. An admin session opens it for every page, for the
-  // life of the layout. A forest token opens it for the one forest path it
-  // was checked on, and only until the path changes: any client navigation
-  // (to an admin page, or out to /forest/login and back) checks again, so a
-  // key holder's token never paints an admin page and a cleared token never
-  // reopens /forest.
-  const [opened, setOpened] = useState<
-    { by: 'session' } | { by: 'forest-token'; path: string } | null
-  >(null);
-  const resolved =
-    opened !== null &&
-    (opened.by === 'session' || (forestPage && opened.path === path));
+  // An admin session opens the gate for every page, for the life of the
+  // layout. Once opened it stays opened — a client-side navigation does not
+  // re-check the session.
+  const [opened, setOpened] = useState(false);
 
   useEffect(() => {
-    if (opened?.by === 'forest-token' && opened.path !== path) setOpened(null);
-  }, [opened, path]);
-
-  useEffect(() => {
-    if (openToEveryone || resolved) return;
-    if (forestPage) {
-      // forestTokenState() clears an expired token as it reads it.
-      const held = forestTokenState();
-      if (held === 'valid') {
-        setOpened({ by: 'forest-token', path });
-        return;
-      }
-      if (held === 'expired' || forestKeyRequested()) {
-        router.replace(FOREST_LOGIN);
-        return;
-      }
-    }
+    if (openToEveryone || opened) return;
     // A token already in memory means a client-side navigation, not a fresh
     // load; there is nothing to wait for.
     if (getAccessToken() !== null) {
-      setOpened({ by: 'session' });
+      setOpened(true);
       return;
     }
     let cancelled = false;
@@ -115,18 +74,17 @@ export function SessionGate({ children }: { children: React.ReactNode }) {
       if (cancelled) return;
       if (check === 'invalid') {
         // Stay closed. The navigation is what ends this render.
-        if (forestPage) router.replace(FOREST_LOGIN);
-        else redirectToLogin();
+        redirectToLogin();
         return;
       }
-      setOpened({ by: 'session' });
+      setOpened(true);
     });
     return () => {
       cancelled = true;
     };
-  }, [openToEveryone, forestPage, resolved, path, router]);
+  }, [openToEveryone, opened, path]);
 
-  if (openToEveryone || resolved) return <>{children}</>;
+  if (openToEveryone || opened) return <>{children}</>;
 
   return (
     <div

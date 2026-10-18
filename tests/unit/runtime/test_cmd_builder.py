@@ -167,6 +167,25 @@ def test_overrides_replace_tp_gpu_mem_max_len():
     assert args[args.index("--max-model-len") + 1] == "16384"
 
 
+def test_quantization_fp8_is_passed_through_verbatim():
+    """vLLM v0.31 renamed the online quantization shorthand ``fp8`` to
+    ``fp8_per_tensor``. The warden does NOT remap the row's value: it passes
+    ``quantization`` through unchanged, so an operator who wants online FP8 on
+    an unquantized checkpoint must set ``fp8_per_tensor`` themselves. ``fp8``
+    stays valid for checkpoints whose ``quant_method`` is literally ``fp8``."""
+    row = _row()
+    args = build_vllm_args(
+        row,
+        port=10001,
+        overrides={"quantization": "fp8_per_tensor"},
+    )
+    assert "--quantization" in args
+    assert args[args.index("--quantization") + 1] == "fp8_per_tensor"
+    # The old name is not silently rewritten to the new one.
+    args_old = build_vllm_args(row, port=10001, overrides={"quantization": "fp8"})
+    assert args_old[args_old.index("--quantization") + 1] == "fp8"
+
+
 def test_overrides_do_not_mutate_model_row():
     """Overrides apply in-memory only — the ModelRow is read, never written."""
     row = _row(tensor_parallel_size=2, gpu_memory_utilization=0.9, max_model_len=8192)

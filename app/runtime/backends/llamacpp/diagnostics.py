@@ -24,12 +24,15 @@ The three levers that actually differ:
 There is deliberately NO auto-retry here: this path only REPORTS.
 
 WHERE THE PATTERNS COME FROM. Every rule is derived from a real captured log in
-tests/fixtures/llamacpp/ except the CUDA spellings inside _OOM_RE, which are
-read from the same pinned b10731 tree (ggml/src/ggml-cuda/ggml-cuda.cu) because
+tests/fixtures/llamacpp/ (captured at b11719) except the CUDA spellings inside
+_OOM_RE, which are read from the same pinned b11719 tree
+(ggml/src/ggml-cuda/ggml-cuda.cu) because
 the only NVIDIA host in scope was read-only when the fixtures were taken -- see
 that directory's README. The CPU and CUDA spellings share the backend-neutral
-``alloc_tensor_range`` / ``failed to allocate ... buffer`` anchors, so the rule
-is exercised by the fixture either way.
+``failed to allocate ... buffer`` anchors, so the rule is exercised by the
+fixture either way. (At b11719 the CPU-side ``alloc_tensor_range`` line was
+renamed to ``ggml_backend_buft_alloc_buffer_n_default``; the regex matches
+both via the ``failed to allocate \\S+ buffer`` alternative.)
 
 IMPORT DIRECTION, stated so it is a decision and not an accident: EngineDiagnosis
 is a shared type that happens to live under ``vllm/`` because sub-project B moved
@@ -46,13 +49,13 @@ import re
 from app.runtime.backends.vllm.diagnostics import EngineDiagnosis
 
 # --- 1. Out of memory. Checked FIRST -- see the module docstring. ------------
-# The CPU spellings are in tests/fixtures/llamacpp/log_oom.txt:
+# The CPU spellings are in tests/fixtures/llamacpp/log_oom.txt (b11719 capture):
 #   ggml_aligned_malloc: insufficient memory (attempted to allocate 21488.50 MB)
 #   ggml_backend_cpu_buffer_type_alloc_buffer: failed to allocate buffer of size ...
-#   alloc_tensor_range: failed to allocate CPU buffer of size ...
+#   ggml_backend_buft_alloc_buffer_n_default: failed to allocate CPU buffer of size ...
 #   llama_init_from_model: failed to initialize the context: failed to allocate
 #     buffer for kv cache
-# The CUDA spellings come from ggml/src/ggml-cuda/ggml-cuda.cu at b10731:
+# The CUDA spellings come from ggml/src/ggml-cuda/ggml-cuda.cu at b11719:
 #   ... cudaMalloc failed: out of memory
 #   alloc_tensor_range: failed to allocate CUDA0 buffer of size ...
 #   unable to allocate CUDA0 buffer

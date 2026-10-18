@@ -13,7 +13,8 @@ not have been enough:
 * ``kv_block_size`` is the same info series' ``block_size`` label. It is the
   EFFECTIVE block size: vLLM's EngineCore overwrites cache_config.block_size
   with the smallest KV-group block after hybrid page alignment and ships it to
-  the API server in its ready handshake (v0.26.0 v1/engine/core.py), so a
+  the API server in its ready handshake (v1/engine/core.py, cited at v0.26.0;
+  not re-checked at v0.32.0), so a
   hybrid Qwen3.5 reads 784, not the 16 default and not mamba_block_size.
 * several counters have two spellings across vLLM versions -- 0.25.1 renamed
   gpu_cache_usage_perc to kv_cache_usage_perc and appended _total to others --

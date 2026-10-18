@@ -18,7 +18,7 @@
 // colours — so retro / retro-dark / any future theme just work. SVG marks use
 // `currentColor` inherited from a token-classed wrapper for the same reason.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Brain,
@@ -997,11 +997,9 @@ export function sharedModel(rows: readonly LiveRequestRow[]): string | null {
 function RequestCards({
   animated,
   showModel,
-  callbacks = {},
 }: {
   animated: ReturnType<typeof useExitingRows<LiveRequestRow>>;
   showModel: boolean;
-  callbacks?: RowCallbacks;
 }) {
   return (
     <ul data-testid="live-cards" className="divide-y divide-chat-rule/70">
@@ -1018,12 +1016,7 @@ function RequestCards({
             aria-hidden={exiting ? true : undefined}
             title={`${r.client_ip ?? "unknown IP"} · ${r.model}`}
             aria-label={`${who}, ${r.model}, ${r.client_ip ?? "unknown IP"}, ${formatElapsed(r.elapsed_s)}`}
-            className={cn(
-              "px-4 text-chat-fg",
-              exiting && "pointer-events-none",
-              callbacks.onRowClick && !exiting && "cursor-pointer",
-            )}
-            {...rowHandlers(r, exiting, callbacks)}
+            className={cn("px-4 text-chat-fg", exiting && "pointer-events-none")}
           >
             <RowCell collapsed={collapsed} exiting={exiting}>
               <div className="flex items-baseline gap-2 text-xs">
@@ -1091,144 +1084,10 @@ function RequestCards({
   );
 }
 
-/** Optional row callbacks (the forest full window: hover marks the session's
- *  limb, click moves the camera to it). Absent, the rows render as before. */
-export interface RowCallbacks {
-  onRowHover?: (row: LiveRequestRow | null) => void;
-  onRowClick?: (row: LiveRequestRow) => void;
-}
-
-/** Event props for one row; none at all when no callback is given (or the
- *  row is leaving), so the default rendering is untouched. A clickable row is
- *  also a keyboard target: focusable, Enter / Space click it, and it is named. */
-function rowHandlers(r: LiveRequestRow, exiting: boolean, { onRowHover, onRowClick }: RowCallbacks) {
-  if (exiting) return {};
-  return {
-    ...(onRowHover && {
-      onMouseEnter: () => onRowHover(r),
-      onMouseLeave: () => onRowHover(null),
-    }),
-    ...(onRowClick && {
-      onClick: () => onRowClick(r),
-      tabIndex: 0,
-      "aria-label": `${r.token_name ?? "anonymous"}, session ${r.session_id ? r.session_id.slice(0, 8) : "unknown"}, ${r.model}: select`,
-      onKeyDown: (e: React.KeyboardEvent) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onRowClick(r);
-        }
-      },
-      ...(onRowHover && {
-        onFocus: () => onRowHover(r),
-        onBlur: () => onRowHover(null),
-      }),
-    }),
-  };
-}
-
-/** The forest full window's narrow table (spec §6.4): key, session, phase, context, cache estimate, generated,
- *  elapsed. No min-width, no client IP / model / context bar. Same animated rows and row callbacks. */
-function CompactRequestsTable({
-  animated,
-  causeSlot,
-  callbacks,
-}: {
-  animated: ReturnType<typeof useExitingRows<LiveRequestRow>>;
-  causeSlot: boolean;
-  callbacks: RowCallbacks;
-}) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-xs">
-        <thead className="border-b border-chat-rule text-left text-[10px] uppercase tracking-wider text-chat-dim">
-          <tr>
-            <th className="px-3 py-1.5 font-medium">Key</th>
-            <th className="px-2 py-1.5 font-medium">Session</th>
-            <th className="px-2 py-1.5 font-medium">Phase</th>
-            <th className="px-2 py-1.5 text-right font-medium">Ctx</th>
-            <th className="px-2 py-1.5 text-right font-medium">Cache</th>
-            <th className="px-2 py-1.5 text-right font-medium">Gen</th>
-            <th className="px-3 py-1.5 text-right font-medium">Time</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-chat-rule/70 whitespace-nowrap">
-          {animated.map(({ row: r, state }) => {
-            const collapsed = state !== "live";
-            const exiting = state === "exiting";
-            return (
-              <tr
-                key={r.id}
-                data-testid="live-row"
-                data-exiting={exiting ? "true" : undefined}
-                data-entering={state === "entering" ? "true" : undefined}
-                aria-hidden={exiting ? true : undefined}
-                title={`${r.client_ip ?? "unknown IP"} · ${r.model}`}
-                className={cn(
-                  "text-chat-fg",
-                  exiting && "pointer-events-none",
-                  callbacks.onRowClick && !exiting && "cursor-pointer hover:bg-chat-surface-2/40",
-                )}
-                {...rowHandlers(r, exiting, callbacks)}
-              >
-                <td className="max-w-[8rem] px-3">
-                  <RowCell collapsed={collapsed} exiting={exiting}>
-                    <span className="block truncate font-mono">
-                      {r.token_name ?? <span className="text-chat-dim">anonymous</span>}
-                    </span>
-                  </RowCell>
-                </td>
-                <td
-                  className={cn("px-2 font-mono text-chat-muted", r.session_source === "prompt_hash" && "opacity-60")}
-                  title={sessionTitle(r)}
-                >
-                  <RowCell collapsed={collapsed} exiting={exiting}>
-                    {r.session_id ? r.session_id.slice(0, 8) : "—"}
-                  </RowCell>
-                </td>
-                <td className="px-2">
-                  <RowCell collapsed={collapsed} exiting={exiting}>
-                    <PhasePill row={r} cacheSlot={false} causeSlot={causeSlot} />
-                  </RowCell>
-                </td>
-                <td className="px-2 text-right font-mono tabular-nums text-chat-muted">
-                  <RowCell collapsed={collapsed} exiting={exiting}>
-                    {formatCompact(r.context_tokens)}
-                  </RowCell>
-                </td>
-                <td
-                  className="px-2 text-right font-mono tabular-nums text-chat-muted"
-                  title="Estimated prompt share in the prefix cache (the engine reports the real hit after the request ends)"
-                >
-                  <RowCell collapsed={collapsed} exiting={exiting}>
-                    {r.cache_est_pct === null ? "—" : formatPct(Math.min(1, r.cache_est_pct))}
-                  </RowCell>
-                </td>
-                <td className="px-2 text-right font-mono tabular-nums text-chat-muted">
-                  <RowCell collapsed={collapsed} exiting={exiting}>
-                    {r.completion_tokens > 0 ? formatCompact(r.completion_tokens) : "—"}
-                  </RowCell>
-                </td>
-                <td className="px-3 text-right font-mono tabular-nums text-chat-muted">
-                  <RowCell collapsed={collapsed} exiting={exiting}>
-                    {formatElapsed(r.elapsed_s)}
-                  </RowCell>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export function LiveRequestsPanel({
   rows,
   error,
   isLoading,
-  onRowHover,
-  onRowClick,
-  compact = false,
 }: {
   // Already narrowed to the selected models by the page. Taking rows rather
   // than the whole snapshot is what makes it impossible for this panel and
@@ -1236,23 +1095,7 @@ export function LiveRequestsPanel({
   rows: LiveRequestRow[];
   error: unknown;
   isLoading: boolean;
-  /** The forest full window: the spec §6.4 columns only, no min-width (default: the Stats page table). */
-  compact?: boolean;
-} & RowCallbacks) {
-  // The hovered row is tracked so a row that exits (or the panel unmounting)
-  // clears the hover: an exiting row has no handlers, so no mouseleave comes.
-  const hovered = useRef<string | null>(null);
-  const hoverCb = useRef(onRowHover);
-  hoverCb.current = onRowHover;
-  const callbacks: RowCallbacks = {
-    onRowHover:
-      onRowHover &&
-      ((r) => {
-        hovered.current = r?.id ?? null;
-        onRowHover(r);
-      }),
-    onRowClick,
-  };
+}) {
   // Rows keyed by request id (never index): survivors keep their DOM node, so
   // the eye can stay on one across polls while neighbours enter and leave.
   const animated = useExitingRows(rows, (r) => r.id, ROW_EXIT_MS);
@@ -1261,20 +1104,6 @@ export function LiveRequestsPanel({
   const mobile = useMediaQuery(MOBILE_QUERY);
   const liveRows = animated.filter((a) => a.state !== "exiting").map((a) => a.row);
   const oneModel = sharedModel(liveRows);
-  const liveKey = liveRows.map((r) => r.id).join("\u0001");
-  useEffect(() => {
-    const id = hovered.current;
-    if (id !== null && !liveKey.split("\u0001").includes(id)) {
-      hovered.current = null;
-      hoverCb.current?.(null);
-    }
-  }, [liveKey]);
-  useEffect(
-    () => () => {
-      if (hovered.current !== null) hoverCb.current?.(null);
-    },
-    [],
-  );
   return (
     <Panel
       title={
@@ -1308,10 +1137,8 @@ export function LiveRequestsPanel({
           Nothing in flight for this selection. Live sessions appear here the
           moment they hit the engine.
         </p>
-      ) : compact ? (
-        <CompactRequestsTable animated={animated} causeSlot={anyCause} callbacks={callbacks} />
       ) : mobile ? (
-        <RequestCards animated={animated} showModel={oneModel === null} callbacks={callbacks} />
+        <RequestCards animated={animated} showModel={oneModel === null} />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[56rem] text-sm">
@@ -1339,12 +1166,7 @@ export function LiveRequestsPanel({
                     data-exiting={exiting ? "true" : undefined}
                     data-entering={state === "entering" ? "true" : undefined}
                     aria-hidden={exiting ? true : undefined}
-                    className={cn(
-                      "text-chat-fg",
-                      exiting && "pointer-events-none",
-                      onRowClick && !exiting && "cursor-pointer hover:bg-chat-surface-2/40",
-                    )}
-                    {...rowHandlers(r, exiting, callbacks)}
+                    className={cn("text-chat-fg", exiting && "pointer-events-none")}
                   >
                     <td className="px-4">
                       <RowCell collapsed={collapsed} exiting={exiting}>
