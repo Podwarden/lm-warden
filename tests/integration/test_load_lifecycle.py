@@ -140,7 +140,7 @@ async def test_supervisor_unload_refused_during_warming(tmp_path):
     from app.runtime.supervisor import ModelState, Supervisor, UnloadRefused
 
     class _Settings:
-        pass
+        load_max_s = 7200.0
 
     s = _Settings()
     s.data_dir = str(tmp_path)

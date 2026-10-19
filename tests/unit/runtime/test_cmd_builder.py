@@ -488,6 +488,7 @@ class _SupSettings:
         self.hf_token_path = str(tmp_path / "tok")
         self.hf_cache_dir = str(tmp_path / "hf-cache")
         self.engine_driver = engine_driver
+        self.load_max_s = 7200.0
 
 
 class _SupModel:

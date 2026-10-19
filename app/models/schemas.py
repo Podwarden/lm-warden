@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -543,3 +544,107 @@ class ModelOut(BaseModel):
 
 class ModelList(BaseModel):
     models: list[ModelOut]
+
+
+# ---------------------------------------------------------------------------
+# Load-progress (Task 6)
+# ---------------------------------------------------------------------------
+#
+# ``GET /api/models/{model_id}/load-progress`` and ``GET /api/models/
+# load-progress`` serialise a live :class:`~app.runtime.load_progress.tracker.
+# LoadTracker` plus its latest :class:`~app.runtime.load_progress.policy.Verdict`
+# through :func:`~app.runtime.load_progress.snapshot.build_snapshot` into the
+# pydantic response models below.  The UI polls these every ~2 s to draw the
+# step checklist with progress bars and vital signs while a model loads.
+
+
+class StepOut(BaseModel):
+    """One step in the load-progress checklist.
+
+    ``status`` is ``done`` when the tracker says the step ended; ``running``
+    for the first not-done step that has started (or the first not-done step
+    if none started) while the load is progressing; ``stalled`` for that same
+    step when the verdict is not progressing; ``pending`` for the rest;
+    ``skipped`` for a step the engine never reports (e.g. TUNE on a model
+    with no AutoTuner) once a later step has started.
+    ``duration_s`` is set when the step has ended; ``elapsed_s`` when it is
+    running.  ``count`` / ``total`` come from the step's counter progress
+    (WEIGHTS shards, GRAPHS, TUNE AutoTuner).  ``usual_s`` is the historical
+    per-step duration from Task 7's history, or ``None`` when no history
+    exists yet.  ``detail`` carries step-specific extra text (e.g.
+    "trtllm_fp4_block_scale_moe · op 2" for TUNE).
+    """
+
+    key: str
+    label: str
+    status: Literal["done", "running", "pending", "stalled", "skipped"]
+    duration_s: float | None = None
+    elapsed_s: float | None = None
+    count: int | None = None
+    total: int | None = None
+    usual_s: float | None = None
+    detail: str | None = None
+
+
+class VitalsPointOut(BaseModel):
+    """One point of the vitals time series.
+
+    ``t_s`` is seconds since load start.  ``cpu_cores`` is the cores busy since
+    the previous sample (``None`` for the first point or when a sample is
+    missing).  ``gpu_mem_mib`` is the GPU memory used, ``None`` when the probe
+    failed.
+    """
+
+    t_s: float
+    cpu_cores: float | None = None
+    gpu_mem_mib: int | None = None
+
+
+class VitalsOut(BaseModel):
+    """Vital signs for a load, as a time series of up to 120 points.
+
+    ``series`` is one point per vitals sample (downsampled to ≤ 120 evenly
+    spaced points plus the newest).  Each point has ``t_s`` (seconds since
+    load start), ``cpu_cores`` (cores busy between consecutive samples,
+    ``ΔCPU-s / Δt``; ``None`` for the first point or when a sample is
+    missing), and ``gpu_mem_mib`` (GPU memory used, in MiB; ``None`` when the
+    probe failed).  ``gpu_mem_total_mib`` is the summed capacity of the
+    model's GPUs, or ``None`` when not known (e.g. the docker driver).
+    ``log_quiet_normal`` is true when the log has been quiet for > 60 s
+    while CPU or GPU memory still moved in the last minute — a "slow but
+    alive" signal.
+    """
+
+    series: list[VitalsPointOut]
+    last_log_age_s: float | None = None
+    last_log_line: str | None = None
+    log_quiet_normal: bool
+    gpu_mem_total_mib: int | None = None
+    #: False only when the engine driver cannot attribute GPU memory (docker).
+    gpu_mem_supported: bool = True
+
+
+class LoadProgressOut(BaseModel):
+    """The load-progress snapshot for one active model load.
+
+    ``state`` is ``progressing`` when no verdict has evaluated yet (verdict is
+    ``None``) or the policy says progressing; ``stalled`` / ``give_up`` come
+    from the verdict.  ``give_up_at`` is the wall-clock datetime the load will
+    be given up at if nothing moves.  ``ready_eta`` is only set when
+    ``usual_total_s`` is known (Task 7's history); otherwise ``None``.
+    """
+
+    model_id: str
+    backend: str
+    layout: str | None = None
+    elapsed_s: float
+    state: Literal["progressing", "stalled", "give_up"]
+    stalled_for_s: float
+    give_up_at: datetime | None = None
+    reason: str | None = None
+    hint: str | None = None
+    usual_total_s: float | None = None
+    ready_eta: datetime | None = None
+    current_step: str
+    steps: list[StepOut]
+    vitals: VitalsOut

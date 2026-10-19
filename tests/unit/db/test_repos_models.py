@@ -48,24 +48,6 @@ async def test_update_status(db):
     assert m.status == "loaded"
 
 
-async def test_note_progress_writes_last_error_only(db):
-    """#282 — a soft-deadline progress note must not disturb ``status`` or
-    ``prior_status``. Writing it through ``update_status`` instead would
-    silently clear ``prior_status`` on a row still mid-restore (see
-    ``note_progress``'s own docstring)."""
-    repo = ModelRepo(db)
-    await repo.insert(_make_row("m1", status="loading"))
-    await repo.set_prior_status("m1", "loaded")
-
-    await repo.note_progress("m1", "still loading after 600s (engine process alive)")
-
-    m = await repo.get("m1")
-    assert m.status == "loading"
-    assert m.last_error == "still loading after 600s (engine process alive)"
-    row = await db.execute("SELECT prior_status FROM models WHERE id = 'm1'")
-    assert (await row.fetchone())[0] == "loaded"
-
-
 async def test_set_status_failed_on_startup_wipes_loaded(db):
     """At app startup, any 'loaded'/'loading'/'unloading'/'pulling' rows
     must be marked failed."""

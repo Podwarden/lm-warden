@@ -21,7 +21,7 @@
   },
   {
     "q": "Which inference engines does it use?",
-    "a": "Mainline vLLM and llama.cpp, chosen per model and run unmodified: no patched image, no fork, no monkeypatching. Picking a <code>.gguf</code> file selects llama.cpp, which fits larger models onto smaller cards with GGUF quantisation and keeps older GPUs useful. TensorRT-LLM, SGLang, MLX and Ollama’s runtime are not shipped."
+    "a": "Mainline vLLM v0.32.0 and llama.cpp b11719, chosen per model and run unmodified: no patched image, no fork, no monkeypatching. Picking a <code>.gguf</code> file selects llama.cpp, which fits larger models onto smaller cards with GGUF quantisation and keeps older GPUs useful. TensorRT-LLM, SGLang, MLX and Ollama’s runtime are not shipped."
   },
   {
     "q": "Does anything leave my machine?",

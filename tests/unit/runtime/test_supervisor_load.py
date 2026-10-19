@@ -11,6 +11,7 @@ class _Settings:
     data_dir = "/data"
     hf_token_path = "/data/hf-token"
     hf_cache_dir = "/root/.cache/huggingface"
+    load_max_s = 7200.0
 
 
 class _M:

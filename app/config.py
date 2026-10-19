@@ -105,6 +105,18 @@ class Settings:
     # window between /health 200 and actual serving readiness (e.g.
     # Qwen3-VL's _warmup_mm_processor). Configurable via env override.
     warmup_probe_timeout_s: float = 600.0
+    # --- Model load stall policy (2026-10-18) -------------------------------
+    # Replaces the plain wall-clock deadline with a progress-aware policy.
+    # ``load_stall_warn_s`` is the amber-warning threshold: no progress
+    # (excluding CPU) for this many seconds -> ``stalled`` verdict.
+    # ``load_stall_timeout_s`` is the give-up threshold: no progress INCLUDING
+    # CPU for this many seconds -> ``give_up`` verdict.
+    # ``load_max_s`` is the absolute cap: ``now - started_at >= max_s`` -> give
+    # up regardless of progress. Defaults to ``max(7200.0, 3 * load_timeout_s)``
+    # when ``VW_LOAD_MAX_S`` is unset; the operator's value wins when set.
+    load_stall_warn_s: float = 300.0
+    load_stall_timeout_s: float = 1200.0
+    load_max_s: float = 7200.0
     # Server-side wall-clock backstop for a single proxied request (streaming
     # or not). 0.0 = disabled (default; behaviour-identical to pre-reaper).
     # When > 0, a streamed generation that has run longer than this many
@@ -327,6 +339,13 @@ def load_settings() -> Settings:
     trusted_proxies = _parse_trusted_proxies(os.environ.get("VW_TRUSTED_PROXIES", ""))
     load_timeout_s = float(os.environ.get("VW_LOAD_TIMEOUT_S", "600.0"))
     warmup_probe_timeout_s = float(os.environ.get("VW_WARMUP_PROBE_TIMEOUT_S", "600.0"))
+    load_stall_warn_s = float(os.environ.get("VW_LOAD_STALL_WARN_S", "300.0"))
+    load_stall_timeout_s = float(os.environ.get("VW_LOAD_STALL_TIMEOUT_S", "1200.0"))
+    _raw_load_max_s = os.environ.get("VW_LOAD_MAX_S")
+    if _raw_load_max_s is not None:
+        load_max_s = float(_raw_load_max_s)
+    else:
+        load_max_s = max(7200.0, 3 * load_timeout_s)
     engine_driver = os.environ.get("VW_ENGINE_DRIVER", "local")
     watchdog_enabled = _truthy(os.environ.get("VW_WATCHDOG_ENABLED", "1"))
     watchdog_interval_s = float(os.environ.get("VW_WATCHDOG_INTERVAL_S", "30.0"))
@@ -427,6 +446,9 @@ def load_settings() -> Settings:
         derive_origin_from_request=derive_origin_from_request,
         load_timeout_s=load_timeout_s,
         warmup_probe_timeout_s=warmup_probe_timeout_s,
+        load_stall_warn_s=load_stall_warn_s,
+        load_stall_timeout_s=load_stall_timeout_s,
+        load_max_s=load_max_s,
         engine_driver=engine_driver,
         watchdog_enabled=watchdog_enabled,
         watchdog_interval_s=watchdog_interval_s,

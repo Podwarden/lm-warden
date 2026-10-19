@@ -26,6 +26,7 @@ from app.cache.routes_api import _delete_repo_dirs, _safe_dirname
 from app.config import Settings
 from app.db.constants import ACTIVE_STATUSES
 from app.db.database import open_db
+from app.db.repos.load_history import LoadHistoryRepo, load_fingerprint, median
 from app.db.repos.models import ModelRepo, ModelRow
 from app.db.repos.runtime import RuntimeRepo
 from app.db.repos.setup import SetupRepo
@@ -48,6 +49,7 @@ from app.models.load_preflight import decide_preflight
 from app.models.parallelism import PARALLEL_FLAGS_REFUSAL, parallel_flag_values
 from app.models.pull_task import _snapshot_dir_size, run_pull
 from app.models.schemas import (
+    LoadProgressOut,
     ModelCreate,
     ModelList,
     ModelOut,
@@ -65,6 +67,14 @@ from app.runtime.backends.paths import ModelFileNotFound, resolve_model_paths
 from app.runtime.backends.registry import DEFAULT_BACKEND
 from app.runtime.backends.vllm.images import UnsupportedChannelError, resolve_image
 from app.runtime.engine.run_marker import tail_since_last_run
+from app.runtime.load_progress.follow import LogFollower
+from app.runtime.load_progress.parse import Step
+from app.runtime.load_progress.policy import StallPolicy, Verdict
+from app.runtime.load_progress.registry import LoadProgressRegistry
+from app.runtime.load_progress.snapshot import build_snapshot
+from app.runtime.load_progress.tracker import LoadTracker, VitalsSample
+from app.runtime.load_progress.vitals import default_compute_apps, sample_vitals
+from app.runtime.load_progress.watcher import watch_load
 from app.runtime.port_alloc import PortAllocator
 from app.runtime.supervisor import Supervisor, UnloadRefused, wait_for_health
 from app.runtime.variants import ModelVariantRepo, Variant, mark_recorded
@@ -1023,6 +1033,240 @@ async def list_models(request: Request, _user: str = Depends(require_jwt)):
     return {"models": [model_summary(r) for r in rows]}
 
 
+# ---------------------------------------------------------------------------
+# Load-progress (Task 6)
+# ---------------------------------------------------------------------------
+#
+# ``GET /api/models/load-progress`` MUST be registered before the
+# ``/{model_id}`` routes: FastAPI matches paths in registration order, and
+# ``load-progress`` would otherwise be captured by ``/{model_id}`` and look up
+# a model row with id "load-progress" (404).  The per-model endpoint
+# ``GET /api/models/{model_id}/load-progress`` sits after ``/{model_id}`` and is
+# matched by its longer, more specific path.
+
+
+def _load_progress_layout(dp_size: int, tp: int | None) -> str | None:
+    """Format the parallelism layout string for the progress snapshot.
+
+    ``"N replicas × TPm"`` when dp_size > 1, ``"TPm"`` for a single engine with
+    tp > 1, else ``None``.  ``tp`` comes from the model row's
+    ``tensor_parallel_size`` (the tracker knows dp_size but not TP).
+    """
+    if dp_size > 1 and tp is not None and tp > 0:
+        return f"{dp_size} replicas × TP{tp}"
+    if tp is not None and tp > 1:
+        return f"TP{tp}"
+    return None
+
+
+def _read_usual_sync(
+    db_path: Any, model_id: str, fingerprint: str
+) -> tuple[float | None, dict[Step, float]]:
+    """Read usual load times from the DB using a short-lived read-only sync
+    connection.
+
+    Called from ``_run_load`` via :func:`asyncio.to_thread` so the blocking
+    sqlite3 read runs off the event loop. The connection is opened read-only
+    (``mode=ro``) with a 5 s ``busy_timeout`` (bounded — usual times are a
+    nicety, not a reason to delay a load). Any failure returns ``(None, {})``;
+    the caller's ``to_thread`` wrapper also catches so a locked or missing DB
+    never fails the load.
+
+    The sync connection is used rather than :func:`open_db` (aiosqlite) because
+    aiosqlite spawns its own thread and the ``TestClient`` harness runs a
+    single event loop that can deadlock when an aiosqlite connection is opened
+    inside a background ``_run_load`` task before ``wait_for_health`` returns.
+    A plain ``sqlite3`` read in WAL mode is lock-free for readers and does not
+    need a thread of its own; ``to_thread`` keeps it off the loop anyway.
+    """
+    import sqlite3  # noqa: PLC0415
+
+    uri = f"file:{db_path}?mode=ro"
+    try:
+        conn = sqlite3.connect(uri, uri=True, timeout=5)
+    except sqlite3.Error:
+        # Missing or locked DB — usual times are a nicety, never a reason
+        # to fail a load.
+        return None, {}
+    try:
+        conn.execute("PRAGMA busy_timeout = 5000")
+        rows = conn.execute(
+            "SELECT total_s, steps_json FROM model_load_history "
+            "WHERE model_id = ? AND fingerprint = ? "
+            "ORDER BY finished_at DESC, id DESC LIMIT 5",
+            (model_id, fingerprint),
+        ).fetchall()
+    except sqlite3.Error:
+        return None, {}
+    finally:
+        conn.close()
+    if not rows:
+        return None, {}
+    totals = [r[0] for r in rows]
+    step_values: dict[Step, list[float]] = {}
+    for _, steps_json in rows:
+        try:
+            raw = json.loads(steps_json)
+        except (json.JSONDecodeError, TypeError):
+            continue
+        for key, val in raw.items():
+            try:
+                step = Step(key)
+            except ValueError:
+                continue
+            step_values.setdefault(step, []).append(float(val))
+    usual_total = median(totals)
+    usual_steps = {step: median(vals) for step, vals in step_values.items() if vals}
+    return usual_total, usual_steps
+
+
+async def _fill_usual(
+    tracker: LoadTracker,
+    db_path: Any,
+    model_id: str,
+    fingerprint: str,
+    still_current: Callable[[], bool],
+) -> None:
+    """Read usual load times off the event loop and set them on ``tracker``.
+
+    Runs as a background task beside the watcher; the load path never awaits
+    it. A failed read leaves the tracker's usual values as None (no usual bars,
+    no ready-by time) and never reaches the load. If a newer load has
+    superseded this one by the time the read lands, the values are dropped.
+    """
+    try:
+        total, steps = await asyncio.to_thread(_read_usual_sync, db_path, model_id, fingerprint)
+    except Exception:  # noqa: BLE001 — usual times are a nicety, never fatal
+        logger.warning("load-history usual lookup failed for %s", model_id, exc_info=True)
+        return
+    if not still_current():
+        return
+    tracker.usual_total_s = total
+    tracker.usual = steps
+
+
+def _usual_for(tracker: LoadTracker) -> dict[Step, float] | None:
+    """Return the tracker's per-step usual durations, or None when empty.
+
+    Filled from ``LoadHistoryRepo.usual`` at load start and passed into the
+    tracker's ``usual``; the route reads it back here so the snapshot's
+    per-step ``usual_s`` reaches the API.
+    """
+    usual = getattr(tracker, "usual", None)
+    return usual if usual else None
+
+
+async def _snapshot_for(
+    request: Request,
+    model_id: str,
+    tracker: LoadTracker,
+    verdict: Verdict | None,
+) -> LoadProgressOut:
+    """Build a :class:`LoadProgressOut` for one tracker, deriving the layout's
+    TP size from the model row when the tracker cannot."""
+    now = time.monotonic()
+    now_wall = datetime.now(UTC)
+    # usual_total_s: from the history lookup at load start (stored on the
+    # tracker). None when no history exists yet.
+    usual_total_s = getattr(tracker, "usual_total_s", None)
+    usual_steps = _usual_for(tracker)
+    await _gpu_mem_total_once(request, model_id, tracker)
+    snap = build_snapshot(tracker, verdict, now, usual_total_s, usual_steps, now_wall)
+    # The tracker knows dp_size but not TP; derive TP from the model row.
+    tp = await _tensor_parallel_for(request, model_id)
+    snap["layout"] = _load_progress_layout(tracker.dp_size, tp)
+    return LoadProgressOut(**snap)
+
+
+async def _gpu_mem_total_once(request: Request, model_id: str, tracker: LoadTracker) -> None:
+    """Fill ``tracker.gpu_mem_total_mib`` on the first snapshot, then never again.
+
+    The total is the summed ``memory_total_mib`` over the model's
+    ``gpu_indices``. It is only a sum when EVERY index is present in the probe
+    snapshot: a partial miss leaves it None rather than a short total. A failed
+    probe also leaves it None and sets ``gpu_mem_probed``, so a failure is not
+    retried on every poll. The flag is set before the first await, so two
+    polls racing on a new tracker probe once.
+    """
+    if tracker.gpu_mem_probed:
+        return
+    tracker.gpu_mem_probed = True
+    settings = request.app.state.settings
+    try:
+        async with open_db(settings.db_path) as db:
+            row = await ModelRepo(db).get(model_id)
+        if row is None or not row.gpu_indices:
+            return
+        cache_gpu = getattr(request.app.state, "gpu_probe_cache", None)
+        if cache_gpu is None:
+            from app.system.routes_gpus import _ProbeCache  # noqa: PLC0415
+
+            cache_gpu = _ProbeCache()
+            request.app.state.gpu_probe_cache = cache_gpu
+        snap = await cache_gpu.get()
+        vram_by_index = {g.index: g.memory_total_mib for g in snap.gpus}
+        if any(i not in vram_by_index for i in row.gpu_indices):
+            return
+        tracker.gpu_mem_total_mib = sum(vram_by_index[i] for i in row.gpu_indices) or None
+    except Exception:  # noqa: BLE001 — a poll must not 500 on a probe error
+        logger.debug("load-progress GPU capacity probe failed for %s", model_id, exc_info=True)
+
+
+async def _tensor_parallel_for(request: Request, model_id: str) -> int | None:
+    """Look up the model row's ``tensor_parallel_size`` for the layout string.
+
+    Returns ``None`` when the model row is missing (e.g. deleted mid-load) so
+    the layout degrades to ``None`` rather than 500ing the poll.
+    """
+    settings = request.app.state.settings
+    try:
+        async with open_db(settings.db_path) as db:
+            row = await ModelRepo(db).get(model_id)
+    except Exception:  # noqa: BLE001 — a poll must not 500 on a DB error
+        return None
+    return row.tensor_parallel_size if row else None
+
+
+@router.get("/load-progress", response_model=list[LoadProgressOut])
+async def list_load_progress(
+    request: Request, _user: str = Depends(require_jwt)
+) -> list[LoadProgressOut]:
+    """All active model loads, for the dashboard cards.
+
+    Returns one :class:`LoadProgressOut` per model with a live load in flight.
+    Empty list when nothing is loading.  The layout's TP size is derived per
+    model from its row; a deleted-mid-load model degrades to ``layout=None``.
+    """
+    reg: LoadProgressRegistry = request.app.state.load_progress
+    active = reg.active()
+    out: list[LoadProgressOut] = []
+    for model_id in active:
+        tracker = reg.get(model_id)
+        if tracker is None:
+            continue
+        verdict = reg.verdict(model_id)
+        out.append(await _snapshot_for(request, model_id, tracker, verdict))
+    return out
+
+
+@router.get("/{model_id}/load-progress", response_model=LoadProgressOut)
+async def get_load_progress(
+    model_id: str, request: Request, _user: str = Depends(require_jwt)
+) -> LoadProgressOut:
+    """One model's load progress, for the model detail page's loading screen.
+
+    404 when no active load exists for ``model_id`` (the load has finished, was
+    never started, or was superseded).  The snapshot is built by
+    :func:`build_snapshot` and is total — it never raises mid-load.
+    """
+    reg: LoadProgressRegistry = request.app.state.load_progress
+    tracker = reg.get(model_id)
+    if tracker is None:
+        raise HTTPException(404, "no active load")
+    verdict = reg.verdict(model_id)
+    return await _snapshot_for(request, model_id, tracker, verdict)
+
+
 @router.get("/{model_id}", response_model=ModelOut)
 async def get_model(model_id: str, request: Request, _user: str = Depends(require_jwt)):
     settings = request.app.state.settings
@@ -1523,13 +1767,6 @@ def _diagnose_or(settings, model_id: str, fallback: str, backend_name: str | Non
     return diag.message if diag is not None else fallback
 
 
-# #282 — how far past settings.load_timeout_s (the "soft" deadline)
-# wait_for_health keeps polling while the engine process is still alive,
-# before giving up for good. See wait_for_health's own docstring for why a
-# live-but-slow load must not be judged by the soft deadline alone.
-LOAD_HARD_TIMEOUT_MULTIPLIER = 3.0
-
-
 async def start_engine(
     settings: Settings,
     sup: Supervisor,
@@ -1538,6 +1775,8 @@ async def start_engine(
     port: int,
     overrides: dict[str, Any] | None = None,
     on_spawn: Callable[[int], None] | None = None,
+    load_progress: LoadProgressRegistry | None = None,
+    on_loaded: Callable[[LoadTracker], Awaitable[None]] | None = None,
 ) -> None:
     """Spawn an engine and drive it to `loaded`: health wait, warmup, status.
 
@@ -1550,9 +1789,36 @@ async def start_engine(
     spawned as, read right after a successful ``sup.load``. The watchdog passes
     a callback so it can learn which generation its restart owns and detect when
     a newer load has since superseded it (#278).
+
+    ``load_progress`` (optional): the in-memory load-progress registry.  When
+    passed, the stall-based watcher runs alongside the health wait and replaces
+    the old wall-clock load deadline.  A give-up kills the engine and releases
+    the GPUs (see ``on_give_up`` below).  When ``None`` (legacy callers, tests)
+    the watcher is skipped and the health wait uses the policy's absolute cap
+    as its timeout — no stall detection, no give-up kill.
+
+    ``on_loaded`` (optional): called after the load succeeds with the tracker
+    that recorded the step durations.  Task 7 will record load history there;
+    until then it defaults to a no-op.
     """
     model_id = model.id
     load_overrides = overrides
+
+    # --- Load history: compute fingerprint + start the usual-times read -----
+    # The fingerprint covers backend, engine image/pin (or baked engine
+    # version), repo, revision, filename, dtype, extra_args, GPU/parallel
+    # layout, context, and VLLM_ env vars. The usual-times read runs off the
+    # event loop via to_thread; the task is started here and awaited inside
+    # _run_load AFTER the watcher is scheduled, so the to_thread yield does
+    # not change the timing between watcher creation and the warmup probe.
+    from app.runtime.supervisor import _resolve_engine_image  # noqa: PLC0415
+    from app.runtime.variants import baked_engine_version  # noqa: PLC0415
+
+    _engine_image = _resolve_engine_image(model)
+    _baked_ver = None
+    if _engine_image is None:
+        _baked_ver = baked_engine_version(getattr(model, "backend", None) or "vllm")
+    _fingerprint = load_fingerprint(model, _engine_image, baked_engine_version=_baked_ver)
 
     async def on_exit(rc: int) -> None:
         async with open_db(settings.db_path) as db:
@@ -1645,149 +1911,314 @@ async def start_engine(
         # vanished between spawn and here; loopback is the safe fallback.
         host = sup.get_host(model_id) or "127.0.0.1"
 
-        async def _note_still_loading() -> None:
-            # #282 — surfaced during the v2026.09.30.4 rollout: the soft
-            # deadline used to be the ONLY signal an operator ever got, and it
-            # fired by writing 'failed' onto a model that was in fact still
-            # booting (NVFP4/Blackwell FlashInfer autotuning routinely runs
-            # past load_timeout_s, see #275). Skip the note for a superseded
-            # generation -- writing last_error onto a newer load's row would
-            # be exactly the #275/#278 clobber this codebase already fixed
-            # elsewhere.
+        # --- Model load-progress watcher (2026-10-18) -----------------------
+        # Replaces the old wall-clock load deadline (load_timeout_s × 3) with
+        # a progress-aware stall policy: the watcher feeds engine log lines
+        # and vital signs into a LoadTracker every 5 s, the StallPolicy
+        # decides progressing/stalled/give_up, and on give-up the engine is
+        # killed and the GPUs released (today it leaves them held).
+        #
+        # ``stop`` is set by ``on_give_up`` so ``wait_for_health`` returns
+        # promptly instead of running out the policy's max_s deadline.
+        # ``stop`` is also set when the engine dies (``alive`` returning
+        # False already does that via wait_for_health's own loop).
+        stop_event = asyncio.Event()
+        policy = StallPolicy.from_settings(settings)
+        backend_name = getattr(model, "backend", None)
+        try:
+            backend = registry.get(backend_name)
+            health_path = backend.capabilities.health_path
+        except Exception:  # noqa: BLE001 — registry failure is non-fatal here
+            logger.debug("could not resolve backend health path for %s; /health", model_id)
+            health_path = "/health"
+
+        log_path = settings.logs_dir / f"{model_id}.log"
+        follower = LogFollower(log_path)
+
+        tracker = LoadTracker(
+            model_id=model_id,
+            generation=generation,
+            backend=backend_name or "vllm",
+            started_at=time.monotonic(),
+            started_wall=datetime.now(UTC),
+        )
+        # The docker driver (it exposes ``stats``) never attributes GPU
+        # memory; the local driver does once the engine's processes hold it.
+        tracker.gpu_mem_supported = getattr(sup.driver, "stats", None) is None
+
+        # ``still_current`` is the generation guard the watcher uses to stop
+        # when a newer load supersedes this one.  Reading it live (not a
+        # snapshot) is the point: the watcher must notice a supersession
+        # that lands while it is running.
+        def still_current() -> bool:
+            return sup.get_generation(model_id) == generation
+
+        async def _sample_vitals() -> VitalsSample:
+            return await sample_vitals(
+                pid=sup.get_pid(model_id),
+                handle=sup.get_handle(model_id),
+                driver=sup.driver,
+                compute_apps=default_compute_apps,
+            )
+
+        # The give-up handler.  HAZARD: ``sup.unload(force=True)`` cancels
+        # this load runner task (``self._load_runners``), and the watcher
+        # runs as part of this same runner.  Awaiting ``unload`` from
+        # inside the runner would cancel the very task executing it and
+        # abort the teardown at its next await.  The required order:
+        #   (1) re-check the generation (the watcher already did, but the
+        #       unload task below races us);
+        #   (2) write ``failed`` with the stall reason (only if still
+        #       current);
+        #   (3) set the stop event so ``wait_for_health`` returns;
+        #   (4) schedule ``unload`` as a SEPARATE task so the runner's own
+        #       cancellation cannot abort it — keep a reference so it is
+        #       not garbage-collected and log its exception;
+        #   (5) return.
+        # See ``test_give_up_unload_survives_runner_cancellation``.
+        _give_up_unload_tasks: set[asyncio.Task[None]] = set()
+
+        async def on_give_up(verdict: Verdict) -> None:
             if sup.get_generation(model_id) != generation:
                 return
+            last_error = f"{verdict.reason} — gave up; engine stopped and GPUs released"
             async with open_db(settings.db_path) as db:
-                await ModelRepo(db).note_progress(
+                await ModelRepo(db).update_status(
                     model_id,
-                    f"still loading after {settings.load_timeout_s:.0f}s (engine process alive); "
-                    f"waiting up to {LOAD_HARD_TIMEOUT_MULTIPLIER * settings.load_timeout_s:.0f}s "
-                    "total before giving up",
+                    "failed",
+                    last_error=last_error,
                 )
+            stop_event.set()
+            # Schedule the unload as a SEPARATE task so the runner's own
+            # cancellation (which ``unload`` does to ``self._load_runners``)
+            # cannot abort the teardown.  Keep a strong reference so the GC
+            # does not drop it mid-flight, and log any exception.
+            unload_task = asyncio.create_task(sup.unload(model_id, force=True))
+            _give_up_unload_tasks.add(unload_task)
 
-        ok = await wait_for_health(
-            port=port,
-            host=host,
-            timeout_s=settings.load_timeout_s,
-            alive=lambda: sup.is_running(model_id),
-            hard_timeout_s=LOAD_HARD_TIMEOUT_MULTIPLIER * settings.load_timeout_s,
-            on_soft_timeout=_note_still_loading,
-        )
-        if sup.get_generation(model_id) != generation:
-            # #275 root cause — this load was force-unloaded out from under
-            # us (Supervisor.unload cancels this task, but a cancellation
-            # already in flight when wait_for_health returned can still land
-            # here first). A newer load may already own model_id; writing
-            # ANY terminal status below would clobber its row with this
-            # superseded attempt's stale result. Nothing to release: unload()
-            # already tore down the engine and the port for this generation.
-            return
-        if not ok:
-            # #282 — ``alive=False`` is also how wait_for_health now reports
-            # a process that straight-up died (fails fast, does not wait out
-            # the deadline). That is on_exit's story to tell: it already has
-            # (or is about to, from the SAME exit event) write a diagnosed
-            # crash message and the prior_status the restart sweep keys on.
-            # Writing the generic timeout message here as well would race
-            # on_exit's write and can clobber a correct diagnosis with a
-            # useless one, or vice versa, for no benefit — nothing below is
-            # specific to a genuine timeout once the process is confirmed gone.
-            if not sup.is_running(model_id):
-                return
-            # Subprocess is left running; operator must force-unload to
-            # release GPUs. This is intentional (spec §"Load-route changes")
-            # — auto-SIGTERM here was the original race trigger.
-            # If the engine log reveals WHY it never came up (KV overflow, OOM,
-            # trust_remote_code), surface that instead of the bare timeout.
-            generic = "health timeout; subprocess still holding GPUs — force-unload to release"
-            diagnosed = _diagnose_or(
-                settings,
-                model_id,
-                generic,
-                backend_name=getattr(model, "backend", None),
-            )
-            if diagnosed == generic:
-                # #274 — no known failure pattern in the log: the engine may
-                # be hung mid-load rather than crashed, and the bare generic
-                # string told the operator nothing. Append a bounded slice of
-                # the raw tail so the stall is self-diagnosing from
-                # last_error alone. A pattern-matched diagnosis (and the
-                # warmup-probe path) stays exactly as before.
-                tail = _bounded_log_tail(_read_engine_log_tail(settings, model_id))
-                last_error = (
-                    f"{generic}\n"
-                    f"--- engine log tail (no recognised failure pattern) ---\n"
-                    f"{tail}"
-                    if tail
-                    else generic
+            def _drop_when_done(t: asyncio.Task[None]) -> None:
+                _give_up_unload_tasks.discard(t)
+                if t.cancelled():
+                    return
+                exc = t.exception()
+                if exc is not None:
+                    logger.error(
+                        "give-up unload failed for %s: %s",
+                        model_id,
+                        exc,
+                        exc_info=exc,
+                    )
+
+            unload_task.add_done_callback(_drop_when_done)
+
+        # Run the watcher alongside the health wait.  The watcher is a
+        # background task; the health wait is what the runner awaits.  When
+        # the watcher returns (done, superseded, or gave up), the stop
+        # event is set (for give-up) or the tracker is done (for success),
+        # and the health wait returns.
+        watcher_task: asyncio.Task[None] | None = None
+        usual_task: asyncio.Task[None] | None = None
+        try:
+            if load_progress is not None:
+                load_progress.start(tracker)
+            registry_for_watcher = load_progress or LoadProgressRegistry()
+            watcher_task = asyncio.create_task(
+                watch_load(
+                    tracker=tracker,
+                    follower=follower,
+                    sample=_sample_vitals,
+                    policy=policy,
+                    still_current=still_current,
+                    on_give_up=on_give_up,
+                    registry=registry_for_watcher,
+                    interval_s=5.0,
                 )
-            else:
-                last_error = (
-                    f"{diagnosed} (subprocess still holding GPUs — force-unload to release)"
-                )
-            async with open_db(settings.db_path) as db:
-                await ModelRepo(db).update_status(
-                    model_id,
-                    "failed",
-                    last_error=last_error,
-                )
-            return
-        await sup.mark_warming(model_id)
-        probe_result = await warmup_probe(
-            port=port,
-            host=host,
-            served_model_name=model.served_model_name,
-            timeout_s=settings.warmup_probe_timeout_s,
-        )
-        if sup.get_generation(model_id) != generation:
-            # #275 — superseded while warming up; see the check above
-            # wait_for_health for why neither the failure nor the success
-            # write below may run for a generation that is no longer current.
-            return
-        if not probe_result.ok:
-            # The probe failed — but the engine log may explain it crashed
-            # mid-warmup (e.g. a deferred KV-cache allocation OOM). Prefer the
-            # log diagnosis; fall back to the probe detail.
-            generic = (
-                f"{probe_result.detail}; subprocess still holding "
-                f"GPUs — force-unload to release"
             )
-            diagnosed = _diagnose_or(
-                settings,
-                model_id,
-                generic,
-                backend_name=getattr(model, "backend", None),
+            # Usual times are filled in the background and never awaited on the
+            # load path: the read runs off the loop, and the load proceeds with
+            # usual=None until (and unless) it lands.
+            usual_task = asyncio.create_task(
+                _fill_usual(tracker, settings.db_path, model_id, _fingerprint, still_current)
             )
-            last_error = (
-                generic
-                if diagnosed == generic
-                else f"{diagnosed} (subprocess still holding GPUs — force-unload to release)"
-            )
-            async with open_db(settings.db_path) as db:
-                await ModelRepo(db).update_status(
-                    model_id,
-                    "failed",
-                    last_error=last_error,
-                )
-            return
-        await sup.mark_ready(model_id)
-        # #29 — persist health_ok=True now that the warmup probe has
-        # actually served a request. Stats/status badges and any future
-        # telemetry need to distinguish 'process up but never proved
-        # serving' from 'process up and served at least one request'.
-        # Both the upsert (creates the row with pid/port/started_at) and
-        # the update_health (writes the health columns) MUST happen in
-        # this success branch; the legacy code wrote only the upsert and
-        # left health_ok stuck at its default 0.
-        now_iso = datetime.now(UTC).isoformat()
-        async with open_db(settings.db_path) as db:
-            await ModelRepo(db).update_status(model_id, "loaded")
-            await RuntimeRepo(db).upsert(
-                model_id,
-                pid=sup.get_pid(model_id),
+
+            ok = await wait_for_health(
                 port=port,
-                started_at=now_iso,
+                host=host,
+                timeout_s=policy.max_s,
+                alive=lambda: sup.is_running(model_id),
+                stop=stop_event,
+                path=health_path,
             )
-            await RuntimeRepo(db).update_health(model_id, True, now_iso)
+            # The watcher is done one way or another — cancel it if it has not
+            # already returned (e.g. the health wait returned True before the
+            # watcher noticed the tracker was done).  Swallow the cancellation
+            # so it never surfaces as a task exception.
+
+            if sup.get_generation(model_id) != generation:
+                # #275 root cause — this load was force-unloaded out from under
+                # us (Supervisor.unload cancels this task, but a cancellation
+                # already in flight when wait_for_health returned can still land
+                # here first). A newer load may already own model_id; writing
+                # ANY terminal status below would clobber its row with this
+                # superseded attempt's stale result. Nothing to release: unload()
+                # already tore down the engine and the port for this generation.
+                return
+            if stop_event.is_set() and not ok:
+                # The give-up handler already wrote ``failed`` and scheduled the
+                # unload.  The health wait returned ``False`` because ``stop``
+                # was set — NOT because of a genuine health timeout.  Do NOT
+                # write again: that would clobber the stall reason with the
+                # health-timeout message.  The unload task is already tearing
+                # down the engine; nothing else to do here.
+                return
+            if not ok:
+                # #282 — ``alive=False`` is also how wait_for_health now reports
+                # a process that straight-up died (fails fast, does not wait out
+                # the deadline). That is on_exit's story to tell: it already has
+                # (or is about to, from the SAME exit event) write a diagnosed
+                # crash message and the prior_status the restart sweep keys on.
+                # Writing the generic timeout message here as well would race
+                # on_exit's write and can clobber a correct diagnosis with a
+                # useless one, or vice versa, for no benefit — nothing below is
+                # specific to a genuine timeout once the process is confirmed gone.
+                if not sup.is_running(model_id):
+                    return
+                # Subprocess is left running; operator must force-unload to
+                # release GPUs. This is intentional (spec §"Load-route changes")
+                # — auto-SIGTERM here was the original race trigger.
+                # If the engine log reveals WHY it never came up (KV overflow, OOM,
+                # trust_remote_code), surface that instead of the bare timeout.
+                generic = "health timeout; subprocess still holding GPUs — force-unload to release"
+                diagnosed = _diagnose_or(
+                    settings,
+                    model_id,
+                    generic,
+                    backend_name=getattr(model, "backend", None),
+                )
+                if diagnosed == generic:
+                    # #274 — no known failure pattern in the log: the engine may
+                    # be hung mid-load rather than crashed, and the bare generic
+                    # string told the operator nothing. Append a bounded slice of
+                    # the raw tail so the stall is self-diagnosing from
+                    # last_error alone. A pattern-matched diagnosis (and the
+                    # warmup-probe path) stays exactly as before.
+                    tail = _bounded_log_tail(_read_engine_log_tail(settings, model_id))
+                    last_error = (
+                        f"{generic}\n"
+                        f"--- engine log tail (no recognised failure pattern) ---\n"
+                        f"{tail}"
+                        if tail
+                        else generic
+                    )
+                else:
+                    last_error = (
+                        f"{diagnosed} (subprocess still holding GPUs — force-unload to release)"
+                    )
+                async with open_db(settings.db_path) as db:
+                    await ModelRepo(db).update_status(
+                        model_id,
+                        "failed",
+                        last_error=last_error,
+                    )
+                return
+            # --- warmup ---------------------------------------------------------
+            tracker.mark_warmup_started(time.monotonic())
+            await sup.mark_warming(model_id)
+            probe_result = await warmup_probe(
+                port=port,
+                host=host,
+                served_model_name=model.served_model_name,
+                timeout_s=settings.warmup_probe_timeout_s,
+            )
+            if stop_event.is_set():
+                # The stall watcher gave up during warm-up: the give-up path already wrote
+                # ``failed`` and scheduled the unload. Do not overwrite that result.
+                return
+            if sup.get_generation(model_id) != generation:
+                # #275 — superseded while warming up; see the check above
+                # wait_for_health for why neither the failure nor the success
+                # write below may run for a generation that is no longer current.
+                return
+            if not probe_result.ok:
+                # The probe failed — but the engine log may explain it crashed
+                # mid-warmup (e.g. a deferred KV-cache allocation OOM). Prefer the
+                # log diagnosis; fall back to the probe detail.
+                generic = (
+                    f"{probe_result.detail}; subprocess still holding "
+                    f"GPUs — force-unload to release"
+                )
+                diagnosed = _diagnose_or(
+                    settings,
+                    model_id,
+                    generic,
+                    backend_name=getattr(model, "backend", None),
+                )
+                last_error = (
+                    generic
+                    if diagnosed == generic
+                    else f"{diagnosed} (subprocess still holding GPUs — force-unload to release)"
+                )
+                async with open_db(settings.db_path) as db:
+                    await ModelRepo(db).update_status(
+                        model_id,
+                        "failed",
+                        last_error=last_error,
+                    )
+                return
+            await sup.mark_ready(model_id)
+            done_at = time.monotonic()
+            tracker.mark_done(done_at)
+            # #29 — persist health_ok=True now that the warmup probe has
+            # actually served a request. Stats/status badges and any future
+            # telemetry need to distinguish 'process up but never proved
+            # serving' from 'process up and served at least one request'.
+            # Both the upsert (creates the row with pid/port/started_at) and
+            # the update_health (writes the health columns) MUST happen in
+            # this success branch; the legacy code wrote only the upsert and
+            # left health_ok stuck at its default 0.
+            now_iso = datetime.now(UTC).isoformat()
+            async with open_db(settings.db_path) as db:
+                await ModelRepo(db).update_status(model_id, "loaded")
+                await RuntimeRepo(db).upsert(
+                    model_id,
+                    pid=sup.get_pid(model_id),
+                    port=port,
+                    started_at=now_iso,
+                )
+                await RuntimeRepo(db).update_health(model_id, True, now_iso)
+            # Record load history so the next load of the same model + config
+            # can show "usual" bars and a ready-by time. The total is the
+            # wall-clock from load start to mark_done. Recording never fails
+            # the load: LoadHistoryRepo.record is defensive, and this whole
+            # block is wrapped in the try/except below.
+            try:
+                total_s = done_at - tracker.started_at
+                async with open_db(settings.db_path) as hist_db:
+                    await LoadHistoryRepo(hist_db).record(
+                        model_id,
+                        _fingerprint,
+                        total_s,
+                        tracker.step_durations(),
+                    )
+            except Exception:  # noqa: BLE001 — history must never fail a load
+                logger.warning("load-history record failed for %s", model_id, exc_info=True)
+            if on_loaded is not None:
+                try:
+                    await on_loaded(tracker)
+                except Exception:  # noqa: BLE001 — a history-record failure must not fail the load
+                    logger.warning("on_loaded hook failed for %s", model_id, exc_info=True)
+        finally:
+            if usual_task is not None and not usual_task.done():
+                usual_task.cancel()
+            if watcher_task is not None and not watcher_task.done():
+                watcher_task.cancel()
+            # Deterministic close of the follower's file handle so it is
+            # released immediately when the watcher task is cancelled, rather
+            # than waiting for GC.  Safe to call twice (the watcher may have
+            # already closed it on a clean exit).
+            follower.close()
+            if load_progress is not None:
+                load_progress.finish(model_id, generation)
 
     await _run_load()
 
@@ -1922,7 +2353,16 @@ async def load_model(model_id: str, request: Request, _user: str = Depends(requi
         port = port_alloc.allocate()
 
         load_task = _spawn_background(
-            request, start_engine(settings, sup, port_alloc, model, port, load_overrides)
+            request,
+            start_engine(
+                settings,
+                sup,
+                port_alloc,
+                model,
+                port,
+                load_overrides,
+                load_progress=request.app.state.load_progress,
+            ),
         )
     except BaseException:
         # #278 slice 1 — nothing was handed to a runner, so the done-callback

@@ -38,10 +38,10 @@
                 <!-- src: demo-stats-poster.webp (POWER "548 W sum across GPUs · host"; POWER DRAW "24h busy median 530 W · peak 559 W") -->
                 <tr><th scope="row">GPU power, four cards summed&nbsp;(W)</th><td class="n" data-h="At capture">548</td><td class="n" data-h="24&#8239;h median">530</td><td class="n" data-h="24&#8239;h peak">559</td></tr>
                 <!-- src: demo-stats-poster.webp (TOKENS / MINUTE "24h busy median 190k · peak 880k"; no live tile, so "not shown") -->
-                <tr><th scope="row">Tokens per minute</th><td class="n" data-h="At capture"><span class="muted">not shown</span></td><td class="n" data-h="24&#8239;h median">190k</td><td class="n" data-h="24&#8239;h peak">880k</td></tr>
+                <tr><th scope="row">Tokens per minute (Sep 23 panel)</th><td class="n" data-h="At capture"><span class="muted">not shown</span></td><td class="n" data-h="24&#8239;h median">190k</td><td class="n" data-h="24&#8239;h peak">880k</td></tr>
               </tbody>
             </table>
-            <p class="plate-note">Your numbers will be different. That is the point of measuring them.</p>
+            <p class="plate-note">Your numbers will be different. That is the point of measuring them. The tokens row predates the switch to tokens per second; the stats panel now plots tokens per second, and these figures are from the 23&nbsp;September capture on the older per-minute panel.</p>
           </div>
         </div>
       </div>
@@ -95,7 +95,7 @@
             <caption>What is read where</caption>
             <tbody>
               <tr><th scope="row">Per card</th><td>Temperature and throttle point, power and its cap, core and memory clocks, fan, PCIe generation and width, ECC, NVLink, and the engine process using the card</td></tr>
-              <tr><th scope="row">Per host</th><td>VRAM in use, GPU utilisation (the busiest card), power (the sum of the cards) and tokens per minute</td></tr>
+              <tr><th scope="row">Per host</th><td>VRAM in use, GPU utilisation (the busiest card), power (the sum of the cards) and tokens per second</td></tr>
               <tr><th scope="row">Per request</th><td>Time to first token, inter-token latency and duration, measured at the proxy the same way for both engines</td></tr>
             </tbody>
           </table>

@@ -7,6 +7,49 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.19.1] — 2026-10-19
+
+### Added
+
+- **Live model load progress.** While a model loads, the model page now shows a
+  step checklist (Start engine, Load weights, Compile kernels, Size KV cache,
+  Tune kernels, Capture CUDA graphs, Warm-up request) with progress bars,
+  elapsed and usual times, CPU and GPU-memory charts, and the last log line.
+  "Tune kernels" tracks vLLM's kernel autotuning, which can take minutes on
+  NVFP4 models.
+  The models list shows a compact card with the status pill, overall bar and
+  current step. Live logs are collapsed by default and open by themselves when
+  a load stalls or fails. No red while a load is in progress — red stays for a
+  real failure.
+- **Load-progress API.** `GET /api/models/{model_id}/load-progress` and
+  `GET /api/models/load-progress` return the live step checklist, vital signs
+  and stall verdict for active loads. See the API docs.
+- **Load history.** The warden now records each successful load's per-step and
+  total durations, keyed by the engine settings that affect load time. "Usual"
+  times shown in the checklist are the median of the last five matching loads.
+- **Stall settings.** `VW_LOAD_STALL_WARN_S` (default 300 s) warns after this
+  long with no progress; `VW_LOAD_STALL_TIMEOUT_S` (default 1200 s) gives up
+  after this long with no progress; `VW_LOAD_MAX_S` (default
+  `max(7200, 3×VW_LOAD_TIMEOUT_S)`) is the absolute cap.
+
+### Changed
+
+- **Stuck loads are stopped and their GPUs released.** A load that makes no
+  progress for the stall-timeout, or exceeds the absolute cap, is now stopped:
+  the engine is killed and the GPUs freed. There is no automatic retry. Before,
+  the warden leaves a stuck engine running and holding its GPUs until someone
+  force-unloads.
+- **`VW_LOAD_TIMEOUT_S` no longer produces a "still loading after Ns" error.**
+  The old wall-clock deadline wrote a progress note into the model's
+  `last_error` (rendered as a red "Last error" box) and then failed the load at
+  3× the deadline without stopping it. Neither happens any more: no progress
+  note is written into `last_error` while a load is loading, and the old
+  timeout settings never shorten a load — only the new stall policy and the
+  absolute cap can end one.
+- **vLLM's `VLLM_ENGINE_READY_TIMEOUT_S` now defaults to the absolute load
+  cap** (`VW_LOAD_MAX_S`) unless the model's `extra_env` sets it, so vLLM's own
+  readiness deadline and the warden's share the same wall clock.
+
 ## [v2026.10.18.2] — 2026-10-18
 
 ### Changed

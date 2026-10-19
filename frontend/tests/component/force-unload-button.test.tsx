@@ -159,9 +159,20 @@ describe("ModelDetailPage — Force unload", () => {
   });
 
   it("says on the page why it is offered, not only in the dialog", async () => {
+    // Task 8 replaced the loading branch of the force-unload hint with the
+    // LoadChecklist; the hint now only renders for the ``unloading`` state.
+    // The loading state still has a Force unload button on the action row
+    // and (when stalled) a Force-unload pill in the checklist.
     await renderWith(fakeModel({ status: "loading" }));
+    // The loading state shows the LoadChecklist, not the old hint.
+    expect(screen.queryByTestId("force-unload-hint")).not.toBeInTheDocument();
+    // The Force unload button is still on the action row.
+    expect(screen.getByTestId("force-unload-button")).not.toBeDisabled();
+    cleanup();
+
+    // The ``unloading`` state still shows the hint (it was not replaced).
+    await renderWith(fakeModel({ status: "unloading" }));
     const hint = screen.getByTestId("force-unload-hint");
-    expect(hint).toHaveTextContent(/stranded/);
     expect(hint).toHaveTextContent(/Force unload/);
     cleanup();
 

@@ -9,6 +9,7 @@ class _Settings:
         self.data_dir = str(tmp_path)
         self.hf_token_path = str(tmp_path / "tok")
         self.hf_cache_dir = str(tmp_path / "hf-cache")
+        self.load_max_s = 7200.0
 
 
 class _M:

@@ -262,6 +262,7 @@ class Supervisor:
                     hf_cache_dir=str(self.settings.hf_cache_dir),
                     engine_driver=driver_name,
                     image=engine_image,
+                    load_max_s=self.settings.load_max_s,
                 )
                 spec = EngineSpec(
                     model_id=model.id,
@@ -333,6 +334,27 @@ class Supervisor:
         """
         h = self._handles.get(model_id)
         return h.pid if h is not None else None
+
+    def get_handle(self, model_id: str) -> object | None:
+        """The driver-owned live engine reference for ``model_id``, or
+        ``None`` if no engine is registered.
+
+        Public accessor so the load-progress vitals sampler can reach the
+        driver's ``stats(handle)`` for the docker driver without breaking
+        the encapsulation of ``_handles``.  Returns the same object
+        :meth:`load` stored; callers MUST NOT mutate it.
+        """
+        return self._handles.get(model_id)
+
+    @property
+    def driver(self) -> Any:
+        """The engine driver (local-subprocess or docker-socket).  Public
+        read so the load-progress vitals sampler can call
+        ``driver.stats(handle)`` on the docker driver without breaking the
+        encapsulation of ``_driver``.  Callers MUST NOT mutate the driver
+        or call ``spawn`` / ``terminate`` through it.
+        """
+        return self._driver
 
     def get_state(self, model_id: str) -> ModelState | None:
         """Current supervisor lifecycle state for ``model_id``.
@@ -536,8 +558,11 @@ async def wait_for_health(
     alive: Callable[[], bool] | None = None,
     hard_timeout_s: float | None = None,
     on_soft_timeout: Callable[[], Awaitable[None]] | None = None,
+    stop: asyncio.Event | None = None,
+    path: str = "/health",
 ) -> bool:
-    """Poll ``/health`` until it answers 200, the engine dies, or time runs out.
+    """Poll the engine's health endpoint until it answers 200, the engine
+    dies, time runs out, or ``stop`` is set.
 
     Without ``alive``/``hard_timeout_s`` this is the original fixed-deadline
     wait: give up at ``timeout_s`` no matter what. Passing both extends the
@@ -554,14 +579,28 @@ async def wait_for_health(
     extends the wait) -- callers use it to make the extended wait visible
     (e.g. write a progress note) since a caller otherwise sees no signal at
     all until this function finally returns.
+
+    ``stop`` (model-load-progress, 2026-10-18): when set, the loop returns
+    ``False`` on its next tick.  The stall watcher sets it after a give-up
+    so the health wait returns promptly instead of running out its own
+    deadline.  ``False`` from a stop is not a health failure — the caller
+    distinguishes the two by checking the verdict before acting on a
+    ``False`` return.
+
+    ``path``: the URL path to poll.  Defaults to ``"/health"`` (the vLLM and
+    llama.cpp default).  Callers that know the backend's health path
+    (``backend.capabilities.health_path``) pass it explicitly so a future
+    backend with a different path does not need a code change here.
     """
     deadline = time.monotonic() + timeout_s
     hard_deadline = deadline
     if alive is not None and hard_timeout_s is not None:
         hard_deadline = time.monotonic() + hard_timeout_s
-    url = f"http://{host}:{port}/health"
+    url = f"http://{host}:{port}{path}"
     soft_timeout_fired = False
     while time.monotonic() < hard_deadline:
+        if stop is not None and stop.is_set():
+            return False
         if alive is not None and not alive():
             return False
         try:

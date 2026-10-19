@@ -139,6 +139,7 @@ class VllmBackend:
         hf_cache_dir: str = "",
         engine_driver: str = "local",
         image: str | None = None,
+        load_max_s: float | None = None,
     ) -> LaunchPlan:
         argv = list(LAUNCH_HEAD) + build_vllm_args(
             model, port=port, overrides=overrides, bind_host=bind_host
@@ -150,6 +151,7 @@ class VllmBackend:
             engine_driver=engine_driver,
             allowed_prefixes=self.capabilities.env_prefixes,
             allowed_exact=self.capabilities.env_exact,
+            load_max_s=load_max_s,
         )
         return LaunchPlan(
             argv=argv,

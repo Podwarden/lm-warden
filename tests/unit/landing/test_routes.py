@@ -816,9 +816,9 @@ def test_requests_figure(client: TestClient) -> None:
     source comment naming the asset and figures numbered 1 to 15 in order."""
     assert "<!-- src: shot-requests-7d.webp" in _sources()
     body = site_html(client)
-    # Figures keep their site-wide numbers, 1 to 15, each once.
+    # Figures keep their site-wide numbers, 1 to 16, each once.
     nums = re.findall(r"<b>Fig\.&nbsp;(\d+)</b>", body)
-    assert sorted(map(int, nums)) == list(range(1, 16))
+    assert sorted(map(int, nums)) == list(range(1, 17))
     img = re.search(
         r'<img src="/_landing/assets/shot-requests-7d\.webp\?v=[0-9a-f]{12}"[^>]*>', body
     )

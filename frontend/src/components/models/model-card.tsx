@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LoadProgressCompact } from "@/components/models/load-progress/load-progress-compact";
+import type { LoadProgressOut } from "@/lib/load-progress";
 
 export type ModelStatus =
   | "registered"
@@ -72,7 +74,16 @@ function formatBytes(n: number): string {
   return `${v.toFixed(1)} ${units[i]}`;
 }
 
-export function ModelCard({ model }: { model: ModelRow }) {
+export function ModelCard({
+  model,
+  loadProgress,
+}: {
+  model: ModelRow;
+  /** Live load-progress snapshot for the compact bar; only meaningful while
+   *  ``status === "loading"``.  The list page passes the matching entry from
+   *  ``useActiveLoadProgress()`` by model id, or ``undefined`` if none. */
+  loadProgress?: LoadProgressOut;
+}) {
   const pct =
     model.status === "pulling" && model.pulled_total && model.pulled_total > 0
       ? Math.min(100, Math.round((model.pulled_bytes / model.pulled_total) * 100))
@@ -142,7 +153,16 @@ export function ModelCard({ model }: { model: ModelRow }) {
             </div>
           </div>
         )}
-        {model.last_error && (
+        {/* Compact load-progress bar while loading (Task 8): status pill,
+            overall bar, current step name — the brief's compact form. */}
+        {model.status === "loading" && (
+          <LoadProgressCompact progress={loadProgress} />
+        )}
+        {/* The red ``Error:`` line only renders for a real failure.  While
+            loading, ``last_error`` is not shown — the colour rule from the
+            owner: no red unless the state is failed.  The compact
+            load-progress bar owns the loading state. */}
+        {model.status === "failed" && model.last_error && (
           <p className="break-words text-xs text-red-400">
             <span className="font-semibold">Error:</span> {model.last_error}
           </p>

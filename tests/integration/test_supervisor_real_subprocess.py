@@ -21,7 +21,7 @@ def _free_port() -> int:
 
 
 class _Settings:
-    pass
+    load_max_s = 7200.0
 
 
 class _M:

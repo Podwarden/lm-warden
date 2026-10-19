@@ -735,6 +735,7 @@ async def _restart(
                 port,
                 overrides,
                 on_spawn=_on_spawn,
+                load_progress=getattr(app_state, "load_progress", None),
             )
         )
         sup.register_load_runner(model_id, load_task)

@@ -24,6 +24,10 @@ import { DpRoutingCard } from "@/components/models/dp-routing-card";
 import { TryStackPanel } from "@/components/models/try-stack-panel";
 import { StressTestModal } from "@/components/stress/stress-test-modal";
 import { useBreadcrumb } from "@/lib/use-breadcrumb";
+import { LoadChecklist } from "@/components/models/load-progress/load-checklist";
+import { LiveLogsCollapsible } from "@/components/models/live-logs-collapsible";
+import type { LiveLogsCollapsibleHandle } from "@/components/models/live-logs-collapsible";
+import { useLoadProgress } from "@/lib/load-progress";
 
 interface ModelDetail {
   id: string;
@@ -179,6 +183,35 @@ export default function ModelDetailPage({
   // optional "free cache" chained DELETE. The runAction path here only
   // handles load/unload.
   const inflight = useRef<"load" | "unload" | null>(null);
+
+  // Load-progress (Task 8): poll the per-model load-progress endpoint only
+  // while the row is ``loading``.  The hook returns ``undefined`` when not
+  // loading (or before the first poll), so the checklist renders nothing
+  // outside a load.  A 404 mid-load (the load finished between polls) is
+  // swallowed by the hook as "no longer active".
+  const loadProgress = useLoadProgress(id, data?.status);
+
+  // Ref + scroll helper for the "View log" action on the stalled pill: it
+  // opens the Live logs card and scrolls it into view.  Opening counts as a
+  // manual open, so it wins until the state changes (matching the auto-open
+  // rule in LiveLogsCollapsible).
+  const liveLogsRef = useRef<LiveLogsCollapsibleHandle>(null);
+  const liveLogsScrollRef = useRef<HTMLDivElement>(null);
+  const scrollToLiveLogs = useRef(() => {
+    liveLogsRef.current?.open();
+    if (liveLogsScrollRef.current) {
+      liveLogsScrollRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }).current;
+
+  // Whether the engine still holds the GPUs after a failure — decided by
+  // whether ``last_error`` ends with "GPUs released" (the spec's rule).
+  // Used to decide what the failed-state hint says.  Only meaningful when
+  // ``status === "failed"``.
+  const gpusReleased =
+    data?.status === "failed" &&
+    typeof data?.last_error === "string" &&
+    data.last_error.endsWith("GPUs released");
 
   async function runAction(action: "load" | "unload") {
     if (inflight.current) return;
@@ -432,36 +465,51 @@ export default function ModelDetailPage({
             </Badge>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-slate-300">
+            {/* Load-progress checklist (Task 8). While loading, the old
+                amber "Still loading" hint is replaced by the step checklist
+                with progress bars and vital signs — the owner's approved
+                design. The hint's ``unloading`` branch below stays (the
+                checklist is only for loads, not teardowns). */}
+            {data.status === "loading" && loadProgress && (
+              <LoadChecklist
+                progress={loadProgress}
+                onForceUnload={() => setForceUnloadOpen(true)}
+                onViewLog={() => scrollToLiveLogs()}
+              />
+            )}
+            {/* Before the first load-progress poll lands, show a quiet
+                neutral placeholder so the status card is not empty between
+                the row flipping to ``loading`` and the first 2 s poll.  No
+                spinner colour change, no red — just a muted "Starting…". */}
+            {data.status === "loading" && !loadProgress && (
+              <p
+                className="text-sm text-slate-500"
+                data-testid="load-starting-placeholder"
+              >
+                Starting…
+              </p>
+            )}
             {/* Why a Force unload is on offer (#244). The page cannot tell a
                 load that is two minutes into reading weights from a row the
                 warden restarted out from under — both read `loading` — so it
                 says what distinguishes them (Live logs) and what the way out
-                is, instead of leaving a red button next to a spinner. */}
-            {needsForceUnload(data.status) && (
+                is, instead of leaving a red button next to a spinner.
+                The ``loading`` branch is gone — the checklist owns that now
+                — so only the ``unloading`` case renders here. */}
+            {needsForceUnload(data.status) && data.status !== "loading" && (
               <div
                 role="status"
                 data-testid="force-unload-hint"
                 className="rounded-md border border-amber-700 bg-amber-900/30 p-3 text-xs text-amber-200"
               >
-                {data.status === "loading" ? (
-                  <>
-                    <span className="font-semibold">Still loading.</span>{" "}
-                    Large models take minutes; watch Live logs below. If the
-                    log has gone quiet, or the warden restarted mid-load, the
-                    engine may no longer exist and this row is stranded —{" "}
-                    <span className="font-semibold">Force unload</span> is
-                    the way out.
-                  </>
-                ) : (
-                  <>
-                    <span className="font-semibold">Still unloading.</span>{" "}
-                    Engine teardown normally finishes within a minute, even
-                    for a large multi-GPU engine. If the row stays here, the
-                    unload did not complete —{" "}
-                    <span className="font-semibold">Force unload</span> kills
-                    what is left and releases the row.
-                  </>
-                )}
+                <>
+                  <span className="font-semibold">Still unloading.</span>{" "}
+                  Engine teardown normally finishes within a minute, even
+                  for a large multi-GPU engine. If the row stays here, the
+                  unload did not complete —{" "}
+                  <span className="font-semibold">Force unload</span> kills
+                  what is left and releases the row.
+                </>
               </div>
             )}
             {/* "GPUs: 1" on a model pinned to GPU index 1 reads as a count.
@@ -613,13 +661,33 @@ export default function ModelDetailPage({
           </Card>
         )}
 
-        {data.last_error && (
+        {/* The red ``last_error`` box only renders for a real failure.
+            While a load is progressing (however slowly), ``last_error`` is
+            not shown — the colour rule from the owner: no red unless the
+            state is failed.  The load-progress checklist owns the loading
+            state.  When failed, the box says whether the GPUs were released
+            or the engine still holds them (Force unload). */}
+        {data.status === "failed" && data.last_error && (
           <div
             role="alert"
+            data-testid="last-error-box"
             className="rounded-md border border-red-700 bg-red-900/30 p-3 text-sm text-red-200"
           >
             <span className="font-semibold">Last error:</span>{" "}
             {data.last_error}
+            {!gpusReleased && (
+              <div className="mt-2 text-xs text-red-300">
+                Engine still holds the GPUs —{" "}
+                <button
+                  type="button"
+                  className="font-semibold underline"
+                  onClick={() => setForceUnloadOpen(true)}
+                  data-testid="failed-force-unload-link"
+                >
+                  Force unload
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -628,38 +696,29 @@ export default function ModelDetailPage({
             <CardTitle>Live logs</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Key on modelId only — issue #52/#53. The earlier
-                `${id}:${data.status}` key (commit 7df62a3,
-                v17.2) forced LogStream to fully remount on
-                every status transition so each flip got a fresh
-                SSE connect + 200-line backfill. Cost: every
-                remount tore down EventSource, minted a new
-                ticket, and re-opened — and the Next.js rewrite
-                proxy surfaces the upstream socket teardown as
-                503 during the `pulled → loading` window, which
-                the SSE hook then drives into reconnect/backoff
-                while the panel sits blank.
+            <div ref={liveLogsScrollRef}>
+              {/* Collapsible Live logs (Task 8): collapsed by default with a
+                  one-line last-log preview and ``Show log``; auto-opens on
+                  stalled/failed; remembers the choice in localStorage under
+                  ``lmw.liveLogs.open`` (try/catch guarded inside the
+                  component).  A manual toggle wins until the state changes.
 
-                devops empirically verified the in-pod tail path
-                is fine (file grows, fd tracks, curling SSE from
-                inside the API container during an active load
-                delivers live vLLM startup lines). The browser-
-                facing symptom is the proxy churn caused by the
-                status-keyed remount, NOT a backend tail bug.
-                De-keying lets LogStream keep a single
-                EventSource open across the lifecycle so the
-                proxy never sees the teardown.
+                  The last-log preview comes from the load-progress vitals
+                  when loading, so the collapsed bar still tells the operator
+                  what the engine last said without opening the full stream.
 
-                The genuine remount case (operator switches to a
-                different model — different id, different key)
-                still triggers a fresh connect; the backend's
-                per-connect 200-line backfill replays anything
-                produced before the new mount.
-
-                We hand the current status down to LogStream so
-                it can skip opening the EventSource for non-log-
-                producing states (`registered`) up front. */}
-            <LogStream key={id} modelId={id} status={data.status} />
+                  ``liveLogsRef`` exposes an imperative ``open()`` so the
+                  stalled pill's "View log" action can open the card and scroll
+                  to it in one click. */}
+              <LiveLogsCollapsible
+                ref={liveLogsRef}
+                modelId={id}
+                status={data.status}
+                loadState={loadProgress?.state ?? null}
+                lastLogLine={loadProgress?.vitals?.last_log_line ?? null}
+                lastLogAgeS={loadProgress?.vitals?.last_log_age_s ?? null}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>

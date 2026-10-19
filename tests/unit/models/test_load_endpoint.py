@@ -479,11 +479,13 @@ def test_load_health_timeout_marks_failed_without_unloading(tmp_data_dir, client
     sup_unload.assert_not_awaited()
 
 
-def test_load_wires_liveness_aware_hard_timeout_into_wait_for_health(tmp_data_dir, client):
-    """#282 — start_engine must pass an ``alive`` probe and an extended
-    ``hard_timeout_s`` to wait_for_health, not just the soft load_timeout_s.
-    Without this wiring a slow-but-live load (e.g. NVFP4/Blackwell FlashInfer
-    autotuning past 600s, #275) is judged by the soft deadline alone again."""
+def test_load_wires_stall_watcher_into_wait_for_health(tmp_data_dir, client):
+    """2026-10-18 — start_engine must pass an ``alive`` probe, a ``stop``
+    event, and the policy's ``max_s`` (the absolute cap) as the timeout to
+    wait_for_health — NOT the old ``hard_timeout_s`` / ``on_soft_timeout``
+    pair.  Without this wiring a slow-but-live load (e.g. NVFP4/Blackwell
+    autotuning past 600s, #275) is judged by the soft deadline alone again,
+    and the stall watcher cannot stop the health wait on a give-up."""
     client.get("/healthz")
     _seed_done_with_pulled_model(
         tmp_data_dir / "vllm-warden.db",
@@ -515,8 +517,18 @@ def test_load_wires_liveness_aware_hard_timeout_into_wait_for_health(tmp_data_di
         _, kwargs = health.call_args
         assert callable(kwargs["alive"])
         assert kwargs["alive"]() is True
-        assert kwargs["hard_timeout_s"] == pytest.approx(3.0 * kwargs["timeout_s"])
-        assert callable(kwargs["on_soft_timeout"])
+        # The new wiring: no hard_timeout_s, no on_soft_timeout.  The
+        # timeout is the policy's max_s (absolute cap), and a stop event
+        # lets the stall watcher end the wait on a give-up.
+        assert "hard_timeout_s" not in kwargs or kwargs["hard_timeout_s"] is None
+        assert "on_soft_timeout" not in kwargs or kwargs["on_soft_timeout"] is None
+        assert kwargs["timeout_s"] == pytest.approx(client.app.state.settings.load_max_s)
+        assert "stop" in kwargs
+        # ``stop`` is an asyncio.Event — the watcher sets it on give-up so
+        # the health wait returns promptly instead of running out max_s.
+        assert hasattr(kwargs["stop"], "is_set")
+        assert "path" in kwargs
+        assert kwargs["path"] == "/health"
 
 
 def test_load_health_timeout_unrecognised_log_appends_bounded_raw_tail(tmp_data_dir, client):
@@ -1397,3 +1409,820 @@ def test_load_releases_the_claim_when_preflight_rejects_the_model(tmp_data_dir, 
     assert (
         "clashbig" not in sup._claims
     ), "a wont_fit 422 must not leave the claim held for a load that never spawned"
+
+
+# ---------------------------------------------------------------------------
+# Model load-progress watcher (2026-10-18): stall-based give-up
+# ---------------------------------------------------------------------------
+
+
+def test_no_progress_note_written_to_last_error(tmp_data_dir, client):
+    """2026-10-18 — a slow fake engine that passes 2× ``load_timeout_s`` must
+    NOT write a "still loading after …" progress note into ``last_error``.
+    The old ``_note_still_loading`` / ``note_progress`` path is gone; the
+    stall watcher replaces it and only writes on give-up."""
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_done_with_pulled_model(db_path, allowed=[0, 1, 2, 3], gpus=[0, 1], model_id="slow-model")
+    _stub_probe(client, [0, 1])
+    auth = _jwt_login(client)
+
+    sup_load = AsyncMock()
+    health = AsyncMock(return_value=True)
+
+    with (
+        patch("app.runtime.supervisor.Supervisor.load", new=sup_load),
+        patch("app.runtime.supervisor.Supervisor.is_running", return_value=True),
+        patch("app.models.routes_api.wait_for_health", new=health),
+    ):
+        r = client.post(
+            "/api/models/slow-model/load",
+            headers={**auth, **csrf_header(client)},
+        )
+        assert r.status_code == 202
+        wait_until(lambda: health.await_count >= 1, what="wait_for_health to be awaited")
+
+    # The load succeeded (health=True).  last_error must be None — no
+    # progress note was written during the (simulated) slow load.
+    with sqlite3.connect(db_path) as db:
+        row = db.execute("SELECT status, last_error FROM models WHERE id='slow-model'").fetchone()
+    assert row[0] in ("loaded", "loading")
+    assert row[1] is None, f"no progress note should be written to last_error; got {row[1]!r}"
+
+
+def test_give_up_marks_failed_and_unloads(tmp_data_dir, client):
+    """2026-10-18 — a give-up verdict from the stall watcher must write
+    ``failed`` with the stall reason and call ``sup.unload(force=True)`` so
+    the engine is stopped and the GPUs are released."""
+    from app.runtime.load_progress.policy import Verdict
+
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_done_with_pulled_model(db_path, allowed=[0, 1, 2, 3], gpus=[0, 1], model_id="stuck-model")
+    _stub_probe(client, [0, 1])
+    auth = _jwt_login(client)
+
+    sup_load = AsyncMock()
+    sup_unload = AsyncMock()
+    health_was_called = {"v": False}
+    give_up_fired = {"v": False}
+
+    async def fake_health(**kwargs):
+        health_was_called["v"] = True
+        # Wait for the watcher's on_give_up to fire before returning —
+        # the give-up handler sets the stop event and writes ``failed``.
+        # This simulates the real flow: the watcher fires on_give_up,
+        # which sets stop, which makes wait_for_health return False.
+
+        deadline = time.monotonic() + 10.0
+        while not give_up_fired["v"] and time.monotonic() < deadline:  # noqa: ASYNC110 - polls a fake's state with a deadline
+            await asyncio.sleep(0.05)
+        return False
+
+    async def fake_watch_load(*, on_give_up, **_kwargs):
+        v = Verdict(
+            state="give_up",
+            stalled_for_s=1200.0,
+            give_up_at_s=7200.0,
+            reason="no progress for 20 min",
+            hint=None,
+        )
+        await on_give_up(v)
+        give_up_fired["v"] = True
+
+    with (
+        patch("app.runtime.supervisor.Supervisor.load", new=sup_load),
+        patch("app.runtime.supervisor.Supervisor.unload", new=sup_unload),
+        patch("app.runtime.supervisor.Supervisor.is_running", return_value=True),
+        patch("app.models.routes_api.wait_for_health", new=fake_health),
+        patch("app.models.routes_api.watch_load", new=fake_watch_load),
+    ):
+        r = client.post(
+            "/api/models/stuck-model/load",
+            headers={**auth, **csrf_header(client)},
+        )
+        assert r.status_code == 202
+        # on_give_up runs as a background task: wait for the unload call while
+        # the patch is still active, or the handler binds the real method.
+        wait_until(lambda: sup_unload.call_count >= 1, what="sup.unload(force=True) to be called")
+
+    def _failed_row():
+        if not health_was_called["v"]:
+            return None
+        with sqlite3.connect(db_path) as db:
+            row = db.execute(
+                "SELECT status, last_error FROM models WHERE id='stuck-model'"
+            ).fetchone()
+        return row if row and row[0] == "failed" else None
+
+    row = wait_until(_failed_row, what="the stuck-model row to reach 'failed' on give-up")
+    assert row[0] == "failed"
+    assert "gave up; engine stopped and GPUs released" in row[1]
+    assert "no progress for 20 min" in row[1]
+    # unload(force=True) was scheduled by on_give_up to kill the engine and
+    # release GPUs.  The unload is scheduled as a separate asyncio task
+    # (``asyncio.create_task``) — the mock's coroutine was CREATED (call_count
+    # increments when the mock is called, before the task runs), proving the
+    # handler reached the unload-scheduling step.  Whether the task actually
+    # runs is proven by ``test_give_up_unload_survives_runner_cancellation``.
+    # The ``with`` block has exited by now, so ``_Sup.unload`` is the real
+    # method again.  But ``sup_unload`` is the same mock object that was
+    # patched onto the class during the ``client.post`` call, and its
+    # ``call_count`` reflects calls made during that window.
+    assert (
+        sup_unload.call_count == 1
+    ), f"expected sup.unload to be called once, got {sup_unload.call_count}"
+    assert sup_unload.call_args.kwargs["force"] is True
+
+
+def test_health_timeout_path_still_leaves_engine_running(tmp_data_dir, client):
+    """2026-10-18 — the existing health-timeout path (engine alive past the
+    cap, no give-up verdict) keeps today's behaviour: ``failed`` with
+    "force-unload to release", the engine is NOT killed.  The stall watcher
+    is the ONLY path that kills the engine."""
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_done_with_pulled_model(db_path, allowed=[0, 1, 2, 3], gpus=[0, 1], model_id="ht-model")
+    _stub_probe(client, [0, 1])
+    auth = _jwt_login(client)
+
+    sup_load = AsyncMock()
+    sup_unload = AsyncMock()
+    health = AsyncMock(return_value=False)
+
+    with (
+        patch("app.runtime.supervisor.Supervisor.load", new=sup_load),
+        patch("app.runtime.supervisor.Supervisor.unload", new=sup_unload),
+        patch("app.runtime.supervisor.Supervisor.is_running", return_value=True),
+        patch("app.models.routes_api.wait_for_health", new=health),
+    ):
+        r = client.post(
+            "/api/models/ht-model/load",
+            headers={**auth, **csrf_header(client)},
+        )
+        assert r.status_code == 202
+
+    def _failed_row():
+        if health.await_count < 1:
+            return None
+        with sqlite3.connect(db_path) as db:
+            row = db.execute("SELECT status, last_error FROM models WHERE id='ht-model'").fetchone()
+        return row if row and row[0] == "failed" else None
+
+    row = wait_until(_failed_row, what="the ht-model row to reach 'failed' on health timeout")
+    assert row[0] == "failed"
+    assert "health timeout" in row[1] or "force-unload" in row[1]
+    # The health-timeout path does NOT unload — the engine is left running.
+    sup_unload.assert_not_awaited()
+
+
+def test_force_unload_mid_load_stops_watcher_without_write(tmp_data_dir, client):
+    """2026-10-18 — a force-unload mid-load bumps the generation; the
+    watcher's ``still_current()`` returns False and the watcher stops
+    WITHOUT writing ``failed`` — the unload route owns the terminal write."""
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_done_with_pulled_model(db_path, allowed=[0, 1, 2, 3], gpus=[0, 1], model_id="force-model")
+    _stub_probe(client, [0, 1])
+    auth = _jwt_login(client)
+
+    sup_load = AsyncMock()
+    sup_unload = AsyncMock()
+
+    gen_bumped = {"v": False}
+
+    def fake_get_generation(self, model_id):
+        return 2 if gen_bumped["v"] else 1
+
+    watch_started = {"v": False}
+    watch_returned = {"v": False}
+    on_give_up_calls = {"n": 0}
+
+    async def fake_watch_load(*, still_current, on_give_up, **_kwargs):
+        watch_started["v"] = True
+        # Wait until the generation is bumped (force-unload happened).
+
+        deadline = time.monotonic() + 10.0
+        while still_current() and time.monotonic() < deadline:  # noqa: ASYNC110 - polls a fake's state with a deadline
+            await asyncio.sleep(0.05)
+        if not still_current():
+            watch_returned["v"] = True
+            return
+        # If still current, don't fire (shouldn't happen in this test).
+        on_give_up_calls["n"] += 1
+
+    async def fake_health(**kwargs):
+        # Block until the watcher returns (which happens when the
+        # generation is bumped).
+
+        deadline = time.monotonic() + 10.0
+        while not watch_returned["v"] and time.monotonic() < deadline:  # noqa: ASYNC110 - polls a fake's state with a deadline
+            await asyncio.sleep(0.05)
+        # The stop event should have been set by on_give_up — but in
+        # this test on_give_up is NOT called, so we return False because
+        # the generation changed (the runner's generation check below
+        # catches it).
+        return False
+
+    with (
+        patch("app.runtime.supervisor.Supervisor.load", new=sup_load),
+        patch("app.runtime.supervisor.Supervisor.unload", new=sup_unload),
+        patch("app.runtime.supervisor.Supervisor.is_running", return_value=True),
+        patch("app.runtime.supervisor.Supervisor.get_generation", new=fake_get_generation),
+        patch("app.models.routes_api.wait_for_health", new=fake_health),
+        patch("app.models.routes_api.watch_load", new=fake_watch_load),
+    ):
+        r = client.post(
+            "/api/models/force-model/load",
+            headers={**auth, **csrf_header(client)},
+        )
+        assert r.status_code == 202
+        wait_until(lambda: watch_started["v"], what="the watcher to start")
+        # Simulate a force-unload bumping the generation.
+        gen_bumped["v"] = True
+
+    wait_until(lambda: watch_returned["v"], what="the watcher to return without firing on_give_up")
+    assert on_give_up_calls["n"] == 0, "a superseded load must not fire on_give_up"
+    # The row must NOT be 'failed' — the watcher did not write anything.
+    with sqlite3.connect(db_path) as db:
+        row = db.execute("SELECT status FROM models WHERE id='force-model'").fetchone()
+    assert row[0] != "failed", "a superseded load must not write 'failed'"
+
+
+def test_newer_generation_stops_watcher_without_write(tmp_data_dir, client):
+    """A newer load supersedes this one while its watcher is still running.
+
+    A second load bumps the generation (the way a second spawn does) and writes
+    its own row. The first load's watcher must stop without giving up, and a
+    stale give-up that still reaches the handler must not write anything. Both
+    guards are needed: the watcher's ``still_current`` check, and the handler's
+    own generation check.
+
+    Driven through the real route, real watcher and real stall policy, with only
+    the health wait, the verdict, and the engine spawn faked.
+    """
+    import threading
+
+    from app.runtime.load_progress import watcher as watcher_mod
+    from app.runtime.load_progress.policy import Verdict
+    from app.runtime.supervisor import Supervisor
+
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_done_with_pulled_model(db_path, allowed=[0, 1, 2, 3], gpus=[0, 1], model_id="gen-model")
+    _stub_probe(client, [0, 1])
+    auth = _jwt_login(client)
+    sup = client.app.state.supervisor
+
+    health_started = threading.Event()
+    health_release = threading.Event()
+    give_up_enabled = {"v": False}
+    watcher_returned = threading.Event()
+    stale_done = threading.Event()
+    give_up_calls: list[Verdict] = []
+    real_watch = watcher_mod.watch_load
+    real_evaluate = watcher_mod.evaluate
+
+    def fake_evaluate(tracker, now, policy):
+        verdict = real_evaluate(tracker, now, policy)
+        if give_up_enabled["v"]:
+            return Verdict(
+                state="give_up",
+                stalled_for_s=1200.0,
+                give_up_at_s=1200.0,
+                reason="no progress for 20 min",
+                hint=None,
+            )
+        return verdict
+
+    async def fake_load(self, model, *, port, on_exit=None, overrides=None):
+        self._generation[model.id] = self._generation.get(model.id, 0) + 1
+
+    async def fake_health(**kwargs):
+        # The first engine never answers; hold the runner until the test has
+        # superseded it and the watcher has observed that.
+        health_started.set()
+        await asyncio.to_thread(health_release.wait, 30.0)
+        return False
+
+    async def spying_watch(**kwargs):
+        real_on_give_up = kwargs["on_give_up"]
+
+        async def counting_on_give_up(verdict):
+            give_up_calls.append(verdict)
+            await real_on_give_up(verdict)
+
+        kwargs["on_give_up"] = counting_on_give_up
+        try:
+            await real_watch(**kwargs)  # must return on supersede, with no give-up
+        finally:
+            watcher_returned.set()
+        # A stale give-up verdict still reaching the handler after supersede.
+        await real_on_give_up(
+            Verdict(
+                state="give_up",
+                stalled_for_s=1200.0,
+                give_up_at_s=1200.0,
+                reason="stale give-up from a superseded load",
+                hint=None,
+            )
+        )
+        stale_done.set()
+
+    with (
+        patch.object(Supervisor, "load", new=fake_load),
+        patch.object(Supervisor, "register_load_runner", new=lambda *a, **k: None),
+        patch("app.models.routes_api.wait_for_health", new=fake_health),
+        patch("app.models.routes_api.watch_load", new=spying_watch),
+        patch.object(watcher_mod, "evaluate", new=fake_evaluate),
+    ):
+        r = client.post("/api/models/gen-model/load", headers={**auth, **csrf_header(client)})
+        assert r.status_code == 202, r.text
+        assert health_started.wait(30.0), "the first load never reached its health wait"
+
+        # The second load: bump the generation and write its own row, as a
+        # second spawn does, then let the first watcher see it and stale-fire.
+        sup._generation["gen-model"] = sup._generation.get("gen-model", 0) + 1
+        with sqlite3.connect(db_path) as db:
+            db.execute("UPDATE models SET status='loaded', last_error=NULL WHERE id='gen-model'")
+            db.commit()
+        give_up_enabled["v"] = True
+        assert watcher_returned.wait(30.0), "the superseded watcher did not stop"
+        assert stale_done.wait(30.0)
+        health_release.set()
+
+    # The superseded watcher gave up on nothing and wrote nothing.
+    assert give_up_calls == [], "a superseded watcher must not fire on_give_up"
+    with sqlite3.connect(db_path) as db:
+        row = db.execute("SELECT status, last_error FROM models WHERE id='gen-model'").fetchone()
+    assert row == ("loaded", None), f"the newer load's row must stand alone, got {row!r}"
+
+
+@pytest.mark.asyncio
+async def test_unload_cancels_registered_runner_and_still_terminates(tmp_data_dir, client):
+    """2026-10-18 HAZARD — ``sup.unload(force=True)`` cancels the registered
+    load runner task.  The give-up handler runs as part of that same runner.
+    If it awaited ``unload`` directly, the cancellation would abort the
+    teardown at its next await.  The handler must schedule ``unload`` as a
+    SEPARATE task so the runner's own cancellation cannot abort it.
+
+    This test proves the engine is terminated and GPUs released even though
+    ``unload`` cancels the runner, and that the row stays ``failed``
+    (``Supervisor.unload`` does not write the DB; ``on_exit`` only
+    overwrites ``loaded``/``loading`` rows).
+    """
+    from app.runtime.supervisor import ModelState, Supervisor
+
+    client.get("/healthz")  # ensure migrations ran
+    db_path = tmp_data_dir / "vllm-warden.db"
+    # Seed a model so the DB has the schema and a row to check.
+    _seed_done_with_pulled_model(db_path, allowed=[0, 1, 2, 3], gpus=[0, 1], model_id="haz")
+
+    # A real Supervisor with a fake driver that records terminate calls.
+    terminated = {"v": False}
+
+    class _FakeHandle:
+        pid = 99999
+        returncode = None
+
+        async def wait(self):
+            await asyncio.sleep(100)
+
+    class _FakeDriver:
+        supports_engine_image = True
+        default_image = None
+
+        async def spawn(self, spec):
+            return _FakeHandle()
+
+        def engine_host(self, model_id):
+            return "127.0.0.1"
+
+        async def terminate(self, handle, *, grace_s):
+            terminated["v"] = True
+
+    from app.config import Settings
+
+    settings = Settings(
+        data_dir=tmp_data_dir,
+        hf_cache_dir=tmp_data_dir,
+        cookie_secret="x" * 32,
+        container_gpu_count=2,
+    )
+    sup = Supervisor(settings, driver=_FakeDriver())
+    # Manually register an engine so unload has something to terminate.
+    sup._handles["haz"] = _FakeHandle()
+    sup._ports["haz"] = 10000
+    sup._hosts["haz"] = "127.0.0.1"
+    sup._state["haz"] = ModelState.LOADING
+    sup._generation["haz"] = 1
+    sup.gpus.claim("haz", [0, 1])
+
+    # Register a fake "load runner" task that ``unload`` will cancel.
+    async def fake_runner():
+        await asyncio.sleep(100)
+
+    runner_task = asyncio.create_task(fake_runner())
+    sup.register_load_runner("haz", runner_task)
+
+    # Write ``failed`` first (as on_give_up would).
+    with sqlite3.connect(db_path) as db:
+        db.execute(
+            "UPDATE models SET status='failed', "
+            "last_error='no progress — gave up; engine stopped and GPUs released' "
+            "WHERE id='haz'"
+        )
+        db.commit()
+
+    # Schedule the unload as a separate task (as on_give_up does).
+    unload_task = asyncio.create_task(sup.unload("haz", force=True))
+
+    # Give the unload a moment to run — it cancels the runner inside.
+    await asyncio.sleep(0.05)
+
+    # The unload task must complete despite cancelling the runner.
+    await asyncio.wait_for(unload_task, timeout=5.0)
+
+    assert terminated["v"], "the engine must be terminated by the unload task"
+    assert "haz" not in sup._handles, "the handle must be removed"
+    # The runner was cancelled by unload (as the real load runner would be).
+    assert (
+        runner_task.cancelled()
+    ), "unload must cancel the registered load runner — that is the hazard"
+
+    # The row stays ``failed`` — Supervisor.unload does NOT write the DB.
+    with sqlite3.connect(db_path) as db:
+        row = db.execute("SELECT status, last_error FROM models WHERE id='haz'").fetchone()
+    assert row[0] == "failed", f"the row must stay 'failed' after unload; got {row[0]!r}"
+    assert "gave up" in row[1]
+
+
+def test_give_up_unload_survives_runner_cancellation(tmp_data_dir, client):
+    """2026-10-18 HAZARD, end to end through the real give-up path.
+
+    The watcher's give-up handler schedules ``sup.unload(force=True)`` as a
+    separate task. That unload cancels the registered load runner (the task
+    running start_engine). The engine must still be terminated, its handle
+    dropped (GPUs released), and the row must stay ``failed``.
+    The supervisor is real; only the driver and the watcher/health seams are fakes.
+    """
+    from app.runtime.load_progress.policy import Verdict
+    from app.runtime.supervisor import ModelState
+
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_done_with_pulled_model(db_path, allowed=[0, 1, 2, 3], gpus=[0, 1], model_id="haz")
+    _stub_probe(client, [0, 1])
+    auth = _jwt_login(client)
+    sup = client.app.state.supervisor
+
+    terminated: list[object] = []
+
+    class _Handle:
+        pid = 99999
+        returncode = None
+
+        async def wait(self):
+            await asyncio.sleep(3600)
+
+    class _Driver:
+        supports_engine_image = True
+        default_image = None
+
+        async def spawn(self, spec):  # pragma: no cover - load is faked
+            return _Handle()
+
+        def engine_host(self, model_id):
+            return "127.0.0.1"
+
+        async def terminate(self, handle, *, grace_s):
+            terminated.append(handle)
+
+    real_driver = sup._driver
+    sup._driver = _Driver()
+
+    async def fake_load(self, model, *, port, on_exit=None, overrides=None):
+        # What a successful spawn leaves behind, without starting an engine.
+        self._handles[model.id] = _Handle()
+        self._ports[model.id] = port
+        self._hosts[model.id] = "127.0.0.1"
+        self._state[model.id] = ModelState.LOADING
+        self._generation[model.id] = self._generation.get(model.id, 0) + 1
+        self.gpus.claim(model.id, model.gpu_indices)
+
+    async def fake_health(**kwargs):
+        # The engine never comes up; the watcher's give-up sets ``stop``.
+        stop = kwargs["stop"]
+        await asyncio.wait_for(stop.wait(), timeout=10.0)
+        return False
+
+    async def fake_watch_load(*, on_give_up, **_kwargs):
+        await on_give_up(
+            Verdict(
+                state="give_up",
+                stalled_for_s=1200.0,
+                give_up_at_s=1200.0,
+                reason="no progress for 20 min",
+                hint=None,
+            )
+        )
+
+    try:
+        with (
+            patch("app.runtime.supervisor.Supervisor.load", new=fake_load),
+            patch("app.models.routes_api.wait_for_health", new=fake_health),
+            patch("app.models.routes_api.watch_load", new=fake_watch_load),
+        ):
+            r = client.post("/api/models/haz/load", headers={**auth, **csrf_header(client)})
+            assert r.status_code == 202, r.text
+            wait_until(lambda: len(terminated) >= 1, what="the engine to be terminated")
+    finally:
+        sup._driver = real_driver
+
+    assert "haz" not in sup._handles, "the handle must be dropped (GPUs released)"
+    with sqlite3.connect(db_path) as db:
+        row = db.execute("SELECT status, last_error FROM models WHERE id='haz'").fetchone()
+    assert row[0] == "failed", f"row must stay failed, got {row[0]!r}"
+    assert "gave up; engine stopped and GPUs released" in row[1]
+
+
+class _FakeEngineHandle:
+    pid = None
+    returncode = None
+
+    async def wait(self):
+        await asyncio.sleep(3600)
+
+
+def _fake_engine_load():
+    """A spawn that leaves the supervisor in the state a live engine would."""
+
+    async def fake_load(self, model, *, port, on_exit=None, overrides=None):
+        from app.runtime.supervisor import ModelState
+
+        self._handles[model.id] = _FakeEngineHandle()
+        self._ports[model.id] = port
+        self._hosts[model.id] = "127.0.0.1"
+        self._state[model.id] = ModelState.LOADING
+        self._generation[model.id] = self._generation.get(model.id, 0) + 1
+        self.gpus.claim(model.id, model.gpu_indices)
+
+    return fake_load
+
+
+def test_watcher_runs_during_warmup(tmp_data_dir, client):
+    """The stall watcher keeps running while the warm-up probe is in flight, and
+    the tracker shows the WARMUP step running at that point."""
+    import threading
+
+    from app.runtime.load_progress import watcher as watcher_mod
+    from app.runtime.load_progress.parse import Step
+    from app.runtime.supervisor import Supervisor
+    from app.runtime.warmup_probe import ProbeResult
+
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_done_with_pulled_model(db_path, allowed=[0, 1], gpus=[0], model_id="warm-model")
+    _stub_probe(client, [0])
+    auth = _jwt_login(client)
+
+    probe_started = threading.Event()
+    probe_release = threading.Event()
+    recorder = {"started": 0, "finished": 0}
+    real_watch = watcher_mod.watch_load
+
+    async def probe(**_kw):
+        probe_started.set()
+        await asyncio.to_thread(probe_release.wait, 30.0)
+        return ProbeResult(ok=True, detail=None)
+
+    async def recording_watch(**kwargs):
+        recorder["started"] += 1
+        try:
+            await real_watch(**kwargs)
+        finally:
+            recorder["finished"] += 1
+
+    with (
+        patch.object(Supervisor, "load", new=_fake_engine_load()),
+        patch("app.models.routes_api.wait_for_health", new=AsyncMock(return_value=True)),
+        patch("app.models.routes_api.warmup_probe", new=probe),
+        patch("app.models.routes_api.watch_load", new=recording_watch),
+    ):
+        r = client.post("/api/models/warm-model/load", headers={**auth, **csrf_header(client)})
+        assert r.status_code == 202, r.text
+        assert probe_started.wait(30.0), "the warm-up probe never started"
+        tracker = client.app.state.load_progress.get("warm-model")
+        assert tracker is not None, "the load must be tracked while warming up"
+        assert tracker.step_start_at(Step.WARMUP) is not None, "WARMUP must be running"
+        assert tracker.step_end_at(Step.WARMUP) is None, "WARMUP must not be done yet"
+        assert (
+            recorder["started"] == 1 and recorder["finished"] == 0
+        ), "the watcher must still be running during warm-up"
+        probe_release.set()
+        _wait_for_status(db_path, "warm-model", ("loaded",))
+        wait_until(lambda: recorder["finished"] == 1, what="the watcher to finish after warm-up")
+    assert client.app.state.load_progress.get("warm-model") is None
+
+
+def test_give_up_during_warmup_unloads(tmp_data_dir, client):
+    """A stall give-up during warm-up takes the same path as one during health
+    wait: failed with the give-up text, the stop event, then a separately
+    scheduled force-unload that cancels the runner and terminates the engine."""
+    from app.runtime.load_progress.parse import Step
+    from app.runtime.load_progress.policy import Verdict
+    from app.runtime.supervisor import Supervisor
+
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_done_with_pulled_model(db_path, allowed=[0, 1], gpus=[0], model_id="warm-stuck")
+    _stub_probe(client, [0])
+    auth = _jwt_login(client)
+    sup = client.app.state.supervisor
+
+    terminated: list[object] = []
+
+    class _Driver:
+        supports_engine_image = True
+        default_image = None
+
+        def engine_host(self, model_id):
+            return "127.0.0.1"
+
+        async def terminate(self, handle, *, grace_s):
+            terminated.append(handle)
+
+    real_driver = sup._driver
+    sup._driver = _Driver()
+
+    async def stuck_probe(**_kw):
+        await asyncio.sleep(3600)  # warm-up never answers; the unload cancels it
+
+    async def fake_watch(*, tracker, on_give_up, **_kw):
+        while tracker.step_start_at(Step.WARMUP) is None:  # noqa: ASYNC110 - polls the tracker
+            await asyncio.sleep(0.05)
+        await on_give_up(
+            Verdict(
+                state="give_up",
+                stalled_for_s=1200.0,
+                give_up_at_s=1200.0,
+                reason="no progress for 20 min",
+                hint=None,
+            )
+        )
+
+    try:
+        with (
+            patch.object(Supervisor, "load", new=_fake_engine_load()),
+            patch("app.models.routes_api.wait_for_health", new=AsyncMock(return_value=True)),
+            patch("app.models.routes_api.warmup_probe", new=stuck_probe),
+            patch("app.models.routes_api.watch_load", new=fake_watch),
+        ):
+            r = client.post("/api/models/warm-stuck/load", headers={**auth, **csrf_header(client)})
+            assert r.status_code == 202, r.text
+            wait_until(lambda: len(terminated) >= 1, what="the warm-up engine to be terminated")
+    finally:
+        sup._driver = real_driver
+
+    assert "warm-stuck" not in sup._handles, "the handle must be dropped (GPUs released)"
+    with sqlite3.connect(db_path) as db:
+        row = db.execute("SELECT status, last_error FROM models WHERE id='warm-stuck'").fetchone()
+    assert row[0] == "failed", f"row must be failed, got {row[0]!r}"
+    assert "gave up; engine stopped and GPUs released" in row[1]
+
+
+def test_wait_for_health_raising_leaves_no_watcher_or_registry_entry(tmp_data_dir, client):
+    """If the health wait raises unexpectedly, the watcher task is still
+    cancelled and the registry entry is removed (try/finally in the runner)."""
+    from app.runtime.load_progress import watcher as watcher_mod
+    from app.runtime.supervisor import Supervisor
+
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_done_with_pulled_model(db_path, allowed=[0, 1], gpus=[0], model_id="raise-model")
+    _stub_probe(client, [0])
+    auth = _jwt_login(client)
+
+    watch_tasks: list[asyncio.Task] = []
+    real_watch = watcher_mod.watch_load
+
+    async def recording_watch(**kwargs):
+        watch_tasks.append(asyncio.current_task())
+        await real_watch(**kwargs)
+
+    async def boom(**_kw):
+        await asyncio.sleep(0)  # let the watcher task start before the health wait raises
+        raise RuntimeError("health wait exploded")
+
+    with (
+        patch.object(Supervisor, "load", new=_fake_engine_load()),
+        patch("app.models.routes_api.wait_for_health", new=boom),
+        patch("app.models.routes_api.watch_load", new=recording_watch),
+    ):
+        r = client.post("/api/models/raise-model/load", headers={**auth, **csrf_header(client)})
+        assert r.status_code == 202, r.text
+        wait_until(
+            lambda: client.app.state.load_progress.get("raise-model") is None
+            and len(watch_tasks) == 1,
+            what="the registry entry to be removed after the runner raised",
+        )
+    wait_until(lambda: watch_tasks[0].done(), what="the watcher task to be cancelled")
+
+
+def _usual_history(db_path, model_id, seconds):
+    """Record one prior successful load for ``model_id`` under its real fingerprint."""
+    import asyncio as _aio
+
+    from app.db.database import open_db
+    from app.db.repos.load_history import LoadHistoryRepo, load_fingerprint
+    from app.db.repos.models import ModelRepo
+    from app.runtime.load_progress.parse import Step
+    from app.runtime.variants import baked_engine_version
+
+    async def _go():
+        async with open_db(db_path) as db:
+            row = await ModelRepo(db).get(model_id)
+            fp = load_fingerprint(row, None, baked_engine_version=baked_engine_version("vllm"))
+            await LoadHistoryRepo(db).record(model_id, fp, seconds, {Step.WEIGHTS: 10.0})
+
+    _aio.run(_go())
+
+
+def _blocked_warmup_probe():
+    """A warm-up probe that blocks until released; returns (started, release, probe)."""
+    import threading
+
+    from app.runtime.warmup_probe import ProbeResult
+
+    probe_started = threading.Event()
+    probe_release = threading.Event()
+
+    async def probe(**_kw):
+        probe_started.set()
+        await asyncio.to_thread(probe_release.wait, 30.0)
+        return ProbeResult(ok=True, detail=None)
+
+    return probe_started, probe_release, probe
+
+
+def test_load_with_history_fills_in_usual_times(tmp_data_dir, client):
+    """A load whose model has history gets usual values on its tracker."""
+    from app.runtime.supervisor import Supervisor
+
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_done_with_pulled_model(db_path, allowed=[0, 1], gpus=[0], model_id="usual-model")
+    _usual_history(db_path, "usual-model", 60.0)
+    _stub_probe(client, [0])
+    auth = _jwt_login(client)
+    started, release, probe = _blocked_warmup_probe()
+    with (
+        patch.object(Supervisor, "load", new=_fake_engine_load()),
+        patch("app.models.routes_api.wait_for_health", new=AsyncMock(return_value=True)),
+        patch("app.models.routes_api.warmup_probe", new=probe),
+    ):
+        r = client.post("/api/models/usual-model/load", headers={**auth, **csrf_header(client)})
+        assert r.status_code == 202, r.text
+        assert started.wait(30.0), "the warm-up probe never started"
+        tracker = client.app.state.load_progress.get("usual-model")
+        assert tracker is not None
+        wait_until(lambda: tracker.usual_total_s is not None, what="usual times to fill in")
+        assert tracker.usual_total_s == pytest.approx(60.0)
+        release.set()
+        _wait_for_status(db_path, "usual-model", ("loaded",))
+
+
+def test_failing_usual_read_leaves_usual_empty_and_load_succeeds(tmp_data_dir, client):
+    """A failing history read leaves usual as None and the load still reaches loaded."""
+    import sqlite3
+
+    from app.runtime.supervisor import Supervisor
+
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_done_with_pulled_model(db_path, allowed=[0, 1], gpus=[0], model_id="locked-model")
+    _stub_probe(client, [0])
+    auth = _jwt_login(client)
+    calls: list[tuple] = []
+
+    def _locked(*args, **_kw):
+        calls.append(args)
+        raise sqlite3.OperationalError("database is locked")
+
+    started, release, probe = _blocked_warmup_probe()
+    with (
+        patch.object(Supervisor, "load", new=_fake_engine_load()),
+        patch("app.models.routes_api.wait_for_health", new=AsyncMock(return_value=True)),
+        patch("app.models.routes_api.warmup_probe", new=probe),
+        patch("app.models.routes_api._read_usual_sync", new=_locked),
+    ):
+        r = client.post("/api/models/locked-model/load", headers={**auth, **csrf_header(client)})
+        assert r.status_code == 202, r.text
+        assert started.wait(30.0), "the warm-up probe never started"
+        tracker = client.app.state.load_progress.get("locked-model")
+        assert tracker is not None
+        wait_until(lambda: calls, what="the usual read to be attempted")
+        assert tracker.usual_total_s is None
+        assert tracker.usual == {}
+        release.set()
+        _wait_for_status(db_path, "locked-model", ("loaded",))

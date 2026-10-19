@@ -25,6 +25,7 @@ def test_argv_matches_golden(case):
         hf_token=case.hf_token,
         hf_cache_dir=case.hf_cache_dir,
         engine_driver=case.driver,
+        load_max_s=7200.0,
     )
     assert plan.argv[2:] == GOLDEN[case.name]["argv"]
 
@@ -39,6 +40,7 @@ def test_env_matches_golden(case):
         hf_token=case.hf_token,
         hf_cache_dir=case.hf_cache_dir,
         engine_driver=case.driver,
+        load_max_s=7200.0,
     )
     assert plan.env == GOLDEN[case.name]["env"]
 

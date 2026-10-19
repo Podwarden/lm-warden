@@ -18,6 +18,7 @@ import os
 import threading
 import time
 from pathlib import Path
+from typing import Any
 
 from app.runtime.engine.run_marker import format_run_sentinel
 
@@ -250,6 +251,30 @@ class DockerSocketDriver:
         # never spawned (a warden restart with a container still up), which is
         # the pre-C behaviour and correct for every vLLM row.
         return self._names.get(model_id) or _engine_name(model_id)
+
+    async def stats(self, handle: DockerHandle) -> dict[str, Any] | None:
+        """One-shot container stats for the load-progress vitals sampler.
+
+        ``container.stats(stream=False)`` is a blocking docker-daemon round-trip
+        (one HTTP chunk), so it runs in a thread via ``asyncio.to_thread``.
+        Returns the raw stats dict on success, or ``None`` on any error (the
+        container is gone, the daemon is unreachable, the SDK raised) — the
+        vitals sampler treats ``None`` as "cpu and read_bytes unavailable" and
+        does not propagate the failure.
+
+        The dict's ``cpu_stats.cpu_usage.total_usage`` is cumulative
+        nanoseconds; ``blkio_stats.io_service_bytes_recursive`` is a list of
+        ``{op, value}`` rows. The sampler converts ns→s and sums the Read rows.
+        """
+
+        def _stats() -> dict[str, Any] | None:
+            try:
+                result: object = handle._c.stats(stream=False)
+            except Exception:
+                return None
+            return result if isinstance(result, dict) else None
+
+        return await asyncio.to_thread(_stats)
 
     async def spawn(self, spec) -> DockerHandle:
         name = _engine_name(spec.model_id, getattr(spec, "backend", None))

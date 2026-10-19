@@ -142,6 +142,17 @@ REWRITTEN = {
     # Engine-bump: the features page's source-of-truth sentence was rewritten
     # (the old one named the shipped version explicitly; the new one does not).
     'Checked against vLLM&nbsp;0.20.0, before the engine moved to 0.26.0, the version this release ships and the replica measurements above used. The rules have held across those upgrades; the exact numbers are worth rechecking on your engine. The full table and the reasons behind it are in <a href="https://github.com/Podwarden/lm-warden/blob/main/documents/HAZARDS.md#what-fits-on-what" rel="noopener">HAZARDS.md</a>. Not on NVIDIA? <a href="#roadmap">Other GPUs are on the roadmap</a>.': "engine-bump: features.html source sentence rewritten to drop the version pin",
+    # Tokens-per-second rename: the chart now plots tokens per second; the
+    # Sep 23 capture row is labelled as the old per-minute panel.
+    "Tokens per minute": "tokens-per-second rename, audit item E",
+    "VRAM in use, GPU utilisation (the busiest card), power (the sum of the cards) and tokens per minute": "tokens-per-second rename, audit item E",
+    # Spill-threshold fix: the landing said 8 was a constant; the default is a
+    # quarter of max_num_seqs, 8 is the auto value on the four-card box.
+    "An agent resends its whole history every turn, so a long conversation is mostly a prefix the engine has already read. vLLM keeps that work in its prefix cache (the attention state of prompts it has seen) and skips it the next time the same prefix arrives, but only on the replica that did the work: each full copy of the model has its own cache. vLLM’s own balancer sends each turn to whichever replica has the shortest queue, which usually has never seen the conversation, so it reads the whole history again. LM Warden places each new conversation on the least-loaded replica (requests in flight, how full its cache is, and how many live conversations it holds) and keeps it there, using the session id Claude Code already sends. It moves a request only when that replica has 8 requests in flight (the spill threshold).": "spill-threshold fix, audit item G",
+    # Third lesson note added: the heading now says "Three things".
+    "Two things we learned the hard way.": "third lesson note added, audit item C",
+    # Engine versions added to the FAQ answer for consistency with the lede.
+    "Mainline vLLM and llama.cpp, chosen per model and run unmodified: no patched image, no fork, no monkeypatching. Picking a <code>.gguf</code> file selects llama.cpp, which fits larger models onto smaller cards with GGUF quantisation and keeps older GPUs useful. TensorRT-LLM, SGLang, MLX and Ollama’s runtime are not shipped.": "engine versions added to FAQ, audit item 5",
 }
 
 

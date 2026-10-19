@@ -9,7 +9,7 @@ from app.runtime.supervisor import Supervisor
 
 
 class _Settings:
-    pass
+    load_max_s = 7200.0
 
 
 @pytest.mark.asyncio

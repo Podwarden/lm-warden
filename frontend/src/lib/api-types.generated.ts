@@ -233,6 +233,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/models/load-progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Load Progress
+         * @description All active model loads, for the dashboard cards.
+         *
+         *     Returns one :class:`LoadProgressOut` per model with a live load in flight.
+         *     Empty list when nothing is loading.  The layout's TP size is derived per
+         *     model from its row; a deleted-mid-load model degrades to ``layout=None``.
+         */
+        get: operations["list_load_progress_api_models_load_progress_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/models/{model_id}/load-progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Load Progress
+         * @description One model's load progress, for the model detail page's loading screen.
+         *
+         *     404 when no active load exists for ``model_id`` (the load has finished, was
+         *     never started, or was superseded).  The snapshot is built by
+         *     :func:`build_snapshot` and is total — it never raises mid-load.
+         */
+        get: operations["get_load_progress_api_models__model_id__load_progress_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/models/{model_id}": {
         parameters: {
             query?: never;
@@ -3405,6 +3453,48 @@ export interface components {
             /** Message */
             message: string;
         };
+        /**
+         * LoadProgressOut
+         * @description The load-progress snapshot for one active model load.
+         *
+         *     ``state`` is ``progressing`` when no verdict has evaluated yet (verdict is
+         *     ``None``) or the policy says progressing; ``stalled`` / ``give_up`` come
+         *     from the verdict.  ``give_up_at`` is the wall-clock datetime the load will
+         *     be given up at if nothing moves.  ``ready_eta`` is only set when
+         *     ``usual_total_s`` is known (Task 7's history); otherwise ``None``.
+         */
+        LoadProgressOut: {
+            /** Model Id */
+            model_id: string;
+            /** Backend */
+            backend: string;
+            /** Layout */
+            layout?: string | null;
+            /** Elapsed S */
+            elapsed_s: number;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "progressing" | "stalled" | "give_up";
+            /** Stalled For S */
+            stalled_for_s: number;
+            /** Give Up At */
+            give_up_at?: string | null;
+            /** Reason */
+            reason?: string | null;
+            /** Hint */
+            hint?: string | null;
+            /** Usual Total S */
+            usual_total_s?: number | null;
+            /** Ready Eta */
+            ready_eta?: string | null;
+            /** Current Step */
+            current_step: string;
+            /** Steps */
+            steps: components["schemas"]["StepOut"][];
+            vitals: components["schemas"]["VitalsOut"];
+        };
         /** LoginBody */
         LoginBody: {
             /** Username */
@@ -3882,6 +3972,46 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /**
+         * StepOut
+         * @description One step in the load-progress checklist.
+         *
+         *     ``status`` is ``done`` when the tracker says the step ended; ``running``
+         *     for the first not-done step that has started (or the first not-done step
+         *     if none started) while the load is progressing; ``stalled`` for that same
+         *     step when the verdict is not progressing; ``pending`` for the rest;
+         *     ``skipped`` for a step the engine never reports (e.g. TUNE on a model
+         *     with no AutoTuner) once a later step has started.
+         *     ``duration_s`` is set when the step has ended; ``elapsed_s`` when it is
+         *     running.  ``count`` / ``total`` come from the step's counter progress
+         *     (WEIGHTS shards, GRAPHS, TUNE AutoTuner).  ``usual_s`` is the historical
+         *     per-step duration from Task 7's history, or ``None`` when no history
+         *     exists yet.  ``detail`` carries step-specific extra text (e.g.
+         *     "trtllm_fp4_block_scale_moe · op 2" for TUNE).
+         */
+        StepOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "done" | "running" | "pending" | "stalled" | "skipped";
+            /** Duration S */
+            duration_s?: number | null;
+            /** Elapsed S */
+            elapsed_s?: number | null;
+            /** Count */
+            count?: number | null;
+            /** Total */
+            total?: number | null;
+            /** Usual S */
+            usual_s?: number | null;
+            /** Detail */
+            detail?: string | null;
+        };
         /** StressAccepted */
         StressAccepted: {
             /** Run Id */
@@ -4223,6 +4353,55 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /**
+         * VitalsOut
+         * @description Vital signs for a load, as a time series of up to 120 points.
+         *
+         *     ``series`` is one point per vitals sample (downsampled to ≤ 120 evenly
+         *     spaced points plus the newest).  Each point has ``t_s`` (seconds since
+         *     load start), ``cpu_cores`` (cores busy between consecutive samples,
+         *     ``ΔCPU-s / Δt``; ``None`` for the first point or when a sample is
+         *     missing), and ``gpu_mem_mib`` (GPU memory used, in MiB; ``None`` when the
+         *     probe failed).  ``gpu_mem_total_mib`` is the summed capacity of the
+         *     model's GPUs, or ``None`` when not known (e.g. the docker driver).
+         *     ``log_quiet_normal`` is true when the log has been quiet for > 60 s
+         *     while CPU or GPU memory still moved in the last minute — a "slow but
+         *     alive" signal.
+         */
+        VitalsOut: {
+            /** Series */
+            series: components["schemas"]["VitalsPointOut"][];
+            /** Last Log Age S */
+            last_log_age_s?: number | null;
+            /** Last Log Line */
+            last_log_line?: string | null;
+            /** Log Quiet Normal */
+            log_quiet_normal: boolean;
+            /** Gpu Mem Total Mib */
+            gpu_mem_total_mib?: number | null;
+            /**
+             * Gpu Mem Supported
+             * @default true
+             */
+            gpu_mem_supported: boolean;
+        };
+        /**
+         * VitalsPointOut
+         * @description One point of the vitals time series.
+         *
+         *     ``t_s`` is seconds since load start.  ``cpu_cores`` is the cores busy since
+         *     the previous sample (``None`` for the first point or when a sample is
+         *     missing).  ``gpu_mem_mib`` is the GPU memory used, ``None`` when the probe
+         *     failed.
+         */
+        VitalsPointOut: {
+            /** T S */
+            t_s: number;
+            /** Cpu Cores */
+            cpu_cores?: number | null;
+            /** Gpu Mem Mib */
+            gpu_mem_mib?: number | null;
         };
     };
     responses: never;
@@ -4579,6 +4758,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_load_progress_api_models_load_progress_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoadProgressOut"][];
+                };
+            };
+        };
+    };
+    get_load_progress_api_models__model_id__load_progress_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                model_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoadProgressOut"];
                 };
             };
             /** @description Validation Error */

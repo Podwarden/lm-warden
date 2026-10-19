@@ -880,7 +880,7 @@ async def test_restart_keeps_the_restart_flag_lit_while_the_spawn_is_in_flight(
     seen = {}
 
     async def fake_start_engine(
-        settings, sup, port_alloc, model, port, overrides=None, on_spawn=None
+        settings, sup, port_alloc, model, port, overrides=None, on_spawn=None, load_progress=None
     ):
         async with open_db(settings.db_path) as db:
             row = await ModelRepo(db).get("m1")

@@ -173,6 +173,11 @@ class LlamaCppBackend:
         hf_cache_dir: str = "",
         engine_driver: str = "local",
         image: str | None = None,
+        # Accepted and IGNORED: VLLM_ENGINE_READY_TIMEOUT_S is a vLLM-only env
+        # var. Kept in the signature so the supervisor can pass it uniformly
+        # without branching on the backend's name (same reason every backend
+        # takes hf_token/hf_cache_dir even if it ignores them).
+        load_max_s: float | None = None,
     ) -> LaunchPlan:
         argv = [BINARY] + build_llamacpp_args(
             model,

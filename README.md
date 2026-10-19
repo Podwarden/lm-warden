@@ -1,8 +1,8 @@
 # LM Warden
 
-**Your own OpenAI-compatible LLM API on NVIDIA GPUs you already own: vLLM and
-llama.cpp behind one port, a key per consumer with its usage, and a live view
-of what the cards are doing.**
+**Your own OpenAI-compatible LLM API on NVIDIA GPUs you already own: vLLM
+v0.32.0 and llama.cpp b11719 behind one port, a key per consumer with its usage,
+and a live view of what the cards are doing.**
 
 > Formerly LLM Warden and, before that, vLLM Warden. Existing installs upgrade
 > in place ([how](documents/OPERATING.md#day-to-day)); the install directory
@@ -13,7 +13,7 @@ of what the cards are doing.**
 [![Engines](https://img.shields.io/badge/engines-vLLM%200.32.0%20%C2%B7%20llama.cpp%20b11719-4b8bbe.svg)](#two-engines-and-the-model-that-made-us-add-the-second)
 [![Deploy](https://img.shields.io/badge/deploy-Docker%20Compose-2496ed.svg)](documents/INSTALL.md)
 
-![LM Warden's Stats page under load, stepping through its 1 h, 6 h and 24 h windows: host VRAM, GPU utilisation, power draw and tokens per minute](app/landing/assets/demo-stats.gif)
+![LM Warden's Stats page under load, stepping through its 1 h, 6 h and 24 h windows: host VRAM, GPU utilisation, power draw and tokens per minute (23 September capture, before the panel switched to tokens per second)](app/landing/assets/demo-stats.gif)
 
 **Install it** on a Linux x86_64 host with Docker, an NVIDIA GPU and the NVIDIA
 Container Toolkit:
@@ -113,12 +113,30 @@ tokens and emits garbage. The product warns about that rather than letting you
 discover it.
 
 Above the floor, the question is what fits. Measured on 16 GiB cards against
-vLLM 0.20.0 (this release ships 0.32.0; the rules have held across the
-upgrades, the exact numbers are worth rechecking),
+vLLM 0.20.0; this release ships 0.32.0, and the first load timed on it is
+GLM-5.2 NVFP4 at tensor-parallel 8 on eight B300s, about 11 to 12 minutes. The
+fit rules have not been re-measured on 0.32.
 [What fits on what](documents/HAZARDS.md#what-fits-on-what) says which model
 classes run on one card, which need two, and which quantisations to avoid; the
 rest of [documents/HAZARDS.md](documents/HAZARDS.md) is what to know before
 the first load.
+
+The same software and rules run on a workstation under a desk (the 16 GiB
+A4000s and Quadro RTX 5000 above are examples) up to an 8× NVIDIA B300 NVLink
+server. GLM-5.2 NVFP4 at tensor-parallel 8 loads in about 11 to 12 minutes on
+eight B300s.
+
+<table>
+<tr>
+<td><img src="assets/screenshots/21-b300-gpus-nvswitch.jpg" alt="The Stats page system section on an 8x B300 server: an Intel Xeon 6776P with 128 cores and 3019 GiB of RAM, eight NVIDIA B300 SXM6 cards with 268.6 GiB each, 241 GiB in use per card, 18 of 18 NVLink links active, and the server architecture drawing with every card on one NVSwitch"><br>
+<b>The same console on an 8× B300 server.</b> Eight B300 SXM6 cards on one
+NVSwitch, 18 NVLink links each, serving GLM-5.2 NVFP4 at tensor-parallel 8.</td>
+<td><img src="assets/screenshots/22-b300-stats.jpg" alt="The Stats page header on the 8x B300 server: VRAM 1932.1 of 2148.8 GiB, power 1893 W summed across the cards, GPU utilisation and power draw charts for the last hour, and prompt and completion tokens per second with a 93 % cache hit"><br>
+<b>One hour of agent traffic on it.</b> 1.9 of 2.1 TiB of VRAM in use, up to
+4.3 kW across the cards, and the prompt tokens per second split into cached and
+computed.</td>
+</tr>
+</table>
 
 **Other GPUs are on the roadmap.** Apple silicon (Macs), AMD Radeon and Intel
 GPUs are on our immediate roadmap, with no dates; which comes first depends on
@@ -208,7 +226,7 @@ line on someone's invoice.
 | A bare engine | With LM Warden |
 |---|---|
 | One model per container, restart to switch | Register, pull, load and unload from the browser |
-| One engine, take it or leave it | vLLM **and** llama.cpp, chosen per model |
+| One engine, take it or leave it | vLLM v0.32.0 **and** llama.cpp b11719, chosen per model |
 | A single shared API key, or none | A key per consumer, each with its own page, priority lane, pause switch and rotation grace window |
 | No record of who used what | Requests, prompt tokens and completion tokens rolled up per key and per client IP, plus each key's queue wait and latency |
 | No way to see what a client actually sent | God mode: an opt-in, in-memory live view of one key's prompts and completions, streaming only while open; off by default |
@@ -262,6 +280,16 @@ line on someone's invoice.
   its prompt came from the cache (vLLM's `--enable-prompt-tokens-details`,
   llama.cpp's own timings). The Stats page splits prompt tokens per second
   into cached and computed and shows the cache-hit share for the last hour.
+- **Model loads, step by step**: while a model loads, the model page shows a
+  step checklist (Start engine, Load weights, Compile kernels, Size KV cache,
+  Tune kernels, Capture CUDA graphs, Warm-up request) with progress bars,
+  elapsed and usual times, CPU and GPU-memory charts, and the last log line.
+  "Usual" times are
+  the median of the last five matching loads. A load that stops making
+  progress is stopped and its GPUs freed, not left holding them on a fixed
+  timeout; nothing turns red while a load is still moving.
+
+  <img src="assets/screenshots/20-b300-glm-load.jpg" alt="The model page while GLM-5.2 NVFP4 loads on eight B300s: 9 min 17 s into a usual 10 min 46 s, steps Start engine, Load weights 47 of 47, Compile kernels and Size KV cache done, Tune kernels at op 2, 21 of 22, with CPU and GPU-memory charts (1948 of 2149 GiB) and the last log line; Capture CUDA graphs and Warm-up request still to come with their usual times">
 - **GPU observability**: per-card telemetry with engine process attribution,
   plus an interconnect graph read from `nvidia-smi topo -m`, so you can see
   whether two cards have a path to each other before splitting a model across

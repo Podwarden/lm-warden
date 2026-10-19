@@ -374,6 +374,7 @@ def _snapshot() -> dict:
                 hf_token=c.hf_token,
                 hf_cache_dir=c.hf_cache_dir,
                 engine_driver=c.driver,
+                load_max_s=7200.0,
             ),
         }
     return out

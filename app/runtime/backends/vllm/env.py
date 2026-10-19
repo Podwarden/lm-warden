@@ -254,6 +254,7 @@ def build_subprocess_env(
     engine_driver: str = "local",
     allowed_prefixes: tuple[str, ...] = ALLOWED_ENV_PREFIXES,
     allowed_exact: frozenset[str] = ALLOWED_ENV_EXACT,
+    load_max_s: float | None = None,
 ) -> dict[str, str]:
     """Construct the env dict for a vLLM subprocess.
 
@@ -319,6 +320,14 @@ def build_subprocess_env(
         # production engine should ever die silently.
         "PYTHONFAULTHANDLER": "1",
     }
+    # VLLM_ENGINE_READY_TIMEOUT_S: how long EngineCore waits for the full
+    # engine (weights, compile, KV cache, CUDA graphs) to be "ready" before
+    # declaring the load failed. Defaults to the stall-policy cap
+    # (int(load_max_s)) so vLLM's own deadline and the warden's are the same
+    # wall clock. Set BEFORE the extra_env merge so the operator wins: a
+    # filtered VLLM_ENGINE_READY_TIMEOUT_S in extra_env overrides it.
+    if load_max_s is not None:
+        env["VLLM_ENGINE_READY_TIMEOUT_S"] = str(int(load_max_s))
     # Apply allowed extra_env first so hard-locked keys below always win.
     env.update(filtered)
 

@@ -14,7 +14,7 @@ from tests.conftest import wait_until_async
 
 
 class _Settings:
-    pass
+    load_max_s = 7200.0
 
 
 class _M:

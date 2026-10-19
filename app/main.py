@@ -130,6 +130,14 @@ async def lifespan(app: FastAPI):
     )
     app.state.port_allocator = PortAllocator(start=10000, end=10999)
 
+    # Model load-progress registry (2026-10-18).  In-memory per-load tracker
+    # and verdict, keyed by model id.  Lives on app.state so the API/UI
+    # layer can read live progress without reaching into the load runner;
+    # the watcher loop is the single writer.
+    from app.runtime.load_progress.registry import LoadProgressRegistry  # noqa: PLC0415
+
+    app.state.load_progress = LoadProgressRegistry()
+
     # #236 — a row left in a transient status ('loading'/'unloading'/'pulling')
     # by a warden that died mid-operation describes an in-process object that
     # no longer exists, and BOTH routes out of those statuses 409. Demote them

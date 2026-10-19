@@ -1,0 +1,682 @@
+[truncated: copied the last 33554432 of 33555486 bytes]
+ 10-05 13:49:11 [api_utils.py:345]    ▀▀  ▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀
+INFO 10-05 13:49:11 [api_utils.py:345] 
+INFO 10-05 13:49:11 [api_utils.py:273] non-default args: {'model_tag': 'Qwen/Qwen3.8-27B-FP8', 'api_server_count': 3, 'enable_auto_tool_choice': True, 'tool_call_parser': 'qwen3_xml', 'enable_prompt_tokens_details': True, 'host': '127.0.0.1', 'port': 10000, 'model': 'Qwen/Qwen3.8-27B-FP8', 'revision': 'main', 'max_model_len': 131072, 'served_model_name': ['qwen3.8-27b-fp8'], 'reasoning_parser': 'qwen3', 'tensor_parallel_size': 2, 'data_parallel_size': 3, 'kv_cache_dtype': 'fp8', 'enable_prefix_caching': True, 'max_num_batched_tokens': 8192, 'max_num_seqs': 32, 'scheduling_policy': 'priority', 'speculative_config': {'method': 'mtp', 'num_speculative_tokens': 1}, 'compilation_config': {'mode': None, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': [], 'ir_enable_torch_wrap': None, 'splitting_ops': None, 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': None, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 48, 64, 96], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': None, 'pass_config': {}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': None, 'static_all_moe_layers': []}}
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+INFO 10-05 13:49:11 [model.py:623] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-05 13:49:11 [model.py:1788] Using max model len 131072
+INFO 10-05 13:49:12 [cache.py:285] Using fp8 data type to store kv cache. It reduces the GPU memory footprint and boosts the performance. Meanwhile, it may cause accuracy drop without a proper scaling factor
+INFO 10-05 13:49:12 [model.py:623] Resolved architecture: Qwen3_5MTP
+INFO 10-05 13:49:12 [model.py:1788] Using max model len 262144
+INFO 10-05 13:49:12 [speculative.py:1126] Overriding draft model max model len from 262144 to 131072
+INFO 10-05 13:49:12 [scheduler.py:252] Chunked prefill is enabled with max_num_batched_tokens=8192.
+WARNING 10-05 13:49:12 [config.py:563] Mamba cache mode is set to 'align' for Qwen3_5ForConditionalGeneration by default when prefix caching is enabled
+INFO 10-05 13:49:12 [config.py:583] Warning: Prefix caching in Mamba cache 'align' mode is currently enabled. Its support for Mamba layers is experimental. Please report any issues you may observe.
+WARNING 10-05 13:49:12 [vllm.py:1008] Auto-disabled DeepGemm for model_type=qwen3_5_text on Blackwell. DeepGemm E8M0 scale format causes accuracy degradation for this architecture. Falling back to CUTLASS. To disable DeepGemm globally, set VLLM_USE_DEEP_GEMM=0.
+INFO 10-05 13:49:12 [vllm.py:1109] Asynchronous scheduling is enabled.
+INFO 10-05 13:49:12 [kernel.py:295] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+INFO 10-05 13:49:14 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+INFO 10-05 13:49:22 [utils.py:1127] Started DP Coordinator process (PID: 928861)
+INFO 10-05 13:49:36 [utils.py:241] Started 3 API server processes
+(ApiServer_0 pid=929808) INFO 10-05 13:49:47 [__init__.py:112] Registered model loader `<class 'vllm_gguf_plugin.loader.GGUFModelLoader'>` with load format `gguf`
+(ApiServer_0 pid=929808) INFO 10-05 13:49:47 [config.py:455] Registered config parser `<class 'vllm_gguf_plugin.config_parser.GGUFConfigParser'>` with config format `gguf`
+(ApiServer_1 pid=929809) INFO 10-05 13:49:47 [__init__.py:112] Registered model loader `<class 'vllm_gguf_plugin.loader.GGUFModelLoader'>` with load format `gguf`
+(ApiServer_1 pid=929809) INFO 10-05 13:49:47 [config.py:455] Registered config parser `<class 'vllm_gguf_plugin.config_parser.GGUFConfigParser'>` with config format `gguf`
+(ApiServer_0 pid=929808) Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+(ApiServer_2 pid=929810) INFO 10-05 13:49:47 [__init__.py:112] Registered model loader `<class 'vllm_gguf_plugin.loader.GGUFModelLoader'>` with load format `gguf`
+(ApiServer_2 pid=929810) INFO 10-05 13:49:47 [config.py:455] Registered config parser `<class 'vllm_gguf_plugin.config_parser.GGUFConfigParser'>` with config format `gguf`
+(ApiServer_1 pid=929809) Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+(ApiServer_2 pid=929810) Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+(ApiServer_0 pid=929808) INFO 10-05 13:49:48 [model.py:623] Resolved architecture: Qwen3_5ForConditionalGeneration
+(ApiServer_0 pid=929808) INFO 10-05 13:49:48 [model.py:1788] Using max model len 131072
+(ApiServer_1 pid=929809) INFO 10-05 13:49:48 [model.py:623] Resolved architecture: Qwen3_5ForConditionalGeneration
+(ApiServer_1 pid=929809) INFO 10-05 13:49:48 [model.py:1788] Using max model len 131072
+(ApiServer_2 pid=929810) INFO 10-05 13:49:48 [model.py:623] Resolved architecture: Qwen3_5ForConditionalGeneration
+(ApiServer_2 pid=929810) INFO 10-05 13:49:48 [model.py:1788] Using max model len 131072
+(ApiServer_0 pid=929808) INFO 10-05 13:49:48 [cache.py:285] Using fp8 data type to store kv cache. It reduces the GPU memory footprint and boosts the performance. Meanwhile, it may cause accuracy drop without a proper scaling factor
+(ApiServer_1 pid=929809) INFO 10-05 13:49:48 [cache.py:285] Using fp8 data type to store kv cache. It reduces the GPU memory footprint and boosts the performance. Meanwhile, it may cause accuracy drop without a proper scaling factor
+(ApiServer_2 pid=929810) INFO 10-05 13:49:48 [cache.py:285] Using fp8 data type to store kv cache. It reduces the GPU memory footprint and boosts the performance. Meanwhile, it may cause accuracy drop without a proper scaling factor
+(ApiServer_0 pid=929808) INFO 10-05 13:49:48 [model.py:623] Resolved architecture: Qwen3_5MTP
+(ApiServer_0 pid=929808) INFO 10-05 13:49:48 [model.py:1788] Using max model len 262144
+(ApiServer_0 pid=929808) INFO 10-05 13:49:48 [speculative.py:1126] Overriding draft model max model len from 262144 to 131072
+(ApiServer_0 pid=929808) INFO 10-05 13:49:48 [scheduler.py:252] Chunked prefill is enabled with max_num_batched_tokens=8192.
+(ApiServer_0 pid=929808) WARNING 10-05 13:49:48 [config.py:563] Mamba cache mode is set to 'align' for Qwen3_5ForConditionalGeneration by default when prefix caching is enabled
+(ApiServer_0 pid=929808) INFO 10-05 13:49:48 [config.py:583] Warning: Prefix caching in Mamba cache 'align' mode is currently enabled. Its support for Mamba layers is experimental. Please report any issues you may observe.
+(ApiServer_0 pid=929808) WARNING 10-05 13:49:48 [vllm.py:1008] Auto-disabled DeepGemm for model_type=qwen3_5_text on Blackwell. DeepGemm E8M0 scale format causes accuracy degradation for this architecture. Falling back to CUTLASS. To disable DeepGemm globally, set VLLM_USE_DEEP_GEMM=0.
+(ApiServer_0 pid=929808) INFO 10-05 13:49:48 [vllm.py:1109] Asynchronous scheduling is enabled.
+(ApiServer_0 pid=929808) INFO 10-05 13:49:48 [kernel.py:295] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(ApiServer_1 pid=929809) INFO 10-05 13:49:48 [model.py:623] Resolved architecture: Qwen3_5MTP
+(ApiServer_1 pid=929809) INFO 10-05 13:49:48 [model.py:1788] Using max model len 262144
+(ApiServer_1 pid=929809) INFO 10-05 13:49:48 [speculative.py:1126] Overriding draft model max model len from 262144 to 131072
+(ApiServer_1 pid=929809) INFO 10-05 13:49:48 [scheduler.py:252] Chunked prefill is enabled with max_num_batched_tokens=8192.
+(ApiServer_1 pid=929809) WARNING 10-05 13:49:48 [config.py:563] Mamba cache mode is set to 'align' for Qwen3_5ForConditionalGeneration by default when prefix caching is enabled
+(ApiServer_1 pid=929809) INFO 10-05 13:49:48 [config.py:583] Warning: Prefix caching in Mamba cache 'align' mode is currently enabled. Its support for Mamba layers is experimental. Please report any issues you may observe.
+(ApiServer_1 pid=929809) WARNING 10-05 13:49:48 [vllm.py:1008] Auto-disabled DeepGemm for model_type=qwen3_5_text on Blackwell. DeepGemm E8M0 scale format causes accuracy degradation for this architecture. Falling back to CUTLASS. To disable DeepGemm globally, set VLLM_USE_DEEP_GEMM=0.
+(ApiServer_1 pid=929809) INFO 10-05 13:49:48 [vllm.py:1109] Asynchronous scheduling is enabled.
+(ApiServer_1 pid=929809) INFO 10-05 13:49:48 [kernel.py:295] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(ApiServer_2 pid=929810) INFO 10-05 13:49:48 [model.py:623] Resolved architecture: Qwen3_5MTP
+(ApiServer_2 pid=929810) INFO 10-05 13:49:48 [model.py:1788] Using max model len 262144
+(ApiServer_2 pid=929810) INFO 10-05 13:49:48 [speculative.py:1126] Overriding draft model max model len from 262144 to 131072
+(ApiServer_2 pid=929810) INFO 10-05 13:49:48 [scheduler.py:252] Chunked prefill is enabled with max_num_batched_tokens=8192.
+(ApiServer_2 pid=929810) WARNING 10-05 13:49:48 [config.py:563] Mamba cache mode is set to 'align' for Qwen3_5ForConditionalGeneration by default when prefix caching is enabled
+(ApiServer_2 pid=929810) INFO 10-05 13:49:48 [config.py:583] Warning: Prefix caching in Mamba cache 'align' mode is currently enabled. Its support for Mamba layers is experimental. Please report any issues you may observe.
+(ApiServer_2 pid=929810) WARNING 10-05 13:49:48 [vllm.py:1008] Auto-disabled DeepGemm for model_type=qwen3_5_text on Blackwell. DeepGemm E8M0 scale format causes accuracy degradation for this architecture. Falling back to CUTLASS. To disable DeepGemm globally, set VLLM_USE_DEEP_GEMM=0.
+(ApiServer_2 pid=929810) INFO 10-05 13:49:48 [vllm.py:1109] Asynchronous scheduling is enabled.
+(ApiServer_2 pid=929810) INFO 10-05 13:49:48 [kernel.py:295] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(ApiServer_1 pid=929809) INFO 10-05 13:49:50 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+(ApiServer_0 pid=929808) INFO 10-05 13:49:50 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+(ApiServer_2 pid=929810) INFO 10-05 13:49:50 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+(ApiServer_0 pid=929808) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(ApiServer_2 pid=929810) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(ApiServer_1 pid=929809) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(EngineCore_DP2 pid=929431) INFO 10-05 13:50:08 [__init__.py:112] Registered model loader `<class 'vllm_gguf_plugin.loader.GGUFModelLoader'>` with load format `gguf`
+(EngineCore_DP2 pid=929431) INFO 10-05 13:50:08 [config.py:455] Registered config parser `<class 'vllm_gguf_plugin.config_parser.GGUFConfigParser'>` with config format `gguf`
+(EngineCore_DP2 pid=929431) WARNING 10-05 13:50:08 [multiproc_executor.py:1070] Reducing Torch parallelism from 64 threads to 1 to avoid unnecessary CPU contention. Set OMP_NUM_THREADS in the external environment to tune this value as needed.
+(EngineCore_DP2 pid=929431) INFO 10-05 13:50:08 [multiproc_executor.py:140] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=172.17.0.2 (local), world_size=2, local_world_size=2
+(EngineCore_DP0 pid=929126) INFO 10-05 13:50:08 [__init__.py:112] Registered model loader `<class 'vllm_gguf_plugin.loader.GGUFModelLoader'>` with load format `gguf`
+(EngineCore_DP0 pid=929126) INFO 10-05 13:50:08 [config.py:455] Registered config parser `<class 'vllm_gguf_plugin.config_parser.GGUFConfigParser'>` with config format `gguf`
+(EngineCore_DP1 pid=929211) INFO 10-05 13:50:08 [__init__.py:112] Registered model loader `<class 'vllm_gguf_plugin.loader.GGUFModelLoader'>` with load format `gguf`
+(EngineCore_DP1 pid=929211) INFO 10-05 13:50:08 [config.py:455] Registered config parser `<class 'vllm_gguf_plugin.config_parser.GGUFConfigParser'>` with config format `gguf`
+(EngineCore_DP0 pid=929126) INFO 10-05 13:50:08 [core.py:116] Initializing a V1 LLM engine (v0.26.0) with config: model='Qwen/Qwen3.8-27B-FP8', speculative_config=SpeculativeConfig(method='mtp', model='Qwen/Qwen3.8-27B-FP8', num_spec_tokens=1), tokenizer='Qwen/Qwen3.8-27B-FP8', skip_tokenizer_init=False, tokenizer_mode=auto, revision=main, tokenizer_revision=main, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=131072, download_dir=None, load_format=auto, tensor_parallel_size=2, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=fp8, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=fp8, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='qwen3', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=qwen3.8-27b-fp8, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['+quant_fp8', 'none', '+quant_fp8'], 'ir_enable_torch_wrap': True, 'splitting_ops': ['vllm::unified_attention_with_output', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::qwen_gdn_attention_core', 'vllm::gdn_attention_core_xpu', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::deepseek_v4_attention', 'vllm::hpc_rope_norm_forward', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 48, 64, 96], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': 96, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_bf16x3_router_gemm=False, moe_backend='auto', linear_backend='auto')
+(EngineCore_DP0 pid=929126) WARNING 10-05 13:50:08 [multiproc_executor.py:1070] Reducing Torch parallelism from 64 threads to 1 to avoid unnecessary CPU contention. Set OMP_NUM_THREADS in the external environment to tune this value as needed.
+(EngineCore_DP1 pid=929211) WARNING 10-05 13:50:08 [multiproc_executor.py:1070] Reducing Torch parallelism from 64 threads to 1 to avoid unnecessary CPU contention. Set OMP_NUM_THREADS in the external environment to tune this value as needed.
+(EngineCore_DP0 pid=929126) (EngineCore_DP1 pid=929211) INFO 10-05 13:50:08 [multiproc_executor.py:140] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=172.17.0.2 (local), world_size=2, local_world_size=2
+INFO 10-05 13:50:08 [multiproc_executor.py:140] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=172.17.0.2 (local), world_size=2, local_world_size=2
+INFO 10-05 13:50:19 [__init__.py:112] Registered model loader `<class 'vllm_gguf_plugin.loader.GGUFModelLoader'>` with load format `gguf`
+INFO 10-05 13:50:19 [config.py:455] Registered config parser `<class 'vllm_gguf_plugin.config_parser.GGUFConfigParser'>` with config format `gguf`
+INFO 10-05 13:50:19 [__init__.py:112] Registered model loader `<class 'vllm_gguf_plugin.loader.GGUFModelLoader'>` with load format `gguf`
+INFO 10-05 13:50:19 [config.py:455] Registered config parser `<class 'vllm_gguf_plugin.config_parser.GGUFConfigParser'>` with config format `gguf`
+INFO 10-05 13:50:20 [__init__.py:112] Registered model loader `<class 'vllm_gguf_plugin.loader.GGUFModelLoader'>` with load format `gguf`
+INFO 10-05 13:50:20 [config.py:455] Registered config parser `<class 'vllm_gguf_plugin.config_parser.GGUFConfigParser'>` with config format `gguf`
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+(Worker pid=931966) INFO 10-05 13:50:23 [parallel_state.py:1615] world_size=2 rank=0 local_rank=4 distributed_init_method=tcp://127.0.0.1:56673 backend=nccl
+(Worker pid=931965) INFO 10-05 13:50:23 [parallel_state.py:1615] world_size=2 rank=0 local_rank=2 distributed_init_method=tcp://127.0.0.1:51751 backend=nccl
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+(Worker pid=931964) INFO 10-05 13:50:24 [parallel_state.py:1615] world_size=2 rank=0 local_rank=0 distributed_init_method=tcp://127.0.0.1:33621 backend=nccl
+INFO 10-05 13:50:29 [__init__.py:112] Registered model loader `<class 'vllm_gguf_plugin.loader.GGUFModelLoader'>` with load format `gguf`
+INFO 10-05 13:50:29 [config.py:455] Registered config parser `<class 'vllm_gguf_plugin.config_parser.GGUFConfigParser'>` with config format `gguf`
+INFO 10-05 13:50:29 [__init__.py:112] Registered model loader `<class 'vllm_gguf_plugin.loader.GGUFModelLoader'>` with load format `gguf`
+INFO 10-05 13:50:29 [config.py:455] Registered config parser `<class 'vllm_gguf_plugin.config_parser.GGUFConfigParser'>` with config format `gguf`
+INFO 10-05 13:50:30 [__init__.py:112] Registered model loader `<class 'vllm_gguf_plugin.loader.GGUFModelLoader'>` with load format `gguf`
+INFO 10-05 13:50:30 [config.py:455] Registered config parser `<class 'vllm_gguf_plugin.config_parser.GGUFConfigParser'>` with config format `gguf`
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+(Worker pid=932055) INFO 10-05 13:50:31 [parallel_state.py:1615] world_size=2 rank=1 local_rank=1 distributed_init_method=tcp://127.0.0.1:33621 backend=nccl
+(Worker pid=932029) INFO 10-05 13:50:32 [parallel_state.py:1615] world_size=2 rank=1 local_rank=5 distributed_init_method=tcp://127.0.0.1:56673 backend=nccl
+(Worker pid=932033) INFO 10-05 13:50:32 [parallel_state.py:1615] world_size=2 rank=1 local_rank=3 distributed_init_method=tcp://127.0.0.1:51751 backend=nccl
+(Worker pid=931964) INFO 10-05 13:50:32 [pynccl.py:113] vLLM is using nccl==2.30.4
+(Worker pid=931964) WARNING 10-05 13:50:33 [symm_mem.py:66] SymmMemCommunicator: Device capability 12.0 not supported, communicator is not available.
+(Worker pid=932055) WARNING 10-05 13:50:33 [symm_mem.py:66] SymmMemCommunicator: Device capability 12.0 not supported, communicator is not available.
+(Worker pid=932055) WARNING 10-05 13:50:33 [custom_all_reduce.py:162] Custom allreduce is disabled because your platform lacks GPU P2P capability or P2P test failed. To silence this warning, specify disable_custom_all_reduce=True explicitly.
+(Worker pid=931964) WARNING 10-05 13:50:33 [custom_all_reduce.py:162] Custom allreduce is disabled because your platform lacks GPU P2P capability or P2P test failed. To silence this warning, specify disable_custom_all_reduce=True explicitly.
+(Worker pid=931964) INFO 10-05 13:50:33 [cuda_communicator.py:264] Using ['PYNCCL'] all-reduce backends (in dispatch order) for group 'tp:0' out of potential backends: ['NCCL_SYMM_MEM', 'QUICK_REDUCE', 'FLASHINFER', 'AITER_CUSTOM', 'CUSTOM', 'SYMM_MEM', 'PYNCCL'].
+(Worker pid=931964) INFO 10-05 13:50:33 [parallel_state.py:1946] rank 0 in world size 2 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(Worker pid=932029) WARNING 10-05 13:50:33 [symm_mem.py:66] SymmMemCommunicator: Device capability 12.0 not supported, communicator is not available.
+(Worker pid=931966) WARNING 10-05 13:50:33 [symm_mem.py:66] SymmMemCommunicator: Device capability 12.0 not supported, communicator is not available.
+(Worker pid=932029) WARNING 10-05 13:50:33 [custom_all_reduce.py:162] Custom allreduce is disabled because your platform lacks GPU P2P capability or P2P test failed. To silence this warning, specify disable_custom_all_reduce=True explicitly.
+(Worker pid=931966) WARNING 10-05 13:50:33 [custom_all_reduce.py:162] Custom allreduce is disabled because your platform lacks GPU P2P capability or P2P test failed. To silence this warning, specify disable_custom_all_reduce=True explicitly.
+(Worker pid=931966) INFO 10-05 13:50:33 [cuda_communicator.py:264] Using ['PYNCCL'] all-reduce backends (in dispatch order) for group 'tp:0' out of potential backends: ['NCCL_SYMM_MEM', 'QUICK_REDUCE', 'FLASHINFER', 'AITER_CUSTOM', 'CUSTOM', 'SYMM_MEM', 'PYNCCL'].
+(Worker pid=931964) INFO 10-05 13:50:34 [topk_topp_sampler.py:55] Using FlashInfer for top-p & top-k sampling.
+(Worker pid=932055) WARNING 10-05 13:50:34 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker pid=931964) WARNING 10-05 13:50:34 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker pid=932029) WARNING 10-05 13:50:34 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker pid=931966) INFO 10-05 13:50:34 [topk_topp_sampler.py:55] Using FlashInfer for top-p & top-k sampling.
+(Worker pid=931966) WARNING 10-05 13:50:34 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker pid=932033) WARNING 10-05 13:50:34 [symm_mem.py:66] SymmMemCommunicator: Device capability 12.0 not supported, communicator is not available.
+(Worker pid=931965) WARNING 10-05 13:50:34 [symm_mem.py:66] SymmMemCommunicator: Device capability 12.0 not supported, communicator is not available.
+(Worker pid=931965) WARNING 10-05 13:50:34 [custom_all_reduce.py:162] Custom allreduce is disabled because your platform lacks GPU P2P capability or P2P test failed. To silence this warning, specify disable_custom_all_reduce=True explicitly.
+(Worker pid=931965) INFO 10-05 13:50:34 [cuda_communicator.py:264] Using ['PYNCCL'] all-reduce backends (in dispatch order) for group 'tp:0' out of potential backends: ['NCCL_SYMM_MEM', 'QUICK_REDUCE', 'FLASHINFER', 'AITER_CUSTOM', 'CUSTOM', 'SYMM_MEM', 'PYNCCL'].
+(Worker pid=932033) WARNING 10-05 13:50:34 [custom_all_reduce.py:162] Custom allreduce is disabled because your platform lacks GPU P2P capability or P2P test failed. To silence this warning, specify disable_custom_all_reduce=True explicitly.
+(Worker pid=931965) INFO 10-05 13:50:35 [topk_topp_sampler.py:55] Using FlashInfer for top-p & top-k sampling.
+(Worker pid=931965) WARNING 10-05 13:50:35 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker pid=932033) WARNING 10-05 13:50:35 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker pid=931964) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(Worker pid=932055) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(Worker pid=932029) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(Worker pid=931966) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(Worker pid=931965) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(Worker pid=932033) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(Worker_TP0 pid=931964) INFO 10-05 13:50:43 [gpu_model_runner.py:5250] Starting to load model Qwen/Qwen3.8-27B-FP8...
+(Worker_TP0 pid=931966) INFO 10-05 13:50:43 [gpu_model_runner.py:5250] Starting to load model Qwen/Qwen3.8-27B-FP8...
+(Worker_TP0 pid=931966) INFO 10-05 13:50:43 [__init__.py:604] Selected CutlassFp8BlockScaledMMKernel for Fp8LinearMethod
+(Worker_TP0 pid=931964) INFO 10-05 13:50:43 [cuda.py:541] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(Worker_TP0 pid=931964) INFO 10-05 13:50:43 [mm_encoder_attention.py:373] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(Worker_TP0 pid=931964) INFO 10-05 13:50:43 [__init__.py:604] Selected CutlassFp8BlockScaledMMKernel for Fp8LinearMethod
+(Worker_TP0 pid=931964) INFO 10-05 13:50:43 [qwen_gdn_linear_attn.py:150] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).
+(Worker_TP0 pid=931964) INFO 10-05 13:50:44 [cuda.py:482] Using FLASHINFER attention backend out of potential backends: ['FLASHINFER', 'TRITON_ATTN'].
+(Worker_TP0 pid=931965) INFO 10-05 13:50:44 [gpu_model_runner.py:5250] Starting to load model Qwen/Qwen3.8-27B-FP8...
+(Worker_TP0 pid=931965) INFO 10-05 13:50:44 [__init__.py:604] Selected CutlassFp8BlockScaledMMKernel for Fp8LinearMethod
+(Worker_TP0 pid=931964) INFO 10-05 13:50:45 [weight_utils.py:869] Filesystem type for checkpoints: XFS. Checkpoint size: 28.75 GiB. Available RAM: 972.60 GiB.
+(Worker_TP0 pid=931964) INFO 10-05 13:50:45 [weight_utils.py:892] Auto-prefetch is disabled because the filesystem (XFS) is not a recognized network FS (NFS/Lustre). If you want to force prefetching, start vLLM with --safetensors-load-strategy=prefetch.
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:   0% Completed | 0/66 [00:00<?, ?it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:   2% Completed | 1/66 [00:00<00:11,  5.65it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:   3% Completed | 2/66 [00:00<00:11,  5.76it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:   0% Completed | 0/66 [00:00<?, ?it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:   5% Completed | 3/66 [00:00<00:10,  5.78it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:   2% Completed | 1/66 [00:00<00:11,  5.77it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:   6% Completed | 4/66 [00:00<00:10,  5.87it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:   3% Completed | 2/66 [00:00<00:10,  5.98it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:   8% Completed | 5/66 [00:00<00:10,  5.98it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:   0% Completed | 0/66 [00:00<?, ?it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:   5% Completed | 3/66 [00:00<00:10,  6.15it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:   9% Completed | 6/66 [00:01<00:09,  6.06it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:   2% Completed | 1/66 [00:00<00:11,  5.91it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:   6% Completed | 4/66 [00:00<00:09,  6.26it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  11% Completed | 7/66 [00:01<00:09,  6.18it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:   3% Completed | 2/66 [00:00<00:10,  6.17it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:   8% Completed | 5/66 [00:00<00:09,  6.41it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  12% Completed | 8/66 [00:01<00:09,  6.39it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:   5% Completed | 3/66 [00:00<00:10,  6.21it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:   9% Completed | 6/66 [00:00<00:09,  6.47it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  14% Completed | 9/66 [00:01<00:08,  6.41it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:   6% Completed | 4/66 [00:00<00:09,  6.42it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  11% Completed | 7/66 [00:01<00:09,  6.51it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  15% Completed | 10/66 [00:01<00:08,  6.33it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:   8% Completed | 5/66 [00:00<00:09,  6.50it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  12% Completed | 8/66 [00:01<00:08,  6.50it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  17% Completed | 11/66 [00:01<00:08,  6.38it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:   9% Completed | 6/66 [00:00<00:09,  6.55it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  14% Completed | 9/66 [00:01<00:08,  6.51it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  18% Completed | 12/66 [00:01<00:08,  6.48it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  11% Completed | 7/66 [00:01<00:08,  6.62it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  15% Completed | 10/66 [00:01<00:08,  6.50it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  20% Completed | 13/66 [00:02<00:08,  6.56it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  12% Completed | 8/66 [00:01<00:08,  6.76it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  17% Completed | 11/66 [00:01<00:08,  6.58it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  14% Completed | 9/66 [00:01<00:08,  6.78it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  21% Completed | 14/66 [00:02<00:07,  6.61it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  18% Completed | 12/66 [00:01<00:08,  6.60it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  15% Completed | 10/66 [00:01<00:08,  6.81it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  23% Completed | 15/66 [00:02<00:07,  6.65it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  20% Completed | 13/66 [00:02<00:07,  6.69it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  17% Completed | 11/66 [00:01<00:07,  6.92it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  24% Completed | 16/66 [00:02<00:07,  6.78it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  21% Completed | 14/66 [00:02<00:07,  6.78it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  18% Completed | 12/66 [00:01<00:07,  7.07it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  26% Completed | 17/66 [00:02<00:07,  6.84it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  23% Completed | 15/66 [00:02<00:07,  6.83it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  20% Completed | 13/66 [00:01<00:07,  7.06it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  27% Completed | 18/66 [00:02<00:07,  6.78it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  24% Completed | 16/66 [00:02<00:07,  6.83it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  21% Completed | 14/66 [00:02<00:07,  6.96it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  29% Completed | 19/66 [00:02<00:07,  6.68it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  26% Completed | 17/66 [00:02<00:07,  6.82it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  23% Completed | 15/66 [00:02<00:07,  7.01it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  30% Completed | 20/66 [00:03<00:06,  6.62it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  27% Completed | 18/66 [00:02<00:07,  6.80it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  24% Completed | 16/66 [00:02<00:07,  7.06it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  32% Completed | 21/66 [00:03<00:07,  6.41it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  29% Completed | 19/66 [00:02<00:07,  6.69it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  26% Completed | 17/66 [00:02<00:07,  7.00it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  30% Completed | 20/66 [00:03<00:06,  6.65it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  33% Completed | 22/66 [00:03<00:06,  6.32it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  27% Completed | 18/66 [00:02<00:06,  6.97it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  35% Completed | 23/66 [00:03<00:06,  6.30it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  32% Completed | 21/66 [00:03<00:06,  6.46it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  29% Completed | 19/66 [00:02<00:06,  6.95it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  36% Completed | 24/66 [00:03<00:06,  6.42it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  33% Completed | 22/66 [00:03<00:06,  6.50it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  30% Completed | 20/66 [00:02<00:06,  7.01it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  38% Completed | 25/66 [00:03<00:06,  6.47it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  35% Completed | 23/66 [00:03<00:06,  6.59it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  32% Completed | 21/66 [00:03<00:06,  6.91it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  36% Completed | 24/66 [00:03<00:06,  6.70it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  39% Completed | 26/66 [00:04<00:06,  6.47it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  33% Completed | 22/66 [00:03<00:06,  6.93it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  38% Completed | 25/66 [00:03<00:06,  6.78it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  41% Completed | 27/66 [00:04<00:05,  6.59it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  35% Completed | 23/66 [00:03<00:06,  7.02it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  39% Completed | 26/66 [00:03<00:05,  6.81it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  42% Completed | 28/66 [00:04<00:05,  6.70it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  36% Completed | 24/66 [00:03<00:05,  7.11it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  41% Completed | 27/66 [00:04<00:05,  6.78it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  38% Completed | 25/66 [00:03<00:05,  7.11it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  44% Completed | 29/66 [00:04<00:05,  6.60it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  42% Completed | 28/66 [00:04<00:05,  6.80it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  39% Completed | 26/66 [00:03<00:05,  7.07it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  45% Completed | 30/66 [00:04<00:05,  6.71it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  41% Completed | 27/66 [00:03<00:05,  7.16it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  44% Completed | 29/66 [00:04<00:05,  6.80it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  47% Completed | 31/66 [00:04<00:05,  6.80it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  42% Completed | 28/66 [00:04<00:05,  7.29it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  45% Completed | 30/66 [00:04<00:05,  7.06it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  48% Completed | 32/66 [00:04<00:04,  6.89it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  44% Completed | 29/66 [00:04<00:05,  7.28it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  47% Completed | 31/66 [00:04<00:04,  7.07it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  50% Completed | 33/66 [00:05<00:04,  6.87it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  45% Completed | 30/66 [00:04<00:04,  7.53it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  48% Completed | 32/66 [00:04<00:04,  7.28it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  52% Completed | 34/66 [00:05<00:04,  6.88it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  47% Completed | 31/66 [00:04<00:04,  7.55it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  50% Completed | 33/66 [00:04<00:04,  7.28it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  53% Completed | 35/66 [00:05<00:04,  6.89it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  48% Completed | 32/66 [00:04<00:04,  7.53it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  52% Completed | 34/66 [00:05<00:04,  7.27it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  55% Completed | 36/66 [00:05<00:04,  7.01it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  50% Completed | 33/66 [00:04<00:04,  7.48it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  53% Completed | 35/66 [00:05<00:04,  7.33it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  56% Completed | 37/66 [00:05<00:04,  6.95it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  52% Completed | 34/66 [00:04<00:04,  7.50it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  55% Completed | 36/66 [00:05<00:04,  7.34it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  58% Completed | 38/66 [00:05<00:04,  6.85it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  53% Completed | 35/66 [00:04<00:04,  7.60it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  56% Completed | 37/66 [00:05<00:03,  7.25it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  59% Completed | 39/66 [00:05<00:03,  6.77it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  55% Completed | 36/66 [00:05<00:03,  7.57it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  58% Completed | 38/66 [00:05<00:03,  7.25it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  56% Completed | 37/66 [00:05<00:03,  7.49it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  61% Completed | 40/66 [00:06<00:03,  6.82it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  59% Completed | 39/66 [00:05<00:03,  7.24it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  58% Completed | 38/66 [00:05<00:03,  7.44it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  62% Completed | 41/66 [00:06<00:03,  6.80it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  61% Completed | 40/66 [00:05<00:03,  7.23it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  59% Completed | 39/66 [00:05<00:03,  7.50it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  64% Completed | 42/66 [00:06<00:03,  6.92it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  62% Completed | 41/66 [00:06<00:03,  7.26it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  61% Completed | 40/66 [00:05<00:03,  7.51it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  65% Completed | 43/66 [00:06<00:03,  6.93it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  64% Completed | 42/66 [00:06<00:03,  7.24it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  62% Completed | 41/66 [00:05<00:03,  7.47it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  67% Completed | 44/66 [00:06<00:03,  6.95it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  65% Completed | 43/66 [00:06<00:03,  7.26it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  64% Completed | 42/66 [00:05<00:03,  7.46it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  68% Completed | 45/66 [00:06<00:03,  6.86it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  67% Completed | 44/66 [00:06<00:03,  7.17it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  65% Completed | 43/66 [00:06<00:03,  7.48it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  70% Completed | 46/66 [00:06<00:02,  6.99it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  68% Completed | 45/66 [00:06<00:02,  7.14it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  67% Completed | 44/66 [00:06<00:02,  7.53it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  71% Completed | 47/66 [00:07<00:02,  7.04it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  70% Completed | 46/66 [00:06<00:02,  7.27it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  68% Completed | 45/66 [00:06<00:02,  7.57it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  73% Completed | 48/66 [00:07<00:02,  7.13it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  71% Completed | 47/66 [00:06<00:02,  7.29it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  70% Completed | 46/66 [00:06<00:02,  7.64it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  74% Completed | 49/66 [00:07<00:02,  7.05it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  73% Completed | 48/66 [00:06<00:02,  7.23it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  71% Completed | 47/66 [00:06<00:02,  7.51it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  74% Completed | 49/66 [00:07<00:02,  7.05it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  76% Completed | 50/66 [00:07<00:02,  6.79it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  73% Completed | 48/66 [00:06<00:02,  7.34it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  76% Completed | 50/66 [00:07<00:02,  6.85it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  77% Completed | 51/66 [00:07<00:02,  6.64it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  74% Completed | 49/66 [00:06<00:02,  7.22it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  77% Completed | 51/66 [00:07<00:02,  6.76it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  79% Completed | 52/66 [00:07<00:02,  6.65it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  76% Completed | 50/66 [00:07<00:02,  7.12it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  79% Completed | 52/66 [00:07<00:02,  6.85it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  80% Completed | 53/66 [00:07<00:01,  6.69it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  77% Completed | 51/66 [00:07<00:02,  7.13it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  80% Completed | 53/66 [00:07<00:01,  6.95it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  79% Completed | 52/66 [00:07<00:01,  7.27it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  82% Completed | 54/66 [00:08<00:01,  6.79it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  80% Completed | 53/66 [00:07<00:01,  7.29it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  82% Completed | 54/66 [00:07<00:01,  6.97it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  83% Completed | 55/66 [00:08<00:01,  6.71it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  82% Completed | 54/66 [00:07<00:01,  7.29it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  83% Completed | 55/66 [00:08<00:01,  6.87it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  85% Completed | 56/66 [00:08<00:01,  6.60it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  83% Completed | 55/66 [00:07<00:01,  7.18it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  85% Completed | 56/66 [00:08<00:01,  6.73it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  86% Completed | 57/66 [00:08<00:01,  6.71it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  85% Completed | 56/66 [00:07<00:01,  7.27it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  86% Completed | 57/66 [00:08<00:01,  6.95it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  88% Completed | 58/66 [00:08<00:01,  6.82it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  86% Completed | 57/66 [00:07<00:01,  7.53it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  88% Completed | 58/66 [00:08<00:01,  7.05it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  89% Completed | 59/66 [00:08<00:00,  7.02it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  88% Completed | 58/66 [00:08<00:01,  7.64it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  89% Completed | 59/66 [00:08<00:00,  7.16it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  91% Completed | 60/66 [00:09<00:00,  7.15it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  89% Completed | 59/66 [00:08<00:00,  7.69it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  91% Completed | 60/66 [00:08<00:00,  7.30it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  92% Completed | 61/66 [00:09<00:00,  7.19it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  91% Completed | 60/66 [00:08<00:00,  7.77it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  92% Completed | 61/66 [00:08<00:00,  7.45it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  94% Completed | 62/66 [00:09<00:00,  7.37it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  92% Completed | 61/66 [00:08<00:00,  8.14it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  94% Completed | 62/66 [00:08<00:00,  7.96it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  95% Completed | 63/66 [00:09<00:00,  7.92it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  95% Completed | 63/66 [00:09<00:00,  8.47it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  97% Completed | 64/66 [00:09<00:00,  8.42it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  95% Completed | 63/66 [00:08<00:00,  9.08it/s]
+(Worker_TP1 pid=932029) INFO 10-05 13:50:54 [kernel.py:295] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards: 100% Completed | 66/66 [00:10<00:00,  3.78it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards: 100% Completed | 66/66 [00:10<00:00,  6.38it/s]
+(Worker_TP0 pid=931964) 
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards: 100% Completed | 66/66 [00:09<00:00,  4.39it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards: 100% Completed | 66/66 [00:09<00:00,  6.61it/s]
+(Worker_TP0 pid=931966) 
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards: 100% Completed | 66/66 [00:09<00:00,  4.79it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards: 100% Completed | 66/66 [00:09<00:00,  6.91it/s]
+(Worker_TP0 pid=931965) 
+(Worker_TP0 pid=931964) INFO 10-05 13:50:55 [default_loader.py:430] Loading weights took 10.45 seconds
+(Worker_TP0 pid=931964) WARNING 10-05 13:50:55 [kv_cache.py:134] Checkpoint does not provide a q scaling factor. Setting it to k_scale. This only matters for FP8 Attention backends (flash-attn or flashinfer).
+(Worker_TP0 pid=931964) WARNING 10-05 13:50:55 [kv_cache.py:151] Using KV cache scaling factor 1.0 for fp8_e4m3. If this is unintended, verify that k/v_scale scaling factors are properly set in the checkpoint.
+(Worker_TP0 pid=931964) WARNING 10-05 13:50:55 [kv_cache.py:190] Using uncalibrated q_scale 1.0 and/or prob_scale 1.0 with fp8 attention. This may cause accuracy issues. Please make sure q/prob scaling factors are available in the fp8 checkpoint.
+(Worker_TP0 pid=931964) INFO 10-05 13:50:55 [gpu_model_runner.py:5274] Loading drafter model...
+(Worker_TP0 pid=931964) INFO 10-05 13:50:55 [vllm.py:1109] Asynchronous scheduling is enabled.
+(Worker_TP0 pid=931964) INFO 10-05 13:50:55 [kernel.py:295] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(Worker_TP0 pid=931964) INFO 10-05 13:50:55 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+(Worker_TP0 pid=931966) INFO 10-05 13:50:55 [kernel.py:295] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(Worker_TP0 pid=931966) INFO 10-05 13:50:55 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+(Worker_TP0 pid=931965) INFO 10-05 13:50:55 [kernel.py:295] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(Worker_TP0 pid=931965) INFO 10-05 13:50:55 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+(Worker_TP1 pid=932055) INFO 10-05 13:50:55 [kernel.py:295] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(Worker_TP0 pid=931964) INFO 10-05 13:50:55 [weight_utils.py:869] Filesystem type for checkpoints: XFS. Checkpoint size: 28.75 GiB. Available RAM: 972.63 GiB.
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:   0% Completed | 0/66 [00:00<?, ?it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards:  98% Completed | 65/66 [00:00<00:00, 377.09it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:   0% Completed | 0/66 [00:00<?, ?it/s]
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards:  98% Completed | 65/66 [00:00<00:00, 392.66it/s]
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:   0% Completed | 0/66 [00:00<?, ?it/s]
+(Worker_TP0 pid=931964) Loading safetensors checkpoint shards: 100% Completed | 66/66 [00:00<00:00, 77.58it/s]
+(Worker_TP0 pid=931964)  
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards:  98% Completed | 65/66 [00:00<00:00, 382.44it/s]
+(Worker_TP0 pid=931964) INFO 10-05 13:50:56 [default_loader.py:430] Loading weights took 0.90 seconds
+(Worker_TP1 pid=932033) INFO 10-05 13:50:57 [kernel.py:295] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(Worker_TP0 pid=931966) Loading safetensors checkpoint shards: 100% Completed | 66/66 [00:00<00:00, 78.52it/s]
+(Worker_TP0 pid=931966)  
+(Worker_TP0 pid=931965) Loading safetensors checkpoint shards: 100% Completed | 66/66 [00:00<00:00, 80.05it/s]
+(Worker_TP0 pid=931965)  
+(Worker_TP1 pid=932029) INFO 10-05 13:50:57 [llm_base_proposer.py:1475] Detected MTP model. Sharing target model embedding weights with the draft model.
+(Worker_TP1 pid=932029) INFO 10-05 13:50:57 [llm_base_proposer.py:1551] Detected MTP model. Sharing target model lm_head weights with the draft model.
+(Worker_TP0 pid=931964) INFO 10-05 13:50:57 [llm_base_proposer.py:1475] Detected MTP model. Sharing target model embedding weights with the draft model.
+(Worker_TP0 pid=931964) INFO 10-05 13:50:57 [llm_base_proposer.py:1551] Detected MTP model. Sharing target model lm_head weights with the draft model.
+(Worker_TP0 pid=931966) INFO 10-05 13:50:58 [llm_base_proposer.py:1475] Detected MTP model. Sharing target model embedding weights with the draft model.
+(Worker_TP0 pid=931966) INFO 10-05 13:50:58 [llm_base_proposer.py:1551] Detected MTP model. Sharing target model lm_head weights with the draft model.
+(Worker_TP0 pid=931965) INFO 10-05 13:50:59 [llm_base_proposer.py:1475] Detected MTP model. Sharing target model embedding weights with the draft model.
+(Worker_TP0 pid=931965) INFO 10-05 13:50:59 [llm_base_proposer.py:1551] Detected MTP model. Sharing target model lm_head weights with the draft model.
+(Worker_TP1 pid=932029) INFO 10-05 13:50:59 [interface.py:905] Setting attention block size to 1584 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP1 pid=932029) INFO 10-05 13:50:59 [interface.py:929] Padding mamba page size by 0.51% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP1 pid=932055) INFO 10-05 13:50:59 [llm_base_proposer.py:1475] Detected MTP model. Sharing target model embedding weights with the draft model.
+(Worker_TP1 pid=932055) INFO 10-05 13:50:59 [llm_base_proposer.py:1551] Detected MTP model. Sharing target model lm_head weights with the draft model.
+(Worker_TP0 pid=931966) INFO 10-05 13:50:59 [interface.py:905] Setting attention block size to 1584 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP0 pid=931966) INFO 10-05 13:50:59 [interface.py:929] Padding mamba page size by 0.51% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP0 pid=931964) INFO 10-05 13:50:59 [gpu_model_runner.py:5347] Model loading took 14.76 GiB memory and 14.135285 seconds
+(Worker_TP0 pid=931964) INFO 10-05 13:50:59 [interface.py:905] Setting attention block size to 1584 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP0 pid=931964) INFO 10-05 13:50:59 [interface.py:929] Padding mamba page size by 0.51% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP1 pid=932033) INFO 10-05 13:50:59 [llm_base_proposer.py:1475] Detected MTP model. Sharing target model embedding weights with the draft model.
+(Worker_TP1 pid=932033) INFO 10-05 13:50:59 [llm_base_proposer.py:1551] Detected MTP model. Sharing target model lm_head weights with the draft model.
+(Worker_TP1 pid=932055) INFO 10-05 13:51:00 [interface.py:905] Setting attention block size to 1584 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP1 pid=932055) INFO 10-05 13:51:00 [interface.py:929] Padding mamba page size by 0.51% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP0 pid=931965) INFO 10-05 13:51:00 [interface.py:905] Setting attention block size to 1584 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP0 pid=931965) INFO 10-05 13:51:00 [interface.py:929] Padding mamba page size by 0.51% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP0 pid=931964) INFO 10-05 13:51:00 [gpu_model_runner.py:6396] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(Worker_TP1 pid=932033) INFO 10-05 13:51:00 [interface.py:905] Setting attention block size to 1584 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP1 pid=932033) INFO 10-05 13:51:00 [interface.py:929] Padding mamba page size by 0.51% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP0 pid=931964) INFO 10-05 13:51:29 [backends.py:1094] Using cache directory: /root/.cache/vllm/torch_compile_cache/aaae0f3cc4/rank_0_0/backbone for vLLM's torch.compile
+(Worker_TP0 pid=931964) INFO 10-05 13:51:29 [backends.py:1155] Dynamo bytecode transform time: 13.66 s
+(Worker_TP0 pid=931964) INFO 10-05 13:51:34 [backends.py:378] Cache the graph of compile range (1, 8192) for later use
+(EngineCore_DP2 pid=929431) INFO 10-05 13:52:00 [shm_broadcast.py:705] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(EngineCore_DP0 pid=929126) INFO 10-05 13:52:01 [shm_broadcast.py:705] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(EngineCore_DP1 pid=929211) INFO 10-05 13:52:01 [shm_broadcast.py:705] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(Worker_TP0 pid=931964) INFO 10-05 13:52:39 [backends.py:393] Compiling a graph for compile range (1, 8192) takes 68.21 s
+(Worker_TP0 pid=931964) INFO 10-05 13:52:48 [decorators.py:708] saved AOT compiled function to /root/.cache/vllm/torch_compile_cache/torch_aot_compile/d34bd2b916c4ef8345e688984844eb06fa4d049f197372378e93995230d88aa7/rank_0_0/model
+(Worker_TP0 pid=931964) INFO 10-05 13:52:48 [monitor.py:53] torch.compile took 92.69 s in total
+(EngineCore_DP2 pid=929431) INFO 10-05 13:53:00 [shm_broadcast.py:705] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(EngineCore_DP0 pid=929126) INFO 10-05 13:53:01 [shm_broadcast.py:705] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(EngineCore_DP1 pid=929211) INFO 10-05 13:53:01 [shm_broadcast.py:705] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(EngineCore_DP2 pid=929431) INFO 10-05 13:54:00 [shm_broadcast.py:705] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(EngineCore_DP0 pid=929126) INFO 10-05 13:54:01 [shm_broadcast.py:705] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(EngineCore_DP1 pid=929211) INFO 10-05 13:54:01 [shm_broadcast.py:705] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(Worker_TP0 pid=931964) INFO 10-05 13:54:15 [monitor.py:81] Initial profiling/warmup run took 86.28 s
+(Worker_TP0 pid=931964) INFO 10-05 13:54:16 [backends.py:1094] Using cache directory: /root/.cache/vllm/torch_compile_cache/aaae0f3cc4/rank_0_0/eagle_head for vLLM's torch.compile
+(Worker_TP0 pid=931964) INFO 10-05 13:54:16 [backends.py:1155] Dynamo bytecode transform time: 1.00 s
+(Worker_TP0 pid=931964) INFO 10-05 13:54:30 [backends.py:393] Compiling a graph for compile range (1, 8192) takes 12.71 s
+(Worker_TP0 pid=931964) INFO 10-05 13:54:30 [decorators.py:708] saved AOT compiled function to /root/.cache/vllm/torch_compile_cache/torch_aot_compile/095267c1dd6a4421874fa7c0fcc29c032200e99f90154be4822d6de64dece291/rank_0_0/model
+(Worker_TP0 pid=931964) INFO 10-05 13:54:30 [monitor.py:53] torch.compile took 15.43 s in total
+(Worker_TP0 pid=931964) INFO 10-05 13:54:31 [monitor.py:81] Initial profiling/warmup run took 0.74 s
+(Worker_TP0 pid=931966) WARNING 10-05 13:54:42 [kv_cache_utils.py:1237] Add 3 padding layers, may waste at most 6.25% KV cache memory
+(Worker_TP0 pid=931966) WARNING 10-05 13:54:42 [compilation.py:1443] CUDAGraphMode.FULL_AND_PIECEWISE is not supported with spec-decode for attention backend FlashInferBackend (support: AttentionCGSupport.UNIFORM_SINGLE_TOKEN_DECODE); setting cudagraph_mode=PIECEWISE
+(Worker_TP0 pid=931966) INFO 10-05 13:54:42 [gpu_model_runner.py:6612] Profiling CUDA graph memory: PIECEWISE=10 (largest=96)
+(Worker_TP1 pid=932029) WARNING 10-05 13:54:42 [kv_cache_utils.py:1237] Add 3 padding layers, may waste at most 6.25% KV cache memory
+(Worker_TP1 pid=932029) WARNING 10-05 13:54:42 [compilation.py:1443] CUDAGraphMode.FULL_AND_PIECEWISE is not supported with spec-decode for attention backend FlashInferBackend (support: AttentionCGSupport.UNIFORM_SINGLE_TOKEN_DECODE); setting cudagraph_mode=PIECEWISE
+(Worker_TP1 pid=932029) INFO 10-05 13:54:42 [gpu_model_runner.py:6612] Profiling CUDA graph memory: PIECEWISE=10 (largest=96)
+(Worker_TP0 pid=931964) WARNING 10-05 13:54:43 [kv_cache_utils.py:1237] Add 3 padding layers, may waste at most 6.25% KV cache memory
+(Worker_TP0 pid=931964) WARNING 10-05 13:54:43 [compilation.py:1443] CUDAGraphMode.FULL_AND_PIECEWISE is not supported with spec-decode for attention backend FlashInferBackend (support: AttentionCGSupport.UNIFORM_SINGLE_TOKEN_DECODE); setting cudagraph_mode=PIECEWISE
+(Worker_TP0 pid=931964) INFO 10-05 13:54:43 [flashinfer.py:822] FlashInfer resolved query dtypes: prefill=torch.bfloat16, decode=torch.bfloat16, decode_backend=flashinfer-native, kv_cache_dtype=torch.float8_e4m3fn, arch=sm120
+(Worker_TP0 pid=931964) INFO 10-05 13:54:43 [gpu_model_runner.py:6612] Profiling CUDA graph memory: PIECEWISE=10 (largest=96)
+(Worker_TP1 pid=932055) WARNING 10-05 13:54:43 [kv_cache_utils.py:1237] Add 3 padding layers, may waste at most 6.25% KV cache memory
+(Worker_TP1 pid=932055) WARNING 10-05 13:54:43 [compilation.py:1443] CUDAGraphMode.FULL_AND_PIECEWISE is not supported with spec-decode for attention backend FlashInferBackend (support: AttentionCGSupport.UNIFORM_SINGLE_TOKEN_DECODE); setting cudagraph_mode=PIECEWISE
+(Worker_TP1 pid=932055) INFO 10-05 13:54:43 [gpu_model_runner.py:6612] Profiling CUDA graph memory: PIECEWISE=10 (largest=96)
+(Worker_TP1 pid=932029) INFO 10-05 13:54:44 [gpu_model_runner.py:6737] Estimated CUDA graph memory: 0.23 GiB total
+(Worker_TP0 pid=931966) INFO 10-05 13:54:44 [gpu_model_runner.py:6737] Estimated CUDA graph memory: 0.23 GiB total
+(Worker_TP1 pid=932029) INFO 10-05 13:54:45 [gpu_worker.py:575] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9200 is equivalent to --gpu-memory-utilization=0.9128 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9272. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(Worker_TP0 pid=931966) INFO 10-05 13:54:45 [gpu_worker.py:575] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9200 is equivalent to --gpu-memory-utilization=0.9128 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9272. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(EngineCore_DP2 pid=929431) WARNING 10-05 13:54:45 [kv_cache_utils.py:1237] Add 3 padding layers, may waste at most 6.25% KV cache memory
+(EngineCore_DP2 pid=929431) INFO 10-05 13:54:45 [kv_cache_utils.py:2177] GPU KV cache size: 683,853 tokens
+(EngineCore_DP2 pid=929431) INFO 10-05 13:54:45 [kv_cache_utils.py:2178] Maximum concurrency for 131,072 tokens per request: 5.22x
+(Worker_TP0 pid=931964) INFO 10-05 13:54:45 [gpu_model_runner.py:6737] Estimated CUDA graph memory: 0.23 GiB total
+(Worker_TP1 pid=932055) INFO 10-05 13:54:45 [gpu_model_runner.py:6737] Estimated CUDA graph memory: 0.23 GiB total
+(Worker_TP1 pid=932033) WARNING 10-05 13:54:46 [kv_cache_utils.py:1237] Add 3 padding layers, may waste at most 6.25% KV cache memory
+(Worker_TP1 pid=932033) WARNING 10-05 13:54:46 [compilation.py:1443] CUDAGraphMode.FULL_AND_PIECEWISE is not supported with spec-decode for attention backend FlashInferBackend (support: AttentionCGSupport.UNIFORM_SINGLE_TOKEN_DECODE); setting cudagraph_mode=PIECEWISE
+(Worker_TP0 pid=931964) INFO 10-05 13:54:46 [gpu_worker.py:560] Available KV cache memory: 12.33 GiB
+(Worker_TP0 pid=931964) INFO 10-05 13:54:46 [gpu_worker.py:575] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9200 is equivalent to --gpu-memory-utilization=0.9128 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9272. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(Worker_TP1 pid=932055) INFO 10-05 13:54:46 [gpu_worker.py:575] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9200 is equivalent to --gpu-memory-utilization=0.9128 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9272. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(EngineCore_DP0 pid=929126) WARNING 10-05 13:54:46 [kv_cache_utils.py:1237] Add 3 padding layers, may waste at most 6.25% KV cache memory
+(EngineCore_DP0 pid=929126) INFO 10-05 13:54:46 [kv_cache_utils.py:2177] GPU KV cache size: 683,853 tokens
+(EngineCore_DP0 pid=929126) INFO 10-05 13:54:46 [kv_cache_utils.py:2178] Maximum concurrency for 131,072 tokens per request: 5.22x
+(Worker_TP1 pid=932033) INFO 10-05 13:54:46 [gpu_model_runner.py:6612] Profiling CUDA graph memory: PIECEWISE=10 (largest=96)
+(Worker_TP0 pid=931965) WARNING 10-05 13:54:46 [kv_cache_utils.py:1237] Add 3 padding layers, may waste at most 6.25% KV cache memory
+(Worker_TP0 pid=931965) WARNING 10-05 13:54:46 [compilation.py:1443] CUDAGraphMode.FULL_AND_PIECEWISE is not supported with spec-decode for attention backend FlashInferBackend (support: AttentionCGSupport.UNIFORM_SINGLE_TOKEN_DECODE); setting cudagraph_mode=PIECEWISE
+(Worker_TP0 pid=931965) INFO 10-05 13:54:46 [gpu_model_runner.py:6612] Profiling CUDA graph memory: PIECEWISE=10 (largest=96)
+(Worker_TP0 pid=931966) INFO 10-05 13:54:46 [qwen_triton_warmup.py:370] Warming up Qwen Triton kernels for model_type=qwen3_5_text.
+(Worker_TP1 pid=932029) INFO 10-05 13:54:46 [qwen_triton_warmup.py:370] Warming up Qwen Triton kernels for model_type=qwen3_5_text.
+(Worker_TP0 pid=931964) INFO 10-05 13:54:47 [qwen_triton_warmup.py:370] Warming up Qwen Triton kernels for model_type=qwen3_5_text.
+(Worker_TP1 pid=932055) INFO 10-05 13:54:47 [qwen_triton_warmup.py:370] Warming up Qwen Triton kernels for model_type=qwen3_5_text.
+(Worker_TP1 pid=932033) INFO 10-05 13:54:48 [gpu_model_runner.py:6737] Estimated CUDA graph memory: 0.23 GiB total
+(Worker_TP0 pid=931965) INFO 10-05 13:54:48 [gpu_model_runner.py:6737] Estimated CUDA graph memory: 0.23 GiB total
+(Worker_TP1 pid=932033) INFO 10-05 13:54:48 [gpu_worker.py:575] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9200 is equivalent to --gpu-memory-utilization=0.9128 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9272. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(Worker_TP0 pid=931965) INFO 10-05 13:54:48 [gpu_worker.py:575] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9200 is equivalent to --gpu-memory-utilization=0.9128 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9272. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(EngineCore_DP1 pid=929211) WARNING 10-05 13:54:48 [kv_cache_utils.py:1237] Add 3 padding layers, may waste at most 6.25% KV cache memory
+(EngineCore_DP1 pid=929211) INFO 10-05 13:54:48 [kv_cache_utils.py:2177] GPU KV cache size: 683,853 tokens
+(EngineCore_DP1 pid=929211) INFO 10-05 13:54:48 [kv_cache_utils.py:2178] Maximum concurrency for 131,072 tokens per request: 5.22x
+(Worker_TP1 pid=932033) INFO 10-05 13:54:49 [qwen_triton_warmup.py:370] Warming up Qwen Triton kernels for model_type=qwen3_5_text.
+(Worker_TP0 pid=931965) INFO 10-05 13:54:49 [qwen_triton_warmup.py:370] Warming up Qwen Triton kernels for model_type=qwen3_5_text.
+(Worker_TP1 pid=932029) 2026-10-05 13:54:50,679 - INFO - autotuner.py:651 - flashinfer.jit: [Autotuner]: Autotuning process starts ...
+(Worker_TP0 pid=931966) 2026-10-05 13:54:50,897 - INFO - autotuner.py:651 - flashinfer.jit: [Autotuner]: Autotuning process starts ...
+(Worker_TP0 pid=931966) 2026-10-05 13:54:51,018 - INFO - autotuner.py:674 - flashinfer.jit: [Autotuner]: Autotuning process ends
+(Worker_TP1 pid=932029) 2026-10-05 13:54:51,018 - INFO - autotuner.py:674 - flashinfer.jit: [Autotuner]: Autotuning process ends
+(Worker_TP1 pid=932029) INFO 10-05 13:54:51 [kernel_warmup.py:65] Warming up ll_bf16 router GEMM kernels.
+(Worker_TP0 pid=931966) INFO 10-05 13:54:51 [kernel_warmup.py:65] Warming up ll_bf16 router GEMM kernels.
+(Worker_TP0 pid=931964) 2026-10-05 13:54:51,582 - INFO - autotuner.py:651 - flashinfer.jit: [Autotuner]: Autotuning process starts ...
+(Worker_TP1 pid=932055) 2026-10-05 13:54:51,608 - INFO - autotuner.py:651 - flashinfer.jit: [Autotuner]: Autotuning process starts ...
+(Worker_TP1 pid=932055) 2026-10-05 13:54:51,729 - INFO - autotuner.py:674 - flashinfer.jit: [Autotuner]: Autotuning process ends
+(Worker_TP0 pid=931964) 2026-10-05 13:54:51,729 - INFO - autotuner.py:674 - flashinfer.jit: [Autotuner]: Autotuning process ends
+(Worker_TP0 pid=931964) INFO 10-05 13:54:51 [kernel_warmup.py:65] Warming up ll_bf16 router GEMM kernels.
+(Worker_TP1 pid=932055) INFO 10-05 13:54:51 [kernel_warmup.py:65] Warming up ll_bf16 router GEMM kernels.
+(Worker_TP1 pid=932033) 2026-10-05 13:54:53,955 - INFO - autotuner.py:651 - flashinfer.jit: [Autotuner]: Autotuning process starts ...
+(Worker_TP0 pid=931965) 2026-10-05 13:54:53,992 - INFO - autotuner.py:651 - flashinfer.jit: [Autotuner]: Autotuning process starts ...
+(Worker_TP1 pid=932033) 2026-10-05 13:54:54,113 - INFO - autotuner.py:674 - flashinfer.jit: [Autotuner]: Autotuning process ends
+(Worker_TP0 pid=931965) 2026-10-05 13:54:54,113 - INFO - autotuner.py:674 - flashinfer.jit: [Autotuner]: Autotuning process ends
+(Worker_TP1 pid=932033) INFO 10-05 13:54:54 [kernel_warmup.py:65] Warming up ll_bf16 router GEMM kernels.
+(Worker_TP0 pid=931965) INFO 10-05 13:54:54 [kernel_warmup.py:65] Warming up ll_bf16 router GEMM kernels.
+(Worker_TP0 pid=931966) INFO 10-05 13:55:03 [cutedsl_warmup.py:101] Skipping CuTeDSL warmup because no compile units were requested.
+(Worker_TP1 pid=932029) INFO 10-05 13:55:03 [cutedsl_warmup.py:101] Skipping CuTeDSL warmup because no compile units were requested.
+(Worker_TP0 pid=931964) INFO 10-05 13:55:04 [cutedsl_warmup.py:101] Skipping CuTeDSL warmup because no compile units were requested.
+(Worker_TP0 pid=931964) INFO 10-05 13:55:04 [gpu_model_runner.py:6798] Rank 0: Torch profiler disabled for CUDA graph capture
+(Worker_TP0 pid=931966) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/10 [00:00<?, ?it/s](Worker_TP1 pid=932055) INFO 10-05 13:55:04 [cutedsl_warmup.py:101] Skipping CuTeDSL warmup because no compile units were requested.
+Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|█         | 1/10 [00:00<00:02,  4.40it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|██        | 2/10 [00:00<00:01,  6.02it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  30%|███       | 3/10 [00:00<00:00,  7.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  40%|████      | 4/10 [00:00<00:00,  7.81it/s](Worker_TP0 pid=931964) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/10 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  50%|█████     | 5/10 [00:00<00:00,  8.27it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  60%|██████    | 6/10 [00:00<00:00,  8.42it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|█         | 1/10 [00:00<00:01,  4.88it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  70%|███████   | 7/10 [00:00<00:00,  8.45it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|██        | 2/10 [00:00<00:01,  6.86it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 8/10 [00:01<00:00,  8.68it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  30%|███       | 3/10 [00:00<00:00,  7.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 9/10 [00:01<00:00,  8.87it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  40%|████      | 4/10 [00:00<00:00,  8.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 10/10 [00:01<00:00,  8.48it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 10/10 [00:01<00:00,  7.97it/s]
+Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  50%|█████     | 5/10 [00:00<00:00,  8.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  60%|██████    | 6/10 [00:00<00:00,  8.76it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  70%|███████   | 7/10 [00:00<00:00,  8.83it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 8/10 [00:00<00:00,  8.85it/s](Worker_TP1 pid=932029) INFO 10-05 13:55:06 [gpu_worker.py:793] CUDA graph pool memory: 0.19 GiB (actual), 0.23 GiB (estimated), difference: 0.04 GiB (20.8%).
+(Worker_TP1 pid=932029) INFO 10-05 13:55:06 [gpu_worker.py:857] Free memory on device (30.48/31.36 GiB) on startup. Desired GPU memory utilization is (0.92, 28.85 GiB). Actual usage is 14.76 GiB for weight, 1.47 GiB for peak activation, 0.05 GiB for non-torch memory, and 0.19 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13128918528` (12.23 GiB) to fit into requested memory, or `--kv-cache-memory=14877484544` (13.86 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.33 GiB.
+Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 9/10 [00:01<00:00,  8.85it/s](Worker_TP0 pid=931966) INFO 10-05 13:55:06 [gpu_worker.py:793] CUDA graph pool memory: 0.19 GiB (actual), 0.23 GiB (estimated), difference: 0.04 GiB (20.8%).
+(Worker_TP0 pid=931966) INFO 10-05 13:55:06 [gpu_worker.py:857] Free memory on device (30.48/31.36 GiB) on startup. Desired GPU memory utilization is (0.92, 28.85 GiB). Actual usage is 14.76 GiB for weight, 1.47 GiB for peak activation, 0.05 GiB for non-torch memory, and 0.19 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13128918528` (12.23 GiB) to fit into requested memory, or `--kv-cache-memory=14877484544` (13.86 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.33 GiB.
+Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 10/10 [00:01<00:00,  8.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 10/10 [00:01<00:00,  8.16it/s]
+(Worker_TP1 pid=932029) INFO 10-05 13:55:06 [jit_monitor.py:79] Kernel JIT monitor activated; monitored JIT compilations during inference will use mode=warn.
+(Worker_TP0 pid=931965) INFO 10-05 13:55:06 [cutedsl_warmup.py:101] Skipping CuTeDSL warmup because no compile units were requested.
+(Worker_TP0 pid=931966) INFO 10-05 13:55:06 [jit_monitor.py:79] Kernel JIT monitor activated; monitored JIT compilations during inference will use mode=warn.
+(Worker_TP1 pid=932033) INFO 10-05 13:55:07 [cutedsl_warmup.py:101] Skipping CuTeDSL warmup because no compile units were requested.
+(Worker_TP0 pid=931964) INFO 10-05 13:55:07 [gpu_model_runner.py:6844] Graph capturing finished in 3 secs, took 0.19 GiB
+(Worker_TP0 pid=931964) INFO 10-05 13:55:07 [gpu_worker.py:793] CUDA graph pool memory: 0.19 GiB (actual), 0.23 GiB (estimated), difference: 0.04 GiB (20.8%).
+(Worker_TP0 pid=931964) INFO 10-05 13:55:07 [gpu_worker.py:857] Free memory on device (30.48/31.36 GiB) on startup. Desired GPU memory utilization is (0.92, 28.85 GiB). Actual usage is 14.76 GiB for weight, 1.47 GiB for peak activation, 0.05 GiB for non-torch memory, and 0.19 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13128918528` (12.23 GiB) to fit into requested memory, or `--kv-cache-memory=14877484544` (13.86 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.33 GiB.
+(Worker_TP1 pid=932055) INFO 10-05 13:55:07 [gpu_worker.py:793] CUDA graph pool memory: 0.19 GiB (actual), 0.23 GiB (estimated), difference: 0.04 GiB (20.8%).
+(Worker_TP1 pid=932055) INFO 10-05 13:55:07 [gpu_worker.py:857] Free memory on device (30.48/31.36 GiB) on startup. Desired GPU memory utilization is (0.92, 28.85 GiB). Actual usage is 14.76 GiB for weight, 1.47 GiB for peak activation, 0.05 GiB for non-torch memory, and 0.19 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13128918528` (12.23 GiB) to fit into requested memory, or `--kv-cache-memory=14877484544` (13.86 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.33 GiB.
+(EngineCore_DP2 pid=929431) INFO 10-05 13:55:07 [core.py:340] init engine (profile, create kv cache, warmup model) took 248.10 s (compilation: 108.05 s)
+(Worker_TP0 pid=931965) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/10 [00:00<?, ?it/s](Worker_TP0 pid=931964) INFO 10-05 13:55:07 [jit_monitor.py:79] Kernel JIT monitor activated; monitored JIT compilations during inference will use mode=warn.
+(Worker_TP1 pid=932055) INFO 10-05 13:55:07 [jit_monitor.py:79] Kernel JIT monitor activated; monitored JIT compilations during inference will use mode=warn.
+(EngineCore_DP2 pid=929431) Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|█         | 1/10 [00:00<00:02,  3.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|██        | 2/10 [00:00<00:01,  5.43it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  30%|███       | 3/10 [00:00<00:01,  6.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  40%|████      | 4/10 [00:00<00:00,  7.42it/s](EngineCore_DP0 pid=929126) INFO 10-05 13:55:08 [core.py:340] init engine (profile, create kv cache, warmup model) took 248.16 s (compilation: 108.12 s)
+Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  50%|█████     | 5/10 [00:00<00:00,  7.92it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  60%|██████    | 6/10 [00:00<00:00,  8.29it/s](EngineCore_DP0 pid=929126) Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  70%|███████   | 7/10 [00:00<00:00,  8.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 8/10 [00:01<00:00,  8.67it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 9/10 [00:01<00:00,  8.79it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 10/10 [00:01<00:00,  8.40it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 10/10 [00:01<00:00,  7.69it/s]
+(Worker_TP1 pid=932033) INFO 10-05 13:55:09 [gpu_worker.py:793] CUDA graph pool memory: 0.19 GiB (actual), 0.23 GiB (estimated), difference: 0.04 GiB (20.8%).
+(Worker_TP1 pid=932033) INFO 10-05 13:55:09 [gpu_worker.py:857] Free memory on device (30.48/31.36 GiB) on startup. Desired GPU memory utilization is (0.92, 28.85 GiB). Actual usage is 14.76 GiB for weight, 1.47 GiB for peak activation, 0.05 GiB for non-torch memory, and 0.19 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13128918528` (12.23 GiB) to fit into requested memory, or `--kv-cache-memory=14877484544` (13.86 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.33 GiB.
+(Worker_TP0 pid=931965) INFO 10-05 13:55:09 [gpu_worker.py:793] CUDA graph pool memory: 0.19 GiB (actual), 0.23 GiB (estimated), difference: 0.04 GiB (20.8%).
+(Worker_TP0 pid=931965) INFO 10-05 13:55:09 [gpu_worker.py:857] Free memory on device (30.48/31.36 GiB) on startup. Desired GPU memory utilization is (0.92, 28.85 GiB). Actual usage is 14.76 GiB for weight, 1.47 GiB for peak activation, 0.05 GiB for non-torch memory, and 0.19 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13128918528` (12.23 GiB) to fit into requested memory, or `--kv-cache-memory=14877484544` (13.86 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.33 GiB.
+(Worker_TP0 pid=931965) INFO 10-05 13:55:09 [jit_monitor.py:79] Kernel JIT monitor activated; monitored JIT compilations during inference will use mode=warn.
+(Worker_TP1 pid=932033) INFO 10-05 13:55:09 [jit_monitor.py:79] Kernel JIT monitor activated; monitored JIT compilations during inference will use mode=warn.
+(EngineCore_DP1 pid=929211) INFO 10-05 13:55:10 [core.py:340] init engine (profile, create kv cache, warmup model) took 249.77 s (compilation: 110.48 s)
+(EngineCore_DP1 pid=929211) Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+(EngineCore_DP2 pid=929431) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(EngineCore_DP0 pid=929126) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(EngineCore_DP1 pid=929211) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+INFO 10-05 13:55:21 [coordinator.py:249] All engine subscriptions received by DP coordinator
+(EngineCore_DP1 pid=929211) INFO 10-05 13:55:21 [vllm.py:1109] Asynchronous scheduling is enabled.
+(EngineCore_DP2 pid=929431) INFO 10-05 13:55:21 [vllm.py:1109] Asynchronous scheduling is enabled.
+(EngineCore_DP0 pid=929126) INFO 10-05 13:55:21 [vllm.py:1109] Asynchronous scheduling is enabled.
+(ApiServer_2 pid=929810) WARNING 10-05 13:55:21 [loggers.py:1340] AsyncLLM created with api_server_count more than 1; disabling stats logging to avoid incomplete stats.
+(ApiServer_0 pid=929808) WARNING 10-05 13:55:21 [loggers.py:1340] AsyncLLM created with api_server_count more than 1; disabling stats logging to avoid incomplete stats.
+(EngineCore_DP1 pid=929211) INFO 10-05 13:55:21 [kernel.py:295] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(EngineCore_DP2 pid=929431) INFO 10-05 13:55:21 [kernel.py:295] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(EngineCore_DP0 pid=929126) INFO 10-05 13:55:21 [kernel.py:295] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(ApiServer_1 pid=929809) WARNING 10-05 13:55:21 [loggers.py:1340] AsyncLLM created with api_server_count more than 1; disabling stats logging to avoid incomplete stats.
+(EngineCore_DP1 pid=929211) INFO 10-05 13:55:21 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+INFO 10-05 13:55:21 [utils.py:536] Waiting for API servers to complete ...
+(EngineCore_DP2 pid=929431) INFO 10-05 13:55:21 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+(EngineCore_DP0 pid=929126) INFO 10-05 13:55:21 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+(ApiServer_2 pid=929810) (ApiServer_0 pid=929808) INFO 10-05 13:55:21 [api_server.py:673] Supported tasks: ['generate']
+INFO 10-05 13:55:21 [api_server.py:673] Supported tasks: ['generate']
+(ApiServer_1 pid=929809) INFO 10-05 13:55:21 [api_server.py:673] Supported tasks: ['generate']
+(ApiServer_2 pid=929810) INFO 10-05 13:55:21 [parser_manager.py:37] "auto" tool choice has been enabled.
+(ApiServer_0 pid=929808) INFO 10-05 13:55:21 [parser_manager.py:37] "auto" tool choice has been enabled.
+(ApiServer_1 pid=929809) INFO 10-05 13:55:21 [parser_manager.py:37] "auto" tool choice has been enabled.
+(ApiServer_2 pid=929810) WARNING 10-05 13:55:21 [model.py:1546] Default vLLM sampling parameters have been overridden by the model's `generation_config.json`: `{'temperature': 1.0, 'top_k': 20, 'top_p': 0.95}`. If this is not intended, please relaunch vLLM instance with `--generation-config vllm`.
+(ApiServer_0 pid=929808) WARNING 10-05 13:55:21 [model.py:1546] Default vLLM sampling parameters have been overridden by the model's `generation_config.json`: `{'temperature': 1.0, 'top_k': 20, 'top_p': 0.95}`. If this is not intended, please relaunch vLLM instance with `--generation-config vllm`.
+(ApiServer_1 pid=929809) WARNING 10-05 13:55:21 [model.py:1546] Default vLLM sampling parameters have been overridden by the model's `generation_config.json`: `{'temperature': 1.0, 'top_k': 20, 'top_p': 0.95}`. If this is not intended, please relaunch vLLM instance with `--generation-config vllm`.
+(ApiServer_0 pid=929808) INFO 10-05 13:55:23 [hf.py:540] Detected the chat template content format to be 'openai'. You can set `--chat-template-content-format` to override this.
+(ApiServer_1 pid=929809) INFO 10-05 13:55:23 [hf.py:540] Detected the chat template content format to be 'openai'. You can set `--chat-template-content-format` to override this.
+(ApiServer_2 pid=929810) INFO 10-05 13:55:23 [hf.py:540] Detected the chat template content format to be 'openai'. You can set `--chat-template-content-format` to override this.
+(ApiServer_0 pid=929808) INFO 10-05 13:55:37 [base.py:236] Multi-modal warmup completed in 14.124s
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [base.py:236] Readonly multi-modal warmup completed in 1.291s
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [api_server.py:677] Starting vLLM server on http://127.0.0.1:10000
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:37] Available routes are:
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /openapi.json, Methods: HEAD, GET
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /docs, Methods: HEAD, GET
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /docs/oauth2-redirect, Methods: HEAD, GET
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /redoc, Methods: HEAD, GET
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /load, Methods: GET
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /version, Methods: GET
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /health, Methods: GET
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /metrics, Methods: GET
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /tokenize, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /detokenize, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /v1/models, Methods: GET
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /ping, Methods: GET
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /ping, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /invocations, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /v1/chat/completions, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /v1/chat/completions/batch, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /v1/responses, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /v1/responses/{response_id}, Methods: GET
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /v1/responses/{response_id}/cancel, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /v1/completions, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /v1/messages, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /v1/messages/count_tokens, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /generative_scoring, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /scale_elastic_ep, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /is_scaling_elastic_ep, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /v1/chat/completions/render, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /v1/completions/render, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /v1/chat/completions/derender, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /v1/completions/derender, Methods: POST
+(ApiServer_0 pid=929808) INFO 10-05 13:55:38 [launcher.py:46] Route: /inference/v1/generate, Methods: POST
+(ApiServer_0 pid=929808) INFO:     Started server process [929808]
+(ApiServer_0 pid=929808) INFO:     Waiting for application startup.
+(ApiServer_0 pid=929808) INFO:     Application startup complete.
+(ApiServer_0 pid=929808) INFO:     127.0.0.1:59982 - "GET /health HTTP/1.1" 200 OK
+(Worker_TP0 pid=931964) WARNING 10-05 13:55:40 [jit_monitor.py:135] Triton kernel JIT compilation during inference: _compute_slot_mapping_kernel. This causes a latency spike; consider extending warmup to cover this shape/config.
+(Worker_TP0 pid=931964) WARNING 10-05 13:55:41 [jit_monitor.py:135] Triton kernel JIT compilation during inference: _copy_page_indices_kernel. This causes a latency spike; consider extending warmup to cover this shape/config.
+(Worker_TP0 pid=931964) WARNING 10-05 13:55:42 [jit_monitor.py:135] Triton kernel JIT compilation during inference: _causal_conv1d_update_kernel. This causes a latency spike; consider extending warmup to cover this shape/config.
+(Worker_TP0 pid=931964) WARNING 10-05 13:55:43 [jit_monitor.py:135] Triton kernel JIT compilation during inference: fused_recurrent_gated_delta_rule_packed_decode_kernel. This causes a latency spike; consider extending warmup to cover this shape/config.
+(Worker_TP0 pid=931964) WARNING 10-05 13:55:44 [jit_monitor.py:135] Triton kernel JIT compilation during inference: postprocess_mamba_fused_kernel. This causes a latency spike; consider extending warmup to cover this shape/config.
+(Worker_TP0 pid=931964) WARNING 10-05 13:55:44 [jit_monitor.py:135] Triton kernel JIT compilation during inference: eagle_prepare_next_token_padded_kernel. This causes a latency spike; consider extending warmup to cover this shape/config.
+(ApiServer_0 pid=929808) INFO:     127.0.0.1:59996 - "POST /v1/completions HTTP/1.1" 200 OK
+(ApiServer_0 pid=929808) INFO:     127.0.0.1:58494 - "GET /metrics HTTP/1.1" 200 OK
+(ApiServer_1 pid=929809) INFO 10-05 13:55:47 [base.py:236] Multi-modal warmup completed in 23.688s
+(ApiServer_2 pid=929810) INFO 10-05 13:55:47 [base.py:236] Multi-modal warmup completed in 24.201s
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [base.py:236] Readonly multi-modal warmup completed in 1.303s
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [api_server.py:677] Starting vLLM server on http://127.0.0.1:10000
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:37] Available routes are:
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /openapi.json, Methods: HEAD, GET
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /docs, Methods: HEAD, GET
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /docs/oauth2-redirect, Methods: HEAD, GET
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /redoc, Methods: HEAD, GET
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /load, Methods: GET
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /version, Methods: GET
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /health, Methods: GET
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /metrics, Methods: GET
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /tokenize, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /detokenize, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /v1/models, Methods: GET
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /ping, Methods: GET
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /ping, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /invocations, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /v1/chat/completions, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /v1/chat/completions/batch, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /v1/responses, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /v1/responses/{response_id}, Methods: GET
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /v1/responses/{response_id}/cancel, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /v1/completions, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /v1/messages, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /v1/messages/count_tokens, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /generative_scoring, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /scale_elastic_ep, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /is_scaling_elastic_ep, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /v1/chat/completions/render, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /v1/completions/render, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /v1/chat/completions/derender, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /v1/completions/derender, Methods: POST
+(ApiServer_1 pid=929809) INFO 10-05 13:55:48 [launcher.py:46] Route: /inference/v1/generate, Methods: POST
+(ApiServer_1 pid=929809) INFO:     Started server process [929809]
+(ApiServer_1 pid=929809) INFO:     Waiting for application startup.
+(ApiServer_0 pid=929808) INFO:     127.0.0.1:58504 - "GET /metrics HTTP/1.1" 200 OK
+(ApiServer_2 pid=929810) INFO 10-05 13:55:48 [base.py:236] Readonly multi-modal warmup completed in 1.162s
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [api_server.py:677] Starting vLLM server on http://127.0.0.1:10000
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:37] Available routes are:
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /openapi.json, Methods: GET, HEAD
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /docs, Methods: GET, HEAD
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /docs/oauth2-redirect, Methods: GET, HEAD
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /redoc, Methods: GET, HEAD
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /load, Methods: GET
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /version, Methods: GET
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /health, Methods: GET
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /metrics, Methods: GET
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /tokenize, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /detokenize, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /v1/models, Methods: GET
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /ping, Methods: GET
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /ping, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /invocations, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /v1/chat/completions, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /v1/chat/completions/batch, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /v1/responses, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /v1/responses/{response_id}, Methods: GET
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /v1/responses/{response_id}/cancel, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /v1/completions, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /v1/messages, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /v1/messages/count_tokens, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /generative_scoring, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /scale_elastic_ep, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /is_scaling_elastic_ep, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /v1/chat/completions/render, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /v1/completions/render, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /v1/chat/completions/derender, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /v1/completions/derender, Methods: POST
+(ApiServer_2 pid=929810) INFO 10-05 13:55:49 [launcher.py:46] Route: /inference/v1/generate, Methods: POST
+(ApiServer_2 pid=929810) INFO:     Started server process [929810]
+(ApiServer_2 pid=929810) INFO:     Waiting for application startup.
+(ApiServer_0 pid=929808) INFO:     127.0.0.1:58506 - "GET /metrics HTTP/1.1" 200 OK
+(ApiServer_0 pid=929808) INFO:     127.0.0.1:58512 - "GET /health HTTP/1.1" 200 OK
+(ApiServer_1 pid=929809) INFO:     Application startup complete.
+(ApiServer_2 pid=929810) INFO:     Application startup complete.

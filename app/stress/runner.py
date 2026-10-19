@@ -1714,15 +1714,28 @@ class WardenEngineControl:
         await _restart(self._settings, self._app_state, self._row.id, overrides)
 
     async def wait_for_health(self) -> bool:
+        from app.runtime.load_progress.policy import StallPolicy  # noqa: PLC0415
         from app.runtime.supervisor import wait_for_health  # noqa: PLC0415
 
         target = self.target()
         if target is None:
             return False
+        # 2026-10-18 — use the stall policy's absolute cap (``load_max_s``)
+        # as the timeout, matching the watcher in ``start_engine``.  The
+        # reload itself goes through ``_restart`` → ``start_engine``, which
+        # already runs the stall watcher and reports a give-up as a failed
+        # load; this second ``wait_for_health`` is a quick re-check that
+        # must not give up before the watcher's cap.  ``StallPolicy.max_s``
+        # is the same value ``start_engine`` passes as ``timeout_s``.
+        policy = StallPolicy.from_settings(self._settings)
+        sup = self._app_state.supervisor
         return await wait_for_health(
             port=target.port,
             host=target.host,
-            timeout_s=float(getattr(self._settings, "load_timeout_s", 600.0)),
+            timeout_s=policy.max_s,
+            # A give-up unloads the engine: stop polling its dead port at once
+            # instead of running out the cap (a "won't load" answer, not a 2 h wait).
+            alive=lambda: sup.is_running(self._row.id),
         )
 
     async def warmup(self) -> bool:

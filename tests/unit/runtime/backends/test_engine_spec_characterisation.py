@@ -51,6 +51,7 @@ class _DeadHandle:
 
 class _Settings:
     engine_driver = "local"
+    load_max_s = 7200.0
 
     def __init__(self, tmp_path):
         self.data_dir = str(tmp_path)

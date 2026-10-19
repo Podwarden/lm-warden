@@ -17,6 +17,7 @@ from tests.fakes.fake_engine import FakeDriver, FakeHandle
 class _Settings:
     def __init__(self, tmp_path):
         self.data_dir = str(tmp_path)
+        self.load_max_s = 7200.0
 
 
 def test_sweep_rotates_only_logs_of_live_engines(tmp_path):

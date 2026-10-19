@@ -11,8 +11,9 @@
             never seen the conversation, so it reads the whole history again. LM Warden places each
             new conversation on the least-loaded replica (requests in flight, how full its cache is,
             and how many live conversations it holds) and keeps it there, using the session id
-            Claude Code already sends. It moves a request only when that replica has 8 requests in
-            flight (the spill threshold).
+            Claude Code already sends. It moves a request only when that replica passes its spill
+            threshold: in-flight requests above a quarter of the model’s concurrent-sequence limit
+            by default, 8 on our four-card box.
           </p>
         </div>
 

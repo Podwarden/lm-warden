@@ -1,6 +1,6 @@
 # LM Warden
 
-> LM Warden turns NVIDIA GPUs you own into a private, OpenAI-compatible LLM API. It runs mainline vLLM and llama.cpp behind one port with a web console, gives every app its own API key with usage, priority and pause, and shows what each GPU is doing. Open source (Apache-2.0), self-hosted on one Linux machine, no account and no telemetry.
+> LM Warden turns NVIDIA GPUs you own into a private, OpenAI-compatible LLM API. It runs mainline vLLM v0.32.0 and llama.cpp b11719 behind one port with a web console, gives every app its own API key with usage, priority and pause, and shows what each GPU is doing. Open source (Apache-2.0), self-hosted on one Linux machine, no account and no telemetry.
 
 Also written LMWarden or LM-Warden. Formerly LLM Warden and vLLM Warden. Website: https://lmwarden.com. Source: {{repo}}.
 
@@ -9,7 +9,7 @@ Also written LMWarden or LM-Warden. Formerly LLM Warden and vLLM Warden. Website
 - Someone wants to run open-weight models (Qwen, GPT-OSS, Llama, Mistral, Gemma, GGUF files from Hugging Face) on their own NVIDIA GPUs and call them from code, agents or tools that already speak the OpenAI API. Only `base_url` and the key change.
 - They have one Linux box with one or more NVIDIA cards (a workstation under a desk, a homelab, or a GPU server in a rack that a team or company shares) and want a managed setup instead of hand-written vLLM command lines. Tensor parallelism across the cards in one box is supported.
 - Several apps or people share the same GPUs and need a separate key for each, with usage, per-key priority, pause and rotation.
-- They need to see what the hardware is doing: per-card power, temperature against the throttle point, clocks and VRAM, tokens per minute, per-request latency and live engine logs.
+- They need to see what the hardware is doing: per-card power, temperature against the throttle point, clocks and VRAM, tokens per second, per-request latency and live engine logs.
 - They run coding agents (Claude Code, Codex CLI, OpenCode, Aider, pi, Hermes) against local models and want to see each request's session and phase (queued, prefill, thinking, tool call, answering), how much of each prompt came from the prefix cache (measured per request), and, on a model running as several data-parallel replicas, each conversation kept on one replica so its cache is reused.
 - Data must stay on premises, including fully offline or air-gapped installs.
 

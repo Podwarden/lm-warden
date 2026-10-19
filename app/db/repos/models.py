@@ -304,23 +304,6 @@ class ModelRepo:
             )
         await self._commit()
 
-    async def note_progress(self, model_id: str, message: str) -> None:
-        """Write ``last_error`` only, touching neither ``status`` nor
-        ``prior_status``.
-
-        Used by a load still in progress past its soft deadline to surface
-        "still loading, engine alive" to the UI without the side effects
-        ``update_status`` carries: writing through it would flip status
-        through a non-``failed`` branch and clear ``prior_status``, which
-        would silently defeat the restart-after-crash recovery a genuinely
-        in-flight restore is relying on (see ``set_prior_status`` above).
-        """
-        await self.db.execute(
-            "UPDATE models SET last_error = ?, updated_at = datetime('now') WHERE id = ?",
-            (message, model_id),
-        )
-        await self._commit()
-
     async def set_prior_status(self, model_id: str, prior: str | None) -> None:
         """Record which status was interrupted, independent of ``last_error``.
 

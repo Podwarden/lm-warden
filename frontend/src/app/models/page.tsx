@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ModelCard, type ModelRow } from "@/components/models/model-card";
 import { AddModelModal } from "@/components/models/add-model-modal";
+import { useActiveLoadProgress } from "@/lib/load-progress";
 
 interface ModelsResponse {
   models: ModelRow[];
@@ -32,8 +33,14 @@ export default function ModelsPage() {
       refreshInterval: 5000,
     },
   );
-
+  // Active load-progress for the compact card bars (Task 8).  Polls the
+  // all-models endpoint every 2 s, but only while at least one model in the
+  // list is loading — no point polling when the fleet is idle.  The list
+  // page's own 5 s poll keeps ``anyLoading`` fresh between ticks.
   const models = data?.models ?? [];
+  const anyLoading = models.some((m) => m.status === "loading");
+  const activeLoads = useActiveLoadProgress(anyLoading);
+
   const hasModels = !isLoading && !error && models.length > 0;
   const isEmpty = !isLoading && !error && models.length === 0;
 
@@ -77,7 +84,11 @@ export default function ModelsPage() {
       {hasModels && (
         <div className="grid gap-4 md:grid-cols-2">
           {models.map((m) => (
-            <ModelCard key={m.id} model={m} />
+            <ModelCard
+              key={m.id}
+              model={m}
+              loadProgress={activeLoads?.find((p) => p.model_id === m.id)}
+            />
           ))}
         </div>
       )}

@@ -6,7 +6,7 @@
         <h2>Set it up in three steps</h2>
         <ol>
           <li><strong>Install LM Warden</strong> on the GPU host (the command is at the bottom of this page) and finish the setup wizard.</li>
-          <li><strong>Issue an admin token</strong> in Settings → Admin tokens, with an expiry of 30 days. Export it as <code>VW_ADMIN_TOKEN</code> and the warden’s address as <code>W</code> in the shell your agent uses.</li>
+          <li><strong>Issue an admin token</strong> in Settings → Access Tokens, with an expiry of 30 days. Export it as <code>VW_ADMIN_TOKEN</code> and the warden’s address as <code>W</code> in the shell your agent uses.</li>
           <li><strong>Start your agent</strong>: <a href="/coding-agents/claude-code">Claude Code</a>, <a href="/coding-agents/codex-cli">Codex&nbsp;CLI</a> or another one that can run shell commands. It can use a hosted model for this job; the model it is tuning is the one on your cards.</li>
         </ol>
 
@@ -57,7 +57,7 @@ Write the results to ./model-comparison.md with a recommendation, and leave the 
           <li>An admin token has full admin rights over the warden: models, keys and settings. There are no narrower scopes yet. Give it a short expiry.</li>
           <li>A stress run deliberately crashes an engine to find its limit. Run these prompts on a warden nobody else depends on.</li>
           <li>Downloads are large. The prompts ask the agent to check fit before pulling, but watch your disk.</li>
-          <li>Revoke the admin token in Settings → Admin tokens when the job is done.</li>
+          <li>Revoke the admin token in Settings → Access Tokens when the job is done.</li>
         </ul>
         <p class="related">Related: <a href="/coding-agents">coding agents</a> · <a href="/gpu-monitoring">GPU monitoring</a> · <a href="/faq">FAQ</a></p>
       </div>

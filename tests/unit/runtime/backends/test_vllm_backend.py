@@ -206,6 +206,7 @@ def test_plan_reproduces_the_golden_launch(case):
         hf_token=case.hf_token,
         hf_cache_dir=case.hf_cache_dir,
         engine_driver=case.driver,
+        load_max_s=7200.0,
     )
     assert isinstance(plan, LaunchPlan)
     # argv[0:2] is the launch head that used to be hard-coded in the driver.

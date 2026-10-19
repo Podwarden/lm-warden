@@ -9,7 +9,7 @@ from app.runtime.supervisor import ModelState, Supervisor, UnloadRefused
 
 
 class _Settings:
-    pass
+    load_max_s = 7200.0
 
 
 def _make_sup(tmp_path):

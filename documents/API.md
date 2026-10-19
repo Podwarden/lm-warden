@@ -280,6 +280,75 @@ entirely: if the row changes underneath it, the refusal lands after the unload,
 the engine is restarted before the `422` is returned, and a restart that itself
 fails leaves the row `failed` for the watchdog.
 
+### Watching a load
+
+`POST /api/models/{id}/load` answers `202` and the row's `status` walks to
+`loading`, but the row alone does not say *where* the load is. Two endpoints do.
+Both are JWT-gated (an admin token works too) and return the same shape:
+
+- `GET /api/models/{model_id}/load-progress` — one model's live load. `404`
+  when no load is in flight for `model_id` (it finished, never started, or was
+  superseded — poll `GET /api/models/{model_id}` for the row's `status`).
+- `GET /api/models/load-progress` — every active load at once, for the
+  dashboard cards. An empty array when nothing is loading. Registered before
+  `/{model_id}` so the path `load-progress` is not captured as a model id.
+
+```bash
+# One model's load (404 when nothing is loading for it).
+curl -s $W/api/models/$M/load-progress "${AUTH[@]}"
+
+# Every active load (empty array when none).
+curl -s $W/api/models/load-progress "${AUTH[@]}"
+```
+
+The response is a snapshot built every poll (the UI polls roughly every 2 s)
+and is total — it never raises mid-load. Its fields:
+
+| Field | Meaning |
+|-------|---------|
+| `model_id` | The model being loaded. |
+| `backend` | `vllm` or `llamacpp`. |
+| `layout` | A human-readable parallelism label (e.g. `3 replicas × TP2`, `TP2`), or `null` for a single-engine TP1 load, or when the model row was deleted mid-load. |
+| `elapsed_s` | Seconds since the load started (monotonic). |
+| `state` | `progressing` (no stall), `stalled` (amber — no progress for `VW_LOAD_STALL_WARN_S`), or `give_up` (the warden is stopping the engine — no progress for `VW_LOAD_STALL_TIMEOUT_S`, or the absolute cap `VW_LOAD_MAX_S` was reached). |
+| `stalled_for_s` | How long the load has been stalled (0 while progressing). |
+| `give_up_at` | The wall-clock datetime the load will be given up at if nothing moves, or `null`. |
+| `reason` | Plain-English reason for a `stalled`/`give_up` verdict (e.g. an NCCL init guess), or `null`. |
+| `hint` | A short suggested action for a `stalled`/`give_up` verdict, or `null`. |
+| `usual_total_s` | The median total load time from the last five successful loads with the same engine settings, or `null` when no history exists yet. |
+| `ready_eta` | A wall-clock datetime estimate of when the load will finish, based on `usual_total_s`, or `null` without history. |
+| `current_step` | The key of the running step (one of `START`, `WEIGHTS`, `COMPILE`, `KV`, `TUNE`, `GRAPHS`, `WARMUP`). |
+| `steps` | The step checklist — see `StepOut` below. |
+| `vitals` | Vital signs — see `VitalsOut` below. |
+
+Each entry in `steps` (`StepOut`):
+
+| Field | Meaning |
+|-------|---------|
+| `key` | Step key: `START`, `WEIGHTS`, `COMPILE`, `KV`, `TUNE`, `GRAPHS`, `WARMUP` (vLLM); llama.cpp uses `START`, `WEIGHTS`, `WARMUP` only. |
+| `label` | Human-readable step label (e.g. "Load weights", "Tune kernels"). |
+| `status` | `done` (the step ended), `running` (the first not-done step that has started, or the first not-done step while progressing), `stalled` (that same step when the verdict is not progressing), `pending`, or `skipped` (a step the engine never reports, e.g. `TUNE` on a model with no AutoTuner, once a later step has started). |
+| `duration_s` | The step's duration when done, or `null`. |
+| `elapsed_s` | The step's elapsed time while running, or `null`. |
+| `count` / `total` | The step's counter progress (e.g. weights shards `30/66`, CUDA graphs `8/10`, AutoTuner ops `5/22`), or `null`. |
+| `usual_s` | The historical per-step duration from load history, or `null` without history. |
+| `detail` | Step-specific extra text (e.g. `"trtllm_fp4_block_scale_moe · op 2"` for `TUNE`), or `null`. |
+
+`vitals` (`VitalsOut`) — a time series of up to 120 points:
+
+| Field | Meaning |
+|-------|---------|
+| `series` | One point per vitals sample (downsampled to ≤ 120 evenly spaced points plus the newest). Each point has `t_s` (seconds since load start), `cpu_cores` (cores busy, `ΔCPU-s / Δt`; `null` for the first point or when a sample is missing), and `gpu_mem_mib` (GPU memory used, in MiB; `null` when the probe failed). |
+| `gpu_mem_total_mib` | The summed capacity of the model's GPUs, in MiB, or `null` when not known (e.g. the docker driver). |
+| `last_log_age_s` | Seconds since the engine last wrote a log line. |
+| `last_log_line` | The last log line, truncated to ≤ 200 characters. |
+| `log_quiet_normal` | `true` when the log has been quiet for > 60 s while CPU or GPU memory still moved — a "slow but alive" signal. |
+
+Progress means: a new log line, a step or counter change, GPU memory growth,
+or disk reads. A stuck load (no progress past the stall timeout, or past the
+absolute cap) is stopped — the engine is killed and the GPUs released — and the
+model is marked `failed` with the stall reason. There is no automatic retry.
+
 ---
 
 ## Managing a key from the API

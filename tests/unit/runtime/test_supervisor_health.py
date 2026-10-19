@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import time
 from unittest.mock import AsyncMock, patch
@@ -177,3 +178,51 @@ async def test_wait_for_health_fires_on_soft_timeout_once():
         )
     assert ok is False
     assert fired["n"] == 1
+
+
+@pytest.mark.asyncio
+async def test_wait_for_health_returns_false_when_stop_set():
+    """2026-10-18 — when ``stop`` is set, the loop returns ``False`` on its
+    next tick instead of running out the deadline.  The stall watcher sets
+    ``stop`` after a give-up so the health wait returns promptly."""
+    stop = asyncio.Event()
+    stop.set()
+
+    async def never_200(url, timeout):  # noqa: ASYNC109
+        raise Exception("conn refused")
+
+    with patch("app.runtime.supervisor._http_get", new=AsyncMock(side_effect=never_200)):
+        start = time.monotonic()
+        ok = await wait_for_health(
+            port=10001,
+            timeout_s=10.0,
+            interval_s=0.02,
+            stop=stop,
+        )
+        elapsed = time.monotonic() - start
+    assert ok is False
+    # Must return almost immediately — the stop event was already set.
+    assert elapsed < 1.0, f"expected fast return on stop, took {elapsed:.3f}s"
+
+
+@pytest.mark.asyncio
+async def test_wait_for_health_uses_backend_health_path():
+    """2026-10-18 — the ``path`` parameter selects which URL the loop polls.
+    Both vLLM and llama.cpp use ``/health`` today, but a future backend with
+    a different path must not need a code change in ``wait_for_health``."""
+    captured_urls: list[str] = []
+
+    async def fake_get(url, timeout):  # noqa: ASYNC109
+        captured_urls.append(url)
+        raise Exception("conn refused")
+
+    with patch("app.runtime.supervisor._http_get", new=AsyncMock(side_effect=fake_get)):
+        await wait_for_health(
+            port=10001,
+            timeout_s=0.05,
+            interval_s=0.02,
+            path="/custom/health",
+        )
+    assert captured_urls, "the health loop should have made at least one request"
+    for url in captured_urls:
+        assert url == "http://127.0.0.1:10001/custom/health", f"expected the custom path, got {url}"

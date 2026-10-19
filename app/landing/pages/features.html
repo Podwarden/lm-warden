@@ -19,7 +19,7 @@
 
     <section class="sec" aria-labelledby="lessons-title">
       <div class="wrap">
-        <h2 id="lessons-title">Two things we learned the hard way.</h2>
+        <h2 id="lessons-title">Three things we learned the hard way.</h2>
 
         <article class="note with-fig">
           <div class="note-text">
@@ -50,6 +50,29 @@
 
         <article class="note">
           <div class="note-text">
+            <h3>A 12-minute load used to end in an error.</h3>
+            <p>
+              A large model can take twelve minutes or more to load. Until now the warden
+              watched a fixed clock: at the deadline it wrote a red “still loading” error
+              into the model, though the engine kept loading. The model page now shows every
+              load step with its progress bar, the usual time for each from earlier loads,
+              and the CPU and GPU-memory vital signs. A stalled load is stopped and its
+              GPUs freed; nothing turns red while a load is still moving. GLM-5.2 NVFP4
+              at tensor-parallel&nbsp;8 on eight NVIDIA B300s loads in about 11 to 12 minutes;
+              a load that long used to hit the 600&#8239;s timeout.
+            </p>
+          </div>
+          <figure>
+            <div class="shot">
+              <img src="{{a:shot-load-progress.webp}}" width="1700" height="1050" loading="lazy" decoding="async"
+                   alt="The model page while GLM-5.2 NVFP4 loads on eight NVIDIA B300s: 9 min 17 s into a usual 10 min 46 s; Start engine, Load weights 47 of 47, Compile kernels and Size KV cache done; Tune kernels at op 2, 21 of 22; CPU and GPU-memory charts with 1948 of 2149&#8239;GiB in use; Capture CUDA graphs and Warm-up request still to come, each with its usual time">
+            </div>
+            <figcaption><b>Fig.&nbsp;16</b>GLM-5.2 NVFP4 loading at tensor-parallel 8 on eight B300s, nine minutes in. Kernel tuning is the long step; the charts show the engine is alive while the log only repeats tuning progress.</figcaption>
+          </figure>
+        </article>
+
+        <article class="note">
+          <div class="note-text">
             <h3>A 16&#8239;GiB card holds less than the arithmetic says.</h3>
             <p>
               The weights of a bf16 8B model are about 15&#8239;GiB on their own, and it runs out
@@ -68,7 +91,7 @@
                 <tr><th scope="row">Two models at once</th><td data-h="Works">One model per card, each fitting its own card</td><td data-h="Does not">Two models sharing one card</td></tr>
               </tbody>
             </table>
-            <p class="src">Checked against vLLM&nbsp;0.20.0. The replica measurements above used 0.26.0; this release ships 0.32.0, which has not been re-measured. The rules have held across those upgrades; the exact numbers are worth rechecking on your engine. The full table and the reasons behind it are in <a href="{{repo}}/blob/main/documents/HAZARDS.md#what-fits-on-what" rel="noopener">HAZARDS.md</a>. Not on NVIDIA? <a href="/#roadmap">Other GPUs are on the roadmap</a>.</p>
+            <p class="src">Checked against vLLM&nbsp;0.20.0. The replica measurements above used 0.26.0. This release ships 0.32.0; the first load timed on it is GLM-5.2 NVFP4 at tensor-parallel 8 on eight B300s, about 11 to 12 minutes. The fit rules have not been re-measured on 0.32. The full table and the reasons behind it are in <a href="{{repo}}/blob/main/documents/HAZARDS.md#what-fits-on-what" rel="noopener">HAZARDS.md</a>. Not on NVIDIA? <a href="/#roadmap">Other GPUs are on the roadmap</a>.</p>
           </div>
         </article>
       </div>

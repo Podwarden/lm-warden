@@ -2,7 +2,7 @@
       <div class="hero-text wrap">
         <h1 id="hero-title"><span class="nw">An OpenAI-compatible</span> API on the GPUs under&nbsp;your&nbsp;desk or&nbsp;in&nbsp;your&nbsp;rack.</h1>
         <p class="lede">
-          LM Warden runs vLLM and llama.cpp on your NVIDIA cards behind one port.
+          LM Warden runs vLLM v0.32.0 and llama.cpp b11719 on your NVIDIA cards behind one port.
           Each app gets its own key, and each card reports for itself.
           Point Claude Code, Codex&nbsp;CLI, OpenCode or another coding agent at it; with Claude Code, a model on your cards can answer for the Claude models you choose, under their names, while the rest go to Anthropic on your own login.
         </p>
@@ -72,6 +72,7 @@
           <li><a href="/gpu-monitoring"><h3>GPU monitoring</h3><p>One panel per card: temperature against its own throttle point, power against its own cap, and every request in flight.</p></a></li>
           <li><a href="/cache-aware-routing"><h3>Cache-aware routing</h3><p>Each agent session goes back to the replica that already holds its prompt in cache.</p></a></li>
           <li><a href="/api-keys"><h3>API keys</h3><p>A key per app, with its own priority, usage and queue times. Leaving is a <code>base_url</code> change.</p></a></li>
+          <li><a href="/features"><h3>Model loads, step by step</h3><p>Each load shows its steps with the usual time from earlier loads. A load that stops making progress is stopped and its GPUs freed, not left holding them.</p></a></li>
           <li><a href="/features"><h3>More features</h3><p>God mode, admin tokens, the engine watchdog, and the lessons behind them.</p></a></li>
         </ul>
       </div>

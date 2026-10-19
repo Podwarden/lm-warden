@@ -79,8 +79,9 @@ async def test_migrations_idempotent(tmp_data_dir):
         # (request_history forest columns) + 0046
         # (request_history cache-observation columns) + 0047
         # (counters: merge duplicate NULL-token rows, partial unique index, #298) + 0048
-        # (request_history.diverged_at_own).
-        assert count == 47
+        # (request_history.diverged_at_own) + 0049
+        # (model_load_history: per-step load durations for "usual" bars).
+        assert count == 48
 
 
 async def test_migrations_create_all_v2_tables(tmp_data_dir):

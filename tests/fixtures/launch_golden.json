@@ -30,6 +30,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -60,6 +61,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -92,6 +94,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -125,6 +128,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -156,6 +160,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "0",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "DEBUG"
     }
   },
@@ -186,6 +191,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -216,6 +222,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -246,6 +253,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -276,6 +284,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -306,6 +315,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -340,6 +350,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -376,6 +387,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -413,6 +425,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -455,6 +468,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -487,6 +501,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -519,6 +534,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -549,6 +565,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -579,6 +596,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -615,6 +633,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -645,6 +664,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -675,6 +695,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -707,6 +728,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -739,6 +761,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -769,6 +792,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   },
@@ -799,6 +823,7 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
   }
