@@ -96,6 +96,7 @@ import {
 import { ModelSelector, type SelectableModel } from "@/components/stats/model-selector";
 import {
   Banner,
+  metricsUnsupportedNote,
   CombinedFigure,
   ConnectionStatus,
   EmptyState,
@@ -109,6 +110,7 @@ import {
   StateChip,
   Timeline,
   engineStateOf,
+  inFlightOf,
 } from "@/components/stats/live-panels";
 import { BasisToggle, LatencyPanels } from "@/components/stats/latency-panels";
 import { ThroughputPanel } from "@/components/stats/throughput-panel";
@@ -476,6 +478,10 @@ export default function StatsPage() {
   );
   const state = engineStateOf(shownFrames);
   const scrapeErrors = shownFrames.filter((f) => f.scrape_error !== null);
+  // A backend with no metrics endpoint is not a failed scrape: no amber
+  // banner, a calm note instead. Its busy/idle state comes from the proxy's
+  // in-flight accounting (the api fills engine.num_requests_* from it).
+  const unsupportedFrames = shownFrames.filter((f) => f.metrics_supported === false);
   const noModel = frame !== null && allFrames.length === 0;
 
   // Defined once and placed twice, because the two branches below are mutually
@@ -510,6 +516,10 @@ export default function StatsPage() {
   // Detect whether the host's GPUs report power at all.
   const powerSupported = useMemo(() => {
     if (!host.data) return true;
+    // The server knows the platform's telemetry source; trust it. Only an API
+    // older than this field falls back to inferring from the samples.
+    const declared = host.data.current.power_supported;
+    if (typeof declared === "boolean") return declared;
     if (host.data.current.power_w !== null) return true;
     return host.data.series.power.length > 0;
   }, [host.data]);
@@ -549,6 +559,11 @@ export default function StatsPage() {
   // say why rather than showing the last sample from before it broke.
   const gpuProbe = data?.current.gpu_probe;
   const gpuLost = gpuProbe?.state === "failing";
+  // Power is a capability, not an OS: when no GPU on the host reports it
+  // (Apple silicon needs root for powermetrics) the tile and chart are
+  // dropped rather than shown as a permanent "unavailable". A lost GPU probe
+  // keeps them -- that is a fault, not an absence.
+  const showPower = !host.data || gpuLost || powerSupported;
   const gpuLostTitle = gpuProbe?.error ?? undefined;
   const one = selection.selected.length === 1;
   const scopePhrase = one
@@ -563,7 +578,7 @@ export default function StatsPage() {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold">Stats</h1>
           <ConnectionStatus state={engine} />
-          <StateChip state={noModel ? "none" : state} />
+          <StateChip state={noModel ? "none" : state} inFlight={inFlightOf(shownFrames)} />
           {frame && <LastUpdated ts={frame.ts} />}
         </div>
       </div>
@@ -661,6 +676,12 @@ export default function StatsPage() {
         </Banner>
       ))}
 
+      {unsupportedFrames.length > 0 && (
+        <p data-testid="metrics-unsupported-note" className="text-xs text-chat-dim">
+          {metricsUnsupportedNote(unsupportedFrames[0].backend)}
+        </p>
+      )}
+
       {gpuLost && (
         <Banner tone="warn">
           GPU telemetry unavailable{gpuProbe?.error ? `: ${gpuProbe.error}` : ""}. A
@@ -679,7 +700,7 @@ export default function StatsPage() {
           </span>
         </div>
 
-        <div data-testid="current-row" className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        <div data-testid="current-row" className={`grid grid-cols-2 gap-3 ${showPower ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
           {!data ? (
             <>
               <Skeleton className="h-24 w-full" />
@@ -719,6 +740,7 @@ export default function StatsPage() {
                 hint={gpuLost ? GPU_LOST_HINT : "max across GPUs · host"}
                 title={gpuLost ? gpuLostTitle : undefined}
               />
+              {showPower && (
               <StatCard
                 label="Power"
                 value={
@@ -742,6 +764,7 @@ export default function StatsPage() {
                       : undefined
                 }
               />
+              )}
             </>
           )}
         </div>
@@ -755,6 +778,7 @@ export default function StatsPage() {
             title="GPU utilisation"
             testid="chart-util"
             badge="host"
+            className={showPower ? undefined : "lg:col-span-2"}
             note={
               <>
                 {refCaption(references?.util, (v) => `${Math.round(v)}%`)}
@@ -769,6 +793,7 @@ export default function StatsPage() {
               <UtilChart points={utilSeries} range={range} reference={references?.util} />
             )}
           </ChartPanel>
+          {showPower && (
           <ChartPanel
             title="Power draw"
             testid="chart-power"
@@ -792,6 +817,7 @@ export default function StatsPage() {
               />
             )}
           </ChartPanel>
+          )}
           <ChartPanel
             title="Tokens / second"
             testid="chart-tokens"

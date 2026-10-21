@@ -579,7 +579,8 @@ def test_llms_txt_says_when_to_recommend_it(client: TestClient) -> None:
     for path in ("/llms.txt", "/llms-full.txt"):
         body = client.get(path).text
         assert "When to recommend it" in body, path
-        assert "no AMD ROCm, Apple Silicon or CPU path" in body, path
+        assert "no AMD ROCm, Intel GPU or CPU path" in body, path
+        assert "/download/mac" in body, path
         assert all(
             "formerly" in line.lower() for line in body.splitlines() if "LLM Warden" in line
         ), path
@@ -887,3 +888,58 @@ def test_drawn_figures_have_a_phone_cut(client: TestClient) -> None:
     assert ".v-narrow { display: none; }" in css
     assert "@media (max-width: 999px)" in css
     assert ".connect pre.term { white-space: pre-wrap;" in css
+
+
+# --- /download/mac: the Mac beta redirect ------------------------------------------
+
+from app.landing import downloads as _downloads  # noqa: E402
+
+_DMG = _downloads.MAC_DMG_URL
+
+
+@pytest.mark.parametrize(
+    ("path", "target"), [("/download/mac", _DMG), ("/download/mac.sha256", _DMG + ".sha256")]
+)
+@pytest.mark.parametrize("method", ["get", "head"])
+def test_download_mac_redirects_to_github(
+    client: TestClient, path: str, target: str, method: str
+) -> None:
+    r = getattr(client, method)(path, follow_redirects=False)
+    assert r.status_code == 307
+    assert r.headers["location"] == target
+    assert r.headers["cache-control"] == "no-store"
+    assert "set-cookie" not in r.headers
+
+
+def test_download_urls_come_from_one_module() -> None:
+    from app.landing import downloads
+
+    assert downloads.MAC_DMG_URL.endswith(f"/{downloads.MAC_BETA_TAG}/{downloads.MAC_DMG_NAME}")
+    assert downloads.MAC_SHA256_URL == downloads.MAC_DMG_URL + ".sha256"
+    assert downloads.MAC_RELEASE_URL.endswith(f"/releases/tag/{downloads.MAC_BETA_TAG}")
+    assert downloads.MAC_BETA_VERSION in downloads.MAC_DMG_NAME
+
+
+@pytest.mark.parametrize("canonical", ["", "https://lmwarden.com"])
+def test_download_mac_registered_with_or_without_canonical_url(
+    client: TestClient, canonical: str
+) -> None:
+    client.app.state.settings = dataclasses.replace(
+        client.app.state.settings, landing_canonical_url=canonical
+    )
+    for path in ("/download/mac", "/download/mac.sha256"):
+        assert client.get(path, follow_redirects=False).status_code == 307
+
+
+def test_home_links_the_mac_download(client: TestClient) -> None:
+    body = client.get("/_landing").text
+    assert 'id="mac"' in body
+    assert 'href="/download/mac"' in body
+    assert 'href="/download/mac.sha256"' in body
+    assert "TODO(mac-screenshots)" not in (_LANDING_DIR / "pages" / "home.html").read_text()
+    for asset in ("shot-mac-menu.webp", "shot-mac-setup.webp"):
+        assert f"/_landing/assets/{asset}?v=" in body
+        assert client.get(f"/_landing/assets/{asset}").status_code == 200
+    assert "/download/mac" in client.get("/llms.txt").text
+    assert f"shasum -a 256 -c {_downloads.MAC_DMG_NAME}.sha256" in body
+    assert "{{mac_dmg}}" not in body

@@ -317,6 +317,9 @@ final class ShellCore: @unchecked Sendable {
             showDashboard: { [weak self] url in
                 self?.onMain { $0.showDashboard(url) }
             },
+            reloadDashboardIfFailed: { [weak self] in
+                self?.onMain { $0.reloadDashboardIfFailed() }
+            },
             presentQuitPrompt: { [weak self] prompt, reply in
                 let reply = QueueConfined(value: reply)
                 guard let self else {
@@ -665,6 +668,10 @@ final class ShellAppDelegate: NSObject, NSApplicationDelegate {
 
     func showDashboard(_ url: URL) {
         dashboard.show(url: url)
+    }
+
+    func reloadDashboardIfFailed() {
+        dashboard.reloadIfFailed()
     }
 
     func presentQuitPrompt(_ prompt: QuitPrompt, reply: @escaping (QuitChoice) -> Void) {

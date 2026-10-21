@@ -13,6 +13,7 @@
           </div>
         </div>
         <p class="guide"><a href="{{repo}}/blob/main/documents/INSTALL.md" rel="noopener">Read the install guide</a>: every command, and what it printed.</p>
+        <p class="guide">On an Apple silicon Mac? <a href="#mac">Get the Mac beta</a>.</p>
         <!-- src: README.md, "Quick start" (Compose v2.24+) and "Will it run on my hardware?" (Turing floor) -->
         <p class="req">Needs Linux x86_64, Docker Compose&nbsp;v2.24+, the NVIDIA Container Toolkit and a card of the Turing generation (RTX&nbsp;20-series, Quadro&nbsp;RTX) or newer.</p>
         <!-- src: install.sh (VW_APP="vllm-warden", DIR="/opt/$VW_APP"); app/auth/bearer.py (INFERENCE_TOKEN_PREFIX "vw_", ADMIN_TOKEN_PREFIX "vwa_") -->
@@ -33,6 +34,53 @@
         <!-- src: demo-stats.mp4 (IN FLIGHT "10 active", every row "demo-agent") -->
         <figcaption><b>Fig.&nbsp;1</b>The Stats page of our four-card box while ten of our own streaming requests ran on it, stepping through its 1&#8239;h, 6&#8239;h and 24&#8239;h windows. Recorded on 23&nbsp;September 2026.</figcaption>
       </figure>
+    </section>
+
+    <hr class="topic">
+
+    <section class="sec mac" id="mac" aria-labelledby="mac-title">
+      <div class="wrap">
+        <h2 id="mac-title">On a Mac: the beta.</h2>
+        <p class="mac-lede">
+          A native menu-bar app for Apple silicon that runs models with MLX and shows the same web dashboard in its own window.
+          It is a beta: ad-hoc signed and not notarized, so macOS asks you to confirm before its first launch.
+          Linux with NVIDIA GPUs, above, is still the main way to run LM Warden.
+        </p>
+        <p class="mac-dl">
+          <a class="btn" href="/download/mac"><span>Download for Mac (beta)</span></a>
+          <a href="/download/mac.sha256">SHA-256 checksum</a> · <a href="{{mac_release}}" rel="noopener">release notes on GitHub</a>
+        </p>
+        <!-- src: README.md, "Mac app (beta)"; documents/INSTALL.md, "What it needs" and "Beta builds"; macos/Package.swift (.macOS(.v14)) -->
+        <p class="req">About 360&#8239;MB. Needs an Apple silicon Mac on macOS&nbsp;14 or later. Updates are manual: a newer beta is a new download.</p>
+        <ul class="mac-points">
+          <li><strong>Menu bar, no Dock icon.</strong> It starts and supervises the server, walks you through a first-run setup and can open at login. <b>Open Dashboard</b> shows the web console in a window of its own.</li>
+          <li><strong>MLX first.</strong> Models run with MLX. llama.cpp is registered as a second engine, with a Metal build of its server bundled in the app; vLLM is not available on a Mac.</li>
+          <li><strong>This Mac only, until you say otherwise.</strong> The server listens on loopback. <b>Share on Local Network</b> opens it to your network, in plain HTTP. For HTTPS, put a reverse proxy such as Caddy, or Tailscale, in front; the app has no TLS of its own.</li>
+        </ul>
+        <h3 id="mac-open">First launch</h3>
+        <ol class="mac-steps">
+          <li>Check the download. With the DMG and its checksum file in one folder, run <code>shasum -a 256 -c {{mac_dmg}}.sha256</code> in Terminal. It prints <code>OK</code> for an intact file.</li>
+          <li>Open the DMG and drag LM Warden to Applications.</li>
+          <li>In Applications, double-click LM Warden. macOS refuses it; open <b>System Settings</b> &rsaquo; <b>Privacy &amp; Security</b> and click <b>Open Anyway</b> next to LM Warden. (On macOS 14, right-click LM Warden and choose <b>Open</b> also works.)</li>
+        </ol>
+        <p class="src">Do this only for a download whose checksum matched. The full walk-through is in the <a href="{{repo}}/blob/main/documents/INSTALL.md#beta-builds" rel="noopener">install guide</a>.</p>
+        <div class="mac-figs">
+          <figure>
+            <div class="shot">
+              <img src="{{a:shot-mac-menu.webp}}" width="868" height="868" loading="lazy" decoding="async"
+                   alt="The LM Warden menu-bar menu on a Mac: a green status dot and LM Warden, Running; Serving on this Mac only, 127.0.0.1:8080; no models loaded; a memory bar reading 0.0 of 12.7&#8239;GB usable for models and 0 requests in flight; then Open Dashboard, Copy API Address, Share on Local Network, Stop Server, Open at Login, Check for Updates, About LM Warden and Quit LM Warden">
+            </div>
+            <figcaption>The menu-bar menu of the beta, on an M1 Mac with 16&#8239;GB: status, the loopback address, a memory bar and Open Dashboard.</figcaption>
+          </figure>
+          <figure>
+            <div class="shot">
+              <img src="{{a:shot-mac-setup.webp}}" width="1440" height="1096" loading="lazy" decoding="async"
+                   alt="The first step of the native setup window, Welcome: the machine checks read Apple M1 OK, 16&#8239;GB OK (16&#8239;GB is the minimum) and 289&#8239;GB free disk space OK, with steps Network, Models and Finish still to come">
+            </div>
+            <figcaption>First-run setup, step 1 of 4: it checks the chip, the memory and the free disk before anything is installed.</figcaption>
+          </figure>
+        </div>
+      </div>
     </section>
 
     <hr class="topic">
@@ -84,28 +132,22 @@
       <div class="wrap">
         <h2 id="dont-title">Don’t use this if…</h2>
         <ul>
-          <li><strong>You have no NVIDIA GPU.</strong> Today it runs on NVIDIA cards with CUDA only. There is no ROCm, Apple silicon, Intel GPU or CPU path yet; a Mac app for Apple silicon is in development, see below.</li>
+          <li><strong>You have no NVIDIA GPU and no Apple silicon Mac.</strong> On Linux it runs on NVIDIA cards with CUDA only, and the Mac app is a beta. There is no ROCm, Intel GPU or CPU path yet.</li>
           <li><strong>You need one model served across several machines.</strong> This is one host. Several GPUs in one box, yes; several boxes, no.</li>
           <li><strong>You want several models resident on one card.</strong> One loaded model per GPU is enforced before an engine starts.</li>
-          <li><strong>You need an engine other than vLLM or llama.cpp.</strong> TensorRT-LLM, SGLang, MLX and Ollama’s runtime are not shipped.</li>
+          <li><strong>You need an engine other than vLLM or llama.cpp.</strong> TensorRT-LLM, SGLang and Ollama’s runtime are not shipped; MLX runs only in the Mac beta.</li>
           <li><strong>You want a hosted API.</strong> Nobody runs this for you. You supply the hardware, the driver and the electricity.</li>
-          <li><strong>Your host isn’t Linux x86_64.</strong></li>
+          <li><strong>Your host isn’t Linux x86_64 or an Apple silicon Mac.</strong> On a Mac you get the beta described above, not the Docker stack.</li>
         </ul>
 
         <div class="roadmap" id="roadmap">
-          <h3>A Mac app is in development; other GPUs are on the roadmap.</h3>
+          <h3>Other GPUs are on the roadmap.</h3>
           <p>
-            A native Mac app for Apple silicon, running models with MLX, is in development. It is
-            not released, and there is no notarized download yet. A beta build, ad-hoc signed and
-            not notarized, may come first: if one has been published it is on the
-            <a href="{{repo}}/releases" rel="noopener">GitHub releases page (Mac beta)</a> as a
-            pre-release labelled beta, and macOS asks you to confirm before its first launch.
-            AMD Radeon and Intel GPUs are on our
-            immediate roadmap, with no dates. Which comes first depends on who asks, so tell us
-            which one you would run it on:
+            Apple silicon is covered by the <a href="#mac">Mac beta</a> above.
+            AMD Radeon and Intel GPUs are on our immediate roadmap, with no dates. Which comes
+            first depends on who asks, so tell us which one you would run it on:
           </p>
           <ul>
-            <li><a href="{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Mac" rel="noopener">Mac, Apple silicon</a></li>
             <li><a href="{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon" rel="noopener">AMD Radeon</a></li>
             <li><a href="{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel" rel="noopener">Intel GPUs</a></li>
           </ul>

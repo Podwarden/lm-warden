@@ -16,6 +16,10 @@ Routes (all unauthenticated, all hidden from the OpenAPI schema):
   GET /llms.txt                 llmstxt.org summary for language models.
   GET /llms-full.txt            the same, self-contained, in one markdown file.
   GET /agent-guide.md           the control API, written for a coding agent.
+  GET /download/mac[.sha256]    307 to the Mac beta DMG / its checksum on
+                                GitHub (app/landing/downloads.py). Always
+                                registered, whatever the canonical URL or the
+                                website setting: it is a redirect, not a page.
 
 Unknown GET paths get the site's HTML 404 through `not_found_response`,
 which app/main.py's 404 handler calls. Rendering lives in render.py.
@@ -62,6 +66,7 @@ from fastapi.responses import (
 
 from app.config import parse_canonical_origin
 from app.landing.clients import CLIENT_PAGES
+from app.landing.downloads import MAC_DMG_URL, MAC_SHA256_URL
 from app.landing.pages import NOT_FOUND, PAGES, Page
 from app.landing.render import (  # noqa: F401  (re-exported for tests)
     _ASSET_CACHE,
@@ -194,6 +199,28 @@ async def not_found_response(request: Request) -> Response | None:
             "Content-Security-Policy": page_csp(body, state.analytics),
         },
     )
+
+
+def _download_redirect(url: str) -> Callable[[], Awaitable[Response]]:
+    async def handler() -> Response:
+        # Temporary and uncached: the next beta changes the target.
+        return RedirectResponse(url, status_code=307, headers={"Cache-Control": "no-store"})
+
+    return handler
+
+
+router.add_api_route(
+    "/download/mac",
+    _download_redirect(MAC_DMG_URL),
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+router.add_api_route(
+    "/download/mac.sha256",
+    _download_redirect(MAC_SHA256_URL),
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
 
 
 @router.api_route("/coding-agents/{client_id}", methods=["GET", "HEAD"], include_in_schema=False)

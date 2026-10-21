@@ -27,10 +27,11 @@ Path A has three variants that end in the same place: unattended
 ([A5](#a5-unattended)), without a clone ([A6](#a6-without-a-clone)), and with
 no route to the internet ([A7](#a7-offline--air-gapped-install)).
 
-On a Mac, neither path applies: the Mac app is in development and has no
-notarized download yet. [On a Mac (preview)](#on-a-mac-preview) says what
-exists, how to build it from source, and how to open a beta build if one has
-been published ([Beta builds](#beta-builds)).
+On a Mac, neither path applies: there is a beta of the Mac app, downloaded from
+[lmwarden.com/download/mac](https://lmwarden.com/download/mac) (see the README's
+[Mac app (beta)](../README.md#mac-app-beta)). [On a Mac (preview)](#on-a-mac-preview)
+says what it needs, how to build it from source, and how to open the beta
+([Beta builds](#beta-builds)).
 
 ---
 
@@ -1253,9 +1254,9 @@ Two things were broken in earlier published releases and are fixed from
 
 # On a Mac (preview)
 
-LM Warden on a Mac is in development. No signed, notarized DMG has been
-published. A beta DMG may be published before that; [Beta builds](#beta-builds)
-covers it. Path A, Path B and the NVIDIA, Docker and
+LM Warden on a Mac is in beta. A DMG is published from
+[lmwarden.com/download/mac](https://lmwarden.com/download/mac); it is ad-hoc
+signed and not notarized, and [Beta builds](#beta-builds) covers it. Path A, Path B and the NVIDIA, Docker and
 Compose steps in the rest of this manual do not apply to a Mac. What exists
 today is a build from source on an Apple silicon Mac. Unlike the paths above,
 this section is not a recorded install, so it has no transcripts.
@@ -1287,16 +1288,17 @@ same app into a DMG, no more signed than the app.
 ## Beta builds
 
 A beta is a DMG of one release, built by the project's CI, published before
-the app can be notarized. When one exists it is on the
-[GitHub releases page](https://github.com/Podwarden/lm-warden/releases) as a
-pre-release whose name ends in "(beta)", with two files:
+the app can be notarized. The current one is at
+[lmwarden.com/download/mac](https://lmwarden.com/download/mac), which redirects
+to the [GitHub releases page](https://github.com/Podwarden/lm-warden/releases),
+where it is a pre-release whose name ends in "(beta)", with two files:
 `LM-Warden-<version>-beta.dmg` and `LM-Warden-<version>-beta.dmg.sha256`.
 What sets it apart from a normal release:
 
 - It is ad-hoc signed only: no Developer ID signature, no notarization by
   Apple. macOS therefore blocks it the first time you open it (below).
 - It does not update itself. A newer beta is a new download from the releases
-  page.
+  page. The download is about 360 MB.
 - It is the same app as a build from source: the same requirements (an Apple
   silicon Mac on macOS 14 or later) and the same server inside.
 
@@ -1313,10 +1315,10 @@ else means the file is not the one that was published: delete it.
 macOS marks a downloaded app as quarantined, and it refuses to open a
 quarantined app that Apple has not notarized. Do one of these, once:
 
-- In Finder, right-click (or Control-click) LM Warden in Applications,
-  choose **Open**, then **Open** again in the dialog. On macOS 15 and later
-  the dialog may have no Open button: open **System Settings**, then
-  **Privacy & Security**, and click **Open Anyway** next to LM Warden.
+- In Finder, double-click LM Warden in Applications. macOS refuses it: open
+  **System Settings** › **Privacy & Security** and click **Open Anyway** next
+  to LM Warden. (On macOS 14, right-click (or Control-click) LM Warden and
+  choose **Open**, then **Open** again, also works.)
 - Or, in Terminal:
 
   ```sh
@@ -1337,8 +1339,9 @@ DMG you downloaded from the releases page whose checksum matched.
   a first-run setup, keeps its session secret in the macOS Keychain and can
   open at login.
 - The server runs models with MLX, through mlx-lm's server, as the default
-  engine. llama.cpp is registered as a second backend, but the app does not
-  ship a llama.cpp binary yet; vLLM is not available on a Mac.
+  engine. llama.cpp is registered as a second backend, and the app bundles a
+  Metal build of its `llama-server` (the default for `make macos-dmg`;
+  `MACOS_LLAMACPP=0` leaves it out); vLLM is not available on a Mac.
 - The server sizes each load — weights and KV cache — against the Mac's
   unified-memory budget read from Metal's recommended working-set size, so
   several models can share the GPU when they fit.

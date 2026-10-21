@@ -366,19 +366,36 @@ describe("StatsPage", () => {
     expect(window.localStorage.getItem("vw.stats.range")).toBe("7d");
   });
 
-  it("renders the power tile as '—' when telemetry is unavailable", async () => {
+  // Capability-driven, not OS-driven: when no GPU reports power (Apple
+  // silicon needs root), the tile and the chart are not shown at all.
+  it("hides the power tile and power chart when no GPU reports power", async () => {
     installFetchStub({
       overview: {
         ...FIXTURE_OVERVIEW,
-        current: { ...FIXTURE_OVERVIEW.current, power_w: null },
+        current: { ...FIXTURE_OVERVIEW.current, power_w: null, power_supported: false },
         series: { ...FIXTURE_OVERVIEW.series, power: [] },
       },
     });
     renderPage();
     await waitFor(() => {
+      expect(screen.getByTestId("tile-vram-value")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("tile-power-value")).toBeNull();
+    expect(screen.queryByTestId("chart-power")).toBeNull();
+    expect(screen.queryByText(/telemetry unavailable/i)).toBeNull();
+    expect(screen.queryByText(/Power telemetry not reported/)).toBeNull();
+    // The remaining host panels are still there.
+    expect(screen.getByTestId("tile-util-value")).toBeInTheDocument();
+    expect(screen.getByTestId("chart-util")).toBeInTheDocument();
+  });
+
+  it("shows both the power tile and chart when the host reports power", async () => {
+    installFetchStub({ overview: FIXTURE_OVERVIEW });
+    renderPage();
+    await waitFor(() => {
       expect(screen.getByTestId("tile-power-value")).toBeInTheDocument();
     });
-    expect(screen.getByTestId("tile-power-value").textContent).toBe("—");
+    expect(screen.getByTestId("chart-power")).toBeInTheDocument();
   });
 
   // #255: a failing GPU probe must not leave the pre-failure sample on show.

@@ -71,6 +71,11 @@ class _FakeSup:
     def is_running(self, model_id):
         return self.alive
 
+    engine_id: str | None = None
+
+    def get_engine_model_id(self, model_id):
+        return self.engine_id
+
 
 def _settings(tmp_path: Path, **kw) -> Settings:
     base = dict(
@@ -192,3 +197,25 @@ async def test_a_stuck_reload_is_won_t_load_via_the_policy_not_the_wall_clock(tm
 
 async def _ok_probe(**_kw):
     return ProbeResult(ok=True, detail=None)
+
+
+@pytest.mark.parametrize(
+    ("engine_id", "expect"),
+    [("/cache/mlx/Qwen-4bit", "/cache/mlx/Qwen-4bit"), (None, "m1"), ("m1", "m1")],
+    ids=["mlx-like", "no-engine-id", "vllm-like"],
+)
+@pytest.mark.asyncio
+async def test_stress_warmup_probes_the_engines_model_id(tmp_path, engine_id, expect):
+    sup = _FakeSup()
+    sup.engine_id = engine_id
+    sup.port = 1
+    control = _control(_settings(tmp_path), sup)
+    seen: list[dict] = []
+
+    async def spy(**kw):
+        seen.append(kw)
+        return ProbeResult(True, None)
+
+    with patch("app.runtime.warmup_probe.warmup_probe", new=spy):
+        assert await control.warmup() is True
+    assert seen[0]["model_id"] == expect

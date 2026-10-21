@@ -105,6 +105,25 @@ function installFetchStub(discovery: unknown) {
     const url = typeof input === "string" ? input : input.toString();
     if (url === "/api/auth/refresh") return json({ access_token: "t" });
     if (url === "/api/csrf") return json({ csrf: "c" });
+    // The server's engine list: a create body names the backend only once it is known.
+    if (url === "/api/system/backends")
+      return json({
+        default: "vllm",
+        driver: "subprocess",
+        engine_version: null,
+        backends: ["vllm", "llamacpp"].map((name) => ({
+          name,
+          display_name: name,
+          version: null,
+          supports_version_pin: false,
+          version_pin_available: false,
+          version_pin_reason: "fixed",
+          vram_cap_fraction: null,
+          supports_tensor_parallel: name === "vllm",
+          supports_data_parallel: name === "vllm",
+          needs_local_model_path: name === "llamacpp",
+        })),
+      });
     if (url.startsWith("/api/models/discover")) return json(discovery);
     if (url === "/api/models/fit-preview") {
       fitPosts.push(init?.body ? JSON.parse(init.body as string) : {});

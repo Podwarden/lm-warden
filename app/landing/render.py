@@ -18,6 +18,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from app.landing.downloads import MAC_DMG_NAME, MAC_RELEASE_URL
 from app.landing.pages import HOME, PAGES, Page
 from app.landing.site import Analytics
 
@@ -183,10 +184,11 @@ def _jsonld(origin: str, page: Page) -> str:
         "name": "LM Warden",
         "description": DESCRIPTION,
         "applicationCategory": "DeveloperApplication",
-        "operatingSystem": "Linux",
+        "operatingSystem": "Linux, macOS (beta)",
         "softwareRequirements": (
             "Linux x86_64, Docker with Compose v2.24+, an NVIDIA GPU (Turing or newer) "
-            "and the NVIDIA Container Toolkit"
+            "and the NVIDIA Container Toolkit; or, for the Mac beta, an Apple silicon "
+            "Mac on macOS 14 or later"
         ),
         "license": "https://www.apache.org/licenses/LICENSE-2.0",
         "isAccessibleForFree": True,
@@ -446,6 +448,8 @@ def render_page(page: Page, origin: str, analytics: Analytics) -> str:
             "jsonld": _jsonld(origin, page),
             "faq": _faq_html(),
             "repo": REPO_URL,
+            "mac_release": MAC_RELEASE_URL,
+            "mac_dmg": MAC_DMG_NAME,
             "install": _install_html(),
             "nav": nav_html(page),
             "crumbs": crumbs_html(page),
@@ -490,6 +494,8 @@ def render_llms(origin: str, full: bool) -> str:
         {
             "repo": REPO_URL,
             "raw": RAW_URL,
+            "mac_release": MAC_RELEASE_URL,
+            "mac_dmg": MAC_DMG_NAME,
             "origin": origin,
             "install": INSTALL_CMD,
             "faq": faq_md,

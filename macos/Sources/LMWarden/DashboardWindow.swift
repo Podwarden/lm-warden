@@ -14,17 +14,86 @@ final class DashboardWindowController: NSObject, WKNavigationDelegate, WKUIDeleg
     private var window: NSWindow?
     private var webView: WKWebView?
     private var loadedURL: URL?
+    private var state = DashboardLoadState()
+    private var pendingRetry: DispatchWorkItem?
 
     func show(url: URL) {
         let isNew = window == nil
         let (window, webView) = ensureWindow()
-        if isNew || loadedURL != url {
-            loadedURL = url
-            webView.load(URLRequest(url: url))
-        }
+        let action = state.onShow(isNewWindow: isNew, urlChanged: loadedURL != url)
+        loadedURL = url
+        perform(action, in: webView)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
+
+    /// The server just became healthy: reload the dashboard if its last load
+    /// failed, without bringing the window forward.
+    func reloadIfFailed() {
+        guard let webView, loadedURL != nil else { return }
+        perform(state.onServerRunning(), in: webView)
+    }
+
+    private func perform(_ action: DashboardLoadAction, in webView: WKWebView) {
+        switch action {
+        case .none:
+            break
+        case .load:
+            cancelRetry()
+            if let url = loadedURL { webView.load(URLRequest(url: url)) }
+        case .showPlaceholderAndSchedule(let delay):
+            webView.loadHTMLString(Self.placeholderHTML, baseURL: nil)
+            scheduleRetry(after: delay, in: webView)
+        case .scheduleRetry(let delay):
+            scheduleRetry(after: delay, in: webView)
+        case .showError:
+            cancelRetry()
+            webView.loadHTMLString(Self.errorHTML, baseURL: nil)
+        case .stopLoading:
+            cancelRetry()
+            webView.stopLoading()
+        }
+    }
+
+    private func scheduleRetry(after delay: TimeInterval, in webView: WKWebView) {
+        cancelRetry()
+        let item = DispatchWorkItem { [weak self, weak webView] in
+            MainActor.assumeIsolated {
+                guard let self, let webView else { return }
+                self.pendingRetry = nil
+                self.perform(self.state.onRetryTimer(), in: webView)
+            }
+        }
+        pendingRetry = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
+    }
+
+    private func cancelRetry() {
+        pendingRetry?.cancel()
+        pendingRetry = nil
+    }
+
+    private func handleFailure(_ webView: WKWebView, _ error: Error) {
+        let ns = error as NSError
+        let action = state.onFailure(
+            domain: ns.domain, code: ns.code,
+            failingURL: ns.userInfo[NSURLErrorFailingURLErrorKey] as? URL, now: Date()
+        )
+        perform(action, in: webView)
+    }
+
+    private static func page(_ message: String) -> String {
+        """
+        <html><body style="font-family:-apple-system;display:flex;align-items:center;\
+        justify-content:center;height:100vh;margin:0;color:#888;background:transparent">\
+        <p style="max-width:28em;text-align:center">\(message)</p></body></html>
+        """
+    }
+
+    private static let placeholderHTML = page("Starting the LM Warden server&hellip;")
+    private static let errorHTML = page(
+        "The LM Warden server did not answer. Choose Show Log from the menu, then Open Dashboard to try again."
+    )
 
     private func ensureWindow() -> (NSWindow, WKWebView) {
         if let window, let webView { return (window, webView) }
@@ -60,6 +129,7 @@ final class DashboardWindowController: NSObject, WKNavigationDelegate, WKUIDeleg
     // MARK: NSWindowDelegate
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
+        if let webView { perform(state.onClose(), in: webView) }
         sender.orderOut(nil)
         return false
     }
@@ -72,6 +142,18 @@ final class DashboardWindowController: NSObject, WKNavigationDelegate, WKUIDeleg
         decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void
     ) {
         decisionHandler(apply(to: navigationAction.request.url))
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        state.onFinish(url: webView.url)
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        handleFailure(webView, error)
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        handleFailure(webView, error)
     }
 
     // MARK: WKUIDelegate

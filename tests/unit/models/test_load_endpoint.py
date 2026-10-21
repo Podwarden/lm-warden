@@ -377,6 +377,67 @@ def test_load_runs_warmup_probe_before_flipping_to_loaded(tmp_data_dir, client):
     sup_mark_ready.assert_awaited_once()
 
 
+@pytest.mark.parametrize(
+    ("engine_id", "expect"),
+    [
+        ("/cache/mlx/Qwen2.5-3B-Instruct-4bit", "/cache/mlx/Qwen2.5-3B-Instruct-4bit"),
+        (None, "SERVED"),  # engine id unknown -> fall back to the served name
+        ("SERVED", "SERVED"),  # vLLM / llama.cpp: engine id == served name
+    ],
+    ids=["mlx-like", "no-engine-id", "vllm-like"],
+)
+def test_warmup_probe_sends_the_engines_model_id(tmp_data_dir, client, engine_id, expect):
+    """mlx_lm.server treats the request's ``model`` as a HF repo/path to load,
+    so the warm-up must send the engine's id, not the served name."""
+    client.get("/healthz")
+    _seed_done_with_pulled_model(
+        tmp_data_dir / "vllm-warden.db",
+        allowed=[0, 1, 2, 3],
+        gpus=[0, 1],
+        model_id="engid-model",
+    )
+    _stub_probe(client, [0, 1])
+    auth = _jwt_login(client)
+
+    from app.runtime.warmup_probe import ProbeResult
+
+    async def fake_load(self, model, *, port, on_exit=None, overrides=None):
+        class _FakeProc:
+            pid = 1234
+
+        self._handles[model.id] = _FakeProc()
+        self._ports[model.id] = port
+        served = model.served_model_name
+        eid = served if engine_id == "SERVED" else engine_id
+        if eid is not None:
+            self._engine_ids[model.id] = eid
+
+    probe = AsyncMock(return_value=ProbeResult(ok=True, detail=None))
+    with (
+        patch("app.runtime.supervisor.Supervisor.load", new=fake_load),
+        patch("app.runtime.supervisor.Supervisor.mark_warming", new=AsyncMock()),
+        patch("app.runtime.supervisor.Supervisor.mark_ready", new=AsyncMock()),
+        patch("app.models.routes_api.wait_for_health", new=AsyncMock(return_value=True)),
+        patch("app.models.routes_api.warmup_probe", new=probe),
+    ):
+        r = client.post(
+            "/api/models/engid-model/load",
+            headers={**auth, **csrf_header(client)},
+        )
+        assert r.status_code == 202
+        wait_until(lambda: probe.await_count >= 1, what="the warmup probe to run")
+    got = probe.await_args.kwargs["model_id"]
+    served = _served_name(tmp_data_dir, "engid-model")
+    assert got == (served if expect == "SERVED" else expect)
+
+
+def _served_name(tmp_data_dir, model_id):
+    with sqlite3.connect(tmp_data_dir / "vllm-warden.db") as db:
+        return db.execute(
+            "SELECT served_model_name FROM models WHERE id = ?", (model_id,)
+        ).fetchone()[0]
+
+
 def test_load_probe_failure_marks_failed_without_unloading(tmp_data_dir, client):
     """When the warmup probe fails, the model row goes to 'failed' but
     the subprocess is left running (no SIGTERM). Operator must

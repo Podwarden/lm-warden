@@ -1232,6 +1232,7 @@ export interface paths {
          *           "vram_pct": int | None,    # 0..100, rounded
          *           "gpu_util_pct": int | None,  # max across GPUs at most-recent minute
          *           "power_w": float | None,   # sum across GPUs at most-recent minute
+         *           "power_supported": bool,   # platform can report power at all
          *           "tps": float,              # tokens-per-second over last full minute
          *                                      # (prompt + completion)
          *           # The GPU probe right now (#255). While it is "failing" the four

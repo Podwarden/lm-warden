@@ -56,6 +56,8 @@ def test_every_internal_link_resolves(client: TestClient) -> None:
         "/llms.txt",
         "/llms-full.txt",
         "/agent-guide.md",
+        "/download/mac",
+        "/download/mac.sha256",
     }
     for path, body in all_pages(client).items():
         for href in re.findall(r'href="(/[^"#?]*)', body):
@@ -159,6 +161,12 @@ REWRITTEN = {
     "Other GPUs are next on the roadmap.": "Mac app in development, BACKLOG-macos P9",
     "Apple silicon (Macs), AMD Radeon and Intel GPUs are on our immediate roadmap, with no dates. Which comes first depends on who asks, so tell us which one you would run it on:": "Mac app in development, BACKLOG-macos P9",
     "NVIDIA GPUs on a Linux x86_64 host. The floor is Turing (sm_75, the RTX 20-series generation): the base image ships CUDA 13, which dropped Maxwell, Pascal and Volta, so a GTX 1080 Ti, a Titan X or a V100 will not work. Turing through Blackwell is covered, including Ada, Hopper and the RTX 50-series. There is no ROCm, Apple Silicon, Intel GPU or CPU path today; Apple silicon, AMD Radeon and Intel GPUs are on the immediate roadmap, and which comes first depends on the feedback we get in the project’s GitHub Discussions. Several GPUs in one box are supported; one model split across several machines is not.": "Mac app in development, BACKLOG-macos P9",
+    # Mac beta (2026-10-21): the Mac app has a download, so the engine list
+    # names MLX as Mac-only, the host item names the Mac, and the Mac
+    # discussion link is replaced by the Mac section.
+    "<strong>You need an engine other than vLLM or llama.cpp.</strong> TensorRT-LLM, SGLang, MLX and Ollama’s runtime are not shipped.": "Mac beta: MLX runs in the Mac app",
+    "<strong>Your host isn’t Linux x86_64.</strong>": "Mac beta: or an Apple silicon Mac",
+    '<a href="https://github.com/Podwarden/lm-warden/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Mac" rel="noopener">Mac, Apple silicon</a>': "Mac beta: the Mac section replaces the request link",
 }
 
 
@@ -170,4 +178,4 @@ def test_nothing_from_the_single_page_was_lost(client: TestClient) -> None:
     new = " ".join(" ".join(_blocks(b)) for b in all_pages(client).values())
     new = re.sub(r"\s+", " ", new)
     missing = [b for b in old if b and b not in new and b not in REWRITTEN]
-    assert not missing, missing[:5]
+    assert not missing, missing

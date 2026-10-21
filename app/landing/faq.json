@@ -5,7 +5,7 @@
   },
   {
     "q": "Which GPUs and operating systems does it run on?",
-    "a": "NVIDIA GPUs on a Linux x86_64 host. The floor is Turing (sm_75, the RTX 20-series generation): the base image ships CUDA 13, which dropped Maxwell, Pascal and Volta, so a GTX 1080 Ti, a Titan X or a V100 will not work. Turing through Blackwell is covered, including Ada, Hopper and the RTX 50-series. There is no ROCm, Apple Silicon, Intel GPU or CPU path in this release. A native Mac app for Apple silicon, running models with MLX, is in development and has no download yet; AMD Radeon and Intel GPUs are on the roadmap, and which comes first depends on the feedback we get in the project’s GitHub Discussions. Several GPUs in one box are supported; one model split across several machines is not."
+    "a": "NVIDIA GPUs on a Linux x86_64 host. The floor is Turing (sm_75, the RTX 20-series generation): the base image ships CUDA 13, which dropped Maxwell, Pascal and Volta, so a GTX 1080 Ti, a Titan X or a V100 will not work. Turing through Blackwell is covered, including Ada, Hopper and the RTX 50-series. Apple silicon is covered by a separate Mac app, in beta: a native menu-bar app for macOS 14 or later that runs models with MLX and shows the same dashboard in its own window, from <a href=\"/download/mac\">lmwarden.com/download/mac</a> (about 360&#8239;MB, with a <a href=\"/download/mac.sha256\">SHA-256 file</a>). It is ad-hoc signed and not notarized, so on first launch allow it under System Settings › Privacy & Security › Open Anyway (on macOS 14, right-click › Open also works); it listens on loopback by default, and it does not update itself. There is no ROCm, Intel GPU or CPU path in this release; AMD Radeon and Intel GPUs are on the roadmap, and which comes first depends on the feedback we get in the project’s GitHub Discussions. Several GPUs in one box are supported; one model split across several machines is not."
   },
   {
     "q": "Will my existing OpenAI client work with it?",
@@ -21,7 +21,7 @@
   },
   {
     "q": "Which inference engines does it use?",
-    "a": "Mainline vLLM v0.32.0 and llama.cpp b11719, chosen per model and run unmodified: no patched image, no fork, no monkeypatching. Picking a <code>.gguf</code> file selects llama.cpp, which fits larger models onto smaller cards with GGUF quantisation and keeps older GPUs useful. TensorRT-LLM, SGLang, MLX and Ollama’s runtime are not shipped."
+    "a": "Mainline vLLM v0.32.0 and llama.cpp b11719, chosen per model and run unmodified: no patched image, no fork, no monkeypatching. Picking a <code>.gguf</code> file selects llama.cpp, which fits larger models onto smaller cards with GGUF quantisation and keeps older GPUs useful. TensorRT-LLM, SGLang and Ollama’s runtime are not shipped; the Mac beta runs models with MLX instead of vLLM."
   },
   {
     "q": "Does anything leave my machine?",

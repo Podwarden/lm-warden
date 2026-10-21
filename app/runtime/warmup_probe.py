@@ -27,9 +27,14 @@ class ProbeResult:
 
 
 async def warmup_probe(
-    *, port: int, served_model_name: str, timeout_s: float, host: str = "127.0.0.1"
+    *, port: int, model_id: str, timeout_s: float, host: str = "127.0.0.1"
 ) -> ProbeResult:
     """Send one POST /v1/completions to host:port and report success.
+
+    ``model_id`` is the id the *engine* serves (``supervisor.get_engine_model_id``),
+    not the user-facing served name: ``mlx_lm.server`` treats the request's
+    ``model`` as a Hugging Face repo or path to load, so the served name 404s
+    there. For vLLM and llama.cpp the two are equal.
 
     ``host`` is loopback for the in-container subprocess driver and the
     engine container's DNS name for the docker driver (the supervisor
@@ -44,7 +49,7 @@ async def warmup_probe(
     """
     url = f"http://{host}:{port}/v1/completions"
     payload = {
-        "model": served_model_name,
+        "model": model_id,
         "prompt": " ",
         "max_tokens": 1,
         "stream": False,

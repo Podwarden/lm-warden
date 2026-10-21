@@ -123,12 +123,12 @@ async def test_status_stays_loading_during_probe_window(fake_vllm):
     assert r.status_code == 200
 
     # Probe attempted now should fail (warmup still pending)
-    early = await warmup_probe(port=port, served_model_name="fake", timeout_s=0.5)
+    early = await warmup_probe(port=port, model_id="fake", timeout_s=0.5)
     assert early.ok is False
 
     # Wait for warmup window to end, then probe again
     await asyncio.sleep(3.5)
-    late = await warmup_probe(port=port, served_model_name="fake", timeout_s=2.0)
+    late = await warmup_probe(port=port, model_id="fake", timeout_s=2.0)
     assert late.ok is True
 
 

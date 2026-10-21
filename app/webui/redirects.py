@@ -78,11 +78,18 @@ def _table_target(rule_target: str, request: Request) -> str:
 class _BookmarkIdConvertor(Convertor[str]):
     """One path segment that is not the literal ``detail`` page segment.
 
+    The id also contains no dot: model and token ids never do, and the Next
+    static export keeps its own files beside the pages (``models/index.txt``,
+    the RSC payload the client router fetches on every navigation, and
+    similar ``*.txt`` / ``*.json`` files). A dotted segment is such a file, so
+    it must fall through to the /ui mount instead of becoming
+    ``detail/?id=index.txt`` ("Model not found").
+
     The lookahead stops at the segment end (``/`` or end of path) so
     ``/ui/models/detail/settings`` is spared too, while ``detailx`` is an id.
     """
 
-    regex = "(?!detail(?:/|$))[^/]+"
+    regex = "(?!detail(?:/|$))[^/.]+"
 
     def convert(self, value: str) -> str:
         return value

@@ -96,6 +96,8 @@ PUBLIC_ROUTES: frozenset[tuple[str, str]] = frozenset(
         ("GET", "/llms.txt"),
         ("GET", "/llms-full.txt"),
         ("GET", "/agent-guide.md"),
+        ("GET", "/download/mac"),
+        ("GET", "/download/mac.sha256"),
         *(("GET", p) for p in PUBLIC_PAGE_PATHS),
         ("GET", "/api/chat2/attachments/{attachment_id}"),
     }

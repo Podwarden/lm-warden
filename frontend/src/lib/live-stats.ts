@@ -128,6 +128,15 @@ export interface LiveEngineFrame {
   /** Non-null string when the /metrics scrape failed this tick. */
   scrape_error: string | null;
   /**
+   * `false` when the backend has no metrics endpoint at all (MLX). That is a
+   * capability, not a failure: `scrape_error` is null then and `engine` carries
+   * only the running/waiting counts, taken from the proxy's own in-flight
+   * accounting. Absent (older api) or `true` means the engine reports metrics.
+   */
+  metrics_supported?: boolean;
+  /** Why the engine reports no metrics; set only with `metrics_supported: false`. */
+  metrics_unsupported_reason?: string | null;
+  /**
    * Every loaded model's block, most significant first.
    *
    * Optional at the type level: ui and api ship as separate images, so a

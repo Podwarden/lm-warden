@@ -246,7 +246,7 @@ def _now_iso() -> str:
 
 def _null_frame(
     model, model_id, max_model_len, scrape_error: str, backend: str | None = None
-) -> dict:
+) -> dict[str, Any]:
     return {
         "ts": _now_iso(),
         "model": model,
@@ -263,6 +263,61 @@ def _null_frame(
         "finished": None,
         "scrape_error": scrape_error,
     }
+
+
+def proxy_in_flight(registry: Any, model_id: str) -> tuple[int, int]:
+    """``(running, waiting)`` for one model from the proxy's in-flight registry.
+
+    The registry is the same source the macOS menu bar's "N requests in
+    flight" reads (app/system/shell_status.py). ``queued`` requests wait at the
+    warden's admission gate; everything else is being served.
+    """
+    live = [
+        r
+        for r in (registry.snapshot() if registry is not None else [])
+        if r.model_row_id == model_id
+    ]
+    waiting = sum(1 for r in live if r.phase == "queued")
+    return len(live) - waiting, waiting
+
+
+def unsupported_frame(
+    model: str | None,
+    model_id: str | None,
+    max_model_len: int | None,
+    backend: str,
+    *,
+    running: int,
+    waiting: int,
+) -> dict[str, Any]:
+    """The block for a backend that exposes NO metrics endpoint (MLX).
+
+    That is a capability of the engine, not a failed scrape: ``scrape_error``
+    stays ``None`` (no amber banner) and ``metrics_supported`` is ``False``
+    with a reason the UI can show calmly. Busy/idle is not knowable from the
+    engine, so ``running``/``waiting`` come from the proxy's own in-flight
+    registry (the same source as the menu bar's "N requests in flight"); every
+    other engine number stays null -- never zero.
+    """
+    frame = _null_frame(model, model_id, max_model_len, "", backend)
+    frame["scrape_error"] = None
+    # Additive keys, present ONLY on this frame shape (the frontend reads
+    # ``metrics_supported === false``; absent means supported), so the
+    # build_frame golden is untouched.
+    frame["metrics_supported"] = False
+    frame["metrics_unsupported_reason"] = f"{backend} backend exposes no metrics endpoint"
+    frame["engine"] = {
+        "num_requests_running": running,
+        "num_requests_waiting": waiting,
+        "waiting_by_reason": {"capacity": None, "deferred": None},
+        "kv_cache_usage_perc": None,
+        "kv_tokens_used": None,
+        "kv_tokens_total": None,
+        "engine_sleep_state": None,
+        "preemptions_total": None,
+        "preemptions_per_s": None,
+    }
+    return frame
 
 
 def build_frame(
@@ -596,6 +651,22 @@ async def stream_live(
                     max_model_len,
                     "engine not running",
                     backend.capabilities.name,
+                ),
+                None,
+            )
+        if backend.capabilities.metrics_path is None:
+            # No metrics endpoint is a capability, not a failure.
+            running, waiting = proxy_in_flight(
+                getattr(request.app.state, "request_registry", None), model_id
+            )
+            return (
+                unsupported_frame(
+                    model_name,
+                    model_id,
+                    max_model_len,
+                    backend.capabilities.name,
+                    running=running,
+                    waiting=waiting,
                 ),
                 None,
             )

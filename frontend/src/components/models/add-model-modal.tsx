@@ -64,8 +64,36 @@ type FileKind =
   | "tokenizer"
   | "other";
 
-/** Which engine serves a model. Mirrors ModelCreate.backend's Literal. */
-type BackendName = "vllm" | "llamacpp";
+/** Which engine serves a model: a name from GET /api/system/backends. */
+type BackendName = string;
+
+/** Offered when /api/system/backends has not answered (or is an older shape). */
+const FALLBACK_BACKENDS: { name: string; display_name: string }[] = [
+  { name: "vllm", display_name: "vLLM" },
+  { name: "llamacpp", display_name: "llama.cpp" },
+];
+
+/** One sentence about the selected engine, driven by what the server says it can do. */
+function engineDescription(
+  backend: string,
+  offered: readonly { name: string; display_name: string }[],
+  caps: BackendCapability | null,
+  isDefault: boolean,
+): string {
+  const label = offered.find((b) => b.name === backend)?.display_name ?? backend;
+  const tp = caps?.supports_tensor_parallel ?? backend === "vllm";
+  if (backend === "llamacpp") {
+    const tail = offered.some((b) => b.name !== backend)
+      ? " Another engine here may be the better choice when throughput across several cards matters."
+      : "";
+    return `llama.cpp serves a single .gguf file. It splits a multi-GPU model by layer rather than by tensor.${tail}`;
+  }
+  if (backend === "vllm") {
+    return `vLLM${isDefault ? " is the default. It" : ""} serves safetensors and GGUF${tp ? ", and is the only backend here with tensor-parallel multi-GPU" : ""}.`;
+  }
+  const scope = backend === "mlx" ? "serves the whole repository" : "serves models";
+  return `${label}${isDefault ? " is the default. It" : ""} ${scope}${tp ? " with tensor-parallel multi-GPU" : ", on a single GPU"}.`;
+}
 
 /**
  * Decision D6's pre-selection rule, stated once.
@@ -81,8 +109,14 @@ type BackendName = "vllm" | "llamacpp";
  * happened to click a DIFFERENT file -- the pre-selection would be invisible in
  * exactly the common case it exists for.
  */
-function backendForFilename(filename: string): BackendName {
-  return filename.toLowerCase().endsWith(".gguf") ? "llamacpp" : "vllm";
+function backendForFilename(
+  filename: string,
+  offered: readonly { name: string }[],
+): BackendName {
+  // "" means "the server's default" (resolved where the capability list is).
+  return filename.toLowerCase().endsWith(".gguf") && offered.some((b) => b.name === "llamacpp")
+    ? "llamacpp"
+    : "";
 }
 
 interface DiscoveredFile {
@@ -132,6 +166,10 @@ interface BackendCapability {
    * true and everything else as false (#286).
    */
   supports_data_parallel?: boolean;
+  /** Tensor-parallel multi-GPU. Optional for older servers. */
+  supports_tensor_parallel?: boolean;
+  /** Engine loads from a local snapshot path (llama.cpp, MLX). */
+  needs_local_model_path?: boolean;
 }
 
 interface BackendsResponse {
@@ -252,7 +290,8 @@ export function AddModelModal({ open, onClose }: AddModelModalProps) {
   // before. `backendTouched` is what makes the .gguf rule a SUGGESTION rather
   // than a policy: once the operator has answered, changing the weights file
   // must not silently undo "serve this GGUF on vLLM for the throughput".
-  const [backend, setBackend] = useState<BackendName>("vllm");
+  // "" = not chosen: the server's default (from /api/system/backends) applies.
+  const [backendState, setBackend] = useState<BackendName>("");
   const [backendTouched, setBackendTouched] = useState(false);
   // llama.cpp only. The multimodal projector GGUF that sits beside the weights
   // in the same repo; llama-server takes it as a separate --mmproj file.
@@ -350,7 +389,7 @@ export function AddModelModal({ open, onClose }: AddModelModalProps) {
     setHfRepo("");
     setHfRevision("main");
     setTemplateId("");
-    setBackend("vllm");
+    setBackend("");
     setBackendTouched(false);
     setMmprojFilename("");
     setName("");
@@ -394,7 +433,21 @@ export function AddModelModal({ open, onClose }: AddModelModalProps) {
     open ? "/api/system/backends" : null,
     authFetchJSON,
   );
-  const activeBackendCaps = backendCaps?.backends.find((b) => b.name === backend) ?? null;
+  const offeredBackends =
+    Array.isArray(backendCaps?.backends) && backendCaps.backends.length > 0
+      ? backendCaps.backends
+      : FALLBACK_BACKENDS;
+  const defaultBackend =
+    backendCaps?.default && offeredBackends.some((b) => b.name === backendCaps.default)
+      ? backendCaps.default
+      : offeredBackends[0].name;
+  // True once the server has told us which engines it actually has. Until then
+  // (pending / failed) `backend` is only our guess from FALLBACK_BACKENDS.
+  const backendsLoaded = Array.isArray(backendCaps?.backends) && backendCaps.backends.length > 0;
+  const backend: BackendName = offeredBackends.some((b) => b.name === backendState)
+    ? backendState
+    : defaultBackend;
+  const activeBackendCaps = backendCaps?.backends?.find?.((b) => b.name === backend) ?? null;
   // The VRAM cap fraction the SELECTED backend actually imposes. Falls back to
   // GMU when the capability list has not loaded yet, which matches the server
   // default (vLLM) rather than inventing a more generous number.
@@ -544,7 +597,7 @@ export function AddModelModal({ open, onClose }: AddModelModalProps) {
         // D6's pre-selection has to run here too, not only in the click
         // handler: this IS the selection for a repo the operator does not
         // re-click, which is the common case.
-        setBackend(backendForFilename(firstWeights.filename));
+        setBackend(backendForFilename(firstWeights.filename, offeredBackends));
       }
       // Best-effort load GPUs in parallel with the discovery transition.
       // `/api/system/gpus` already has a 2 s TTL cache server-side. The
@@ -796,7 +849,7 @@ export function AddModelModal({ open, onClose }: AddModelModalProps) {
     // to vLLM for throughput. Sub-project E adds the compatibility verdicts
     // that make this pre-selection intelligent; C stops at the suggestion.
     if (!backendTouched) {
-      setBackend(backendForFilename(filename));
+      setBackend(backendForFilename(filename, offeredBackends));
     }
   }
 
@@ -871,10 +924,20 @@ export function AddModelModal({ open, onClose }: AddModelModalProps) {
       hf_repo: hfRepo,
       hf_revision: hfRevision || "main",
       gpu_indices: Array.from(selectedGpus).sort((a, b) => a - b),
-      filename: selectedFilename,
       parallelism_strategy: parallelismStrategy,
-      backend,
     };
+    // Send the engine only when the operator chose one or the server's own list
+    // backs the resolved default. A guessed fallback ("vllm") on a Mac -- which
+    // has only llamacpp + mlx -- would 422; omitting lets the server default apply.
+    if (backendTouched || backendsLoaded) body.backend = backend;
+    // A single file is named wherever the engine loads one (vLLM, llama.cpp --
+    // which needs a single .gguf). Only an engine that serves a WHOLE repository
+    // (MLX; /api/system/backends has no capability flag for that, and
+    // needs_local_model_path is true for llama.cpp too) takes the repo, so a
+    // filename would narrow its pull to one shard.
+    if (!(backend === "mlx" && !selectedFilename.toLowerCase().endsWith(".gguf"))) {
+      body.filename = selectedFilename;
+    }
     // llama.cpp only, and only when the operator picked one. Absent stays
     // absent so the column keeps its NULL rather than an empty string.
     if (backend === "llamacpp" && mmprojFilename) {
@@ -1087,6 +1150,9 @@ export function AddModelModal({ open, onClose }: AddModelModalProps) {
           selectedFilename={selectedFilename}
           onPickFilename={pickFilename}
           backend={backend}
+          backends={offeredBackends}
+          activeCaps={activeBackendCaps}
+          isDefaultBackend={backend === defaultBackend}
           onBackendChange={(b) => {
             setBackend(b);
             setBackendTouched(true);
@@ -1194,6 +1260,9 @@ interface SelectFileStageProps {
   selectedFilename: string | null;
   onPickFilename: (f: string) => void;
   backend: BackendName;
+  backends: readonly { name: string; display_name: string }[];
+  activeCaps: BackendCapability | null;
+  isDefaultBackend: boolean;
   onBackendChange: (b: BackendName) => void;
   // Engine version pin, for the SELECTED backend. `engineVersionDisabled`
   // comes from `version_pin_available` (the deployment fact) and
@@ -1249,6 +1318,9 @@ function SelectFileStage({
   selectedFilename,
   onPickFilename,
   backend,
+  backends,
+  activeCaps,
+  isDefaultBackend,
   onBackendChange,
   engineVersion,
   onEngineVersionChange,
@@ -1425,13 +1497,14 @@ function SelectFileStage({
           onChange={(e) => onBackendChange(e.target.value as BackendName)}
           className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
         >
-          <option value="vllm">vLLM</option>
-          <option value="llamacpp">llama.cpp</option>
+          {backends.map((b) => (
+            <option key={b.name} value={b.name}>
+              {b.display_name}
+            </option>
+          ))}
         </select>
-        <p className="mt-1 text-[11px] text-slate-500">
-          {backend === "llamacpp"
-            ? "llama.cpp serves a single .gguf file. It splits a multi-GPU model by layer rather than by tensor, so vLLM remains the choice when throughput across several cards matters."
-            : "vLLM is the default. It serves safetensors and GGUF, and is the only backend here with tensor-parallel multi-GPU."}
+        <p className="mt-1 text-[11px] text-slate-500" data-testid="backend-description">
+          {engineDescription(backend, backends, activeCaps, isDefaultBackend)}
         </p>
       </div>
 

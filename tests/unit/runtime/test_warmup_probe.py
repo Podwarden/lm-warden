@@ -20,7 +20,7 @@ class _FakeResponse:
 async def test_probe_succeeds_on_200_with_choices():
     fake = _FakeResponse(200, {"choices": [{"text": " "}]})
     with patch("httpx.AsyncClient.post", new=AsyncMock(return_value=fake)):
-        result = await warmup_probe(port=10001, served_model_name="m1", timeout_s=5.0)
+        result = await warmup_probe(port=10001, model_id="m1", timeout_s=5.0)
     assert result.ok is True
     assert result.detail is None
 
@@ -29,7 +29,7 @@ async def test_probe_succeeds_on_200_with_choices():
 async def test_probe_fails_on_5xx():
     fake = _FakeResponse(503, {"error": "engine warming"})
     with patch("httpx.AsyncClient.post", new=AsyncMock(return_value=fake)):
-        result = await warmup_probe(port=10001, served_model_name="m1", timeout_s=5.0)
+        result = await warmup_probe(port=10001, model_id="m1", timeout_s=5.0)
     assert result.ok is False
     assert "503" in result.detail
 
@@ -38,7 +38,7 @@ async def test_probe_fails_on_5xx():
 async def test_probe_fails_on_200_without_choices():
     fake = _FakeResponse(200, {"unexpected": "shape"})
     with patch("httpx.AsyncClient.post", new=AsyncMock(return_value=fake)):
-        result = await warmup_probe(port=10001, served_model_name="m1", timeout_s=5.0)
+        result = await warmup_probe(port=10001, model_id="m1", timeout_s=5.0)
     assert result.ok is False
     assert "choices" in result.detail
 
@@ -49,7 +49,7 @@ async def test_probe_fails_on_timeout():
         "httpx.AsyncClient.post",
         new=AsyncMock(side_effect=httpx.ReadTimeout("timed out")),
     ):
-        result = await warmup_probe(port=10001, served_model_name="m1", timeout_s=0.1)
+        result = await warmup_probe(port=10001, model_id="m1", timeout_s=0.1)
     assert result.ok is False
     assert "timeout" in result.detail.lower()
 
@@ -60,7 +60,7 @@ async def test_probe_fails_on_connection_error():
         "httpx.AsyncClient.post",
         new=AsyncMock(side_effect=httpx.ConnectError("refused")),
     ):
-        result = await warmup_probe(port=10001, served_model_name="m1", timeout_s=5.0)
+        result = await warmup_probe(port=10001, model_id="m1", timeout_s=5.0)
     assert result.ok is False
     assert "connect" in result.detail.lower()
 
@@ -76,7 +76,7 @@ async def test_probe_sends_max_tokens_1():
         return fake
 
     with patch("httpx.AsyncClient.post", new=fake_post):
-        await warmup_probe(port=10001, served_model_name="m1", timeout_s=5.0)
+        await warmup_probe(port=10001, model_id="m1", timeout_s=5.0)
     assert captured["json"]["max_tokens"] == 1
     assert captured["json"]["model"] == "m1"
     assert captured["json"]["stream"] is False

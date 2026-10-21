@@ -66,7 +66,14 @@ import { tokenHref } from "@/lib/routes";
 export const ENGINE_LABELS: Record<string, string> = {
   vllm: "vLLM",
   llamacpp: "llama.cpp",
+  mlx: "MLX",
 };
+
+/** The calm note for an engine that has no metrics endpoint. Not a failure. */
+export function metricsUnsupportedNote(backend: string | null): string {
+  const label = ENGINE_LABELS[backend ?? ""] ?? "This engine";
+  return `${label} doesn't report live engine metrics; requests, tokens per second and latency here come from LM Warden's own proxy.`;
+}
 
 // ===========================================================================
 // Shared primitives
@@ -197,7 +204,7 @@ export function ConnectionStatus({ state }: { state: LiveStatsState }) {
   );
 }
 
-export type EngineState = "healthy" | "queueing" | "idle" | "none";
+export type EngineState = "healthy" | "queueing" | "active" | "idle" | "none";
 
 /**
  * The one part of the old verdict strip that was not a restatement of
@@ -215,6 +222,9 @@ export function engineStateOf(
     waiting += f.engine?.num_requests_waiting ?? 0;
   }
   if (running === 0 && waiting === 0) return "idle";
+  // An engine with no metrics endpoint gives us a request count and nothing
+  // about its health, so "Healthy"/"Queueing" would be claims we cannot back.
+  if (selectedFrames.some((f) => f.metrics_supported === false)) return "active";
   return waiting > 0 ? "queueing" : "healthy";
 }
 
@@ -234,6 +244,11 @@ const STATE_META: Record<EngineState, { label: string; className: string; title:
     title:
       "More requests than decode slots — the queue, not the GPU, is what callers feel.",
   },
+  active: {
+    label: "Active",
+    className: "rounded-md border border-chat-rule text-chat-fg",
+    title: "Serving requests; this engine doesn't report finer health.",
+  },
   idle: {
     label: "Idle",
     className: "rounded-md border border-chat-rule text-chat-dim",
@@ -246,7 +261,22 @@ const STATE_META: Record<EngineState, { label: string; className: string; title:
   },
 };
 
-export function StateChip({ state }: { state: EngineState }) {
+/** Requests in flight (running + waiting) across the selected frames. */
+export function inFlightOf(selectedFrames: readonly LiveEngineFrame[]): number {
+  return selectedFrames.reduce(
+    (n, f) =>
+      n + (f.engine?.num_requests_running ?? 0) + (f.engine?.num_requests_waiting ?? 0),
+    0,
+  );
+}
+
+export function StateChip({
+  state,
+  inFlight,
+}: {
+  state: EngineState;
+  inFlight?: number;
+}) {
   const meta = STATE_META[state];
   return (
     <span
@@ -256,6 +286,7 @@ export function StateChip({ state }: { state: EngineState }) {
       className={cn("px-2.5 py-0.5 text-xs font-semibold", meta.className)}
     >
       {meta.label}
+      {state === "active" && inFlight !== undefined ? ` (${inFlight} in flight)` : ""}
     </span>
   );
 }
@@ -1284,6 +1315,27 @@ function ModelContextRow({ frame }: { frame: LiveEngineFrame }) {
   // kept) is not an engine that reports nothing — it is a tick with no data.
   // Say that, rather than borrowing the "does not expose this metric" copy
   // that belongs to llama.cpp.
+  if (frame.metrics_supported === false) {
+    return (
+      <div
+        data-testid="model-context-row"
+        data-model-id={frame.model_id ?? ""}
+        className="border-t border-chat-rule pt-3 first:border-t-0 first:pt-0"
+      >
+        <span
+          data-testid="live-model-name"
+          className="max-w-[24ch] truncate font-mono text-xs text-chat-fg"
+          title={frame.model ?? undefined}
+        >
+          {frame.model}
+        </span>
+        <p className="mt-1 text-xs text-chat-dim" data-testid="kv-usage">
+          KV usage and cache figures are not available — {engineLabel} has no
+          metrics endpoint.
+        </p>
+      </div>
+    );
+  }
   if (e === null && frame.cache === null && frame.scrape_error !== null) {
     return (
       <div

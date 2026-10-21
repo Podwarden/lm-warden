@@ -196,6 +196,23 @@ def test_literal_detail_segment_is_not_redirected() -> None:
     assert c.get("/ui/tokens/detail/").status_code == 404
 
 
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/ui/models/index.txt",
+        "/ui/tokens/index.txt",
+        "/ui/models/x.json",
+        "/ui/models/__next.models.txt",
+        "/ui/models/index.txt/settings",
+    ],
+)
+def test_dotted_segments_are_the_uis_own_files_not_ids(path: str) -> None:
+    # Without a mount they fall through to 404; they are never redirected.
+    r = _client().get(path)
+    assert r.status_code == 404, f"{path} -> {r.status_code}"
+    assert "location" not in r.headers
+
+
 def _export(tmp_path: Path) -> Path:
     # The trailingSlash export's shape for the three detail pages
     # (frontend/src/app/{models,tokens}/detail/**, BACKLOG-macos P4).

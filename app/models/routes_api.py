@@ -2197,7 +2197,7 @@ async def start_engine(
             probe_result = await warmup_probe(
                 port=port,
                 host=host,
-                served_model_name=model.served_model_name,
+                model_id=sup.get_engine_model_id(model_id) or model.served_model_name,
                 timeout_s=settings.warmup_probe_timeout_s,
             )
             if stop_event.is_set():

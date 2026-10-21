@@ -54,6 +54,7 @@ private func runGUI() {
     MainActor.assumeIsolated {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
+        app.mainMenu = EditMenu.makeMainMenu()
         let delegate = ShellAppDelegate()
         shellAppDelegate = delegate
         app.delegate = delegate

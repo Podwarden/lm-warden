@@ -1178,8 +1178,13 @@ class StressRunner:
         acc = StreamAccumulator(detector)
 
         payload = {
-            # The REAL served name. An unknown one returns 200 and garbage.
-            "model": self.control.served_model_name,
+            # The id the ENGINE serves (not the proxy's served name: mlx_lm.server
+            # treats ``model`` as an HF repo/path and 404s on it). Falls back to
+            # the REAL served name; an unknown one returns 200 and garbage.
+            "model": (
+                getattr(self.control, "engine_model_id", lambda: None)()
+                or self.control.served_model_name
+            ),
             "messages": probe.messages,
             "max_tokens": probe.max_tokens,
             "temperature": 0,
@@ -1597,6 +1602,11 @@ class WardenEngineControl:
 
     # -- identity ---------------------------------------------------------
 
+    def engine_model_id(self) -> str | None:
+        """The model id the running engine itself serves (MLX: a repo/path)."""
+        engine_id: str | None = self._app_state.supervisor.get_engine_model_id(self._row.id)
+        return engine_id
+
     def subject(self) -> Subject:
         return self._subject
 
@@ -1762,7 +1772,7 @@ class WardenEngineControl:
         result = await warmup_probe(
             port=target.port,
             host=target.host,
-            served_model_name=self.served_model_name,
+            model_id=self.engine_model_id() or self.served_model_name,
             timeout_s=60.0,
         )
         return result.ok

@@ -37,7 +37,16 @@ _SESSION_COOKIE = "vw_session"
 # ad click that never goes near the console. The UI mints its own through
 # /api/csrf.
 _NO_MINT_PATHS = frozenset(
-    {"/_landing", "/robots.txt", "/sitemap.xml", "/llms.txt", "/llms-full.txt", "/agent-guide.md"}
+    {
+        "/_landing",
+        "/robots.txt",
+        "/sitemap.xml",
+        "/llms.txt",
+        "/llms-full.txt",
+        "/agent-guide.md",
+        "/download/mac",
+        "/download/mac.sha256",
+    }
     | PUBLIC_PAGE_PATHS
 )
 _NO_MINT_PREFIXES = ("/_landing/", "/coding-agents/")

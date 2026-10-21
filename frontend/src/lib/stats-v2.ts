@@ -39,6 +39,8 @@ export interface StatsV2Current {
   /** Sum of per-GPU averages over the last minute. `null` when no card
    *  on the host reports power.draw (older or virtualised GPUs). */
   power_w: number | null;
+  /** Whether this platform can report power at all. Optional: an older API omits it. */
+  power_supported?: boolean;
   /** Tokens per second over the last full minute (prompt + completion / 60). */
   tps: number;
 }

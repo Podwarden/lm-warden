@@ -7,6 +7,25 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.21.2] — 2026-10-21
+
+### Added
+
+- **`/download/mac` on lmwarden.com.** `GET` or `HEAD` on `/download/mac` answers 307 to the current Mac beta DMG (the `v2026.10.21.2-macos-beta` pre-release on GitHub) and `/download/mac.sha256` to its checksum, both `Cache-Control: no-store`. The two URLs live in `app/landing/downloads.py`, so the next beta is a one-line change, and the routes exist whatever `VW_LANDING_CANONICAL_URL` says.
+- **A Mac beta section on the landing page and in the README.** The home page gets a "On a Mac: the beta" section with the download button, the checksum link, requirements and the first-launch steps for an ad-hoc signed, non-notarized app; the FAQ, `llms.txt` and `llms-full.txt` stop saying the Mac app has no download. The README's "Mac app (in development)" section becomes "Mac app (beta)".
+
+### Fixed
+
+- **Add model offers the engines the server actually has.** The dialog hard-coded vLLM and llama.cpp, so on the Mac it offered an engine that does not exist and none that does. The engine list, labels and default now come from `/api/system/backends`: MLX is offered and preselected on the Mac, a `.gguf` still preselects llama.cpp when the server has it, and the engine description follows the engine's capabilities (tensor-parallel is only mentioned for an engine that has it). An engine that loads from a local path (MLX) takes the whole repository, so the create request carries no single filename for it.
+- **Stats: an engine with no metrics endpoint shows "Active (n in flight)", not "Healthy".** Without engine metrics there is no health to report, so the badge says only that requests are being served (tooltip: "Serving requests; this engine doesn't report finer health."), counted from the proxy's in-flight requests.
+- **Stats: the Power tile and Power draw chart are hidden when the host reports no power.** On Apple silicon power needs root, so the panel only ever said "telemetry unavailable". When no GPU reports power the tile and chart are not shown (the other host panels fill the row); a host that reports power, or whose GPU probe is failing, still shows both. The decision follows what the host reports, not the operating system.
+- **Stats: an MLX model no longer shows a "Metrics scrape failed" banner and an "Idle" badge while busy.** MLX has no metrics endpoint, which is not a failed scrape. The live frame now says `metrics_supported: false` with no `scrape_error`, the page shows a neutral note that requests, tokens per second and latency come from LM Warden's own proxy, and busy/idle and the request counts come from the proxy's in-flight requests (the same count as the menu bar). A real scrape failure on vLLM or llama.cpp still shows the amber banner.
+- **Mac app: loading an MLX model no longer fails at the warm-up check with a Hugging Face 404.** The warm-up probe sent the served name as the request's `model`, which `mlx_lm.server` tries to download; it now sends the engine's own model id (the same as the served name on vLLM and llama.cpp).
+- **Mac app: a stress run on an MLX model no longer fails every probe with a Hugging Face 404.** The stress probe, which talks to the engine directly, now sends the engine's own model id, as the warm-up check does.
+- **Mac app: links to Models and Tokens inside the dashboard no longer open a "Model not found" page.** The bookmark redirects for `/ui/models/<id>` and `/ui/tokens/<id>` no longer treat the UI's own data files (such as `models/index.txt`) as ids.
+- **Mac app: copy, paste, cut, select all and undo work in the dashboard window and the setup fields.** The app had no Edit menu, so ⌘C, ⌘V, ⌘X, ⌘A and ⌘Z did nothing; it now has the standard one (invisible, as the app lives in the menu bar).
+- **Mac app: the dashboard window no longer stays blank when it opens before the server has started** (first launch after setup); it retries for up to three minutes, reloads as soon as the server reports running, and shows an error page, not a blank window, if the server never answers (Open Dashboard then tries again).
+
 ## [v2026.10.21.1] — 2026-10-21
 
 ### Added

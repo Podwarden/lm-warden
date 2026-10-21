@@ -5,6 +5,7 @@ from typing import Any
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app import platform_profile
 from app.auth.deps import require_jwt
 from app.db.database import open_db
 from app.proxy import bookkeeping
@@ -228,6 +229,7 @@ async def stats_v2_overview(
           "vram_pct": int | None,    # 0..100, rounded
           "gpu_util_pct": int | None,  # max across GPUs at most-recent minute
           "power_w": float | None,   # sum across GPUs at most-recent minute
+          "power_supported": bool,   # platform can report power at all
           "tps": float,              # tokens-per-second over last full minute
                                      # (prompt + completion)
           # The GPU probe right now (#255). While it is "failing" the four
@@ -417,6 +419,10 @@ async def stats_v2_overview(
             "vram_pct": vram_pct,
             "gpu_util_pct": util_pct,
             "power_w": power_w,
+            # Platform fact, not inferred from samples: Apple silicon has no
+            # unprivileged power source (powermetrics needs root), so the page
+            # hides the tile there; a Linux GPU with no sample yet is not that.
+            "power_supported": platform_profile.PROFILE != "apple",
             "tps": tps,
             "gpu_probe": {"state": probe.state, "error": probe.error},
         },

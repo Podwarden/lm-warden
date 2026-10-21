@@ -662,6 +662,18 @@
     .roadmap ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); }
     .roadmap ul li + li { margin-top: 0; }
 
+    .mac > .wrap > * + * { margin-top: var(--s4); }
+    .mac h3 { margin-top: var(--s6); }
+    .mac-lede { max-width: 40em; }
+    a.btn { text-decoration: none; color: var(--paper); margin-right: var(--s4); }
+    .mac-dl { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) 0; }
+    .mac-dl a:not(.btn) { margin-right: var(--s2); }
+    .mac-points, .mac-steps { margin: var(--s4) 0 0; padding-left: 1.2em; max-width: 40em; }
+    .mac-points li + li, .mac-steps li + li { margin-top: var(--s3); }
+    .mac-figs { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--s4); align-items: start; margin-top: var(--s5); }
+    .mac-figs figcaption { margin-top: var(--s2); }
+    @media (max-width: 720px) { .mac-figs { grid-template-columns: 1fr; } }
+
     /* FAQ: every answer visible, two columns on desktop, each column about
        65 characters wide */
     .faq-list { margin-top: var(--s6); max-width: 66rem; }

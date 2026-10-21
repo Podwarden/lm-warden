@@ -29,6 +29,9 @@ struct ShellViews {
     var refreshMenu: (MenuBarModel) -> Void
     var presentFirstRun: () -> Void
     var showDashboard: (URL) -> Void
+    /// The server reported running: reload the dashboard window if its last
+    /// load failed (no-op otherwise; never brings the window forward).
+    var reloadDashboardIfFailed: () -> Void = {}
     var presentQuitPrompt: (QuitPrompt, @escaping (QuitChoice) -> Void) -> Void
     var copyToPasteboard: (String) -> Void
     var showLog: ([String]) -> Void
@@ -284,7 +287,8 @@ final class ShellCoordinator {
             let url = try controller.boot(options: options)
             dashboardURL = url
             lastPort = controller.port
-            controller.supervisor?.onStateChange = { [weak self] _ in
+            controller.supervisor?.onStateChange = { [weak self] state in
+                if state == .running { self?.views.reloadDashboardIfFailed() }
                 self?.refresh()
             }
             return url

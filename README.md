@@ -28,6 +28,10 @@ Your endpoint is `http://YOUR-HOST:8080/v1`: in any OpenAI client, only the
 install are under [Quick start](#quick-start) and in
 [documents/INSTALL.md](documents/INSTALL.md).
 
+**On an Apple silicon Mac?** There is a beta of a native menu-bar app:
+[download it](https://lmwarden.com/download/mac) (about 360 MB), then read
+[Mac app (beta)](#mac-app-beta) before the first launch.
+
 You have NVIDIA GPUs: in a rack, in a workstation, or two cards bought eighteen
 months apart in a box under a desk. You want what is on them reachable the way
 a hosted API is reachable: a base URL, a key, and a client library that already
@@ -97,8 +101,10 @@ and [`gpu_memory_utilization` is a fraction of the whole card](documents/HAZARDS
 
 ## Will it run on my hardware?
 
-NVIDIA only: no ROCm, no Metal, no CPU serving path. vLLM's own support matrix
-applies unchanged, because it is upstream's image. **The floor is Turing
+On Linux, NVIDIA only: no ROCm and no CPU serving path. Apple silicon runs on
+a Mac through the [Mac beta](#mac-app-beta), with MLX instead of vLLM. For the
+Linux stack, vLLM's own support matrix applies unchanged, because it is
+upstream's image. **The floor is Turing
 (sm_75, the RTX 20-series generation)**: the base image ships CUDA 13, which
 dropped Maxwell, Pascal and Volta, so a GTX 1080 Ti, a Titan X or a V100 will
 not work here and no rebuild changes that. Above that floor the llama.cpp
@@ -138,12 +144,11 @@ computed.</td>
 </tr>
 </table>
 
-**Macs and other GPUs.** A native Mac app for Apple silicon is in development
-and not released yet: see [Mac app (in development)](#mac-app-in-development)
-below. AMD Radeon and Intel GPUs are on our roadmap, with no dates; which comes
-first depends on who asks. Tell us which one you would run it on, in the Ideas
-category of the project's GitHub Discussions:
-[Mac](https://github.com/Podwarden/lm-warden/discussions/new?category=ideas&title=Hardware%20support%3A%20Mac),
+**Macs and other GPUs.** Apple silicon is covered by the
+[Mac app (beta)](#mac-app-beta) below. AMD Radeon and Intel GPUs are on our
+roadmap, with no dates; which comes first depends on who asks. Tell us which
+one you would run it on, in the Ideas category of the project's GitHub
+Discussions:
 [AMD Radeon](https://github.com/Podwarden/lm-warden/discussions/new?category=ideas&title=Hardware%20support%3A%20Radeon),
 [Intel](https://github.com/Podwarden/lm-warden/discussions/new?category=ideas&title=Hardware%20support%3A%20Intel).
 
@@ -152,59 +157,93 @@ category of the project's GitHub Discussions:
 None of these are solvable by configuration today.
 
 - **You have no NVIDIA GPU.** `--gpus none` starts the control plane for
-  evaluation and CI; nothing can be loaded on it. On an Apple silicon Mac, see
-  [Mac app (in development)](#mac-app-in-development): it has no release yet.
+  evaluation and CI; nothing can be loaded on it. On an Apple silicon Mac, use
+  the [Mac app (beta)](#mac-app-beta) instead of the Docker stack.
 - **You need to serve one model across several machines.** This is a
   single-host Compose stack. Multiple GPUs in one box, yes; multi-node, no.
 - **You want a hosted API.** Nobody operates this for you. You supply the
   hardware, the driver, the disk and the electricity.
 - **You need a backend that is not vLLM or llama.cpp** (TensorRT-LLM, SGLang,
-  MLX, Ollama's runtime). The seam to add one is real and small, but nothing
-  else ships today.
+  Ollama's runtime). The seam to add one is real and small, but nothing else
+  ships today on Linux; the Mac beta runs MLX.
 - **You want several models resident on one card.** One loaded model per GPU
   is an ownership rule enforced before an engine starts.
 - **You want tensor parallelism out of llama.cpp.** It splits layers, not
   tensors. For a model too large for one card, vLLM is still the right answer.
-- **Your host is not Linux x86_64.** The api image is built on upstream's CUDA
-  base and needs both.
+- **Your host is not Linux x86_64 or an Apple silicon Mac.** The api image is
+  built on upstream's CUDA base and needs both; a Mac runs the app below.
 
-## Mac app (in development)
+## Mac app (beta)
 
-A native macOS app for Apple silicon is being built in this repository. It is
-in development: no signed, notarized build of it is published yet, and nothing
-in this README is a Mac release.
+A native menu-bar app for Apple silicon, in beta. Linux with NVIDIA GPUs is
+still the main way to run LM Warden; this is the way to run it on a Mac.
 
-**Beta builds.** A beta DMG of a release may be published before the first
-notarized one. When one is, it appears on the
-[GitHub releases page](https://github.com/Podwarden/lm-warden/releases) as a
-pre-release labelled beta, with a `.sha256` checksum file next to it. A beta
-is ad-hoc signed only and not notarized, so macOS blocks it the first time you
-open it, and it does not update itself. The
-[Beta builds](documents/INSTALL.md#beta-builds) section of INSTALL.md says how
-to check the download and how to open it.
+**[Download the beta](https://lmwarden.com/download/mac)** (about 360 MB, release
+v2026.10.21.2) · [SHA-256 checksum](https://lmwarden.com/download/mac.sha256) ·
+[release notes](https://github.com/Podwarden/lm-warden/releases/tag/v2026.10.21.2-macos-beta)
 
-- **Lives in the menu bar.** The app has no Dock icon; it starts and
-  supervises the LM Warden server, walks you through a first-run setup, keeps
-  its session secret in the macOS Keychain and can open at login. Its Swift
-  sources are under `macos/`.
+<table>
+<tr>
+<td width="34%"><img src="assets/screenshots/23-mac-menu.jpg" alt="The LM Warden menu-bar menu on a Mac: a green status dot and LM Warden, Running; Serving on this Mac only, 127.0.0.1:8080; no models loaded; a memory bar reading 0.0 of 12.7 GB usable for models and 0 requests in flight; then Open Dashboard, Copy API Address, Share on Local Network, Stop Server, Open at Login, Check for Updates, About LM Warden and Quit LM Warden"><br>
+<b>The menu-bar menu.</b> Status, the loopback address and a memory bar.</td>
+<td width="33%"><img src="assets/screenshots/24-mac-setup-welcome.jpg" alt="Setup step 1 of 4, Welcome, in the native setup window: the machine checks read Apple M1 OK, 16 GB OK (16 GB is the minimum) and 289 GB free disk space OK"><br>
+<b>First-run setup, step 1.</b> Welcome and a check of the Mac.</td>
+<td width="33%"><img src="assets/screenshots/25-mac-setup-models.jpg" alt="Setup step 3 of 4, Models, in the native setup window: where downloaded models are stored, with an option to exclude that folder from Time Machine backups"><br>
+<b>Step 3.</b> Where models are stored.</td>
+</tr>
+<tr>
+<td><img src="assets/screenshots/26-mac-setup-finish.jpg" alt="Setup step 4 of 4, Finish, in the native setup window: a message that you are ready"><br>
+<b>Step 4.</b> Ready.</td>
+<td colspan="2"><img src="assets/screenshots/27-mac-dashboard.jpg" alt="The Dashboard window of the Mac app: a chat streaming from qwen2.5-3b served by MLX, with the GPU at 96% in the header"><br>
+<b>Open Dashboard.</b> The same web console as on Linux, in its own window: here a chat with an MLX model, the GPU at 96%.</td>
+</tr>
+</table>
+
+It needs an Apple silicon Mac on macOS 14 or later. The first-run check
+reports Macs with less than 16 GiB of memory but does not block first run.
+
+- **Lives in the menu bar.** No Dock icon. The app starts and supervises the
+  LM Warden server, walks you through a first-run setup, keeps its session
+  secret in the macOS Keychain and can open at login. **Open Dashboard** shows
+  the same web dashboard as the Linux install in a window of its own. The
+  Swift sources are under `macos/`.
 - **Models run on MLX.** The Mac server runs models with MLX, through
-  mlx-lm's server, as the default engine; llama.cpp is registered as a second
-  backend, but no llama.cpp binary is shipped with the app yet, and vLLM is
-  not available on a Mac.
+  mlx-lm's server, as the default engine. llama.cpp is registered as a second
+  engine, and the app bundles a Metal build of llama.cpp's `llama-server` for
+  it. vLLM is not available on a Mac.
 - **Models share the GPU.** The server sizes each load, the weights and the
   KV cache, against the Mac's unified-memory budget, so several models can
   share the GPU when they fit.
+- **This Mac only, until you say otherwise.** The server listens on 127.0.0.1,
+  port 8080 (falling back to 8081 to 8099), in plain HTTP. The **Share on Local
+  Network** switch opens it to your network, still plain HTTP. There is no
+  built-in TLS: for HTTPS, put an external reverse proxy such as Caddy, or
+  Tailscale, in front of it.
+  [documents/MACOS-REMOTE-ACCESS.md](documents/MACOS-REMOTE-ACCESS.md) covers
+  both.
 - **Its own Python.** The app bundle carries its own pinned Python 3.12 and
   hash-locked dependencies; nothing is installed into the system Python.
 
-It needs an Apple silicon Mac on macOS 14 or later; the first-run check
-reports Macs with less than 16 GiB of memory but does not block first run.
-[documents/INSTALL.md](documents/INSTALL.md), in its "On a Mac (preview)"
-section, explains how to build it from source. By default the server listens
-on 127.0.0.1, port 8080 (falling back to 8081 to 8099), in plain HTTP.
-[documents/MACOS-REMOTE-ACCESS.md](documents/MACOS-REMOTE-ACCESS.md)
-covers what **Share on Local Network** changes and how to put HTTPS in front
-of it with Caddy or Tailscale.
+**It is a beta, and macOS will say so.** The DMG is ad-hoc signed and not
+notarized, so macOS blocks it the first time you open it, and it does not
+update itself: a newer beta is a new download.
+
+1. Check the download. With the DMG and its checksum file in one folder:
+
+   ```sh
+   shasum -a 256 -c LM-Warden-v2026.10.21.2-beta.dmg.sha256
+   ```
+
+   It prints `OK` for an intact file.
+2. Open the DMG and drag LM Warden to Applications.
+3. Double-click LM Warden. macOS refuses it: open **System Settings** ›
+   **Privacy & Security** and click **Open Anyway** next to LM Warden. (On
+   macOS 14, right-click LM Warden and choose **Open** also works.)
+
+Do this only for a download whose checksum matched. The
+[Beta builds](documents/INSTALL.md#beta-builds) section of INSTALL.md has the
+detail, and the same chapter, "On a Mac (preview)", explains how to build
+the app from source instead.
 
 ---
 
@@ -684,7 +723,7 @@ Each of these is one hop from here and says what it holds.
   their precedence, the failure and refusal tables, replica placement,
   affinity and its tuning, and the A/B measurement in full.
 - [documents/MACOS-REMOTE-ACCESS.md](documents/MACOS-REMOTE-ACCESS.md): the Mac
-  app (in development): what it listens on, what **Share on Local Network**
+  app (beta): what it listens on, what **Share on Local Network**
   changes, and HTTPS in front of it with Caddy or Tailscale.
 - [documents/ARCHITECTURE.md](documents/ARCHITECTURE.md): one port and three
   containers, drivers against backends, what is automatic and what is not, and
