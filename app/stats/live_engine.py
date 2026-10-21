@@ -417,8 +417,21 @@ async def _default_fetch(host: str, port: int, at: float, backend) -> ScrapeResu
     The path comes from ``backend.capabilities.metrics_path`` rather than a
     literal: llama.cpp happens to use ``/metrics`` too, but it only serves it
     when ``--metrics`` was passed, and a future backend need not agree at all.
+
+    A backend that advertises ``metrics_path=None`` exposes no metrics
+    endpoint at all; we return without any request rather than interpolate the
+    literal ``"None"`` into the URL (``http://host:8001None``, which httpx
+    rejects as an invalid port, surfacing a misleading scrape error).
+    ``metrics=None`` with an error naming the absence is the honest frame.
     """
-    url = f"http://{host}:{port}{backend.capabilities.metrics_path}"
+    path = backend.capabilities.metrics_path
+    if path is None:
+        return ScrapeResult(
+            metrics=None,
+            error=f"{backend.capabilities.name} backend exposes no metrics endpoint",
+            monotonic=at,
+        )
+    url = f"http://{host}:{port}{path}"
     try:
         async with httpx.AsyncClient(timeout=SCRAPE_TIMEOUT_S) as client:
             r = await client.get(url)

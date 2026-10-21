@@ -61,7 +61,7 @@ export function DeleteModelModal({
   // Synchronous double-submit guard. setBusy(true) doesn't take effect
   // until React re-renders, so a rapid double-click on Delete can fire
   // two concurrent DELETEs; the second 404s on the row that the first
-  // already removed. Mirrors the same pattern in /models/[id]/page.tsx.
+  // already removed. Mirrors the same pattern in components/models/model-detail-page.tsx.
   const inflight = useRef(false);
   // Focus the safe "Cancel" action by default for destructive confirms,
   // matching the rest of the app's confirm-modal hygiene.

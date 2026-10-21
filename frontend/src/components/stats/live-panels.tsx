@@ -58,6 +58,7 @@ import {
   quantileFromBuckets,
   type TimelinePoint,
 } from "@/lib/live-history";
+import { tokenHref } from "@/lib/routes";
 
 // Display names for the frame's `backend` field, so an empty state can say
 // WHICH engine is silent rather than "this engine build". Falls back to a
@@ -1033,7 +1034,7 @@ function RequestCards({
                 <span className="min-w-0 truncate font-mono">
                   {r.token_id ? (
                     <Link
-                      href={`/tokens/${encodeURIComponent(r.token_id)}`}
+                      href={tokenHref(r.token_id)}
                       tabIndex={exiting ? -1 : undefined}
                       // 44px tap target without growing the line.
                       className="-my-3 inline-block py-3 hover:underline underline-offset-2"
@@ -1173,7 +1174,7 @@ export function LiveRequestsPanel({
                         <span className="font-mono text-xs">
                           {r.token_id ? (
                             <Link
-                              href={`/tokens/${encodeURIComponent(r.token_id)}`}
+                              href={tokenHref(r.token_id)}
                               tabIndex={exiting ? -1 : undefined}
                               className="hover:underline underline-offset-2"
                             >

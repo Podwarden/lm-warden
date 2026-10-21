@@ -77,6 +77,11 @@ tell the warden its public URL with
 `Secure`. If your proxy sets `X-Forwarded-Proto`, set `VW_TRUST_PROXY_ORIGIN=1`
 in `.env` so the warden believes it.
 
+**The Mac app (in development).** It also speaks plain HTTP, and listens on
+this Mac only until you turn on **Share on Local Network**.
+[MACOS-REMOTE-ACCESS.md](MACOS-REMOTE-ACCESS.md) covers what it listens on, what
+sharing changes, and putting Caddy or Tailscale HTTPS in front of it.
+
 **The page at `/`.** A new install opens the console at `/`: the public
 website (LM Warden's own product site: home, coding agents, agent tuning,
 features, FAQ, with its assets under `/_landing/assets/` and a `/robots.txt`,

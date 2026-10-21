@@ -10,6 +10,13 @@
 // with a white "W" wordmark, sized for iOS home-screen.
 import { ImageResponse } from "next/og";
 
+// BACKLOG-macos P8: `output: 'export'` (LMW_UI_EXPORT=1) refuses a metadata
+// image route that is not statically renderable; force-static has Next
+// render the PNG once at build time and write it into the export as
+// /ui/apple-icon. The standalone build already prerendered it statically,
+// so nothing changes there.
+export const dynamic = "force-static";
+
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 

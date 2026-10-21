@@ -1,0 +1,17 @@
+-- Make the historical default of models.backend explicit (Metal design s10,
+-- DEFAULT_BACKEND migration, step 1 of 2).
+--
+-- 0027 added this column as NULLABLE ON PURPOSE and deliberately did not
+-- backfill (decision D6): every pre-existing row sits at NULL, and
+-- app/db/repos/models.py::_decode_row decodes NULL to 'vllm' through
+-- app/runtime/backends/registry.get(None). Step 2 of s10 moves the default
+-- out of the decoder and into a deployment PROFILE; on the 'apple' profile
+-- that default is 'llamacpp', so a NULL row decoded there would silently
+-- become a non-vllm model. This UPDATE closes that hole by writing the
+-- historical default into the data. On Linux it is a semantic no-op: NULL
+-- and 'vllm' already decode identically, so no existing row changes behaviour.
+--
+-- WHERE covers both historical shapes: IS NULL for every pre-0027 row, and
+-- '' for any row that has ever stored the empty string. Rows that already
+-- carry a real backend name ('llamacpp', 'vllm', ...) are untouched.
+UPDATE models SET backend = 'vllm' WHERE backend IS NULL OR backend = '';

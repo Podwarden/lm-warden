@@ -138,10 +138,11 @@ computed.</td>
 </tr>
 </table>
 
-**Other GPUs are on the roadmap.** Apple silicon (Macs), AMD Radeon and Intel
-GPUs are on our immediate roadmap, with no dates; which comes first depends on
-who asks. Tell us which one you would run it on, in the Ideas category of the
-project's GitHub Discussions:
+**Macs and other GPUs.** A native Mac app for Apple silicon is in development
+and not released yet: see [Mac app (in development)](#mac-app-in-development)
+below. AMD Radeon and Intel GPUs are on our roadmap, with no dates; which comes
+first depends on who asks. Tell us which one you would run it on, in the Ideas
+category of the project's GitHub Discussions:
 [Mac](https://github.com/Podwarden/lm-warden/discussions/new?category=ideas&title=Hardware%20support%3A%20Mac),
 [AMD Radeon](https://github.com/Podwarden/lm-warden/discussions/new?category=ideas&title=Hardware%20support%3A%20Radeon),
 [Intel](https://github.com/Podwarden/lm-warden/discussions/new?category=ideas&title=Hardware%20support%3A%20Intel).
@@ -151,7 +152,8 @@ project's GitHub Discussions:
 None of these are solvable by configuration today.
 
 - **You have no NVIDIA GPU.** `--gpus none` starts the control plane for
-  evaluation and CI; nothing can be loaded on it.
+  evaluation and CI; nothing can be loaded on it. On an Apple silicon Mac, see
+  [Mac app (in development)](#mac-app-in-development): it has no release yet.
 - **You need to serve one model across several machines.** This is a
   single-host Compose stack. Multiple GPUs in one box, yes; multi-node, no.
 - **You want a hosted API.** Nobody operates this for you. You supply the
@@ -165,6 +167,44 @@ None of these are solvable by configuration today.
   tensors. For a model too large for one card, vLLM is still the right answer.
 - **Your host is not Linux x86_64.** The api image is built on upstream's CUDA
   base and needs both.
+
+## Mac app (in development)
+
+A native macOS app for Apple silicon is being built in this repository. It is
+in development: no signed, notarized build of it is published yet, and nothing
+in this README is a Mac release.
+
+**Beta builds.** A beta DMG of a release may be published before the first
+notarized one. When one is, it appears on the
+[GitHub releases page](https://github.com/Podwarden/lm-warden/releases) as a
+pre-release labelled beta, with a `.sha256` checksum file next to it. A beta
+is ad-hoc signed only and not notarized, so macOS blocks it the first time you
+open it, and it does not update itself. The
+[Beta builds](documents/INSTALL.md#beta-builds) section of INSTALL.md says how
+to check the download and how to open it.
+
+- **Lives in the menu bar.** The app has no Dock icon; it starts and
+  supervises the LM Warden server, walks you through a first-run setup, keeps
+  its session secret in the macOS Keychain and can open at login. Its Swift
+  sources are under `macos/`.
+- **Models run on MLX.** The Mac server runs models with MLX, through
+  mlx-lm's server, as the default engine; llama.cpp is registered as a second
+  backend, but no llama.cpp binary is shipped with the app yet, and vLLM is
+  not available on a Mac.
+- **Models share the GPU.** The server sizes each load, the weights and the
+  KV cache, against the Mac's unified-memory budget, so several models can
+  share the GPU when they fit.
+- **Its own Python.** The app bundle carries its own pinned Python 3.12 and
+  hash-locked dependencies; nothing is installed into the system Python.
+
+It needs an Apple silicon Mac on macOS 14 or later; the first-run check
+reports Macs with less than 16 GiB of memory but does not block first run.
+[documents/INSTALL.md](documents/INSTALL.md), in its "On a Mac (preview)"
+section, explains how to build it from source. By default the server listens
+on 127.0.0.1, port 8080 (falling back to 8081 to 8099), in plain HTTP.
+[documents/MACOS-REMOTE-ACCESS.md](documents/MACOS-REMOTE-ACCESS.md)
+covers what **Share on Local Network** changes and how to put HTTPS in front
+of it with Caddy or Tailscale.
 
 ---
 
@@ -643,6 +683,9 @@ Each of these is one hop from here and says what it holds.
   which replica answers: what prompted it, how a request travels, rules and
   their precedence, the failure and refusal tables, replica placement,
   affinity and its tuning, and the A/B measurement in full.
+- [documents/MACOS-REMOTE-ACCESS.md](documents/MACOS-REMOTE-ACCESS.md): the Mac
+  app (in development): what it listens on, what **Share on Local Network**
+  changes, and HTTPS in front of it with Caddy or Tailscale.
 - [documents/ARCHITECTURE.md](documents/ARCHITECTURE.md): one port and three
   containers, drivers against backends, what is automatic and what is not, and
   the full account of the two engines and what the second one costs.

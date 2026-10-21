@@ -5,7 +5,7 @@
   },
   {
     "q": "Which GPUs and operating systems does it run on?",
-    "a": "NVIDIA GPUs on a Linux x86_64 host. The floor is Turing (sm_75, the RTX 20-series generation): the base image ships CUDA 13, which dropped Maxwell, Pascal and Volta, so a GTX 1080 Ti, a Titan X or a V100 will not work. Turing through Blackwell is covered, including Ada, Hopper and the RTX 50-series. There is no ROCm, Apple Silicon, Intel GPU or CPU path today; Apple silicon, AMD Radeon and Intel GPUs are on the immediate roadmap, and which comes first depends on the feedback we get in the project’s GitHub Discussions. Several GPUs in one box are supported; one model split across several machines is not."
+    "a": "NVIDIA GPUs on a Linux x86_64 host. The floor is Turing (sm_75, the RTX 20-series generation): the base image ships CUDA 13, which dropped Maxwell, Pascal and Volta, so a GTX 1080 Ti, a Titan X or a V100 will not work. Turing through Blackwell is covered, including Ada, Hopper and the RTX 50-series. There is no ROCm, Apple Silicon, Intel GPU or CPU path in this release. A native Mac app for Apple silicon, running models with MLX, is in development and has no download yet; AMD Radeon and Intel GPUs are on the roadmap, and which comes first depends on the feedback we get in the project’s GitHub Discussions. Several GPUs in one box are supported; one model split across several machines is not."
   },
   {
     "q": "Will my existing OpenAI client work with it?",

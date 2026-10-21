@@ -14,8 +14,19 @@ and an old UI against a new API must not break mid-rollout.
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import AsyncMock
+
+import pytest
 
 from tests.conftest import jwt_login, seed_admin_user
+
+
+@pytest.fixture(autouse=True)
+def _no_real_gpu_probe_in_lifespan(monkeypatch):
+    # The lifespan's stats sampler would spawn real nvidia-smi / ioreg
+    # probes; cancelled mid-spawn at shutdown, their subprocess transports
+    # outlive the TestClient loop and print "Event loop is closed" at GC.
+    monkeypatch.setattr("app.runtime.stats_sampler.query_gpus", AsyncMock(return_value=[]))
 
 
 def _seed_done(db_path: Path) -> None:

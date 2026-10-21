@@ -549,6 +549,6 @@ describe('SettingsPage — Model tab', () => {
     await gotoTab(/^Model$/);
 
     const link = await screen.findByRole('link', { name: /edit settings/i });
-    expect(link).toHaveAttribute('href', '/models/m1/settings');
+    expect(link).toHaveAttribute('href', '/models/detail/settings?id=m1');
   });
 });

@@ -13,10 +13,11 @@ vi.mock('next/navigation', () => ({
     if (nav.sp.toString() !== nav.search) nav.sp = new URLSearchParams(nav.search);
     return nav.sp;
   },
-  usePathname: () => '/tokens/tok-self',
+  // The real route: the id rides in the query (BACKLOG-macos P4, lib/routes.ts).
+  usePathname: () => '/tokens/detail',
 }));
 
-import TokenDetailPage from '@/app/tokens/[id]/page';
+import { TokenDetailPage } from '@/components/tokens/token-detail-page';
 import { useDockOpen } from '@/components/tokens/detail/godmode-dock';
 import { NavStackProvider } from '@/lib/nav-stack';
 import { BreadcrumbHeader } from '@/components/breadcrumb-header';
@@ -27,13 +28,6 @@ class FakeES {
   closed = false;
   constructor(public url: string) { FakeES.all.push(this); }
   close() { this.closed = true; }
-}
-
-function syncResolved<T>(value: T): Promise<T> {
-  const p = Promise.resolve(value) as Promise<T> & { status?: string; value?: T };
-  p.status = 'fulfilled';
-  p.value = value;
-  return p;
 }
 
 const json = (b: unknown, status = 200) =>
@@ -62,7 +56,7 @@ function renderPage() {
   return render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
       <Suspense fallback={<div>loading</div>}>
-        <TokenDetailPage params={syncResolved({ id: 'tok-self' })} />
+        <TokenDetailPage id="tok-self" />
       </Suspense>
     </SWRConfig>,
   );
@@ -116,12 +110,13 @@ describe('token details page', () => {
   // replaced the header's own "API tokens / <name>" row.
   it('titles the breadcrumb with the token name', async () => {
     installFetch();
+    nav.search = 'id=tok-self';
     render(
       <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
         <NavStackProvider>
           <BreadcrumbHeader />
           <Suspense fallback={<div>loading</div>}>
-            <TokenDetailPage params={syncResolved({ id: 'tok-self' })} />
+            <TokenDetailPage id="tok-self" />
           </Suspense>
         </NavStackProvider>
       </SWRConfig>,
@@ -138,12 +133,13 @@ describe('token details page', () => {
 
   it('titles the breadcrumb with the id when the token is gone', async () => {
     installFetch({ tokenStatus: 404 });
+    nav.search = 'id=tok-self';
     render(
       <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
         <NavStackProvider>
           <BreadcrumbHeader />
           <Suspense fallback={<div>loading</div>}>
-            <TokenDetailPage params={syncResolved({ id: 'tok-self' })} />
+            <TokenDetailPage id="tok-self" />
           </Suspense>
         </NavStackProvider>
       </SWRConfig>,
@@ -251,13 +247,13 @@ describe('token details page', () => {
     const m = installFetch();
     const { rerender } = renderPage();
     fireEvent.click(await screen.findByRole('button', { name: '24h' }));
-    expect(nav.replace).toHaveBeenCalledWith('/tokens/tok-self?range=24h', { scroll: false });
+    expect(nav.replace).toHaveBeenCalledWith('/tokens/detail?id=tok-self&range=24h', { scroll: false });
 
     nav.search = 'range=24h';
     rerender(
       <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
         <Suspense fallback={<div>loading</div>}>
-          <TokenDetailPage params={syncResolved({ id: 'tok-self' })} />
+          <TokenDetailPage id="tok-self" />
         </Suspense>
       </SWRConfig>,
     );
@@ -333,7 +329,7 @@ describe('token details page', () => {
     const page = () => (
       <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
         <Suspense fallback={<div>loading</div>}>
-          <TokenDetailPage params={syncResolved({ id: 'tok-self' })} />
+          <TokenDetailPage id="tok-self" />
         </Suspense>
       </SWRConfig>
     );
@@ -348,7 +344,7 @@ describe('token details page', () => {
     fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-09-13T09:00' } });
     fireEvent.change(screen.getByLabelText('To'), { target: { value: '2026-09-13T11:00' } });
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
-    expect(nav.replace).toHaveBeenLastCalledWith(`/tokens/tok-self?from=${zFrom}&to=${zTo}`, { scroll: false });
+    expect(nav.replace).toHaveBeenLastCalledWith(`/tokens/detail?id=tok-self&from=${zFrom}&to=${zTo}`, { scroll: false });
     nav.search = `from=${zFrom}&to=${zTo}`;
     rerender(page());
 
@@ -371,7 +367,7 @@ describe('token details page', () => {
     expect(stripUrls(m)).toHaveLength(4);
 
     fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
-    expect(nav.replace).toHaveBeenLastCalledWith('/tokens/tok-self?range=7d', { scroll: false });
+    expect(nav.replace).toHaveBeenLastCalledWith('/tokens/detail?id=tok-self&range=7d', { scroll: false });
     nav.search = 'range=7d';
     rerender(page());
     // Zoomed out: the strip is back on the key's whole life, and Reset is off.
@@ -391,13 +387,13 @@ describe('token details page', () => {
     rerender(
       <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
         <Suspense fallback={<div>loading</div>}>
-          <TokenDetailPage params={syncResolved({ id: 'tok-self' })} />
+          <TokenDetailPage id="tok-self" />
         </Suspense>
       </SWRConfig>,
     );
     await waitFor(() => expect(screen.getByRole('button', { name: 'Reset' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
-    expect(nav.replace).toHaveBeenLastCalledWith('/tokens/tok-self?range=7d', { scroll: false });
+    expect(nav.replace).toHaveBeenLastCalledWith('/tokens/detail?id=tok-self&range=7d', { scroll: false });
   });
 
   it('Apply with new custom times writes the URL at once', async () => {
@@ -407,7 +403,7 @@ describe('token details page', () => {
     fireEvent.change(await screen.findByLabelText('From'), { target: { value: '2026-09-13T09:00' } });
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
     expect(nav.replace).toHaveBeenCalledWith(
-      `/tokens/tok-self?from=${Date.UTC(2026, 8, 13, 9, 0) / 1000}&to=${Date.UTC(2026, 8, 14, 18, 30) / 1000}`,
+      `/tokens/detail?id=tok-self&from=${Date.UTC(2026, 8, 13, 9, 0) / 1000}&to=${Date.UTC(2026, 8, 14, 18, 30) / 1000}`,
       { scroll: false },
     );
   });
@@ -460,7 +456,7 @@ describe('token details page', () => {
       render(
         <SWRConfig value={{ provider: () => cache, dedupingInterval: 0 }}>
           <Suspense fallback={<div>loading</div>}>
-            <TokenDetailPage params={syncResolved({ id: 'tok-self' })} />
+            <TokenDetailPage id="tok-self" />
           </Suspense>
         </SWRConfig>,
       );

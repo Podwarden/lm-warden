@@ -45,7 +45,10 @@ up to ``busy_timeout`` — on every cancelled request and every shutdown. It is
 still bounded by ``_CLOSE_ACK_TIMEOUT``, because a task that has already taken
 its one cancellation has nothing left to break it out of a close that will
 never be acknowledged, and a ``finally`` that parks forever is the same
-process-that-will-not-exit in a different place.
+process-that-will-not-exit in a different place. When ``open_db`` itself is
+unwinding a cancellation the bound is far shorter
+(``_CANCELLED_CLOSE_ACK_TIMEOUT``): the cancel may have left a statement in
+flight that holds the close up for its whole busy wait.
 
 The one deliberate concession: a cleanup wait cannot be cancelled, by
 construction, so it is bounded by attempts *and* by the clock
@@ -99,10 +102,27 @@ _CONNECT_CLEANUP_TIMEOUT = 10.0
 # shutdown bounded, and 10s is Docker's default stop grace.
 _CLOSE_ACK_TIMEOUT = 10.0
 
+# The same wait when ``open_db`` is unwinding a cancellation. A cancel that
+# lands while a statement is in flight leaves that statement running on the
+# worker thread -- under a write lock held elsewhere, inside SQLite's busy
+# handler for up to the 30 s ``busy_timeout`` -- and the close is queued behind
+# it. Waiting the full ``_CLOSE_ACK_TIMEOUT`` there added a fixed 10 s to every
+# shutdown that caught a loop mid-write on a locked database (the stats pruner's
+# boot-time prune, seen as a 2 s + 10.0 s shutdown in the ledger tests), which
+# alone is Docker's whole 10 s stop grace. Nothing is gained by that wait: the
+# cancelled caller has abandoned the statement, and the close and the stop
+# sentinel are already queued, so the connection still closes and the thread
+# still stops once the statement gives up. A healthy close is acknowledged in
+# milliseconds, so this only ever cuts short a close stuck behind a statement.
+# sqlite3's interrupt() cannot shorten that statement instead: it does not
+# break a busy-handler wait.
+_CANCELLED_CLOSE_ACK_TIMEOUT = 0.5
+
 
 @asynccontextmanager
 async def open_db(path: Path) -> AsyncIterator[aiosqlite.Connection]:
     db = await _connect(path)
+    ack_timeout = _CLOSE_ACK_TIMEOUT
     try:
         # busy_timeout FIRST, before the two pragmas that can themselves hit the
         # lock: `journal_mode = WAL` needs an exclusive lock, so setting it
@@ -116,8 +136,42 @@ async def open_db(path: Path) -> AsyncIterator[aiosqlite.Connection]:
         await db.execute("PRAGMA foreign_keys = ON")
         await db.execute("PRAGMA journal_mode = WAL")
         yield db
+    except asyncio.CancelledError:
+        ack_timeout = _CANCELLED_CLOSE_ACK_TIMEOUT
+        raise
     finally:
-        await _close(db)
+        await _close(db, ack_timeout)
+
+
+def _keep_draining_after_loop_close(conn: aiosqlite.Connection) -> None:
+    """Keep *conn*'s worker thread draining its queue once its loop is closed.
+
+    A statement abandoned by a cancelled ``open_db`` (see
+    ``_CANCELLED_CLOSE_ACK_TIMEOUT``) can outlive the event loop -- at shutdown
+    it is still in its busy wait when the loop closes. When it finally returns,
+    aiosqlite 0.20.0's ``run()`` reports the result with
+    ``future.get_loop().call_soon_threadsafe(...)``, which raises
+    ``RuntimeError('Event loop is closed')`` from both of its branches and
+    kills the thread: an unhandled thread exception on stderr, and the queued
+    ``close`` and stop sentinel never run, so the sqlite connection (and any
+    write lock its abandoned statement took) stays open until it is garbage
+    collected. Nobody is waiting for that result any more, so drop it and go
+    back to the queue: the close runs, the stop sentinel ends the thread.
+    """
+    drain = conn.run
+
+    def run() -> None:
+        while True:
+            try:
+                drain()
+            except RuntimeError as exc:
+                if "Event loop is closed" not in str(exc):
+                    raise
+                continue
+            return
+
+    # The thread calls ``self.run()``; an instance attribute shadows the method.
+    conn.run = run  # type: ignore[method-assign]
 
 
 async def _open(conn: aiosqlite.Connection) -> aiosqlite.Connection:
@@ -133,6 +187,7 @@ async def _connect(path: Path) -> aiosqlite.Connection:
     # block interpreter shutdown the way a non-daemon one does. The flag has to
     # be set before the thread starts, which is what awaiting `conn` does.
     conn.daemon = True
+    _keep_draining_after_loop_close(conn)
     connecting = asyncio.ensure_future(_open(conn))
     cancelled: asyncio.CancelledError | None = None
     deadline: float | None = None
@@ -211,7 +266,7 @@ async def _connect(path: Path) -> aiosqlite.Connection:
     raise cancelled if cancelled is not None else asyncio.CancelledError()
 
 
-async def _close(db: aiosqlite.Connection) -> None:
+async def _close(db: aiosqlite.Connection, ack_timeout: float | None = None) -> None:
     """Close *db* without ever masking the exception we are unwinding from.
 
     Deliberately NOT shielded. ``Connection.close()`` queues ``sqlite3.
@@ -247,14 +302,17 @@ async def _close(db: aiosqlite.Connection) -> None:
     run in three. ``asyncio.timeout`` exists for exactly this: it uncancels
     only the cancellation it raised itself, so a foreign one still propagates.
     """
+    # Read at call time (not as a default argument) so a test can lower it.
+    if ack_timeout is None:
+        ack_timeout = _CLOSE_ACK_TIMEOUT
     try:
-        async with asyncio.timeout(_CLOSE_ACK_TIMEOUT):
+        async with asyncio.timeout(ack_timeout):
             await db.close()
     except TimeoutError:
         logger.warning(
             "SQLite close was not acknowledged in %ss; it is queued on the "
             "connection's worker thread and no longer waited on",
-            _CLOSE_ACK_TIMEOUT,
+            ack_timeout,
         )
     except Exception:
         # close() re-raises whatever the worker thread hit, having already

@@ -28,7 +28,18 @@ class GpuOwnership:
         self._labels: dict[str, str] = {}
         self._lock = Lock()
 
-    def claim(self, model_id: str, gpu_indices: list[int], *, label: str | None = None) -> None:
+    def claim(
+        self,
+        model_id: str,
+        gpu_indices: list[int],
+        *,
+        label: str | None = None,
+        model: object = None,
+        overrides: object = None,
+    ) -> None:
+        # ``model`` and ``overrides`` are part of the admission shape the
+        # supervisor calls (UnifiedMemoryAdmission sizes the weights and the KV
+        # cache from them); ownership needs only the indices.
         with self._lock:
             conflicts = [g for g in gpu_indices if g in self._owner and self._owner[g] != model_id]
             if conflicts:

@@ -95,9 +95,15 @@ class Supervisor:
         *,
         driver: Any = None,
         on_wrapper_spawn: Callable[[str, int], None] | None = None,
+        admission: Any = None,
     ) -> None:
         self.settings = settings
-        self.gpus = GpuOwnership()
+        # Load admission (Metal design s10): GpuOwnership (one model per
+        # discrete GPU) unless the caller injects another collaborator with the
+        # same claim/release shape -- UnifiedMemoryAdmission on a Mac, where
+        # every row is gpu [0] and the question is bytes, not ownership. Chosen
+        # once by the caller; no platform check here.
+        self.gpus = admission if admission is not None else GpuOwnership()
         self._driver = driver or LocalSubprocessDriver(
             log_dir=str(Path(settings.data_dir) / "logs")
         )
@@ -128,6 +134,12 @@ class Supervisor:
         # models row does not re-attribute the engine's traffic until it is
         # restarted. Cleared with the other per-engine state.
         self._variants: dict[str, Variant] = {}
+        # model_id -> the id the running engine serves (Backend.engine_model_id
+        # with the SAME resolved paths plan() used: MLX's id is the local path,
+        # which only the launch knows). Fixed at spawn like the variant, read
+        # by the proxy on every request -- a dict lookup, no disk. Cleared with
+        # the other per-engine state.
+        self._engine_ids: dict[str, str] = {}
         self._watchers: dict[str, asyncio.Task] = {}
         self._state: dict[str, ModelState] = {}
         # model_id -> load-attempt counter, bumped by ``load()`` on each
@@ -172,6 +184,7 @@ class Supervisor:
             self._hosts.pop(model_id, None)
             self._overrides.pop(model_id, None)
             self._variants.pop(model_id, None)
+            self._engine_ids.pop(model_id, None)
             self._watchers.pop(model_id, None)
             self._state.pop(model_id, None)
             self.gpus.release(model_id)
@@ -209,6 +222,8 @@ class Supervisor:
                 model.id,
                 model.gpu_indices,
                 label=getattr(model, "served_model_name", None),
+                model=model,
+                overrides=overrides,
             )
             try:
                 hf_token_path = Path(self.settings.hf_token_path)
@@ -293,6 +308,10 @@ class Supervisor:
                     revision=getattr(model, "hf_revision", None),
                 )
                 variant = variant_of(model, overrides, facts)
+                # Before the spawn, inside the try that releases the GPU claim:
+                # a backend that cannot name its id fails the load, not every
+                # later request.
+                engine_id = backend.engine_model_id(model, resolved)
                 handle = await self._driver.spawn(spec)
 
                 self._handles[model.id] = handle
@@ -306,6 +325,7 @@ class Supervisor:
                 self._hosts[model.id] = _driver_engine_host(self._driver, model.id)
                 self._overrides[model.id] = overrides
                 self._variants[model.id] = variant
+                self._engine_ids[model.id] = engine_id
                 self._state[model.id] = ModelState.LOADING
                 self._watchers[model.id] = asyncio.create_task(self._watch_exit(model.id, on_exit))
                 self._generation[model.id] = self._generation.get(model.id, 0) + 1
@@ -438,6 +458,11 @@ class Supervisor:
         was not launched by this supervisor (or is not running)."""
         return self._variants.get(model_id)
 
+    def get_engine_model_id(self, model_id: str) -> str | None:
+        """The id ``model_id``'s engine serves (fixed at launch), or None when
+        it was not launched by this supervisor (or is not running)."""
+        return self._engine_ids.get(model_id)
+
     def is_running(self, model_id: str) -> bool:
         h = self._handles.get(model_id)
         return h is not None and h.returncode is None
@@ -540,6 +565,7 @@ class Supervisor:
                 self._hosts.pop(model_id, None)
                 self._overrides.pop(model_id, None)
                 self._variants.pop(model_id, None)
+                self._engine_ids.pop(model_id, None)
                 self._state.pop(model_id, None)
                 self.gpus.release(model_id)
 

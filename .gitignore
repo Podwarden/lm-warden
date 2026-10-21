@@ -57,3 +57,13 @@ __pycache__/
 # scripts/installer-selftest.sh write into. Never a source of truth.
 /.ci-install/
 /.loop/
+
+# Swift package build artifacts (macos/ skeleton, Task 6)
+macos/.build/
+macos/.swiftpm/
+
+# macOS app bundle + DMG output (Task 7). make macos-app / macos-dmg write
+# here; never committed.
+/dist/
+# macOS bundle build cache (python-build-standalone tarball, pip wheels)
+/.cache/

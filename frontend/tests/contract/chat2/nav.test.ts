@@ -17,6 +17,7 @@ describe('nav', () => {
 
   it('keeps /chat alive as a redirect to /chat2', () => {
     const page = readFileSync(path.resolve(__dirname, '../../../src/app/chat/page.tsx'), 'utf8');
-    expect(page).toMatch(/redirect\('\/chat2'\)/);
+    // P4 (farm 73): a client-side router.replace in useEffect (export-safe), not a server redirect().
+    expect(page).toMatch(/router\.replace\('\/chat2'\)/);
   });
 });

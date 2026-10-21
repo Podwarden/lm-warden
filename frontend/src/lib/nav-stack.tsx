@@ -21,10 +21,19 @@
  * (`useRestorableScroll`) is left out because no LM Warden page needs it,
  * and `goBack` navigates outside the state updater (an updater must stay
  * pure; StrictMode runs it twice).
+ *
+ * The pathname the provider tracks (and exposes) is the *logical* one: on a
+ * detail page, whose id rides in the query (/models/detail?id=abc,
+ * BACKLOG-macos P4), it is /models/abc — see lib/routes.ts. The query is read
+ * by a small child inside its own <Suspense> (useSearchParams needs one in a
+ * static export) and reported up; until it has reported for the current
+ * detail URL the provider is not `ready` and its effects hold still, so a
+ * half-known path never lands on the stack.
  */
 
 import {
   createContext,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -33,17 +42,20 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   HOME_HREF,
+  navTarget,
   resolvePageTitle,
   shouldHideBreadcrumb,
   type BreadcrumbOverrides,
 } from "@/lib/breadcrumbs";
+import { isQueryDetailPath, logicalPath } from "@/lib/routes";
 
 /** A single entry in the back navigation stack. */
 export interface NavStackEntry {
-  /** App-router path (no basePath), e.g. `/tokens/abc`. */
+  /** Logical app-router path (no basePath), e.g. `/tokens/abc`; `navTarget`
+   *  turns it into the URL to push. */
   href: string;
   /** Human-readable page title rendered in `← <title>`. */
   title: string;
@@ -52,7 +64,8 @@ export interface NavStackEntry {
 }
 
 export interface NavStackContextValue {
-  /** The current app-router pathname (no basePath). */
+  /** The current logical app-router pathname (no basePath): /models/abc on
+   *  /models/detail?id=abc, see lib/routes.ts. */
   pathname: string;
   /** Frozen view of the back-stack (most-recent last). */
   stack: NavStackEntry[];
@@ -89,9 +102,29 @@ function deriveFallbackTitle(pathname: string): string {
   }
 }
 
+/** Reports the query string of the URL `path` was read with. */
+function SearchReporter({ onSearch }: { onSearch: (path: string, search: string) => void }) {
+  const path = usePathname() ?? "/";
+  const search = useSearchParams()?.toString() ?? "";
+  useEffect(() => {
+    onSearch(path, search);
+  }, [path, search, onSearch]);
+  return null;
+}
+
 export function NavStackProvider({ children }: { children: ReactNode }) {
-  const pathname = usePathname() ?? "/";
+  const rawPath = usePathname() ?? "/";
   const router = useRouter();
+
+  // The last query string SearchReporter saw, with the path it saw it on: a
+  // detail page's logical path is known only once that path is `rawPath`.
+  const [seen, setSeen] = useState<{ path: string; search: string } | null>(null);
+  const onSearch = useCallback((path: string, search: string) => {
+    setSeen((cur) => (cur && cur.path === path && cur.search === search ? cur : { path, search }));
+  }, []);
+  const queryRoute = isQueryDetailPath(rawPath);
+  const ready = !queryRoute || seen?.path === rawPath;
+  const pathname = queryRoute && ready ? logicalPath(rawPath, seen!.search) : rawPath;
 
   const [stack, setStack] = useState<NavStackEntry[]>([]);
   const [overrides, setOverrides] = useState<BreadcrumbOverrides>({});
@@ -126,6 +159,7 @@ export function NavStackProvider({ children }: { children: ReactNode }) {
   // page's title when it is snapshotted. Reordering them makes the back
   // button show the destination's own title.
   useEffect(() => {
+    if (!ready) return; // detail URL whose id is not read yet
     const prev = lastPathRef.current;
     lastPathRef.current = pathname;
     if (prev === null || prev === pathname) return; // first mount / no-op
@@ -156,19 +190,21 @@ export function NavStackProvider({ children }: { children: ReactNode }) {
       });
     }
     currentScrollRef.current = 0;
-  }, [pathname]);
+  }, [pathname, ready]);
 
   // Keep currentTitleRef in sync with the active override / route registry.
   // MUST be declared AFTER the push effect above — see ORDERING INVARIANT.
   useEffect(() => {
+    if (!ready) return;
     currentTitleRef.current = resolvePageTitle(pathname, overrides) ?? deriveFallbackTitle(pathname);
-  }, [pathname, overrides]);
+  }, [pathname, overrides, ready]);
 
   // Drop overrides for paths that aren't the current page or one of its URL
   // ancestors, so the map doesn't accumulate stale titles. The new page's
   // own `useBreadcrumb` effect runs before this one (children first) and its
   // path is kept.
   useEffect(() => {
+    if (!ready) return;
     setOverrides((prev) => {
       const keep: BreadcrumbOverrides = {};
       for (const key of Object.keys(prev)) {
@@ -176,7 +212,7 @@ export function NavStackProvider({ children }: { children: ReactNode }) {
       }
       return Object.keys(keep).length === Object.keys(prev).length ? prev : keep;
     });
-  }, [pathname]);
+  }, [pathname, ready]);
 
   const captureScroll = useCallback(() => {
     currentScrollRef.current = window.scrollY;
@@ -199,7 +235,7 @@ export function NavStackProvider({ children }: { children: ReactNode }) {
     restoreScrollRef.current = top.scrollY;
     // `scroll: false` — we restore the saved position ourselves; letting
     // Next scroll to the top first would flash the page's head.
-    router.push(top.href, { scroll: false });
+    router.push(navTarget(top.href), { scroll: false });
   }, [router]);
 
   const setBreadcrumbTitle = useCallback((path: string, title: string | null, parent?: string) => {
@@ -230,7 +266,14 @@ export function NavStackProvider({ children }: { children: ReactNode }) {
     [pathname, stack, captureScroll, goBack, setBreadcrumbTitle, overrides],
   );
 
-  return <NavStackContext.Provider value={value}>{children}</NavStackContext.Provider>;
+  return (
+    <NavStackContext.Provider value={value}>
+      <Suspense fallback={null}>
+        <SearchReporter onSearch={onSearch} />
+      </Suspense>
+      {children}
+    </NavStackContext.Provider>
+  );
 }
 
 export function useNavStack(): NavStackContextValue {

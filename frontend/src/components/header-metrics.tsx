@@ -31,6 +31,7 @@ import {
   type HeaderActiveModel,
   type HeaderModelStatus,
 } from '@/lib/header-models';
+import { modelHref } from '@/lib/routes';
 
 // Format a percentage 0–100 (or null) into a fixed-width readout. We use
 // figure-tab-numerals via Tailwind's `tabular-nums` so the digit grid
@@ -307,7 +308,7 @@ function ModelChip({
     // The chip opens the model's own page: its name is what the operator
     // clicks to see why it is loading, failing or slow.
     <Link
-      href={`/models/${model.id}`}
+      href={modelHref(model.id)}
       data-testid="header-metrics-model-chip"
       data-model-status={model.status}
       className="inline-flex min-w-0 items-center gap-1.5 rounded-sm hover:text-slate-100 focus-visible:outline focus-visible:outline-1 focus-visible:outline-slate-400"

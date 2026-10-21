@@ -10,18 +10,59 @@ Name resolution ONLY. Capability questions go to the backend --
 
 from __future__ import annotations
 
+from app.platform_profile import PROFILE, PROFILES
 from app.runtime.backends import Backend
 from app.runtime.backends.llamacpp import LlamaCppBackend
+from app.runtime.backends.mlx import MlxBackend
 from app.runtime.backends.vllm import VllmBackend
 
-DEFAULT_BACKEND = "vllm"
 
-# Registered in the order they arrived; PRESENTED sorted -- available() sorts,
-# deliberately, so registration order and presentation order stay independent.
-_BACKENDS: dict[str, Backend] = {
-    "vllm": VllmBackend(),
-    "llamacpp": LlamaCppBackend(),
-}
+def _check_profile(profile: str) -> None:
+    """Both per-profile answers reject a profile the deployment cannot be,
+    the way get() rejects a backend name: loud, at the seam, naming the
+    accepted values. A typo in LMW_PLATFORM_PROFILE must fail here and at
+    import -- never silently serve the wrong backend set."""
+    if profile not in PROFILES:
+        raise ValueError(f"unknown profile {profile!r}; accepted values: {', '.join(PROFILES)}")
+
+
+def backends_for(profile: str) -> dict[str, Backend]:
+    """The backend set a profile runs. PURE in its argument, and it answers
+    FRESH: every call builds its own dict, so mutating the result can never
+    leak into the live registry. The profile, not the process's OS identity,
+    is the seam -- resolving by the running platform would make the unit
+    suite see one registry on CI and another on a developer's Mac (OVERSEER,
+    planner iter 22)."""
+    _check_profile(profile)
+    # Registered in the order they arrived; PRESENTED sorted -- available()
+    # sorts, deliberately, so registration order and presentation order stay
+    # independent.
+    if profile == "apple":
+        return {
+            # profile="apple" reaches the backend's env builder (no CUDA keys)
+            # and its OOM diagnosis (unified-memory message); the linux branch
+            # below keeps the unprofiled backend, byte-identical to today.
+            "llamacpp": LlamaCppBackend(profile="apple"),
+            "mlx": MlxBackend(),
+        }
+    return {
+        "vllm": VllmBackend(),
+        "llamacpp": LlamaCppBackend(),
+    }
+
+
+def default_for(profile: str) -> str:
+    """The backend a NULL/'' models.backend row decodes to, per profile.
+    ``linux`` is vLLM exactly as D6 has always said; ``apple`` is MLX, which
+    registers in this profile and is its default. A default that is not in
+    backends_for(profile) would make get(None) raise on every legacy row of
+    that profile, which the 0050 migration and this seam exist to prevent."""
+    _check_profile(profile)
+    return "mlx" if profile == "apple" else "vllm"
+
+
+_BACKENDS: dict[str, Backend] = backends_for(PROFILE)
+DEFAULT_BACKEND = default_for(PROFILE)
 
 
 class UnknownBackendError(ValueError):

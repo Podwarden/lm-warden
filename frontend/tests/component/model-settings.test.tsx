@@ -2,26 +2,8 @@ import { Suspense } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, act } from '@testing-library/react';
 import { SWRConfig } from 'swr';
-import ModelSettingsPage from '@/app/models/[id]/settings/page';
+import { ModelSettingsPage } from '@/components/models/model-settings-page';
 import { setAccessToken, setCsrfToken } from '@/lib/auth-fetch';
-
-// React 19's `use()` reads a `status`/`value` shape that React itself
-// attaches to a Promise once the runtime has observed it resolve. Forging
-// that shape upfront lets the page hydrate on the first render without
-// any scheduler dance — jsdom does not reliably let us flush React's
-// suspense replay queue via setTimeout/microtask awaits, so a "real"
-// Promise.resolve never settles inside the test. Test-only escape hatch;
-// production code path (where Next.js feeds a real async-resolving
-// params promise) is unaffected.
-function syncResolved<T>(value: T): Promise<T> {
-  const p = Promise.resolve(value) as Promise<T> & {
-    status?: string;
-    value?: T;
-  };
-  p.status = "fulfilled";
-  p.value = value;
-  return p;
-}
 
 // Each test renders inside a fresh SWR cache so cached `/api/models/...`
 // responses from a previous test don't bleed across. `provider: () =>
@@ -29,11 +11,10 @@ function syncResolved<T>(value: T): Promise<T> {
 // makes the first fetch in each test actually fire (otherwise SWR
 // suppresses the request as a duplicate of an already-pending one).
 function renderPage(id: string) {
-  const paramsPromise = syncResolved({ id });
   return render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
       <Suspense fallback={<div data-testid="suspense-fallback">loading</div>}>
-        <ModelSettingsPage params={paramsPromise} />
+        <ModelSettingsPage id={id} />
       </Suspense>
     </SWRConfig>,
   );
@@ -139,8 +120,7 @@ describe('ModelSettingsPage', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     renderPage('abc');
-    // Flush the SWR fetch + first commit. See syncResolved at the top
-    // of this file for the use()-on-Promise workaround.
+    // Flush the SWR fetch + first commit.
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
     });
@@ -295,9 +275,8 @@ describe('ModelSettingsPage', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     renderPage('abc');
-    // Flush the SWR fetch + first commit. `syncResolved` already lets
-    // `use()` return synchronously, so this only needs to drain the
-    // fetch microtask + give React one render pass to write the form.
+    // Flush the SWR fetch + first commit: drain the fetch microtask + give
+    // React one render pass to write the form.
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
     });
@@ -333,9 +312,8 @@ describe('ModelSettingsPage', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     renderPage('abc');
-    // Flush the SWR fetch + first commit. `syncResolved` already lets
-    // `use()` return synchronously, so this only needs to drain the
-    // fetch microtask + give React one render pass to write the form.
+    // Flush the SWR fetch + first commit: drain the fetch microtask + give
+    // React one render pass to write the form.
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
     });

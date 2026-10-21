@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { RotateTokenDialog } from "./rotate-token-dialog";
 import { useTokenActions } from "./use-token-actions";
 import type { components } from "@/lib/api-types.generated";
+import { tokenHref } from "@/lib/routes";
 
 // The shape of one `GET /api/tokens` item, generated from the endpoint's
 // response model (`TokenListItem` in app/tokens/routes_api.py, which mirrors
@@ -135,7 +136,7 @@ export function TokenRow({ item, onChange }: TokenRowProps) {
     <>
       <tr className={deleteError || testResult ? "" : "border-b border-slate-800"}>
         <td className="px-2 py-2 font-medium">
-          <Link href={`/tokens/${encodeURIComponent(item.id)}`} className="hover:underline">
+          <Link href={tokenHref(item.id)} className="hover:underline">
             {item.name}
           </Link>
           {item.anthropic_relay && (

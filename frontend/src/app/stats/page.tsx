@@ -125,6 +125,7 @@ import { CachePanel } from "@/components/stats/cache-panel";
 import { DroppedWritesNote } from "@/components/stats/dropped-writes-note";
 import type { CacheResponse } from "@/lib/cache-obs";
 import { TIMELINE_SPAN_MS } from "@/lib/live-history";
+import { tokenHref } from "@/lib/routes";
 
 // localStorage key for the window selector — unchanged from the old page so a
 // remembered range survives the merge.
@@ -984,7 +985,7 @@ export default function StatsPage() {
                         <td className="px-4 py-2 text-xs">
                           {r.token_id ? (
                             <Link
-                              href={`/tokens/${encodeURIComponent(r.token_id)}`}
+                              href={tokenHref(r.token_id)}
                               className="hover:underline underline-offset-2"
                             >
                               {r.token_name ?? r.token_id}
@@ -1118,7 +1119,7 @@ export default function StatsPage() {
                         row.name
                       ) : (
                         <Link
-                          href={`/tokens/${encodeURIComponent(row.token_id)}`}
+                          href={tokenHref(row.token_id)}
                           className="hover:underline underline-offset-2"
                         >
                           {row.name}

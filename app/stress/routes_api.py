@@ -58,6 +58,7 @@ from app.models.writer import (
     apply_model_change,
     dry_run_model_change,
 )
+from app.runtime.backends import registry
 from app.stress.apply import ApplyRefused, plan_apply
 from app.stress.ceiling import resolve_for_model
 from app.stress.fingerprint import Gpu, Neighbour, Subject, fingerprint
@@ -274,6 +275,12 @@ class FingerprintResult:
     hardware_incomplete: bool
 
 
+def _subject_backend(model: ModelRow) -> str:
+    """The backend a subject row reports, D6: NULL means the profile's
+    default (vLLM on linux, MLX on apple), read at call time."""
+    return model.backend or registry.DEFAULT_BACKEND
+
+
 async def build_subject(
     app_state: Any, model: ModelRow, *, all_models: list[ModelRow], gpus: tuple[Gpu, ...]
 ) -> Subject:
@@ -288,12 +295,13 @@ async def build_subject(
     from app.system.routes_engine import _backend_version
 
     settings = app_state.settings
+    backend_name = _subject_backend(model)
     return Subject(
         hf_repo=model.hf_repo,
         hf_revision=model.hf_revision,
         filename=model.filename,
         quantization=None,
-        backend=model.backend or "vllm",
+        backend=backend_name,
         mmproj_filename=model.mmproj_filename,
         max_model_len=model.max_model_len,
         max_num_seqs=model.max_batch_size,
@@ -304,7 +312,7 @@ async def build_subject(
         parallelism_strategy=model.parallelism_strategy,
         extra_args=tuple(model.extra_args or []),
         extra_env=tuple(sorted((model.extra_env or {}).items())),
-        engine_version=_backend_version(model.backend or "vllm"),
+        engine_version=_backend_version(backend_name),
         engine_image=model.engine_image,
         max_num_batched_tokens=_max_num_batched_tokens(model),
         proxy_max_inflight=_default_max_inflight(),

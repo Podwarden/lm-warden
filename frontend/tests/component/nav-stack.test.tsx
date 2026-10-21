@@ -8,9 +8,10 @@ import { act, cleanup, render } from '@testing-library/react';
 
 // next/navigation with a mutable pathname: a test "navigates" by writing it
 // and re-rendering the provider.
-const navState = vi.hoisted(() => ({ pathname: '/', push: vi.fn() }));
+const navState = vi.hoisted(() => ({ pathname: '/', search: '', push: vi.fn() }));
 vi.mock('next/navigation', () => ({
   usePathname: () => navState.pathname,
+  useSearchParams: () => new URLSearchParams(navState.search),
   useRouter: () => ({ push: navState.push, replace: vi.fn(), refresh: vi.fn() }),
 }));
 
@@ -32,13 +33,20 @@ function harness() {
   return { ref, tree };
 }
 
+// A url may carry a query (/tokens/detail?id=a, BACKLOG-macos P4).
+function setUrl(url: string) {
+  const [pathname, search = ''] = url.split('?');
+  navState.pathname = pathname;
+  navState.search = search;
+}
+
 async function start(path: string, extra?: React.ReactNode) {
   const h = harness();
-  navState.pathname = path;
+  setUrl(path);
   const r = render(h.tree(extra));
   const go = async (to: string, next?: React.ReactNode) => {
     await act(async () => {
-      navState.pathname = to;
+      setUrl(to);
       r.rerender(h.tree(next ?? extra));
     });
   };
@@ -56,7 +64,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
-  navState.pathname = '/';
+  setUrl('/');
   navState.push.mockReset();
   window.scrollY = 0;
 });
@@ -226,5 +234,30 @@ describe('useBreadcrumb', () => {
     }
     vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<Bad />)).toThrow(/NavStackProvider/);
+  });
+});
+
+// BACKLOG-macos P4: a detail page's id rides in the query; the provider
+// tracks the logical path (/tokens/a) and never lets the bare /tokens/detail
+// reach the stack while the query is still being read.
+describe('NavStackProvider — query-id detail URLs', () => {
+  it('exposes the logical pathname and stacks it, never the bare detail path', async () => {
+    const { ref, go } = await start('/tokens/detail?id=a');
+    await act(async () => {});
+    expect(ref.ctx!.pathname).toBe('/tokens/a');
+    expect(ref.ctx!.stack).toEqual([]); // a direct load pushes nothing
+    await go('/models/detail/settings?id=m%2F1');
+    await act(async () => {});
+    expect(ref.ctx!.pathname).toBe('/models/m%2F1/settings');
+    await go('/stats');
+    expect(ref.ctx!.stack.map((e) => e.href)).toEqual(['/tokens/a', '/models/m%2F1/settings']);
+  });
+
+  it('goBack pushes the query URL of a stacked detail page', async () => {
+    const { ref, go } = await start('/models/detail?id=abc');
+    await act(async () => {});
+    await go('/stats');
+    act(() => ref.ctx!.goBack());
+    expect(navState.push).toHaveBeenCalledWith('/models/detail?id=abc', { scroll: false });
   });
 });

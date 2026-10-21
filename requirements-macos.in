@@ -1,0 +1,41 @@
+# Inputs for requirements-macos.txt — the Python embedded in the macOS app
+# bundle (Metal design §3 "Python embedding": python-build-standalone 3.12,
+# hash-locked). Regenerate the lock with `make macos-requirements` on an
+# Apple Silicon Mac; never edit requirements-macos.txt by hand.
+#
+# Rules (tests/unit/test_requirements_macos.py enforces them):
+#   * Every `==` pin in requirements.txt is repeated here VERBATIM (same
+#     extras, same version) unless it is listed in MACOS_EXCLUDED in that test.
+#     Linux is the source of truth: bump requirements.txt first, then copy the
+#     pin here and re-lock.
+#   * docker==7.1.0 is NOT here — Docker cannot pass Metal into a container,
+#     and `import docker` is lazy inside _build_engine_driver (Metal design §9).
+
+# --- shared with requirements.txt (keep identical) ---
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+aiosqlite==0.20.0
+bcrypt==4.2.1
+aiofiles==24.1.0
+httpx==0.28.1
+python-multipart==0.0.20
+PyJWT[crypto]==2.9.0
+Pillow==11.0.0
+
+# --- macOS-only ---
+# MLX engine (app/runtime/backends/mlx/): the server runs `mlx_lm.server`
+# from the bundle's own interpreter. Pulls mlx + mlx-metal (the .metallib
+# shaders) and transformers.
+mlx-lm==0.32.2
+# MTLDevice.recommendedMaxWorkingSetSize / hasUnifiedMemory probe for
+# app/system/apple/metal.py (Metal design §8). Not on the stock interpreter.
+pyobjc-framework-Metal==12.2.2
+# On Linux, transformers + huggingface_hub come from the vllm/vllm-openai base
+# image; the bundle has no base image, so they are explicit here.
+# app/proxy/tokenizers.py imports transformers at module level, and
+# app/models/{discovery,pull_task}.py use huggingface_hub. mlx-lm 0.32 needs
+# transformers>=5.7. huggingface_hub is held on the 1.x line the app is
+# written and tested against (prod ships 1.12); 2.0 (2026-09-24) is a major
+# API break that has not been audited.
+transformers>=5.7
+huggingface_hub>=1.31,<2

@@ -29,7 +29,7 @@ extend-immutable-calls = ["fastapi.Depends", "Depends", "fastapi.File", "File", 
 asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-ra --strict-markers -m \"not live\""
+addopts = "-ra --strict-markers -m \"not live and not macos\""
 # #260: a test that hangs for 300 s (setup+call+teardown) dumps every thread's
 # stack, so a wedged run leaves a diagnosis behind instead of nothing at all.
 # It does NOT end the run: pytest 8.3.4 arms the timer without `exit=True`
@@ -46,6 +46,7 @@ markers = [
     "perf: scale sanity checks (seconds, not minutes); deselect with -m 'not perf'",
     "fresh_db: the `client` fixture must let the lifespan migrate an empty DB instead of copying the pre-migrated template",
     "live: talks to a real deployment; opt-in with -m live (see tests/live/README.md)",
+    "macos: needs Apple Silicon; selected only by the macos CI job and macos-lane workers",
 ]
 
 [tool.mypy]

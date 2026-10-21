@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoadProgressCompact } from "@/components/models/load-progress/load-progress-compact";
 import type { LoadProgressOut } from "@/lib/load-progress";
+import { modelHref } from "@/lib/routes";
 
 export type ModelStatus =
   | "registered"
@@ -95,7 +96,7 @@ export function ModelCard({
         <div className="min-w-0 flex-1">
           <CardTitle className="truncate">
             <Link
-              href={`/models/${model.id}`}
+              href={modelHref(model.id)}
               className="hover:underline focus-visible:underline focus-visible:outline-none"
             >
               {model.served_model_name}

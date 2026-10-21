@@ -9,8 +9,8 @@ End-to-end tests using Playwright. **Not run in CI** — exercised manually agai
 cd /path/to/lm-warden
 docker compose up -d
 
-# 2. Wait for the UI to be reachable
-curl -fsS http://localhost:3000/api/health  # should return {"ok": true}
+# 2. Wait for the stack to be reachable (the api answers /healthz via Caddy)
+curl -fsS http://localhost:8080/healthz  # returns {"ok": true, ...}; the Next health route and /ui/healthz no longer exist
 
 # 3. Run Playwright (inside the frontend dir, in Docker)
 cd frontend

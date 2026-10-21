@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, act } from '@testing-library/react';
 import { SWRConfig } from 'swr';
-import ModelSettingsPage from '@/app/models/[id]/settings/page';
+import { ModelSettingsPage } from '@/components/models/model-settings-page';
 import { setAccessToken, setCsrfToken } from '@/lib/auth-fetch';
 
 // ---------------------------------------------------------------------------
@@ -21,13 +21,6 @@ import { setAccessToken, setCsrfToken } from '@/lib/auth-fetch';
 //     what the controls do not own;
 //   * "unset" stays reachable, so an untouched control changes no argv.
 // ---------------------------------------------------------------------------
-
-function syncResolved<T>(value: T): Promise<T> {
-  const p = Promise.resolve(value) as Promise<T> & { status?: string; value?: T };
-  p.status = 'fulfilled';
-  p.value = value;
-  return p;
-}
 
 const DEFAULT_GPU_PROBE = {
   gpus: [
@@ -103,7 +96,7 @@ async function renderPage(settings: Record<string, unknown>) {
   render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
       <Suspense fallback={<div data-testid="suspense-fallback">loading</div>}>
-        <ModelSettingsPage params={syncResolved({ id: 'abc' })} />
+        <ModelSettingsPage id="abc" />
       </Suspense>
     </SWRConfig>,
   );

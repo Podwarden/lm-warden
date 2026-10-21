@@ -20,7 +20,7 @@ describe('StatusStrip', () => {
     expect(strip.textContent).toMatch(/Live changes only\./);
     expect(screen.getByRole('link', { name: /unload on the model page/i })).toHaveAttribute(
       'href',
-      '/models/qwen3-4b',
+      '/models/detail?id=qwen3-4b',
     );
     expect(screen.queryByRole('status')).toBeNull();
   });
@@ -33,7 +33,7 @@ describe('StatusStrip', () => {
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.getByRole('link', { name: /load on the model page/i })).toHaveAttribute(
       'href',
-      '/models/m1',
+      '/models/detail?id=m1',
     );
   });
 
@@ -63,6 +63,6 @@ describe('StatusStrip', () => {
 
   it('encodes the model id in the link', () => {
     render(<StatusStrip status="pulled" conflict={false} modelId="a/b c" />);
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/models/a%2Fb%20c');
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/models/detail?id=a%2Fb%20c');
   });
 });

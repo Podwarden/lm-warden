@@ -202,7 +202,14 @@ def test_data_file_has_no_internal_names():
     text = DATA.read_text().lower()
     # The denylist entries are assembled so this public file never spells an
     # internal host name itself.
-    for bad in ("lmw" + "48", "lmwarden" + ".com", "ollama", "co-authored", "noreply", "10.10."):
+    for bad in (
+        "lmw" + "48",
+        "lmwarden" + ".com",
+        "ollama",
+        "co-authored",
+        "noreply",
+        "10" + ".10.",
+    ):
         assert bad not in text
 
 

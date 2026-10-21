@@ -1,7 +1,8 @@
 // The model pages name their breadcrumbs through useBreadcrumb — the
 // app-wide strip replaced their "← Back to models" / "← Back to <name>" links.
-//   /models/[id]           → Home › Models › <served name>
-//   /models/[id]/settings  → Home › Models › <served name> › Settings
+//   /models/detail?id=<id>           → Home › Models › <served name>
+//   /models/detail/settings?id=<id>  → Home › Models › <served name> › Settings
+// (the id rides in the query since BACKLOG-macos P4 — see lib/routes.ts).
 // A model that fails to load (404 included) is named by its id, so the crumb
 // doesn't sit on the italic "Model" placeholder forever.
 import { Suspense } from 'react';
@@ -9,26 +10,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { SWRConfig } from 'swr';
 
-const navState = vi.hoisted(() => ({ pathname: '/models/abc' }));
+const navState = vi.hoisted(() => ({ pathname: '/models/detail', search: 'id=abc' }));
 vi.mock('next/navigation', () => ({
   usePathname: () => navState.pathname,
+  useSearchParams: () => new URLSearchParams(navState.search),
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
 }));
 
-import ModelDetailPage from '@/app/models/[id]/page';
-import ModelSettingsPage from '@/app/models/[id]/settings/page';
+import { ModelDetailPage } from '@/components/models/model-detail-page';
+import { ModelSettingsPage } from '@/components/models/model-settings-page';
 import { NavStackProvider } from '@/lib/nav-stack';
 import { BreadcrumbHeader } from '@/components/breadcrumb-header';
 import { setAccessToken, setCsrfToken } from '@/lib/auth-fetch';
-
-// See tests/component/model-settings.test.tsx for why the params promise is
-// forged with a resolved shape rather than awaited.
-function syncResolved<T>(value: T): Promise<T> {
-  const p = Promise.resolve(value) as Promise<T> & { status?: string; value?: T };
-  p.status = 'fulfilled';
-  p.value = value;
-  return p;
-}
 
 class InertEventSource {
   close() {}
@@ -108,29 +101,29 @@ describe('model pages — breadcrumb titles', () => {
     vi.unstubAllGlobals();
   });
 
-  it('/models/[id] names its crumb after the served model name, and draws no back link of its own', async () => {
+  it('/models/detail?id= names its crumb after the served model name, and draws no back link of its own', async () => {
     stubFetch();
-    renderAt('/models/abc', <ModelDetailPage params={syncResolved({ id: 'abc' })} />);
+    renderAt('/models/detail', <ModelDetailPage id="abc" />);
     await screen.findByRole('heading', { level: 1, name: 'Qwen3-8B' });
     await waitFor(() => expect(trailText()).toBe('HomeModelsQwen3-8B'));
     expect(screen.queryByText(/Back to models/)).toBeNull();
   });
 
-  it('/models/[id] on a 404 names the crumb by the id', async () => {
+  it('/models/detail?id= on a 404 names the crumb by the id', async () => {
     stubFetch(404);
-    renderAt('/models/abc', <ModelDetailPage params={syncResolved({ id: 'abc' })} />);
+    renderAt('/models/detail', <ModelDetailPage id="abc" />);
     await screen.findByText('Model not found');
     await waitFor(() => expect(trailText()).toBe('HomeModelsabc'));
     expect(screen.queryByText(/Back to models/)).toBeNull();
   });
 
-  it('/models/[id]/settings names the parent crumb after the model (direct load)', async () => {
+  it('/models/detail/settings?id= names the parent crumb after the model (direct load)', async () => {
     stubFetch();
-    renderAt('/models/abc/settings', <ModelSettingsPage params={syncResolved({ id: 'abc' })} />);
+    renderAt('/models/detail/settings', <ModelSettingsPage id="abc" />);
     await screen.findByRole('heading', { level: 1, name: 'Settings' });
     await waitFor(() => expect(trailText()).toBe('HomeModelsQwen3-8BSettings'));
     const crumb = screen.getAllByRole('link', { name: 'Qwen3-8B' })[0];
-    expect(crumb).toHaveAttribute('href', '/models/abc');
+    expect(crumb).toHaveAttribute('href', '/models/detail?id=abc');
     expect(screen.queryByText(/Back to/)).toBeNull();
   });
 });

@@ -7,6 +7,26 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.21.1] — 2026-10-21
+
+### Added
+
+- **A path to publish a beta of the Mac app.** A release can now get a beta DMG on GitHub, published as a pre-release labelled beta with a SHA-256 checksum file. A beta is ad-hoc signed and not notarized, and it never updates itself. INSTALL.md's new "Beta builds" section explains how to check the download and how to open it past Gatekeeper.
+
+### Changed
+
+- **Each backend reports its own engine version through `Backend.version_string()`.** The `/api/system/backends` route no longer branches on the backend name to decide what version to show; it asks each backend. The MLX backend now reports the installed mlx-lm version there, where it previously reported none.
+- **On a Mac, load admission sizes only the files the model actually loads** (its quant, shard siblings and projector), not every cached quant of the repo, so the unified-memory budget is no longer over-counted by the other quants sitting in the same cache.
+- **On a Mac, the memory budget is the GPU's real ceiling, not total RAM.** Load admission, the GPU table's memory total and the desktop shell's usable-memory figure now use Metal's `recommendedMaxWorkingSetSize` (about 11.8 GiB on a 16 GiB M1), lowered by a smaller `iogpu.wired_limit_mb`, with the OS reserve taken of `hw.memsize_usable`. When Metal cannot be read the budget stays the old total-RAM figure, and it never exceeds total RAM.
+
+### Fixed
+
+- **Health probes use each backend's own health path.** The engine watchdog and the stress runner's
+  health re-check probed a hardcoded `/health`; they now ask the backend for its health path, so a backend
+  whose readiness endpoint differs is no longer misread as down.
+- **Removed the dead `BACKEND_URL` setting.** `frontend/Dockerfile` and `docker-compose.yml` set
+  `BACKEND_URL=http://api:8080`, which nothing read. Both lines are gone.
+
 ## [v2026.10.19.1] — 2026-10-19
 
 ### Added

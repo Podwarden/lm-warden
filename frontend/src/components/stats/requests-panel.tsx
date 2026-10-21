@@ -27,6 +27,7 @@ import {
 import type { StatsRange } from "@/lib/stats-v2";
 import { ColourLegend, RequestsChart, toPoints } from "./requests-chart";
 import { Panel, ScopeNote } from "./live-panels";
+import { tokenHref } from "@/lib/routes";
 
 /** Rows the detail table shows before "show all". */
 export const TABLE_ROWS_COLLAPSED = 25;
@@ -167,7 +168,7 @@ export function RequestsPanel({
                         <span className="font-mono text-xs">
                           {r.token_id ? (
                             <Link
-                              href={`/tokens/${encodeURIComponent(r.token_id)}`}
+                              href={tokenHref(r.token_id)}
                               className="hover:underline underline-offset-2"
                             >
                               {r.token_name ?? r.token_id}

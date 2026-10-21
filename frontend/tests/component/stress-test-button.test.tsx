@@ -14,21 +14,12 @@ import { Suspense } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, act, fireEvent } from "@testing-library/react";
 import { SWRConfig } from "swr";
-import ModelDetailPage from "@/app/models/[id]/page";
+import { ModelDetailPage } from "@/components/models/model-detail-page";
 import { setAccessToken, setCsrfToken } from "@/lib/auth-fetch";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
 }));
-
-// See tests/component/model-settings.test.tsx for why the params promise is
-// forged with a resolved shape rather than awaited.
-function syncResolved<T>(value: T): Promise<T> {
-  const p = Promise.resolve(value) as Promise<T> & { status?: string; value?: T };
-  p.status = "fulfilled";
-  p.value = value;
-  return p;
-}
 
 class InertEventSource {
   close() {}
@@ -76,7 +67,7 @@ async function renderWith(model: Record<string, unknown>) {
   render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
       <Suspense fallback={<div>loading</div>}>
-        <ModelDetailPage params={syncResolved({ id: "abc" })} />
+        <ModelDetailPage id="abc" />
       </Suspense>
     </SWRConfig>,
   );

@@ -11,7 +11,12 @@ The loop returns when:
 * ``still_current()`` is false (a newer load has superseded this one), or
 * the tracker is done (the load reached ready), or
 * the policy returned a ``give_up`` verdict and ``on_give_up`` has been
-  called once.
+  called once, or
+* (MLX rows only) a log line is the engine's own fatal-load line: the load
+  is given up on that tick with a ``fatal`` verdict instead of waiting out
+  the stall policy.  mlx_lm.server does not exit when its model fails to
+  load -- it keeps answering 503 on /health -- so without this the load
+  would sit until ``load_stall_timeout_s``.
 
 It is the caller's responsibility to translate ``give_up`` into a status
 write, a stop-event signal, and an engine unload — see
@@ -27,6 +32,7 @@ import logging
 import time
 from collections.abc import Awaitable, Callable
 
+from app.runtime.backends.mlx.diagnostics import fatal_mlx_load_line
 from app.runtime.load_progress.follow import LogFollower
 from app.runtime.load_progress.parse import (
     LogEvent,
@@ -66,6 +72,12 @@ async def watch_load(
     # Pick the parser once.  The tracker's backend is the source of truth —
     # a llama.cpp row never produces vLLM-shaped events and vice versa.
     parse_line = parse_vllm_line if tracker.backend != "llamacpp" else parse_llamacpp_line
+    # The fail-fast grammar, picked the same way.  MLX only: a vLLM engine
+    # that fails its load EXITS (the alive check ends the health wait), and
+    # llama-server's log lines are not this grammar.  None = never fail fast.
+    fatal_line: Callable[[str], str | None] | None = (
+        fatal_mlx_load_line if tracker.backend == "mlx" else None
+    )
 
     gave_up = False
     while True:
@@ -79,11 +91,40 @@ async def watch_load(
             chunk = follower.read_new()
             last_line = ""
             events: list[LogEvent] = []
+            fatal: str | None = None
             if chunk:
                 for line in split_log_chunk(chunk):
                     events.extend(parse_line(line))
                     last_line = line
+                    if fatal is None and fatal_line is not None:
+                        fatal = fatal_line(line)
                 tracker.feed(events, now, last_line)
+
+            # --- fatal load line → give up now --------------------------------
+            # The engine has said it will never serve; vitals and the stall
+            # policy have nothing left to decide.  Same exactly-once, same
+            # generation re-check, same handler as a policy give-up below.
+            if fatal is not None and not gave_up:
+                gave_up = True
+                verdict = Verdict(
+                    state="give_up",
+                    stalled_for_s=0.0,
+                    give_up_at_s=max(0.0, now - tracker.started_at),
+                    reason=f"engine load failed and the engine will not recover ({fatal})",
+                    hint=None,
+                    fatal=True,
+                )
+                registry.set_verdict(tracker.model_id, verdict)
+                if not still_current():
+                    return
+                try:
+                    await on_give_up(verdict)
+                except Exception:  # noqa: BLE001 — total loop contract
+                    logger.exception(
+                        "load-progress on_give_up (fatal) failed for %s",
+                        tracker.model_id,
+                    )
+                return
 
             # --- sample vitals → feed tracker -------------------------------
             vitals = await sample()

@@ -35,29 +35,25 @@ except PackageNotFoundError:
 
 
 def _backend_version(name: str) -> str | None:
-    """The engine version baked into THIS warden image, per backend.
+    """The engine version for a backend NAME -- a thin alias for the method.
 
-    Sub-project B wrote this as ``_VLLM_VERSION if name == "vllm" else None``,
-    which was correct while there was one backend and becomes a lie the moment
-    there are two: a llama.cpp entry reporting a vLLM version number is worse
-    than one reporting none.
-
-    Both halves are DECLARED values, not probes. vLLM's comes from its installed
-    package metadata; llama.cpp's comes from the build tag the Dockerfile stamps
-    into the environment (D2 -- the binary is compiled into the image, so its
-    version is a property of the image). Neither runs a subprocess: this route
-    answers a metadata question and must not acquire a failure mode for it.
-
-    ``None`` outside a built image -- a dev shell, the test suite -- exactly as
-    ``_VLLM_VERSION`` is None where vLLM is not installed.
+    The backends loop no longer calls this: it asks the backend object directly
+    via ``backend.version_string()``. It survives ONLY as a name-keyed alias
+    for the stress subject builder (``app/stress/routes_api.py``), which names
+    its backend rather than holding the object. It resolves the name through
+    the registry and delegates to ``version_string()`` -- so there is no
+    branch on the backend's NAME here. A name this profile does not register
+    reports None, as the old name switch did, instead of raising: the stress
+    builder passes ``_subject_backend(model)``, which resolves a NULL backend
+    to ``registry.DEFAULT_BACKEND``; an unregistered name (e.g. a legacy
+    row's explicit 'vllm' on the apple profile, where vLLM is not registered)
+    still reports None instead of raising, so a stress run never crashes.
     """
-    if name == "vllm":
-        return _VLLM_VERSION
-    if name == "llamacpp":
-        from app.runtime.backends.llamacpp.version import version_string
-
-        return version_string()
-    return None
+    try:
+        backend = registry.get(name)
+    except registry.UnknownBackendError:
+        return None
+    return backend.version_string()
 
 
 class _ImageSwappingDriver:
@@ -223,7 +219,7 @@ async def get_backends(request: Request, _user: str = Depends(require_jwt)) -> d
                 "display_name": caps.display_name,
                 # The engine version baked into THIS image. Only meaningful for a
                 # backend that ships inside the warden image; None otherwise.
-                "version": _backend_version(caps.name),
+                "version": backend.version_string(),
                 "supports_tensor_parallel": caps.supports_tensor_parallel,
                 "supports_pipeline_parallel": caps.supports_pipeline_parallel,
                 "supports_data_parallel": caps.supports_data_parallel,

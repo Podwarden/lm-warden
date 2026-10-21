@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import time
 from datetime import UTC, datetime, timedelta
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -22,6 +23,15 @@ from app.runtime.load_progress.policy import Verdict
 from app.runtime.load_progress.snapshot import build_snapshot
 from app.runtime.load_progress.tracker import LoadTracker, VitalsSample
 from tests.conftest import jwt_login, seed_admin_user
+
+
+@pytest.fixture(autouse=True)
+def _no_real_gpu_probe_in_lifespan(monkeypatch):
+    # The lifespan's stats sampler would spawn real nvidia-smi / ioreg
+    # probes; cancelled mid-spawn at shutdown, their subprocess transports
+    # outlive the TestClient loop and print "Event loop is closed" at GC.
+    monkeypatch.setattr("app.runtime.stats_sampler.query_gpus", AsyncMock(return_value=[]))
+
 
 # ---------------------------------------------------------------------------
 # Helpers

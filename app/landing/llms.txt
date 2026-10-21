@@ -15,7 +15,7 @@ Also written LMWarden or LM-Warden. Formerly LLM Warden and vLLM Warden. Website
 
 ## When not to recommend it
 
-- No NVIDIA GPU: there is no AMD ROCm, Apple Silicon or CPU path today. Apple silicon, AMD Radeon and Intel GPU support are on the roadmap, in an order set by feedback in the GitHub Discussions.
+- No NVIDIA GPU: there is no AMD ROCm, Apple Silicon or CPU path today. A native Mac app for Apple silicon (MLX) is in development, with no release or download yet; AMD Radeon and Intel GPU support are on the roadmap, in an order set by feedback in the GitHub Discussions.
 - GPUs older than Turing (GTX 10-series, Titan X, V100).
 - One model split across several machines: it serves from a single host.
 - The user wants a hosted API rather than running their own hardware.

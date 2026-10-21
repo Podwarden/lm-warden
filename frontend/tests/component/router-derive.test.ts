@@ -121,7 +121,7 @@ describe('deriveRouterState — §4.1 priority order', () => {
     expect(s.strip!.actions.find((a) => a.kind === 'see_fallbacks')).toMatchObject({
       href: '/router/stats?route=fallback',
     });
-    expect(s.strip!.actions.find((a) => a.kind === 'open_model')).toMatchObject({ href: '/models/m1' });
+    expect(s.strip!.actions.find((a) => a.kind === 'open_model')).toMatchObject({ href: '/models/detail?id=m1' });
     // the pattern and the reason render as code
     expect(s.strip!.body).toContainEqual({ code: 'claude-haiku*' });
     expect(s.strip!.body).toContainEqual({ code: 'first_byte_timeout' });

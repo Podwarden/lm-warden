@@ -77,7 +77,7 @@ describe("In-flight panel on a phone", () => {
     const card = screen.getByTestId("live-card");
     expect(within(card).getByTestId("card-session").textContent).toBe("0b1c2d3e");
     const link = within(card).getByText("dev");
-    expect(link.closest("a")?.getAttribute("href")).toBe("/tokens/t1");
+    expect(link.closest("a")?.getAttribute("href")).toBe("/tokens/detail?id=t1");
     expect(link.closest("a")?.className).toContain("py-3"); // 44px tap area
     expect(card.textContent).toContain("12s");
     expect(within(card).getByText("thinking")).toBeInTheDocument();

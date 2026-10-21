@@ -227,7 +227,7 @@ describe("merged stats — requests chart and its table", () => {
     // f1 carries token_id "tok-a" -- rendered as a link.
     const first = screen.getAllByTestId("finished-row")[0];
     const link = within(first).getByRole("link", { name: "key-a" });
-    expect(link).toHaveAttribute("href", "/tokens/tok-a");
+    expect(link).toHaveAttribute("href", "/tokens/detail?id=tok-a");
     expect(link.className).toContain("hover:underline");
   });
 
@@ -262,7 +262,7 @@ describe("merged stats — in-flight requests and the by-token rollup", () => {
     renderPage();
     const panel = await screen.findByTestId("live-requests");
     const link = await within(panel).findByRole("link", { name: "key-a" });
-    expect(link).toHaveAttribute("href", "/tokens/tok-a");
+    expect(link).toHaveAttribute("href", "/tokens/detail?id=tok-a");
   });
 
   it("renders anonymous in-flight rows as plain text, no link", async () => {
@@ -320,7 +320,7 @@ describe("merged stats — in-flight requests and the by-token rollup", () => {
     // Two distinct token_ids sharing a display name stay two separate rows.
     expect(links).toHaveLength(2);
     const hrefs = links.map((l) => l.getAttribute("href")).sort();
-    expect(hrefs).toEqual(["/tokens/tok-new", "/tokens/tok-old"]);
+    expect(hrefs).toEqual(["/tokens/detail?id=tok-new", "/tokens/detail?id=tok-old"]);
   });
 });
 

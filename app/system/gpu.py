@@ -7,6 +7,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Literal
 
+from app.models.capacity import UnifiedCapacity
+
 logger = logging.getLogger(__name__)
 
 NVIDIA_SMI_CMD = [
@@ -916,6 +918,17 @@ def _first_line(*streams: bytes) -> str:
     return ""
 
 
+async def _kill_and_reap(proc: asyncio.subprocess.Process) -> None:
+    """Kill a probe that did not answer, then wait at most 1 s for it to
+    exit, so the child is reaped and its subprocess transport is closed
+    before the probe returns (an unreaped child's transport is closed at
+    GC, after the event loop, and prints 'Event loop is closed')."""
+    with contextlib.suppress(ProcessLookupError):
+        proc.kill()
+    with contextlib.suppress(ProcessLookupError, TimeoutError):
+        await asyncio.wait_for(proc.wait(), timeout=1.0)
+
+
 async def _run_nvidia_smi(args: list[str], *, timeout: float = 5.0) -> str | None:  # noqa: ASYNC109
     """Run nvidia-smi with `args` and return stdout, or None if it failed.
 
@@ -941,8 +954,7 @@ async def _run_nvidia_smi(args: list[str], *, timeout: float = 5.0) -> str | Non
         # A wedged driver hangs every probe; without the kill each one
         # (every few seconds) would leave another nvidia-smi behind.
         if proc is not None:
-            with contextlib.suppress(ProcessLookupError):
-                proc.kill()
+            await _kill_and_reap(proc)
     else:
         if proc.returncode != 0:
             detail = _first_line(stdout, stderr) or "no output"
@@ -958,8 +970,106 @@ async def _run_nvidia_smi(args: list[str], *, timeout: float = 5.0) -> str | Non
     return stdout.decode()
 
 
+IOREG_AGX_CMD = ["ioreg", "-r", "-c", "AGXAccelerator", "-d", "2"]
+
+
+async def _run_ioreg(argv: list[str], *, timeout: float = 5.0) -> str | None:  # noqa: ASYNC109
+    """Run `argv` (the ioreg AGXAccelerator probe) and return stdout, or None
+    if it failed. The Apple counterpart of `_run_nvidia_smi`: async subprocess
+    with a timeout, a kill and a bounded reap on the timeout so a wedged probe
+    cannot accumulate children, and a failure that degrades to None (never
+    raises). ioreg is NOT recorded in the nvidia probe-health tracker — that
+    tracker is for nvidia-smi only; an ioreg failure surfaces through the empty
+    parse or the snapshot's probe_error instead."""
+    proc = None
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *argv,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, _stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+    except TimeoutError:
+        # Before OSError: TimeoutError IS an OSError subclass, and the wedged
+        # probe must be killed, not just abandoned.
+        if proc is not None:
+            await _kill_and_reap(proc)
+        return None
+    except OSError:
+        # Missing binary (FileNotFoundError), a non-executable path
+        # (PermissionError) or any other spawn failure: degrade, never raise.
+        return None
+    if proc.returncode != 0:
+        return None
+    return stdout.decode(errors="replace")
+
+
+async def _apple_device_ceiling() -> int | None:
+    """``recommendedMaxWorkingSetSize`` off the event loop; None on any failure."""
+    from app.system.apple import metal
+
+    try:
+        return await asyncio.to_thread(metal.device_ceiling)
+    except Exception:
+        return None
+
+
+async def _apple_capacity() -> UnifiedCapacity:
+    """Read the Mac's capacity probes into one ``UnifiedCapacity`` (Metal design
+    s7) — the single source of truth behind ``_apple_budget_mib`` (GPU table,
+    shell feed) and the unified-memory admission budget.
+
+    ``hw.memsize``, ``hw.memsize_usable`` and ``iogpu.wired_limit_mb`` run
+    through the ioreg-plumbed async runner (timeout, never raises) and the
+    latter two are parsed by ``capacity_sysctl.read_capacity_sysctls``; the
+    device ceiling comes from the pyobjc Metal probe. Any unreadable probe is
+    None and ``UnifiedCapacity`` resolves it fail closed.
+    """
+    from app.system.apple.capacity_sysctl import (
+        CAPACITY_SYSCTL_CMDS,
+        parse_sysctl_uint,
+        read_capacity_sysctls,
+    )
+
+    memsize = parse_sysctl_uint(await _run_ioreg(["sysctl", "-n", "hw.memsize"]) or "")
+    outs = {tuple(argv): await _run_ioreg(list(argv)) for argv in CAPACITY_SYSCTL_CMDS}
+    sysctls = read_capacity_sysctls(lambda argv: outs.get(tuple(argv)))
+    return UnifiedCapacity(
+        memsize=memsize,
+        memsize_usable=sysctls.memsize_usable,
+        wired_limit_mb=sysctls.wired_limit_mb,
+        device_ceiling=await _apple_device_ceiling(),
+    )
+
+
+async def _apple_budget_mib() -> int:
+    """The GPU memory budget for the apple dispatch, in MiB.
+
+    The §7 device budget — ``min(recommendedMaxWorkingSetSize,
+    iogpu.wired_limit_mb)`` clamped to ``hw.memsize`` — before the OS
+    reserve (that is admission's business). Without a Metal ceiling it is
+    the pre-P6 ``hw.memsize`` stand-in; an unreadable ``hw.memsize`` is 0.
+    Never raises.
+    """
+    return (await _apple_capacity()).device_budget // (2**20)
+
+
 async def query_gpus() -> list[GpuInfo]:
-    """Run nvidia-smi and parse output. Returns [] if not available."""
+    """Return the current per-GPU readings.
+
+    Dispatches on the deployment PROFILE (app.platform_profile), never
+    ``sys.platform``: on the linux profile this runs nvidia-smi and returns
+    [] if it is unavailable (byte-identical to before profiles existed); on
+    the apple profile it runs ioreg AGXAccelerator and returns gpu_apple's
+    parse, or [] if the probe failed or saw no object."""
+    from app import platform_profile
+    from app.system import gpu_apple
+
+    if platform_profile.PROFILE == "apple":
+        out = await _run_ioreg(IOREG_AGX_CMD)
+        if out is None:
+            return []
+        return gpu_apple.parse_ioreg_agx_info(out, budget_mib=await _apple_budget_mib())
     stdout = await _run_nvidia_smi(NVIDIA_SMI_CMD)
     if stdout is None:
         return []
@@ -1090,6 +1200,19 @@ async def query_gpu_snapshot() -> GpuSnapshot:
     The static nvlink/thermal facts come from a 60 s cache and are merged onto
     each row; when their probes failed the rows simply keep None there.
     """
+    # Apple dispatch: ioreg AGXAccelerator gives the per-GPU readings; there is
+    # no per-process GPU attribution on Apple (s8), so apps is always [].
+    # Dispatches on the PROFILE, never sys.platform (Metal design s8).
+    from app import platform_profile
+    from app.system import gpu_apple
+
+    if platform_profile.PROFILE == "apple":
+        out = await _run_ioreg(IOREG_AGX_CMD)
+        if out is None:
+            return GpuSnapshot(gpus=[], apps=[], probe_error="ioreg AGXAccelerator unavailable")
+        gpus = gpu_apple.parse_ioreg_agx(out, budget_mib=await _apple_budget_mib())
+        return GpuSnapshot(gpus=gpus, apps=[], probe_error=None, topology=None)
+
     live_out = await _run_nvidia_smi(NVIDIA_SMI_LIVE_CMD)
     if live_out is None:
         # The reason nvidia-smi gave (#255), e.g. "nvidia-smi exit 255: Failed

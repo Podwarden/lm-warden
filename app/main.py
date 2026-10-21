@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -86,6 +87,14 @@ def _build_engine_driver(settings):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Metal design s2 — the VW_PARENT_PID belt. Parsed BEFORE any background
+    # task starts: an unset var means no watcher (Linux stays byte-identical),
+    # and a malformed value must fail boot loud — a silently disabled belt is
+    # the orphan hazard it exists to prevent.
+    from app.runtime.parent_watch import parse_parent_pid
+
+    parent_pid = parse_parent_pid(os.environ)
+
     settings = load_settings()
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     settings.logs_dir.mkdir(parents=True, exist_ok=True)
@@ -121,12 +130,20 @@ async def lifespan(app: FastAPI):
     # at spawn time: the ledger's per-tick sample misses a wrapper that dies
     # and is replaced within one interval (a double spawn), and the orphans
     # the first wrapper left are then unattributable to this warden.
+    #
+    # Metal design s10: the load admission is chosen once from the deployment
+    # profile -- GpuOwnership on linux (unchanged), unified-memory bytes on apple.
+    from app import platform_profile
+    from app.runtime.unified_admission import admission_for_profile
     from app.runtime.watchdog import record_wrapper_pid
 
     app.state.supervisor = Supervisor(
         app.state.settings,
         driver=_build_engine_driver(app.state.settings),
         on_wrapper_spawn=record_wrapper_pid,
+        admission=await admission_for_profile(
+            platform_profile.PROFILE, hf_cache_dir=app.state.settings.hf_cache_dir
+        ),
     )
     app.state.port_allocator = PortAllocator(start=10000, end=10999)
 
@@ -354,6 +371,16 @@ async def lifespan(app: FastAPI):
     )
     audit_task = asyncio.create_task(admin_audit.run_forever())
 
+    # Metal design s2 — on the macOS launcher, a force-quit must not leave a
+    # headless uvicorn behind: when VW_PARENT_PID is set, watch the launcher
+    # and SIGTERM ourselves (the normal graceful shutdown) if it dies. Unset
+    # (Linux) -> no task, byte-identical.
+    parent_watch_task = None
+    if parent_pid is not None:
+        from app.runtime.parent_watch import watch_parent
+
+        parent_watch_task = asyncio.create_task(watch_parent(parent_pid))
+
     # Chat2 (2026-08-23) — orphan/TTL/LRU collector for attachments (spec §3).
     # Same "log and keep going" shape as the other background loops above.
     from app.chat2.gc import run_gc_forever
@@ -415,6 +442,12 @@ async def lifespan(app: FastAPI):
         rank_scraper_task.cancel()
         block_size_task.cancel()
         audit_task.cancel()
+        # Metal design s2 — the parent watcher only ever SIGTERMs itself (the
+        # normal graceful shutdown, which runs this finally), so on a clean
+        # exit it is still polling and must be cancelled and awaited with the
+        # other loops so it does not outlive the app.
+        if parent_watch_task is not None:
+            parent_watch_task.cancel()
         await asyncio.gather(
             sampler_task,
             pruner_task,
@@ -426,6 +459,7 @@ async def lifespan(app: FastAPI):
             rank_scraper_task,
             block_size_task,
             audit_task,
+            *((parent_watch_task,) if parent_watch_task is not None else ()),
             return_exceptions=True,
         )
 
@@ -611,6 +645,24 @@ def build_app() -> FastAPI:
 
     app.include_router(system_routes_info.router)
 
+    # Shell status feed (planner iter 44): mounted ONLY when the macOS shell
+    # injected a valid per-launch bearer as VW_SHELL_TOKEN; unset/empty keeps
+    # the route table byte-identical on Linux/CI. A malformed token fails boot
+    # loud (parse_shell_token names the variable, never the value). The
+    # variable is popped after reading so engine subprocesses and any later
+    # child cannot inherit the token.
+    import os
+
+    from app.system.shell_auth import parse_shell_token
+
+    shell_token = parse_shell_token(os.environ)
+    os.environ.pop("VW_SHELL_TOKEN", None)
+    app.state.shell_token = shell_token
+    if shell_token is not None:
+        from app.system import routes_shell
+
+        app.include_router(routes_shell.router)
+
     from app.header import routes_api as header_routes_api
 
     app.include_router(header_routes_api.router)
@@ -655,6 +707,23 @@ def build_app() -> FastAPI:
         return await http_exception_handler(request, exc)
 
     app.add_exception_handler(StarletteHTTPException, _site_404)
+
+    # 422 validation errors are redacted app-wide: FastAPI's default handler
+    # echoes the offending 'input' (for a model-level validator, the WHOLE
+    # body), which can carry secret-looking extra_args/extra_env values. The
+    # shared redactor keeps only loc/msg/type per error.
+    from typing import Any, cast
+
+    from fastapi.exceptions import RequestValidationError
+
+    from app.utils.validation_errors import redacted_validation_exception_handler
+
+    # Starlette types handlers as (Request, Exception); the redactor takes the
+    # narrower RequestValidationError, which is the only type routed to it.
+    # cast, not a wrapper, so the registered handler IS the shared redactor.
+    app.add_exception_handler(
+        RequestValidationError, cast(Any, redacted_validation_exception_handler)
+    )
 
     # Chat2 (2026-08-23) — T5 image attachments (upload/serve/delete under
     # /api/chat2/attachments) + T13 chats CRUD/fork/defaults/models/budget
@@ -779,6 +848,28 @@ def build_app() -> FastAPI:
         logging.getLogger(__name__).error(
             "router: /v1 routes registered after the catch-all are unreachable: %s", shadowed
         )
+
+    # The UI static export (BACKLOG-macos P4, Metal design sec. 1): the one
+    # process serves the exported Next.js app at /ui next to the api. The
+    # env names the export directory at BUILD time; unset means a
+    # Linux/CI-style install and the route table stays byte-identical.
+    import os
+    from pathlib import Path
+
+    webui_dir = os.environ.get("VW_WEBUI_DIR")
+    if webui_dir:
+        from app.webui.mount import mount_webui
+        from app.webui.redirects import build_redirect_router
+
+        # LAST registration of all: after /healthz, install_openapi and the
+        # guard above, so nothing registered before it can be shadowed by
+        # the /ui mount and the mount cannot shadow an API route.
+        app.include_router(build_redirect_router())
+        # /ui/healthz is aliased to the api's /healthz (the standalone UI's
+        # rewrite under basePath /ui); registered before the mount so the
+        # route wins over the export's 404.
+        app.add_api_route("/ui/healthz", healthz, methods=["GET"], include_in_schema=False)
+        mount_webui(app, Path(webui_dir))
 
     return app
 

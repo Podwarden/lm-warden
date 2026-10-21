@@ -12,10 +12,11 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 // Vitest runs each test file in its own worker, so this does not leak.
 const navState = vi.hoisted(() => {
   process.env.__NEXT_ROUTER_BASEPATH = '/ui';
-  return { pathname: '/models', push: vi.fn() };
+  return { pathname: '/models', search: '', push: vi.fn() };
 });
 vi.mock('next/navigation', () => ({
   usePathname: () => navState.pathname,
+  useSearchParams: () => new URLSearchParams(navState.search),
   useRouter: () => ({ push: navState.push, replace: vi.fn(), refresh: vi.fn(), prefetch: vi.fn() }),
 }));
 
@@ -37,12 +38,20 @@ function tree(page?: React.ReactNode) {
   );
 }
 
+// `url` may carry a query: the detail pages take their id from it
+// (/tokens/detail?id=tok-1, BACKLOG-macos P4).
+function setUrl(url: string) {
+  const [pathname, search = ''] = url.split('?');
+  navState.pathname = pathname;
+  navState.search = search;
+}
+
 function mount(path: string, page?: React.ReactNode) {
-  navState.pathname = path;
+  setUrl(path);
   const r = render(tree(page));
   const go = async (to: string, next?: React.ReactNode) => {
     await act(async () => {
-      navState.pathname = to;
+      setUrl(to);
       r.rerender(tree(next));
     });
   };
@@ -54,7 +63,7 @@ const desktop = () => screen.getByRole('navigation', { name: 'Breadcrumb' }).que
 
 afterEach(() => {
   cleanup();
-  navState.pathname = '/models';
+  setUrl('/models');
   navState.push.mockReset();
 });
 
@@ -87,7 +96,7 @@ describe('BreadcrumbHeader — trail', () => {
     mount('/models/abc/settings', <Title path="/models/abc" title="Qwen3-8B" />);
     const ol = within(desktop());
     expect(ol.getByRole('link', { name: 'Models' })).toHaveAttribute('href', '/ui/models');
-    expect(ol.getByRole('link', { name: 'Qwen3-8B' })).toHaveAttribute('href', '/ui/models/abc');
+    expect(ol.getByRole('link', { name: 'Qwen3-8B' })).toHaveAttribute('href', '/ui/models/detail?id=abc');
     expect(ol.getByText('Settings')).toHaveAttribute('aria-current', 'page');
   });
 
@@ -138,7 +147,7 @@ describe('BreadcrumbHeader — trail', () => {
     expect(within(mobile).queryByText('Qwen3-8B')).toBeNull();
     expect(within(mobile).getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/ui/models');
     fireEvent.click(within(mobile).getByRole('button', { name: 'Show hidden breadcrumb segments' }));
-    expect(within(mobile).getByRole('link', { name: 'Qwen3-8B' })).toHaveAttribute('href', '/ui/models/abc');
+    expect(within(mobile).getByRole('link', { name: 'Qwen3-8B' })).toHaveAttribute('href', '/ui/models/detail?id=abc');
   });
 
   it('uses only theme tokens — no hex colours in class names', () => {
@@ -186,7 +195,7 @@ describe('BreadcrumbHeader — back button', () => {
     const back = screen.getByRole('button', { name: 'Back to ci-runner' });
     expect(back).toHaveTextContent('ci-runner');
     fireEvent.click(back);
-    expect(navState.push).toHaveBeenCalledWith('/tokens/tok-1', { scroll: false });
+    expect(navState.push).toHaveBeenCalledWith('/tokens/detail?id=tok-1', { scroll: false });
     // Popped: with nothing left the button falls back to Home.
     expect(screen.getByRole('link', { name: 'Back to Home' })).toBeInTheDocument();
   });
@@ -197,5 +206,55 @@ describe('BreadcrumbHeader — back button', () => {
     await go('/stats');
     const back = screen.getByRole('button', { name: `Back to ${long}` });
     expect(back.textContent).toBe('a'.concat(long.slice(1, 23), '…'));
+  });
+});
+
+// BACKLOG-macos P4: the detail pages live at fixed URLs with the id in the
+// query (lib/routes.ts) so the static export can build them. The trail and
+// the back stack read them as the old path-shaped (logical) routes, so the
+// strip looks exactly as it did; links go to the query URLs.
+describe('BreadcrumbHeader — query-id detail URLs', () => {
+  it('/models/detail/settings?id=abc reads Home › Models › <name> › Settings, the model crumb linking to its query URL', async () => {
+    mount('/models/detail/settings?id=abc', <Title path="/models/abc" title="Qwen3-8B" />);
+    await act(async () => {});
+    expect(desktop()).toHaveTextContent(/^HomeModelsQwen3-8BSettings$/);
+    const ol = within(desktop());
+    expect(ol.getByRole('link', { name: 'Qwen3-8B' })).toHaveAttribute('href', '/ui/models/detail?id=abc');
+    expect(ol.getByText('Settings')).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('/tokens/detail?id=tok-1 names its crumb from the page, like /tokens/<id> did', async () => {
+    mount('/tokens/detail?id=tok-1', <Title title="ci-runner" />);
+    await act(async () => {});
+    expect(desktop()).toHaveTextContent(/^HomeAPI tokensci-runner$/);
+    expect(within(desktop()).getByText('ci-runner')).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('the back button returns to the query URL of the detail page left', async () => {
+    const { go } = mount('/tokens/detail?id=tok-1', <Title title="ci-runner" />);
+    await act(async () => {});
+    await go('/stats');
+    const back = screen.getByRole('button', { name: 'Back to ci-runner' });
+    fireEvent.click(back);
+    expect(navState.push).toHaveBeenCalledWith('/tokens/detail?id=tok-1', { scroll: false });
+  });
+
+  it('moving between two ids on the same detail URL is a navigation (pushes the first)', async () => {
+    const { go } = mount('/tokens/detail?id=a', <Title title="token-a" />);
+    await act(async () => {});
+    await go('/tokens/detail?id=b', <Title title="token-b" />);
+    await act(async () => {});
+    expect(screen.getByRole('button', { name: 'Back to token-a' })).toBeInTheDocument();
+    expect(within(desktop()).getByText('token-b')).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('a range change on the same token (query, not id) pushes nothing', async () => {
+    const { go } = mount('/stats');
+    await go('/tokens/detail?id=a', <Title title="token-a" />);
+    await act(async () => {});
+    await go('/tokens/detail?id=a&range=7d', <Title title="token-a" />);
+    await act(async () => {});
+    // Only /stats is behind us.
+    expect(screen.getByRole('button', { name: 'Back to Stats' })).toBeInTheDocument();
   });
 });

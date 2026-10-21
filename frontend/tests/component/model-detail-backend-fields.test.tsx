@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, act } from '@testing-library/react';
 import { SWRConfig } from 'swr';
-import ModelDetailPage from '@/app/models/[id]/page';
+import { ModelDetailPage } from '@/components/models/model-detail-page';
 import { setAccessToken, setCsrfToken } from '@/lib/auth-fetch';
 
 // The page calls useRouter() to navigate after a delete; jsdom has no mounted
@@ -23,20 +23,11 @@ vi.mock('next/navigation', () => ({
 // right engine and only the fields that engine actually consumes.
 // ---------------------------------------------------------------------------
 
-// See tests/component/model-settings.test.tsx for why the params promise is
-// forged with a resolved shape rather than awaited.
-function syncResolved<T>(value: T): Promise<T> {
-  const p = Promise.resolve(value) as Promise<T> & { status?: string; value?: T };
-  p.status = 'fulfilled';
-  p.value = value;
-  return p;
-}
-
 function renderPage(id: string) {
   return render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
       <Suspense fallback={<div data-testid="suspense-fallback">loading</div>}>
-        <ModelDetailPage params={syncResolved({ id })} />
+        <ModelDetailPage id={id} />
       </Suspense>
     </SWRConfig>,
   );

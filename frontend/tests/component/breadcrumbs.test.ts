@@ -143,11 +143,18 @@ describe('buildBreadcrumbs — per-page overrides (useBreadcrumb)', () => {
 });
 
 describe('navTarget — where a crumb navigates', () => {
-  it('Home (`/`, which only redirects) navigates to /models; everything else to itself', () => {
+  it('Home (`/`, which only redirects) navigates to /models; plain pages to themselves', () => {
     expect(HOME_HREF).toBe('/models');
     expect(navTarget('/')).toBe('/models');
     expect(navTarget('/tokens')).toBe('/tokens');
-    expect(navTarget('/models/abc')).toBe('/models/abc');
+    expect(navTarget('/stats')).toBe('/stats');
+  });
+
+  it('a logical detail crumb navigates to its query-id URL (BACKLOG-macos P4)', () => {
+    expect(navTarget('/models/abc')).toBe('/models/detail?id=abc');
+    expect(navTarget('/models/abc/settings')).toBe('/models/detail/settings?id=abc');
+    expect(navTarget('/tokens/tok-1')).toBe('/tokens/detail?id=tok-1');
+    expect(navTarget('/models/a%2Fb')).toBe('/models/detail?id=a%2Fb');
   });
 
   it('the registry still matches Home on `/`', () => {

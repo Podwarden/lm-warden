@@ -178,15 +178,21 @@ def test_unknown_backend_is_rejected_at_the_api_boundary():
 
 
 def test_the_literal_matches_the_registry():
-    """The Literal and the registry must never drift: a backend the registry
+    """The Literal and the registry must never drift: a backend some profile
     can serve but the API rejects is invisible; the reverse creates rows that
-    cannot load."""
+    cannot load. The Literal is the union over every profile (so a row decodes
+    on any build); the PUBLISHED enum is exactly this profile's backends, so
+    the schema never advertises one the registry refuses."""
     from typing import get_args
 
+    from app.platform_profile import PROFILES
     from app.runtime.backends import registry
 
     field = ModelCreate.model_fields["backend"]
-    assert set(get_args(field.annotation)) == set(registry.available())
+    every_profile = {name for p in PROFILES for name in registry.backends_for(p)}
+    assert set(get_args(field.annotation)) == every_profile
+    enum = ModelCreate.model_json_schema()["properties"]["backend"]["enum"]
+    assert sorted(enum) == list(registry.available())
 
 
 def test_extra_env_is_validated_against_the_selected_backends_allowlist():

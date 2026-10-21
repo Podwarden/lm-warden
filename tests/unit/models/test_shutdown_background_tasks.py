@@ -27,6 +27,7 @@ import httpx
 from httpx import ASGITransport
 
 from app.main import build_app
+from app.proxy.upstream import UpstreamClients
 from tests.conftest import seed_admin_user
 
 # Coroutine names of the fire-and-forget runners the model routes spawn
@@ -156,7 +157,20 @@ async def test_normal_unload_still_completes_and_drains_the_tracker(
 ):
     """Control: a teardown that actually finishes still drives the row to
     its terminal state, and the finished runner discards itself from the
-    app's tracker instead of accumulating in it."""
+    app's tracker instead of accumulating in it.
+
+    The terminal row is NOT the runner's last step: after committing
+    'pulled' it still closes its DB connection (an aiosqlite thread hop),
+    evicts the tokenizer cache and discards the model's pooled upstream
+    clients. A test that left the lifespan the moment it saw the row raced
+    those tail awaits against the lifespan's cancel — under CPU load
+    (``make test-unit -n auto``) the cancel won and the runner ended
+    cancelled (gate-57 flake). That cancel is the intended shutdown
+    behaviour, not a product bug; the test must wait for the runner itself.
+
+    The upstream-pool discard is gated on the test having seen the row, so
+    the losing order (row visible, runner not yet returned) is forced on
+    every run rather than left to scheduling luck."""
     db_path = tmp_data_dir / "vllm-warden.db"
     shutil.copyfile(migrated_db_template, db_path)
     created = _record_create_tasks(monkeypatch)
@@ -164,8 +178,20 @@ async def test_normal_unload_still_completes_and_drains_the_tracker(
     async def quick_unload(self, model_id, *, force=False):
         await asyncio.sleep(0.05)
 
+    row_seen = asyncio.Event()
+    discard_entered: list[str] = []
+    real_discard = UpstreamClients.discard_model
+
+    async def gated_discard(self, model_id):
+        discard_entered.append(model_id)
+        await row_seen.wait()  # the runner's tail outlives the row write
+        await real_discard(self, model_id)
+
     app = build_app()
-    with patch("app.runtime.supervisor.Supervisor.unload", new=quick_unload):
+    with (
+        patch("app.runtime.supervisor.Supervisor.unload", new=quick_unload),
+        patch.object(UpstreamClients, "discard_model", new=gated_discard),
+    ):
         async with app.router.lifespan_context(app):
             _seed_loaded_model(db_path, "ok-model")
             r = await _login_and_unload(app, "ok-model")
@@ -181,10 +207,22 @@ async def test_normal_unload_still_completes_and_drains_the_tracker(
             assert (
                 row is not None and row[0] == "pulled"
             ), f"expected terminal 'pulled', got {row[0] if row else None}"
+            row_seen.set()
 
-    runners = [t for t in created if t.get_coro().__name__ == "runner"]
-    assert len(runners) == 1
-    assert runners[0].done() and not runners[0].cancelled()
+            runners = [t for t in created if t.get_coro().__name__ == "runner"]
+            assert len(runners) == 1
+            # Wait for the runner itself, not its row: leaving the lifespan
+            # now would cancel its tail. The timeout only bounds a hang.
+            await asyncio.wait(runners, timeout=10)
+
+    assert runners[0].done() and not runners[0].cancelled(), runners[0]
+    # The runner finished its whole tail cleanly, not merely "done": a tail
+    # step that raised would also leave the task done and uncancelled.
+    assert runners[0].exception() is None, runners[0].exception()
+    # The forced ordering was actually driven: the runner reached the gated
+    # pool discard (if it stopped calling it, the gate would silently vanish
+    # and the test would be back to scheduling luck).
+    assert discard_entered == ["ok-model"], discard_entered
     assert (
         app.state.model_bg_tasks == set()
     ), f"a finished runner is stuck in the tracker: {app.state.model_bg_tasks!r}"

@@ -70,10 +70,10 @@ test-unit:
 	# machine, so one worker per CPU is right; a CI runner is shared and `auto`
 	# starves whatever is co-scheduled (see the note in .gitlab-ci.yml).
 	# Override with VW_XDIST_WORKERS to match a CI run.
-	@$(RUN_DEPS)"pytest -v -n $${VW_XDIST_WORKERS:-auto} -m 'not integration' tests/unit"
+	@$(RUN_DEPS)"pytest -v -n $${VW_XDIST_WORKERS:-auto} -m 'not integration and not macos' tests/unit"
 
 test-integration:
-	@$(RUN_DEPS)"pytest -v -m integration $(ARGS) tests/integration"
+	@$(RUN_DEPS)"pytest -v -m 'integration and not macos' $(ARGS) tests/integration"
 
 lint:
 	# Uses the pinned ruff from requirements-dev.txt rather than `pip install ruff`
@@ -164,7 +164,7 @@ smoke:
 	#   /_landing    → 200 (same, direct)
 	#   /ui/         → 200 (Next.js root page, possibly /ui/models or /ui/login)
 	#   /api/csrf    → 200 (CSRF bootstrap, no auth required)
-	#   /healthz     → 200 (uptime probe — Caddy → Next /healthz alias)
+	#   /healthz     → 200 (uptime probe — Caddy → api /healthz; /ui/healthz no longer exists on Linux)
 	#
 	# `|| rc=$$?` is load-bearing, not defensive clutter. Under `set -e` a bare
 	# `code=$$(curl ...)` assignment aborts the whole recipe the instant curl
@@ -257,3 +257,8 @@ conformance:
 # dependency image (the previous, accidental default).
 # ---------------------------------------------------------------------------
 include make/operator.mk
+
+# macOS app + DMG targets (Task 7): macos-test, macos-app, macos-dmg.
+# Driven on the M1 runner by the test:macos / build:macos / publish:macos CI
+# jobs. dist/ is gitignored.
+include make/macos.mk

@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
 from app.proxy import ledger as ledger_mod
-from tests.unit.proxy.ledger_helpers import flush_ledger
+from tests.unit.proxy.ledger_helpers import flush_ledger, ledger_pending_settled
 from tests.unit.proxy.test_dp_routing_forward import (
     AUTH,
     _ready,
@@ -66,9 +66,9 @@ def test_200_concurrent_requests_under_a_held_write_lock_lose_nothing(
             assert statuses == [200] * N
             # Still held: the totals are in memory, not on disk, and the
             # ledger's flush has hit the lock (and kept the batch).
-            assert ledger.pending() is True
+            assert ledger_pending_settled(client) is True
             assert busy_hit.wait(10), "the ledger flush never ran into the held lock"
-            assert ledger.pending() is True
+            assert ledger_pending_settled(client) is True
             with sqlite3.connect(db_path) as db:
                 (on_disk,) = db.execute("SELECT COALESCE(SUM(requests),0) FROM counters").fetchone()
             assert on_disk == 0
@@ -78,7 +78,7 @@ def test_200_concurrent_requests_under_a_held_write_lock_lose_nothing(
 
     # flush() never raises; with the lock gone one call lands everything.
     flush_ledger(client)
-    assert ledger.pending() is False
+    assert ledger_pending_settled(client) is False
 
     with sqlite3.connect(db_path) as db:
         (reqs,) = db.execute("SELECT COALESCE(SUM(requests),0) FROM counters").fetchone()

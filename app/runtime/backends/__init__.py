@@ -27,13 +27,14 @@ under this package.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
 
 if TYPE_CHECKING:  # pragma: no cover
     # TYPE-ONLY. Never imported at runtime, so the "imports nothing from app"
     # property above -- and the no-import-cycle guarantee that rests on it --
     # is unaffected. It exists so ``version_pin_available``'s annotation names
     # a real type instead of an undefined forward reference (ruff F821).
+    from app.runtime.backends.paths import ResolvedModelPaths
     from app.runtime.engine import EngineDriver
 
 
@@ -151,6 +152,19 @@ class BackendCapabilities:
     # engine can actually serve (#300). Defaulted: an engine that predates the
     # field is assumed to ignore it.
     honours_cache_salt: bool = False
+    # Does the engine's /health mean "ready to serve", or is it liveness only?
+    # MLX answers False: its is_healthy() reports the generation thread's
+    # liveness, 200 before any weights are resident (Metal design s5 B). The
+    # reader is the load runner's warmup probe (app/runtime/warmup_probe.py),
+    # which already gates loaded; a backend that predates the field keeps its
+    # historical True.
+    health_means_ready: bool = True
+    # How the control plane gets an EngineReading for this backend: scrape the
+    # engine's own Prometheus exposition, or build one from what the proxy
+    # already observed (Metal design s5 C; the consumer is the future
+    # app/stats/proxy_reading.py). Defaulted and last so a backend that
+    # predates the field answers the way the stats path works today.
+    telemetry: Literal["engine_prometheus", "proxy_observed"] = "engine_prometheus"
 
 
 @dataclass(frozen=True)
@@ -171,6 +185,21 @@ class LaunchPlan:
 class Backend(Protocol):
     # Driver-invariant facts about the engine. A plain attribute, per §6.3.
     capabilities: BackendCapabilities
+
+    def version_string(self) -> str | None:
+        """The engine version baked into THIS install, reported by the backend.
+
+        A DECLARED value -- package metadata or a build stamp -- NEVER a
+        subprocess or an ``import`` of the engine: the control plane answers a
+        metadata question and must not acquire a failure mode for it. ``None``
+        when the version is unknown on this install (dev shell, the test
+        suite). A bare version with no vendor prefix, because the vendor is
+        already the backend's own name on the route.
+
+        This is what lets ``/api/system/backends`` report each engine's version
+        without branching on the backend's NAME: a new backend (MLX included)
+        reports its own mlx-lm build without the route ever learning about it.
+        """
 
     def version_pin_available(self, driver: EngineDriver | None) -> bool:
         """Can THIS deployment actually honour a per-model version pin?
@@ -271,6 +300,33 @@ class Backend(Protocol):
         Returns ``None`` when the body cannot be parsed. Sub-project C splits
         the vLLM metric-NAME table out of ``app/stats/live_engine.py`` when a
         second dialect exists to justify the seam.
+        """
+
+    def engine_model_id(self, model: Any, resolved: ResolvedModelPaths | None = None) -> str:
+        """The model id the engine serves this row under.
+
+        The proxy writes it into ``body['model']`` before forwarding (and
+        re-serialises the body only when it differs from what the client sent --
+        the same discipline as the #173 priority injection beside it -- so a
+        Linux request whose body already names the served id stays
+        byte-identical). The answer is PER ROW, hence a method rather than a
+        ``capabilities`` field: vLLM and llama.cpp return the row's
+        ``served_model_name`` -- the ``--served-model-name`` / ``--alias``
+        ``plan()`` already passes -- while MLX returns the local model path it
+        passed to ``--model``. MLX has no ``--served-model-name`` and
+        mlx_lm.server compares the request id to the loaded one as a raw string,
+        so a body carrying an unrecognised id would trigger a Hub download of
+        ANOTHER model (Metal design s5 A).
+
+        ``resolved`` is a ``ResolvedModelPaths`` or ``None``, the same
+        companion ``plan()`` takes. vLLM and llama.cpp accept and ignore it;
+        MLX needs it and raises ``ValueError`` when it is ``None`` (the row
+        carries no path, and any guessed id would make the engine download a
+        model), so a caller must pass the same ``resolved`` it gave ``plan()``
+        and must not treat the call as infallible. Added to this
+        Protocol only once every registered backend (and MLX) has the method:
+        this is a ``@runtime_checkable`` Protocol, so a member a registered
+        backend lacked would flip ``isinstance(x, Backend)`` to False for it.
         """
 
 

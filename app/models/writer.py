@@ -59,6 +59,7 @@ from app.models.policy import (
     TRISTATE_FIELDS,
 )
 from app.models.schemas import ModelSpec
+from app.utils.validation_errors import redact_validation_errors
 
 
 class ModelChangeRefused(HTTPException):
@@ -247,12 +248,11 @@ def _coerce_wire(changes: Mapping[str, Any]) -> dict[str, Any]:
 
 def _validation_detail(exc: ValidationError) -> list[dict[str, Any]]:
     """FastAPI's 422 shape, built by hand because this one is raised from a route
-    body rather than by the body parser. ``ctx`` is dropped: it can carry the
-    original exception object, which is not JSON-serialisable."""
-    return [
-        {"loc": list(err["loc"]), "msg": err["msg"], "type": err["type"]}
-        for err in exc.errors(include_url=False)
-    ]
+    body rather than by the body parser. Delegates to the shared redactor
+    (``app/utils/validation_errors.py``): ``ctx`` is dropped because it can carry
+    the original exception object, which is not JSON-serialisable, and ``input``
+    is dropped because it echoes the request value."""
+    return redact_validation_errors(exc.errors(include_url=False))
 
 
 # ---------------------------------------------------------------------------
@@ -318,7 +318,13 @@ async def _check_model_change(
         base = {k: row_values[k] for k in OPERATOR_FIELDS}
     try:
         spec = ModelSpec.model_validate(
-            {**base, **coerced}, context={"extra_args_written": "extra_args" in coerced}
+            {**base, **coerced},
+            context={
+                "extra_args_written": "extra_args" in coerced,
+                # The model-id flag is per backend: a backend-only change must
+                # re-check the stored extra_args against the NEW engine.
+                "backend_written": "backend" in coerced,
+            },
         )
     except ValidationError as exc:
         raise ModelChangeRefused(status_code=422, detail=_validation_detail(exc)) from exc

@@ -266,6 +266,29 @@ def _fast_bcrypt(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(auth_routes, "_DUMMY_HASH", _FAST_DUMMY_HASH)
 
 
+@pytest.fixture(autouse=True)
+def _hermetic_nvidia_smi(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Make nvidia-smi look ABSENT in every unit test: a host with
+    /usr/bin/nvidia-smi but no working driver (ollama.h, it exits 9) made the
+    probe 'failing' and nulled vram/util/power in the stats tests. A test
+    that wants a real or fake nvidia-smi overrides this fixture BY NAME in
+    its own module (tests/unit/system/test_gpu_probe_health.py does)."""
+
+    async def _absent(args, *, timeout=5.0):  # noqa: ASYNC109
+        # The exact outcome of the real function's FileNotFoundError arm for
+        # a primary probe; an optional probe's failure only logs debug.
+        if args is gpu.NVIDIA_SMI_CMD or args is gpu.NVIDIA_SMI_LIVE_CMD:
+            gpu._record_primary_probe("absent", "nvidia-smi not found")
+        return None
+
+    import app.system.gpu as gpu
+
+    gpu.reset_gpu_probe_health()
+    monkeypatch.setattr(gpu, "_run_nvidia_smi", _absent)
+    yield
+    gpu.reset_gpu_probe_health()
+
+
 @pytest.fixture(scope="session")
 def migrated_db_template(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """A SQLite file with every migration in app/db/sql applied, built once.

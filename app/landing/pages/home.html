@@ -84,7 +84,7 @@
       <div class="wrap">
         <h2 id="dont-title">Don’t use this if…</h2>
         <ul>
-          <li><strong>You have no NVIDIA GPU.</strong> Today it runs on NVIDIA cards with CUDA only. There is no ROCm, Apple silicon, Intel GPU or CPU path yet; see the roadmap below.</li>
+          <li><strong>You have no NVIDIA GPU.</strong> Today it runs on NVIDIA cards with CUDA only. There is no ROCm, Apple silicon, Intel GPU or CPU path yet; a Mac app for Apple silicon is in development, see below.</li>
           <li><strong>You need one model served across several machines.</strong> This is one host. Several GPUs in one box, yes; several boxes, no.</li>
           <li><strong>You want several models resident on one card.</strong> One loaded model per GPU is enforced before an engine starts.</li>
           <li><strong>You need an engine other than vLLM or llama.cpp.</strong> TensorRT-LLM, SGLang, MLX and Ollama’s runtime are not shipped.</li>
@@ -93,10 +93,16 @@
         </ul>
 
         <div class="roadmap" id="roadmap">
-          <h3>Other GPUs are next on the roadmap.</h3>
+          <h3>A Mac app is in development; other GPUs are on the roadmap.</h3>
           <p>
-            Apple silicon (Macs), AMD Radeon and Intel GPUs are on our immediate roadmap, with no
-            dates. Which comes first depends on who asks, so tell us which one you would run it on:
+            A native Mac app for Apple silicon, running models with MLX, is in development. It is
+            not released, and there is no notarized download yet. A beta build, ad-hoc signed and
+            not notarized, may come first: if one has been published it is on the
+            <a href="{{repo}}/releases" rel="noopener">GitHub releases page (Mac beta)</a> as a
+            pre-release labelled beta, and macOS asks you to confirm before its first launch.
+            AMD Radeon and Intel GPUs are on our
+            immediate roadmap, with no dates. Which comes first depends on who asks, so tell us
+            which one you would run it on:
           </p>
           <ul>
             <li><a href="{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Mac" rel="noopener">Mac, Apple silicon</a></li>

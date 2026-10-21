@@ -709,6 +709,18 @@ async def _forward(
     """
     body = await request.body()
     body_json = json.loads(body) if body else {}
+    # The id the engine serves (applied to the body after the #173 priority
+    # block below). Resolved HERE, before any live row or admission slot is
+    # taken, so a raise cannot leak either. The supervisor's launch-time record
+    # first (MLX's id is the resolved local path, which only the launch knows);
+    # the row's answer only for an engine this supervisor did not launch -- MLX
+    # raises ValueError there rather than name an id the engine would download.
+    _sup_engine_id = getattr(
+        getattr(request.app.state, "supervisor", None), "get_engine_model_id", None
+    )
+    engine_id = _sup_engine_id(model.id) if _sup_engine_id is not None else None
+    if not isinstance(engine_id, str):
+        engine_id = backend_registry.get(getattr(model, "backend", None)).engine_model_id(model)
     # #286: the replica-affinity key comes from the body as the client sent it,
     # before anything below may re-serialise it. Pure and read-only, but it is
     # still on the hot path: a failure means "no key", never a failed request.
@@ -1069,6 +1081,19 @@ async def _forward(
         ).capabilities.supports_request_priority
     ):
         body_json["priority"] = -token.priority
+        body = json.dumps(body_json).encode()
+
+    # Pin the model id the ENGINE actually serves this row under (the Backend's
+    # engine_model_id: vLLM/llama.cpp the --served-model-name/--alias plan()
+    # passes, MLX the local --model path — it has no alias at all). A body
+    # naming any other id reaches the engine as an unknown name; for MLX that
+    # triggers a Hub download of ANOTHER model (Metal design s5 A). Re-serialise
+    # ONLY when it differs from what the client sent, so a body already naming
+    # the served id forwards byte-identical (same discipline as the priority
+    # injection above, which it composes with: one re-serialisation carries
+    # both fields).
+    if body_json.get("model") != engine_id:
+        body_json["model"] = engine_id
         body = json.dumps(body_json).encode()
 
     async def _release_slot() -> None:

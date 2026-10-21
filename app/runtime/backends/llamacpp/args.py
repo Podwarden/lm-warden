@@ -35,6 +35,8 @@ from __future__ import annotations
 
 import os
 
+from app.models.model_id_flags import model_id_flag_in, model_id_refusal
+
 
 def engine_bind_host(driver_name: str) -> str:
     """Interface llama-server binds its HTTP server to, chosen by engine driver.
@@ -87,6 +89,15 @@ def build_llamacpp_args(
 ) -> list[str]:
     """Construct the argv tail for llama-server (everything after argv[0])."""
     ov = overrides or {}
+
+    # The engine's model id comes from the served_model_name column (emitted
+    # as the single --alias above); an extra_args --alias/-a would serve an id
+    # the proxy never asks for (it routes and forwards by that column). Fail
+    # loud at load, before any argv is returned — same layering as #286's
+    # parallel flags.
+    _flag = model_id_flag_in("llamacpp", list(getattr(model, "extra_args", []) or []))
+    if _flag is not None:
+        raise ValueError(model_id_refusal("llamacpp", _flag))
     if resolved is None or not getattr(resolved, "model_path", None):
         # The resolver deliberately does NOT raise for an unresolvable weights
         # file -- a vLLM GGUF row sets `filename` too and resolves it itself, so

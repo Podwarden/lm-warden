@@ -43,11 +43,6 @@ services:
     # #155 unified-port: ui is no longer host-published either; Caddy
     # proxies /ui/* and /_next/* to ui:3000 over the compose network.
     expose: ["3000"]
-    environment:
-      # SSR fetches inside the standalone server still talk to api:8080
-      # directly. NEXT_PUBLIC_BACKEND_URL is gone — the browser is now
-      # same-origin with Caddy, so client-side fetches use relative paths.
-      BACKEND_URL: http://api:8080
     depends_on: [api]
 
   # #155 — Caddy reverse-proxy front-door. Only host-published port in

@@ -153,6 +153,12 @@ REWRITTEN = {
     "Two things we learned the hard way.": "third lesson note added, audit item C",
     # Engine versions added to the FAQ answer for consistency with the lede.
     "Mainline vLLM and llama.cpp, chosen per model and run unmodified: no patched image, no fork, no monkeypatching. Picking a <code>.gguf</code> file selects llama.cpp, which fits larger models onto smaller cards with GGUF quantisation and keeps older GPUs useful. TensorRT-LLM, SGLang, MLX and Ollama’s runtime are not shipped.": "engine versions added to FAQ, audit item 5",
+    # BACKLOG-macos P9: Apple silicon moved from the roadmap to "Mac app in
+    # development, no download yet" (home roadmap div, no-NVIDIA item, GPU FAQ).
+    "<strong>You have no NVIDIA GPU.</strong> Today it runs on NVIDIA cards with CUDA only. There is no ROCm, Apple silicon, Intel GPU or CPU path yet; see the roadmap below.": "Mac app in development, BACKLOG-macos P9",
+    "Other GPUs are next on the roadmap.": "Mac app in development, BACKLOG-macos P9",
+    "Apple silicon (Macs), AMD Radeon and Intel GPUs are on our immediate roadmap, with no dates. Which comes first depends on who asks, so tell us which one you would run it on:": "Mac app in development, BACKLOG-macos P9",
+    "NVIDIA GPUs on a Linux x86_64 host. The floor is Turing (sm_75, the RTX 20-series generation): the base image ships CUDA 13, which dropped Maxwell, Pascal and Volta, so a GTX 1080 Ti, a Titan X or a V100 will not work. Turing through Blackwell is covered, including Ada, Hopper and the RTX 50-series. There is no ROCm, Apple Silicon, Intel GPU or CPU path today; Apple silicon, AMD Radeon and Intel GPUs are on the immediate roadmap, and which comes first depends on the feedback we get in the project’s GitHub Discussions. Several GPUs in one box are supported; one model split across several machines is not.": "Mac app in development, BACKLOG-macos P9",
 }
 
 

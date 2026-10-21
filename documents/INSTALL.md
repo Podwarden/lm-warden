@@ -27,6 +27,11 @@ Path A has three variants that end in the same place: unattended
 ([A5](#a5-unattended)), without a clone ([A6](#a6-without-a-clone)), and with
 no route to the internet ([A7](#a7-offline--air-gapped-install)).
 
+On a Mac, neither path applies: the Mac app is in development and has no
+notarized download yet. [On a Mac (preview)](#on-a-mac-preview) says what
+exists, how to build it from source, and how to open a beta build if one has
+been published ([Beta builds](#beta-builds)).
+
 ---
 
 ## About the transcripts in this document
@@ -1107,7 +1112,7 @@ RESTART_EXIT=0
 	#   /_landing    → 200 (same content, direct)
 	#   /ui/         → 200 (Next.js root page, possibly /ui/models or /ui/login)
 	#   /api/csrf    → 200 (CSRF bootstrap, no auth required)
-	#   /healthz     → 200 (uptime probe — Caddy → Next /healthz alias)
+	#   /healthz     → 200 (uptime probe — Caddy → api /healthz; /ui/healthz no longer exists on Linux)
 make: *** [Makefile:147: smoke] Error 56
 ```
 
@@ -1243,6 +1248,104 @@ Two things were broken in earlier published releases and are fixed from
   so every full page load, reload or pasted deep link logged you out and the
   15-minute session could never refresh. Confirmed fixed: a session opened over
   plain HTTP survived a full navigation 17 minutes after login.
+
+---
+
+# On a Mac (preview)
+
+LM Warden on a Mac is in development. No signed, notarized DMG has been
+published. A beta DMG may be published before that; [Beta builds](#beta-builds)
+covers it. Path A, Path B and the NVIDIA, Docker and
+Compose steps in the rest of this manual do not apply to a Mac. What exists
+today is a build from source on an Apple silicon Mac. Unlike the paths above,
+this section is not a recorded install, so it has no transcripts.
+
+## What it needs
+
+- An Apple silicon Mac running macOS 14 or later. A Mac with less than 16 GiB
+  of memory is flagged at first run, but that flag never blocks first run.
+- Swift 5.10 or newer (Xcode or the Command Line Tools) and git.
+- Network access on the first build: it downloads a pinned Python 3.12
+  interpreter (python-build-standalone, checked against its SHA-256) and the
+  hash-locked wheels in `requirements-macos.txt`.
+
+## Build it
+
+```sh
+git clone https://github.com/Podwarden/lm-warden.git
+cd lm-warden
+make macos-bundle-python
+```
+
+That builds `dist/LM Warden.app` — the Swift release build, the embedded
+Python and the server code from the committed `app/`. A checkout with
+uncommitted changes under `app/` is refused, so the server code in the app is
+always what is committed. The bundle is ad-hoc signed only: no Developer ID
+signature and no notarization. `make macos-dmg VERSION=<version>` packs the
+same app into a DMG, no more signed than the app.
+
+## Beta builds
+
+A beta is a DMG of one release, built by the project's CI, published before
+the app can be notarized. When one exists it is on the
+[GitHub releases page](https://github.com/Podwarden/lm-warden/releases) as a
+pre-release whose name ends in "(beta)", with two files:
+`LM-Warden-<version>-beta.dmg` and `LM-Warden-<version>-beta.dmg.sha256`.
+What sets it apart from a normal release:
+
+- It is ad-hoc signed only: no Developer ID signature, no notarization by
+  Apple. macOS therefore blocks it the first time you open it (below).
+- It does not update itself. A newer beta is a new download from the releases
+  page.
+- It is the same app as a build from source: the same requirements (an Apple
+  silicon Mac on macOS 14 or later) and the same server inside.
+
+**Check the download.** With both files in one folder, in Terminal:
+
+```sh
+shasum -a 256 -c LM-Warden-<version>-beta.dmg.sha256
+```
+
+It prints `LM-Warden-<version>-beta.dmg: OK` for an intact download. Anything
+else means the file is not the one that was published: delete it.
+
+**Open it the first time.** Open the DMG and drag LM Warden to Applications.
+macOS marks a downloaded app as quarantined, and it refuses to open a
+quarantined app that Apple has not notarized. Do one of these, once:
+
+- In Finder, right-click (or Control-click) LM Warden in Applications,
+  choose **Open**, then **Open** again in the dialog. On macOS 15 and later
+  the dialog may have no Open button: open **System Settings**, then
+  **Privacy & Security**, and click **Open Anyway** next to LM Warden.
+- Or, in Terminal:
+
+  ```sh
+  xattr -dr com.apple.quarantine "/Applications/LM Warden.app"
+  ```
+
+  This removes the quarantine mark from the app and everything inside it.
+
+What either step means: you are telling macOS to trust this copy and skip the
+check Apple would otherwise make for you. Nothing else on the Mac changes, and
+it applies to this copy only, so a newer beta needs it again. Do it only for a
+DMG you downloaded from the releases page whose checksum matched.
+
+## What runs in it
+
+- A native macOS menu-bar app named LM Warden: it lives in the menu bar with
+  no Dock icon, starts and supervises the LM Warden server, walks you through
+  a first-run setup, keeps its session secret in the macOS Keychain and can
+  open at login.
+- The server runs models with MLX, through mlx-lm's server, as the default
+  engine. llama.cpp is registered as a second backend, but the app does not
+  ship a llama.cpp binary yet; vLLM is not available on a Mac.
+- The server sizes each load — weights and KV cache — against the Mac's
+  unified-memory budget read from Metal's recommended working-set size, so
+  several models can share the GPU when they fit.
+
+By default it listens on 127.0.0.1 port 8080 (falling back to 8081–8099) over
+plain HTTP. [MACOS-REMOTE-ACCESS.md](MACOS-REMOTE-ACCESS.md) covers reaching it
+from another machine.
 
 ---
 

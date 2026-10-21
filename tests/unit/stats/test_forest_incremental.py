@@ -2,9 +2,9 @@
 
 - Correctness: after any sequence of appends (some committed late) and prunes, the incremental
   forest equals a from-scratch ``build_parts`` over the rows it holds.
-- Cost: a refresh with one new row rebuilds one tree, through the real SQLite path, in time
-  proportional to that tree, not to the window (a scaled-down benchmark with a proportional bound;
-  the 200k-row numbers are in the report).
+- Cost: a refresh with one new row rebuilds only the trees that changed, through the real SQLite
+  path, and loads only the new rows -- work, not wall-clock, because wall-clock flakes under
+  ``-n auto`` (a scaled-down benchmark; the 200k-row numbers are in the report).
 """
 
 import json
@@ -205,16 +205,45 @@ def _hrow(rid, at, tok, sk):
     )
 
 
-def test_refresh_with_one_new_row_costs_its_tree_not_the_window(tmp_path):
-    """20k rows / 7 d (a tenth of the 200k target): a full build vs a refresh with one new row of key A. The refresh
-    must be ≤ 50 ms at 200k rows; it does not grow with the window, so at 20k it must be both ≤ 50 ms and well under
-    a tenth of the full build."""
+def test_refresh_with_one_new_row_costs_its_tree_not_the_window(tmp_path, monkeypatch):
+    """20k rows / 7 d (a tenth of the 200k target): a full build vs a refresh with one new row of key A. The refresh's
+    cost is asserted as work (trees rebuilt, rows loaded), not wall-clock, because wall-clock flakes under ``-n auto``;
+    the 200k-row timings live in the report."""
     now = time.time()
     db_path = _bench_db(tmp_path, 20_000, now)
     store = rf._Store()
+    built: list[str] = []
+    real_build = fo._build_tree
+    loads: list[int] = []
+    real_load = rf._load
+
+    def load(*a, **k):
+        rows = real_load(*a, **k)
+        loads.append(len(rows))
+        return rows
+
+    new_rows: list[int] = []
+    real_new = rf._load_new
+
+    def load_new(*a, **k):
+        rows = real_new(*a, **k)
+        new_rows.append(len(rows))
+        return rows
+
+    monkeypatch.setattr(
+        fo, "_build_tree", lambda tok, tid, *a: built.append(tid) or real_build(tok, tid, *a)
+    )
+    monkeypatch.setattr(rf, "_load", load)
+    monkeypatch.setattr(rf, "_load_new", load_new)
     t = time.perf_counter()
     _state(db_path, store, now)
     full = time.perf_counter() - t
+    n_full_trees = len(built)
+    assert n_full_trees >= 100  # 20k rows in 150-turn sessions: ~133 trees
+    assert sum(loads) == 20_000
+    built.clear()
+    loads.clear()
+    new_rows.clear()
     _insert(db_path, [_hrow("new", now + 1, "A", f"A-{14_000 // 150}")])
     t = time.perf_counter()
     st2 = _state(db_path, store, now + 2)
@@ -222,8 +251,12 @@ def test_refresh_with_one_new_row_costs_its_tree_not_the_window(tmp_path):
     print(f"20k rows: full {full * 1000:.0f} ms, one-row refresh {inc * 1000:.1f} ms")
     # A got the new row; the window slid 2 s, so the oldest tree of each key lost a row too
     assert "A" in st2.rebuilt
-    assert inc <= 0.05
-    assert inc <= full / 10
+    assert loads == []  # no token or window load: a refresh reloads nothing
+    assert new_rows == [1]  # exactly the one new row came in, by rowid
+    # A's newest tree plus at most the oldest tree of each key, which lost a row as the window slid 2 s
+    assert 1 <= len(built) <= len(store.toks) + 1
+    # the refresh's tree work is well under a tenth of the full build's
+    assert len(built) * 10 <= n_full_trees
     # and the incremental state renders what a from-scratch state renders
     fresh = _state(db_path, rf._Store(), now + 2)
     a = json.loads(rf._render(st2, "7d", None, False, now + 2))

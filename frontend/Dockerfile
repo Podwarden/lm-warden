@@ -165,13 +165,6 @@ FROM node:20-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# next.config.ts:rewrites() reads BACKEND_URL — but Next 15 standalone bakes
-# rewrites into routes-manifest.json at BUILD time, so passing BACKEND_URL at
-# runtime is a no-op. Hard-coding the Docker service name here works for both
-# the local compose stack and the Hub catalogue compose (both expose the API
-# as `api:8080`). If a future deployment uses a different service name, this
-# becomes a build arg.
-ENV BACKEND_URL=http://api:8080
 
 # #67 fix — bake the release identity into the UI bundle. Next.js
 # inlines ``NEXT_PUBLIC_*`` env vars into the client bundle at build

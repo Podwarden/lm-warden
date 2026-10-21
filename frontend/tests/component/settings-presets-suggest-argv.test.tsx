@@ -3,9 +3,8 @@
 // already pins the dirty-diff PATCH + 409 banner contract; this file
 // complements it with the new UX surfaces.
 //
-// We reuse the same syncResolved + SWRConfig provider-reset pattern as
-// model-settings.test so the React 19 `use(params)` call hydrates the page
-// synchronously and SWR doesn't bleed cached fetches across tests.
+// We reuse the same SWRConfig provider-reset pattern as model-settings.test
+// so SWR doesn't bleed cached fetches across tests.
 
 import { Suspense } from "react";
 import {
@@ -26,30 +25,14 @@ import {
   within,
 } from "@testing-library/react";
 import { SWRConfig } from "swr";
-import ModelSettingsPage from "@/app/models/[id]/settings/page";
+import { ModelSettingsPage } from "@/components/models/model-settings-page";
 import { setAccessToken, setCsrfToken } from "@/lib/auth-fetch";
 
-// React 19 `use()` reads a `status`/`value` shape that the runtime attaches
-// to a Promise once observed. Forging that shape up-front lets the page
-// hydrate on the first render without driving a microtask queue (which
-// jsdom doesn't reliably flush for React's suspense replay). Test-only
-// hack — production gets a real async-resolving params promise from Next.
-function syncResolved<T>(value: T): Promise<T> {
-  const p = Promise.resolve(value) as Promise<T> & {
-    status?: string;
-    value?: T;
-  };
-  p.status = "fulfilled";
-  p.value = value;
-  return p;
-}
-
 function renderPage(id: string) {
-  const paramsPromise = syncResolved({ id });
   return render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
       <Suspense fallback={<div data-testid="suspense-fallback">loading</div>}>
-        <ModelSettingsPage params={paramsPromise} />
+        <ModelSettingsPage id={id} />
       </Suspense>
     </SWRConfig>,
   );
@@ -202,8 +185,7 @@ function installFetchStub(opts: {
   return fetchMock;
 }
 
-// Flush the SWR fetch + first commit pass. `syncResolved` makes `use(params)`
-// return synchronously, so we only need to drain the fetch microtask + give
+// Flush the SWR fetch + first commit pass: drain the fetch microtask + give
 // React one render pass to write the form.
 async function flush() {
   await act(async () => {
@@ -228,7 +210,7 @@ describe("Settings page — PresetStrip (#S4)", () => {
     await flush();
 
     // Wait for the strip to mount — it only renders after the SWR fetch
-    // settles, which on syncResolved is the same tick as flush().
+    // settles, which is the same tick as flush().
     const strip = await screen.findByTestId("presets-strip");
     const chips = within(strip).getAllByRole("button");
     // 4 chips, in JSON order.

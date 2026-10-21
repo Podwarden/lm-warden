@@ -5,6 +5,7 @@ import type { TokenLineageEntry } from "@/lib/token-series";
 import { day, fmtDateTime, parseSqliteUtc } from "@/lib/token-format";
 import { cn } from "@/lib/utils";
 import { CARD, CARD_TITLE } from "./styles";
+import { tokenHref } from "@/lib/routes";
 
 export function lineageMeta(e: TokenLineageEntry, nowSec: number): string {
   const created = parseSqliteUtc(e.created_at) ?? 0;
@@ -38,7 +39,7 @@ export function LineageCard({ lineage, nowSec }: { lineage: TokenLineageEntry[];
               {e.is_self ? (
                 <span className="font-semibold">This token</span>
               ) : (
-                <Link href={`/tokens/${encodeURIComponent(e.id)}`} className="font-medium text-chat-fg no-underline hover:underline">
+                <Link href={tokenHref(e.id)} className="font-medium text-chat-fg no-underline hover:underline">
                   {e.name}
                 </Link>
               )}

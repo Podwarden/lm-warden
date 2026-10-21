@@ -41,6 +41,7 @@ from app.config import Settings
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo
 from app.db.repos.settings import SettingsRepo
+from app.runtime.backends import registry
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     # Imported for annotations only. watchdog is imported BY the
@@ -97,15 +98,19 @@ async def live_config(settings) -> dict:
     return cfg
 
 
-async def probe_health(host: str, port: int) -> tuple[bool, str]:
-    """Probe the engine's own /health. Returns (healthy, detail-for-the-record).
+async def probe_health(host: str, port: int, path: str = "/health") -> tuple[bool, str]:
+    """Probe the engine's own health path. Returns (healthy, detail-for-the-record).
+
+    ``path`` is engine-specific: each backend declares ``capabilities.health_path``
+    and the caller resolves it, so the watchdog never hardcodes an engine's route.
+    The default keeps a bare call probing the historical /health.
 
     Both a non-200 and a connection error count as unhealthy. The detail string
     is stored in the crash report: if a dead engine ever answers 200 here, that
     record is what proves this probe is too weak and must escalate to a real
     generation.
     """
-    url = f"http://{host}:{port}/health"
+    url = f"http://{host}:{port}{path}"
     try:
         async with httpx.AsyncClient(timeout=PROBE_TIMEOUT_S) as c:
             r = await c.get(url)
@@ -1009,7 +1014,12 @@ async def check_once(
         if port is None:
             continue  # no runtime record yet; nothing to probe
         host = sup.get_host(row.id) or "127.0.0.1"
-        healthy, detail = await probe_health(host, port)
+        try:
+            health_path = registry.get(row.backend).capabilities.health_path
+        except Exception:  # noqa: BLE001 — a registry hiccup must not stop the pass
+            logger.debug("watchdog: could not resolve backend health path for %s; /health", row.id)
+            health_path = "/health"
+        healthy, detail = await probe_health(host, port, health_path)
         if healthy:
             if state.get(row.id):
                 logger.info("watchdog: %s recovered on its own", row.id)

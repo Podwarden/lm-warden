@@ -319,7 +319,7 @@ describe("StatsPage", () => {
     const rows = screen.getAllByTestId("tokens-per-key-row");
     const heavy = rows.find((r) => r.textContent?.includes("Heavy Key"))!;
     const link = within(heavy).getByRole("link", { name: "Heavy Key" });
-    expect(link).toHaveAttribute("href", "/tokens/t-heavy");
+    expect(link).toHaveAttribute("href", "/tokens/detail?id=t-heavy");
     expect(link.className).toContain("hover:underline");
 
     // The deleted-token row (name "(unknown)") stays plain text.

@@ -150,7 +150,7 @@ describe('TokenRow additions', () => {
 
   it('links the name to the details page', () => {
     render(<table><tbody><TokenRow item={item()} onChange={() => {}} /></tbody></table>);
-    expect(screen.getByRole('link', { name: 'ci-bot' })).toHaveAttribute('href', '/tokens/t1');
+    expect(screen.getByRole('link', { name: 'ci-bot' })).toHaveAttribute('href', '/tokens/detail?id=t1');
   });
 
   it('shows Paused ahead of every other status', () => {

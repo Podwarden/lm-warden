@@ -479,6 +479,129 @@ async def test_a_close_that_is_never_acknowledged_is_not_waited_on_forever(
     ]
 
 
+async def test_a_cancel_mid_statement_under_a_held_lock_does_not_wait_out_the_close_ack(
+    tmp_data_dir, caplog
+):
+    """A loop cancelled while its statement waits on a write lock held
+    elsewhere must not hold shutdown for the full ``_CLOSE_ACK_TIMEOUT``.
+
+    The statement keeps running on the worker thread (SQLite's busy handler,
+    up to open_db's 30 s ``busy_timeout``) and the close is queued behind it.
+    Waiting 10 s for that acknowledgement was the fixed +10 s in the ledger's
+    shutdown tests: the stats pruner's boot-time prune caught mid-write by a
+    held lock turned a ~2 s shutdown into 12.0 s, past Docker's 10 s grace.
+    Real SQLite and a real lock, because the stall is the busy handler's.
+    """
+    db_path = tmp_data_dir / "vllm-warden.db"
+    with sqlite3.connect(db_path) as c:
+        c.execute("PRAGMA journal_mode = WAL")
+    lock = sqlite3.connect(db_path, isolation_level=None)
+    lock.execute("BEGIN IMMEDIATE")
+    before = _connection_threads()
+    in_statement = asyncio.Event()
+
+    async def writer() -> None:
+        async with open_db(db_path) as db:
+            in_statement.set()
+            await db.execute("BEGIN IMMEDIATE")  # waits on the held lock
+
+    try:
+        task = asyncio.create_task(writer())
+        await in_statement.wait()
+        await asyncio.sleep(0.3)  # the worker is inside the busy handler now
+        with caplog.at_level(logging.WARNING, logger="app.db.database"):
+            t0 = asyncio.get_running_loop().time()
+            task.cancel()
+            done, _pending = await asyncio.wait({task}, timeout=15)
+            elapsed = asyncio.get_running_loop().time() - t0
+        assert task in done and task.cancelled()
+        # 10.0 s (_CLOSE_ACK_TIMEOUT) before the fix; 0.5 s now.
+        assert elapsed < 3, elapsed
+    finally:
+        lock.execute("ROLLBACK")
+        lock.close()
+    # The abandoned statement gives up once the lock is gone, and the queued
+    # close and stop sentinel then end the worker thread: nothing leaks.
+    for _ in range(500):
+        if not (_connection_threads() - before):
+            break
+        await asyncio.sleep(0.01)
+    _assert_nothing_leaked(before)
+
+
+_AIOSQLITE_CHANGED = (
+    "aiosqlite changed: re-verify _keep_draining_after_loop_close in app/db/database.py"
+)
+
+
+def test_the_aiosqlite_worker_loop_the_drain_shim_relies_on_is_unchanged():
+    """``_keep_draining_after_loop_close`` shadows ``Connection.run`` per
+    instance and re-enters it after a report into a closed loop. That is only
+    right for aiosqlite 0.20.0's ``run()``: a queue loop that ends on the stop
+    sentinel and reports every result through
+    ``future.get_loop().call_soon_threadsafe``. A version bump must stop here."""
+    import inspect
+
+    assert aiosqlite.__version__ == "0.20.0", _AIOSQLITE_CHANGED
+    assert issubclass(aiosqlite.Connection, threading.Thread), _AIOSQLITE_CHANGED
+    assert "run" in vars(aiosqlite.Connection), _AIOSQLITE_CHANGED
+    source = inspect.getsource(aiosqlite.Connection.run)
+    for shape in (
+        "self._tx.get()",
+        "_STOP_RUNNING_SENTINEL",
+        "break",
+        "future.get_loop().call_soon_threadsafe(set_result, future, result)",
+        "future.get_loop().call_soon_threadsafe(set_exception, future, e)",
+    ):
+        assert shape in source, _AIOSQLITE_CHANGED
+
+
+def test_a_statement_abandoned_past_its_loop_still_closes_its_connection(tmp_data_dir, monkeypatch):
+    """The cancelled close above is abandoned after 0.5 s, so at shutdown the
+    statement can still be in its busy wait when the event loop closes. When
+    it returns, aiosqlite reports into the closed loop; that must not kill the
+    worker before the queued close runs -- an unhandled thread exception on
+    stderr, and a sqlite connection (holding the abandoned write) left open.
+    Its own loop, closed while the lock is still held, as at shutdown."""
+    db_path = tmp_data_dir / "vllm-warden.db"
+    with sqlite3.connect(db_path) as c:
+        c.execute("PRAGMA journal_mode = WAL")
+        c.execute("CREATE TABLE t (x)")
+    lock = sqlite3.connect(db_path, isolation_level=None)
+    lock.execute("BEGIN IMMEDIATE")
+    unhandled: list[BaseException | None] = []
+    monkeypatch.setattr(threading, "excepthook", lambda args: unhandled.append(args.exc_value))
+    raw: list[sqlite3.Connection] = []
+    before = _connection_threads()
+
+    async def writer(in_statement: asyncio.Event) -> None:
+        async with open_db(db_path) as db:
+            raw.append(db._conn)
+            in_statement.set()
+            await db.execute("INSERT INTO t VALUES (1)")  # waits on the held lock
+
+    async def cancel_mid_statement() -> None:
+        in_statement = asyncio.Event()
+        task = asyncio.create_task(writer(in_statement))
+        await in_statement.wait()
+        await asyncio.sleep(0.3)  # inside the busy handler now
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    try:
+        asyncio.run(cancel_mid_statement())  # closes its loop on the way out
+    finally:
+        lock.execute("ROLLBACK")
+        lock.close()
+    _assert_nothing_leaked(before)
+    assert unhandled == []
+    with pytest.raises(sqlite3.ProgrammingError, match="closed database"):
+        _ = raw[0].total_changes  # the queued close ran (no thread check here)
+    with sqlite3.connect(db_path) as c:
+        assert c.execute("SELECT count(*) FROM t").fetchone()[0] == 0  # nothing committed
+
+
 async def test_a_cancellation_during_the_close_is_never_lost():
     """A cancellation that arrives while the close is in flight must still end
     the task, bound or no bound.

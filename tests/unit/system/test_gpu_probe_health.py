@@ -8,10 +8,13 @@ on PATH, so what is pinned is what a production probe does.
 """
 
 import asyncio
+import contextlib
 import logging
 import os
+import signal
 import stat
 import time
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -39,9 +42,20 @@ echo "0, NVIDIA RTX A4000, 16376, 1200, 10, 30.0"
 exit 0
 """
 
+# exec makes the fake ONE process like a real nvidia-smi; without it
+# `sleep` is a grandchild that keeps the stdout/stderr pipes open after
+# the kill, so the transport cannot close and the test itself leaks.
 HANGS = """#!/bin/sh
-sleep 30
+exec sleep 30
 """
+
+
+@pytest.fixture
+def _hermetic_nvidia_smi():
+    """Opt out of the conftest autouse fixture: this file drives the REAL
+    ``_run_nvidia_smi`` through the fake_smi PATH fake (its own monkeypatched
+    module state, no nvidia-smi interception)."""
+    yield
 
 
 @pytest.fixture
@@ -61,6 +75,14 @@ def fake_smi(tmp_path, monkeypatch):
     yield install
     reset_gpu_probe_health()
     reset_static_facts_cache()
+
+
+@pytest.fixture(autouse=True)
+def _no_real_gpu_probe_in_lifespan(monkeypatch):
+    # The lifespan's stats sampler would spawn real nvidia-smi / ioreg
+    # probes; cancelled mid-spawn at shutdown, their subprocess transports
+    # outlive the TestClient loop and print "Event loop is closed" at GC.
+    monkeypatch.setattr("app.runtime.stats_sampler.query_gpus", AsyncMock(return_value=[]))
 
 
 def _warnings(caplog) -> list[str]:
@@ -151,6 +173,98 @@ async def test_a_hung_nvidia_smi_is_killed_and_reported(fake_smi):
     h = gpu_probe_health()
     assert h.state == "failing"
     assert h.error == "nvidia-smi did not answer within 0.3 s"
+
+
+def _spy_subprocesses(monkeypatch, procs: list) -> None:
+    real = asyncio.create_subprocess_exec
+
+    async def spy(*a, **kw):
+        p = await real(*a, **kw)
+        procs.append(p)
+        return p
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", spy)
+
+
+async def test_a_timed_out_nvidia_smi_child_is_reaped(fake_smi, monkeypatch):
+    fake_smi(HANGS)
+    procs: list = []
+    _spy_subprocesses(monkeypatch, procs)
+    assert await mod._run_nvidia_smi(NVIDIA_SMI_CMD, timeout=0.3) is None
+    assert len(procs) == 1
+    assert procs[0].returncode == -signal.SIGKILL
+
+
+async def test_a_timed_out_ioreg_child_is_reaped(tmp_path, monkeypatch):
+    hang = tmp_path / "hang"
+    hang.write_text(HANGS)
+    hang.chmod(hang.stat().st_mode | stat.S_IEXEC)
+    procs: list = []
+    _spy_subprocesses(monkeypatch, procs)
+    assert await mod._run_ioreg([str(hang)], timeout=0.3) is None
+    assert procs[0].returncode == -signal.SIGKILL
+
+
+async def test_the_reap_wait_is_bounded(fake_smi, monkeypatch):
+    fake_smi(HANGS)
+    procs: list = []
+
+    async def never():
+        await asyncio.Event().wait()
+
+    def wrapped(real):
+        async def spy(*a, **kw):
+            p = await real(*a, **kw)
+            p.wait = never
+            procs.append(p)
+            return p
+
+        return spy
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", wrapped(asyncio.create_subprocess_exec))
+    try:
+        started = time.monotonic()
+        out = await mod._run_nvidia_smi(NVIDIA_SMI_CMD, timeout=0.3)
+        elapsed = time.monotonic() - started
+        assert out is None
+        # 0.3 s probe timeout + the 1.0 s reap bound: the lower bound proves
+        # the wait ran, the upper bound that it is bounded.
+        assert 1.2 <= elapsed < 3.0
+        assert gpu_probe_health().state == "failing"
+    finally:
+        with contextlib.suppress(ProcessLookupError):
+            asyncio.subprocess.Process.kill(procs[0])
+        await asyncio.subprocess.Process.wait(procs[0])
+
+
+async def test_a_child_already_gone_does_not_raise(fake_smi, monkeypatch):
+    fake_smi(HANGS)
+    procs: list = []
+
+    def gone():
+        raise ProcessLookupError
+
+    async def gone_wait():
+        raise ProcessLookupError
+
+    def wrapped(real):
+        async def spy(*a, **kw):
+            p = await real(*a, **kw)
+            p.kill = gone
+            p.wait = gone_wait
+            procs.append(p)
+            return p
+
+        return spy
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", wrapped(asyncio.create_subprocess_exec))
+    try:
+        assert await mod._run_nvidia_smi(NVIDIA_SMI_CMD, timeout=0.3) is None
+        assert gpu_probe_health().state == "failing"
+    finally:
+        with contextlib.suppress(ProcessLookupError):
+            asyncio.subprocess.Process.kill(procs[0])
+        await asyncio.subprocess.Process.wait(procs[0])
 
 
 async def test_an_optional_probe_failure_does_not_touch_the_state(fake_smi, caplog):

@@ -9,9 +9,12 @@
  * that override comes through `useBreadcrumb({title})` and is wired up via
  * `NavStackProvider.setBreadcrumbTitle`.
  *
- * Paths here are app-router paths WITHOUT the `/ui` basePath — they are what
- * `usePathname()` returns and what `<Link href>` / `router.push` take (Next
- * prefixes the basePath itself).
+ * Paths here are app-router paths WITHOUT the `/ui` basePath (Next prefixes
+ * the basePath itself). They are *logical* paths: the detail pages live at
+ * fixed URLs with the id in the query (/models/detail?id=abc, BACKLOG-macos
+ * P4), and `logicalPath` in lib/routes.ts maps such a URL to the path-shaped
+ * form the registry matches (/models/abc) — one segment per crumb. A crumb is
+ * turned back into a real URL by `navTarget` at the moment it is linked.
  *
  * --- Navigability ---
  *
@@ -27,10 +30,10 @@
  * Verified page.tsx inventory (2026-10-04, frontend/src/app):
  *   /                       — page.tsx (redirects to /models)  navigable
  *   /models                 — page.tsx  navigable
- *   /models/[id]            — page.tsx  navigable
- *   /models/[id]/settings   — page.tsx  navigable
+ *   /models/[id]            — models/detail/page.tsx (?id=)  navigable
+ *   /models/[id]/settings   — models/detail/settings/page.tsx (?id=)  navigable
  *   /tokens                 — page.tsx  navigable
- *   /tokens/[id]            — page.tsx  navigable
+ *   /tokens/[id]            — tokens/detail/page.tsx (?id=)  navigable
  *   /stats                  — page.tsx  navigable
  *   /router                 — page.tsx  navigable
  *   /connect                — page.tsx  navigable (Connect a client, 2026-10-04)
@@ -43,6 +46,8 @@
  * No intermediate segment without a page.tsx exists today, so no entry
  * carries `navigable: false`; the flag stays for the next one that does.
  */
+
+import { detailHref } from "@/lib/routes";
 
 export interface BreadcrumbEntry {
   /** Resolved label rendered in the breadcrumb. */
@@ -69,9 +74,12 @@ export interface BreadcrumbEntry {
  */
 export const HOME_HREF = "/models";
 
-/** The URL a crumb or back entry navigates to (Home → HOME_HREF). */
+/**
+ * The URL a crumb or back entry navigates to: Home → HOME_HREF, a logical
+ * detail path → its query URL (/models/abc → /models/detail?id=abc).
+ */
 export function navTarget(href: string): string {
-  return href === "/" ? HOME_HREF : href;
+  return href === "/" ? HOME_HREF : detailHref(href);
 }
 
 export interface BreadcrumbOverride {

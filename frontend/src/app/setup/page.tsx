@@ -1,17 +1,15 @@
-import { redirect } from "next/navigation";
+'use client';
 
-/**
- * Root /setup page — redirects to the first step of the wizard.
- *
- * The /setup segment has a layout.tsx and five child pages
- * (welcome, gpus, hf-token, admin, done) but until v2026.05.15.5 was
- * missing this root page.tsx, so https://vllm.example.com/setup
- * returned 404. Standard Next.js App Router fix: a server component
- * that delegates to next/navigation's redirect() so the browser lands
- * on /setup/welcome without ever rendering an interstitial.
- *
- * Closes vllm-warden#41.
- */
+// /setup root — forwards to the first wizard step. The /setup segment has a
+// layout.tsx and five child pages (welcome, gpus, hf-token, admin, done);
+// without this page /setup 404s (closes vllm-warden#41).
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
 export default function SetupRootPage() {
-  redirect("/setup/welcome");
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/setup/welcome');
+  }, [router]);
+  return null;
 }

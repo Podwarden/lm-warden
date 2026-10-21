@@ -3,6 +3,7 @@
 import asyncio
 import shutil
 import sqlite3
+import threading
 import time
 
 from fastapi.testclient import TestClient
@@ -44,6 +45,51 @@ async def _idle(self, interval=1.0):
     await asyncio.Event().wait()
 
 
+def _catch_the_pruner_mid_write(monkeypatch):
+    """Pin the race behind the old ~1-in-3 flake: a loop caught mid-write.
+
+    The stats pruner runs a real prune at boot. When it had not reached its
+    first DELETE before the test took the write lock, it sat in SQLite's busy
+    handler at shutdown; cancelled there, its open_db close waited the full
+    10 s _CLOSE_ACK_TIMEOUT behind that statement, so a ~2 s shutdown took
+    12.0 s. Here the real prune_once runs only once the lock is held, so every
+    run takes that path. Returns (go, in_write): set `go` with the lock held,
+    then wait for `in_write`."""
+    from app.runtime import stats_pruner
+
+    go, in_write = threading.Event(), threading.Event()
+    prune_once = stats_pruner.prune_once
+
+    async def pruner(settings):
+        while not go.is_set():  # noqa: ASYNC110 -- set from the test thread, not the loop
+            await asyncio.sleep(0.01)
+        in_write.set()
+        await prune_once(settings)  # blocks on the held lock (30 s busy_timeout)
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(stats_pruner, "run_pruner_forever", pruner)
+    return go, in_write
+
+
+def _hold_the_pruner(go, in_write):
+    go.set()
+    assert in_write.wait(10)
+    time.sleep(0.5)  # past connect and pragmas: inside the DELETE's busy wait
+
+
+def _wait_for_sqlite_threads(before):
+    """The abandoned prune ends once the lock is released; let its worker
+    thread finish before the next test, so nothing outlives this one."""
+    import aiosqlite
+
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        live = {t for t in threading.enumerate() if isinstance(t, aiosqlite.Connection)}
+        if not (live - before):
+            return
+        time.sleep(0.01)
+
+
 def test_lifespan_shutdown_flushes_ledger(tmp_data_dir, migrated_db_template, monkeypatch):
     from app.main import build_app
 
@@ -72,10 +118,60 @@ def test_shutdown_with_a_held_write_lock_is_bounded(
     # The history store's own final flush waits out the same held lock (its own
     # budget, not the ledger's); keep it out so this pins the ledger's bound.
     monkeypatch.setattr(RequestHistoryStore, "run_forever", _idle)
+    go, in_write = _catch_the_pruner_mid_write(monkeypatch)
     shutil.copyfile(migrated_db_template, tmp_data_dir / "vllm-warden.db")
     app = build_app()
     db = tmp_data_dir / "vllm-warden.db"
     lock = sqlite3.connect(db, isolation_level=None)
+    before = set(threading.enumerate())
+    t0 = None
+    try:
+        with TestClient(app) as c:
+            _ready(c, tmp_data_dir, dp=1)
+            r, _ = _post(c)
+            assert r.status_code == 200
+            lock.execute("BEGIN IMMEDIATE")
+            _hold_the_pruner(go, in_write)
+            t0 = time.monotonic()
+        elapsed = time.monotonic() - t0
+        # ~2.5 s: the ledger's 2 s busy_timeout, then the pruner's cancelled
+        # close (0.5 s). 12.0 s when that close waited out its 10 s ack.
+        assert elapsed < 7, elapsed
+        # The batch is still pending (never lost, nothing raised).
+        assert app.state.ledger.pending()
+    finally:
+        lock.execute("ROLLBACK") if lock.in_transaction else None
+        lock.close()
+        _wait_for_sqlite_threads(before)
+
+
+def test_the_shutdown_flush_is_bounded_by_its_own_timeout_too(
+    tmp_data_dir, migrated_db_template, monkeypatch
+):
+    """The lifespan's `asyncio.timeout(5)` around the final ledger flush is a
+    bound of its own, not a restatement of the ledger's 2 s busy_timeout: with
+    the busy wait longer than the whole budget, only the timeout ends the
+    flush, and the cancelled flush's close must not then wait 10 s for its
+    acknowledgement. ~5.5 s; without the timeout, 30 s; without the short
+    cancelled-close ack, 15 s."""
+    from app.main import build_app
+    from app.proxy import ledger
+    from app.runtime import stats_pruner
+    from app.stats.request_history import RequestHistoryStore
+
+    monkeypatch.setattr(ledger, "LEDGER_BUSY_TIMEOUT_MS", 30_000)
+    monkeypatch.setattr(Ledger, "run_forever", _idle)
+    monkeypatch.setattr(RequestHistoryStore, "run_forever", _idle)
+
+    async def idle_pruner(settings):
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(stats_pruner, "run_pruner_forever", idle_pruner)
+    shutil.copyfile(migrated_db_template, tmp_data_dir / "vllm-warden.db")
+    app = build_app()
+    db = tmp_data_dir / "vllm-warden.db"
+    lock = sqlite3.connect(db, isolation_level=None)
+    before = set(threading.enumerate())
     t0 = None
     try:
         with TestClient(app) as c:
@@ -85,12 +181,12 @@ def test_shutdown_with_a_held_write_lock_is_bounded(
             lock.execute("BEGIN IMMEDIATE")
             t0 = time.monotonic()
         elapsed = time.monotonic() - t0
-        assert elapsed < 7, elapsed
-        # The batch is still pending (never lost, nothing raised).
+        assert 4.5 < elapsed < 7, elapsed
         assert app.state.ledger.pending()
     finally:
         lock.execute("ROLLBACK") if lock.in_transaction else None
         lock.close()
+        _wait_for_sqlite_threads(before)
 
 
 def _history_row(i):
@@ -106,19 +202,23 @@ def _history_row(i):
 
 
 def test_whole_shutdown_with_a_held_write_lock_fits_dockers_stop_grace(
-    tmp_data_dir, migrated_db_template
+    tmp_data_dir, migrated_db_template, monkeypatch
 ):
     """#295: the real loops, nothing idled. Under a write lock held by another
     connection, the lifespan's ledger flush, the ledger loop's last flush and
     the request-history writer (caught mid-write AND with rows still queued)
-    all wait on the same lock. Together they must end inside Docker's 10 s
-    stop grace, or the container is SIGKILLed instead of stopped."""
+    all wait on the same lock, and so does the stats pruner, caught mid-prune
+    every run (see _catch_the_pruner_mid_write). Together they must end inside
+    Docker's 10 s stop grace, or the container is SIGKILLed instead of
+    stopped."""
     from app.main import build_app
 
+    go, in_write = _catch_the_pruner_mid_write(monkeypatch)
     shutil.copyfile(migrated_db_template, tmp_data_dir / "vllm-warden.db")
     app = build_app()
     db = tmp_data_dir / "vllm-warden.db"
     lock = sqlite3.connect(db, isolation_level=None)
+    before = set(threading.enumerate())
     t0 = None
     try:
         with TestClient(app) as c:
@@ -126,6 +226,7 @@ def test_whole_shutdown_with_a_held_write_lock_fits_dockers_stop_grace(
             r, _ = _post(c)
             assert r.status_code == 200
             lock.execute("BEGIN IMMEDIATE")
+            _hold_the_pruner(go, in_write)
             history = app.state.request_history
             assert history.record(_history_row(0))
             # Past the writer's batching sleep: it is now inside a write that
@@ -142,6 +243,7 @@ def test_whole_shutdown_with_a_held_write_lock_fits_dockers_stop_grace(
     finally:
         lock.execute("ROLLBACK") if lock.in_transaction else None
         lock.close()
+        _wait_for_sqlite_threads(before)
 
 
 async def test_a_failing_variant_lookup_still_records_the_request(

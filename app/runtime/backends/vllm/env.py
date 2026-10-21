@@ -93,6 +93,14 @@ HARD_LOCKED_ENV_KEYS: frozenset[str] = frozenset(
         # documents WHY they can never be added to ALLOWED_ENV_PREFIXES.
         "PYTHONPATH",
         "LD_PRELOAD",
+        # The macOS spelling of LD_PRELOAD: DYLD_INSERT_LIBRARIES interposes a
+        # library, DYLD_LIBRARY_PATH / DYLD_FRAMEWORK_PATH redirect dyld to load
+        # a different copy of a named dylib. They reach the same interposition
+        # LD_PRELOAD does on Linux, from the same extra_env back door, so they
+        # are locked alongside it (Metal design §5 security addendum).
+        "DYLD_INSERT_LIBRARIES",
+        "DYLD_LIBRARY_PATH",
+        "DYLD_FRAMEWORK_PATH",
         # Sub-project C. Every llama.cpp CLI flag has an LLAMA_ARG_* env twin, so
         # these five would each breach a boundary if extra_env could set them:
         # HOST re-binds the unauthenticated OpenAI API (#211 from the env side),

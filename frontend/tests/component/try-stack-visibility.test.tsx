@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, act } from '@testing-library/react';
 import { SWRConfig } from 'swr';
-import ModelDetailPage from '@/app/models/[id]/page';
+import { ModelDetailPage } from '@/components/models/model-detail-page';
 import { setAccessToken, setCsrfToken } from '@/lib/auth-fetch';
 import { versionPinControlApplies } from '@/lib/backend-fields';
 
@@ -26,13 +26,6 @@ vi.mock('next/navigation', () => ({
 //                the server's sentence rendered beside them.
 //   "backend" -> not removable by anyone: card absent.
 // ---------------------------------------------------------------------------
-
-function syncResolved<T>(value: T): Promise<T> {
-  const p = Promise.resolve(value) as Promise<T> & { status?: string; value?: T };
-  p.status = 'fulfilled';
-  p.value = value;
-  return p;
-}
 
 class InertEventSource {
   close() {}
@@ -132,7 +125,7 @@ async function renderWith(model: Record<string, unknown>) {
   render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
       <Suspense fallback={<div data-testid="suspense-fallback">loading</div>}>
-        <ModelDetailPage params={syncResolved({ id: 'abc' })} />
+        <ModelDetailPage id="abc" />
       </Suspense>
     </SWRConfig>,
   );

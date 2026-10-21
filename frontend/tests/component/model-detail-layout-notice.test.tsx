@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, act, fireEvent, waitFor } from '@testing-library/react';
 import { SWRConfig } from 'swr';
-import ModelDetailPage from '@/app/models/[id]/page';
+import { ModelDetailPage } from '@/components/models/model-detail-page';
 import { setAccessToken, setCsrfToken } from '@/lib/auth-fetch';
 
 vi.mock('next/navigation', () => ({
@@ -11,13 +11,6 @@ vi.mock('next/navigation', () => ({
 
 // #286 review #8: the boot reconcile's outcome (model.layout_notice) is shown on
 // the model page -- a warning when the operator must act, an info note otherwise.
-
-function syncResolved<T>(value: T): Promise<T> {
-  const p = Promise.resolve(value) as Promise<T> & { status?: string; value?: T };
-  p.status = 'fulfilled';
-  p.value = value;
-  return p;
-}
 
 function fakeModel(overrides: Record<string, unknown> = {}) {
   return {
@@ -73,7 +66,7 @@ async function renderWith(initial: Record<string, unknown>) {
   render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
       <Suspense fallback={<div>loading</div>}>
-        <ModelDetailPage params={syncResolved({ id: 'abc' })} />
+        <ModelDetailPage id="abc" />
       </Suspense>
     </SWRConfig>,
   );

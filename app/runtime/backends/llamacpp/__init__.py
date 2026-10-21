@@ -13,7 +13,7 @@ per-model choice, until sub-projects D and F land.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from app.runtime.backends import BackendCapabilities, LaunchPlan
 from app.runtime.backends.llamacpp.args import build_llamacpp_args, engine_bind_host
@@ -22,11 +22,15 @@ from app.runtime.backends.llamacpp.env import (
     ALLOWED_ENV_PREFIXES,
     build_llamacpp_env,
 )
+from app.runtime.backends.llamacpp.version import version_string as _llamacpp_version_string
 
 if TYPE_CHECKING:  # pragma: no cover - type-only, never imported at runtime
+    from app.runtime.backends.paths import ResolvedModelPaths
     from app.runtime.engine import EngineDriver
 
-# argv[0]. Task 13 puts the binary on PATH at /usr/local/bin/llama-server.
+# argv[0]. Task 13 puts the binary on PATH at /usr/local/bin/llama-server (linux
+# image); the Mac bundle puts it next to the embedded interpreter, on the apple
+# PATH env.py emits (scripts/macos/bundle-llamacpp.sh).
 BINARY = "llama-server"
 
 CAPABILITIES = BackendCapabilities(
@@ -88,6 +92,29 @@ CAPABILITIES = BackendCapabilities(
 
 class LlamaCppBackend:
     capabilities = CAPABILITIES
+
+    def __init__(self, *, profile: str = "linux") -> None:
+        # The deployment profile, set by registry.backends_for and never read
+        # from the environment inside this backend: the seam is the
+        # constructor, so the unit suite can build an apple backend on a
+        # linux CI host. It reaches exactly two members -- plan() (the env
+        # has no CUDA keys on apple) and diagnose() (the OOM message is the
+        # unified-memory answer). capabilities is the shared class attribute
+        # in both profiles.
+        self._profile = profile
+
+    def version_string(self) -> str | None:
+        """The llama.cpp build tag baked into THIS image, or None.
+
+        From ``VW_LLAMACPP_BUILD`` -- the tag the Dockerfile stamps (decision
+        D2: the binary is compiled into the image, so its version is a property
+        of the image). A declared value read from the environment, never a
+        ``llama-server --version`` subprocess. The version module has no heavy
+        imports, so it is safe to import at module top here. On the apple
+        profile an unset env var falls back to the stamp file the Mac bundle
+        writes beside llama-server (see the version module).
+        """
+        return _llamacpp_version_string(profile=self._profile)
 
     # ------------------------------------------------------------------
     # TWO MEMBERS, TWO KINDS OF DRIVER -- and the base implementation ENFORCES
@@ -190,6 +217,7 @@ class LlamaCppBackend:
             model,
             allowed_prefixes=self.capabilities.env_prefixes,
             allowed_exact=self.capabilities.env_exact,
+            profile=self._profile,
         )
         return LaunchPlan(
             argv=argv,
@@ -199,13 +227,29 @@ class LlamaCppBackend:
             gpu_indices=list(model.gpu_indices),
         )
 
+    def engine_model_id(self, model: Any, resolved: ResolvedModelPaths | None = None) -> str:
+        """The id this engine serves: what the proxy must put in ``body['model']``.
+
+        llama.cpp serves the row's ``served_model_name`` as the ``--alias`` it
+        registers (see ``app/runtime/backends/llamacpp/args.py``) -- so a request
+        body carrying any other model id would reach the engine as an unknown
+        name. Pure: no I/O, and ``resolved`` is accepted and ignored -- the
+        answer is the same whether or not a resolved path is available.
+
+        Not yet a ``Backend`` Protocol member: the answer is per row, and the
+        member is added only once MLX has it too -- adding it first would make
+        ``isinstance(x, Backend)`` false for every backend that lacks it.
+        """
+        served: str = model.served_model_name
+        return served
+
     def health_url(self, host: str, port: int) -> str:
         return f"http://{host}:{port}{self.capabilities.health_path}"
 
     def diagnose(self, log_tail: str):
         from app.runtime.backends.llamacpp.diagnostics import diagnose_llamacpp_log
 
-        return diagnose_llamacpp_log(log_tail)
+        return diagnose_llamacpp_log(log_tail, profile=self._profile)
 
     def parse_metrics(self, body: str):
         from app.runtime.backends.llamacpp.metrics import read

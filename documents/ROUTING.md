@@ -395,7 +395,7 @@ over 40k tokens of context.**
 
 ## Reference
 
-<!-- keep in sync with docs/operating.md §"Data-parallel models and replica routing (#286)" and §"Claude Code model router (#287)" -->
+<!-- keep in sync with the internal operator guide (operating.md) §"Data-parallel models and replica routing (#286)" and §"Claude Code model router (#287)" -->
 
 ### Data-parallel models
 

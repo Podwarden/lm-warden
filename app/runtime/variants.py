@@ -32,7 +32,6 @@ import re
 import time
 from dataclasses import dataclass
 from functools import lru_cache
-from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
@@ -229,22 +228,22 @@ def resolve_hf_commit(
 
 
 @lru_cache(maxsize=4)
-def baked_engine_version(backend: str) -> str | None:
+def baked_engine_version(backend: str | None) -> str | None:
     """The engine version compiled into THIS warden image, for the in-container
-    engine. Declared values, not probes -- the same sources as
-    ``GET /api/system/backends`` (app/system/routes_engine.py): vLLM's package
-    metadata, and the llama.cpp build tag the Dockerfile stamps (the binary is
-    built into the image, D2). Cached: it cannot change without a restart."""
-    if backend == "vllm":
-        try:
-            return version("vllm")
-        except PackageNotFoundError:
-            return None
-    if backend == "llamacpp":
-        from app.runtime.backends.llamacpp.version import version_string
+    engine. The backend reports its OWN version -- the same declared source
+    ``GET /api/system/backends`` reads -- so there is no branch on the backend's
+    NAME here (BACKLOG-macos P5, mirroring ``_backend_version`` in
+    ``app/system/routes_engine.py``). ``None`` resolves to the profile's default
+    through ``registry.get`` (D6: vLLM on linux, MLX on apple); a name this
+    profile does not register reports None, never raises. Cached: it cannot
+    change without a restart."""
+    from app.runtime.backends import registry  # noqa: PLC0415
 
-        return version_string()
-    return None
+    try:
+        b = registry.get(backend)
+    except registry.UnknownBackendError:
+        return None
+    return b.version_string()
 
 
 def runtime_facts(

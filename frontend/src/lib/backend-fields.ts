@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // Which model fields each backend actually consumes.
 //
-// This table used to live inside `app/models/[id]/settings/page.tsx` and was
+// This table used to live inside the model settings page (now `components/models/model-settings-page.tsx`) and was
 // applied on that page alone. The detail page rendered the same row's fields
 // unconditionally, so a llama.cpp model advertised a `Tensor parallel size` and
 // a `gpu_memory_utilization` -- two vLLM-only concepts -- next to an `Engine`

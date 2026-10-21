@@ -149,6 +149,13 @@ async def test_unload_cancels_the_registered_load_runner_task(tmp_path):
     whatever row now owns model_id -- possibly a newer load that has since
     superseded this one, while its replacement engine keeps running
     unaffected (podwarden/apps/lm-warden#275).
+
+    ``Task.cancel()`` only REQUESTS cancellation; it lands at the runner's
+    next await, so this waits for the cancellation to land (bounded) instead
+    of relying on an incidental loop yield inside ``unload()`` — on Python
+    3.12+ ``asyncio.wait_for`` awaits the coroutine inline, so a
+    non-suspending mock terminate yields nothing and the immediate
+    ``cancelled()`` assertion raced (planner iter 40).
     """
     s = _Settings()
     s.data_dir = str(tmp_path)
@@ -182,7 +189,53 @@ async def test_unload_cancels_the_registered_load_runner_task(tmp_path):
     with patch("os.killpg"):
         await sup.unload("m1", force=True)
 
-    assert runner_task.cancelled(), "force-unload must cancel the in-flight load runner"
+    done, _ = await asyncio.wait({runner_task}, timeout=1.0)
+    assert (
+        runner_task in done and runner_task.cancelled()
+    ), "force-unload must cancel the in-flight load runner"
+
+
+@pytest.mark.asyncio
+async def test_unload_cancels_the_load_runner_even_without_a_yield(tmp_path):
+    """The cancellation contract must not depend on ``unload()`` incidentally
+    yielding to the loop. This driver's ``terminate`` never yields
+    (``AsyncMock(return_value=None)`` resolves inline), so the runner's
+    cancellation can only land once the loop runs after ``unload()`` — on
+    Python 3.12+ that never happens inside ``unload()`` itself (planner
+    iter 40). A bounded wait for the cancellation to land is the race-free
+    assertion.
+    """
+    s = _Settings()
+    s.data_dir = str(tmp_path)
+    s.hf_token_path = str(tmp_path / "tok")
+    (tmp_path / "tok").write_text("hf_x")
+
+    driver = MagicMock()
+    driver.terminate = AsyncMock(return_value=None)
+    sup = Supervisor(s, driver=driver)
+
+    handle = MagicMock()
+    handle.returncode = None
+    sup._handles["m1"] = handle
+    sup._ports["m1"] = 10001
+    sup.gpus.claim("m1", [0])
+
+    runner_started = asyncio.Event()
+
+    async def fake_runner():
+        runner_started.set()
+        await asyncio.sleep(60)
+
+    runner_task = asyncio.create_task(fake_runner())
+    sup.register_load_runner("m1", runner_task)
+    await runner_started.wait()
+
+    await sup.unload("m1", force=True)
+
+    done, _ = await asyncio.wait({runner_task}, timeout=1.0)
+    assert (
+        runner_task in done and runner_task.cancelled()
+    ), "force-unload must cancel the in-flight load runner"
 
 
 @pytest.mark.asyncio

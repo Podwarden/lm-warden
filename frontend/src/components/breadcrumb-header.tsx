@@ -22,7 +22,6 @@
  */
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ArrowLeft, ChevronRight, Ellipsis, House } from "lucide-react";
 import { useNavStack } from "@/lib/nav-stack";
@@ -52,8 +51,9 @@ const FOCUS = "focus:outline-none focus-visible:ring-1 focus-visible:ring-chat-a
 const CHEVRON = <ChevronRight className="h-3 w-3 shrink-0 text-chat-dim/70" aria-hidden="true" />;
 
 export function BreadcrumbHeader() {
-  const pathname = usePathname() ?? "/";
-  const { canGoBack, topOfStack, goBack, captureScroll, overrides } = useNavStack();
+  // The provider's logical pathname (/models/abc on /models/detail?id=abc;
+  // see lib/routes.ts) — the registry and the back stack both speak it.
+  const { pathname, canGoBack, topOfStack, goBack, captureScroll, overrides } = useNavStack();
   const hidden = shouldHideBreadcrumb(pathname);
 
   const chain = useMemo(
@@ -192,7 +192,7 @@ function BreadcrumbSegment({
   // Home's link goes to /models (HOME_HREF); on /models itself that would be
   // a link to the current page, so it renders as plain text there.
   const target = navTarget(entry.href);
-  const selfLink = target === pathname;
+  const selfLink = target === navTarget(pathname);
 
   if (iconOnly && entry.href === "/") {
     const icon = (

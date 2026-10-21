@@ -12,6 +12,8 @@ import os
 import re
 from typing import Any
 
+from app.models.model_id_flags import model_id_flag_in, model_id_refusal
+
 # vLLM 0.20.0 requires GGUF models to be addressed as ``repo_id:quant_type``
 # (e.g. ``unsloth/Qwen3.6-27B-GGUF:Q5_K_M``). #85 (v17.13) started shipping
 # per-file GGUF downloads via the ``filename`` column, but the launcher kept
@@ -137,6 +139,14 @@ def build_vllm_args(
     to pass and is responsible for never persisting this to the DB.
     """
     ov = overrides or {}
+
+    # The engine's model id comes from the served_model_name column; an
+    # extra_args flag that overrides it would serve an id the proxy never
+    # asks for (it routes and forwards by that column). Fail loud at load,
+    # before any argv is returned — same layering as #286's parallel flags.
+    _flag = model_id_flag_in("vllm", list(getattr(model, "extra_args", []) or []))
+    if _flag is not None:
+        raise ValueError(model_id_refusal("vllm", _flag))
 
     tp = ov.get("tensor_parallel_size", model.tensor_parallel_size)
     gpu_mem = ov.get("gpu_memory_utilization", model.gpu_memory_utilization)

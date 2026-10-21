@@ -62,6 +62,10 @@ class Verdict:
         started_at + give_up_s, max_s)``.  Moves forward with progress.
     ``reason`` — human-readable string when stalled or give_up, else ``None``.
     ``hint`` — operator-facing hint for the most likely cause, else ``None``.
+    ``fatal`` — True only for a give-up the watcher raised because the engine
+        log shows a fatal load error (the MLX fail-fast); :func:`evaluate`
+        never sets it.  The give-up handler then appends the log tail as well
+        as any diagnosis.
     """
 
     state: Literal["progressing", "stalled", "give_up"]
@@ -69,6 +73,7 @@ class Verdict:
     give_up_at_s: float
     reason: str | None
     hint: str | None
+    fatal: bool = False
 
 
 def evaluate(t: LoadTracker, now: float, policy: StallPolicy) -> Verdict:

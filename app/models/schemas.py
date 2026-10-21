@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, cast
 
 from pydantic import (
     BaseModel,
@@ -224,8 +224,11 @@ class ModelSpec(BaseModel):
     # NULL is the D6 default (``_decode_row`` resolves it to the registry's
     # default) and is how an operator puts a row back on the default without
     # naming it, so a ROW may hold None. ``ModelCreate`` narrows this to the
-    # Literal, because a register always states a backend.
-    backend: Literal["vllm", "llamacpp"] | None = None
+    # Literal, because a register always states a backend. The Literal admits
+    # every backend a profile can register (vllm, llamacpp and, on apple, mlx)
+    # so a decoded row never fails to load; the registry, not this Literal, is
+    # what refuses a backend the running profile cannot serve.
+    backend: Literal["vllm", "llamacpp", "mlx"] | None = None
     engine_channel: str | None = None
     engine_vllm_version: str | None = None
     # Deliberately unvalidated beyond being a string: `POST /api/models` already
@@ -334,6 +337,34 @@ class ModelSpec(BaseModel):
         return self
 
     @model_validator(mode="after")
+    def _no_model_id_flag_in_extra_args(self, info: ValidationInfo) -> "ModelSpec":
+        """The served name lives in the column; ``extra_args`` may not override it.
+
+        An engine model-id flag in ``extra_args`` (vLLM ``--served-model-name``,
+        llama.cpp ``--alias`` / ``-a``, MLX ``--model``) would serve an id the
+        proxy never asks for -- it routes and forwards by ``served_model_name``
+        (OVERSEER model-id decision, planner iter 32). The write-time twin of the
+        load-time ``model_id_flag_in`` guards, with the same ``extra_args_written``
+        context as :meth:`_no_parallel_flags_in_extra_args`: the writer validates
+        the MERGED row, so a legacy row still carrying the flag stays editable for
+        fields that do not touch ``extra_args``. ``self.backend`` is ``None`` on a
+        default-backend row, so resolve it the way the other per-backend checks
+        do -- a NULL-backend row is checked against the engine it will actually
+        run under. Direct construction (no context) stays strict. The flag is
+        per backend, so a write that changes ``backend`` alone
+        (``backend_written``) re-checks the stored ``extra_args`` against the
+        NEW engine.
+        """
+        ctx = info.context or {}
+        if ctx.get("extra_args_written", True) or ctx.get("backend_written", False):
+            from app.models.model_id_flags import model_id_flag_in, model_id_refusal
+
+            b = self.backend or registry.DEFAULT_BACKEND
+            if tok := model_id_flag_in(b, self.extra_args):
+                raise ValueError(model_id_refusal(b, tok))
+        return self
+
+    @model_validator(mode="after")
     def _extra_env_allowlist(self) -> "ModelSpec":
         """Enforce the same allowlist that runs at subprocess-spawn time.
 
@@ -376,12 +407,28 @@ class ModelCreate(ModelSpec):
     # the merged dict.
     hf_repo: HfRepoId | None = None  # type: ignore[assignment]
     # Which inference program serves this model (sub-project B, decision D6).
-    # Defaulted, so a client that never sends it behaves exactly as before.
-    # Sub-project C widens the Literal to include "llamacpp"; the registry is
-    # the source of truth and tests/unit/models/test_schemas.py asserts the two
-    # never drift. Narrower than ``ModelSpec.backend``, which also admits None
-    # because a legacy ROW may hold NULL.
-    backend: Literal["vllm", "llamacpp"] = "vllm"
+    # Defaulted to the registry's profile default, so a client that never sends
+    # it behaves exactly as before: 'vllm' on linux, 'mlx' on apple (OVERSEER
+    # schema-default decision, planner iter 32). A PLAIN default -- resolved
+    # from the profile at import, not a default_factory -- so the OpenAPI
+    # 'default' stays and reads the profile (linux stays 'vllm', api-types
+    # unchanged). Sub-project C widens the Literal to include "llamacpp" and
+    # registration widens it to 'mlx'; the registry is the source of truth and
+    # a register that names a backend this profile lacks is refused by
+    # registry.get, not silently accepted. Narrower than ``ModelSpec.backend``,
+    # which also admits None because a legacy ROW may hold NULL. The PUBLISHED
+    # enum is the running profile's backends only (in the Literal's order), so
+    # the OpenAPI schema -- and the generated api-types -- stay byte-identical
+    # on linux (``["vllm", "llamacpp"]``) and list ``["llamacpp", "mlx"]`` on
+    # apple: the schema never advertises a backend this build refuses.
+    # The cast is sound: DEFAULT_BACKEND is a member of a registered set,
+    # which test_the_literal_matches_the_registry pins inside the Literal.
+    backend: Literal["vllm", "llamacpp", "mlx"] = Field(
+        default=cast(Literal["vllm", "llamacpp", "mlx"], registry.DEFAULT_BACKEND),
+        json_schema_extra={
+            "enum": [b for b in ("vllm", "llamacpp", "mlx") if b in registry.available()]
+        },
+    )
     # #162 — engine templates. ``template_id`` selects a builtin/user template
     # whose fields prefill the model; the ``engine_*`` trio (on ``ModelSpec``)
     # overrides the template's engine axis.

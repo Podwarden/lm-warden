@@ -1252,31 +1252,76 @@ def test_spawn_failure_does_not_clobber_a_newer_load_that_already_loaded(tmp_dat
     writer already owns the model ("model m already running"), the 'failed'
     write must not land on the row a NEWER load has since driven to 'loaded'.
     The guard is the generation this load captured before spawning: if it has
-    moved, a newer load owns model_id and the terminal write is dropped."""
+    moved, a newer load owns model_id and the terminal write is dropped.
+
+    The stub runs on the app's event loop, so its own DB write goes through
+    ``asyncio.to_thread``: a blocking ``sqlite3`` write there stalls the loop,
+    and any lifespan writer (the stats sampler's execute-then-commit, the
+    ledger, the audit log) holding the write lock across an ``await`` can then
+    never reach its commit -- the stub sat in sqlite3's 5 s busy wait, raised
+    "database is locked" before recording that it ran, and the test timed out
+    under ``-n auto`` (gate-56). The sibling writer below holds that lock on
+    purpose, so the interleaving is forced on every run instead of left to
+    xdist scheduling."""
     client.get("/healthz")
     db_path = tmp_data_dir / "vllm-warden.db"
     _seed_done_with_pulled_model(db_path, allowed=[0, 1], gpus=[0], model_id="m")
     _stub_probe(client, [0])
     auth = _jwt_login(client)
 
+    from app.db.database import open_db
+
+    async def _sibling_writer_mid_transaction():
+        """A lifespan-style writer that holds the write lock across an await:
+        it commits on the loop's first free turn after the stub starts writing,
+        and only this loop can run that commit."""
+        began = asyncio.Event()
+        stub_writing = asyncio.Event()
+
+        async def hold():
+            async with open_db(db_path) as db:
+                await db.execute("BEGIN IMMEDIATE")
+                began.set()
+                await stub_writing.wait()
+                await db.commit()
+
+        task = asyncio.create_task(hold())
+        await began.wait()
+        return task, stub_writing
+
+    async def _settle(task):
+        done, _ = await asyncio.wait({task}, timeout=30)
+        return task in done
+
+    def _mark_loaded(model_id):
+        with sqlite3.connect(db_path) as db:
+            db.execute("UPDATE models SET status='loaded' WHERE id=?", (model_id,))
+            db.commit()
+
     ran = []
+    sibling: dict = {}
 
     async def fake_load(self, model, *, port, on_exit=None, overrides=None):
         # A concurrent load already won: it owns the generation and drove the
         # row to 'loaded' before our spawn failed to start.
         self._generation[model.id] = self._generation.get(model.id, 0) + 1
-        with sqlite3.connect(db_path) as db:
-            db.execute("UPDATE models SET status='loaded' WHERE id=?", (model.id,))
-            db.commit()
+        sibling["task"], stub_writing = await _sibling_writer_mid_transaction()
+        stub_writing.set()
+        await asyncio.to_thread(_mark_loaded, model.id)
         ran.append(1)
         raise RuntimeError("model m already running")
 
     with patch("app.runtime.supervisor.Supervisor.load", new=fake_load):
         r = client.post("/api/models/m/load", headers={**auth, **csrf_header(client)})
         assert r.status_code == 202
-        wait_until(lambda: len(ran) >= 1, what="the failing spawn to run")
-        # Let the guarded except path settle before reading the row.
-        time.sleep(0.3)
+        # The route registered its runner before answering; wait for it (and the
+        # sibling writer) to finish instead of sleeping past the guarded except.
+        runner = client.app.state.supervisor._load_runners["m"]
+        assert client.portal.call(_settle, runner), "the load runner did not finish within 30 s"
+        assert client.portal.call(
+            _settle, sibling["task"]
+        ), "the sibling writer did not commit within 30 s"
+    assert ran == [1], "the failing spawn never got past its own DB write"
 
     with sqlite3.connect(db_path) as db:
         status, last_error = db.execute(
@@ -1533,6 +1578,262 @@ def test_give_up_marks_failed_and_unloads(tmp_data_dir, client):
         sup_unload.call_count == 1
     ), f"expected sup.unload to be called once, got {sup_unload.call_count}"
     assert sup_unload.call_args.kwargs["force"] is True
+
+
+def _run_give_up_load(
+    tmp_data_dir,
+    client,
+    *,
+    model_id,
+    log_text: str | None,
+    backend: str | None = None,
+    verdict=None,
+):
+    """POST a load for ``model_id`` whose stall watcher immediately fires a
+    give-up verdict, optionally writing ``log_text`` to the model's engine log
+    and setting the row's ``backend`` first. Returns (db_path, sup_unload) once
+    the row is ``failed``; the caller asserts on ``last_error``."""
+    from app.runtime.load_progress.policy import Verdict
+
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_done_with_pulled_model(db_path, allowed=[0, 1, 2, 3], gpus=[0, 1], model_id=model_id)
+    if backend is not None:
+        with sqlite3.connect(db_path) as db:
+            db.execute("UPDATE models SET backend = ? WHERE id = ?", (backend, model_id))
+            db.commit()
+    if log_text is not None:
+        logs_dir = tmp_data_dir / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        (logs_dir / f"{model_id}.log").write_text(log_text)
+    _stub_probe(client, [0, 1])
+    auth = _jwt_login(client)
+
+    sup_unload = AsyncMock()
+    give_up_fired = {"v": False}
+
+    async def fake_health(**kwargs):
+        deadline = time.monotonic() + 10.0
+        while not give_up_fired["v"] and time.monotonic() < deadline:  # noqa: ASYNC110 - polls a fake's state with a deadline
+            await asyncio.sleep(0.05)
+        return False
+
+    async def fake_watch_load(*, on_give_up, **_kwargs):
+        await on_give_up(
+            verdict
+            or Verdict(
+                state="give_up",
+                stalled_for_s=1200.0,
+                give_up_at_s=7200.0,
+                reason="no progress for 20 min",
+                hint=None,
+            )
+        )
+        give_up_fired["v"] = True
+
+    with (
+        patch("app.runtime.supervisor.Supervisor.load", new=AsyncMock()),
+        patch("app.runtime.supervisor.Supervisor.unload", new=sup_unload),
+        patch("app.runtime.supervisor.Supervisor.is_running", return_value=True),
+        patch("app.models.routes_api.wait_for_health", new=fake_health),
+        patch("app.models.routes_api.watch_load", new=fake_watch_load),
+    ):
+        r = client.post(f"/api/models/{model_id}/load", headers={**auth, **csrf_header(client)})
+        assert r.status_code == 202
+        wait_until(lambda: sup_unload.call_count >= 1, what="sup.unload(force=True) to be called")
+
+    def _failed_row():
+        with sqlite3.connect(db_path) as db:
+            row = db.execute(
+                "SELECT status, last_error FROM models WHERE id = ?", (model_id,)
+            ).fetchone()
+        return row if row and row[0] == "failed" else None
+
+    row = wait_until(_failed_row, what=f"the {model_id} row to reach 'failed' on give-up")
+    assert row[0] == "failed"
+    return row[1], sup_unload
+
+
+def test_give_up_appends_engine_log_tail(tmp_data_dir, client):
+    """2026-10-21 (P5 follow-up) — a stall give-up must write the engine-log
+    diagnosis (or a bounded raw tail when no pattern is recognised) into
+    last_error, like the health-timeout path, so one last_error read tells the
+    operator WHY the engine stalled. The red-first leg: an unrecognised log
+    with a distinctive last line -> that line appears in last_error after the
+    give-up (RED today: last_error is only the stall reason). Bounding, the
+    recognised-pattern arm, and the no-log arm each have their own test
+    below; (e) the MLX traceback leg registers MlxBackend for its duration
+    because the linux profile does not."""
+    early = "EARLY-MARKER-XYZ-000"
+    filler = "\n".join(
+        f"INFO loading weights shard {i:03d} of 200 padding-padding-padding" for i in range(120)
+    )
+    distinct = "Capturing CUDA graph shapes:  45%|####---- | 450/1000 [00:42<00:51, 10.7it/s]"
+    last_error, _ = _run_give_up_load(
+        tmp_data_dir,
+        client,
+        model_id="tail-model",
+        log_text=early + "\n" + filler + "\n" + distinct + "\n",
+    )
+    # The stall reason + give-up phrasing are still there...
+    assert "no progress for 20 min" in last_error
+    assert "gave up; engine stopped and GPUs released" in last_error
+    # ...and the distinctive last line of the unrecognised log is appended,
+    # so the stall is self-diagnosing from last_error alone.
+    assert distinct in last_error
+
+
+def test_give_up_appends_bounded_tail_only(tmp_data_dir, client):
+    """Leg (a)+(b): unrecognised log -> the distinctive last line is in
+    last_error AND the stall reason is kept, but an early marker 120+ filler
+    lines back is cut off by the tail limit (same shape as the #274 test)."""
+    early = "EARLY-MARKER-XYZ-000"
+    filler = "\n".join(
+        f"INFO loading weights shard {i:03d} of 200 padding-padding-padding" for i in range(120)
+    )
+    distinct = "Capturing CUDA graph shapes:  45%|####---- | 450/1000 [00:42<00:51, 10.7it/s]"
+    last_error, _ = _run_give_up_load(
+        tmp_data_dir,
+        client,
+        model_id="tail-model",
+        log_text=early + "\n" + filler + "\n" + distinct + "\n",
+    )
+    # (a) the stall reason + give-up phrasing are still there...
+    assert "no progress for 20 min" in last_error
+    assert "gave up; engine stopped and GPUs released" in last_error
+    # ...and the unrecognised tail is appended, so the stall is self-diagnosing.
+    assert distinct in last_error
+    assert "--- engine log tail (no recognised failure pattern) ---" in last_error
+    # (b) bounded: the early part of the log is cut off by the tail limit.
+    assert early not in last_error
+
+
+def test_give_up_recognised_log_appends_diagnosis_only(tmp_data_dir, client):
+    """Leg (c): the SAME give-up path with a log tail that DOES match a known
+    pattern produces the pattern diagnosis appended, and the raw-tail header is
+    NOT present (the tail is not appended when a pattern already explains it)."""
+    log_text = (
+        "RAW-TAIL-SENTINEL-999 must never appear in a pattern-matched diagnosis\n"
+        "ValueError: To serve at least one request with the models's max seq "
+        "len (262144), (16.0 GiB KV cache is needed, which is larger than the "
+        "available KV cache memory (9.6 GiB). Based on the available memory, "
+        "the estimated maximum model length is 157216. Try increasing "
+        "`gpu_memory_utilization` or decreasing `max_model_len`.\n"
+    )
+    last_error, _ = _run_give_up_load(tmp_data_dir, client, model_id="kv-model", log_text=log_text)
+    # The stall reason + give-up phrasing are still there...
+    assert "no progress for 20 min" in last_error
+    assert "gave up; engine stopped and GPUs released" in last_error
+    # ...and the pattern diagnosis was appended, with NO raw tail.
+    assert "157216" in last_error
+    assert "max_model_len" in last_error
+    assert "--- engine log tail (no recognised failure pattern) ---" not in last_error
+    assert "RAW-TAIL-SENTINEL-999" not in last_error
+
+
+def test_give_up_no_log_file_keeps_exact_string(tmp_data_dir, client):
+    """Leg (d): no engine log file -> last_error is EXACTLY today's string,
+    byte-for-byte (no appended tail, no diagnosis)."""
+    last_error, _ = _run_give_up_load(tmp_data_dir, client, model_id="no-log-model", log_text=None)
+    assert last_error == "no progress for 20 min — gave up; engine stopped and GPUs released"
+
+
+def test_give_up_mlx_traceback_appends_mlx_diagnosis(tmp_data_dir, client, monkeypatch):
+    """Leg (e): an MLX row's give-up routes its engine log through the MLX
+    grammar (the row's backend, not the profile default). The linux profile
+    does not register ``mlx``, so the test registers the real MlxBackend for
+    its duration; the route itself is unchanged. A Python traceback ending in
+    a ValueError -> last_error carries diagnose_mlx_log's message for that
+    exact text, and no raw-tail header."""
+    from app.runtime.backends import registry
+    from app.runtime.backends.mlx import MlxBackend
+    from app.runtime.backends.mlx.diagnostics import diagnose_mlx_log
+
+    monkeypatch.setitem(registry._BACKENDS, "mlx", MlxBackend())
+    log_text = (
+        "INFO mlx_lm.server starting\n"
+        "Traceback (most recent call last):\n"
+        '  File "/opt/mlx_lm/server.py", line 42, in load\n'
+        "    raise ValueError('MLX-LEG-E unsupported model type qwen9')\n"
+        "ValueError: MLX-LEG-E unsupported model type qwen9\n"
+    )
+    expected = diagnose_mlx_log(log_text)
+    assert expected is not None
+    last_error, _ = _run_give_up_load(
+        tmp_data_dir, client, model_id="mlx-model", log_text=log_text, backend="mlx"
+    )
+    assert last_error == (
+        "no progress for 20 min — gave up; engine stopped and GPUs released\n" + expected.message
+    )
+    assert "--- engine log tail (no recognised failure pattern) ---" not in last_error
+
+
+def test_fatal_give_up_appends_diagnosis_and_tail(tmp_data_dir, client, monkeypatch):
+    """BACKLOG-macos P5 fail-fast: a ``fatal`` give-up (the watcher saw
+    mlx_lm.server's own fatal-load line) writes the reason, the MLX diagnosis
+    AND the bounded raw tail -- the engine's traceback is the evidence the
+    early kill was warranted -- and still force-unloads. Captured M1 log."""
+    from app.runtime.backends import registry
+    from app.runtime.backends.mlx import MlxBackend
+    from app.runtime.backends.mlx.diagnostics import diagnose_mlx_log, fatal_mlx_load_line
+    from app.runtime.load_progress.policy import Verdict
+    from tests.unit.runtime.backends.mlx_load_failure_logs import (
+        CORRUPT_SAFETENSORS_FATAL,
+        CORRUPT_SAFETENSORS_LOG,
+    )
+
+    monkeypatch.setitem(registry._BACKENDS, "mlx", MlxBackend())
+    engine_words = fatal_mlx_load_line(CORRUPT_SAFETENSORS_FATAL)
+    reason = f"engine load failed and the engine will not recover ({engine_words})"
+    expected = diagnose_mlx_log(CORRUPT_SAFETENSORS_LOG)
+    assert expected is not None
+    last_error, sup_unload = _run_give_up_load(
+        tmp_data_dir,
+        client,
+        model_id="mlx-corrupt",
+        log_text=CORRUPT_SAFETENSORS_LOG,
+        backend="mlx",
+        verdict=Verdict(
+            state="give_up",
+            stalled_for_s=0.0,
+            give_up_at_s=4.0,
+            reason=reason,
+            hint=None,
+            fatal=True,
+        ),
+    )
+    head = f"{reason} — gave up; engine stopped and GPUs released\n{expected.message}\n"
+    assert last_error.startswith(head)
+    tail = last_error[len(head) :]
+    assert tail.startswith("--- engine log tail ---\n")
+    assert "RuntimeError: [load_safetensors] Invalid json header length" in tail
+    assert '"GET /health HTTP/1.1" 503' in tail
+    assert len(tail) <= len("--- engine log tail ---\n") + 1 + 1500
+    assert sup_unload.call_args.kwargs["force"] is True
+
+
+def test_fatal_give_up_without_log_keeps_exact_string(tmp_data_dir, client):
+    """No engine log: a fatal give-up adds nothing after the give-up string."""
+    from app.runtime.load_progress.policy import Verdict
+
+    last_error, _ = _run_give_up_load(
+        tmp_data_dir,
+        client,
+        model_id="fatal-no-log",
+        log_text=None,
+        verdict=Verdict(
+            state="give_up",
+            stalled_for_s=0.0,
+            give_up_at_s=1.0,
+            reason="engine load failed and the engine will not recover (x)",
+            hint=None,
+            fatal=True,
+        ),
+    )
+    assert last_error == (
+        "engine load failed and the engine will not recover (x)"
+        " — gave up; engine stopped and GPUs released"
+    )
 
 
 def test_health_timeout_path_still_leaves_engine_running(tmp_data_dir, client):

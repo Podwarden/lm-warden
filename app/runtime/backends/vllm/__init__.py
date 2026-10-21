@@ -11,7 +11,9 @@ behaviour question still lands you in the file that explains it.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _dist_version
+from typing import TYPE_CHECKING, Any
 
 from app.runtime.backends import BackendCapabilities, LaunchPlan
 from app.runtime.backends.vllm.args import build_vllm_args, engine_bind_host
@@ -24,6 +26,7 @@ from app.runtime.backends.vllm.env import (
 from app.runtime.backends.vllm.metrics import read as read_vllm_metrics
 
 if TYPE_CHECKING:  # pragma: no cover - type-only, never imported at runtime
+    from app.runtime.backends.paths import ResolvedModelPaths
     from app.runtime.engine import EngineDriver
 
 # argv[0] and its subcommand. This pair used to be hard-coded inside
@@ -70,6 +73,19 @@ CAPABILITIES = BackendCapabilities(
 
 class VllmBackend:
     capabilities = CAPABILITIES
+
+    def version_string(self) -> str | None:
+        """The vLLM version in THIS install, from its package metadata.
+
+        ``importlib.metadata`` reads the installed ``vllm`` dist's version
+        without importing the engine (which would drag in torch) -- the same
+        cheap, failure-free metadata read routes_engine.py made at import time.
+        ``None`` where vLLM is not installed (dev shell, the test suite).
+        """
+        try:
+            return _dist_version("vllm")
+        except PackageNotFoundError:
+            return None
 
     def version_pin_available(self, driver: EngineDriver | None) -> bool:
         """Can ``driver`` actually honour a per-model vLLM version pin?
@@ -160,6 +176,23 @@ class VllmBackend:
             port=port,
             gpu_indices=list(model.gpu_indices),
         )
+
+    def engine_model_id(self, model: Any, resolved: ResolvedModelPaths | None = None) -> str:
+        """The id this engine serves: what the proxy must put in ``body['model']``.
+
+        vLLM serves the row's ``served_model_name`` -- the exact string
+        ``plan()`` passes to ``--served-model-name`` (see
+        ``app/runtime/backends/vllm/args.py``) -- so a request body carrying any
+        other model id would reach the engine as an unknown name. Pure: no I/O,
+        and ``resolved`` is accepted and ignored (vLLM takes a repo id and does
+        its own cache lookup, exactly as ``plan()`` does).
+
+        Not yet a ``Backend`` Protocol member: the answer is per row, and the
+        member is added only once MLX has it too -- adding it first would make
+        ``isinstance(x, Backend)`` false for every backend that lacks it.
+        """
+        served: str = model.served_model_name
+        return served
 
     def health_url(self, host: str, port: int) -> str:
         return f"http://{host}:{port}{self.capabilities.health_path}"

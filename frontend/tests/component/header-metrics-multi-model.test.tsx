@@ -256,8 +256,8 @@ describe('HeaderMetrics links', () => {
     expect(screen.getByTestId('header-metrics-gpu-link').getAttribute('href')).toBe('/stats');
     const chips = screen.getAllByTestId('header-metrics-model-chip');
     expect(chips.map((c) => c.getAttribute('href'))).toEqual([
-      '/models/id-qwen3.8-27b',
-      '/models/id-llama-3.1-8b',
+      '/models/detail?id=id-qwen3.8-27b',
+      '/models/detail?id=id-llama-3.1-8b',
     ]);
   });
 });

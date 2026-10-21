@@ -222,7 +222,7 @@ describe('state strip (plan §4.1)', () => {
     const alert = await within(strip()).findByRole('alert');
     await waitFor(() => expect(alert).toHaveTextContent('qwen is failing — its breaker is open.'));
     expect(alert).toHaveTextContent('are going to Anthropic instead (the rule falls back)');
-    expect(within(alert).getByRole('link', { name: 'Open qwen' })).toHaveAttribute('href', '/models/m1');
+    expect(within(alert).getByRole('link', { name: 'Open qwen' })).toHaveAttribute('href', '/models/detail?id=m1');
     expect(within(alert).getByRole('link', { name: 'See recent fallbacks' })).toHaveAttribute('href', FALLBACKS_HREF);
     fireEvent.click(within(alert).getByRole('button', { name: 'Pause this rule' }));
     await waitFor(() => expect(callsTo(fn, 'PATCH /api/router/rules/ra')).toHaveLength(1));

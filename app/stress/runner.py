@@ -1714,6 +1714,7 @@ class WardenEngineControl:
         await _restart(self._settings, self._app_state, self._row.id, overrides)
 
     async def wait_for_health(self) -> bool:
+        from app.runtime.backends import registry  # noqa: PLC0415
         from app.runtime.load_progress.policy import StallPolicy  # noqa: PLC0415
         from app.runtime.supervisor import wait_for_health  # noqa: PLC0415
 
@@ -1729,6 +1730,16 @@ class WardenEngineControl:
         # is the same value ``start_engine`` passes as ``timeout_s``.
         policy = StallPolicy.from_settings(self._settings)
         sup = self._app_state.supervisor
+        # Poll the backend's own health path, not a hardcoded ``/health``:
+        # a backend whose readiness endpoint lives elsewhere (the Metal
+        # design's ``/v1/ready``) would otherwise get a re-check that polls
+        # a URL its engine never serves. ``start_engine`` resolves it the
+        # same way and falls back to ``/health`` when the registry cannot
+        # answer (app/models/routes_api.py).
+        try:
+            health_path = registry.get(self._row.backend).capabilities.health_path
+        except Exception:  # noqa: BLE001 — registry failure is non-fatal here
+            health_path = "/health"
         return await wait_for_health(
             port=target.port,
             host=target.host,
@@ -1736,6 +1747,7 @@ class WardenEngineControl:
             # A give-up unloads the engine: stop polling its dead port at once
             # instead of running out the cap (a "won't load" answer, not a 2 h wait).
             alive=lambda: sup.is_running(self._row.id),
+            path=health_path,
         )
 
     async def warmup(self) -> bool:

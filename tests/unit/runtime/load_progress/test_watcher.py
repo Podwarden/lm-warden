@@ -561,3 +561,126 @@ async def test_watcher_feeds_log_lines_into_tracker(tmp_path: Path):
     assert progress is not None
     assert progress == (30, 66)
     assert on_give_up.await_count == 0
+
+
+# ---------------------------------------------------------------------------
+# MLX fail-fast (BACKLOG-macos P5): the engine's own fatal-load line
+# ---------------------------------------------------------------------------
+
+
+def _tracker_for(backend: str, started_at: float = 0.0) -> LoadTracker:
+    return LoadTracker(
+        model_id="m",
+        generation=1,
+        backend=backend,
+        started_at=started_at,
+        started_wall=datetime(2026, 1, 1, tzinfo=UTC),
+    )
+
+
+async def _run_fatal_case(backend: str, chunks: list[str], *, ticks: int = 4, current=True):
+    """Drive the watcher over ``chunks`` (one per tick) with flat vitals and a
+    policy whose give-up is hours away; return (verdicts given up with,
+    registry). Stops after ``ticks`` ticks if nothing gave up."""
+    clock = _Clock(start=100.0)
+    tracker = _tracker_for(backend, started_at=97.5)
+    registry = LoadProgressRegistry()
+    registry.start(tracker)
+    given: list[Verdict] = []
+    n = {"ticks": 0}
+
+    async def sample():
+        n["ticks"] += 1
+        clock.advance(1.0)
+        return _flat_vitals(clock.now)
+
+    def still_current() -> bool:
+        if n["ticks"] >= ticks:
+            return False  # end the run: superseded
+        return current
+
+    async def on_give_up(v: Verdict) -> None:
+        given.append(v)
+
+    await asyncio.wait_for(
+        watch_load(
+            tracker=tracker,
+            follower=_FakeFollower(chunks),
+            sample=sample,
+            policy=_policy(warn_s=3000.0, give_up_s=12000.0, max_s=72000.0),
+            still_current=still_current,
+            on_give_up=on_give_up,
+            registry=registry,
+            interval_s=0.0,
+            clock=clock,
+        ),
+        timeout=5.0,
+    )
+    return given, registry
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("case", ["empty_dir", "corrupt_safetensors", "unsupported_arch"])
+async def test_mlx_fatal_load_line_gives_up_on_that_tick(case):
+    """A captured mlx_lm.server load failure gives the load up on the tick the
+    fatal line arrives -- not after load_stall_timeout_s -- exactly once, with a
+    ``fatal`` verdict whose reason quotes the engine's own line."""
+    from tests.unit.runtime.backends.mlx_load_failure_logs import CAPTURED
+
+    log, fatal = CAPTURED[case]
+    engine_words = fatal[fatal.index("mlx_lm.server generation thread died:") :]
+    given, registry = await _run_fatal_case("mlx", ["Fetching 9 files: 100%\n", log, log], ticks=10)
+    assert len(given) == 1
+    v = given[0]
+    assert v.state == "give_up"
+    assert v.fatal is True
+    assert engine_words in (v.reason or "")
+    # Seconds since load start at the tick it fired (clock 100, started 97.5):
+    # the first tick read only the "Fetching" chunk, the second read the log.
+    assert v.give_up_at_s == pytest.approx(3.5)
+    assert registry.verdict("m") == v
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("backend", ["vllm", "llamacpp"])
+async def test_fatal_line_is_ignored_for_other_backends(backend):
+    """Scoped to MLX: the same text in a vLLM or llama.cpp row's log does not
+    give the load up (their engines exit on a failed load; the stall policy and
+    the alive check own them, unchanged)."""
+    from tests.unit.runtime.backends.mlx_load_failure_logs import CORRUPT_SAFETENSORS_LOG
+
+    given, _ = await _run_fatal_case(backend, [CORRUPT_SAFETENSORS_LOG], ticks=3)
+    assert given == []
+
+
+@pytest.mark.asyncio
+async def test_mlx_without_a_fatal_line_is_left_to_the_policy():
+    """An MLX log of a slow-but-healthy load (503 chatter, warnings, the bare
+    traceback/exception lines without the server's fatal anchor) is NOT given
+    up early."""
+    chatter = (
+        "UserWarning: mlx_lm.server is not recommended for production\n"
+        "2026-10-21 01:18:41,122 - INFO - Starting httpd at 127.0.0.1 on port 18951...\n"
+        '127.0.0.1 - - [21/Oct/2026 01:18:41] "GET /health HTTP/1.1" 503 -\n'
+        "RuntimeError: generation thread died\n"
+    )
+    given, _ = await _run_fatal_case("mlx", [chatter, chatter], ticks=3)
+    assert given == []
+
+
+@pytest.mark.asyncio
+async def test_mlx_fatal_line_does_not_fire_when_superseded():
+    """The generation re-check runs before on_give_up for the fatal path too."""
+    from tests.unit.runtime.backends.mlx_load_failure_logs import EMPTY_DIR_LOG
+
+    given, _ = await _run_fatal_case("mlx", [EMPTY_DIR_LOG], ticks=10, current=False)
+    assert given == []
+
+
+def test_policy_evaluate_never_sets_fatal():
+    from app.runtime.load_progress.policy import evaluate
+
+    t = _tracker_for("mlx")
+    v = evaluate(t, 99999.0, _policy(give_up_s=1.0, max_s=2.0, warn_s=0.5))
+    assert v.state == "give_up"
+    assert v.fatal is False

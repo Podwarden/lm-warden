@@ -40,6 +40,7 @@ def build_llamacpp_env(
     *,
     allowed_prefixes: tuple[str, ...] = ALLOWED_ENV_PREFIXES,
     allowed_exact: frozenset[str] = ALLOWED_ENV_EXACT,
+    profile: str = "linux",
 ) -> dict[str, str]:
     """Construct the env dict for a llama-server subprocess.
 
@@ -51,23 +52,52 @@ def build_llamacpp_env(
     emits -- app/runtime/backends/paths.py resolved the file before we got here.
     Handing a credential to a process with no use for it widens the blast radius
     of a compromise for nothing.
+
+    ``profile`` is the deployment profile (registry.backends_for sets it at
+    construction; never a module-level PROFILE read here -- the unit suite
+    must be able to build an apple env on a linux CI host). On "apple" the
+    CUDA device-selection env is dropped entirely: there is no CUDA device to
+    order or hide, and the GPU is the Mac's own unified memory. The
+    extra_env allowlist is unchanged by profile -- GGML_ is exactly where the
+    Metal knobs (GGML_METAL_*) live, and the hard-locked LLAMA_* keys are
+    refused the same way on both profiles.
     """
     if not model.gpu_indices:
         raise ValueError("gpu_indices must be non-empty")
 
     extra_env = getattr(model, "extra_env", {}) or {}
+    if profile == "apple":
+        # No CUDA on Apple silicon: no order to pin, no devices to expose, and
+        # a CUDA_MODULE_LOADING carried in extra_env would be an inert lie.
+        # The rest of the allowlist (GGML_*) is profile-independent.
+        allowed_exact = frozenset()
+
     filtered = filter_extra_env(extra_env, prefixes=allowed_prefixes, exact=allowed_exact)
 
-    env = {
-        # 2026-05-08, restated for a second engine. ggml enumerates CUDA devices
-        # in CUDA's order; without PCI_BUS_ID, NVML may reorder by SM count and
-        # gpu_indices stops meaning the cards the operator picked. bonus mixes an
-        # RTX A4000 (sm_86) with a Quadro RTX 5000 (sm_75), so this is live.
-        "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
-    }
+    env: dict[str, str] = {}
+    if profile != "apple":
+        env["CUDA_DEVICE_ORDER"] = (
+            # 2026-05-08, restated for a second engine. ggml enumerates CUDA devices
+            # in CUDA's order; without PCI_BUS_ID, NVML may reorder by SM count and
+            # gpu_indices stops meaning the cards the operator picked. bonus mixes an
+            # RTX A4000 (sm_86) with a Quadro RTX 5000 (sm_75), so this is live.
+            "PCI_BUS_ID"
+        )
     # Allowed extra_env first so the hard-set keys below always win.
     env.update(filtered)
 
-    env["CUDA_VISIBLE_DEVICES"] = ",".join(str(g) for g in model.gpu_indices)
-    env["PATH"] = "/usr/local/bin:/usr/bin:/bin"
+    if profile != "apple":
+        env["CUDA_VISIBLE_DEVICES"] = ",".join(str(g) for g in model.gpu_indices)
+        env["PATH"] = "/usr/local/bin:/usr/bin:/bin"
+    else:
+        # The Mac bundle ships llama-server next to the embedded interpreter
+        # (scripts/macos/bundle-llamacpp.sh: Contents/Resources/python/bin,
+        # beside mlx_lm.server), so the bare argv[0] resolves through the MLX
+        # backend's own hard-set PATH: dirname(sys.executable), /usr/bin, /bin.
+        # /usr/local/bin and /opt/homebrew/bin stay off it -- a llama-server
+        # there would be a user-supplied, unsigned engine (Metal design s3).
+        # Imported here, not at module top: the linux path never touches mlx.
+        from app.runtime.backends.mlx import ENGINE_PATH
+
+        env["PATH"] = ENGINE_PATH
     return env

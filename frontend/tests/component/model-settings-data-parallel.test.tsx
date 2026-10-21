@@ -2,21 +2,14 @@ import { Suspense } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, act } from '@testing-library/react';
 import useSWR, { SWRConfig } from 'swr';
-import ModelSettingsPage from '@/app/models/[id]/settings/page';
+import { ModelSettingsPage } from '@/components/models/model-settings-page';
 import { setAccessToken, setCsrfToken } from '@/lib/auth-fetch';
-
-function syncResolved<T>(value: T): Promise<T> {
-  const p = Promise.resolve(value) as Promise<T> & { status?: string; value?: T };
-  p.status = 'fulfilled';
-  p.value = value;
-  return p;
-}
 
 function renderPage(id: string) {
   return render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
       <Suspense fallback={<div>loading</div>}>
-        <ModelSettingsPage params={syncResolved({ id })} />
+        <ModelSettingsPage id={id} />
       </Suspense>
     </SWRConfig>,
   );
@@ -301,7 +294,7 @@ describe('ModelSettingsPage — data-parallel (#286)', () => {
       <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
         <Probe />
         <Suspense fallback={<div>loading</div>}>
-          <ModelSettingsPage params={syncResolved({ id: 'abc' })} />
+          <ModelSettingsPage id="abc" />
         </Suspense>
       </SWRConfig>,
     );

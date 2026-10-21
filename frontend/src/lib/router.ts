@@ -1,4 +1,5 @@
 import type { components } from "@/lib/api-types.generated";
+import { modelHref as modelDetailHref } from "@/lib/routes";
 
 export type RuleOut = components["schemas"]["RuleOut"];
 export type RuleIn = components["schemas"]["RuleIn"];
@@ -146,7 +147,7 @@ export function partsText(parts: StripPart[]): string {
 }
 
 export function modelHref(modelId: string): string {
-  return `/models/${encodeURIComponent(modelId)}`;
+  return modelDetailHref(modelId);
 }
 
 export function fmtInt(n: number): string {

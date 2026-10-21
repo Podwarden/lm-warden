@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { modelHref } from "@/lib/routes";
 
 /**
  * One line that answers "what can I change right now?" (plan
@@ -25,7 +26,7 @@ export function StatusStrip({
   conflict: boolean;
   modelId: string;
 }) {
-  const href = `/models/${encodeURIComponent(modelId)}`;
+  const href = modelHref(modelId);
   const variant = conflict ? "conflict" : status === "loaded" ? "loaded" : "unloaded";
   const linkClass =
     "whitespace-nowrap font-medium text-chat-fg underline underline-offset-[3px] rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chat-accent";

@@ -9,12 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, type SelectOption } from "@/components/ui/select";
 import type { ModelRow } from "@/components/models/model-card";
+import { modelSettingsHref } from "@/lib/routes";
 
 // ---------------------------------------------------------------------------
 // Model tab — navigation pivot, not a duplicate editor
 // ---------------------------------------------------------------------------
 //
-// The per-model settings page (frontend/src/app/models/[id]/settings/page.tsx)
+// The per-model settings page (frontend/src/components/models/model-settings-page.tsx)
 // is the canonical editor for any individual model. This tab exists to
 // answer the spec's question "where do I edit the currently-loaded model's
 // settings?" — by deep-linking to that page when a model is loaded, or by
@@ -141,7 +142,7 @@ export function ModelTab() {
               </div>
             </dl>
             <Link
-              href={`/models/${loadedFirst.id}/settings`}
+              href={modelSettingsHref(loadedFirst.id)}
               className="inline-block text-emerald-400 underline hover:text-emerald-300"
             >
               Edit settings →
@@ -201,7 +202,7 @@ export function ModelTab() {
                 />
                 {pickedId && (
                   <Link
-                    href={`/models/${pickedId}/settings`}
+                    href={modelSettingsHref(pickedId)}
                     className="inline-flex"
                   >
                     <Button size="sm">Edit settings</Button>

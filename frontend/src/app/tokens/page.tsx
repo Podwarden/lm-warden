@@ -57,7 +57,7 @@ const SIZE_OPTIONS = PAGE_SIZES.map((n) => ({ value: String(n), label: String(n)
 
 export default function TokensPage() {
   // useSearchParams opts the tree into client-side rendering; Suspense is
-  // required around it (same as tokens/[id]/page.tsx).
+  // required around it (same as tokens/detail/page.tsx).
   return (
     <Suspense fallback={null}>
       <TokensView />

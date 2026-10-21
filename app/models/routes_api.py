@@ -1767,6 +1767,60 @@ def _diagnose_or(settings, model_id: str, fallback: str, backend_name: str | Non
     return diag.message if diag is not None else fallback
 
 
+# A ``_diagnose_or`` fallback that can never equal a real diagnosis, so
+# ``_engine_failure_suffix`` can tell "no recognised pattern" (the sentinel
+# came back) from "here is the diagnosis" (a message string came back) by
+# identity without a second flag.
+_ENGINE_DIAGNOSIS_UNSET = "⟨engine-failure-sentinel⟩"
+
+
+def _engine_failure_suffix(settings: Settings, model_id: str, backend_name: str | None) -> str:
+    """The diagnosis (or bounded raw tail) a load failure appends after its
+    base ``last_error`` message.  Returns ``""`` (nothing to add), ``"\\n<diagnosis>"``
+    (a recognised failure pattern), or ``"\\n--- engine log tail (no recognised
+    failure pattern) ---\\n<tail>"``.
+
+    Read before the DB write and never raising: the give-up and load-failure
+    handlers must not mask the failure being recorded with a diagnostics
+    exception (``_diagnose_or`` already swallows).  The health-timeout path
+    keeps its own inline #274 form rather than calling this, so its existing
+    tests stay byte-stable.
+    """
+    diagnosed = _diagnose_or(settings, model_id, _ENGINE_DIAGNOSIS_UNSET, backend_name=backend_name)
+    if diagnosed is not _ENGINE_DIAGNOSIS_UNSET:
+        return "\n" + diagnosed
+    tail = _bounded_log_tail(_read_engine_log_tail(settings, model_id))
+    if tail:
+        return f"\n--- engine log tail (no recognised failure pattern) ---\n{tail}"
+    return ""
+
+
+def _fatal_load_suffix(settings: Settings, model_id: str, backend_name: str | None) -> str:
+    """What a FATAL give-up (the watcher saw the engine's own fatal-load line,
+    ``Verdict.fatal``) appends after its base ``last_error``: ``"\\n<diagnosis>"``
+    when the row's grammar recognises the log, then ``"\\n--- engine log tail
+    ---\\n<tail>"`` (same 1500-char bound as #274) whenever there is a tail.
+    Unlike ``_engine_failure_suffix`` the tail is kept even when a diagnosis
+    matched: a fail-fast fires within seconds of the error, so the tail IS the
+    engine's traceback, and it is what proves the early kill was warranted.
+    Never raises (``_diagnose_or`` swallows; the tail reader is defensive).
+    """
+    out = ""
+    diagnosed = _diagnose_or(settings, model_id, _ENGINE_DIAGNOSIS_UNSET, backend_name=backend_name)
+    if diagnosed is not _ENGINE_DIAGNOSIS_UNSET:
+        out += "\n" + diagnosed
+    tail = _bounded_log_tail(_read_engine_log_tail(settings, model_id))
+    if tail:
+        out += f"\n--- engine log tail ---\n{tail}"
+    return out
+
+
+def _tracker_backend(model: object) -> str:
+    """The backend a load tracker reports, D6: NULL or empty means the
+    profile default (vLLM on linux, MLX on apple), read at call time."""
+    return getattr(model, "backend", None) or registry.DEFAULT_BACKEND
+
+
 async def start_engine(
     settings: Settings,
     sup: Supervisor,
@@ -1817,7 +1871,7 @@ async def start_engine(
     _engine_image = _resolve_engine_image(model)
     _baked_ver = None
     if _engine_image is None:
-        _baked_ver = baked_engine_version(getattr(model, "backend", None) or "vllm")
+        _baked_ver = baked_engine_version(getattr(model, "backend", None))
     _fingerprint = load_fingerprint(model, _engine_image, baked_engine_version=_baked_ver)
 
     async def on_exit(rc: int) -> None:
@@ -1938,7 +1992,7 @@ async def start_engine(
         tracker = LoadTracker(
             model_id=model_id,
             generation=generation,
-            backend=backend_name or "vllm",
+            backend=_tracker_backend(model),
             started_at=time.monotonic(),
             started_wall=datetime.now(UTC),
         )
@@ -1981,7 +2035,23 @@ async def start_engine(
         async def on_give_up(verdict: Verdict) -> None:
             if sup.get_generation(model_id) != generation:
                 return
+            # Like the health-timeout path: surface WHY the engine stalled by
+            # reading the engine-log tail (recognised failure pattern, else a
+            # bounded raw slice) BEFORE the DB write, so one last_error read is
+            # self-diagnosing. _diagnose_or swallows diagnostics exceptions, so
+            # this never masks the give-up itself.
             last_error = f"{verdict.reason} — gave up; engine stopped and GPUs released"
+            if verdict.fatal:
+                # MLX fail-fast: the engine logged its own fatal load line and
+                # will never serve. Diagnosis AND the bounded tail, so the
+                # operator sees the engine's words, not only our reading of them.
+                last_error += _fatal_load_suffix(
+                    settings, model_id, getattr(model, "backend", None)
+                )
+            else:
+                last_error += _engine_failure_suffix(
+                    settings, model_id, getattr(model, "backend", None)
+                )
             async with open_db(settings.db_path) as db:
                 await ModelRepo(db).update_status(
                     model_id,

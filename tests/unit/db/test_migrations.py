@@ -80,8 +80,9 @@ async def test_migrations_idempotent(tmp_data_dir):
         # (request_history cache-observation columns) + 0047
         # (counters: merge duplicate NULL-token rows, partial unique index, #298) + 0048
         # (request_history.diverged_at_own) + 0049
-        # (model_load_history: per-step load durations for "usual" bars).
-        assert count == 48
+        # (model_load_history: per-step load durations for "usual" bars) + 0050
+        # (models.backend: historical NULL or empty made explicit vllm, Metal design s10).
+        assert count == 49
 
 
 async def test_migrations_create_all_v2_tables(tmp_data_dir):

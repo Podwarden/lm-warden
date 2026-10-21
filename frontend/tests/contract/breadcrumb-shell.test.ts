@@ -35,16 +35,16 @@ describe('breadcrumb strip in the app shell', () => {
   // links now name themselves through useBreadcrumb instead.
   it.each([
     'components/tokens/detail/token-header.tsx',
-    'app/tokens/[id]/page.tsx',
-    'app/models/[id]/page.tsx',
-    'app/models/[id]/settings/page.tsx',
+    'components/tokens/token-detail-page.tsx',
+    'components/models/model-detail-page.tsx',
+    'components/models/model-settings-page.tsx',
   ])('%s draws no breadcrumb of its own', (file) => {
     const src = read(file);
     expect(src).not.toContain('aria-label="Breadcrumb"');
     expect(src).not.toMatch(/← Back to/);
   });
 
-  it.each(['app/tokens/[id]/page.tsx', 'app/models/[id]/page.tsx', 'app/models/[id]/settings/page.tsx'])(
+  it.each(['components/tokens/token-detail-page.tsx', 'components/models/model-detail-page.tsx', 'components/models/model-settings-page.tsx'])(
     '%s calls useBreadcrumb',
     (file) => expect(read(file)).toMatch(/useBreadcrumb\(\{/),
   );

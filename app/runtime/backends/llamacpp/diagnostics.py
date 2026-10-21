@@ -98,12 +98,33 @@ _SHARD_RE = re.compile(
 _LOAD_FAIL_RE = re.compile(r"failed\s+to\s+load\s+model|error\s+loading\s+model", re.IGNORECASE)
 
 
-def diagnose_llamacpp_log(text: str) -> EngineDiagnosis | None:
-    """Best-effort diagnosis of a llama-server failure. None when unrecognised."""
+def diagnose_llamacpp_log(text: str, *, profile: str = "linux") -> EngineDiagnosis | None:
+    """Best-effort diagnosis of a llama-server failure. None when unrecognised.
+
+    ``profile`` is the deployment profile (registry.backends_for sets it at
+    construction). It changes ONE branch: on "apple" the OOM message is the
+    unified-memory answer, because "reduce n_gpu_layers" is false there -- on
+    Apple silicon the CPU and the GPU share the Mac's memory, so offloading
+    layers to the CPU runs them slower in the same memory. Every other rule,
+    and the rule order (the module docstring's load-bearing discipline), is
+    profile-independent.
+    """
     if not text or not text.strip():
         return None
 
     if _OOM_RE.search(text):
+        if profile == "apple":
+            return EngineDiagnosis(
+                message=(
+                    "llama.cpp ran out of memory placing the model. On Apple "
+                    "silicon the GPU and the CPU share the Mac's memory, so "
+                    "lowering n_gpu_layers saves nothing: it only runs layers "
+                    "on the CPU, slower, in the same memory. Pick a smaller "
+                    "quantisation, unload other models, or use a Mac with more "
+                    "memory."
+                ),
+                recommended_max_model_len=None,
+            )
         return EngineDiagnosis(
             message=(
                 "llama.cpp ran out of memory placing the model. The weights and "
