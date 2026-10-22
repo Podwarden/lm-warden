@@ -7,6 +7,17 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.21.4] — 2026-10-21
+
+### Added
+
+- **The website home page in ten more languages.** lmwarden.com's home page, top bar, footer and cookie banner are translated into French, German, Spanish, Brazilian Portuguese, Russian, Ukrainian, Polish, Simplified Chinese, Japanese and Hindi, at `/fr/`, `/de/`, `/es/`, `/pt-BR/`, `/ru/`, `/uk/`, `/pl/`, `/zh-CN/`, `/ja/` and `/hi/`. A first visit to `/` goes to the visitor's language from the browser's language list (which follows the OS and browser locale); crawlers are never redirected. A language switcher in the top bar lists English first and remembers the choice, and every translated page has an "English" link. Each language has its own canonical URL, `hreflang` links between all of them with English as `x-default`, and sitemap entries. The translations come from an English source catalog with a glossary and per-language style rules, and a check fails when the English changes and a translation goes stale. The other pages stay in English.
+
+### Changed
+
+- **The home page shows the cache-aware routing measurements.** The cache section now carries the drawing of four turns on four replicas, the prefix-cache hit-rate and time-to-first-byte charts, the full ramp table and the per-replica routing card, from the measured run on the four-card box.
+- **The coding-agent tiles and client pages no longer mark clients as tested or documented.**
+
 ## [v2026.10.21.3] — 2026-10-21
 
 ### Changed

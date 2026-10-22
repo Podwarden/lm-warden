@@ -1,0 +1,1138 @@
+{
+  "meta.title": {
+    "text": "LM Warden: आपके अपने GPU के लिए सेल्फ़-होस्टेड LLM गेटवे",
+    "source_hash": "8b40be948ef4"
+  },
+  "meta.description": {
+    "text": "Linux पर NVIDIA GPU या Apple silicon वाले Mac से vLLM, llama.cpp या MLX के साथ LLM चलाएँ: एक OpenAI-संगत /v1 एंडपॉइंट और हर ऐप के लिए एक कुंजी।",
+    "source_hash": "6cb271edae46"
+  },
+  "meta.og-image-alt": {
+    "text": "LM Warden: आपकी डेस्क के नीचे या रैक में लगे GPU पर एक OpenAI-संगत API, साथ में एक RTX A4000 का Stats पैनल, जिसमें ड्राइवर द्वारा बताया गया थ्रॉटल पॉइंट चिह्नित है",
+    "source_hash": "7f75ba3bcd9d"
+  },
+  "jsonld.feature-1": {
+    "text": "फ़िट प्रीव्यू: कुछ भी डाउनलोड होने से पहले Hugging Face रिपॉज़िटरी की हर फ़ाइल को आपके चुने गए GPU से मिलाकर जाँचा जाता है",
+    "source_hash": "615857f542c9"
+  },
+  "jsonld.feature-2": {
+    "text": "आपके अपने मॉडल पर कोडिंग एजेंट (Codex CLI, OpenCode, Aider, Grok CLI, Continue, Cline, Cursor, OpenAI और Anthropic SDK, Claude Code), आपके लिए कॉन्फ़िगर किए हुए",
+    "source_hash": "7b06e74713de"
+  },
+  "jsonld.feature-3": {
+    "text": "Claude Code राउटर: आपके चुने हुए Claude मॉडल की जगह एक लोकल मॉडल जवाब देता है, बाकी अनुरोध आपके अपने लॉगिन से Anthropic को जाते हैं",
+    "source_hash": "1f350726cef9"
+  },
+  "jsonld.feature-4": {
+    "text": "Stats पेज: GPU उपयोग, पावर, प्रति सेकंड टोकन, कैश हिस्सा, लेटेंसी और प्रीएम्प्शन, 1 घंटे से 7 दिन तक",
+    "source_hash": "42d6cdab3fb6"
+  },
+  "jsonld.feature-5": {
+    "text": "कैश-अवेयर रूटिंग, जो हर बातचीत को उसी रेप्लिका पर रखती है जिसके पास उसका प्रीफ़िक्स है",
+    "source_hash": "9791836d7920"
+  },
+  "jsonld.feature-6": {
+    "text": "एजेंट ट्यूनिंग: एक कोडिंग एजेंट API के ज़रिए आपके GPU के लिए मॉडल, इंजन और लेआउट चुनता है और साथ-साथ बेंचमार्क करता है",
+    "source_hash": "b2f04e38f9aa"
+  },
+  "jsonld.feature-7": {
+    "text": "स्ट्रीमिंग Markdown, विज़न मॉडल के लिए इमेज और सहेजी गई हिस्ट्री वाली चैट",
+    "source_hash": "0740507f9225"
+  },
+  "jsonld.feature-8": {
+    "text": "God mode: डीबगिंग के लिए एक कुंजी के प्रॉम्प्ट और जवाब लाइव स्ट्रीम होते हैं, डिफ़ॉल्ट रूप से बंद",
+    "source_hash": "301c375d8a2f"
+  },
+  "jsonld.feature-9": {
+    "text": "9 से 0 तक सख़्त प्राथमिकता और हर कुंजी का अलग उपयोग वाली API कुंजियाँ",
+    "source_hash": "89c7e3de3f80"
+  },
+  "jsonld.feature-10": {
+    "text": "16 GB वाले M1 से लेकर 8 x B300 NVSwitch सर्वर तक हर GPU का पैनल, जो संकरे PCIe लिंक, निष्क्रिय NVLink और ECC के अंतर बताता है",
+    "source_hash": "bf6f8b147d8a"
+  },
+  "chrome.copy.done": {
+    "text": "कॉपी हो गया",
+    "source_hash": "8d525e5f158b"
+  },
+  "chrome.copy.fail": {
+    "text": "Ctrl+C दबाएँ",
+    "source_hash": "e78ab3a91bf2"
+  },
+  "chrome.skip": {
+    "text": "सामग्री पर जाएँ",
+    "source_hash": "ac576a66d456"
+  },
+  "chrome.brand.aria-label": {
+    "text": "LM Warden होम",
+    "source_hash": "a007563c384d"
+  },
+  "chrome.nav.aria-label": {
+    "text": "मुख्य",
+    "source_hash": "efe10c80ec8a"
+  },
+  "chrome.nav.menu": {
+    "text": "मेनू",
+    "source_hash": "99af6606ff9d"
+  },
+  "chrome.nav.use-cases": {
+    "text": "उपयोग के उदाहरण",
+    "source_hash": "ff27a991e855"
+  },
+  "chrome.nav.features": {
+    "text": "सुविधाएँ",
+    "source_hash": "5697d03daef4"
+  },
+  "chrome.nav.coding-agents": {
+    "text": "कोडिंग एजेंट",
+    "source_hash": "707c65c28bca"
+  },
+  "chrome.nav.faq": {
+    "text": "सामान्य प्रश्न",
+    "source_hash": "dbc468a14b60"
+  },
+  "chrome.nav.github.title": {
+    "text": "GitHub पर सोर्स, Apache-2.0",
+    "source_hash": "d2833070219a"
+  },
+  "chrome.nav.install": {
+    "text": "डाउनलोड और इंस्टॉल",
+    "source_hash": "4120132397fd"
+  },
+  "chrome.nav.plat-linux": {
+    "text": "Linux + NVIDIA GPU",
+    "source_hash": "23d8d6d2be9c"
+  },
+  "chrome.nav.plat-mac": {
+    "text": "macOS, Apple silicon (बीटा)",
+    "source_hash": "d2364b229535"
+  },
+  "chrome.nav.plat-win": {
+    "text": "Windows (अगला)",
+    "source_hash": "e5a1bb1c3085"
+  },
+  "chrome.nav.plat-appliance": {
+    "text": "अप्लायंस (जल्द आ रहा है)",
+    "source_hash": "6a7fc115677a"
+  },
+  "chrome.nav.plat-upgrade": {
+    "text": "मौजूदा इंस्टॉल अपग्रेड करें",
+    "source_hash": "c1fe5f01dc6e"
+  },
+  "chrome.nav.signin": {
+    "text": "कंसोल में साइन इन",
+    "source_hash": "cb9ad9f4d662"
+  },
+  "chrome.lang.heading": {
+    "text": "भाषा",
+    "source_hash": "a4fe65264ef7"
+  },
+  "chrome.lang.label": {
+    "text": "भाषा:",
+    "source_hash": "8c16819a2bd4"
+  },
+  "chrome.docs.aria-label": {
+    "text": "दस्तावेज़",
+    "source_hash": "c205924de0fe"
+  },
+  "chrome.docs.full": {
+    "text": "दस्तावेज़",
+    "source_hash": "c205924de0fe"
+  },
+  "chrome.docs.short": {
+    "text": "डॉक्स",
+    "source_hash": "7af023c43013"
+  },
+  "chrome.install": {
+    "text": "इंस्टॉल करें",
+    "source_hash": "4120132397fd"
+  },
+  "home.hero.h1-1": {
+    "text": "आपके GPU, होस्टेड API की तरह सर्व किए हुए।",
+    "source_hash": "b24318c21e4f"
+  },
+  "home.hero.p-1": {
+    "text": "LM Warden आपके अपने हार्डवेयर पर vLLM, llama.cpp या MLX चलाता है और उनके आगे एक OpenAI-संगत पोर्ट रखता है: हर ऐप के लिए एक कुंजी, हर कुंजी का उपयोग, और हर GPU के लिए एक लाइव पैनल। NVIDIA कार्ड वाली Linux मशीन पर, या Apple silicon वाले Mac पर।",
+    "source_hash": "e192caf6a5b3"
+  },
+  "home.hero.a-1": {
+    "text": "डाउनलोड और इंस्टॉल करें",
+    "source_hash": "4120132397fd"
+  },
+  "home.hero.a-2": {
+    "text": "देखें यह क्या दिखाता है",
+    "source_hash": "51b46bd0add6"
+  },
+  "home.hero.span-1": {
+    "text": "ओपन सोर्स, Apache-2.0",
+    "source_hash": "2a43a93eceec"
+  },
+  "home.hero.span-2": {
+    "text": "न अकाउंट, न टेलीमेट्री",
+    "source_hash": "035ccb7cad8a"
+  },
+  "home.hero.span-3": {
+    "text": "Linux + NVIDIA · macOS (बीटा) · Windows अगला",
+    "source_hash": "1f8168eb854e"
+  },
+  "home.hero.img-1.alt": {
+    "text": "एक व्यस्त LM Warden इंस्टेंस का Stats पेज: VRAM 64&#8239;GiB में से 59.4, GPU उपयोग 100%, पावर 548&#8239;W, और पिछले एक घंटे के GPU उपयोग, पावर खपत और प्रति मिनट टोकन के चार्ट",
+    "source_hash": "46cb2df1ab06"
+  },
+  "home.hero.div-1.aria-label": {
+    "text": "एक नज़र में",
+    "source_hash": "46b396c85919"
+  },
+  "home.hero.b-1": {
+    "text": "vLLM v0.32.0 और llama.cpp b11719",
+    "source_hash": "d0656dfa424f"
+  },
+  "home.hero.span-4": {
+    "text": "CUDA पर",
+    "source_hash": "6b06ee360144"
+  },
+  "home.hero.span-5": {
+    "text": "macOS · Apple सिलिकॉन",
+    "source_hash": "1b50b6d8401a"
+  },
+  "home.hero.b-2": {
+    "text": "MLX और llama.cpp",
+    "source_hash": "f2287a1beeab"
+  },
+  "home.hero.span-6": {
+    "text": "Metal पर",
+    "source_hash": "6a893fd85af2"
+  },
+  "home.hero.span-7": {
+    "text": "API",
+    "source_hash": "8d266d3e3abd"
+  },
+  "home.hero.b-3": {
+    "text": "OpenAI, Anthropic Messages और Responses",
+    "source_hash": "3aeff05d5bf6"
+  },
+  "home.hero.span-8": {
+    "text": "एक ही पोर्ट पर",
+    "source_hash": "05261121948c"
+  },
+  "home.hero.span-9": {
+    "text": "कोडिंग एजेंट",
+    "source_hash": "707c65c28bca"
+  },
+  "home.hero.b-4": {
+    "text": "Claude Code, Codex CLI, OpenCode और 7 अन्य",
+    "source_hash": "544b91f8227b"
+  },
+  "home.hero.span-10": {
+    "text": "आपके लिए कॉन्फ़िगर",
+    "source_hash": "48d1003061d4"
+  },
+  "home.uc.h2-1": {
+    "text": "लोग इसका उपयोग किसलिए करते हैं",
+    "source_hash": "a2bc7e06beef"
+  },
+  "home.use-cases.button-1.aria-label": {
+    "text": "पिछला उदाहरण",
+    "source_hash": "40a9d13608d2"
+  },
+  "home.use-cases.button-2.aria-label": {
+    "text": "अपने आप बदलना रोकें",
+    "source_hash": "f1c27427e687"
+  },
+  "home.use-cases.button-2.resume": {
+    "text": "अपने आप बदलना फिर शुरू करें",
+    "source_hash": "bb52c71e6d3b"
+  },
+  "home.use-cases.button-3.aria-label": {
+    "text": "अगला उदाहरण",
+    "source_hash": "9220dc6514fb"
+  },
+  "home.use-cases.li-1.aria-label": {
+    "text": "10 में से 1",
+    "source_hash": "b54457342c7d"
+  },
+  "home.use-cases.h3-1": {
+    "text": "क्या यह मॉडल मेरे GPU में आएगा?",
+    "source_hash": "631429e459b2"
+  },
+  "home.use-cases.p-1": {
+    "text": "Hugging Face रिपॉज़िटरी पेस्ट करें; कुछ भी डाउनलोड होने से पहले हर फ़ाइल को आपके चुने गए कार्ड के हिसाब से फ़ैसला मिलता है।",
+    "source_hash": "7dd1bdcba1fd"
+  },
+  "home.use-cases.span-1": {
+    "text": "फ़िट प्रीव्यू देखें",
+    "source_hash": "3bf0e7fd520d"
+  },
+  "home.use-cases.li-2.aria-label": {
+    "text": "10 में से 2",
+    "source_hash": "264c35a47f15"
+  },
+  "home.use-cases.h3-2": {
+    "text": "अपने कोडिंग एजेंट को अपने ही GPU पर चलाएँ।",
+    "source_hash": "b01cff25d51f"
+  },
+  "home.use-cases.p-2": {
+    "text": "Codex CLI, OpenCode, Aider, Grok CLI, Continue, Cline, Cursor और OpenAI SDK आपके मॉडल पर चलते हैं। Claude Code और Anthropic SDK आपकी Claude सदस्यता भी बनाए रख सकते हैं और रोज़मर्रा की कॉल आपके GPU पर भेज सकते हैं।",
+    "source_hash": "022970d73828"
+  },
+  "home.use-cases.span-2": {
+    "text": "कोडिंग एजेंट देखें",
+    "source_hash": "19dc2417e144"
+  },
+  "home.use-cases.li-3.aria-label": {
+    "text": "10 में से 3",
+    "source_hash": "24607ac1e731"
+  },
+  "home.use-cases.h3-3": {
+    "text": "आपके GPU काम कर रहे हैं या इंतज़ार?",
+    "source_hash": "02e82cfefb89"
+  },
+  "home.use-cases.p-3": {
+    "text": "उपयोग, प्रति सेकंड टोकन, कैश हिस्सा, लेटेंसी, प्रीएम्प्शन और पावर, सब एक ही Stats पेज पर, 1&#8239;h से 7&#8239;d तक।",
+    "source_hash": "ffc4dde74878"
+  },
+  "home.use-cases.span-3": {
+    "text": "Stats पेज देखें",
+    "source_hash": "4df7d5c583ae"
+  },
+  "home.use-cases.li-4.aria-label": {
+    "text": "10 में से 4",
+    "source_hash": "6f3c824e9ec3"
+  },
+  "home.use-cases.h3-4": {
+    "text": "एजेंट के टर्न जो कैश का दोबारा उपयोग करते हैं।",
+    "source_hash": "fd528e59f30f"
+  },
+  "home.use-cases.p-4": {
+    "text": "हर बातचीत अपनी रेप्लिका पर ही रहती है। मापा गया: कैश हिट 56 → 86%, पहले बाइट तक का मीडियन समय 2.05 → 0.38&#8239;s।",
+    "source_hash": "3fd6f50887b9"
+  },
+  "home.use-cases.span-4": {
+    "text": "माप देखें",
+    "source_hash": "91753d838ca4"
+  },
+  "home.use-cases.li-5.aria-label": {
+    "text": "10 में से 5",
+    "source_hash": "4ff9c7d25432"
+  },
+  "home.use-cases.h3-5": {
+    "text": "जिस AI के लिए आप पहले से भुगतान करते हैं, उसी से अपने GPU ट्यून करवाएँ।",
+    "source_hash": "c3ae8600a083"
+  },
+  "home.use-cases.p-5": {
+    "text": "Claude Code, Codex या कोई और एजेंट आपके कार्ड की जाँच करता है, फ़िट होने वाले मॉडल छाँटता है, लेआउट लोड करता है, आपके अपने प्रॉम्प्ट पर बेंचमार्क करता है, बदलाव करता है और सबसे अच्छे को लोड रहने देता है। पेस्ट करने के लिए चार प्रॉम्प्ट।",
+    "source_hash": "bbfa0ef15601"
+  },
+  "home.use-cases.span-5": {
+    "text": "लूप और प्रॉम्प्ट देखें",
+    "source_hash": "ad84f405f980"
+  },
+  "home.use-cases.li-6.aria-label": {
+    "text": "10 में से 6",
+    "source_hash": "9f1b26eea525"
+  },
+  "home.use-cases.h3-6": {
+    "text": "अपने मॉडल से वहीं चैट करें।",
+    "source_hash": "bcd86e5acf2b"
+  },
+  "home.use-cases.p-6": {
+    "text": "स्ट्रीमिंग Markdown, कोड और गणित; विज़न मॉडल के लिए इमेज; हर चैट की अलग सेटिंग; सहेजी गई हिस्ट्री। Mac पर भी वही विंडो।",
+    "source_hash": "8ab616f9c47d"
+  },
+  "home.use-cases.span-6": {
+    "text": "चैट देखें",
+    "source_hash": "6fd76cfcf4f3"
+  },
+  "home.use-cases.li-7.aria-label": {
+    "text": "10 में से 7",
+    "source_hash": "2991e046c7d6"
+  },
+  "home.use-cases.h3-7": {
+    "text": "ठीक-ठीक देखें कि मॉडल ने क्या देखा और क्या कहा।",
+    "source_hash": "175c055be16a"
+  },
+  "home.use-cases.p-7": {
+    "text": "God mode डीबगिंग के लिए एक कुंजी के प्रॉम्प्ट और जवाब लाइव स्ट्रीम करता है। डिफ़ॉल्ट रूप से बंद, सिर्फ़ मेमोरी में, रीस्टार्ट पर मिट जाता है।",
+    "source_hash": "12446d78110e"
+  },
+  "home.use-cases.span-7": {
+    "text": "God mode देखें",
+    "source_hash": "eca4d500a3da"
+  },
+  "home.use-cases.li-8.aria-label": {
+    "text": "10 में से 8",
+    "source_hash": "1170fb3f9b1b"
+  },
+  "home.use-cases.h3-8": {
+    "text": "एक GPU मशीन, जिसे आपकी टीम, आपका परिवार और आपके एजेंट साझा करें।",
+    "source_hash": "a04e398227ac"
+  },
+  "home.use-cases.p-8": {
+    "text": "जितनी चाहें उतनी कुंजियाँ, हर एक की 9 से 0 तक सख़्त प्राथमिकता और अपना उपयोग पेज: ज़रूरी एजेंट को पहले जवाब मिलता है, बाकी सबको जो बचता है वह मिलता है, और आप देख सकते हैं कि मशीन किसने और कैसे इस्तेमाल की।",
+    "source_hash": "3acf884af623"
+  },
+  "home.use-cases.span-8": {
+    "text": "कुंजियाँ और उपयोग देखें",
+    "source_hash": "bb574d2be60e"
+  },
+  "home.use-cases.li-9.aria-label": {
+    "text": "10 में से 9",
+    "source_hash": "7323df202723"
+  },
+  "home.use-cases.h3-9": {
+    "text": "आपका हार्डवेयर, ईमानदारी से: एक Mac से आठ B300 तक।",
+    "source_hash": "3f3225bbc711"
+  },
+  "home.use-cases.p-9": {
+    "text": "16&#8239;GB वाले M1, दो बेमेल कार्ड या एक NVSwitch सर्वर के लिए एक ही कंसोल, और यह संकरे PCIe स्लॉट, निष्क्रिय NVLink और ECC के अंतर का नाम लेकर बताता है।",
+    "source_hash": "6ea6fbd502b6"
+  },
+  "home.use-cases.span-9": {
+    "text": "हार्डवेयर पेज देखें",
+    "source_hash": "c90b8269f1d8"
+  },
+  "home.use-cases.li-10.aria-label": {
+    "text": "10 में से 10",
+    "source_hash": "aef48b281a1a"
+  },
+  "home.use-cases.h3-10": {
+    "text": "जल्द आ रहा है: अप्लायंस। एक USB ड्राइव, GPU वाला एक चेसिस, एक ही काम।",
+    "source_hash": "525b6691292f"
+  },
+  "home.use-cases.p-10": {
+    "text": "एक छोटा, हल्का Linux जो सिर्फ़ LM Warden चलाता है, नेटवर्क और मॉडल स्टोरेज सेट करता है, और ओवर-द-एयर अपडेट होता है या पूरी तरह एयर-गैप्ड रहता है। एक सुरक्षित, समर्पित LLM सर्वर के लिए।",
+    "source_hash": "9ab2a4e163b1"
+  },
+  "home.use-cases.span-10": {
+    "text": "अप्लायंस के बारे में पढ़ें",
+    "source_hash": "4ad529d919d4"
+  },
+  "home.use-cases.dot": {
+    "text": "{m} में से उदाहरण {n}",
+    "source_hash": "04227694e710"
+  },
+  "home.use-cases.div-1.aria-label": {
+    "text": "उपयोग का उदाहरण चुनें",
+    "source_hash": "1bb48b8b99c4"
+  },
+  "home.install.h2-1": {
+    "text": "आप इसे कहाँ चलाएँगे?",
+    "source_hash": "249678c8eba2"
+  },
+  "home.install.p-1": {
+    "text": "वह मशीन चुनें जिस पर मॉडल चलेंगे, न कि वह जिस पर आप यह पढ़ रहे हैं; Mac से आने वाले लोग अक्सर Linux GPU सर्वर पर इंस्टॉल करते हैं। आपके लिए कुछ भी पहले से नहीं चुना जाता और आपके ब्राउज़र से कुछ भी अनुमान नहीं लगाया जाता।",
+    "source_hash": "0c505d2d282e"
+  },
+  "home.install.div-1.aria-label": {
+    "text": "प्लेटफ़ॉर्म",
+    "source_hash": "c78ffe195710"
+  },
+  "home.install.b-1": {
+    "text": "Linux + NVIDIA GPU",
+    "source_hash": "23d8d6d2be9c"
+  },
+  "home.install.small-1": {
+    "text": "Docker Compose · एक या कई कार्ड",
+    "source_hash": "9849f7c407b4"
+  },
+  "home.install.span-1": {
+    "text": "मुख्य रिलीज़",
+    "source_hash": "86f0f70c80d2"
+  },
+  "home.install.b-2": {
+    "text": "macOS, Apple सिलिकॉन",
+    "source_hash": "0d7d5470afac"
+  },
+  "home.install.small-2": {
+    "text": "मेनू-बार ऐप · M1 या नया",
+    "source_hash": "38cba54053bd"
+  },
+  "home.install.span-2": {
+    "text": "बीटा",
+    "source_hash": "f44e64e75f39"
+  },
+  "home.install.small-3": {
+    "text": "काम जारी · अभी कोई तारीख़ नहीं",
+    "source_hash": "1e554752120e"
+  },
+  "home.install.span-3": {
+    "text": "अगला",
+    "source_hash": "c6c1c9a9c854"
+  },
+  "home.install.b-3": {
+    "text": "अप्लायंस",
+    "source_hash": "98432690c966"
+  },
+  "home.install.small-4": {
+    "text": "एक USB ड्राइव जो GPU चेसिस को समर्पित LM Warden सर्वर बना देती है",
+    "source_hash": "dc3e1016c4ce"
+  },
+  "home.install.span-4": {
+    "text": "जल्द आ रहा है",
+    "source_hash": "62bfdf0b726c"
+  },
+  "home.install.p-2": {
+    "text": "इसके चरण देखने के लिए ऊपर एक प्लेटफ़ॉर्म चुनें, या <a href=\"#install-all\">चारों दिखाएँ</a>।",
+    "source_hash": "dd298d4e4a3b"
+  },
+  "home.p-linux.h3-1": {
+    "text": "GPU होस्ट पर एक कमांड।",
+    "source_hash": "e261f30eb5f7"
+  },
+  "home.p-linux.span-1": {
+    "text": "कॉपी करें",
+    "source_hash": "e21f935f11d7"
+  },
+  "home.p-linux.li-1": {
+    "text": "x86_64 होस्ट, Docker Compose v2.24+, NVIDIA Container Toolkit, और Turing या उससे नया कार्ड।",
+    "source_hash": "fc20ff032a73"
+  },
+  "home.p-linux.li-2": {
+    "text": "फिर <code>http://HOST:8080/ui/</code> खोलें, पहली बार का सेटअप विज़र्ड पूरा करें, एक मॉडल जोड़ें, एक कुंजी बनाएँ। आपका एंडपॉइंट <code>http://HOST:8080/v1</code> है।",
+    "source_hash": "33bfcbda3ad4"
+  },
+  "home.p-linux.li-3": {
+    "text": "एक मशीन में कई GPU: टेंसर पैरेलल, या हर कार्ड पर एक रेप्लिका के साथ कैश-अवेयर रूटिंग।",
+    "source_hash": "086f8aa8145e"
+  },
+  "home.p-linux.li-4": {
+    "text": "आज NVIDIA। <b>AMD ROCm और Intel GPU सपोर्ट जल्द आ रहा है</b>; अभी कोई तारीख़ नहीं। हमें बताएँ कि आप इसे किस पर चलाएँगे: <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon\" rel=\"noopener\">Radeon</a> · <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel\" rel=\"noopener\">Intel</a>।",
+    "source_hash": "f17d08f00954"
+  },
+  "home.p-linux.a-1": {
+    "text": "इंस्टॉल गाइड",
+    "source_hash": "e15a133068af"
+  },
+  "home.p-linux.a-2": {
+    "text": "ऑफ़लाइन / एयर-गैप्ड",
+    "source_hash": "16289eae755d"
+  },
+  "home.p-linux.a-3": {
+    "text": "सोर्स से",
+    "source_hash": "5be49bd81af3"
+  },
+  "home.p-linux.a-4": {
+    "text": "अपग्रेड करना",
+    "source_hash": "d8f1ee5bd44a"
+  },
+  "home.p-linux.img-1.alt": {
+    "text": "Models पेज पर एक मॉडल लोड हो रहा है, हर चरण के साथ उसका बीता हुआ और सामान्य समय",
+    "source_hash": "41eaa58c37a4"
+  },
+  "home.p-linux.figcaption-1": {
+    "text": "इंस्टॉल के बाद लोड होता एक मॉडल: हर चरण के साथ पिछले लोड से निकला सामान्य समय।",
+    "source_hash": "c6e56f837dad"
+  },
+  "home.p-mac.h3-1": {
+    "text": "एक मेनू-बार ऐप, बीटा में।",
+    "source_hash": "93a681a12162"
+  },
+  "home.p-mac.a-1": {
+    "text": "Mac के लिए डाउनलोड करें (बीटा)",
+    "source_hash": "95612856681e"
+  },
+  "home.p-mac.li-1": {
+    "text": "लगभग 360&nbsp;MB। Apple silicon (M1 या नया), macOS 14 या नया। <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">रिलीज़ नोट्स</a>।",
+    "source_hash": "eb664f8f7d3a"
+  },
+  "home.p-mac.li-2": {
+    "text": "इंजन: MLX और Metal के साथ बना llama.cpp। वही डैशबोर्ड और वही OpenAI API; vLLM नहीं, पावर रीडिंग नहीं।",
+    "source_hash": "5ff95c0fa25d"
+  },
+  "home.p-mac.li-3": {
+    "text": "<b>साफ़-साफ़ कहें तो बीटा:</b> ऐड-हॉक साइन किया गया है और नोटराइज़ नहीं है, इसलिए पहली बार खोलने पर macOS आपसे इसे गोपनीयता और सुरक्षा में अनुमति देने को कहता है; अपडेट के लिए नया डाउनलोड करना होता है। <a href=\"{{repo}}/blob/main/documents/INSTALL.md#beta-builds\" rel=\"noopener\">पहली बार खोलने के चरण</a>।",
+    "source_hash": "cf254395b87e"
+  },
+  "home.p-mac.li-4": {
+    "text": "जब तक आप <b>Share on Local Network</b> नहीं चुनते, यह सिर्फ़ 127.0.0.1 पर सर्व करता है।",
+    "source_hash": "013272b7df36"
+  },
+  "home.p-mac.li-5": {
+    "text": "<b>जल्द आ रहा है: mlx-rust-lm</b>, एक तीसरा इंजन। LM Warden टीम Apple के mlx-lm को Apple की आधिकारिक mlx-c बाइंडिंग पर Python से Rust में पोर्ट कर रही है; यह MLX और llama.cpp के साथ चलेगा और समय के साथ Python वाले mlx-lm इंजन की जगह लेगा, जो Python और उसकी लाइब्रेरी के साथ आज के डाउनलोड का ज़्यादातर हिस्सा है। अनौपचारिक, Apple से संबद्ध नहीं।",
+    "source_hash": "8121128f773c"
+  },
+  "home.p-mac.img-1.alt": {
+    "text": "Mac पर LM Warden का मेनू-बार मेनू: Running, सिर्फ़ इसी Mac पर 127.0.0.1:8080 पर सर्व हो रहा है, कोई मॉडल लोड नहीं, एक मेमोरी बार, Open Dashboard, Copy API Address, Share on Local Network",
+    "source_hash": "45b8070949bb"
+  },
+  "home.p-mac.figcaption-1": {
+    "text": "16&#8239;GB M1 पर बीटा का मेनू-बार मेनू।",
+    "source_hash": "785cc05a3c6d"
+  },
+  "home.p-win.h3-1": {
+    "text": "अगला Windows है। कोई तारीख़ नहीं है।",
+    "source_hash": "3e2f8c30fbd3"
+  },
+  "home.p-win.p-1": {
+    "text": "हम इसे अभी बना रहे हैं और जिस दिन बिल्ड तैयार होगा उसी दिन यहाँ रख देंगे, उससे पहले कोई साइन-अप फ़ॉर्म नहीं। तब तक, दो ईमानदार विकल्प:",
+    "source_hash": "7389debc8fd3"
+  },
+  "home.p-win.li-1": {
+    "text": "LM Warden को Linux GPU मशीन पर चलाएँ और Windows से उसका उपयोग करें: हर OpenAI क्लाइंट, Claude Code और Codex नेटवर्क पर कनेक्ट होते हैं।",
+    "source_hash": "1296afbbf883"
+  },
+  "home.p-win.li-2": {
+    "text": "पहले Windows बिल्ड की ख़बर पाने के लिए <a href=\"{{repo}}/releases\" rel=\"noopener\">GitHub पर रिलीज़ वॉच करें</a>।",
+    "source_hash": "9a92060cedbe"
+  },
+  "home.p-win.li-3": {
+    "text": "AMD Radeon और Intel GPU इसके बाद आएँगे; हमें बताएँ कि आप इसे किस पर चलाएँगे: <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon\" rel=\"noopener\">Radeon</a> · <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel\" rel=\"noopener\">Intel</a>।",
+    "source_hash": "d85b661eb8e6"
+  },
+  "home.p-appliance.h3-1": {
+    "text": "अप्लायंस: जल्द आ रहा है, कोई तारीख़ नहीं।",
+    "source_hash": "e45c0fc37b2d"
+  },
+  "home.p-appliance.p-1": {
+    "text": "LM Warden चलाने का चौथा तरीका, उस मशीन के लिए जिसे और कुछ नहीं करना है।",
+    "source_hash": "9ff6d73830b6"
+  },
+  "home.p-appliance.li-1": {
+    "text": "आप GPU वाले चेसिस में एक USB ड्राइव लगाते हैं। यह एक छोटा, हल्का Linux इंस्टॉल करती है जो एक ही काम करता है: LM Warden चलाना।",
+    "source_hash": "47cb2ad65dc7"
+  },
+  "home.p-appliance.li-2": {
+    "text": "यह आपके लिए नेटवर्क और मॉडल के स्टोरेज को कॉन्फ़िगर करता है।",
+    "source_hash": "a2a401f4b2c3"
+  },
+  "home.p-appliance.li-3": {
+    "text": "अपडेट ओवर-द-एयर आते हैं, या मशीन पूरी तरह एयर-गैप्ड काम करती है।",
+    "source_hash": "aa9d78e6b6fa"
+  },
+  "home.p-appliance.li-4": {
+    "text": "एक सुरक्षित, समर्पित LLM सर्वर के लिए बना: ऐसी टीम के लिए जो लॉक-डाउन मशीन चाहती है, या ऐसी जगह के लिए जहाँ से बाहर कोई रास्ता नहीं।",
+    "source_hash": "bbc615ea622b"
+  },
+  "home.p-appliance.p-2": {
+    "text": "इसके आने तक, ऊपर वाला Linux इंस्टॉल आपकी अपनी सेट की हुई होस्ट पर यही काम करता है, <a href=\"{{repo}}/blob/main/documents/INSTALL.md#a7-offline--air-gapped-install\" rel=\"noopener\">ऑफ़लाइन / एयर-गैप्ड इंस्टॉल</a> सहित। <a href=\"{{repo}}/releases\" rel=\"noopener\">GitHub पर रिलीज़ वॉच करें</a>।",
+    "source_hash": "177a91e7a6b4"
+  },
+  "home.p-appliance.div-1": {
+    "text": "अभी कोई तस्वीर नहीं: दिखाने के लिए न कोई प्रोडक्ट नाम है न हार्डवेयर, और हम कोई काल्पनिक चित्र नहीं बनाएँगे।",
+    "source_hash": "8a3fbd7c91f0"
+  },
+  "home.upgrade.p-1": {
+    "text": "<b>पहले से चला रहे हैं?</b> Linux अपनी जगह पर अपग्रेड होता है: नई इमेज पुल करें, रीस्टार्ट करें, डेटाबेस आगे माइग्रेट हो जाता है। <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">चरण</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">चेंजलॉग</a>।",
+    "source_hash": "5566c16483a2"
+  },
+  "home.upgrade.p-2": {
+    "text": "<b>पहले का नाम vLLM Warden।</b> इंस्टॉल डायरेक्टरी <code>/opt/vllm-warden</code> और कुंजी का प्रीफ़िक्स <code>vw_</code> पुराना नाम ही रखते हैं, इसलिए मौजूदा कुंजियाँ काम करती रहती हैं।",
+    "source_hash": "4ac584d252da"
+  },
+  "home.why.h2-1": {
+    "text": "सेल्फ़-होस्टिंग की आठ समस्याएँ हैं। यहाँ देखें कि हर एक का हल कैसा दिखता है।",
+    "source_hash": "65341f9c1497"
+  },
+  "home.why.p-1": {
+    "text": "एक अकेला इंजन एक पोर्ट पर एक मॉडल सर्व करता है। ये उसके आसपास के हिस्से हैं, और जहाँ हमारे अपने आँकड़े हैं वहाँ वे भी।",
+    "source_hash": "1668b0870987"
+  },
+  "home.why-fit.h3-1": {
+    "text": "क्या यह मॉडल मेरे GPU में आएगा?",
+    "source_hash": "631429e459b2"
+  },
+  "home.why-fit.p-1": {
+    "text": "Hugging Face रिपॉज़िटरी को <b>Add model</b> में पेस्ट करें। हर फ़ाइल आपके चुने गए कार्ड के हिसाब से फ़ैसले के साथ दिखती है: फ़िट होती है, गुंजाइश कम है, या फ़िट नहीं होगी। ज़्यादा कार्ड चुनें तो बजट जुड़ता जाता है। जब तक कुछ फ़िट न हो, कुछ भी डाउनलोड नहीं होता।",
+    "source_hash": "b0c5f5cbb2ee"
+  },
+  "home.why-fit.img-1.alt": {
+    "text": "वही 20.22&#8239;GiB फ़ाइल, चार GPU चुनने पर फ़िट के रूप में चिह्नित",
+    "source_hash": "906b74daf0f5"
+  },
+  "home.why-stats.h3-1": {
+    "text": "आपने GPU ख़रीदे। वे काम कर रहे हैं या इंतज़ार?",
+    "source_hash": "7cd5266e1f4e"
+  },
+  "home.why-stats.p-1": {
+    "text": "थ्रूपुट = कॉन्करेंसी × प्रॉम्प्ट की लंबाई × कैश का दोबारा उपयोग, और एक अकेला इंजन इनमें से कुछ भी एक साथ नहीं दिखाता। Stats पेज दिखाता है, 1&#8239;h से 7&#8239;d तक: VRAM, GPU उपयोग, पावर (Linux), प्रति सेकंड टोकन जिनमें प्रॉम्प्ट टोकन कैश्ड और कंप्यूटेड में बँटे हैं, p50/p95 लेटेंसी, प्रॉम्प्ट-कैश हिट दर, प्रीएम्प्शन, प्रति कुंजी और प्रति क्लाइंट IP अनुरोध। क़तार के साथ सपाट उपयोग का मतलब है “ज़्यादा कॉन्करेंसी”; कम कैश हिस्सा का मतलब है “सेशन पिन करें”।",
+    "source_hash": "05ae743f085e"
+  },
+  "home.why-stats.img-1.alt": {
+    "text": "प्रति सेकंड टोकन: प्रॉम्प्ट टोकन कैश्ड और कंप्यूटेड में बँटे हुए, नीचे कंप्लीशन टोकन",
+    "source_hash": "94483285e732"
+  },
+  "home.why-chat.h3-1": {
+    "text": "कुछ भी जोड़ने से पहले मॉडल से बात करें।",
+    "source_hash": "83831d46fb09"
+  },
+  "home.why-chat.p-1": {
+    "text": "चैट उसी विंडो में है जिसमें बाकी सब कुछ। हाइलाइट किए गए कोड और गणित के साथ स्ट्रीमिंग Markdown; विज़न मॉडल के लिए हर संदेश में आठ तक PNG, JPEG या WebP इमेज; हर चैट के लिए temperature, top-p, max tokens और सिस्टम प्रॉम्प्ट, डिफ़ॉल्ट के रूप में सहेजे जाते हैं; चैट सहेजी जाती हैं, उनके शीर्षक बनते हैं, और उन्हें फ़ोर्क किया जा सकता है। मॉडल जो टूल कॉल करता है वे दिखाई जाती हैं, ताकि किसी एजेंट के उस पर निर्भर होने से पहले आप टूल कॉलिंग जाँच सकें।",
+    "source_hash": "2e459441dc4f"
+  },
+  "home.why-chat.img-1.alt": {
+    "text": "Mac ऐप की डैशबोर्ड विंडो में चैट, qwen2.5-3b से स्ट्रीम हो रही है, हेडर में GPU 96%",
+    "source_hash": "da46ab93294b"
+  },
+  "home.why-god.h3-1": {
+    "text": "मॉडल ने असल में क्या देखा, और क्या कहा?",
+    "source_hash": "a49be301a05f"
+  },
+  "home.why-god.p-1": {
+    "text": "God mode, प्रॉम्प्ट डीबग करने के लिए: डिप्लॉयमेंट पर <code>VW_GODMODE_ENABLED</code> चालू होने पर हर कुंजी के पेज पर एक डॉक आता है जो उस कुंजी के प्रॉम्प्ट और कंप्लीशन लाइव स्ट्रीम करता है। डिफ़ॉल्ट रूप से बंद, और बंद होने पर मौजूद ही नहीं। एक सीमित इन-मेमोरी रिंग: डेटाबेस या डिस्क पर कुछ नहीं जाता, रीस्टार्ट पर मिट जाता है। एडमिन सेशन वाला कोई भी इसे खोल सकता है; warden में एक ही एडमिन भूमिका है, कोई और नहीं।",
+    "source_hash": "a29986e09f7a"
+  },
+  "home.why-god.img-1.alt": {
+    "text": "API कुंजी coding-agent का पेज, नीचे God mode डॉक खुला है: Live, 4 अनुरोध, 1 चल रहा है; 192.0.2.10 से एक qwen3.8-27b-fp8 अनुरोध स्ट्रीम हो रहा है, जिसमें एक अस्थिर stats टेस्ट के बारे में यूज़र का प्रॉम्प्ट और लिखे जाते समय Python फ़िक्स वाला मॉडल का जवाब दिख रहा है",
+    "source_hash": "171f585f7e38"
+  },
+  "home.cache.h2-1": {
+    "text": "एजेंट का हर टर्न पूरी बातचीत दोबारा पढ़ता है।",
+    "source_hash": "d876efcb94ab"
+  },
+  "home.why-cache.p-1": {
+    "text": "एजेंट हर टर्न में अपनी पूरी हिस्ट्री दोबारा भेजता है, इसलिए लंबी बातचीत का ज़्यादातर हिस्सा ऐसा प्रीफ़िक्स होता है जिसे इंजन पहले ही पढ़ चुका है। vLLM वह काम अपने प्रीफ़िक्स कैश में रखता है, लेकिन सिर्फ़ उसी रेप्लिका पर जिसने उसे किया, और उसका अपना बैलेंसर हर टर्न को उस रेप्लिका पर भेजता है जिसकी क़तार सबसे छोटी हो। LM Warden हर नई बातचीत को सबसे कम लोड वाली रेप्लिका पर रखता है और वहीं बनाए रखता है, उस सेशन id का उपयोग करके जो Claude Code पहले से भेजता है। यह किसी अनुरोध को तभी हटाता है जब वह रेप्लिका अपनी स्पिल सीमा पार कर ले।",
+    "source_hash": "03e36074672f"
+  },
+  "home.why-cache.figcaption-1": {
+    "text": "चार रेप्लिका वाले मॉडल पर एक बातचीत के चार टर्न। vLLM के बैलेंसर के साथ, हर टर्न को जिस भी रेप्लिका को वह मिला उस पर लगभग शुरू से प्रीफ़िल किया जाता है (उसका प्रॉम्प्ट कैश में पढ़ा जाता है)। LM Warden के साथ बातचीत रेप्लिका&nbsp;2 पर रहती है और सिर्फ़ नया टर्न प्रीफ़िल होता है। यह तंत्र का चित्र है, माप नहीं।",
+    "source_hash": "0f19c82ec35c"
+  },
+  "home.why-cache.p-2": {
+    "text": "हमारी चार-कार्ड मशीन पर मापा गया (4&nbsp;×&nbsp;RTX&nbsp;A4000, Qwen3-4B चार एक-कार्ड रेप्लिका के रूप में, सिंथेटिक Claude Code जैसे सेशन, एफ़िनिटी पहले बंद फिर चालू, लगातार): बातचीत पिन करने पर, 4 समवर्ती सेशन पर कैश से मिले प्रॉम्प्ट टोकन का हिस्सा 56 से बढ़कर 86% हो गया, और पहले बाइट तक का मीडियन समय 2.05 से घटकर 0.38&#8239;s हो गया। हमने जो भी चरण चलाए, हर चरण में प्रति मिनट आउटपुट टोकन ज़्यादा थे, और p95 पहले बाइट तक का समय (सबसे धीमे 5%) हर चरण में कम था। काम कर रही रेप्लिका की संख्या लगभग नहीं बदली (4 सेशन पर चार में से 2.71 बनाम 2.83): फ़ायदा कैश के दोबारा उपयोग से है, ज़्यादा कार्ड काम करने से नहीं।",
+    "source_hash": "9de8aa8aa7e1"
+  },
+  "home.why-cache.figcaption-2": {
+    "text": "हर चरण में प्रीफ़िक्स-कैश हिट दर: कैश से दिए गए प्रॉम्प्ट टोकन भाग माँगे गए प्रॉम्प्ट टोकन, चारों रेप्लिका मिलाकर, चरण के दौरान vLLM के अपने काउंटर में हुए बदलाव से। यह फ़ायदा तब तक रहता है जब तक गुंजाइश है, और 32 सेशन पर ख़त्म हो जाता है, जहाँ बातचीत स्पिल होती है।",
+    "source_hash": "ff04da43c87a"
+  },
+  "home.why-cache.figcaption-3": {
+    "text": "4 से 32 समवर्ती सेशन पर पहले बाइट तक का समय, मीडियन और p95, लॉग स्केल पर ताकि सेकंड से कम वाले चरण मिनट भर वाले चरणों के साथ पढ़े जा सकें। एफ़िनिटी के साथ मीडियन 16 सेशन तक काफ़ी कम है (4 पर 0.38 बनाम 2.05&#8239;s) और 24 व 32 पर ज़्यादा; p95 हर चरण में कम है, हालाँकि 16 पर अंतर (24.9 बनाम 26.2&#8239;s) हर पक्ष के एक ही रन के शोर के भीतर है। क्लाइंट पर, इंटरनेट के ज़रिए, पहले स्ट्रीम किए गए टोकन तक मापा गया।",
+    "source_hash": "0ec9d5ccf246"
+  },
+  "home.why-cache.h3-1": {
+    "text": "रैंप का हर चरण, एफ़िनिटी बंद → चालू",
+    "source_hash": "684608311775"
+  },
+  "home.why-cache.p-3": {
+    "text": "हमारी चार-कार्ड मशीन पर एक छोटे मॉडल के साथ मापा गया, पहले एफ़िनिटी बंद, फिर चालू, बीच में vLLM रीस्टार्ट किए बिना: दूसरा पक्ष गर्म प्रीफ़िक्स कैश के साथ शुरू हुआ, और दोनों पक्षों ने अपने प्रॉम्प्ट एक ही सीड से लिए। हर चरण 3&nbsp;मिनट चलता है, इसलिए उसमें सिर्फ़ 9 से 31 सेशन पूरे होते हैं और एक सेशन कम-ज़्यादा होने से प्रति घंटा सेशन 20 तक बदल जाते हैं; प्रति मिनट आउटपुट टोकन ज़्यादा स्थिर कॉलम है। आपका मॉडल, कार्ड और वर्कलोड अलग होंगे; मॉडल के पेज पर रेप्लिका कार्ड आपके लिए यही काउंटर दिखाता है।",
+    "source_hash": "4744b11be2ad"
+  },
+  "home.why-cache.img-1.alt": {
+    "text": "मॉडल के पेज पर Data-parallel routing कार्ड, जिसमें पिल Affinity on, Spill threshold 8 (auto), Sticky 100.0% और In flight 0 हैं। एक तालिका में रेप्लिका 0 से 3 के लिए इन-फ़्लाइट, स्टिकी (38, 21, 19 और 29), स्पिल होकर आए, क्लाइंट-पिन किए, चल रहे और प्रतीक्षारत, इस्तेमाल हुआ KV और प्रीफ़िक्स-कैश हिट दर (82.2, 86.0, 69.0 और 80.0 प्रतिशत) हैं, और एक पंक्ति बताती है कि काउंटर warden के शुरू होने से चल रहे हैं।",
+    "source_hash": "f1bc7fbd6399"
+  },
+  "home.why-cache.figcaption-4": {
+    "text": "मॉडल के पेज पर वही काउंटर: हर रेप्लिका की एक पंक्ति, जिसमें उसके पास मौजूद अनुरोध, कितनी बातचीत वहीं रहीं (<code>sticky</code>) या स्पिल होकर आईं, क्या चल रहा है और क्या प्रतीक्षा में है, इस्तेमाल में KV कैश और प्रीफ़िक्स-कैश हिट दर। 4&nbsp;अक्टूबर&nbsp;2026 को एफ़िनिटी चालू और स्पिल सीमा 8 (auto) के साथ रिकॉर्ड किया गया: sticky 100%, और रेप्लिका 0 से 3 पर प्रीफ़िक्स-कैश हिट दर 82.2, 86.0, 69.0 और 80.0%। यह कार्ड है, नतीजा नहीं।<span class=\"cache-hint\"> कार्ड बड़ा करने के लिए उस पर टैप करें।</span>",
+    "source_hash": "234d024e62df"
+  },
+  "home.why-cache.p-4": {
+    "text": "<b>यह कहाँ पीछे रहता है।</b> 24 और 32 सेशन वाले चरण चार छोटे कार्ड पर जानबूझकर डाला गया ओवरलोड हैं, और हर रेप्लिका पूरी तरह भरी है। आउटपुट फिर भी ज़्यादा है (प्रति मिनट 11,178 बनाम 9,048 और 16,638 बनाम 14,760 टोकन) और धीमी टेल काफ़ी छोटी है (p95 38 बनाम 59&#8239;s, और 39 बनाम 83&#8239;s), लेकिन एफ़िनिटी के साथ पहले बाइट तक का मीडियन समय ख़राब है: 24 सेशन पर 13.1 बनाम 5.1&#8239;s, 32 पर 27.7 बनाम 12.3&#8239;s। हमने इसकी वजह अलग से नहीं पहचानी है, और स्पिल सीमा 8 से घटाकर 4 करने से भी यह नहीं बदला।",
+    "source_hash": "2a468a4b1738"
+  },
+  "home.why-cache.p-5": {
+    "text": "<b>व्यस्त मशीन पर दोनों मापें।</b> फ़ायदा तब सबसे ज़्यादा होता है जब गुंजाइश हो; जो मशीन अपनी सीमा पर चलती है उसे दोनों सेटिंग मापनी चाहिए, और एफ़िनिटी हर मॉडल के लिए बंद की जा सकती है। रेप्लिका, और इसलिए यह रूटिंग, NVIDIA GPU वाले Linux इंस्टॉल का हिस्सा हैं; <a href=\"#p-mac\">Mac ऐप (बीटा)</a> में टेंसर या डेटा पैरेललिज़्म नहीं है।",
+    "source_hash": "c245f8292ac7"
+  },
+  "home.why-cache.a-1": {
+    "text": "पूरा तरीका: वर्कलोड, हार्नेस, स्पिल सीमा और सात GPU वाली एक मशीन जो तब से इसके साथ चल रही है →",
+    "source_hash": "cd240e4bc004"
+  },
+  "home.agents.h2-1": {
+    "text": "अपने कोडिंग एजेंट को अपने ही GPU पर चलाएँ।",
+    "source_hash": "b01cff25d51f"
+  },
+  "home.agents.p-1": {
+    "text": "दस हार्नेस एक बेस URL और एक कुंजी से कनेक्ट होते हैं; उनमें से दो कठिन काम के लिए पेड Claude सदस्यता भी बनाए रख सकते हैं।",
+    "source_hash": "26604da90050"
+  },
+  "home.agents.h3-1": {
+    "text": "पूरी तरह अपने मॉडल पर चलाएँ",
+    "source_hash": "a87ec3988e0d"
+  },
+  "home.agents.p-2": {
+    "text": "OpenAI-संगत API के ज़रिए। हर अनुरोध प्रति कुंजी और प्रति सेशन दिखता है।",
+    "source_hash": "eed13d192862"
+  },
+  "home.agents.span-1": {
+    "text": "कस्टम मॉडल प्रोवाइडर · Responses API",
+    "source_hash": "de3ecc4fe5d1"
+  },
+  "home.agents.span-2": {
+    "text": "OpenAI-संगत प्रोवाइडर · <code>/v1</code>",
+    "source_hash": "cc7b475640bb"
+  },
+  "home.agents.span-3": {
+    "text": "OpenAI-संगत प्रोवाइडर · <code>/v1</code>",
+    "source_hash": "cc7b475640bb"
+  },
+  "home.agents.span-4": {
+    "text": "अपनी कुंजी वाला मॉडल · <code>/v1</code>",
+    "source_hash": "5a0628b4b02d"
+  },
+  "home.agents.span-5": {
+    "text": "OpenAI प्रोवाइडर · एक सर्व किया गया मॉडल",
+    "source_hash": "8c2c30bf0764"
+  },
+  "home.agents.span-6": {
+    "text": "OpenAI Compatible प्रोवाइडर · सेटिंग स्क्रीन",
+    "source_hash": "09e5fe8af64a"
+  },
+  "home.agents.span-7": {
+    "text": "OpenAI बेस URL ओवरराइड · चैट",
+    "source_hash": "9ad204014fc0"
+  },
+  "home.agents.h3-2": {
+    "text": "अपनी Claude सदस्यता रखें, रोज़मर्रा की कॉल अपने GPU पर भेजें",
+    "source_hash": "cfeda056d931"
+  },
+  "home.agents.p-3": {
+    "text": "Claude Code और Anthropic SDK, राउटर के ज़रिए। एक नियम बताता है कि आपके GPU किन Claude मॉडल की जगह जवाब देंगे; बाकी सब आपके अपने लॉगिन या कुंजी से Anthropic को जाता है।",
+    "source_hash": "6995102b0af7"
+  },
+  "home.flow-t.title-1": {
+    "text": "Claude Code का अनुरोध कहाँ जाता है",
+    "source_hash": "d7db08f53325"
+  },
+  "home.flow-d.desc-1": {
+    "text": "एजेंट हर अनुरोध LM Warden के राउटर को भेजता है। claude-haiku मॉडल के अनुरोध आपके GPU पर एक मॉडल को जाते हैं और उसी मॉडल के रूप में जवाब पाते हैं। बाकी हर मॉडल, Opus समेत, आपके अपने लॉगिन से Anthropic को भेजा जाता है।",
+    "source_hash": "5c598ca9bc7c"
+  },
+  "home.flow-t2.title-1": {
+    "text": "Claude Code का अनुरोध कहाँ जाता है",
+    "source_hash": "d7db08f53325"
+  },
+  "home.flow-d2.desc-1": {
+    "text": "एजेंट हर अनुरोध LM Warden के राउटर को भेजता है। claude-haiku मॉडल के अनुरोध आपके GPU पर एक मॉडल को जाते हैं और उसी मॉडल के रूप में जवाब पाते हैं। बाकी हर मॉडल, Opus समेत, आपके अपने लॉगिन से Anthropic को भेजा जाता है।",
+    "source_hash": "5c598ca9bc7c"
+  },
+  "home.agents.b-1": {
+    "text": "1,981 अनुरोध",
+    "source_hash": "cdf3dc71b947"
+  },
+  "home.agents.span-8": {
+    "text": "लोकल रूप से जवाब दिए गए, रीस्टार्ट के बाद से इस मशीन के Claude Code ट्रैफ़िक का 99%। हमारी अपनी सात-GPU मशीन के Router पेज से, 21 अक्टूबर 2026; 22 अस्वीकार हुए जब लक्ष्य मॉडल लोड नहीं था।",
+    "source_hash": "6f10abaf7726"
+  },
+  "home.agents.img-1.alt": {
+    "text": "Claude Code राउटर पेज: रूटिंग चालू है, 23:32 से 99% लोकल रूप से जवाब दिए गए; नियम 1 claude-haiku* को qwen3.8-27b पर भेजता है, 1,981 लोकल और 22 अस्वीकार; बाकी हर Claude मॉडल यूज़र के अपने लॉगिन से Anthropic को जाता है",
+    "source_hash": "d77bbac51675"
+  },
+  "home.agents.figcaption-1": {
+    "text": "Claude Code 2.1.227 या नया: <code>ANTHROPIC_BASE_URL</code> warden की ओर, warden की कुंजी <code>ANTHROPIC_CUSTOM_HEADERS</code> में, आपका लॉगिन जैसा है वैसा। हमने जवाबों की गुणवत्ता का बेंचमार्क नहीं किया है: लोकल मॉडल को रोज़मर्रा का, साफ़-साफ़ परिभाषित काम दें।",
+    "source_hash": "bc31fcfd58c7"
+  },
+  "home.agents.h3-3": {
+    "text": "Connect हर क्लाइंट का कॉन्फ़िग लिखता है और एक टेस्ट अनुरोध भेजता है।",
+    "source_hash": "0ceb9132d312"
+  },
+  "home.agents.p-4": {
+    "text": "कंसोल में क्लाइंट, एक कुंजी और एक लोड किया हुआ मॉडल चुनें; यह हर ज़रूरत को असल में लोड किए गए मॉडल से मिलाकर जाँचता है (कॉन्टेक्स्ट विंडो, टूल कॉलिंग, राउटर चालू) और पेस्ट करने के लिए फ़ाइलें देता है। <a href=\"/coding-agents\">सभी कोडिंग एजेंट</a>, हर क्लाइंट का अलग पेज, जिसमें लिखा है कि क्या काम करता है और हमने क्या देखा।",
+    "source_hash": "0b548958da36"
+  },
+  "home.agents.img-2.alt": {
+    "text": "Connect a client पेज: एक कुंजी पिकर, claude-haiku* को qwen3.8-27b पर भेजने वाला राउटर नियम, प्रोटोकॉल के हिसाब से समूहित क्लाइंट, और Claude Code पैनल जिसकी ज़रूरतें जाँची जा चुकी हैं",
+    "source_hash": "6a234848eac5"
+  },
+  "home.tune.h2-1": {
+    "text": "जिस AI के लिए आप पहले से भुगतान करते हैं, उसी से अपने GPU ट्यून करवाएँ।",
+    "source_hash": "c3ae8600a083"
+  },
+  "home.why-agent.p-1": {
+    "text": "अपने कार्ड के लिए मॉडल चुनने का मतलब है क्वांटाइज़ेशन, इंजन, उसे GPU में कैसे बाँटें, कितना कॉन्टेक्स्ट दें और KV-कैश का प्रकार चुनना; हर अनुमान की कीमत एक डाउनलोड और एक लोड है। कंसोल जो भी करता है वह एक API कॉल है, इसलिए Claude Code, Codex या शेल वाला कोई और एजेंट यह खोज आपके लिए, आपके हार्डवेयर पर, आपके वर्कलोड के हिसाब से कर सकता है।",
+    "source_hash": "4844283837a3"
+  },
+  "home.why-agent.h3-1": {
+    "text": "लूप",
+    "source_hash": "85f5dae66c4f"
+  },
+  "home.loop-t.title-1": {
+    "text": "ट्यूनिंग लूप",
+    "source_hash": "3f22e76a3edc"
+  },
+  "home.loop-d.desc-1": {
+    "text": "GPU की जाँच करें, किसी भी डाउनलोड से पहले फ़िट प्रीव्यू से मॉडल छाँटें, संभावित लेआउट लोड करें, असली अनुरोधों से उनका बेंचमार्क करें, सेटिंग बदलें, और सबसे अच्छे को लोड रखें। बेंचमार्क और बदलाव तब तक दोहराए जाते हैं जब तक एजेंट संतुष्ट न हो।",
+    "source_hash": "dd7733aa80ef"
+  },
+  "home.loop-t2.title-1": {
+    "text": "ट्यूनिंग लूप",
+    "source_hash": "3f22e76a3edc"
+  },
+  "home.loop-d2.desc-1": {
+    "text": "GPU की जाँच करें, किसी भी डाउनलोड से पहले फ़िट प्रीव्यू से मॉडल छाँटें, संभावित लेआउट लोड करें, असली अनुरोधों से उनका बेंचमार्क करें, सेटिंग बदलें, और सबसे अच्छे को लोड रखें। बेंचमार्क और बदलाव तब तक दोहराए जाते हैं जब तक एजेंट संतुष्ट न हो।",
+    "source_hash": "dd7733aa80ef"
+  },
+  "home.why-agent.p-2": {
+    "text": "एजेंट क्या कॉल करता है: <code>GET /api/system/gpus</code>, किसी भी डाउनलोड से पहले <code>POST /api/models/fit-preview</code>, रजिस्टर और <code>suggest-config</code>, पुल और लोड, एक स्ट्रेस रन जो असली कॉन्टेक्स्ट सीमा ढूँढकर लागू करता है, <code>GET /api/stats/v2/throughput</code> और <code>latency</code>, और टेस्ट ट्रैफ़िक भेजने के लिए ख़ुद जारी की गई एक इन्फ़रेंस कुंजी। यह सबसे पहले <code>/agent-guide.md</code> पढ़ता है, जो इन कॉल का एक छोटा विवरण है और एक लैंग्वेज मॉडल के लिए लिखा गया है।",
+    "source_hash": "35230c9469a2"
+  },
+  "home.why-agent.img-1.alt": {
+    "text": "Models पेज पर एक मॉडल लोड हो रहा है: हर चरण के साथ उसका बीता हुआ और सामान्य समय",
+    "source_hash": "afd3f600f638"
+  },
+  "home.why-agent.figcaption-1": {
+    "text": "लेआउट लोड होते समय एजेंट क्या देखता है: हर चरण के साथ पिछले लोड से निकला सामान्य समय। जो लोड आगे बढ़ना बंद कर दे उसे रोक दिया जाता है और उसके GPU मुक्त कर दिए जाते हैं।",
+    "source_hash": "4bb331f9f6fb"
+  },
+  "home.why-agent.h3-2": {
+    "text": "पेस्ट करने के लिए चार प्रॉम्प्ट, और बदले में क्या मिलता है",
+    "source_hash": "222000da96d1"
+  },
+  "home.why-agent.li-1": {
+    "text": "<b>जाँच और छँटाई।</b> <span class=\"ask\">पूछें:</span> मेरे GPU की सूची बनाओ, एजेंटिक कोडिंग के लिए ऐसे तीन ओपन-वेट मॉडल छाँटो जो कम से कम 65,536 टोकन के कॉन्टेक्स्ट के साथ फ़िट हों, हर एक को फ़िट प्रीव्यू से जाँचो, कुछ भी डाउनलोड मत करो। <span class=\"get\">आपको मिलता है:</span> मॉडल, क्वांटाइज़ेशन, इंजन, GPU, कॉन्टेक्स्ट और कारण की एक तालिका।",
+    "source_hash": "4d737111bb76"
+  },
+  "home.why-agent.li-2": {
+    "text": "<b>एक मॉडल के लिए इंजन और लेआउट।</b> <span class=\"ask\">पूछें:</span> मेरे कार्ड पर vLLM या llama.cpp, और टेंसर पैरेलल या डेटा पैरेलल रेप्लिका तय करो; सबसे अच्छे दो लेआउट लोड करो, हर एक को वही 20 स्ट्रीमिंग अनुरोध भेजो, कॉन्करेंसी 1 और 8 पर तुलना करो। <span class=\"get\">आपको मिलता है:</span> दोनों के लिए पहले टोकन तक का समय और प्रति सेकंड टोकन, विजेता लोड रहता है, दूसरा अनलोड, टेस्ट कुंजी रद्द।",
+    "source_hash": "aadee19b4763"
+  },
+  "home.why-agent.li-3": {
+    "text": "<b>असली सीमाएँ ढूँढें और लागू करें।</b> <span class=\"ask\">पूछें:</span> लोड किए गए मॉडल का स्ट्रेस रन करो, मापा गया कॉन्टेक्स्ट लागू करो, फिर लगभग 2k और 30k टोकन के प्रॉम्प्ट के साथ कॉन्करेंसी 1, 4 और 16 पर बेंचमार्क करो। <span class=\"get\">आपको मिलता है:</span> मॉडल की सेटिंग में लिखी गई कॉन्टेक्स्ट सीमा, और हर कॉन्करेंसी और प्रॉम्प्ट आकार के लिए पहले टोकन तक का समय और प्रति सेकंड टोकन की एक तालिका।",
+    "source_hash": "5e697967b7ec"
+  },
+  "home.why-agent.li-4": {
+    "text": "<b>अपने ही काम पर दो उम्मीदवारों की तुलना करें।</b> <span class=\"ask\">पूछें:</span> <code>./workload/*.txt</code> के प्रॉम्प्ट मॉडल A और मॉडल B पर कॉन्करेंसी 4 पर दोबारा चलाओ, हर जवाब को परखो। <span class=\"get\">आपको मिलता है:</span> <code>model-comparison.md</code>, जिसमें लेटेंसी, प्रति सेकंड टोकन, एजेंट के आकलन से सही होना और एक सिफ़ारिश है; सुझाया गया मॉडल लोड रहता है।",
+    "source_hash": "d25a394b9e41"
+  },
+  "home.why-agent.p-3": {
+    "text": "<b>शुरू करने से पहले।</b> एडमिन टोकन के पास warden पर पूरे एडमिन अधिकार होते हैं (मॉडल, कुंजियाँ, सेटिंग; अभी कोई सीमित स्कोप नहीं है): इसकी समय-सीमा छोटी रखें और काम पूरा होने पर Settings → Access Tokens में इसे रद्द करें। स्ट्रेस रन सीमा ढूँढने के लिए जानबूझकर इंजन को क्रैश करता है: ये प्रॉम्प्ट ऐसे warden पर चलाएँ जिस पर कोई और निर्भर न हो। डाउनलोड बड़े होते हैं; प्रॉम्प्ट पुल करने से पहले फ़िट जाँचते हैं, लेकिन अपनी डिस्क पर नज़र रखें।",
+    "source_hash": "505b9916712b"
+  },
+  "home.why-agent.p-4": {
+    "text": "इंजन और लेआउट के विकल्प (vLLM, टेंसर पैरेलल या डेटा पैरेलल) Linux इंस्टॉल के हैं; Mac पर विकल्प एक GPU पर MLX या llama.cpp है। ट्यूनिंग करने वाला मॉडल वह कोई भी हो सकता है जिसके लिए आप पहले से भुगतान करते हैं; जिस मॉडल को ट्यून किया जाता है वह आपके कार्ड पर चलने वाला है। <a href=\"/agent-tuning\">एजेंट-ट्यूनिंग पेज: चारों प्रॉम्प्ट पूरे</a>।",
+    "source_hash": "bbeb89be5de6"
+  },
+  "home.share.h2-1": {
+    "text": "एक GPU मशीन, जिसे आपकी पूरी टीम, आपका परिवार और आपके एजेंट साझा करें।",
+    "source_hash": "f1e27da721b7"
+  },
+  "home.why-keys.p-1": {
+    "text": "जितनी ज़रूरत हो उतनी API कुंजियाँ बनाएँ और बाँटें: सहकर्मी, परिवार का सदस्य, CI जॉब, एजेंट फ़ार्म, हर एक की अपनी कुंजी, अपनी प्राथमिकता और अपना उपयोग पेज। हार्डवेयर सबके लिए काम करता है, और ज़रूरी काम को कभी इंतज़ार नहीं करना पड़ता।",
+    "source_hash": "dd9352746e6e"
+  },
+  "home.why-keys.h3-1": {
+    "text": "सख़्त प्राथमिकता: 9 को सबसे पहले, 0 को सबसे आख़िर में",
+    "source_hash": "51396907e61e"
+  },
+  "home.why-keys.p-2": {
+    "text": "इंतज़ार कर रहा ज़्यादा प्राथमिकता वाला अनुरोध हमेशा कम प्राथमिकता वाले से पहले जाता है। लोड के समय, ज़रूरी कुंजियों के बाद जो क्षमता बचती है वही कम प्राथमिकता वाली कुंजियों को मिलती है; व्यस्त मशीन पर कम प्राथमिकता अनिश्चित काल तक इंतज़ार कर सकती है। डिफ़ॉल्ट 5 है। प्रति कुंजी कोई रेट लिमिट नहीं है; प्राथमिकता ने उसकी जगह ली है।",
+    "source_hash": "4dd4ec421cbe"
+  },
+  "home.why-keys.ol-1.aria-label": {
+    "text": "प्राथमिकता सीढ़ी का उदाहरण",
+    "source_hash": "1c1bcbbf1789"
+  },
+  "home.why-keys.b-1": {
+    "text": "प्रोडक्शन एजेंट",
+    "source_hash": "c5da4041ea8e"
+  },
+  "home.why-keys.span-1": {
+    "text": "हमेशा सबसे पहले जवाब",
+    "source_hash": "a2476d66a084"
+  },
+  "home.why-keys.b-2": {
+    "text": "आपके अपने कोडिंग सेशन",
+    "source_hash": "6c8888f1d6dc"
+  },
+  "home.why-keys.span-2": {
+    "text": "उसके बाद",
+    "source_hash": "01b7a9f0d1d4"
+  },
+  "home.why-keys.b-3": {
+    "text": "सहकर्मियों की कुंजियाँ",
+    "source_hash": "a76b6c1ae9be"
+  },
+  "home.why-keys.span-3": {
+    "text": "डिफ़ॉल्ट",
+    "source_hash": "6d244abe081b"
+  },
+  "home.why-keys.b-4": {
+    "text": "परिवार और शौकिया प्रोजेक्ट",
+    "source_hash": "724c4cb2e620"
+  },
+  "home.why-keys.span-4": {
+    "text": "जो बचे वह",
+    "source_hash": "2c1097258738"
+  },
+  "home.why-keys.b-5": {
+    "text": "रात भर के बैच जॉब",
+    "source_hash": "96d527825b4b"
+  },
+  "home.why-keys.span-5": {
+    "text": "खाली समय का इंतज़ार",
+    "source_hash": "687891cb2f66"
+  },
+  "home.why-keys.p-3": {
+    "text": "यह एक उदाहरण सीढ़ी है, नियम नहीं: संख्याएँ आप चुनते हैं। हर कुंजी को रोका भी जा सकता है (नए अनुरोध अस्वीकार, जबकि चल रहे पूरे होते हैं), ग्रेस विंडो के साथ रोटेट किया जा सकता है, और उन मॉडल तक सीमित किया जा सकता है जिन्हें वह कॉल कर सकती है।",
+    "source_hash": "ca3034a912dc"
+  },
+  "home.why-keys.img-1.alt": {
+    "text": "API कुंजी coding-agent का पेज: P0 से P9 प्राथमिकता पिकर और Strict, a waiting P9 request always goes before a P8 one टेक्स्ट वाला Limits कार्ड; पिछले 7 दिनों का Usage पैनल जिसमें 19k अनुरोध, 1.5B प्रॉम्प्ट टोकन और 440k कंप्लीशन टोकन हैं; प्रति मिनट टोकन और प्रति मिनट अनुरोध के चार्ट; नीचे क़तार प्रतीक्षा और लेटेंसी पैनल",
+    "source_hash": "ae01537e1ee6"
+  },
+  "home.why-keys.figcaption-1": {
+    "text": "एक कुंजी का पेज: उसकी प्राथमिकता, उसके अपने सात दिनों का उपयोग (19k अनुरोध, 1.5B प्रॉम्प्ट टोकन), प्रति मिनट टोकन और अनुरोध, क़तार प्रतीक्षा और लेटेंसी। 1&#8239;h, 6&#8239;h, 24&#8239;h, 7&#8239;d की समय-अवधि या कोई भी कस्टम रेंज। जिन पुरानी कुंजियों से इसे रोटेट किया गया था उन्हें भी शामिल किया जा सकता है।",
+    "source_hash": "a098f63084b6"
+  },
+  "home.why-keys.img-2.alt": {
+    "text": "सात दिनों का Stats अनुरोध चार्ट, 28,906 अनुरोध, हर निशान उसे भेजने वाली कुंजी के रंग में: opencode-laptop, research-notebook, ui-refactor-agent, agent-sandbox, load-test-filler और demo-agent",
+    "source_hash": "9ae6aeafcf56"
+  },
+  "home.why-keys.figcaption-2": {
+    "text": "Stats पेज का अनुरोध चार्ट: हर पूरे हुए अनुरोध का एक निशान, जो उसके पूरा होने के समय पर रखा गया है, उसकी ऊँचाई लॉग स्केल पर उसकी अवधि है, आकार उसके बनाए टोकन के हिसाब से, रूप इस हिसाब से कि वह कैसे ख़त्म हुआ, और रंग उसे भेजने वाली कुंजी के हिसाब से (उसका नाम, या कुंजी न हो तो क्लाइंट IP)। कुंजी के हिसाब से रंग तब चालू होता है जब दो या ज़्यादा कुंजियाँ मशीन साझा करती हों और उनमें से किसी के पास 95% अनुरोध न हों। लेजेंड एक फ़िल्टर है: सिर्फ़ किसी कुंजी के अनुरोध देखने के लिए उस पर क्लिक करें।",
+    "source_hash": "348b1b23d393"
+  },
+  "home.why-keys.p-4": {
+    "text": "अभी मशीन का उपयोग कौन और कैसे कर रहा है, यह उन्हीं पेजों पर है: हर चल रहा अनुरोध उसकी कुंजी, सेशन और चरण के साथ, Stats पेज पर प्रति कुंजी तालिका, और पूरे होस्ट के लिए <a href=\"#why-stats\">Stats पैनल</a>।",
+    "source_hash": "b5718f9f8bb5"
+  },
+  "home.hw.h2-1": {
+    "text": "आपका हार्डवेयर, ईमानदारी से: एक Mac से आठ B300 तक।",
+    "source_hash": "3f3225bbc711"
+  },
+  "home.hardware.p-1": {
+    "text": "वही कंसोल 16&#8239;GB वाले M1, डेस्क के नीचे दो बेमेल कार्ड, और 8 × B300 NVSwitch सर्वर को पढ़ता है, और बॉटलनेक का औसत निकालकर उसे छिपाने के बजाय उसका नाम बताता है: x16 में से x4 पर टिका PCIe लिंक, निष्क्रिय NVLink लिंक, कार्ड के बीच अलग ECC।",
+    "source_hash": "f90e55953921"
+  },
+  "home.hardware.img-1.alt": {
+    "text": "8 × B300 सर्वर का सिस्टम कॉन्फ़िगरेशन: Intel Xeon 6776P, 3019&#8239;GiB RAM, आठ NVIDIA B300 SXM6 पैनल, हर एक में 268.6&#8239;GiB में से 241 उपयोग में, Link Gen 6 x16 of x16, NVLink के 18 में से 18 लिंक सक्रिय, हर एक 53.125&#8239;GB/s पर, ECC चालू, और एक सर्वर-आर्किटेक्चर चित्र जिसमें एक NVSwitch हर कार्ड से जुड़ा है",
+    "source_hash": "60071766922d"
+  },
+  "home.hardware.figcaption-1": {
+    "text": "एक NVSwitch पर आठ B300 SXM6 कार्ड: हर कार्ड पर 18 में से 18 NVLink लिंक सक्रिय, ECC चालू, PCIe Gen 6 x16, टेंसर पैरेलल 8 पर GLM-5.2 NVFP4 सर्व करते समय हर कार्ड पर 268.6&#8239;GiB में से 241 उपयोग में।",
+    "source_hash": "937079060820"
+  },
+  "home.hardware.img-2.alt": {
+    "text": "दो बेमेल GPU: एक NVIDIA RTX A4000 जिस पर लाल Reduced link width x4 of x16 चेतावनी है और अभी Link Gen 1, Gen 3 तक, उसके बगल में एक Quadro RTX 5000 जिसका आर्किटेक्चर, VRAM, पावर कैप, लिंक, NVLink और ECC हर एक differs के रूप में चिह्नित है; नीचे एक चित्र कि कार्ड x4 और x16 लिंक से CPU तक कैसे पहुँचते हैं",
+    "source_hash": "6006e1039ec1"
+  },
+  "home.hardware.figcaption-2": {
+    "text": "सालों के अंतर पर ख़रीदे गए दो कार्ड: A4000 का लिंक x16 में से x4 पर टिका है और लाल रंग में चिह्नित है; Quadro का आर्किटेक्चर, पावर कैप, NVLink (सपोर्टेड, लिंक निष्क्रिय) और ECC हर एक <em>differs</em> के रूप में चिह्नित है। चित्र दिखाता है कि कौन-सा स्लॉट संकरा है।",
+    "source_hash": "d67a36ee8dec"
+  },
+  "home.hardware.img-3.alt": {
+    "text": "8 × B300 सर्वर पर Stats: VRAM 2148.8&#8239;GiB में से 1932.1, सभी कार्ड मिलाकर पावर 1893&#8239;W, पिछले एक घंटे का GPU उपयोग और पावर खपत, और कैश्ड व कंप्यूटेड में बँटे प्रति सेकंड प्रॉम्प्ट टोकन, 93% कैश हिट के साथ",
+    "source_hash": "2b44277f55cd"
+  },
+  "home.hardware.figcaption-3": {
+    "text": "रेंज के ऊपरी सिरे पर वही Stats पेज: 2,149&#8239;GiB में से 1,932 VRAM, सभी कार्ड पर 1,893&#8239;W, उस घंटे में 4,351&#8239;W का शिखर, और 93% प्रॉम्प्ट टोकन कैश से।",
+    "source_hash": "f3ceb6c33eb7"
+  },
+  "home.hardware.img-4.alt": {
+    "text": "आठ B300 पर GLM-5.2 NVFP4 लोड होते समय मॉडल पेज: सामान्य 10 min 46 s में से 9 min 17 s बीते, चरण Start engine, Load weights 47 of 47, Compile kernels और Size KV cache पूरे, Tune kernels 22 में से ऑप 21 पर, साथ में CPU और GPU-मेमोरी चार्ट और आख़िरी लॉग पंक्ति",
+    "source_hash": "c1394a12d331"
+  },
+  "home.hardware.figcaption-4": {
+    "text": "10 मिनट का लोड, चरण-दर-चरण: आठ B300 पर GLM-5.2 NVFP4, सामान्य 10 min 46 s में से 9 min 17 s बीते, जब तक यह आगे बढ़ रहा है कुछ भी लाल नहीं।",
+    "source_hash": "cddfa5475f94"
+  },
+  "home.hardware.p-2": {
+    "text": "हर पैनल हर कार्ड के लिए क्या दिखाता है: उसके अपने थ्रॉटल पॉइंट के मुक़ाबले तापमान, उसकी कैप के मुक़ाबले पावर, क्लॉक, फ़ैन, अभी तय हुई PCIe जनरेशन और चौड़ाई, कार्ड में हों तो ECC और NVLink, और मेमोरी पकड़े हुए प्रोसेस। इंटरकनेक्ट चित्र <code>nvidia-smi topo -m</code> से पढ़ा जाता है। Mac पर: GPU उपयोग और Metal जो मेमोरी बजट बताता है, पावर के बिना। और इन सबके नीचे के इंजन पर उसकी अपनी <code>/health</code> से नज़र रखी जाती है, प्रोसेस टेबल से नहीं: ज़िंदा रैपर के नीचे बंद पड़ा इंजन सबूत सहेजकर दोबारा लोड किया जाता है।",
+    "source_hash": "5a4e8569c432"
+  },
+  "home.features.h2-1": {
+    "text": "यह क्या दिखाता है",
+    "source_hash": "8e7ddf931c59"
+  },
+  "home.features.p-1": {
+    "text": "GPU मॉनिटरिंग",
+    "source_hash": "cbdfccb24fcc"
+  },
+  "home.features.h3-1": {
+    "text": "हर कार्ड अपनी रिपोर्ट ख़ुद देता है।",
+    "source_hash": "65fb2dd50a89"
+  },
+  "home.features.p-2": {
+    "text": "उपयोग, उस कार्ड के अपने थ्रॉटल पॉइंट के मुक़ाबले तापमान, उसकी कैप के मुक़ाबले पावर, VRAM, क्लॉक, PCIe लिंक और कौन-सा प्रोसेस मेमोरी पकड़े है। पूरी मशीन का औसत नहीं।",
+    "source_hash": "1bea9211a232"
+  },
+  "home.features.img-1.alt": {
+    "text": "सिस्टम कॉन्फ़िगरेशन और NVIDIA RTX A4000 कार्ड के चार GPU पैनल, हर कार्ड का उपयोग, तापमान, VRAM, पावर, फ़ैन और क्लॉक",
+    "source_hash": "0a8bc4d5312e"
+  },
+  "home.features.p-3": {
+    "text": "चल रहे अनुरोध",
+    "source_hash": "04423fe4175f"
+  },
+  "home.features.h3-2": {
+    "text": "देखें कि हर एजेंट अभी क्या कर रहा है।",
+    "source_hash": "e8070826221c"
+  },
+  "home.features.p-4": {
+    "text": "हर अनुरोध उसकी कुंजी, सेशन और चरण के साथ: क़तार में, प्रीफ़िल, सोच रहा है, टूल कॉल, जवाब दे रहा है। हर प्रॉम्प्ट का कितना हिस्सा प्रीफ़िक्स कैश से आया, प्रति अनुरोध मापा गया।",
+    "source_hash": "49c151ca7020"
+  },
+  "home.features.img-2.alt": {
+    "text": "चल रहे अनुरोधों की तालिका: दस सक्रिय अनुरोध, हर एक की कुंजी, सेशन, चरण और टोकन के साथ",
+    "source_hash": "428dfb61458f"
+  },
+  "home.features.p-5": {
+    "text": "कोडिंग एजेंट",
+    "source_hash": "707c65c28bca"
+  },
+  "home.features.h3-3": {
+    "text": "Claude Code, Codex और OpenCode, एक ही पेज से कनेक्ट।",
+    "source_hash": "ba721e4421e2"
+  },
+  "home.features.p-6": {
+    "text": "Connect इस warden के पते, एक कुंजी और एक लोड किए हुए मॉडल के साथ हर टूल का कॉन्फ़िग लिखता है, ज़रूरतों को असल में लोड किए गए मॉडल से मिलाकर जाँचता है, और एक टेस्ट अनुरोध भेजता है।",
+    "source_hash": "916edc5f7b60"
+  },
+  "home.features.img-3.alt": {
+    "text": "Connect a client पेज, जिसमें Claude Code चुना गया है और ज़रूरतें जाँची जा चुकी हैं",
+    "source_hash": "cc2b73368cf4"
+  },
+  "home.oss.h2-1": {
+    "text": "मुफ़्त और ओपन सोर्स, और खुले में बनाया गया।",
+    "source_hash": "3317e70f46b3"
+  },
+  "home.open-source.p-1": {
+    "text": "LM Warden <a href=\"{{repo}}\" rel=\"noopener\">GitHub</a> पर Apache-2.0 लाइसेंस के तहत है: इंस्टॉल स्क्रिप्ट और Compose फ़ाइल ही पूरा डिप्लॉयमेंट हैं, और आप दोनों पढ़ सकते हैं। न अकाउंट, न लाइसेंस जाँच, न टेलीमेट्री। vLLM, llama.cpp और MLX अपस्ट्रीम प्रोजेक्ट हैं जिन्हें हम बिना बदलाव के चलाते हैं।",
+    "source_hash": "ba01b625fe70"
+  },
+  "home.open-source.h2-1": {
+    "text": "mlx-rust-lm <span class=\"soon\">जल्द आ रहा है</span>",
+    "source_hash": "19dae78c985d"
+  },
+  "home.open-source.p-2": {
+    "text": "Apple के mlx-lm का Python से Rust में पोर्ट, Apple की आधिकारिक mlx-c बाइंडिंग पर, जिसे LM Warden टीम एक अलग ओपन-सोर्स प्रोजेक्ट के रूप में विकसित और मेंटेन करती है। LM Warden इसे Mac के तीसरे इंजन के रूप में उपयोग करेगा, और आख़िरकार यह Python वाले mlx-lm इंजन की जगह लेगा, जो आज के Mac डाउनलोड का ज़्यादातर हिस्सा है। अनौपचारिक, Apple से संबद्ध नहीं।",
+    "source_hash": "598b6f2514fd"
+  },
+  "home.lightbox.button-1": {
+    "text": "बंद करें ✕",
+    "source_hash": "ce7bf15a4a85"
+  },
+  "home.lightbox.button-1.aria-label": {
+    "text": "बड़ा किया गया स्क्रीनशॉट बंद करें",
+    "source_hash": "2d3b2f52a3dd"
+  },
+  "chrome.footer.about": {
+    "text": "Apache License 2.0 के तहत मुफ़्त सॉफ़्टवेयर, <a href=\"https://podwarden.com\" rel=\"noopener\">PodWarden</a> के पीछे वाली टीम से। vLLM, llama.cpp और MLX अपस्ट्रीम प्रोजेक्ट हैं जिन्हें हम बिना बदलाव के चलाते हैं; हम उनसे संबद्ध नहीं हैं।",
+    "source_hash": "7f11ddd74f30"
+  },
+  "chrome.footer.source": {
+    "text": "GitHub पर सोर्स",
+    "source_hash": "11506c59ef23"
+  },
+  "chrome.footer.install": {
+    "text": "इंस्टॉल गाइड",
+    "source_hash": "e15a133068af"
+  },
+  "chrome.footer.changelog": {
+    "text": "चेंजलॉग",
+    "source_hash": "ead07c84baac"
+  },
+  "chrome.footer.licence": {
+    "text": "लाइसेंस",
+    "source_hash": "f3ec8e880a46"
+  },
+  "chrome.footer.tag-note": {
+    "text": "यह पेज ख़ुद LM Warden से सर्व होता है और विज़िट गिनने के लिए Google का टैग लोड करता है। कुकी तभी सेट होती हैं जब आप उन्हें स्वीकार करें (<a href=\"/privacy\">गोपनीयता</a>, <a href=\"/privacy\" data-consent-open>कुकी सेटिंग</a>)।",
+    "source_hash": "09eab402684a"
+  },
+  "chrome.consent.aria-label": {
+    "text": "कुकी विकल्प",
+    "source_hash": "38db21b38100"
+  },
+  "chrome.consent.text": {
+    "text": "यह साइट विज़िट गिनने और विज्ञापनों को मापने के लिए Google Analytics कुकी का उपयोग करती है, लेकिन सिर्फ़ तभी जब आप अनुमति दें। <a href=\"/privacy\">गोपनीयता</a>",
+    "source_hash": "cdf7e1f99a7b"
+  },
+  "chrome.consent.decline": {
+    "text": "अस्वीकार करें",
+    "source_hash": "a2d285b35287"
+  },
+  "chrome.consent.accept": {
+    "text": "स्वीकार करें",
+    "source_hash": "89713b9c9c1b"
+  }
+}

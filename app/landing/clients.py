@@ -30,17 +30,23 @@ _VARS = {
     "context": str(DEFAULT_CONTEXT),
 }
 _PROTOCOL = {"anthropic": "Anthropic Messages", "openai": "OpenAI Chat Completions"}
+#: What a client can do through the warden. The website does not set the
+#: clients we ran apart from the ones configured from their docs (owner,
+#: 2026-10-21), so the catalogue's "documented" support reads as what those
+#: clients get: every one of them is an OpenAI-protocol client on local
+#: models, with no pass-through. The verification record stays in the
+#: catalogue, for the console's Connect page, and is not printed here.
 _SUPPORT = {
     "full": "Full support",
     "local_only": "Local models only",
-    "documented": "Configured from its docs",
+    "documented": "Local models only",
     "unsupported": "Not supported yet",
 }
-_VERIFIED = {
-    "run": "Run against a live warden",
-    "documented": "Checked against its docs",
-    "failed": "Failed when run",
-}
+#: Catalogue prose that states a verification status ("the editor itself was
+#: not run"); dropped from the website's copy for the same reason.
+_STATUS_SENTENCE = re.compile(
+    r"\s*[^.]*\b(?:was|were) (?:not run|tested from this page)[^.]*\.(?=\s|$)"
+)
 
 
 _APOS = re.compile(r"(?<=\w)'(?=\w)")
@@ -98,15 +104,10 @@ def client_def(client_id: str) -> ClientDef:
     return _BY_ID[client_id]
 
 
-def _verified_html(c: ClientDef) -> str:
-    v = c.verified
-    if v is None:
-        return "Not yet run against a warden."
-    parts = [f"{_VERIFIED[v.status]} on {_e(v.date)}"]
-    if v.client_version:
-        parts.append(f"with {_e(v.client_version)}")
-    note = f" {_e(v.note)}" if v.note else ""
-    return f"{' '.join(parts)}.{note}"
+def capability(c: ClientDef) -> str:
+    """The catalogue's capability text without any verification-status
+    sentence (see _STATUS_SENTENCE)."""
+    return _STATUS_SENTENCE.sub("", c.capability).strip()
 
 
 def _snippet(mode_id: str, f: FileDef) -> str:
@@ -153,9 +154,8 @@ def client_body(c: ClientDef, router_section: str) -> str:
         + f"""        <dl class="facts">
           <dt>Protocol</dt><dd>{_e(protocol(c))}</dd>
           <dt>Support</dt><dd>{_e(_SUPPORT[c.support])}</dd>
-          <dt>Verified</dt><dd>{_verified_html(c)}</dd>
         </dl>
-        <p>{_e(c.capability)}</p>
+        <p>{_e(capability(c))}</p>
         {requirements}
         <h2>Setup</h2>
         <p>In the console, <strong>Connect</strong> writes these files with your warden’s address, your key and the model you picked. Here they are with placeholders.</p>
@@ -176,17 +176,13 @@ def _caption(c: ClientDef) -> str:
 
 
 def clients_table_html() -> str:
-    def run_date(c: ClientDef) -> str:
-        return _e(c.verified.date) if c.verified and c.verified.status == "run" else "docs only"
-
     rows = "".join(
         f'<tr><th scope="row"><a href="/coding-agents/{c.id}">{_e(short_name(c))}</a></th>'
-        f"<td>{_e(protocol(c))}</td><td>{_e(_SUPPORT[c.support])}</td><td>{run_date(c)}</td></tr>"
+        f"<td>{_e(protocol(c))}</td><td>{_e(_SUPPORT[c.support])}</td></tr>"
         for c in CLIENTS
     )
     return (
         '<div class="table-wrap"><table class="clients"><thead><tr><th scope="col">Client</th>'
-        '<th scope="col">Protocol</th><th scope="col">Support</th>'
-        '<th scope="col">Run live</th></tr></thead>'
+        '<th scope="col">Protocol</th><th scope="col">Support</th></tr></thead>'
         f"<tbody>{rows}</tbody></table></div>"
     )

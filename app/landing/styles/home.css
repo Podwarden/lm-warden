@@ -139,6 +139,24 @@
     dialog.lb[open]{animation:lb-in .18s ease-out}
     @keyframes lb-in{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:none}}
   }
+  /* Cache-aware routing: the drawing, the hit-rate and TTFB charts, the ramp table and the routing card from /cache-aware-routing, sharing figures.css with that page. figures.css reads these spacing and table tokens; Home sets them here at the article pages' values. */
+  :root{--s1:4px;--s3:12px;--s4:16px;--s5:24px;--t-table:clamp(0.96875rem,0.958rem + 0.0463vw,1rem)}
+  .cache{border-top:1px solid var(--rule)}
+  .cache figure{margin:0}
+  .cache .cache-dia{margin-top:40px}
+  .cache-dia .swap-1000.diagram{margin-inline:auto}
+  .cache-lead{margin-top:32px;max-width:70ch;color:var(--ink-2)}
+  /* The two charts: stacked at the page width; side by side only from 1400px, where the band widens past --max so the TTFB chart's text stays at 12px or more. */
+  .cache-pair{width:min(100% - 2*var(--gutter),var(--max));margin:40px auto 0;display:grid;gap:40px;grid-template-columns:minmax(0,1fr)}
+  @media (min-width:1400px){.cache-pair{width:min(100% - 2*var(--gutter),1400px);grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:48px;align-items:start}}
+  .cache-ramp{margin-top:48px;padding:24px;background:var(--plate);border:1px solid var(--plate-edge);border-radius:var(--r)}
+  @media (max-width:559px){.cache-ramp{padding:16px}}
+  .cache-ramp h3{font-size:var(--t-h3);margin-bottom:16px}
+  .cache-ramp .plate-note{margin-top:16px}
+  .cache .cache-card{margin-top:40px}
+  .cache .honest p{margin:0}
+  .cache-foot{margin-top:24px;font-weight:600}
+  .cache-hint{display:none} @media (max-width:799px){.cache-hint{display:inline}}
   /* Coding agents: two panels, tiles left, router right, Connect under both. */
   .agents{border-top:1px solid var(--rule)}
   .ag-panels{display:grid;gap:24px;margin-top:40px;grid-template-columns:minmax(0,1fr)}
@@ -147,13 +165,11 @@
   .ag-panel.router{border-color:var(--amber)}
   .ag-panel h3{font-size:var(--t-h3)}
   .tiles{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,11.5rem),1fr))}
-  .tiles a{display:grid;grid-template-rows:auto 1fr auto;gap:4px;min-height:6.5rem;padding:12px 14px;border:1px solid var(--rule);border-radius:var(--r);text-decoration:none;color:var(--ink);background:var(--ground)}
+  .tiles a{display:grid;grid-template-rows:auto 1fr;gap:4px;min-height:5rem;padding:12px 14px;border:1px solid var(--rule);border-radius:var(--r);text-decoration:none;color:var(--ink);background:var(--ground)}
   .tiles a:hover{border-color:var(--amber)}
   .tiles b{font-weight:640}
   .tiles span{font-size:var(--t-small);color:var(--ink-2);line-height:1.35}
   .tiles span code{font-size:.9em}
-  .badge{font-style:normal;justify-self:start;font-size:var(--t-label);padding:1px 8px;border-radius:999px;border:1px solid var(--amber);color:var(--amber)}
-  .badge.doc{border-color:var(--rule);color:var(--ink-2)}
   .dia{margin-top:8px;color:var(--ink)}
   .dia svg{display:block;width:100%;height:auto;font-family:var(--sans)}
   .dia .v-narrow{display:none;max-width:360px;margin-inline:auto}

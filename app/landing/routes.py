@@ -3,7 +3,11 @@
 Routes (all unauthenticated, all hidden from the OpenAPI schema):
 
   GET /_landing, /              Home. Caddy's `handle /` block rewrites the
-                                bare root to /_landing.
+                                bare root to /_landing. Picks the visitor's
+                                language (see "Languages" below).
+  GET /<locale>/                Home translated (/de/, /pt-BR/, ...), for each
+                                locale whose catalog ships; 404 otherwise.
+                                /<locale> 308s to it.
   GET <page path>               every page in app/landing/pages.py::PAGES
                                 (/coding-agents, /faq, ...), plus a 308 from
                                 its trailing-slash spelling.
@@ -45,6 +49,15 @@ here because Settings can be constructed directly) does the page emit a
 canonical link, absolute Open Graph URLs and `index,follow`, and robots.txt
 point at /sitemap.xml.
 
+Languages (app/landing/i18n). Only Home is translated. A GET of the English
+Home with `?lang=<tag>` (the switcher's links) sets the `lw_lang` cookie for a
+year and 302s to that language's clean URL; the same works on /<locale>/.
+Otherwise a GET of the English Home by a browser (not a crawler, not HEAD)
+honours the cookie, then Accept-Language, and 302s to the matching
+/<locale>/; English or no match stays. Those responses vary by both, so they
+say `Vary: Accept-Language, Cookie` and `Cache-Control: private`. A
+translated URL is never redirected.
+
 Tracking. When Settings holds a Google Analytics or Ads ID, every page loads
 Google's tag behind a consent banner and its CSP allows Google's origins
 (render.py::page_csp); with none set, nothing changes.
@@ -66,10 +79,12 @@ from fastapi.responses import (
     Response,
 )
 
+from app.auth.cookies import cookie_secure
 from app.config import parse_canonical_origin
+from app.landing import i18n
 from app.landing.clients import CLIENT_PAGES
 from app.landing.downloads import MAC_DMG_URL, MAC_SHA256_URL
-from app.landing.pages import NOT_FOUND, PAGES, Page
+from app.landing.pages import HOME, LOCALES, NOT_FOUND, PAGES, Page
 from app.landing.render import (  # noqa: F401  (re-exported for tests)
     _ASSET_CACHE,
     _ASSETS,
@@ -125,10 +140,10 @@ _DISALLOW_ALL = "User-agent: *\nDisallow: /\n"
 # --- Routes ------------------------------------------------------------------------
 
 
-async def _serve(request: Request, page: Page) -> Response:
+async def _serve(request: Request, page: Page, locale: str = "en") -> Response:
     state = await site_state(request)
     if not state.enabled:
-        if page.path == "/":
+        if page.path == "/" and locale == "en":
             # Off: the unified-port root opens the console, not a bare 404.
             # Temporary and uncached: it follows a runtime setting, and a
             # browser must not keep it once the website is switched on.
@@ -136,20 +151,92 @@ async def _serve(request: Request, page: Page) -> Response:
         return Response(status_code=404)
     if page.tag_only and not state.analytics.tag_on:
         raise HTTPException(status_code=404)  # the site's 404 page
+    if page.path == "/":
+        chosen = _language_redirect(request, locale)
+        if chosen is not None:
+            return chosen
     origin = _origin(request)
-    body = render_page(page, origin, state.analytics)
-    return HTMLResponse(
-        body,
-        headers={
-            **_robots_headers(origin),
-            "Content-Security-Policy": page_csp(body, state.analytics),
-        },
+    body = render_page(page, origin, state.analytics, locale)
+    headers = {
+        **_robots_headers(origin),
+        "Content-Security-Policy": page_csp(body, state.analytics),
+    }
+    if page.path == "/" and locale == "en":
+        headers.update(_NEGOTIATED)
+    response = HTMLResponse(body, headers=headers)
+    if page.path == "/" and request.query_params.get("lang") == locale:
+        _remember_language(response, request, locale)
+    return response
+
+
+def _remember_language(response: Response, request: Request, tag: str) -> None:
+    """The switcher's choice, kept a year (lw_lang)."""
+    response.set_cookie(
+        i18n.COOKIE,
+        tag,
+        max_age=i18n.COOKIE_MAX_AGE,
+        path="/",
+        samesite="lax",
+        secure=cookie_secure(request),
+        httponly=True,
     )
+
+
+#: On every answer of the English Home: it depends on the cookie and on
+#: Accept-Language, so no shared cache may hand one visitor's to another.
+_NEGOTIATED = {"Vary": "Accept-Language, Cookie", "Cache-Control": "private"}
+
+
+def _language_redirect(request: Request, locale: str) -> Response | None:
+    """The redirect a Home request gets, or None to serve the page.
+
+    ?lang=<published tag> on any Home: remember it (lw_lang, a year) and go
+    to that language's clean URL. Then, on the English Home only, for a GET
+    from a browser: the cookie, else Accept-Language, may send it to
+    /<locale>/. HEAD and crawlers are always served the page they asked for."""
+    asked = request.query_params.get("lang")
+    if asked is not None and i18n.is_available(asked) and asked != locale:
+        response = RedirectResponse(i18n.home_path(asked), status_code=302, headers=_NEGOTIATED)
+        _remember_language(response, request, asked)
+        return response
+    if asked == locale:
+        # Already on the asked language's page: serve it (the caller sets the
+        # cookie). Redirecting to the clean URL would let Accept-Language send
+        # a visitor whose browser drops the cookie straight back, so with
+        # cookies blocked and a French browser, English would be unreachable.
+        return None
+    if locale != "en" or request.method != "GET":
+        return None
+    if i18n.is_bot(request.headers.get("user-agent")):
+        return None
+    tag = i18n.negotiate(request.headers.get("accept-language"), request.cookies.get(i18n.COOKIE))
+    if tag == "en":
+        return None
+    return RedirectResponse(i18n.home_path(tag), status_code=302, headers=_NEGOTIATED)
 
 
 def _page_handler(page: Page) -> Callable[[Request], Awaitable[Response]]:
     async def handler(request: Request) -> Response:
         return await _serve(request, page)
+
+    return handler
+
+
+def _locale_handler(tag: str) -> Callable[[Request], Awaitable[Response]]:
+    async def handler(request: Request) -> Response:
+        if not i18n.is_available(tag):
+            if not await _is_enabled(request):
+                return Response(status_code=404)
+            raise HTTPException(status_code=404)  # the site's 404 page
+        return await _serve(request, HOME, tag)
+
+    return handler
+
+
+def _locale_slash_redirect(tag: str) -> Callable[[Request], Awaitable[Response]]:
+    async def handler(request: Request) -> Response:
+        query = request.url.query
+        return RedirectResponse(f"/{tag}/" + (f"?{query}" if query else ""), status_code=308)
 
     return handler
 
@@ -177,6 +264,22 @@ for _p in PAGES:
             methods=["GET", "HEAD"],
             include_in_schema=False,
         )
+
+
+# Home in each other language: /de/ (the canonical spelling) and /de, which
+# redirects. Registered for every locale; one without a catalog answers 404.
+for _loc in LOCALES:
+    if _loc.tag == "en":
+        continue
+    router.add_api_route(
+        f"/{_loc.tag}/", _locale_handler(_loc.tag), methods=["GET", "HEAD"], include_in_schema=False
+    )
+    router.add_api_route(
+        f"/{_loc.tag}",
+        _locale_slash_redirect(_loc.tag),
+        methods=["GET", "HEAD"],
+        include_in_schema=False,
+    )
 
 
 #: Paths that are never the website's, whatever their status: the API keeps
@@ -288,10 +391,12 @@ async def sitemap_xml(request: Request) -> Response:
     origin = _origin(request)
     if not origin or not await _is_enabled(request):
         return Response(status_code=404)
+    paths = [("/" if p.path == "/" else p.path) for p in all_site_pages()]
+    # Every published translation of Home, right after the English one.
+    paths[1:1] = [i18n.home_path(loc.tag) for loc in i18n.available() if loc.tag != "en"]
     urls = "".join(
-        f"  <url><loc>{html.escape(origin + ('/' if p.path == '/' else p.path))}</loc>"
-        f"<lastmod>{_LASTMOD}</lastmod></url>\n"
-        for p in all_site_pages()
+        f"  <url><loc>{html.escape(origin + path)}</loc><lastmod>{_LASTMOD}</lastmod></url>\n"
+        for path in paths
     )
     body = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'

@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from app.auth.csrf import _mints_cookie
 from app.auth.policy import PUBLIC_ROUTES
+from app.landing.i18n import available, home_path
 from app.landing.pages import PAGES
 from tests.unit.landing.conftest import all_pages, fetch
 
@@ -51,14 +52,18 @@ def test_one_h1_per_page(client: TestClient) -> None:
 
 
 def test_every_internal_link_resolves(client: TestClient) -> None:
-    known = {p.path for p in PAGES} | {
-        "/ui/login",
-        "/llms.txt",
-        "/llms-full.txt",
-        "/agent-guide.md",
-        "/download/mac",
-        "/download/mac.sha256",
-    }
+    known = (
+        {p.path for p in PAGES}
+        | {
+            "/ui/login",
+            "/llms.txt",
+            "/llms-full.txt",
+            "/agent-guide.md",
+            "/download/mac",
+            "/download/mac.sha256",
+        }
+        | {home_path(loc.tag) for loc in available()}
+    )  # the switcher's links
     for path, body in all_pages(client).items():
         for href in re.findall(r'href="(/[^"#?]*)', body):
             if href.startswith("/_landing/assets/") or href.startswith("/ui/icon"):

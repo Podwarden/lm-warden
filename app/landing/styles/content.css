@@ -61,7 +61,7 @@
     .cmd pre::before { content: "$ "; color: var(--well-dim); }
     .cmd .nw { white-space: nowrap; }
     .guide { font-size: var(--t-ui); }
-    .req, .src, .plate-note { font-size: var(--t-small); line-height: 1.45; letter-spacing: 0.003em; color: var(--ink-2); max-width: 40em; }
+    .req, .src { font-size: var(--t-small); line-height: 1.45; letter-spacing: 0.003em; color: var(--ink-2); max-width: 40em; }
     @media (max-width: 559px) {
       .cmd { flex-direction: column; }
       .cmd pre { align-self: stretch; }
@@ -88,52 +88,20 @@
     .tight { padding-top: var(--s7); }
     .plate-sec { padding-bottom: 0; }
 
-    /* Tables: text left, numbers right under right-aligned heads, units in
-       the row label instead of every cell, one light rule. Measured numbers
-       are set in the text face, not in mono. Tabular figures only in the
-       numeric columns, where they line up: Mona's tabular zero is its slashed
-       one, which reads as noise in running text like "RTX A4000". */
-    table { border-collapse: collapse; width: 100%; font-size: var(--t-table); line-height: 1.35; }
-    caption { text-align: left; font-size: var(--t-body); font-weight: 600; padding-bottom: var(--s3); text-wrap: balance; }
-    thead th { border-bottom: 1px solid var(--rule); }
-    thead th, .spec dt {
-      font-size: var(--t-label); font-weight: 560; font-stretch: 85%; line-height: 1.3;
-      letter-spacing: 0.01em; color: var(--ink-2);
-    }
-    th, td { text-align: left; vertical-align: top; padding: 0.45em 1em 0.45em 0; }
-    th:last-child, td:last-child { padding-right: 0; }
-    thead th { vertical-align: bottom; }
-    tbody th { font-weight: 500; }
-    td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
-    td.n { white-space: nowrap; }
     .muted { color: var(--ink-2); font-size: var(--t-small); }
 
     /* Reference-host plate */
     .plate { margin-top: var(--s6); background: var(--plate); border: 1px solid var(--plate-edge); border-radius: var(--r); padding: var(--s5) var(--s4); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
     @media (min-width: 560px) { .plate { padding: var(--s5); } }
-    .table-scroll { overflow-x: auto; }
     @media (min-width: 960px) { .plate { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); padding: var(--s6); gap: var(--s7); } }
     .spec { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: baseline; gap: var(--s3) var(--s5);
             font-size: var(--t-table); line-height: 1.4; }
     .spec dd { margin: 0; }
     @media (max-width: 419px) { .spec { grid-template-columns: minmax(0, 1fr); gap: 0; } .spec dd + dt { margin-top: var(--s3); } }
-    /* Phones: each reading becomes a row label over three values. */
-    @media (max-width: 479px) {
-      .readings thead { display: none; }
-      .readings, .readings tbody, .readings caption { display: block; }
-      .readings tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding-block: var(--s3); }
-      .readings tr + tr { border-top: 1px solid var(--rule); }
-      .readings tbody th { grid-column: 1 / -1; padding: 0 0 var(--s1); }
-      .readings td { text-align: left; padding: 0; }
-      .readings td::before { content: attr(data-h); display: block; font: 560 var(--t-label)/1.4 var(--sans); font-stretch: 85%; letter-spacing: 0.01em; color: var(--ink-2); }
-    }
-    .plate-note { margin-top: var(--s4); }
 
     /* --- Router and replica routing: drawn figures and the A/B plate ------------ */
     /* A diagram is paper with a hairline round it, not a mounted screenshot:
        it follows the theme tokens instead of sitting on --screen. */
-    .diagram { border: 1px solid var(--rule); border-radius: var(--r); padding: var(--s5); }
-    .diagram svg { display: block; width: 100%; height: auto; }
     .diagram-fig { margin-top: var(--s7); }
     .diagram-fig figcaption { margin-top: var(--s3); }
     svg.flow { font-family: var(--sans); }
@@ -147,27 +115,6 @@
     .flow .edge { fill: none; stroke: var(--ink); stroke-width: 1.5px; }
     .flow .dash { stroke-dasharray: 7 5; }
     .flow .head { fill: var(--ink); }
-    .chart svg { display: block; width: 100%; height: auto; }
-    .chart figcaption { margin-top: var(--s3); }
-    /* Every drawn figure comes in two cuts: wide, and narrow (stacked or
-       vertical) for a phone column, each drawn so its text lands at 12 to 16px
-       on screen. Only one is displayed, so only one is in the accessibility
-       tree. The swap width is the one at which the wide cut's text would drop
-       under about 12px. */
-    .v-narrow { display: none; }
-    .v-narrow svg { max-width: 460px; }
-    .swap-1200 .v-wide svg { max-width: 1280px; margin-inline: auto; }
-    .swap-1000 .v-wide svg { max-width: 1100px; }
-    .swap-700 .v-wide svg { max-width: 760px; }
-    @media (max-width: 1199px) {
-      .swap-1200 .v-wide { display: none; } .swap-1200 .v-narrow { display: block; }
-      .swap-1200.diagram { max-width: calc(460px + 2 * var(--s5) + 2px); }
-    }
-    @media (max-width: 999px) {
-      .swap-1000 .v-wide { display: none; } .swap-1000 .v-narrow { display: block; }
-      .swap-1000.diagram { max-width: calc(460px + 2 * var(--s5) + 2px); }
-    }
-    @media (max-width: 699px) { .swap-700 .v-wide { display: none; } .swap-700 .v-narrow { display: block; } }
     .plate .plate-wide { grid-column: 1 / -1; }
     .plate-wide .table-scroll + .plate-note { margin-top: var(--s3); }
     /* The A/B plate: the spec runs across the top in two pairs of columns,
@@ -177,14 +124,11 @@
       .ab .spec { grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr); }
       .ab .spec .span { grid-column: 2 / -1; }
     }
-    /* Eight columns do not fit three across on a phone: two values a row. */
-    @media (max-width: 479px) { .plate-wide .readings tr { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3) var(--s4); } }
     .pair { margin-top: var(--s7); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s7); }
     @media (min-width: 1240px) { .pair { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s8); } }
     .reading { margin-top: var(--s6); max-width: 40rem; }
     .connect { margin-top: var(--s7); max-width: 40rem; }
     .connect > * + * { margin-top: var(--s3); }
-    @media (max-width: 799px) { .diagram { padding: var(--s4); } }
     /* The connect snippet wraps on a phone instead of hiding its ends: a soft
        wrap, so a copy still gives the three lines as written. */
     .connect pre.term { white-space: pre-wrap; overflow-wrap: break-word; text-indent: 2ch hanging each-line; }

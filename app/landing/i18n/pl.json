@@ -1,0 +1,1138 @@
+{
+  "meta.title": {
+    "text": "LM Warden: samodzielnie hostowana bramka LLM na własnych GPU",
+    "source_hash": "8b40be948ef4"
+  },
+  "meta.description": {
+    "text": "Udostępniaj LLM z kart NVIDIA w systemie Linux lub z Maca z Apple silicon przez vLLM, llama.cpp lub MLX: jeden endpoint /v1 zgodny z OpenAI, klucz na aplikację.",
+    "source_hash": "6cb271edae46"
+  },
+  "meta.og-image-alt": {
+    "text": "LM Warden: API zgodne z OpenAI na kartach GPU pod biurkiem lub w szafie serwerowej, obok panel Stats jednej karty RTX A4000 z zaznaczonym progiem dławienia zgłaszanym przez sterownik",
+    "source_hash": "7f75ba3bcd9d"
+  },
+  "jsonld.feature-1": {
+    "text": "Podgląd dopasowania: każdy plik repozytorium Hugging Face sprawdzany względem wybranych kart GPU, zanim cokolwiek zostanie pobrane",
+    "source_hash": "615857f542c9"
+  },
+  "jsonld.feature-2": {
+    "text": "Agenci do kodowania (Codex CLI, OpenCode, Aider, Grok CLI, Continue, Cline, Cursor, OpenAI SDK i Anthropic SDK, Claude Code) na własnych modelach, skonfigurowani za Ciebie",
+    "source_hash": "7b06e74713de"
+  },
+  "jsonld.feature-3": {
+    "text": "Router Claude Code: lokalny model odpowiada za wybrane modele Claude, reszta trafia do Anthropic na Twoim własnym logowaniu",
+    "source_hash": "1f350726cef9"
+  },
+  "jsonld.feature-4": {
+    "text": "Strona Stats: wykorzystanie GPU, moc, tokeny na sekundę, udział cache, opóźnienie i wywłaszczenia, od 1 godziny do 7 dni",
+    "source_hash": "42d6cdab3fb6"
+  },
+  "jsonld.feature-5": {
+    "text": "Routing uwzględniający cache, który utrzymuje każdą rozmowę na replice przechowującej jej prefiks",
+    "source_hash": "9791836d7920"
+  },
+  "jsonld.feature-6": {
+    "text": "Strojenie przez agenta: agent do kodowania przez API dobiera model, silnik i układ do Twoich kart GPU, wykonując po drodze testy porównawcze",
+    "source_hash": "b2f04e38f9aa"
+  },
+  "jsonld.feature-7": {
+    "text": "Czat ze strumieniowanym Markdown, obrazami dla modeli wizyjnych i zapisaną historią",
+    "source_hash": "0740507f9225"
+  },
+  "jsonld.feature-8": {
+    "text": "God mode: prompty i odpowiedzi jednego klucza strumieniowane na żywo do debugowania, domyślnie wyłączony",
+    "source_hash": "301c375d8a2f"
+  },
+  "jsonld.feature-9": {
+    "text": "Klucze API ze ścisłym priorytetem od 9 do 0 i użyciem dla każdego klucza",
+    "source_hash": "89c7e3de3f80"
+  },
+  "jsonld.feature-10": {
+    "text": "Panele dla każdej karty GPU, od M1 z 16 GB po serwer 8 × B300 z NVSwitch, wskazujące wąskie łącza PCIe, nieaktywne NVLink i różnice w ECC",
+    "source_hash": "bf6f8b147d8a"
+  },
+  "chrome.copy.done": {
+    "text": "Skopiowano",
+    "source_hash": "8d525e5f158b"
+  },
+  "chrome.copy.fail": {
+    "text": "Naciśnij Ctrl+C",
+    "source_hash": "e78ab3a91bf2"
+  },
+  "chrome.skip": {
+    "text": "Przejdź do treści",
+    "source_hash": "ac576a66d456"
+  },
+  "chrome.brand.aria-label": {
+    "text": "LM Warden – strona główna",
+    "source_hash": "a007563c384d"
+  },
+  "chrome.nav.aria-label": {
+    "text": "Główne",
+    "source_hash": "efe10c80ec8a"
+  },
+  "chrome.nav.menu": {
+    "text": "Menu",
+    "source_hash": "99af6606ff9d"
+  },
+  "chrome.nav.use-cases": {
+    "text": "Zastosowania",
+    "source_hash": "ff27a991e855"
+  },
+  "chrome.nav.features": {
+    "text": "Funkcje",
+    "source_hash": "5697d03daef4"
+  },
+  "chrome.nav.coding-agents": {
+    "text": "Agenci kodujący",
+    "source_hash": "707c65c28bca"
+  },
+  "chrome.nav.faq": {
+    "text": "FAQ",
+    "source_hash": "dbc468a14b60"
+  },
+  "chrome.nav.github.title": {
+    "text": "Kod źródłowy w serwisie GitHub, Apache-2.0",
+    "source_hash": "d2833070219a"
+  },
+  "chrome.nav.install": {
+    "text": "Pobierz i zainstaluj",
+    "source_hash": "4120132397fd"
+  },
+  "chrome.nav.plat-linux": {
+    "text": "Linux + karty NVIDIA",
+    "source_hash": "23d8d6d2be9c"
+  },
+  "chrome.nav.plat-mac": {
+    "text": "macOS, procesor Apple (beta)",
+    "source_hash": "d2364b229535"
+  },
+  "chrome.nav.plat-win": {
+    "text": "Windows (następny)",
+    "source_hash": "e5a1bb1c3085"
+  },
+  "chrome.nav.plat-appliance": {
+    "text": "Urządzenie (wkrótce)",
+    "source_hash": "6a7fc115677a"
+  },
+  "chrome.nav.plat-upgrade": {
+    "text": "Aktualizacja instalacji",
+    "source_hash": "c1fe5f01dc6e"
+  },
+  "chrome.nav.signin": {
+    "text": "Logowanie do konsoli",
+    "source_hash": "cb9ad9f4d662"
+  },
+  "chrome.lang.heading": {
+    "text": "Język",
+    "source_hash": "a4fe65264ef7"
+  },
+  "chrome.lang.label": {
+    "text": "Język:",
+    "source_hash": "8c16819a2bd4"
+  },
+  "chrome.docs.aria-label": {
+    "text": "Dokumentacja",
+    "source_hash": "c205924de0fe"
+  },
+  "chrome.docs.full": {
+    "text": "Dokumentacja",
+    "source_hash": "c205924de0fe"
+  },
+  "chrome.docs.short": {
+    "text": "Dok.",
+    "source_hash": "7af023c43013"
+  },
+  "chrome.install": {
+    "text": "Zainstaluj",
+    "source_hash": "4120132397fd"
+  },
+  "home.hero.h1-1": {
+    "text": "Twoje karty GPU działają jak hostowane API.",
+    "source_hash": "b24318c21e4f"
+  },
+  "home.hero.p-1": {
+    "text": "LM Warden uruchamia vLLM, llama.cpp lub MLX na Twoim własnym sprzęcie i wystawia przed nimi jeden port zgodny z OpenAI: klucz dla każdej aplikacji, użycie dla każdego klucza i panel na żywo dla każdej karty GPU. Na komputerze z systemem Linux i kartami NVIDIA albo na Macu z Apple silicon.",
+    "source_hash": "e192caf6a5b3"
+  },
+  "home.hero.a-1": {
+    "text": "Pobierz i zainstaluj",
+    "source_hash": "4120132397fd"
+  },
+  "home.hero.a-2": {
+    "text": "Zobacz, co pokazuje",
+    "source_hash": "51b46bd0add6"
+  },
+  "home.hero.span-1": {
+    "text": "Otwarty kod, Apache-2.0",
+    "source_hash": "2a43a93eceec"
+  },
+  "home.hero.span-2": {
+    "text": "Bez konta i bez telemetrii",
+    "source_hash": "035ccb7cad8a"
+  },
+  "home.hero.span-3": {
+    "text": "Linux + NVIDIA · macOS (beta) · wkrótce Windows",
+    "source_hash": "1f8168eb854e"
+  },
+  "home.hero.img-1.alt": {
+    "text": "Strona Stats obciążonej instancji LM Warden: VRAM 59,4 z 64&#8239;GiB, wykorzystanie GPU 100%, moc 548&#8239;W oraz wykresy wykorzystania GPU, poboru mocy i tokenów na minutę z ostatniej godziny",
+    "source_hash": "46cb2df1ab06"
+  },
+  "home.hero.div-1.aria-label": {
+    "text": "W skrócie",
+    "source_hash": "46b396c85919"
+  },
+  "home.hero.b-1": {
+    "text": "vLLM v0.32.0 i llama.cpp b11719",
+    "source_hash": "d0656dfa424f"
+  },
+  "home.hero.span-4": {
+    "text": "na CUDA",
+    "source_hash": "6b06ee360144"
+  },
+  "home.hero.span-5": {
+    "text": "macOS · procesor Apple",
+    "source_hash": "1b50b6d8401a"
+  },
+  "home.hero.b-2": {
+    "text": "MLX i llama.cpp",
+    "source_hash": "f2287a1beeab"
+  },
+  "home.hero.span-6": {
+    "text": "na Metal",
+    "source_hash": "6a893fd85af2"
+  },
+  "home.hero.span-7": {
+    "text": "Interfejsy API",
+    "source_hash": "8d266d3e3abd"
+  },
+  "home.hero.b-3": {
+    "text": "OpenAI, Anthropic Messages i Responses",
+    "source_hash": "3aeff05d5bf6"
+  },
+  "home.hero.span-8": {
+    "text": "na jednym porcie",
+    "source_hash": "05261121948c"
+  },
+  "home.hero.span-9": {
+    "text": "Agenci kodujący",
+    "source_hash": "707c65c28bca"
+  },
+  "home.hero.b-4": {
+    "text": "Claude Code, Codex CLI, OpenCode i 7 innych",
+    "source_hash": "544b91f8227b"
+  },
+  "home.hero.span-10": {
+    "text": "skonfigurowani za Ciebie",
+    "source_hash": "48d1003061d4"
+  },
+  "home.uc.h2-1": {
+    "text": "Do czego się go używa",
+    "source_hash": "a2bc7e06beef"
+  },
+  "home.use-cases.button-1.aria-label": {
+    "text": "Poprzedni przypadek użycia",
+    "source_hash": "40a9d13608d2"
+  },
+  "home.use-cases.button-2.aria-label": {
+    "text": "Wstrzymaj automatyczne przewijanie",
+    "source_hash": "f1c27427e687"
+  },
+  "home.use-cases.button-2.resume": {
+    "text": "Wznów automatyczne przewijanie",
+    "source_hash": "bb52c71e6d3b"
+  },
+  "home.use-cases.button-3.aria-label": {
+    "text": "Następny przypadek użycia",
+    "source_hash": "9220dc6514fb"
+  },
+  "home.use-cases.li-1.aria-label": {
+    "text": "1 z 10",
+    "source_hash": "b54457342c7d"
+  },
+  "home.use-cases.h3-1": {
+    "text": "Czy ten model zmieści się na mojej karcie GPU?",
+    "source_hash": "631429e459b2"
+  },
+  "home.use-cases.p-1": {
+    "text": "Wklej repozytorium Hugging Face – każdy plik dostaje werdykt względem zaznaczonych kart, zanim cokolwiek zostanie pobrane.",
+    "source_hash": "7dd1bdcba1fd"
+  },
+  "home.use-cases.span-1": {
+    "text": "Podgląd dopasowania",
+    "source_hash": "3bf0e7fd520d"
+  },
+  "home.use-cases.li-2.aria-label": {
+    "text": "2 z 10",
+    "source_hash": "264c35a47f15"
+  },
+  "home.use-cases.h3-2": {
+    "text": "Skieruj swojego agenta do kodowania na własne karty GPU.",
+    "source_hash": "b01cff25d51f"
+  },
+  "home.use-cases.p-2": {
+    "text": "Codex CLI, OpenCode, Aider, Grok CLI, Continue, Cline, Cursor i OpenAI SDK działają na Twoich modelach. Claude Code i Anthropic SDK mogą też zachować Twoją subskrypcję Claude i przenieść rutynowe wywołania na Twoje karty.",
+    "source_hash": "022970d73828"
+  },
+  "home.use-cases.span-2": {
+    "text": "Zobacz agentów kodujących",
+    "source_hash": "19dc2417e144"
+  },
+  "home.use-cases.li-3.aria-label": {
+    "text": "3 z 10",
+    "source_hash": "24607ac1e731"
+  },
+  "home.use-cases.h3-3": {
+    "text": "Twoje karty GPU pracują czy czekają?",
+    "source_hash": "02e82cfefb89"
+  },
+  "home.use-cases.p-3": {
+    "text": "Wykorzystanie, tokeny na sekundę, udział cache, opóźnienie, wywłaszczenia i moc na jednej stronie Stats, od 1&#8239;h do 7&#8239;dni.",
+    "source_hash": "ffc4dde74878"
+  },
+  "home.use-cases.span-3": {
+    "text": "Zobacz stronę Stats",
+    "source_hash": "4df7d5c583ae"
+  },
+  "home.use-cases.li-4.aria-label": {
+    "text": "4 z 10",
+    "source_hash": "6f3c824e9ec3"
+  },
+  "home.use-cases.h3-4": {
+    "text": "Tury agenta, które ponownie wykorzystują cache.",
+    "source_hash": "fd528e59f30f"
+  },
+  "home.use-cases.p-4": {
+    "text": "Każda rozmowa zostaje na swojej replice. Zmierzono: trafienia w cache 56 → 86%, mediana czasu do pierwszego bajtu 2,05 → 0,38&#8239;s.",
+    "source_hash": "3fd6f50887b9"
+  },
+  "home.use-cases.span-4": {
+    "text": "Zobacz pomiar",
+    "source_hash": "91753d838ca4"
+  },
+  "home.use-cases.li-5.aria-label": {
+    "text": "5 z 10",
+    "source_hash": "4ff9c7d25432"
+  },
+  "home.use-cases.h3-5": {
+    "text": "Niech AI, za które już płacisz, dostroi Twoje karty GPU.",
+    "source_hash": "c3ae8600a083"
+  },
+  "home.use-cases.p-5": {
+    "text": "Claude Code, Codex lub inny agent sprawdza Twoje karty, wybiera pasujące modele, ładuje układy, testuje je na Twoich własnych promptach, poprawia ustawienia i zostawia załadowany najlepszy wariant. Cztery prompty do wklejenia.",
+    "source_hash": "bbfa0ef15601"
+  },
+  "home.use-cases.span-5": {
+    "text": "Zobacz pętlę i prompty",
+    "source_hash": "ad84f405f980"
+  },
+  "home.use-cases.li-6.aria-label": {
+    "text": "6 z 10",
+    "source_hash": "9f1b26eea525"
+  },
+  "home.use-cases.h3-6": {
+    "text": "Rozmawiaj z własnym modelem, od razu w tym miejscu.",
+    "source_hash": "bcd86e5acf2b"
+  },
+  "home.use-cases.p-6": {
+    "text": "Strumieniowany Markdown, kod i wzory matematyczne; obrazy dla modeli wizyjnych; ustawienia dla każdego czatu; zapisana historia. To samo okno na Macu.",
+    "source_hash": "8ab616f9c47d"
+  },
+  "home.use-cases.span-6": {
+    "text": "Zobacz czat",
+    "source_hash": "6fd76cfcf4f3"
+  },
+  "home.use-cases.li-7.aria-label": {
+    "text": "7 z 10",
+    "source_hash": "2991e046c7d6"
+  },
+  "home.use-cases.h3-7": {
+    "text": "Zobacz dokładnie, co model dostał i co odpowiedział.",
+    "source_hash": "175c055be16a"
+  },
+  "home.use-cases.p-7": {
+    "text": "God mode strumieniuje na żywo prompty i odpowiedzi jednego klucza do debugowania. Domyślnie wyłączony, tylko w pamięci, znika po restarcie.",
+    "source_hash": "12446d78110e"
+  },
+  "home.use-cases.span-7": {
+    "text": "Zobacz God mode",
+    "source_hash": "eca4d500a3da"
+  },
+  "home.use-cases.li-8.aria-label": {
+    "text": "8 z 10",
+    "source_hash": "1170fb3f9b1b"
+  },
+  "home.use-cases.h3-8": {
+    "text": "Jeden serwer z GPU dla zespołu, rodziny i Twoich agentów.",
+    "source_hash": "a04e398227ac"
+  },
+  "home.use-cases.p-8": {
+    "text": "Tyle kluczy, ile potrzebujesz, każdy ze ścisłym priorytetem od 9 do 0 i własną stroną użycia: ważni agenci są obsługiwani najpierw, wszyscy inni dostają to, co zostaje, a Ty widzisz, kto i jak korzystał z serwera.",
+    "source_hash": "3acf884af623"
+  },
+  "home.use-cases.span-8": {
+    "text": "Klucze i użycie",
+    "source_hash": "bb574d2be60e"
+  },
+  "home.use-cases.li-9.aria-label": {
+    "text": "9 z 10",
+    "source_hash": "7323df202723"
+  },
+  "home.use-cases.h3-9": {
+    "text": "Twój sprzęt bez upiększeń: od Maca po osiem B300.",
+    "source_hash": "3f3225bbc711"
+  },
+  "home.use-cases.p-9": {
+    "text": "Jedna konsola dla M1 z 16&#8239;GB, dwóch niedopasowanych kart lub serwera z NVSwitch, która wskazuje wąskie gniazdo PCIe, nieaktywne NVLink i różnice w ECC.",
+    "source_hash": "6ea6fbd502b6"
+  },
+  "home.use-cases.span-9": {
+    "text": "Zobacz strony sprzętu",
+    "source_hash": "c90b8269f1d8"
+  },
+  "home.use-cases.li-10.aria-label": {
+    "text": "10 z 10",
+    "source_hash": "aef48b281a1a"
+  },
+  "home.use-cases.h3-10": {
+    "text": "Wkrótce: urządzenie. Dysk USB, obudowa z kartami GPU, jedno zadanie.",
+    "source_hash": "525b6691292f"
+  },
+  "home.use-cases.p-10": {
+    "text": "Okrojony Linux, który uruchamia tylko LM Warden, konfiguruje sieć i magazyn modeli oraz aktualizuje się przez sieć albo działa całkowicie w sieci odizolowanej (air-gapped). Do bezpiecznego, dedykowanego serwera LLM.",
+    "source_hash": "9ab2a4e163b1"
+  },
+  "home.use-cases.span-10": {
+    "text": "Przeczytaj o urządzeniu",
+    "source_hash": "4ad529d919d4"
+  },
+  "home.use-cases.dot": {
+    "text": "Przypadek użycia {n} z {m}",
+    "source_hash": "04227694e710"
+  },
+  "home.use-cases.div-1.aria-label": {
+    "text": "Wybierz przypadek użycia",
+    "source_hash": "1bb48b8b99c4"
+  },
+  "home.install.h2-1": {
+    "text": "Gdzie go uruchomisz?",
+    "source_hash": "249678c8eba2"
+  },
+  "home.install.p-1": {
+    "text": "Wybierz maszynę, na której będą działać modele, a nie tę, na której to czytasz; osoby odwiedzające stronę z Maca często instalują go na serwerze z systemem Linux i kartami GPU. Nic nie jest wybierane za Ciebie i nic nie jest zgadywane na podstawie przeglądarki.",
+    "source_hash": "0c505d2d282e"
+  },
+  "home.install.div-1.aria-label": {
+    "text": "Platforma",
+    "source_hash": "c78ffe195710"
+  },
+  "home.install.b-1": {
+    "text": "Linux + karty NVIDIA",
+    "source_hash": "23d8d6d2be9c"
+  },
+  "home.install.small-1": {
+    "text": "Docker Compose · jedna lub wiele kart",
+    "source_hash": "9849f7c407b4"
+  },
+  "home.install.span-1": {
+    "text": "wydanie główne",
+    "source_hash": "86f0f70c80d2"
+  },
+  "home.install.b-2": {
+    "text": "macOS, procesor Apple",
+    "source_hash": "0d7d5470afac"
+  },
+  "home.install.small-2": {
+    "text": "Aplikacja na pasku menu · M1 lub nowszy",
+    "source_hash": "38cba54053bd"
+  },
+  "home.install.span-2": {
+    "text": "wersja beta",
+    "source_hash": "f44e64e75f39"
+  },
+  "home.install.small-3": {
+    "text": "W przygotowaniu · bez daty",
+    "source_hash": "1e554752120e"
+  },
+  "home.install.span-3": {
+    "text": "następny",
+    "source_hash": "c6c1c9a9c854"
+  },
+  "home.install.b-3": {
+    "text": "Urządzenie",
+    "source_hash": "98432690c966"
+  },
+  "home.install.small-4": {
+    "text": "Dysk USB, który zmienia obudowę z kartami GPU w dedykowany serwer LM Warden",
+    "source_hash": "dc3e1016c4ce"
+  },
+  "home.install.span-4": {
+    "text": "wkrótce",
+    "source_hash": "62bfdf0b726c"
+  },
+  "home.install.p-2": {
+    "text": "Wybierz platformę powyżej, aby zobaczyć jej kroki, lub <a href=\"#install-all\">pokaż wszystkie cztery</a>.",
+    "source_hash": "dd298d4e4a3b"
+  },
+  "home.p-linux.h3-1": {
+    "text": "Jedno polecenie na hoście z GPU.",
+    "source_hash": "e261f30eb5f7"
+  },
+  "home.p-linux.span-1": {
+    "text": "Kopiuj",
+    "source_hash": "e21f935f11d7"
+  },
+  "home.p-linux.li-1": {
+    "text": "Host x86_64, Docker Compose v2.24+, NVIDIA Container Toolkit, karta Turing lub nowsza.",
+    "source_hash": "fc20ff032a73"
+  },
+  "home.p-linux.li-2": {
+    "text": "Następnie otwórz <code>http://HOST:8080/ui/</code>, przejdź kreator pierwszego uruchomienia, dodaj model i utwórz klucz. Twój endpoint to <code>http://HOST:8080/v1</code>.",
+    "source_hash": "33bfcbda3ad4"
+  },
+  "home.p-linux.li-3": {
+    "text": "Kilka kart GPU w jednym komputerze: równoległość tensorowa albo jedna replika na kartę z routingiem uwzględniającym cache.",
+    "source_hash": "086f8aa8145e"
+  },
+  "home.p-linux.li-4": {
+    "text": "Dziś NVIDIA. <b>Obsługa AMD ROCm i kart GPU Intel pojawi się wkrótce</b>; na razie bez dat. Napisz nam, na czym chcesz go uruchamiać: <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon\" rel=\"noopener\">Radeon</a> · <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel\" rel=\"noopener\">Intel</a>.",
+    "source_hash": "f17d08f00954"
+  },
+  "home.p-linux.a-1": {
+    "text": "Instalacja",
+    "source_hash": "e15a133068af"
+  },
+  "home.p-linux.a-2": {
+    "text": "Instalacja offline",
+    "source_hash": "16289eae755d"
+  },
+  "home.p-linux.a-3": {
+    "text": "Ze źródeł",
+    "source_hash": "5be49bd81af3"
+  },
+  "home.p-linux.a-4": {
+    "text": "Aktualizacja",
+    "source_hash": "d8f1ee5bd44a"
+  },
+  "home.p-linux.img-1.alt": {
+    "text": "Ładowanie modelu na stronie Models: każdy krok z czasem, który upłynął, i czasem zwykłym",
+    "source_hash": "41eaa58c37a4"
+  },
+  "home.p-linux.figcaption-1": {
+    "text": "Model ładowany po instalacji: każdy krok ze zwykłym czasem z wcześniejszych ładowań.",
+    "source_hash": "c6e56f837dad"
+  },
+  "home.p-mac.h3-1": {
+    "text": "Aplikacja na pasku menu, w wersji beta.",
+    "source_hash": "93a681a12162"
+  },
+  "home.p-mac.a-1": {
+    "text": "Pobierz na komputer Mac (beta)",
+    "source_hash": "95612856681e"
+  },
+  "home.p-mac.li-1": {
+    "text": "Około 360&nbsp;MB. Apple silicon (M1 lub nowszy), macOS 14 lub nowszy. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">informacje o wydaniu</a>.",
+    "source_hash": "eb664f8f7d3a"
+  },
+  "home.p-mac.li-2": {
+    "text": "Silniki: MLX i llama.cpp skompilowany z Metal. Ten sam pulpit i to samo API OpenAI; bez vLLM, bez odczytu mocy.",
+    "source_hash": "5ff95c0fa25d"
+  },
+  "home.p-mac.li-3": {
+    "text": "<b>Beta, bez owijania w bawełnę:</b> podpisana ad hoc i nienotaryzowana, więc przy pierwszym uruchomieniu macOS poprosi o zezwolenie w ustawieniach Prywatność i ochrona; aktualizacje to nowe pobranie. <a href=\"{{repo}}/blob/main/documents/INSTALL.md#beta-builds\" rel=\"noopener\">Kroki pierwszego uruchomienia</a>.",
+    "source_hash": "cf254395b87e"
+  },
+  "home.p-mac.li-4": {
+    "text": "Działa na 127.0.0.1, dopóki nie wybierzesz <b>Share on Local Network</b>.",
+    "source_hash": "013272b7df36"
+  },
+  "home.p-mac.li-5": {
+    "text": "<b>Wkrótce: mlx-rust-lm</b>, trzeci silnik. Zespół LM Warden przenosi mlx-lm firmy Apple z Pythona do Rusta na oficjalnych powiązaniach Apple mlx-c; będzie działać obok MLX i llama.cpp, a z czasem zastąpi silnik mlx-lm w Pythonie, który razem z Pythonem i jego bibliotekami stanowi większość dzisiejszego pobrania. Nieoficjalny, niepowiązany z Apple.",
+    "source_hash": "8121128f773c"
+  },
+  "home.p-mac.img-1.alt": {
+    "text": "Menu LM Warden na pasku menu Maca: Running, udostępnianie tylko na tym Macu pod adresem 127.0.0.1:8080, brak załadowanych modeli, pasek pamięci, Open Dashboard, Copy API Address, Share on Local Network",
+    "source_hash": "45b8070949bb"
+  },
+  "home.p-mac.figcaption-1": {
+    "text": "Menu paska menu wersji beta na M1 z 16&#8239;GB.",
+    "source_hash": "785cc05a3c6d"
+  },
+  "home.p-win.h3-1": {
+    "text": "Następny jest Windows. Nie ma daty.",
+    "source_hash": "3e2f8c30fbd3"
+  },
+  "home.p-win.p-1": {
+    "text": "Pracujemy nad nim teraz i umieścimy tu kompilację w dniu, w którym powstanie, a nie wcześniej formularz zapisu. Do tego czasu dwie uczciwe opcje:",
+    "source_hash": "7389debc8fd3"
+  },
+  "home.p-win.li-1": {
+    "text": "Uruchom LM Warden na serwerze z systemem Linux i kartami GPU i korzystaj z niego w systemie Windows: każdy klient OpenAI, Claude Code i Codex łączą się przez sieć.",
+    "source_hash": "1296afbbf883"
+  },
+  "home.p-win.li-2": {
+    "text": "<a href=\"{{repo}}/releases\" rel=\"noopener\">Obserwuj wydania w serwisie GitHub</a>, aby dowiedzieć się o pierwszej kompilacji dla systemu Windows.",
+    "source_hash": "9a92060cedbe"
+  },
+  "home.p-win.li-3": {
+    "text": "Karty AMD Radeon i Intel będą później; napisz nam, na czym chcesz go uruchamiać: <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon\" rel=\"noopener\">Radeon</a> · <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel\" rel=\"noopener\">Intel</a>.",
+    "source_hash": "d85b661eb8e6"
+  },
+  "home.p-appliance.h3-1": {
+    "text": "Urządzenie: wkrótce, bez daty.",
+    "source_hash": "e45c0fc37b2d"
+  },
+  "home.p-appliance.p-1": {
+    "text": "Czwarty sposób uruchamiania LM Warden, dla serwera, który nie powinien robić nic innego.",
+    "source_hash": "9ff6d73830b6"
+  },
+  "home.p-appliance.li-1": {
+    "text": "Wkładasz dysk USB do obudowy z kartami GPU. Instaluje on okrojony Linux, który robi jedno: uruchamia LM Warden.",
+    "source_hash": "47cb2ad65dc7"
+  },
+  "home.p-appliance.li-2": {
+    "text": "Sam konfiguruje sieć i magazyn na modele.",
+    "source_hash": "a2a401f4b2c3"
+  },
+  "home.p-appliance.li-3": {
+    "text": "Aktualizacje przychodzą przez sieć albo serwer działa całkowicie w sieci odizolowanej (air-gapped).",
+    "source_hash": "aa9d78e6b6fa"
+  },
+  "home.p-appliance.li-4": {
+    "text": "Do bezpiecznego, dedykowanego serwera LLM: dla zespołu, który chce zamkniętego serwera, lub lokalizacji bez wyjścia na zewnątrz.",
+    "source_hash": "bbc615ea622b"
+  },
+  "home.p-appliance.p-2": {
+    "text": "Do czasu premiery instalacja dla systemu Linux powyżej robi to samo na hoście, który konfigurujesz samodzielnie, łącznie z <a href=\"{{repo}}/blob/main/documents/INSTALL.md#a7-offline--air-gapped-install\" rel=\"noopener\">instalacją offline / w sieci odizolowanej</a>. <a href=\"{{repo}}/releases\" rel=\"noopener\">Obserwuj wydania w serwisie GitHub</a>.",
+    "source_hash": "177a91e7a6b4"
+  },
+  "home.p-appliance.div-1": {
+    "text": "Na razie bez zdjęcia: nie ma jeszcze nazwy produktu ani sprzętu do pokazania, a rysować go nie będziemy.",
+    "source_hash": "8a3fbd7c91f0"
+  },
+  "home.upgrade.p-1": {
+    "text": "<b>Już go używasz?</b> W systemie Linux aktualizacja odbywa się na miejscu: pobierz nowe obrazy, uruchom ponownie, a baza danych zostanie zmigrowana do przodu. <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">Kroki</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">Dziennik zmian</a>.",
+    "source_hash": "5566c16483a2"
+  },
+  "home.upgrade.p-2": {
+    "text": "<b>Dawniej vLLM Warden.</b> Katalog instalacji <code>/opt/vllm-warden</code> i prefiks kluczy <code>vw_</code> zachowują starą nazwę, więc istniejące klucze nadal działają.",
+    "source_hash": "4ac584d252da"
+  },
+  "home.why.h2-1": {
+    "text": "Samodzielny hosting ma osiem problemów. Oto jak wygląda rozwiązanie każdego z nich.",
+    "source_hash": "65341f9c1497"
+  },
+  "home.why.p-1": {
+    "text": "Sam silnik udostępnia jeden model na jednym porcie. To są elementy wokół niego, z naszymi własnymi liczbami tam, gdzie je mamy.",
+    "source_hash": "1668b0870987"
+  },
+  "home.why-fit.h3-1": {
+    "text": "Czy ten model zmieści się na mojej karcie GPU?",
+    "source_hash": "631429e459b2"
+  },
+  "home.why-fit.p-1": {
+    "text": "Wklej repozytorium Hugging Face w <b>Add model</b>. Każdy plik jest wymieniony z werdyktem względem zaznaczonych kart: mieści się, mały zapas albo się nie zmieści. Zaznacz więcej kart, a budżet się sumuje. Nic nie jest pobierane, dopóki coś się nie zmieści.",
+    "source_hash": "b0c5f5cbb2ee"
+  },
+  "home.why-fit.img-1.alt": {
+    "text": "Ten sam plik 20,22&#8239;GiB oznaczony jako pasujący po zaznaczeniu czterech kart GPU",
+    "source_hash": "906b74daf0f5"
+  },
+  "home.why-stats.h3-1": {
+    "text": "Kupione karty GPU: pracują czy czekają?",
+    "source_hash": "7cd5266e1f4e"
+  },
+  "home.why-stats.p-1": {
+    "text": "Przepustowość to współbieżność × długość promptu × ponowne użycie cache, a sam silnik nie pokazuje tego razem. Strona Stats to robi, w zakresie od 1&#8239;h do 7&#8239;dni: VRAM, wykorzystanie GPU, moc (Linux), tokeny na sekundę z podziałem tokenów promptu na pobrane z cache i obliczone, opóźnienie p50/p95, współczynnik trafień w cache promptów, wywłaszczenia, żądania na klucz i na adres IP klienta. Płaskie wykorzystanie przy kolejce oznacza „więcej współbieżności”; niski udział cache oznacza „przypnij sesje”.",
+    "source_hash": "05ae743f085e"
+  },
+  "home.why-stats.img-1.alt": {
+    "text": "Tokeny na sekundę: tokeny promptu z podziałem na pobrane z cache i obliczone, poniżej tokeny odpowiedzi",
+    "source_hash": "94483285e732"
+  },
+  "home.why-chat.h3-1": {
+    "text": "Porozmawiaj z modelem, zanim cokolwiek podłączysz.",
+    "source_hash": "83831d46fb09"
+  },
+  "home.why-chat.p-1": {
+    "text": "Czat jest w tym samym oknie co cała reszta. Strumieniowany Markdown z wyróżnianiem kodu i wzorami matematycznymi; do ośmiu obrazów PNG, JPEG lub WebP w wiadomości dla modelu wizyjnego; temperatura, top-p, maksymalna liczba tokenów i prompt systemowy dla każdego czatu, zapisywane jako domyślne; czaty zachowywane, z tytułami, z możliwością rozgałęziania. Wywołania narzędzi wykonywane przez model są wyświetlane, więc możesz sprawdzić wywoływanie narzędzi, zanim agent zacznie od niego zależeć.",
+    "source_hash": "2e459441dc4f"
+  },
+  "home.why-chat.img-1.alt": {
+    "text": "Czat w oknie pulpitu aplikacji na Maca, strumieniowany z qwen2.5-3b, z GPU 96% w nagłówku",
+    "source_hash": "da46ab93294b"
+  },
+  "home.why-god.h3-1": {
+    "text": "Co model naprawdę dostał i co odpowiedział?",
+    "source_hash": "a49be301a05f"
+  },
+  "home.why-god.p-1": {
+    "text": "God mode do debugowania promptów: gdy wdrożenie ma włączone <code>VW_GODMODE_ENABLED</code>, strona każdego klucza dostaje panel, który na żywo strumieniuje prompty i odpowiedzi tego klucza. Domyślnie wyłączony, a wyłączony w ogóle nie istnieje. Ograniczony bufor cykliczny w pamięci: nic nie trafia do bazy danych ani na dysk, znika po restarcie. Może go otworzyć każdy, kto ma sesję administratora; LM Warden ma jedną rolę administratora i żadnych innych.",
+    "source_hash": "a29986e09f7a"
+  },
+  "home.why-god.img-1.alt": {
+    "text": "Strona klucza API coding-agent z otwartym na dole panelem God mode: Live, 4 żądania, 1 w toku; strumieniowane żądanie do qwen3.8-27b-fp8 z 192.0.2.10, z promptem użytkownika o niestabilnym teście statystyk i odpowiedzią modelu z poprawką w Pythonie w trakcie pisania",
+    "source_hash": "171f585f7e38"
+  },
+  "home.cache.h2-1": {
+    "text": "Każda tura agenta ponownie czyta całą rozmowę.",
+    "source_hash": "d876efcb94ab"
+  },
+  "home.why-cache.p-1": {
+    "text": "Agent w każdej turze wysyła ponownie całą historię, więc długa rozmowa to głównie prefiks, który silnik już przeczytał. vLLM przechowuje tę pracę w cache prefiksów, ale tylko na replice, która ją wykonała, a jego własny mechanizm równoważenia wysyła każdą turę do repliki z najkrótszą kolejką. LM Warden umieszcza każdą nową rozmowę na najmniej obciążonej replice i tam ją utrzymuje, używając identyfikatora sesji, który Claude Code już wysyła. Przenosi żądanie tylko wtedy, gdy replika przekroczy swój próg przelewu.",
+    "source_hash": "03e36074672f"
+  },
+  "home.why-cache.figcaption-1": {
+    "text": "Cztery tury jednej rozmowy na modelu z czterema replikami. Z mechanizmem równoważenia vLLM każda tura przechodzi prefill (wczytanie promptu do cache) prawie od zera na replice, która ją dostała. Z LM Warden rozmowa zostaje na replice&nbsp;2 i prefill obejmuje tylko nową turę. Rysunek mechanizmu, a nie pomiar.",
+    "source_hash": "0f19c82ec35c"
+  },
+  "home.why-cache.p-2": {
+    "text": "Zmierzone na naszym serwerze z czterema kartami (4&nbsp;×&nbsp;RTX&nbsp;A4000, Qwen3-4B jako cztery jednokartowe repliki, syntetyczne sesje w stylu Claude Code, afinicja wyłączona, a potem włączona, jedna po drugiej): przy przypiętych rozmowach udział tokenów promptu obsłużonych z cache wzrósł z 56 do 86% przy 4 równoczesnych sesjach, a mediana czasu do pierwszego bajtu spadła z 2,05 do 0,38&#8239;s. Liczba tokenów wyjściowych na minutę była wyższa na każdym etapie, a czas do pierwszego bajtu p95 (najwolniejsze 5%) był niższy na każdym etapie. Liczba pracujących replik prawie się nie zmieniła (2,71 wobec 2,83 z czterech przy 4 sesjach): zysk to ponowne użycie cache, a nie więcej pracujących kart.",
+    "source_hash": "9de8aa8aa7e1"
+  },
+  "home.why-cache.figcaption-2": {
+    "text": "Współczynnik trafień w cache prefiksów na każdym etapie: tokeny promptu obsłużone z cache do tokenów promptu, o które proszono, łącznie dla wszystkich czterech replik, na podstawie zmiany własnych liczników vLLM w danym etapie. Zysk utrzymuje się, dopóki jest zapas, i znika przy 32 sesjach, gdy rozmowy się przelewają.",
+    "source_hash": "ff04da43c87a"
+  },
+  "home.why-cache.figcaption-3": {
+    "text": "Czas do pierwszego bajtu przy 4–32 równoczesnych sesjach, mediana i p95, w skali logarytmicznej, aby etapy poniżej sekundy dało się odczytać obok tych trwających minutę. Z afinicją mediana jest znacznie niższa do 16 sesji (0,38 wobec 2,05&#8239;s przy 4) i wyższa przy 24 i 32; p95 jest niższy na każdym etapie, choć przy 16 różnica (24,9 wobec 26,2&#8239;s) mieści się w szumie jednego przebiegu na wariant. Mierzone po stronie klienta, przez internet, do pierwszego strumieniowanego tokenu.",
+    "source_hash": "0ec9d5ccf246"
+  },
+  "home.why-cache.h3-1": {
+    "text": "Każdy etap obciążenia, afinicja wyłączona → włączona",
+    "source_hash": "684608311775"
+  },
+  "home.why-cache.p-3": {
+    "text": "Zmierzone na naszym serwerze z czterema kartami na małym modelu, najpierw z wyłączoną afinicją, potem z włączoną, bez ponownego uruchamiania vLLM pomiędzy: drugi wariant zaczynał z rozgrzanym cache prefiksów, a oba pobierały prompty z tego samego ziarna. Każdy etap trwa 3&nbsp;minuty, więc kończy tylko od 9 do 31 sesji, a jedna sesja więcej lub mniej zmienia liczbę sesji na godzinę o 20; tokeny wyjściowe na minutę to stabilniejsza kolumna. Twój model, karty i obciążenie będą inne; karta replik na stronie modelu pokazuje te same liczniki dla Twojego systemu.",
+    "source_hash": "4744b11be2ad"
+  },
+  "home.why-cache.img-1.alt": {
+    "text": "Karta Data-parallel routing na stronie modelu z etykietami Affinity on, Spill threshold 8 (auto), Sticky 100.0% i In flight 0. Tabela zawiera repliki od 0 do 3 z kolumnami in flight, sticky (38, 21, 19 i 29), spilled in, client-pinned, running i waiting, użyciem KV i współczynnikiem trafień w cache prefiksów (82,2; 86,0; 69,0 i 80,0 procent) oraz wiersz informujący, że liczniki działają od uruchomienia LM Warden.",
+    "source_hash": "f1bc7fbd6399"
+  },
+  "home.why-cache.figcaption-4": {
+    "text": "Te same liczniki na stronie modelu: jeden wiersz na replikę z żądaniami, które obsługuje, liczbą rozmów, które zostały (<code>sticky</code>) lub przyszły przez przelew, tym, co działa i czeka, użyciem cache KV i współczynnikiem trafień w cache prefiksów. Zarejestrowano 4&nbsp;października&nbsp;2026&nbsp;r. z włączoną afinicją i progiem przelewu 8 (auto): sticky 100% i współczynnik trafień w cache prefiksów 82,2; 86,0; 69,0 i 80,0% na replikach od 0 do 3. To karta, a nie wynik.<span class=\"cache-hint\"> Dotknij karty, aby ją powiększyć.</span>",
+    "source_hash": "234d024e62df"
+  },
+  "home.why-cache.p-4": {
+    "text": "<b>Gdzie przegrywa.</b> Etapy z 24 i 32 sesjami to celowe przeciążenie czterech małych kart i każda replika jest nasycona. Wydajność jest nadal wyższa (11&nbsp;178 wobec 9&nbsp;048 i 16&nbsp;638 wobec 14&nbsp;760 tokenów na minutę), a wolny ogon jest znacznie krótszy (p95 38 wobec 59&#8239;s oraz 39 wobec 83&#8239;s), ale mediana czasu do pierwszego bajtu jest z afinicją gorsza: 13,1 wobec 5,1&#8239;s przy 24 sesjach, 27,7 wobec 12,3&#8239;s przy 32. Nie ustaliliśmy przyczyny, a obniżenie progu przelewu z 8 do 4 niczego nie zmieniło.",
+    "source_hash": "2a468a4b1738"
+  },
+  "home.why-cache.p-5": {
+    "text": "<b>Na obciążonym serwerze zmierz oba warianty.</b> Przewaga jest największa, dopóki jest zapas; serwer pracujący na granicy możliwości powinien zmierzyć oba ustawienia, a afinicję można wyłączyć dla każdego modelu osobno. Repliki, a więc i ten routing, są częścią instalacji dla systemu Linux z kartami NVIDIA; <a href=\"#p-mac\">aplikacja na Maca (beta)</a> nie ma równoległości tensorowej ani równoległości danych.",
+    "source_hash": "c245f8292ac7"
+  },
+  "home.why-cache.a-1": {
+    "text": "Pełna metoda: obciążenie, środowisko testowe, próg przelewu i serwer z siedmioma kartami GPU, który od tamtej pory z tym działa →",
+    "source_hash": "cd240e4bc004"
+  },
+  "home.agents.h2-1": {
+    "text": "Skieruj swojego agenta do kodowania na własne karty GPU.",
+    "source_hash": "b01cff25d51f"
+  },
+  "home.agents.p-1": {
+    "text": "Dziesięć narzędzi łączy się za pomocą bazowego adresu URL i klucza; dwa z nich mogą też zachować płatną subskrypcję Claude do trudnej pracy.",
+    "source_hash": "26604da90050"
+  },
+  "home.agents.h3-1": {
+    "text": "W całości na Twoich modelach",
+    "source_hash": "a87ec3988e0d"
+  },
+  "home.agents.p-2": {
+    "text": "Przez API zgodne z OpenAI. Każde żądanie jest widoczne dla każdego klucza i każdej sesji.",
+    "source_hash": "eed13d192862"
+  },
+  "home.agents.span-1": {
+    "text": "Niestandardowy dostawca modelu · Responses API",
+    "source_hash": "de3ecc4fe5d1"
+  },
+  "home.agents.span-2": {
+    "text": "Dostawca zgodny z OpenAI · <code>/v1</code>",
+    "source_hash": "cc7b475640bb"
+  },
+  "home.agents.span-3": {
+    "text": "Dostawca zgodny z OpenAI · <code>/v1</code>",
+    "source_hash": "cc7b475640bb"
+  },
+  "home.agents.span-4": {
+    "text": "Model z własnym kluczem · <code>/v1</code>",
+    "source_hash": "5a0628b4b02d"
+  },
+  "home.agents.span-5": {
+    "text": "Dostawca OpenAI · jeden udostępniany model",
+    "source_hash": "8c2c30bf0764"
+  },
+  "home.agents.span-6": {
+    "text": "Dostawca OpenAI Compatible · ekran ustawień",
+    "source_hash": "09e5fe8af64a"
+  },
+  "home.agents.span-7": {
+    "text": "Nadpisanie bazowego adresu URL OpenAI · czat",
+    "source_hash": "9ad204014fc0"
+  },
+  "home.agents.h3-2": {
+    "text": "Zachowaj subskrypcję Claude, przenieś rutynowe wywołania",
+    "source_hash": "cfeda056d931"
+  },
+  "home.agents.p-3": {
+    "text": "Claude Code i Anthropic SDK przez router. Reguła wskazuje modele Claude, za które odpowiadają Twoje karty GPU; wszystko inne trafia do Anthropic na Twoim własnym logowaniu lub kluczu.",
+    "source_hash": "6995102b0af7"
+  },
+  "home.flow-t.title-1": {
+    "text": "Dokąd trafia żądanie Claude Code",
+    "source_hash": "d7db08f53325"
+  },
+  "home.flow-d.desc-1": {
+    "text": "Agent wysyła każde żądanie do routera LM Warden. Żądania do modeli claude-haiku trafiają do modelu na Twojej karcie GPU, który odpowiada jako ten model. Każdy inny model, łącznie z Opus, jest przekazywany do Anthropic na Twoim własnym logowaniu.",
+    "source_hash": "5c598ca9bc7c"
+  },
+  "home.flow-t2.title-1": {
+    "text": "Dokąd trafia żądanie Claude Code",
+    "source_hash": "d7db08f53325"
+  },
+  "home.flow-d2.desc-1": {
+    "text": "Agent wysyła każde żądanie do routera LM Warden. Żądania do modeli claude-haiku trafiają do modelu na Twojej karcie GPU, który odpowiada jako ten model. Każdy inny model, łącznie z Opus, jest przekazywany do Anthropic na Twoim własnym logowaniu.",
+    "source_hash": "5c598ca9bc7c"
+  },
+  "home.agents.b-1": {
+    "text": "1&nbsp;981",
+    "source_hash": "cdf3dc71b947"
+  },
+  "home.agents.span-8": {
+    "text": "żądań obsłużonych lokalnie, 99% ruchu Claude Code na serwerze od jego restartu. Ze strony Router naszego własnego serwera z siedmioma kartami GPU, 21&nbsp;października 2026&nbsp;r.; 22 odrzucone, gdy model docelowy nie był załadowany.",
+    "source_hash": "6f10abaf7726"
+  },
+  "home.agents.img-1.alt": {
+    "text": "Strona routera Claude Code: routing włączony, 99% obsłużonych lokalnie od 23:32; reguła 1 kieruje claude-haiku* do qwen3.8-27b, 1&nbsp;981 lokalnie i 22 odrzucone; każdy inny model Claude trafia do Anthropic na własnym logowaniu użytkownika",
+    "source_hash": "d77bbac51675"
+  },
+  "home.agents.figcaption-1": {
+    "text": "Claude Code 2.1.227 lub nowszy: <code>ANTHROPIC_BASE_URL</code> wskazuje LM Warden, klucz LM Warden w <code>ANTHROPIC_CUSTOM_HEADERS</code>, Twoje logowanie bez zmian. Nie testowaliśmy jakości odpowiedzi: daj lokalnemu modelowi rutynową, dobrze określoną pracę.",
+    "source_hash": "bc31fcfd58c7"
+  },
+  "home.agents.h3-3": {
+    "text": "Connect zapisuje konfigurację każdego klienta i wysyła żądanie testowe.",
+    "source_hash": "0ceb9132d312"
+  },
+  "home.agents.p-4": {
+    "text": "Wybierz w konsoli klienta, klucz i załadowany model; konsola sprawdza każde wymaganie względem tego, co jest faktycznie załadowane (okno kontekstu, wywoływanie narzędzi, włączony router), i daje Ci pliki do wklejenia. <a href=\"/coding-agents\">Wszyscy agenci do kodowania</a>: po jednej stronie na klienta z tym, co działa i co zaobserwowaliśmy.",
+    "source_hash": "0b548958da36"
+  },
+  "home.agents.img-2.alt": {
+    "text": "Strona Connect a client: wybór klucza, reguła routera claude-haiku* do qwen3.8-27b, klienci pogrupowani według protokołu i panel Claude Code ze sprawdzonymi wymaganiami",
+    "source_hash": "6a234848eac5"
+  },
+  "home.tune.h2-1": {
+    "text": "Niech AI, za które już płacisz, dostroi Twoje karty GPU.",
+    "source_hash": "c3ae8600a083"
+  },
+  "home.why-agent.p-1": {
+    "text": "Wybór modelu dla Twoich kart oznacza wybór kwantyzacji, silnika, podziału między karty GPU, rozmiaru kontekstu i typu cache KV; każda próba kosztuje pobranie i załadowanie. Wszystko, co robi konsola, to wywołanie API, więc Claude Code, Codex lub inny agent z dostępem do powłoki może przeprowadzić to wyszukiwanie za Ciebie, na Twoim sprzęcie i z Twoim obciążeniem.",
+    "source_hash": "4844283837a3"
+  },
+  "home.why-agent.h3-1": {
+    "text": "Pętla",
+    "source_hash": "85f5dae66c4f"
+  },
+  "home.loop-t.title-1": {
+    "text": "Pętla strojenia",
+    "source_hash": "3f22e76a3edc"
+  },
+  "home.loop-d.desc-1": {
+    "text": "Sprawdź karty GPU, wybierz modele z podglądem dopasowania przed jakimkolwiek pobraniem, załaduj kandydujące układy, przetestuj je prawdziwymi żądaniami, dostosuj ustawienia i zostaw załadowany najlepszy wariant. Testowanie i dostosowywanie powtarzają się, dopóki agent nie będzie zadowolony.",
+    "source_hash": "dd7733aa80ef"
+  },
+  "home.loop-t2.title-1": {
+    "text": "Pętla strojenia",
+    "source_hash": "3f22e76a3edc"
+  },
+  "home.loop-d2.desc-1": {
+    "text": "Sprawdź karty GPU, wybierz modele z podglądem dopasowania przed jakimkolwiek pobraniem, załaduj kandydujące układy, przetestuj je prawdziwymi żądaniami, dostosuj ustawienia i zostaw załadowany najlepszy wariant. Testowanie i dostosowywanie powtarzają się, dopóki agent nie będzie zadowolony.",
+    "source_hash": "dd7733aa80ef"
+  },
+  "home.why-agent.p-2": {
+    "text": "Co wywołuje agent: <code>GET /api/system/gpus</code>, <code>POST /api/models/fit-preview</code> przed jakimkolwiek pobraniem, rejestrację i <code>suggest-config</code>, pobranie i załadowanie, przebieg obciążeniowy, który znajduje i stosuje rzeczywisty limit kontekstu, <code>GET /api/stats/v2/throughput</code> i <code>latency</code> oraz klucz do inferencji, który wystawia, aby wysyłać ruch testowy. Najpierw czyta <code>/agent-guide.md</code>, krótki opis tych wywołań napisany dla modelu językowego.",
+    "source_hash": "35230c9469a2"
+  },
+  "home.why-agent.img-1.alt": {
+    "text": "Ładowanie modelu na stronie Models: każdy krok z czasem, który upłynął, i czasem zwykłym",
+    "source_hash": "afd3f600f638"
+  },
+  "home.why-agent.figcaption-1": {
+    "text": "Co agent obserwuje podczas ładowania układu: każdy krok ze zwykłym czasem z wcześniejszych ładowań. Ładowanie, które przestaje postępować, jest zatrzymywane, a jego karty GPU zwalniane.",
+    "source_hash": "4bb331f9f6fb"
+  },
+  "home.why-agent.h3-2": {
+    "text": "Cztery prompty do wklejenia i co z nich wynika",
+    "source_hash": "222000da96d1"
+  },
+  "home.why-agent.li-1": {
+    "text": "<b>Przegląd i wybór.</b> <span class=\"ask\">Poproś:</span> wypisz moje karty GPU, wybierz trzy modele open-weight do kodowania agentowego, które zmieszczą się z kontekstem co najmniej 65&nbsp;536 tokenów, sprawdź każdy przez fit-preview, niczego nie pobieraj. <span class=\"get\">Otrzymasz:</span> tabelę z modelem, kwantyzacją, silnikiem, kartami GPU, kontekstem i uzasadnieniem.",
+    "source_hash": "4d737111bb76"
+  },
+  "home.why-agent.li-2": {
+    "text": "<b>Silnik i układ dla jednego modelu.</b> <span class=\"ask\">Poproś:</span> zdecyduj, vLLM czy llama.cpp, oraz równoległość tensorowa czy repliki z równoległością danych na moich kartach; załaduj dwa najlepsze układy, wyślij do każdego te same 20 strumieniowanych żądań, porównaj przy współbieżności 1 i 8. <span class=\"get\">Otrzymasz:</span> czas do pierwszego tokenu i tokeny na sekundę dla obu, zwycięzcę pozostawionego w pamięci, drugi wyładowany, klucz testowy unieważniony.",
+    "source_hash": "aadee19b4763"
+  },
+  "home.why-agent.li-3": {
+    "text": "<b>Znajdź rzeczywiste limity i zastosuj je.</b> <span class=\"ask\">Poproś:</span> wykonaj przebieg obciążeniowy załadowanego modelu, zastosuj zmierzony kontekst, a potem przetestuj przy współbieżności 1, 4 i 16 z promptami około 2k i 30k tokenów. <span class=\"get\">Otrzymasz:</span> limit kontekstu zapisany w ustawieniach modelu i tabelę czasu do pierwszego tokenu oraz tokenów na sekundę dla każdej współbieżności i rozmiaru promptu.",
+    "source_hash": "5e697967b7ec"
+  },
+  "home.why-agent.li-4": {
+    "text": "<b>Porównaj dwóch kandydatów na własnej pracy.</b> <span class=\"ask\">Poproś:</span> odtwórz prompty z <code>./workload/*.txt</code> na modelu A i modelu B przy współbieżności 4, oceń każdą odpowiedź. <span class=\"get\">Otrzymasz:</span> <code>model-comparison.md</code> z opóźnieniem, tokenami na sekundę, poprawnością według oceny agenta i rekomendacją; rekomendowany model pozostaje załadowany.",
+    "source_hash": "d25a394b9e41"
+  },
+  "home.why-agent.p-3": {
+    "text": "<b>Zanim zaczniesz.</b> Token administratora ma pełne uprawnienia administracyjne w LM Warden (modele, klucze, ustawienia; węższych zakresów jeszcze nie ma): nadaj mu krótki czas ważności i unieważnij go w Settings → Access Tokens, gdy zadanie zostanie wykonane. Przebieg obciążeniowy celowo powoduje awarię silnika, aby znaleźć jego limit: uruchamiaj te prompty na instancji, od której nikt inny nie zależy. Pobierane pliki są duże; prompty sprawdzają dopasowanie przed pobraniem, ale pilnuj miejsca na dysku.",
+    "source_hash": "505b9916712b"
+  },
+  "home.why-agent.p-4": {
+    "text": "Wybór silnika i układu (vLLM, równoległość tensorowa lub równoległość danych) dotyczy instalacji dla systemu Linux; na Macu wybór to MLX lub llama.cpp na jednej karcie GPU. Model, który stroi, może być tym, za który już płacisz; model strojony to ten na Twoich kartach. <a href=\"/agent-tuning\">Strona o strojeniu przez agenta: cztery prompty w całości</a>.",
+    "source_hash": "bbeb89be5de6"
+  },
+  "home.share.h2-1": {
+    "text": "Jeden serwer z GPU dla całego zespołu, rodziny i Twoich agentów.",
+    "source_hash": "f1e27da721b7"
+  },
+  "home.why-keys.p-1": {
+    "text": "Utwórz tyle kluczy API, ile potrzebujesz, i rozdaj je: współpracownikowi, członkowi rodziny, zadaniu CI, farmie agentów – każdy z własnym kluczem, własnym priorytetem i własną stroną użycia. Sprzęt pracuje dla wszystkich, a ważna praca nigdy nie czeka.",
+    "source_hash": "dd9352746e6e"
+  },
+  "home.why-keys.h3-1": {
+    "text": "Ścisły priorytet: 9 obsługiwany pierwszy, 0 ostatni",
+    "source_hash": "51396907e61e"
+  },
+  "home.why-keys.p-2": {
+    "text": "Oczekujące żądanie o wyższym priorytecie zawsze idzie przed niższym. Pod obciążeniem niższe klucze dostają moc, która zostaje po ważnych kluczach; na obciążonym serwerze niski priorytet może czekać bez końca. Domyślnie 5. Nie ma limitu częstotliwości dla klucza; zastąpił go priorytet.",
+    "source_hash": "4dd4ec421cbe"
+  },
+  "home.why-keys.ol-1.aria-label": {
+    "text": "Przykładowa drabina priorytetów",
+    "source_hash": "1c1bcbbf1789"
+  },
+  "home.why-keys.b-1": {
+    "text": "Agent produkcyjny",
+    "source_hash": "c5da4041ea8e"
+  },
+  "home.why-keys.span-1": {
+    "text": "zawsze pierwszy",
+    "source_hash": "a2476d66a084"
+  },
+  "home.why-keys.b-2": {
+    "text": "Twoje sesje kodowania",
+    "source_hash": "6c8888f1d6dc"
+  },
+  "home.why-keys.span-2": {
+    "text": "następne",
+    "source_hash": "01b7a9f0d1d4"
+  },
+  "home.why-keys.b-3": {
+    "text": "Klucze kolegów",
+    "source_hash": "a76b6c1ae9be"
+  },
+  "home.why-keys.span-3": {
+    "text": "domyślnie",
+    "source_hash": "6d244abe081b"
+  },
+  "home.why-keys.b-4": {
+    "text": "Rodzina i hobby",
+    "source_hash": "724c4cb2e620"
+  },
+  "home.why-keys.span-4": {
+    "text": "co zostanie",
+    "source_hash": "2c1097258738"
+  },
+  "home.why-keys.b-5": {
+    "text": "Nocne zadania wsadowe",
+    "source_hash": "96d527825b4b"
+  },
+  "home.why-keys.span-5": {
+    "text": "gdy serwer jest wolny",
+    "source_hash": "687891cb2f66"
+  },
+  "home.why-keys.p-3": {
+    "text": "Przykładowa drabina, nie reguła: liczby wybierasz Ty. Każdy klucz można też wstrzymać (nowe żądania są odrzucane, a trwające się kończą), zrotować z okresem przejściowym i ograniczyć do modeli, które może wywoływać.",
+    "source_hash": "ca3034a912dc"
+  },
+  "home.why-keys.img-1.alt": {
+    "text": "Strona klucza API coding-agent: karta Limits z wyborem priorytetu od P0 do P9 i tekstem Strict, a waiting P9 request always goes before a P8 one; panel Usage z ostatnich 7 dni z 19k żądań, 1,5 mld tokenów promptu i 440k tokenów odpowiedzi; wykresy tokenów na minutę i żądań na minutę; poniżej panele czasu oczekiwania w kolejce i opóźnienia",
+    "source_hash": "ae01537e1ee6"
+  },
+  "home.why-keys.figcaption-1": {
+    "text": "Strona klucza: jego priorytet, siedem dni jego własnego użycia (19k żądań, 1,5 mld tokenów promptu), tokeny i żądania na minutę, oczekiwanie w kolejce i opóźnienie. Okna 1&#8239;h, 6&#8239;h, 24&#8239;h, 7&#8239;dni lub dowolny własny zakres. Można uwzględnić wcześniejsze klucze, z których został zrotowany.",
+    "source_hash": "a098f63084b6"
+  },
+  "home.why-keys.img-2.alt": {
+    "text": "Wykres żądań Stats z siedmiu dni, 28&nbsp;906 żądań, każdy znacznik w kolorze klucza, który je wysłał: opencode-laptop, research-notebook, ui-refactor-agent, agent-sandbox, load-test-filler i demo-agent",
+    "source_hash": "9ae6aeafcf56"
+  },
+  "home.why-keys.figcaption-2": {
+    "text": "Wykres żądań na stronie Stats: jeden znacznik na każde zakończone żądanie, umieszczony w chwili zakończenia, na wysokości odpowiadającej czasowi trwania w skali logarytmicznej, z rozmiarem według wygenerowanych tokenów, kształtem według sposobu zakończenia i kolorem według klucza, który je wysłał (jego nazwa lub adres IP klienta, gdy klucz nie ma nazwy). Kolorowanie według klucza włącza się, gdy z serwera korzystają co najmniej dwa klucze i żaden z nich nie ma 95% żądań. Legenda działa jak filtr: kliknij klucz, aby zobaczyć tylko jego żądania.",
+    "source_hash": "348b1b23d393"
+  },
+  "home.why-keys.p-4": {
+    "text": "Kto korzysta z serwera w tej chwili i jak, widać na tych samych stronach: każde żądanie w toku z kluczem, sesją i fazą, tabela dla każdego klucza na stronie Stats oraz <a href=\"#why-stats\">panele Stats</a> dla całego hosta.",
+    "source_hash": "b5718f9f8bb5"
+  },
+  "home.hw.h2-1": {
+    "text": "Twój sprzęt bez upiększeń: od Maca po osiem B300.",
+    "source_hash": "3f3225bbc711"
+  },
+  "home.hardware.p-1": {
+    "text": "Ta sama konsola odczytuje M1 z 16&#8239;GB, dwie niedopasowane karty pod biurkiem i serwer 8 × B300 z NVSwitch, a wąskie gardło wskazuje zamiast je uśredniać: łącze PCIe, które ustaliło się na x4 z x16, nieaktywne łącza NVLink, ECC różniące się między kartami.",
+    "source_hash": "f90e55953921"
+  },
+  "home.hardware.img-1.alt": {
+    "text": "Konfiguracja systemu na serwerze 8 × B300: Intel Xeon 6776P, 3019&#8239;GiB RAM, osiem paneli NVIDIA B300 SXM6, każdy z 241 z 268,6&#8239;GiB w użyciu, Link Gen 6 x16 z x16, NVLink 18 z 18 łączy aktywnych po 53,125&#8239;GB/s każde, ECC włączone oraz rysunek architektury serwera z jednym przełącznikiem NVSwitch połączonym z każdą kartą",
+    "source_hash": "60071766922d"
+  },
+  "home.hardware.figcaption-1": {
+    "text": "Osiem kart B300 SXM6 na jednym NVSwitch: 18 z 18 łączy NVLink aktywnych na kartę, ECC włączone, PCIe Gen 6 x16, 241 z 268,6&#8239;GiB w użyciu na kartę podczas udostępniania GLM-5.2 NVFP4 z równoległością tensorową 8.",
+    "source_hash": "937079060820"
+  },
+  "home.hardware.img-2.alt": {
+    "text": "Dwie niedopasowane karty GPU: NVIDIA RTX A4000 z czerwonym ostrzeżeniem Reduced link width x4 of x16 i Link Gen 1 teraz, maksymalnie Gen 3, obok Quadro RTX 5000, której architektura, VRAM, limit mocy, łącze, NVLink i ECC są oznaczone jako różne; poniżej rysunek tego, jak karty łączą się z CPU przez łącza x4 i x16",
+    "source_hash": "6006e1039ec1"
+  },
+  "home.hardware.figcaption-2": {
+    "text": "Dwie karty kupione w odstępie lat: łącze A4000 ustaliło się na x4 z x16 i jest oznaczone na czerwono; architektura, limit mocy, NVLink (obsługiwany, łącza nieaktywne) i ECC karty Quadro są oznaczone jako <em>różni się</em>. Rysunek pokazuje, które gniazdo jest wąskie.",
+    "source_hash": "d67a36ee8dec"
+  },
+  "home.hardware.img-3.alt": {
+    "text": "Stats na serwerze 8 × B300: VRAM 1932,1 z 2148,8&#8239;GiB, moc 1893&#8239;W łącznie dla kart, wykorzystanie GPU i pobór mocy z ostatniej godziny oraz tokeny promptu na sekundę z podziałem na pobrane z cache i obliczone przy 93% trafień w cache",
+    "source_hash": "2b44277f55cd"
+  },
+  "home.hardware.figcaption-3": {
+    "text": "Ta sama strona Stats na górnym końcu skali: 1&nbsp;932 z 2&nbsp;149&#8239;GiB VRAM, 1&nbsp;893&#8239;W na wszystkich kartach, szczyt 4&nbsp;351&#8239;W w ciągu godziny i 93% tokenów promptu z cache.",
+    "source_hash": "f3ceb6c33eb7"
+  },
+  "home.hardware.img-4.alt": {
+    "text": "Strona modelu podczas ładowania GLM-5.2 NVFP4 na ośmiu B300: 9 min 17 s ze zwykłych 10 min 46 s, kroki Start engine, Load weights 47 of 47, Compile kernels i Size KV cache ukończone, Tune kernels na operacji 21 z 22, z wykresami CPU i pamięci GPU oraz ostatnim wierszem dziennika",
+    "source_hash": "c1394a12d331"
+  },
+  "home.hardware.figcaption-4": {
+    "text": "Ładowanie trwające 10 minut, krok po kroku: GLM-5.2 NVFP4 na ośmiu B300, 9 min 17 s ze zwykłych 10 min 46 s, nic na czerwono, dopóki postępuje.",
+    "source_hash": "cddfa5475f94"
+  },
+  "home.hardware.p-2": {
+    "text": "Co pokazuje każdy panel dla każdej karty: temperaturę względem jej własnego progu dławienia, moc względem jej limitu, zegary, wentylator, generację i szerokość PCIe wynegocjowane w tej chwili, ECC i NVLink, jeśli karta je ma, oraz proces zajmujący pamięć. Rysunek połączeń jest odczytywany z <code>nvidia-smi topo -m</code>. Na Macu: użycie GPU i budżet pamięci zgłaszany przez Metal, bez mocy. A silnik pod tym wszystkim jest nadzorowany przez jego własny <code>/health</code>, a nie tabelę procesów: martwy silnik pod działającą otoczką jest ładowany ponownie z zachowaniem materiału diagnostycznego.",
+    "source_hash": "5a4e8569c432"
+  },
+  "home.features.h2-1": {
+    "text": "Co pokazuje",
+    "source_hash": "8e7ddf931c59"
+  },
+  "home.features.p-1": {
+    "text": "Monitorowanie GPU",
+    "source_hash": "cbdfccb24fcc"
+  },
+  "home.features.h3-1": {
+    "text": "Każda karta raportuje sama za siebie.",
+    "source_hash": "65fb2dd50a89"
+  },
+  "home.features.p-2": {
+    "text": "Wykorzystanie, temperatura względem progu dławienia tej karty, moc względem jej limitu, VRAM, zegary, łącze PCIe i proces zajmujący pamięć. Nie średnia dla całego serwera.",
+    "source_hash": "1bea9211a232"
+  },
+  "home.features.img-1.alt": {
+    "text": "Konfiguracja systemu i cztery panele GPU dla kart NVIDIA RTX A4000 z wykorzystaniem, temperaturą, VRAM, mocą, wentylatorem i zegarami każdej karty",
+    "source_hash": "0a8bc4d5312e"
+  },
+  "home.features.p-3": {
+    "text": "Żądania w toku",
+    "source_hash": "04423fe4175f"
+  },
+  "home.features.h3-2": {
+    "text": "Zobacz, co każdy agent robi w tej chwili.",
+    "source_hash": "e8070826221c"
+  },
+  "home.features.p-4": {
+    "text": "Każde żądanie z kluczem, sesją i fazą: w kolejce, prefill, myślenie, wywołanie narzędzia, odpowiadanie. Ile z każdego promptu pochodzi z cache prefiksów, mierzone dla każdego żądania.",
+    "source_hash": "49c151ca7020"
+  },
+  "home.features.img-2.alt": {
+    "text": "Tabela żądań w toku: dziesięć aktywnych żądań, każde z kluczem, sesją, fazą i tokenami",
+    "source_hash": "428dfb61458f"
+  },
+  "home.features.p-5": {
+    "text": "Agenci do kodowania",
+    "source_hash": "707c65c28bca"
+  },
+  "home.features.h3-3": {
+    "text": "Claude Code, Codex i OpenCode podłączone z jednej strony.",
+    "source_hash": "ba721e4421e2"
+  },
+  "home.features.p-6": {
+    "text": "Connect zapisuje konfigurację każdego narzędzia z adresem tej instancji LM Warden, kluczem i załadowanym modelem, sprawdza wymagania względem tego, co jest faktycznie załadowane, i wysyła żądanie testowe.",
+    "source_hash": "916edc5f7b60"
+  },
+  "home.features.img-3.alt": {
+    "text": "Strona Connect a client z wybranym Claude Code i sprawdzonymi wymaganiami",
+    "source_hash": "cc2b73368cf4"
+  },
+  "home.oss.h2-1": {
+    "text": "Bezpłatny, otwarty i rozwijany jawnie.",
+    "source_hash": "3317e70f46b3"
+  },
+  "home.open-source.p-1": {
+    "text": "LM Warden jest dostępny na licencji Apache-2.0 w serwisie <a href=\"{{repo}}\" rel=\"noopener\">GitHub</a>: skrypt instalacyjny i plik Compose to całe wdrożenie i możesz przeczytać oba. Bez konta, bez sprawdzania licencji, bez telemetrii. vLLM, llama.cpp i MLX to projekty zewnętrzne, które uruchamiamy bez modyfikacji.",
+    "source_hash": "ba01b625fe70"
+  },
+  "home.open-source.h2-1": {
+    "text": "mlx-rust-lm <span class=\"soon\">wkrótce</span>",
+    "source_hash": "19dae78c985d"
+  },
+  "home.open-source.p-2": {
+    "text": "Port mlx-lm firmy Apple z Pythona do Rusta na oficjalnych powiązaniach Apple mlx-c, rozwijany i utrzymywany przez zespół LM Warden jako samodzielny projekt open source, którego LM Warden użyje jako trzeciego silnika na Macu. Z czasem zastąpi on silnik mlx-lm w Pythonie, który stanowi większość dzisiejszego pobrania dla Maca. Nieoficjalny, niepowiązany z Apple.",
+    "source_hash": "598b6f2514fd"
+  },
+  "home.lightbox.button-1": {
+    "text": "Zamknij ✕",
+    "source_hash": "ce7bf15a4a85"
+  },
+  "home.lightbox.button-1.aria-label": {
+    "text": "Zamknij powiększony zrzut ekranu",
+    "source_hash": "2d3b2f52a3dd"
+  },
+  "chrome.footer.about": {
+    "text": "Wolne oprogramowanie na licencji Apache License 2.0 od zespołu odpowiedzialnego za <a href=\"https://podwarden.com\" rel=\"noopener\">PodWarden</a>. vLLM, llama.cpp i MLX to projekty zewnętrzne, które uruchamiamy bez modyfikacji; nie jesteśmy z nimi powiązani.",
+    "source_hash": "7f11ddd74f30"
+  },
+  "chrome.footer.source": {
+    "text": "Kod w serwisie GitHub",
+    "source_hash": "11506c59ef23"
+  },
+  "chrome.footer.install": {
+    "text": "Instalacja",
+    "source_hash": "e15a133068af"
+  },
+  "chrome.footer.changelog": {
+    "text": "Dziennik zmian",
+    "source_hash": "ead07c84baac"
+  },
+  "chrome.footer.licence": {
+    "text": "Licencja",
+    "source_hash": "f3ec8e880a46"
+  },
+  "chrome.footer.tag-note": {
+    "text": "Ta strona jest udostępniana przez sam LM Warden i ładuje tag Google do liczenia odwiedzin. Pliki cookie są ustawiane tylko wtedy, gdy je zaakceptujesz (<a href=\"/privacy\">prywatność</a>, <a href=\"/privacy\" data-consent-open>ustawienia plików cookie</a>).",
+    "source_hash": "09eab402684a"
+  },
+  "chrome.consent.aria-label": {
+    "text": "Wybór plików cookie",
+    "source_hash": "38db21b38100"
+  },
+  "chrome.consent.text": {
+    "text": "Ta witryna używa plików cookie Google Analytics do liczenia odwiedzin i mierzenia reklam, ale tylko jeśli na to zezwolisz. <a href=\"/privacy\">Prywatność</a>",
+    "source_hash": "cdf7e1f99a7b"
+  },
+  "chrome.consent.decline": {
+    "text": "Odrzuć",
+    "source_hash": "a2d285b35287"
+  },
+  "chrome.consent.accept": {
+    "text": "Akceptuj",
+    "source_hash": "89713b9c9c1b"
+  }
+}

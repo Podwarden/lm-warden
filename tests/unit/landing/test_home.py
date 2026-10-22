@@ -26,6 +26,7 @@ def test_sections_in_the_approved_order(client: TestClient) -> None:
         'id="use-cases" aria-roledescription="carousel"',
         'id="install" aria-labelledby="install-title"',
         'id="why" aria-labelledby="why-title"',
+        'id="why-cache" aria-labelledby="cache-title"',
         'id="agents" aria-labelledby="agents-title"',
         'id="why-agent" aria-labelledby="tune-title"',
         'id="why-keys" aria-labelledby="share-title"',
@@ -37,14 +38,14 @@ def test_sections_in_the_approved_order(client: TestClient) -> None:
     assert at == sorted(at)
     assert '<h1 id="hero-title">Your GPUs, served like a hosted API.</h1>' in main
     assert len(re.findall(r"<h1[\s>]", main)) == 1
-    # The ladder holds five problems; coding agents, tuning and sharing are
+    # The ladder holds four problems; cache-aware routing (owner, 2026-10-21:
+    # its charts and table on Home), coding agents, tuning and sharing are
     # sections of their own (decisions D-B15 to D-B17).
     ladder = main[
         main.index('<ol class="ladder">') : main.index("</ol>", main.index('<ol class="ladder">'))
     ]
     assert re.findall(r'<li id="(why-[a-z]+)">', ladder) == [
         "why-fit",
-        "why-cache",
         "why-stats",
         "why-chat",
         "why-god",
@@ -87,7 +88,9 @@ def test_carousel_ten_slides_and_controls(client: TestClient) -> None:
         assert href.startswith("#") and f'id="{href[1:]}"' in main, href
     assert (
         '<div class="uc-ctl" hidden>' in main
-        and '<div class="uc-dots" role="group" aria-label="Choose a use case" hidden></div>' in main
+        and '<div class="uc-dots" role="group" aria-label="Choose a use case" '
+        'data-l-dot="Use case {n} of {m}" hidden></div>'
+        in main
     )
     assert 'aria-label="Pause automatic rotation" aria-pressed="false"' in main
     script = next(s for s in inline_scripts(body) if 'querySelector(".uc")' in s)
@@ -219,3 +222,31 @@ def test_llms_txt_names_every_platform_and_use_case(client: TestClient) -> None:
             "8 × B300",
         ):
             assert fact in uses, (path, fact)
+
+
+def test_cache_section_carries_the_cache_pages_figures(client: TestClient) -> None:
+    """The cache block is a full section (owner, 2026-10-21) with the same
+    drawing, charts and ramp table as /cache-aware-routing, the routing card
+    in the lightbox, the overload caveat and a link to the full method. The
+    figures are the same files, so Home and the cache page cannot drift."""
+    from app.landing.render import _FIGURES
+
+    main = _main(fetch(client, "/"))
+    start = main.index('id="why-cache" aria-labelledby="cache-title"')
+    sec = main[start : main.index("</section>", start)]
+    assert "Every agent turn re-reads the whole conversation." in sec
+    for name in ("d2", "d2-narrow", "c3", "c3-narrow", "c1", "c1-narrow", "t1-ramp"):
+        assert _FIGURES[name] in sec, name
+    cache_page = fetch(client, "/cache-aware-routing")
+    for fact in (
+        "56 to 86%",
+        "2.05 to 0.38&#8239;s",
+        "13.1 against 5.1&#8239;s at 24 sessions, 27.7 against\n          12.3&#8239;s at 32",
+        "affinity can be switched off per model",
+    ):
+        assert fact in cache_page, fact
+        assert " ".join(fact.split()) in " ".join(sec.split()), fact
+    assert re.search(r'<a class="zoom" href="/_landing/assets/shot-dp-card\.webp\?v=', sec)
+    assert '<a href="/cache-aware-routing">' in sec
+    assert "Linux install with NVIDIA GPUs" in sec
+    assert "Fig.&nbsp;" not in sec  # the figure numbers stay on the cache page

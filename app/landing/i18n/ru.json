@@ -1,0 +1,1138 @@
+{
+  "meta.title": {
+    "text": "LM Warden: LLM-шлюз на ваших собственных GPU",
+    "source_hash": "8b40be948ef4"
+  },
+  "meta.description": {
+    "text": "LLM на GPU NVIDIA под Linux или на Mac с Apple silicon через vLLM, llama.cpp или MLX: один OpenAI-совместимый эндпоинт /v1 и свой ключ для каждого приложения.",
+    "source_hash": "6cb271edae46"
+  },
+  "meta.og-image-alt": {
+    "text": "LM Warden: OpenAI-совместимый API на GPU у вас под столом или в стойке, рядом панель Stats одной RTX A4000 с отмеченной точкой троттлинга, которую сообщает драйвер",
+    "source_hash": "7f75ba3bcd9d"
+  },
+  "jsonld.feature-1": {
+    "text": "Предпросмотр совместимости: каждый файл репозитория Hugging Face проверяется на выбранных GPU до начала загрузки",
+    "source_hash": "615857f542c9"
+  },
+  "jsonld.feature-2": {
+    "text": "Агенты для программирования (Codex CLI, OpenCode, Aider, Grok CLI, Continue, Cline, Cursor, OpenAI SDK и Anthropic SDK, Claude Code) на ваших собственных моделях, с готовой настройкой",
+    "source_hash": "7b06e74713de"
+  },
+  "jsonld.feature-3": {
+    "text": "Маршрутизатор Claude Code: локальная модель отвечает за выбранные вами модели Claude, остальные запросы уходят в Anthropic под вашей учетной записью",
+    "source_hash": "1f350726cef9"
+  },
+  "jsonld.feature-4": {
+    "text": "Страница Stats: загрузка GPU, мощность, токены в секунду, доля кэша, задержка и вытеснения, от 1 часа до 7 дней",
+    "source_hash": "42d6cdab3fb6"
+  },
+  "jsonld.feature-5": {
+    "text": "Маршрутизация с учетом кэша: каждый диалог остается на реплике, которая хранит его префикс",
+    "source_hash": "9791836d7920"
+  },
+  "jsonld.feature-6": {
+    "text": "Настройка агентом: агент для программирования через API подбирает модель, движок и раскладку под ваши GPU и попутно проводит бенчмарки",
+    "source_hash": "b2f04e38f9aa"
+  },
+  "jsonld.feature-7": {
+    "text": "Чат с потоковым выводом Markdown, изображениями для моделей с компьютерным зрением и сохраненной историей",
+    "source_hash": "0740507f9225"
+  },
+  "jsonld.feature-8": {
+    "text": "God mode: промпты и ответы одного ключа в реальном времени для отладки, по умолчанию выключен",
+    "source_hash": "301c375d8a2f"
+  },
+  "jsonld.feature-9": {
+    "text": "Ключи API со строгим приоритетом от 9 до 0 и статистикой использования по каждому ключу",
+    "source_hash": "89c7e3de3f80"
+  },
+  "jsonld.feature-10": {
+    "text": "Панели для каждого GPU — от M1 с 16 GB до сервера 8 × B300 с NVSwitch, с указанием узких каналов PCIe, неактивных NVLink и различий в ECC",
+    "source_hash": "bf6f8b147d8a"
+  },
+  "chrome.copy.done": {
+    "text": "Скопировано",
+    "source_hash": "8d525e5f158b"
+  },
+  "chrome.copy.fail": {
+    "text": "Нажмите Ctrl+C",
+    "source_hash": "e78ab3a91bf2"
+  },
+  "chrome.skip": {
+    "text": "К содержимому",
+    "source_hash": "ac576a66d456"
+  },
+  "chrome.brand.aria-label": {
+    "text": "LM Warden: главная",
+    "source_hash": "a007563c384d"
+  },
+  "chrome.nav.aria-label": {
+    "text": "Основное меню",
+    "source_hash": "efe10c80ec8a"
+  },
+  "chrome.nav.menu": {
+    "text": "Меню",
+    "source_hash": "99af6606ff9d"
+  },
+  "chrome.nav.use-cases": {
+    "text": "Сценарии",
+    "source_hash": "ff27a991e855"
+  },
+  "chrome.nav.features": {
+    "text": "Возможности",
+    "source_hash": "5697d03daef4"
+  },
+  "chrome.nav.coding-agents": {
+    "text": "Агенты для кода",
+    "source_hash": "707c65c28bca"
+  },
+  "chrome.nav.faq": {
+    "text": "Вопросы",
+    "source_hash": "dbc468a14b60"
+  },
+  "chrome.nav.github.title": {
+    "text": "Исходный код на GitHub, Apache-2.0",
+    "source_hash": "d2833070219a"
+  },
+  "chrome.nav.install": {
+    "text": "Скачать и установить",
+    "source_hash": "4120132397fd"
+  },
+  "chrome.nav.plat-linux": {
+    "text": "Linux + GPU NVIDIA",
+    "source_hash": "23d8d6d2be9c"
+  },
+  "chrome.nav.plat-mac": {
+    "text": "macOS, Apple silicon (бета)",
+    "source_hash": "d2364b229535"
+  },
+  "chrome.nav.plat-win": {
+    "text": "Windows (далее)",
+    "source_hash": "e5a1bb1c3085"
+  },
+  "chrome.nav.plat-appliance": {
+    "text": "Устройство (скоро)",
+    "source_hash": "6a7fc115677a"
+  },
+  "chrome.nav.plat-upgrade": {
+    "text": "Обновить установку",
+    "source_hash": "c1fe5f01dc6e"
+  },
+  "chrome.nav.signin": {
+    "text": "Вход в консоль",
+    "source_hash": "cb9ad9f4d662"
+  },
+  "chrome.lang.heading": {
+    "text": "Язык",
+    "source_hash": "a4fe65264ef7"
+  },
+  "chrome.lang.label": {
+    "text": "Язык:",
+    "source_hash": "8c16819a2bd4"
+  },
+  "chrome.docs.aria-label": {
+    "text": "Документация",
+    "source_hash": "c205924de0fe"
+  },
+  "chrome.docs.full": {
+    "text": "Документация",
+    "source_hash": "c205924de0fe"
+  },
+  "chrome.docs.short": {
+    "text": "Докум.",
+    "source_hash": "7af023c43013"
+  },
+  "chrome.install": {
+    "text": "Установить",
+    "source_hash": "4120132397fd"
+  },
+  "home.hero.h1-1": {
+    "text": "Ваши GPU — как облачный API.",
+    "source_hash": "b24318c21e4f"
+  },
+  "home.hero.p-1": {
+    "text": "LM Warden запускает vLLM, llama.cpp или MLX на вашем собственном оборудовании и ставит перед ними один OpenAI-совместимый порт: свой ключ для каждого приложения, статистика по каждому ключу и живая панель для каждого GPU. На сервере Linux с картами NVIDIA или на Mac с Apple silicon.",
+    "source_hash": "e192caf6a5b3"
+  },
+  "home.hero.a-1": {
+    "text": "Скачать и установить",
+    "source_hash": "4120132397fd"
+  },
+  "home.hero.a-2": {
+    "text": "Что он показывает",
+    "source_hash": "51b46bd0add6"
+  },
+  "home.hero.span-1": {
+    "text": "Открытый код, Apache-2.0",
+    "source_hash": "2a43a93eceec"
+  },
+  "home.hero.span-2": {
+    "text": "Без аккаунта и телеметрии",
+    "source_hash": "035ccb7cad8a"
+  },
+  "home.hero.span-3": {
+    "text": "Linux + NVIDIA · macOS (бета) · далее Windows",
+    "source_hash": "1f8168eb854e"
+  },
+  "home.hero.img-1.alt": {
+    "text": "Страница Stats загруженного экземпляра LM Warden: VRAM 59,4 из 64&#8239;GiB, загрузка GPU 100&#8239;%, мощность 548&#8239;W и графики загрузки GPU, потребляемой мощности и токенов в минуту за последний час",
+    "source_hash": "46cb2df1ab06"
+  },
+  "home.hero.div-1.aria-label": {
+    "text": "Коротко",
+    "source_hash": "46b396c85919"
+  },
+  "home.hero.b-1": {
+    "text": "vLLM v0.32.0 и llama.cpp b11719",
+    "source_hash": "d0656dfa424f"
+  },
+  "home.hero.span-4": {
+    "text": "на CUDA",
+    "source_hash": "6b06ee360144"
+  },
+  "home.hero.span-5": {
+    "text": "macOS · чип Apple",
+    "source_hash": "1b50b6d8401a"
+  },
+  "home.hero.b-2": {
+    "text": "MLX и llama.cpp",
+    "source_hash": "f2287a1beeab"
+  },
+  "home.hero.span-6": {
+    "text": "на Metal",
+    "source_hash": "6a893fd85af2"
+  },
+  "home.hero.span-7": {
+    "text": "API",
+    "source_hash": "8d266d3e3abd"
+  },
+  "home.hero.b-3": {
+    "text": "OpenAI, Anthropic Messages и Responses",
+    "source_hash": "3aeff05d5bf6"
+  },
+  "home.hero.span-8": {
+    "text": "на одном порту",
+    "source_hash": "05261121948c"
+  },
+  "home.hero.span-9": {
+    "text": "Агенты для кода",
+    "source_hash": "707c65c28bca"
+  },
+  "home.hero.b-4": {
+    "text": "Claude Code, Codex CLI, OpenCode и еще 7",
+    "source_hash": "544b91f8227b"
+  },
+  "home.hero.span-10": {
+    "text": "уже настроены",
+    "source_hash": "48d1003061d4"
+  },
+  "home.uc.h2-1": {
+    "text": "Для чего его используют",
+    "source_hash": "a2bc7e06beef"
+  },
+  "home.use-cases.button-1.aria-label": {
+    "text": "Предыдущий сценарий",
+    "source_hash": "40a9d13608d2"
+  },
+  "home.use-cases.button-2.aria-label": {
+    "text": "Приостановить автоматическую смену",
+    "source_hash": "f1c27427e687"
+  },
+  "home.use-cases.button-2.resume": {
+    "text": "Возобновить автоматическую смену",
+    "source_hash": "bb52c71e6d3b"
+  },
+  "home.use-cases.button-3.aria-label": {
+    "text": "Следующий сценарий",
+    "source_hash": "9220dc6514fb"
+  },
+  "home.use-cases.li-1.aria-label": {
+    "text": "1 из 10",
+    "source_hash": "b54457342c7d"
+  },
+  "home.use-cases.h3-1": {
+    "text": "Поместится ли эта модель на мой GPU?",
+    "source_hash": "631429e459b2"
+  },
+  "home.use-cases.p-1": {
+    "text": "Вставьте репозиторий Hugging Face: каждый файл получает вердикт для отмеченных карт еще до начала загрузки.",
+    "source_hash": "7dd1bdcba1fd"
+  },
+  "home.use-cases.span-1": {
+    "text": "Предпросмотр",
+    "source_hash": "3bf0e7fd520d"
+  },
+  "home.use-cases.li-2.aria-label": {
+    "text": "2 из 10",
+    "source_hash": "264c35a47f15"
+  },
+  "home.use-cases.h3-2": {
+    "text": "Подключите агента для программирования к своим GPU.",
+    "source_hash": "b01cff25d51f"
+  },
+  "home.use-cases.p-2": {
+    "text": "Codex CLI, OpenCode, Aider, Grok CLI, Continue, Cline, Cursor и OpenAI SDK работают на ваших моделях. Claude Code и Anthropic SDK могут также сохранить вашу подписку Claude и переложить рутинные вызовы на ваши GPU.",
+    "source_hash": "022970d73828"
+  },
+  "home.use-cases.span-2": {
+    "text": "Агенты для кода",
+    "source_hash": "19dc2417e144"
+  },
+  "home.use-cases.li-3.aria-label": {
+    "text": "3 из 10",
+    "source_hash": "24607ac1e731"
+  },
+  "home.use-cases.h3-3": {
+    "text": "Ваши GPU работают или простаивают?",
+    "source_hash": "02e82cfefb89"
+  },
+  "home.use-cases.p-3": {
+    "text": "Загрузка, токены в секунду, доля кэша, задержка, вытеснения и мощность на одной странице Stats, от 1&#8239;h до 7&#8239;дней.",
+    "source_hash": "ffc4dde74878"
+  },
+  "home.use-cases.span-3": {
+    "text": "Страница Stats",
+    "source_hash": "4df7d5c583ae"
+  },
+  "home.use-cases.li-4.aria-label": {
+    "text": "4 из 10",
+    "source_hash": "6f3c824e9ec3"
+  },
+  "home.use-cases.h3-4": {
+    "text": "Ходы агента, которые повторно используют кэш.",
+    "source_hash": "fd528e59f30f"
+  },
+  "home.use-cases.p-4": {
+    "text": "Каждый диалог остается на своей реплике. Измерено: попадания в кэш 56 → 86&#8239;%, медианное время до первого байта 2,05 → 0,38&#8239;s.",
+    "source_hash": "3fd6f50887b9"
+  },
+  "home.use-cases.span-4": {
+    "text": "Результаты замеров",
+    "source_hash": "91753d838ca4"
+  },
+  "home.use-cases.li-5.aria-label": {
+    "text": "5 из 10",
+    "source_hash": "4ff9c7d25432"
+  },
+  "home.use-cases.h3-5": {
+    "text": "Пусть ИИ, за который вы уже платите, настроит ваши GPU.",
+    "source_hash": "c3ae8600a083"
+  },
+  "home.use-cases.p-5": {
+    "text": "Claude Code, Codex или другой агент изучает ваши карты, отбирает подходящие модели, загружает раскладки, проводит бенчмарки на ваших собственных промптах, корректирует настройки и оставляет загруженным лучший вариант. Четыре промпта для вставки.",
+    "source_hash": "bbfa0ef15601"
+  },
+  "home.use-cases.span-5": {
+    "text": "Цикл и промпты",
+    "source_hash": "ad84f405f980"
+  },
+  "home.use-cases.li-6.aria-label": {
+    "text": "6 из 10",
+    "source_hash": "9f1b26eea525"
+  },
+  "home.use-cases.h3-6": {
+    "text": "Общайтесь со своей моделью прямо здесь.",
+    "source_hash": "bcd86e5acf2b"
+  },
+  "home.use-cases.p-6": {
+    "text": "Потоковый Markdown, код и формулы; изображения для моделей с компьютерным зрением; настройки для каждого чата; сохраненная история. То же окно на Mac.",
+    "source_hash": "8ab616f9c47d"
+  },
+  "home.use-cases.span-6": {
+    "text": "Чат",
+    "source_hash": "6fd76cfcf4f3"
+  },
+  "home.use-cases.li-7.aria-label": {
+    "text": "7 из 10",
+    "source_hash": "2991e046c7d6"
+  },
+  "home.use-cases.h3-7": {
+    "text": "Точно видно, что модель получила и что ответила.",
+    "source_hash": "175c055be16a"
+  },
+  "home.use-cases.p-7": {
+    "text": "God mode в реальном времени показывает промпты и ответы одного ключа для отладки. По умолчанию выключен, хранит данные только в памяти и очищается при перезапуске.",
+    "source_hash": "12446d78110e"
+  },
+  "home.use-cases.span-7": {
+    "text": "Про God mode",
+    "source_hash": "eca4d500a3da"
+  },
+  "home.use-cases.li-8.aria-label": {
+    "text": "8 из 10",
+    "source_hash": "1170fb3f9b1b"
+  },
+  "home.use-cases.h3-8": {
+    "text": "Один сервер с GPU для команды, семьи и ваших агентов.",
+    "source_hash": "a04e398227ac"
+  },
+  "home.use-cases.p-8": {
+    "text": "Сколько угодно ключей, у каждого строгий приоритет от 9 до 0 и своя страница использования: важные агенты обслуживаются первыми, остальные получают то, что осталось, а вы видите, кто и как использовал сервер.",
+    "source_hash": "3acf884af623"
+  },
+  "home.use-cases.span-8": {
+    "text": "Ключи и статистика",
+    "source_hash": "bb574d2be60e"
+  },
+  "home.use-cases.li-9.aria-label": {
+    "text": "9 из 10",
+    "source_hash": "7323df202723"
+  },
+  "home.use-cases.h3-9": {
+    "text": "Ваше оборудование как есть: от Mac до восьми B300.",
+    "source_hash": "3f3225bbc711"
+  },
+  "home.use-cases.p-9": {
+    "text": "Одна консоль для M1 с 16&#8239;GB, двух разных карт или сервера с NVSwitch, и она называет узкий слот PCIe, неактивные NVLink и различия в ECC.",
+    "source_hash": "6ea6fbd502b6"
+  },
+  "home.use-cases.span-9": {
+    "text": "Страницы оборудования",
+    "source_hash": "c90b8269f1d8"
+  },
+  "home.use-cases.li-10.aria-label": {
+    "text": "10 из 10",
+    "source_hash": "aef48b281a1a"
+  },
+  "home.use-cases.h3-10": {
+    "text": "Скоро: готовое устройство. USB-накопитель, корпус с GPU, одна задача.",
+    "source_hash": "525b6691292f"
+  },
+  "home.use-cases.p-10": {
+    "text": "Урезанный Linux, который запускает только LM Warden, настраивает сеть и хранилище моделей и обновляется по сети или работает в изолированной сети. Для защищенного выделенного LLM-сервера.",
+    "source_hash": "9ab2a4e163b1"
+  },
+  "home.use-cases.span-10": {
+    "text": "Об устройстве",
+    "source_hash": "4ad529d919d4"
+  },
+  "home.use-cases.dot": {
+    "text": "Сценарий {n} из {m}",
+    "source_hash": "04227694e710"
+  },
+  "home.use-cases.div-1.aria-label": {
+    "text": "Выберите сценарий",
+    "source_hash": "1bb48b8b99c4"
+  },
+  "home.install.h2-1": {
+    "text": "Где вы будете его запускать?",
+    "source_hash": "249678c8eba2"
+  },
+  "home.install.p-1": {
+    "text": "Выберите машину, на которой будут работать модели, а не ту, с которой вы читаете эту страницу: посетители с Mac часто устанавливают его на Linux-сервер с GPU. Ничего не выбрано заранее, и ничего не угадывается по вашему браузеру.",
+    "source_hash": "0c505d2d282e"
+  },
+  "home.install.div-1.aria-label": {
+    "text": "Платформа",
+    "source_hash": "c78ffe195710"
+  },
+  "home.install.b-1": {
+    "text": "Linux + GPU NVIDIA",
+    "source_hash": "23d8d6d2be9c"
+  },
+  "home.install.small-1": {
+    "text": "Docker Compose · одна или несколько карт",
+    "source_hash": "9849f7c407b4"
+  },
+  "home.install.span-1": {
+    "text": "основной выпуск",
+    "source_hash": "86f0f70c80d2"
+  },
+  "home.install.b-2": {
+    "text": "macOS, чип Apple",
+    "source_hash": "0d7d5470afac"
+  },
+  "home.install.small-2": {
+    "text": "Приложение в строке меню · M1 и новее",
+    "source_hash": "38cba54053bd"
+  },
+  "home.install.span-2": {
+    "text": "бета-версия",
+    "source_hash": "f44e64e75f39"
+  },
+  "home.install.small-3": {
+    "text": "В работе · срок пока не известен",
+    "source_hash": "1e554752120e"
+  },
+  "home.install.span-3": {
+    "text": "далее",
+    "source_hash": "c6c1c9a9c854"
+  },
+  "home.install.b-3": {
+    "text": "Устройство",
+    "source_hash": "98432690c966"
+  },
+  "home.install.small-4": {
+    "text": "USB-накопитель, который превращает корпус с GPU в выделенный сервер LM Warden",
+    "source_hash": "dc3e1016c4ce"
+  },
+  "home.install.span-4": {
+    "text": "скоро",
+    "source_hash": "62bfdf0b726c"
+  },
+  "home.install.p-2": {
+    "text": "Выберите платформу выше, чтобы увидеть ее шаги, или <a href=\"#install-all\">покажите все четыре</a>.",
+    "source_hash": "dd298d4e4a3b"
+  },
+  "home.p-linux.h3-1": {
+    "text": "Одна команда на хосте с GPU.",
+    "source_hash": "e261f30eb5f7"
+  },
+  "home.p-linux.span-1": {
+    "text": "Копировать",
+    "source_hash": "e21f935f11d7"
+  },
+  "home.p-linux.li-1": {
+    "text": "Хост x86_64, Docker Compose v2.24+, NVIDIA Container Toolkit, карта Turing или новее.",
+    "source_hash": "fc20ff032a73"
+  },
+  "home.p-linux.li-2": {
+    "text": "Затем откройте <code>http://HOST:8080/ui/</code>, пройдите мастер первого запуска, добавьте модель и создайте ключ. Ваш эндпоинт: <code>http://HOST:8080/v1</code>.",
+    "source_hash": "33bfcbda3ad4"
+  },
+  "home.p-linux.li-3": {
+    "text": "Несколько GPU в одном сервере: тензорный параллелизм или по одной реплике на карту с маршрутизацией с учетом кэша.",
+    "source_hash": "086f8aa8145e"
+  },
+  "home.p-linux.li-4": {
+    "text": "Сегодня — NVIDIA. <b>Поддержка AMD ROCm и GPU Intel появится скоро</b>; сроков пока нет. Расскажите нам, на чем вы бы его запускали: <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon\" rel=\"noopener\">Radeon</a> · <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel\" rel=\"noopener\">Intel</a>.",
+    "source_hash": "f17d08f00954"
+  },
+  "home.p-linux.a-1": {
+    "text": "Руководство",
+    "source_hash": "e15a133068af"
+  },
+  "home.p-linux.a-2": {
+    "text": "Изолированная сеть",
+    "source_hash": "16289eae755d"
+  },
+  "home.p-linux.a-3": {
+    "text": "Из исходников",
+    "source_hash": "5be49bd81af3"
+  },
+  "home.p-linux.a-4": {
+    "text": "Обновление",
+    "source_hash": "d8f1ee5bd44a"
+  },
+  "home.p-linux.img-1.alt": {
+    "text": "Загрузка модели на странице Models: у каждого шага прошедшее и обычное время",
+    "source_hash": "41eaa58c37a4"
+  },
+  "home.p-linux.figcaption-1": {
+    "text": "Загрузка модели после установки: у каждого шага обычное время по прошлым загрузкам.",
+    "source_hash": "c6e56f837dad"
+  },
+  "home.p-mac.h3-1": {
+    "text": "Приложение в строке меню, бета-версия.",
+    "source_hash": "93a681a12162"
+  },
+  "home.p-mac.a-1": {
+    "text": "Скачать для Mac (бета)",
+    "source_hash": "95612856681e"
+  },
+  "home.p-mac.li-1": {
+    "text": "Около 360&nbsp;MB. Apple silicon (M1 или новее), macOS 14 или новее. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">заметки о выпуске</a>.",
+    "source_hash": "eb664f8f7d3a"
+  },
+  "home.p-mac.li-2": {
+    "text": "Движки: MLX и llama.cpp, собранный с Metal. Та же панель управления и тот же OpenAI API; без vLLM и без данных о мощности.",
+    "source_hash": "5ff95c0fa25d"
+  },
+  "home.p-mac.li-3": {
+    "text": "<b>Честно о бета-версии:</b> приложение подписано ad-hoc и не нотаризовано, поэтому при первом запуске macOS попросит разрешить его в разделе «Конфиденциальность и безопасность»; обновления — это новая загрузка. <a href=\"{{repo}}/blob/main/documents/INSTALL.md#beta-builds\" rel=\"noopener\">Шаги первого запуска</a>.",
+    "source_hash": "cf254395b87e"
+  },
+  "home.p-mac.li-4": {
+    "text": "Доступно только на 127.0.0.1, пока вы не выберете <b>Share on Local Network</b>.",
+    "source_hash": "013272b7df36"
+  },
+  "home.p-mac.li-5": {
+    "text": "<b>Скоро: mlx-rust-lm</b>, третий движок. Команда LM Warden переносит mlx-lm от Apple с Python на Rust поверх официальных привязок Apple mlx-c; он будет работать рядом с MLX и llama.cpp и со временем заменит движок mlx-lm на Python, который вместе с Python и его библиотеками составляет большую часть нынешней загрузки. Неофициальный проект, не связан с Apple.",
+    "source_hash": "8121128f773c"
+  },
+  "home.p-mac.img-1.alt": {
+    "text": "Меню LM Warden в строке меню Mac: Running, доступ только с этого Mac по адресу 127.0.0.1:8080, модели не загружены, индикатор памяти, Open Dashboard, Copy API Address, Share on Local Network",
+    "source_hash": "45b8070949bb"
+  },
+  "home.p-mac.figcaption-1": {
+    "text": "Меню бета-версии в строке меню на M1 с 16&#8239;GB.",
+    "source_hash": "785cc05a3c6d"
+  },
+  "home.p-win.h3-1": {
+    "text": "Следующая — Windows. Срока нет.",
+    "source_hash": "3e2f8c30fbd3"
+  },
+  "home.p-win.p-1": {
+    "text": "Мы делаем ее прямо сейчас и выложим сборку здесь в тот день, когда она появится, а не форму регистрации заранее. А пока два честных варианта:",
+    "source_hash": "7389debc8fd3"
+  },
+  "home.p-win.li-1": {
+    "text": "Запустите LM Warden на Linux-сервере с GPU и пользуйтесь им из Windows: любой клиент OpenAI, Claude Code и Codex подключаются по сети.",
+    "source_hash": "1296afbbf883"
+  },
+  "home.p-win.li-2": {
+    "text": "<a href=\"{{repo}}/releases\" rel=\"noopener\">Следите за выпусками на GitHub</a>, чтобы узнать о первой сборке для Windows.",
+    "source_hash": "9a92060cedbe"
+  },
+  "home.p-win.li-3": {
+    "text": "Затем GPU AMD Radeon и Intel; расскажите нам, на чем вы бы его запускали: <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon\" rel=\"noopener\">Radeon</a> · <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel\" rel=\"noopener\">Intel</a>.",
+    "source_hash": "d85b661eb8e6"
+  },
+  "home.p-appliance.h3-1": {
+    "text": "Готовое устройство: скоро, без срока.",
+    "source_hash": "e45c0fc37b2d"
+  },
+  "home.p-appliance.p-1": {
+    "text": "Четвертый способ запустить LM Warden — для сервера, который не должен делать ничего другого.",
+    "source_hash": "9ff6d73830b6"
+  },
+  "home.p-appliance.li-1": {
+    "text": "Вы вставляете USB-накопитель в корпус с GPU. Он устанавливает урезанный Linux, который делает одно: запускает LM Warden.",
+    "source_hash": "47cb2ad65dc7"
+  },
+  "home.p-appliance.li-2": {
+    "text": "Он сам настраивает сеть и хранилище для моделей.",
+    "source_hash": "a2a401f4b2c3"
+  },
+  "home.p-appliance.li-3": {
+    "text": "Обновления приходят по сети, либо сервер работает полностью в изолированной сети.",
+    "source_hash": "aa9d78e6b6fa"
+  },
+  "home.p-appliance.li-4": {
+    "text": "Для защищенного выделенного LLM-сервера: для команды, которой нужен закрытый сервер, или площадки без выхода наружу.",
+    "source_hash": "bbc615ea622b"
+  },
+  "home.p-appliance.p-2": {
+    "text": "Пока его нет, установка для Linux выше делает то же самое на хосте, который вы настраиваете сами, включая <a href=\"{{repo}}/blob/main/documents/INSTALL.md#a7-offline--air-gapped-install\" rel=\"noopener\">установку без интернета / в изолированной сети</a>. <a href=\"{{repo}}/releases\" rel=\"noopener\">Следите за выпусками на GitHub</a>.",
+    "source_hash": "177a91e7a6b4"
+  },
+  "home.p-appliance.div-1": {
+    "text": "Изображения пока нет: нет ни названия продукта, ни оборудования, которое можно показать, и рисовать его мы не будем.",
+    "source_hash": "8a3fbd7c91f0"
+  },
+  "home.upgrade.p-1": {
+    "text": "<b>Уже используете?</b> На Linux обновление выполняется на месте: загрузите новые образы, перезапустите, и база данных мигрирует вперед. <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">Шаги</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">Список изменений</a>.",
+    "source_hash": "5566c16483a2"
+  },
+  "home.upgrade.p-2": {
+    "text": "<b>Раньше назывался vLLM Warden.</b> Каталог установки <code>/opt/vllm-warden</code> и префикс ключей <code>vw_</code> сохранили старое имя, поэтому существующие ключи продолжают работать.",
+    "source_hash": "4ac584d252da"
+  },
+  "home.why.h2-1": {
+    "text": "У self-hosting восемь проблем. Вот как выглядит решение каждой.",
+    "source_hash": "65341f9c1497"
+  },
+  "home.why.p-1": {
+    "text": "Голый движок обслуживает одну модель на одном порту. Здесь — все, что вокруг него, с нашими собственными цифрами там, где они есть.",
+    "source_hash": "1668b0870987"
+  },
+  "home.why-fit.h3-1": {
+    "text": "Поместится ли эта модель на мой GPU?",
+    "source_hash": "631429e459b2"
+  },
+  "home.why-fit.p-1": {
+    "text": "Вставьте репозиторий Hugging Face в <b>Add model</b>. Каждый файл выводится с вердиктом для отмеченных карт: помещается, мало запаса или не поместится. Отметьте больше карт, и их память суммируется. Ничего не загружается, пока что-то не поместится.",
+    "source_hash": "b0c5f5cbb2ee"
+  },
+  "home.why-fit.img-1.alt": {
+    "text": "Тот же файл на 20,22&#8239;GiB помечен как подходящий, когда выбраны четыре GPU",
+    "source_hash": "906b74daf0f5"
+  },
+  "home.why-stats.h3-1": {
+    "text": "Вы купили GPU. Они работают или простаивают?",
+    "source_hash": "7cd5266e1f4e"
+  },
+  "home.why-stats.p-1": {
+    "text": "Пропускная способность — это параллелизм × длина промпта × повторное использование кэша, а голый движок не показывает это вместе. Страница Stats показывает, за период от 1&#8239;h до 7&#8239;дней: VRAM, загрузку GPU, мощность (Linux), токены в секунду с разделением токенов промпта на кэшированные и вычисленные, задержку p50/p95, долю попаданий в кэш промптов, вытеснения, запросы по ключам и по IP-адресам клиентов. Ровная загрузка при очереди говорит «нужно больше параллелизма»; низкая доля кэша говорит «закрепите сеансы».",
+    "source_hash": "05ae743f085e"
+  },
+  "home.why-stats.img-1.alt": {
+    "text": "Токены в секунду: токены промпта разделены на кэшированные и вычисленные, ниже токены ответа",
+    "source_hash": "94483285e732"
+  },
+  "home.why-chat.h3-1": {
+    "text": "Поговорите с моделью, прежде чем что-либо подключать.",
+    "source_hash": "83831d46fb09"
+  },
+  "home.why-chat.p-1": {
+    "text": "Чат находится в том же окне, что и все остальное. Потоковый Markdown с подсветкой кода и формулами; до восьми изображений PNG, JPEG или WebP в сообщении для модели с компьютерным зрением; температура, top-p, максимум токенов и системный промпт для каждого чата с сохранением как значений по умолчанию; чаты сохраняются, получают названия, их можно ветвить. Вызовы инструментов, которые делает модель, отображаются, так что вызов инструментов можно проверить до того, как от него будет зависеть агент.",
+    "source_hash": "2e459441dc4f"
+  },
+  "home.why-chat.img-1.alt": {
+    "text": "Чат в окне панели управления приложения для Mac, потоковый ответ qwen2.5-3b, в заголовке GPU 96&#8239;%",
+    "source_hash": "da46ab93294b"
+  },
+  "home.why-god.h3-1": {
+    "text": "Что модель на самом деле получила и что ответила?",
+    "source_hash": "a49be301a05f"
+  },
+  "home.why-god.p-1": {
+    "text": "God mode для отладки промптов: если в развертывании включен <code>VW_GODMODE_ENABLED</code>, на странице каждого ключа появляется панель, которая в реальном времени показывает промпты и ответы этого ключа. По умолчанию выключен, а в выключенном состоянии отсутствует вовсе. Ограниченный кольцевой буфер в памяти: ничего не попадает в базу данных или на диск, все исчезает при перезапуске. Открыть его может любой, у кого есть сеанс администратора; в LM Warden одна роль администратора и других нет.",
+    "source_hash": "a29986e09f7a"
+  },
+  "home.why-god.img-1.alt": {
+    "text": "Страница ключа API coding-agent с открытой внизу панелью God mode: Live, 4 запроса, 1 выполняется; поток запроса к qwen3.8-27b-fp8 с адреса 192.0.2.10, с пользовательским промптом о нестабильном тесте статистики и ответом модели с исправлением на Python по мере его написания",
+    "source_hash": "171f585f7e38"
+  },
+  "home.cache.h2-1": {
+    "text": "Каждый ход агента заново читает весь диалог.",
+    "source_hash": "d876efcb94ab"
+  },
+  "home.why-cache.p-1": {
+    "text": "Агент на каждом ходу заново отправляет всю историю, поэтому длинный диалог — это в основном префикс, который движок уже читал. vLLM сохраняет эту работу в кэше префиксов, но только на той реплике, которая ее выполнила, а его собственный балансировщик отправляет каждый ход на реплику с самой короткой очередью. LM Warden размещает каждый новый диалог на наименее загруженной реплике и оставляет его там, используя идентификатор сеанса, который Claude Code уже отправляет. Запрос переносится, только когда реплика превышает свой порог перелива.",
+    "source_hash": "03e36074672f"
+  },
+  "home.why-cache.figcaption-1": {
+    "text": "Четыре хода одного диалога на модели с четырьмя репликами. С балансировщиком vLLM каждый ход проходит prefill (чтение промпта в кэш) почти с нуля на той реплике, которой он достался. С LM Warden диалог остается на реплике&nbsp;2, и prefill проходит только новый ход. Это схема механизма, а не измерение.",
+    "source_hash": "0f19c82ec35c"
+  },
+  "home.why-cache.p-2": {
+    "text": "Измерено на нашем сервере с четырьмя картами (4&nbsp;×&nbsp;RTX&nbsp;A4000, Qwen3-4B как четыре реплики по одной карте, синтетические сеансы в стиле Claude Code, привязка выключена, затем включена, подряд): при закрепленных диалогах доля токенов промпта, обслуженных из кэша, выросла с 56 до 86&#8239;% при 4 одновременных сеансах, а медианное время до первого байта снизилось с 2,05 до 0,38&#8239;s. Выходных токенов в минуту было больше на каждой ступени, а время до первого байта p95 (самые медленные 5&#8239;%) было ниже на каждой ступени. Число работающих реплик почти не изменилось (2,71 против 2,83 из четырех при 4 сеансах): выигрыш дает повторное использование кэша, а не большее число работающих карт.",
+    "source_hash": "9de8aa8aa7e1"
+  },
+  "home.why-cache.figcaption-2": {
+    "text": "Доля попаданий в кэш префиксов на каждой ступени: токены промпта, обслуженные из кэша, к запрошенным токенам промпта, по всем четырем репликам вместе, по изменению собственных счетчиков vLLM за ступень. Выигрыш сохраняется, пока есть запас, и исчезает при 32 сеансах, когда диалоги переливаются.",
+    "source_hash": "ff04da43c87a"
+  },
+  "home.why-cache.figcaption-3": {
+    "text": "Время до первого байта при 4–32 одновременных сеансах, медиана и p95, в логарифмической шкале, чтобы ступени меньше секунды читались рядом с минутными. С привязкой медиана намного ниже до 16 сеансов (0,38 против 2,05&#8239;s при 4) и выше при 24 и 32; p95 ниже на каждой ступени, хотя при 16 разница (24,9 против 26,2&#8239;s) в пределах шума одного прогона на вариант. Измерено на клиенте, через интернет, до первого потокового токена.",
+    "source_hash": "0ec9d5ccf246"
+  },
+  "home.why-cache.h3-1": {
+    "text": "Каждая ступень нагрузки, привязка выкл. → вкл.",
+    "source_hash": "684608311775"
+  },
+  "home.why-cache.p-3": {
+    "text": "Измерено на нашем сервере с четырьмя картами на небольшой модели, сначала с выключенной привязкой, затем с включенной, без перезапуска vLLM между ними: второй вариант начинался с прогретым кэшем префиксов, и оба брали промпты из одного seed. Каждая ступень длится 3&nbsp;минуты, поэтому завершает лишь от 9 до 31 сеанса, и один сеанс больше или меньше сдвигает число сеансов в час на 20; выходные токены в минуту — более стабильный столбец. Ваши модель, карты и нагрузка будут другими; карточка реплик на странице модели показывает те же счетчики для вашей системы.",
+    "source_hash": "4744b11be2ad"
+  },
+  "home.why-cache.img-1.alt": {
+    "text": "Карточка Data-parallel routing на странице модели с метками Affinity on, Spill threshold 8 (auto), Sticky 100.0% и In flight 0. В таблице реплики с 0 по 3 со столбцами in flight, sticky (38, 21, 19 и 29), spilled in, client-pinned, running и waiting, занятый KV и доля попаданий в кэш префиксов (82,2; 86,0; 69,0 и 80,0 процента), и строка о том, что счетчики идут с момента запуска LM Warden.",
+    "source_hash": "f1bc7fbd6399"
+  },
+  "home.why-cache.figcaption-4": {
+    "text": "Те же счетчики на странице модели: по строке на реплику с запросами, которые она держит, числом диалогов, которые остались (<code>sticky</code>) или пришли переливом, тем, что выполняется и ждет, занятым KV-кэшем и долей попаданий в кэш префиксов. Записано 4&nbsp;октября&nbsp;2026&nbsp;г. с включенной привязкой и порогом перелива 8 (auto): sticky 100&#8239;% и доля попаданий в кэш префиксов 82,2; 86,0; 69,0 и 80,0&#8239;% на репликах с 0 по 3. Это карточка, а не результат.<span class=\"cache-hint\"> Коснитесь карточки, чтобы увеличить ее.</span>",
+    "source_hash": "234d024e62df"
+  },
+  "home.why-cache.p-4": {
+    "text": "<b>Где он проигрывает.</b> Ступени с 24 и 32 сеансами — это намеренная перегрузка четырех небольших карт, и каждая реплика насыщена. Выход все равно выше (11&nbsp;178 против 9&nbsp;048 и 16&nbsp;638 против 14&nbsp;760 токенов в минуту), а медленный хвост намного короче (p95 38 против 59&#8239;s и 39 против 83&#8239;s), но медианное время до первого байта с привязкой хуже: 13,1 против 5,1&#8239;s при 24 сеансах, 27,7 против 12,3&#8239;s при 32. Мы не выяснили причину, и снижение порога перелива с 8 до 4 ее не изменило.",
+    "source_hash": "2a468a4b1738"
+  },
+  "home.why-cache.p-5": {
+    "text": "<b>На загруженном сервере измерьте оба варианта.</b> Преимущество максимально, пока есть запас; серверу, который работает на пределе, стоит измерить обе настройки, а привязку можно отключить для каждой модели отдельно. Реплики, а значит и эта маршрутизация, входят в установку для Linux с GPU NVIDIA; в <a href=\"#p-mac\">приложении для Mac (бета)</a> нет ни тензорного параллелизма, ни параллелизма по данным.",
+    "source_hash": "c245f8292ac7"
+  },
+  "home.why-cache.a-1": {
+    "text": "Полная методика: нагрузка, тестовая обвязка, порог перелива и сервер с семью GPU, который с тех пор работает так →",
+    "source_hash": "cd240e4bc004"
+  },
+  "home.agents.h2-1": {
+    "text": "Подключите агента для программирования к своим GPU.",
+    "source_hash": "b01cff25d51f"
+  },
+  "home.agents.p-1": {
+    "text": "Десять инструментов подключаются по базовому URL и ключу; два из них могут также сохранить платную подписку Claude для сложной работы.",
+    "source_hash": "26604da90050"
+  },
+  "home.agents.h3-1": {
+    "text": "Полностью на ваших моделях",
+    "source_hash": "a87ec3988e0d"
+  },
+  "home.agents.p-2": {
+    "text": "Через OpenAI-совместимый API. Каждый запрос виден в разрезе ключа и сеанса.",
+    "source_hash": "eed13d192862"
+  },
+  "home.agents.span-1": {
+    "text": "Пользовательский провайдер модели · Responses API",
+    "source_hash": "de3ecc4fe5d1"
+  },
+  "home.agents.span-2": {
+    "text": "OpenAI-совместимый провайдер · <code>/v1</code>",
+    "source_hash": "cc7b475640bb"
+  },
+  "home.agents.span-3": {
+    "text": "OpenAI-совместимый провайдер · <code>/v1</code>",
+    "source_hash": "cc7b475640bb"
+  },
+  "home.agents.span-4": {
+    "text": "Модель со своим ключом · <code>/v1</code>",
+    "source_hash": "5a0628b4b02d"
+  },
+  "home.agents.span-5": {
+    "text": "Провайдер OpenAI · одна обслуживаемая модель",
+    "source_hash": "8c2c30bf0764"
+  },
+  "home.agents.span-6": {
+    "text": "Провайдер OpenAI Compatible · экран настроек",
+    "source_hash": "09e5fe8af64a"
+  },
+  "home.agents.span-7": {
+    "text": "Замена базового URL OpenAI · чат",
+    "source_hash": "9ad204014fc0"
+  },
+  "home.agents.h3-2": {
+    "text": "Сохраните подписку Claude, а рутинные вызовы отдайте своим GPU",
+    "source_hash": "cfeda056d931"
+  },
+  "home.agents.p-3": {
+    "text": "Claude Code и Anthropic SDK — через маршрутизатор. Правило задает модели Claude, на которые отвечают ваши GPU; все остальное уходит в Anthropic под вашей учетной записью или ключом.",
+    "source_hash": "6995102b0af7"
+  },
+  "home.flow-t.title-1": {
+    "text": "Куда идет запрос Claude Code",
+    "source_hash": "d7db08f53325"
+  },
+  "home.flow-d.desc-1": {
+    "text": "Агент отправляет каждый запрос в маршрутизатор LM Warden. Запросы к моделям claude-haiku уходят к модели на вашем GPU, и она отвечает от имени этой модели. Все остальные модели, включая Opus, передаются в Anthropic под вашей учетной записью.",
+    "source_hash": "5c598ca9bc7c"
+  },
+  "home.flow-t2.title-1": {
+    "text": "Куда идет запрос Claude Code",
+    "source_hash": "d7db08f53325"
+  },
+  "home.flow-d2.desc-1": {
+    "text": "Агент отправляет каждый запрос в маршрутизатор LM Warden. Запросы к моделям claude-haiku уходят к модели на вашем GPU, и она отвечает от имени этой модели. Все остальные модели, включая Opus, передаются в Anthropic под вашей учетной записью.",
+    "source_hash": "5c598ca9bc7c"
+  },
+  "home.agents.b-1": {
+    "text": "1&nbsp;981",
+    "source_hash": "cdf3dc71b947"
+  },
+  "home.agents.span-8": {
+    "text": "запрос обработан локально — 99&#8239;% трафика Claude Code на сервере с момента его перезапуска. Со страницы Router нашего собственного сервера с семью GPU, 21&nbsp;октября 2026&nbsp;г.; 22 отклонено, пока целевая модель не была загружена.",
+    "source_hash": "6f10abaf7726"
+  },
+  "home.agents.img-1.alt": {
+    "text": "Страница маршрутизатора Claude Code: маршрутизация включена, 99&#8239;% отвечено локально с 23:32; правило 1 отправляет claude-haiku* на qwen3.8-27b, 1&nbsp;981 локально и 22 отклонено; все остальные модели Claude уходят в Anthropic под учетной записью пользователя",
+    "source_hash": "d77bbac51675"
+  },
+  "home.agents.figcaption-1": {
+    "text": "Claude Code 2.1.227 или новее: <code>ANTHROPIC_BASE_URL</code> указывает на LM Warden, ключ LM Warden в <code>ANTHROPIC_CUSTOM_HEADERS</code>, ваша учетная запись не затрагивается. Качество ответов мы не сравнивали: давайте локальной модели рутинную, четко поставленную работу.",
+    "source_hash": "bc31fcfd58c7"
+  },
+  "home.agents.h3-3": {
+    "text": "Connect записывает конфигурацию каждого клиента и отправляет тестовый запрос.",
+    "source_hash": "0ceb9132d312"
+  },
+  "home.agents.p-4": {
+    "text": "Выберите в консоли клиента, ключ и загруженную модель; она проверит каждое требование по тому, что действительно загружено (контекстное окно, вызов инструментов, включенный маршрутизатор), и выдаст файлы для вставки. <a href=\"/coding-agents\">Все агенты для программирования</a>: по странице на клиента с тем, что работает и что мы увидели.",
+    "source_hash": "0b548958da36"
+  },
+  "home.agents.img-2.alt": {
+    "text": "Страница Connect a client: выбор ключа, правило маршрутизатора claude-haiku* на qwen3.8-27b, клиенты по протоколам и панель Claude Code с проверенными требованиями",
+    "source_hash": "6a234848eac5"
+  },
+  "home.tune.h2-1": {
+    "text": "Пусть ИИ, за который вы уже платите, настроит ваши GPU.",
+    "source_hash": "c3ae8600a083"
+  },
+  "home.why-agent.p-1": {
+    "text": "Выбрать модель для ваших карт — значит выбрать квантование, движок, способ разделения между GPU, размер контекста и тип KV-кэша; каждая догадка стоит загрузки файлов и модели. Все, что делает консоль, — это вызов API, поэтому Claude Code, Codex или другой агент с доступом к командной строке может провести этот поиск за вас, на вашем оборудовании и на вашей нагрузке.",
+    "source_hash": "4844283837a3"
+  },
+  "home.why-agent.h3-1": {
+    "text": "Цикл",
+    "source_hash": "85f5dae66c4f"
+  },
+  "home.loop-t.title-1": {
+    "text": "Цикл настройки",
+    "source_hash": "3f22e76a3edc"
+  },
+  "home.loop-d.desc-1": {
+    "text": "Изучить GPU, отобрать модели с помощью предпросмотра совместимости до любой загрузки, загрузить варианты раскладки, провести бенчмарки на реальных запросах, скорректировать настройки и оставить загруженным лучший вариант. Бенчмарк и корректировка повторяются, пока агент не будет удовлетворен.",
+    "source_hash": "dd7733aa80ef"
+  },
+  "home.loop-t2.title-1": {
+    "text": "Цикл настройки",
+    "source_hash": "3f22e76a3edc"
+  },
+  "home.loop-d2.desc-1": {
+    "text": "Изучить GPU, отобрать модели с помощью предпросмотра совместимости до любой загрузки, загрузить варианты раскладки, провести бенчмарки на реальных запросах, скорректировать настройки и оставить загруженным лучший вариант. Бенчмарк и корректировка повторяются, пока агент не будет удовлетворен.",
+    "source_hash": "dd7733aa80ef"
+  },
+  "home.why-agent.p-2": {
+    "text": "Что вызывает агент: <code>GET /api/system/gpus</code>, <code>POST /api/models/fit-preview</code> до любой загрузки, регистрацию и <code>suggest-config</code>, скачивание и загрузку, стресс-прогон, который находит и применяет реальный предел контекста, <code>GET /api/stats/v2/throughput</code> и <code>latency</code>, а также ключ для инференса, который он выпускает для тестового трафика. Сначала он читает <code>/agent-guide.md</code> — краткое описание этих вызовов, написанное для языковой модели.",
+    "source_hash": "35230c9469a2"
+  },
+  "home.why-agent.img-1.alt": {
+    "text": "Загрузка модели на странице Models: у каждого шага прошедшее и обычное время",
+    "source_hash": "afd3f600f638"
+  },
+  "home.why-agent.figcaption-1": {
+    "text": "Что агент отслеживает, пока загружается раскладка: у каждого шага обычное время по прошлым загрузкам. Загрузка, которая перестала продвигаться, останавливается, а ее GPU освобождаются.",
+    "source_hash": "4bb331f9f6fb"
+  },
+  "home.why-agent.h3-2": {
+    "text": "Четыре промпта для вставки и что вы получите",
+    "source_hash": "222000da96d1"
+  },
+  "home.why-agent.li-1": {
+    "text": "<b>Изучить и отобрать.</b> <span class=\"ask\">Запрос:</span> перечисли мои GPU, отбери три модели с открытыми весами для агентного программирования, которые помещаются с контекстом не менее 65&nbsp;536 токенов, проверь каждую через fit-preview, ничего не скачивай. <span class=\"get\">Результат:</span> таблица с моделью, квантованием, движком, GPU, контекстом и обоснованием.",
+    "source_hash": "4d737111bb76"
+  },
+  "home.why-agent.li-2": {
+    "text": "<b>Движок и раскладка для одной модели.</b> <span class=\"ask\">Запрос:</span> выбери vLLM или llama.cpp и тензорный параллелизм или реплики с параллелизмом по данным на моих картах; загрузи две лучшие раскладки, отправь каждой одни и те же 20 потоковых запросов, сравни при параллелизме 1 и 8. <span class=\"get\">Результат:</span> время до первого токена и токены в секунду для обеих, победитель остается загруженным, вторая выгружена, тестовый ключ отозван.",
+    "source_hash": "aadee19b4763"
+  },
+  "home.why-agent.li-3": {
+    "text": "<b>Найти реальные пределы и применить их.</b> <span class=\"ask\">Запрос:</span> проведи стресс-прогон загруженной модели, примени измеренный контекст, затем проведи бенчмарк при параллелизме 1, 4 и 16 с промптами около 2k и 30k токенов. <span class=\"get\">Результат:</span> предел контекста записан в настройки модели, плюс таблица времени до первого токена и токенов в секунду по параллелизму и размеру промпта.",
+    "source_hash": "5e697967b7ec"
+  },
+  "home.why-agent.li-4": {
+    "text": "<b>Сравнить двух кандидатов на вашей работе.</b> <span class=\"ask\">Запрос:</span> прогони промпты из <code>./workload/*.txt</code> на модели A и модели B при параллелизме 4, оцени каждый ответ. <span class=\"get\">Результат:</span> <code>model-comparison.md</code> с задержкой, токенами в секунду, правильностью по оценке агента и рекомендацией; рекомендованная модель остается загруженной.",
+    "source_hash": "d25a394b9e41"
+  },
+  "home.why-agent.p-3": {
+    "text": "<b>Прежде чем начать.</b> Токен администратора дает полные права администратора в LM Warden (модели, ключи, настройки; более узких областей пока нет): задайте ему короткий срок действия и отзовите его в Settings → Access Tokens, когда работа закончена. Стресс-прогон намеренно роняет движок, чтобы найти его предел: запускайте эти промпты на экземпляре, от которого больше никто не зависит. Загрузки большие; промпты проверяют совместимость перед скачиванием, но следите за местом на диске.",
+    "source_hash": "505b9916712b"
+  },
+  "home.why-agent.p-4": {
+    "text": "Выбор движка и раскладки (vLLM, тензорный параллелизм или параллелизм по данным) относится к установке для Linux; на Mac выбор — MLX или llama.cpp на одном GPU. Настраивающей моделью может быть та, за которую вы уже платите; настраиваемая — та, что работает на ваших картах. <a href=\"/agent-tuning\">Страница о настройке агентом: все четыре промпта целиком</a>.",
+    "source_hash": "bbeb89be5de6"
+  },
+  "home.share.h2-1": {
+    "text": "Один сервер с GPU для всей команды, семьи и ваших агентов.",
+    "source_hash": "f1e27da721b7"
+  },
+  "home.why-keys.p-1": {
+    "text": "Создайте столько ключей API, сколько нужно, и раздайте их: коллеге, члену семьи, задаче CI, ферме агентов — каждому свой ключ, свой приоритет и своя страница использования. Оборудование работает на всех, а важная работа никогда не ждет.",
+    "source_hash": "dd9352746e6e"
+  },
+  "home.why-keys.h3-1": {
+    "text": "Строгий приоритет: 9 обслуживается первым, 0 последним",
+    "source_hash": "51396907e61e"
+  },
+  "home.why-keys.p-2": {
+    "text": "Ожидающий запрос с более высоким приоритетом всегда идет раньше запроса с более низким. Под нагрузкой ключи с низким приоритетом получают мощность, которая осталась после важных ключей; на загруженном сервере запрос с низким приоритетом может ждать бесконечно. По умолчанию — 5. Ограничения частоты для ключей нет; его заменил приоритет.",
+    "source_hash": "4dd4ec421cbe"
+  },
+  "home.why-keys.ol-1.aria-label": {
+    "text": "Пример лестницы приоритетов",
+    "source_hash": "1c1bcbbf1789"
+  },
+  "home.why-keys.b-1": {
+    "text": "Рабочий агент",
+    "source_hash": "c5da4041ea8e"
+  },
+  "home.why-keys.span-1": {
+    "text": "всегда отвечает первым",
+    "source_hash": "a2476d66a084"
+  },
+  "home.why-keys.b-2": {
+    "text": "Ваши сеансы разработки",
+    "source_hash": "6c8888f1d6dc"
+  },
+  "home.why-keys.span-2": {
+    "text": "следующие",
+    "source_hash": "01b7a9f0d1d4"
+  },
+  "home.why-keys.b-3": {
+    "text": "Ключи коллег",
+    "source_hash": "a76b6c1ae9be"
+  },
+  "home.why-keys.span-3": {
+    "text": "по умолчанию",
+    "source_hash": "6d244abe081b"
+  },
+  "home.why-keys.b-4": {
+    "text": "Семья и хобби-проекты",
+    "source_hash": "724c4cb2e620"
+  },
+  "home.why-keys.span-4": {
+    "text": "что останется",
+    "source_hash": "2c1097258738"
+  },
+  "home.why-keys.b-5": {
+    "text": "Ночные пакетные задачи",
+    "source_hash": "96d527825b4b"
+  },
+  "home.why-keys.span-5": {
+    "text": "ждут простоя",
+    "source_hash": "687891cb2f66"
+  },
+  "home.why-keys.p-3": {
+    "text": "Это пример лестницы, а не правило: числа выбираете вы. Каждый ключ также можно приостановить (новые запросы отклоняются, пока выполняющиеся завершаются), сменить с переходным периодом и ограничить моделями, которые ему разрешено вызывать.",
+    "source_hash": "ca3034a912dc"
+  },
+  "home.why-keys.img-1.alt": {
+    "text": "Страница ключа API coding-agent: карточка Limits с выбором приоритета от P0 до P9 и текстом Strict, a waiting P9 request always goes before a P8 one; панель Usage за последние 7 дней с 19k запросов, 1,5 млрд токенов промпта и 440k токенов ответа; графики токенов в минуту и запросов в минуту; ниже панели ожидания в очереди и задержки",
+    "source_hash": "ae01537e1ee6"
+  },
+  "home.why-keys.figcaption-1": {
+    "text": "Страница ключа: его приоритет, семь дней его собственного использования (19k запросов, 1,5 млрд токенов промпта), токены и запросы в минуту, ожидание в очереди и задержка. Окна 1&#8239;h, 6&#8239;h, 24&#8239;h, 7&#8239;дней или любой свой диапазон. Можно включить предыдущие ключи, из которых он был получен сменой.",
+    "source_hash": "a098f63084b6"
+  },
+  "home.why-keys.img-2.alt": {
+    "text": "График запросов Stats за семь дней, 28&nbsp;906 запросов, каждая отметка окрашена по ключу, который ее отправил: opencode-laptop, research-notebook, ui-refactor-agent, agent-sandbox, load-test-filler и demo-agent",
+    "source_hash": "9ae6aeafcf56"
+  },
+  "home.why-keys.figcaption-2": {
+    "text": "График запросов на странице Stats: одна отметка на каждый завершенный запрос, по времени завершения и с высотой по его длительности в логарифмической шкале, с размером по числу сгенерированных токенов, формой по тому, как он завершился, и цветом по ключу, который его отправил (имя ключа или IP-адрес клиента, если ключа нет). Цвет по ключам включается, когда сервером пользуются два ключа или больше и ни на один не приходится 95&#8239;% запросов. Легенда работает как фильтр: щелкните ключ, чтобы видеть только его запросы.",
+    "source_hash": "348b1b23d393"
+  },
+  "home.why-keys.p-4": {
+    "text": "Кто пользуется сервером прямо сейчас и как — на тех же страницах: каждый выполняющийся запрос с ключом, сеансом и фазой, таблица по ключам на странице Stats и <a href=\"#why-stats\">панели Stats</a> для всего хоста.",
+    "source_hash": "b5718f9f8bb5"
+  },
+  "home.hw.h2-1": {
+    "text": "Ваше оборудование как есть: от Mac до восьми B300.",
+    "source_hash": "3f3225bbc711"
+  },
+  "home.hardware.p-1": {
+    "text": "Одна и та же консоль читает M1 с 16&#8239;GB, две разные карты под столом и сервер 8 × B300 с NVSwitch и называет узкое место, а не усредняет его: канал PCIe, который установился на x4 из x16, неактивные каналы NVLink, различающийся между картами ECC.",
+    "source_hash": "f90e55953921"
+  },
+  "home.hardware.img-1.alt": {
+    "text": "Конфигурация системы на сервере 8 × B300: Intel Xeon 6776P, 3019&#8239;GiB ОЗУ, восемь панелей NVIDIA B300 SXM6, на каждой занято 241 из 268,6&#8239;GiB, Link Gen 6 x16 из x16, NVLink 18 из 18 каналов активны по 53,125&#8239;GB/s каждый, ECC включен, и схема архитектуры сервера с одним NVSwitch, соединенным с каждой картой",
+    "source_hash": "60071766922d"
+  },
+  "home.hardware.figcaption-1": {
+    "text": "Восемь карт B300 SXM6 на одном NVSwitch: 18 из 18 каналов NVLink активны на каждой карте, ECC включен, PCIe Gen 6 x16, на каждой карте занято 241 из 268,6&#8239;GiB при обслуживании GLM-5.2 NVFP4 с тензорным параллелизмом 8.",
+    "source_hash": "937079060820"
+  },
+  "home.hardware.img-2.alt": {
+    "text": "Два разных GPU: NVIDIA RTX A4000 с красным предупреждением Reduced link width x4 of x16 и Link Gen 1 сейчас, до Gen 3, рядом с Quadro RTX 5000, у которой архитектура, VRAM, предел мощности, канал, NVLink и ECC помечены как отличающиеся; ниже схема того, как карты подключены к CPU через каналы x4 и x16",
+    "source_hash": "6006e1039ec1"
+  },
+  "home.hardware.figcaption-2": {
+    "text": "Две карты, купленные с разницей в годы: канал A4000 установился на x4 из x16 и отмечен красным; архитектура, предел мощности, NVLink (поддерживается, каналы неактивны) и ECC у Quadro помечены как <em>отличается</em>. Схема показывает, какой слот узкий.",
+    "source_hash": "d67a36ee8dec"
+  },
+  "home.hardware.img-3.alt": {
+    "text": "Stats на сервере 8 × B300: VRAM 1932,1 из 2148,8&#8239;GiB, мощность 1893&#8239;W суммарно по картам, загрузка GPU и потребляемая мощность за последний час, а также токены промпта в секунду с разделением на кэшированные и вычисленные при 93&#8239;% попаданий в кэш",
+    "source_hash": "2b44277f55cd"
+  },
+  "home.hardware.figcaption-3": {
+    "text": "Та же страница Stats на верхнем краю диапазона: 1&nbsp;932 из 2&nbsp;149&#8239;GiB VRAM, 1&nbsp;893&#8239;W по всем картам, пик 4&nbsp;351&#8239;W за час и 93&#8239;% токенов промпта из кэша.",
+    "source_hash": "f3ceb6c33eb7"
+  },
+  "home.hardware.img-4.alt": {
+    "text": "Страница модели во время загрузки GLM-5.2 NVFP4 на восьми B300: 9 min 17 s из обычных 10 min 46 s, шаги Start engine, Load weights 47 of 47, Compile kernels и Size KV cache выполнены, Tune kernels на операции 21 из 22, с графиками CPU и памяти GPU и последней строкой журнала",
+    "source_hash": "c1394a12d331"
+  },
+  "home.hardware.figcaption-4": {
+    "text": "Загрузка на 10 минут, шаг за шагом: GLM-5.2 NVFP4 на восьми B300, 9 min 17 s из обычных 10 min 46 s, ничего красного, пока процесс продвигается.",
+    "source_hash": "cddfa5475f94"
+  },
+  "home.hardware.p-2": {
+    "text": "Что показывает каждая панель по каждой карте: температуру относительно ее собственной точки троттлинга, мощность относительно ее предела, частоты, вентилятор, поколение и ширину PCIe, согласованные прямо сейчас, ECC и NVLink, если они есть у карты, и процесс, занимающий память. Схема соединений строится по <code>nvidia-smi topo -m</code>. На Mac: использование GPU и бюджет памяти, который сообщает Metal, без мощности. А за движком под всем этим следит его собственный <code>/health</code>, а не таблица процессов: мертвый движок под живой оболочкой перезагружается с сохранением диагностических данных.",
+    "source_hash": "5a4e8569c432"
+  },
+  "home.features.h2-1": {
+    "text": "Что он показывает",
+    "source_hash": "8e7ddf931c59"
+  },
+  "home.features.p-1": {
+    "text": "Мониторинг GPU",
+    "source_hash": "cbdfccb24fcc"
+  },
+  "home.features.h3-1": {
+    "text": "Каждая карта отчитывается сама.",
+    "source_hash": "65fb2dd50a89"
+  },
+  "home.features.p-2": {
+    "text": "Загрузка, температура относительно точки троттлинга этой карты, мощность относительно ее предела, VRAM, частоты, канал PCIe и процесс, который занимает память. Не среднее по серверу.",
+    "source_hash": "1bea9211a232"
+  },
+  "home.features.img-1.alt": {
+    "text": "Конфигурация системы и четыре панели GPU для карт NVIDIA RTX A4000 с загрузкой, температурой, VRAM, мощностью, вентилятором и частотами каждой карты",
+    "source_hash": "0a8bc4d5312e"
+  },
+  "home.features.p-3": {
+    "text": "Выполняющиеся запросы",
+    "source_hash": "04423fe4175f"
+  },
+  "home.features.h3-2": {
+    "text": "Видно, что каждый агент делает прямо сейчас.",
+    "source_hash": "e8070826221c"
+  },
+  "home.features.p-4": {
+    "text": "Каждый запрос с ключом, сеансом и фазой: в очереди, prefill, размышление, вызов инструмента, ответ. Какая часть каждого промпта пришла из кэша префиксов — измеряется для каждого запроса.",
+    "source_hash": "49c151ca7020"
+  },
+  "home.features.img-2.alt": {
+    "text": "Таблица выполняющихся запросов: десять активных запросов, у каждого ключ, сеанс, фаза и токены",
+    "source_hash": "428dfb61458f"
+  },
+  "home.features.p-5": {
+    "text": "Агенты для программирования",
+    "source_hash": "707c65c28bca"
+  },
+  "home.features.h3-3": {
+    "text": "Claude Code, Codex и OpenCode подключаются с одной страницы.",
+    "source_hash": "ba721e4421e2"
+  },
+  "home.features.p-6": {
+    "text": "Connect записывает конфигурацию каждого инструмента с адресом этого LM Warden, ключом и загруженной моделью, проверяет требования по тому, что действительно загружено, и отправляет тестовый запрос.",
+    "source_hash": "916edc5f7b60"
+  },
+  "home.features.img-3.alt": {
+    "text": "Страница Connect a client с выбранным Claude Code и проверенными требованиями",
+    "source_hash": "cc2b73368cf4"
+  },
+  "home.oss.h2-1": {
+    "text": "Бесплатный и открытый, разрабатывается открыто.",
+    "source_hash": "3317e70f46b3"
+  },
+  "home.open-source.p-1": {
+    "text": "LM Warden распространяется по лицензии Apache-2.0 на <a href=\"{{repo}}\" rel=\"noopener\">GitHub</a>: скрипт установки и файл Compose — это все развертывание, и оба можно прочитать. Без аккаунта, без проверки лицензии, без телеметрии. vLLM, llama.cpp и MLX — сторонние проекты, которые мы запускаем без изменений.",
+    "source_hash": "ba01b625fe70"
+  },
+  "home.open-source.h2-1": {
+    "text": "mlx-rust-lm <span class=\"soon\">скоро</span>",
+    "source_hash": "19dae78c985d"
+  },
+  "home.open-source.p-2": {
+    "text": "Порт mlx-lm от Apple с Python на Rust поверх официальных привязок Apple mlx-c, который разрабатывает и поддерживает команда LM Warden как отдельный проект с открытым исходным кодом. LM Warden будет использовать его как третий движок для Mac, и со временем он заменит движок mlx-lm на Python, который составляет большую часть нынешней загрузки для Mac. Неофициальный проект, не связан с Apple.",
+    "source_hash": "598b6f2514fd"
+  },
+  "home.lightbox.button-1": {
+    "text": "Закрыть ✕",
+    "source_hash": "ce7bf15a4a85"
+  },
+  "home.lightbox.button-1.aria-label": {
+    "text": "Закрыть увеличенный снимок экрана",
+    "source_hash": "2d3b2f52a3dd"
+  },
+  "chrome.footer.about": {
+    "text": "Свободное ПО по лицензии Apache License 2.0 от команды <a href=\"https://podwarden.com\" rel=\"noopener\">PodWarden</a>. vLLM, llama.cpp и MLX — сторонние проекты, которые мы запускаем без изменений; мы с ними не связаны.",
+    "source_hash": "7f11ddd74f30"
+  },
+  "chrome.footer.source": {
+    "text": "Код на GitHub",
+    "source_hash": "11506c59ef23"
+  },
+  "chrome.footer.install": {
+    "text": "Руководство",
+    "source_hash": "e15a133068af"
+  },
+  "chrome.footer.changelog": {
+    "text": "Изменения",
+    "source_hash": "ead07c84baac"
+  },
+  "chrome.footer.licence": {
+    "text": "Лицензия",
+    "source_hash": "f3ec8e880a46"
+  },
+  "chrome.footer.tag-note": {
+    "text": "Эту страницу отдает сам LM Warden, и она загружает тег Google для подсчета посещений. Файлы cookie устанавливаются, только если вы их примете (<a href=\"/privacy\">конфиденциальность</a>, <a href=\"/privacy\" data-consent-open>настройки cookie</a>).",
+    "source_hash": "09eab402684a"
+  },
+  "chrome.consent.aria-label": {
+    "text": "Выбор файлов cookie",
+    "source_hash": "38db21b38100"
+  },
+  "chrome.consent.text": {
+    "text": "Этот сайт использует файлы cookie Google Analytics для подсчета посещений и оценки рекламы, но только с вашего разрешения. <a href=\"/privacy\">Конфиденциальность</a>",
+    "source_hash": "cdf7e1f99a7b"
+  },
+  "chrome.consent.decline": {
+    "text": "Отклонить",
+    "source_hash": "a2d285b35287"
+  },
+  "chrome.consent.accept": {
+    "text": "Принять",
+    "source_hash": "89713b9c9c1b"
+  }
+}

@@ -1,0 +1,1422 @@
+{
+  "meta.title": {
+    "text": "LM Warden: self-hosted LLM gateway for your own GPUs",
+    "note": "The browser tab and the search-result title. Keep LM Warden first and keep it under 65 characters; LLM stays as a search term.",
+    "hash": "8b40be948ef4"
+  },
+  "meta.description": {
+    "text": "Serve LLMs from NVIDIA GPUs on Linux or an Apple silicon Mac, with vLLM, llama.cpp or MLX: one OpenAI-compatible /v1 endpoint and a key per app.",
+    "note": "The search-result snippet and link-preview text. At most 160 characters.",
+    "hash": "6cb271edae46"
+  },
+  "meta.og-image-alt": {
+    "text": "LM Warden: an OpenAI-compatible API on the GPUs under your desk or in your rack, beside the Stats panel of one RTX A4000 with its driver-reported throttle point labelled",
+    "note": "Alt text of the link-preview image (a screenshot of the Stats page).",
+    "hash": "7f75ba3bcd9d"
+  },
+  "jsonld.feature-1": {
+    "text": "Fit preview: every file of a Hugging Face repo checked against the GPUs you pick before anything downloads",
+    "note": "One entry of the structured-data feature list search engines read; plain text.",
+    "hash": "615857f542c9"
+  },
+  "jsonld.feature-2": {
+    "text": "Coding agents (Codex CLI, OpenCode, Aider, Grok CLI, Continue, Cline, Cursor, the OpenAI and Anthropic SDKs, Claude Code) on your own models, configured for you",
+    "note": "One entry of the structured-data feature list search engines read; plain text.",
+    "hash": "7b06e74713de"
+  },
+  "jsonld.feature-3": {
+    "text": "Claude Code router: a local model answers for the Claude models you choose, the rest go to Anthropic on your own login",
+    "note": "One entry of the structured-data feature list search engines read; plain text.",
+    "hash": "1f350726cef9"
+  },
+  "jsonld.feature-4": {
+    "text": "Stats page: GPU utilisation, power, tokens per second, cache share, latency and preemptions, 1 hour to 7 days",
+    "note": "One entry of the structured-data feature list search engines read; plain text.",
+    "hash": "42d6cdab3fb6"
+  },
+  "jsonld.feature-5": {
+    "text": "Cache-aware routing that keeps each conversation on the replica holding its prefix",
+    "note": "One entry of the structured-data feature list search engines read; plain text.",
+    "hash": "9791836d7920"
+  },
+  "jsonld.feature-6": {
+    "text": "Agent tuning: a coding agent picks the model, engine and layout for your GPUs through the API, benchmarking as it goes",
+    "note": "One entry of the structured-data feature list search engines read; plain text.",
+    "hash": "b2f04e38f9aa"
+  },
+  "jsonld.feature-7": {
+    "text": "Chat with streaming Markdown, images for vision models and saved history",
+    "note": "One entry of the structured-data feature list search engines read; plain text.",
+    "hash": "0740507f9225"
+  },
+  "jsonld.feature-8": {
+    "text": "God mode: one key's prompts and replies streamed live for debugging, off by default",
+    "note": "One entry of the structured-data feature list search engines read; plain text.",
+    "hash": "301c375d8a2f"
+  },
+  "jsonld.feature-9": {
+    "text": "API keys with strict priority 9 to 0 and per-key usage",
+    "note": "One entry of the structured-data feature list search engines read; plain text.",
+    "hash": "89c7e3de3f80"
+  },
+  "jsonld.feature-10": {
+    "text": "Per-GPU panels from a 16 GB M1 to an 8 x B300 NVSwitch server, naming narrow PCIe links, inactive NVLink and ECC differences",
+    "note": "One entry of the structured-data feature list search engines read; plain text.",
+    "hash": "bf6f8b147d8a"
+  },
+  "chrome.copy.done": {
+    "text": "Copied",
+    "note": "label read by a script (top bar / footer); at most 14 characters",
+    "hash": "8d525e5f158b"
+  },
+  "chrome.copy.fail": {
+    "text": "Press Ctrl+C",
+    "note": "label read by a script (top bar / footer)",
+    "hash": "e78ab3a91bf2"
+  },
+  "chrome.skip": {
+    "text": "Skip to content",
+    "note": "link (top bar / footer); short label, keep near 15 characters",
+    "hash": "ac576a66d456"
+  },
+  "chrome.brand.aria-label": {
+    "text": "LM Warden home",
+    "note": "screen-reader label (top bar / footer)",
+    "hash": "a007563c384d"
+  },
+  "chrome.nav.aria-label": {
+    "text": "Primary",
+    "note": "screen-reader label (top bar / footer)",
+    "hash": "efe10c80ec8a"
+  },
+  "chrome.nav.menu": {
+    "text": "Menu",
+    "note": "menu button (top bar / footer); at most 8 characters",
+    "hash": "99af6606ff9d"
+  },
+  "chrome.nav.use-cases": {
+    "text": "Use cases",
+    "note": "link (top bar / footer); at most 18 characters",
+    "hash": "ff27a991e855"
+  },
+  "chrome.nav.features": {
+    "text": "Features",
+    "note": "link (top bar / footer); at most 16 characters",
+    "hash": "5697d03daef4"
+  },
+  "chrome.nav.coding-agents": {
+    "text": "Coding agents",
+    "note": "link (top bar / footer); at most 16 characters",
+    "hash": "707c65c28bca"
+  },
+  "chrome.nav.faq": {
+    "text": "FAQ",
+    "note": "link (top bar / footer); short label, keep near 12 characters",
+    "hash": "dbc468a14b60"
+  },
+  "chrome.nav.github.title": {
+    "text": "Source on GitHub, Apache-2.0",
+    "note": "tooltip (top bar / footer)",
+    "hash": "d2833070219a"
+  },
+  "chrome.nav.install": {
+    "text": "Download &amp; Install",
+    "note": "link (top bar / footer); short label, keep near 22 characters",
+    "hash": "4120132397fd"
+  },
+  "chrome.nav.plat-linux": {
+    "text": "Linux + NVIDIA GPUs",
+    "note": "link (top bar / footer); short label, keep near 19 characters",
+    "hash": "23d8d6d2be9c"
+  },
+  "chrome.nav.plat-mac": {
+    "text": "macOS, Apple silicon (beta)",
+    "note": "link (top bar / footer); short label, keep near 27 characters",
+    "hash": "d2364b229535"
+  },
+  "chrome.nav.plat-win": {
+    "text": "Windows (next)",
+    "note": "link (top bar / footer); short label, keep near 14 characters",
+    "hash": "e5a1bb1c3085"
+  },
+  "chrome.nav.plat-appliance": {
+    "text": "Appliance (coming soon)",
+    "note": "link (top bar / footer); short label, keep near 23 characters",
+    "hash": "6a7fc115677a"
+  },
+  "chrome.nav.plat-upgrade": {
+    "text": "Upgrade an existing install",
+    "note": "link (top bar / footer); short label, keep near 27 characters",
+    "hash": "c1fe5f01dc6e"
+  },
+  "chrome.nav.signin": {
+    "text": "Console sign-in",
+    "note": "link (top bar / footer); at most 20 characters",
+    "hash": "cb9ad9f4d662"
+  },
+  "chrome.lang.heading": {
+    "text": "Language",
+    "note": "text (top bar / footer); at most 20 characters",
+    "hash": "a4fe65264ef7"
+  },
+  "chrome.lang.label": {
+    "text": "Language:",
+    "note": "text (top bar / footer); at most 20 characters",
+    "hash": "8c16819a2bd4"
+  },
+  "chrome.docs.aria-label": {
+    "text": "Documentation",
+    "note": "screen-reader label (top bar / footer)",
+    "hash": "c205924de0fe"
+  },
+  "chrome.docs.full": {
+    "text": "Documentation",
+    "note": "text (top bar / footer); at most 16 characters",
+    "hash": "c205924de0fe"
+  },
+  "chrome.docs.short": {
+    "text": "Docs",
+    "note": "text (top bar / footer); at most 6 characters",
+    "hash": "7af023c43013"
+  },
+  "chrome.install": {
+    "text": "Download &amp; Install",
+    "note": "link (top bar / footer); at most 18 characters",
+    "hash": "4120132397fd"
+  },
+  "home.hero.h1-1": {
+    "text": "Your GPUs, served like a hosted API.",
+    "note": "page headline (#hero-title)",
+    "hash": "b24318c21e4f"
+  },
+  "home.hero.p-1": {
+    "text": "LM Warden runs vLLM, llama.cpp or MLX on hardware you own and puts one OpenAI-compatible port in front: a key per app, usage per key, and a live panel for every GPU. On a Linux box with NVIDIA cards, or on an Apple silicon Mac.",
+    "note": "text (#main)",
+    "hash": "e192caf6a5b3"
+  },
+  "home.hero.a-1": {
+    "text": "Download &amp; Install",
+    "note": "link (#main); at most 30 characters",
+    "hash": "4120132397fd"
+  },
+  "home.hero.a-2": {
+    "text": "See what it shows",
+    "note": "link (#main); at most 30 characters",
+    "hash": "51b46bd0add6"
+  },
+  "home.hero.span-1": {
+    "text": "Open source, Apache-2.0",
+    "note": "text (#main); short label, keep near 23 characters",
+    "hash": "2a43a93eceec"
+  },
+  "home.hero.span-2": {
+    "text": "No account, no telemetry",
+    "note": "text (#main); short label, keep near 24 characters",
+    "hash": "035ccb7cad8a"
+  },
+  "home.hero.span-3": {
+    "text": "Linux + NVIDIA · macOS (beta) · Windows next",
+    "note": "text (#main)",
+    "hash": "1f8168eb854e"
+  },
+  "home.hero.img-1.alt": {
+    "text": "The Stats page of a busy LM Warden instance: VRAM 59.4 of 64&#8239;GiB, GPU utilisation 100%, power 548&#8239;W, and charts of GPU utilisation, power draw and tokens per minute over the last hour",
+    "note": "image alt text (#main)",
+    "hash": "46cb2df1ab06"
+  },
+  "home.hero.div-1.aria-label": {
+    "text": "At a glance",
+    "note": "screen-reader label (#main)",
+    "hash": "46b396c85919"
+  },
+  "home.hero.b-1": {
+    "text": "vLLM v0.32.0 and llama.cpp b11719",
+    "note": "text (#main)",
+    "hash": "d0656dfa424f"
+  },
+  "home.hero.span-4": {
+    "text": "on CUDA",
+    "note": "text (#main); short label, keep near 12 characters",
+    "hash": "6b06ee360144"
+  },
+  "home.hero.span-5": {
+    "text": "macOS · Apple silicon",
+    "note": "text (#main); short label, keep near 21 characters",
+    "hash": "1b50b6d8401a"
+  },
+  "home.hero.b-2": {
+    "text": "MLX and llama.cpp",
+    "note": "text (#main); short label, keep near 17 characters",
+    "hash": "f2287a1beeab"
+  },
+  "home.hero.span-6": {
+    "text": "on Metal",
+    "note": "text (#main); short label, keep near 12 characters",
+    "hash": "6a893fd85af2"
+  },
+  "home.hero.span-7": {
+    "text": "APIs",
+    "note": "text (#main); short label, keep near 12 characters",
+    "hash": "8d266d3e3abd"
+  },
+  "home.hero.b-3": {
+    "text": "OpenAI, Anthropic Messages and Responses",
+    "note": "text (#main)",
+    "hash": "3aeff05d5bf6"
+  },
+  "home.hero.span-8": {
+    "text": "on one port",
+    "note": "text (#main); short label, keep near 12 characters",
+    "hash": "05261121948c"
+  },
+  "home.hero.span-9": {
+    "text": "Coding agents",
+    "note": "text (#main); short label, keep near 13 characters",
+    "hash": "707c65c28bca"
+  },
+  "home.hero.b-4": {
+    "text": "Claude Code, Codex CLI, OpenCode and 7 more",
+    "note": "text (#main)",
+    "hash": "544b91f8227b"
+  },
+  "home.hero.span-10": {
+    "text": "configured for you",
+    "note": "text (#main); short label, keep near 18 characters",
+    "hash": "48d1003061d4"
+  },
+  "home.uc.h2-1": {
+    "text": "What people use it for",
+    "note": "section heading (#uc-title)",
+    "hash": "a2bc7e06beef"
+  },
+  "home.use-cases.button-1.aria-label": {
+    "text": "Previous use case",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "40a9d13608d2"
+  },
+  "home.use-cases.button-2.aria-label": {
+    "text": "Pause automatic rotation",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "f1c27427e687"
+  },
+  "home.use-cases.button-2.resume": {
+    "text": "Resume automatic rotation",
+    "note": "label read by a script (#use-cases)",
+    "hash": "bb52c71e6d3b"
+  },
+  "home.use-cases.button-3.aria-label": {
+    "text": "Next use case",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "9220dc6514fb"
+  },
+  "home.use-cases.li-1.aria-label": {
+    "text": "1 of 10",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "b54457342c7d"
+  },
+  "home.use-cases.h3-1": {
+    "text": "Will this model fit my GPU?",
+    "note": "heading (#use-cases)",
+    "hash": "631429e459b2"
+  },
+  "home.use-cases.p-1": {
+    "text": "Paste a Hugging Face repo; every file gets a verdict against the cards you tick before anything downloads.",
+    "note": "text (#use-cases)",
+    "hash": "7dd1bdcba1fd"
+  },
+  "home.use-cases.span-1": {
+    "text": "See the fit preview",
+    "note": "text (#use-cases); short label, keep near 19 characters",
+    "hash": "3bf0e7fd520d"
+  },
+  "home.use-cases.li-2.aria-label": {
+    "text": "2 of 10",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "264c35a47f15"
+  },
+  "home.use-cases.h3-2": {
+    "text": "Point your coding agent at your own GPUs.",
+    "note": "heading (#use-cases)",
+    "hash": "b01cff25d51f"
+  },
+  "home.use-cases.p-2": {
+    "text": "Codex CLI, OpenCode, Aider, Grok CLI, Continue, Cline, Cursor and the OpenAI SDK run on your models. Claude Code and the Anthropic SDK can also keep your Claude subscription and offload the routine calls.",
+    "note": "text (#use-cases)",
+    "hash": "022970d73828"
+  },
+  "home.use-cases.span-2": {
+    "text": "See the coding agents",
+    "note": "text (#use-cases); short label, keep near 21 characters",
+    "hash": "19dc2417e144"
+  },
+  "home.use-cases.li-3.aria-label": {
+    "text": "3 of 10",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "24607ac1e731"
+  },
+  "home.use-cases.h3-3": {
+    "text": "Are your GPUs working or waiting?",
+    "note": "heading (#use-cases)",
+    "hash": "02e82cfefb89"
+  },
+  "home.use-cases.p-3": {
+    "text": "Utilisation, tokens per second, cache share, latency, preemptions and power on one Stats page, 1&#8239;h to 7&#8239;d.",
+    "note": "text (#use-cases)",
+    "hash": "ffc4dde74878"
+  },
+  "home.use-cases.span-3": {
+    "text": "See the Stats page",
+    "note": "text (#use-cases); short label, keep near 18 characters",
+    "hash": "4df7d5c583ae"
+  },
+  "home.use-cases.li-4.aria-label": {
+    "text": "4 of 10",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "6f3c824e9ec3"
+  },
+  "home.use-cases.h3-4": {
+    "text": "Agent turns that reuse the cache.",
+    "note": "heading (#use-cases)",
+    "hash": "fd528e59f30f"
+  },
+  "home.use-cases.p-4": {
+    "text": "Each conversation stays on its replica. Measured: cache hits 56 → 86%, median time to first byte 2.05 → 0.38 s.",
+    "note": "text (#use-cases)",
+    "hash": "3fd6f50887b9"
+  },
+  "home.use-cases.span-4": {
+    "text": "See the measurement",
+    "note": "text (#use-cases); short label, keep near 19 characters",
+    "hash": "91753d838ca4"
+  },
+  "home.use-cases.li-5.aria-label": {
+    "text": "5 of 10",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "4ff9c7d25432"
+  },
+  "home.use-cases.h3-5": {
+    "text": "Let the AI you already pay for tune your own GPUs.",
+    "note": "heading (#use-cases)",
+    "hash": "c3ae8600a083"
+  },
+  "home.use-cases.p-5": {
+    "text": "Claude Code, Codex or another agent surveys your cards, shortlists models that fit, loads layouts, benchmarks on your own prompts, adjusts, and leaves the winner loaded. Four prompts to paste.",
+    "note": "text (#use-cases)",
+    "hash": "bbfa0ef15601"
+  },
+  "home.use-cases.span-5": {
+    "text": "See the loop and the prompts",
+    "note": "text (#use-cases); short label, keep near 28 characters",
+    "hash": "ad84f405f980"
+  },
+  "home.use-cases.li-6.aria-label": {
+    "text": "6 of 10",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "9f1b26eea525"
+  },
+  "home.use-cases.h3-6": {
+    "text": "Chat with your own model, right there.",
+    "note": "heading (#use-cases)",
+    "hash": "bcd86e5acf2b"
+  },
+  "home.use-cases.p-6": {
+    "text": "Streaming Markdown, code and maths; images for vision models; settings per chat; saved history. Same window on a Mac.",
+    "note": "text (#use-cases)",
+    "hash": "8ab616f9c47d"
+  },
+  "home.use-cases.span-6": {
+    "text": "See the chat",
+    "note": "text (#use-cases); short label, keep near 12 characters",
+    "hash": "6fd76cfcf4f3"
+  },
+  "home.use-cases.li-7.aria-label": {
+    "text": "7 of 10",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "2991e046c7d6"
+  },
+  "home.use-cases.h3-7": {
+    "text": "See exactly what the model saw and said.",
+    "note": "heading (#use-cases)",
+    "hash": "175c055be16a"
+  },
+  "home.use-cases.p-7": {
+    "text": "God mode streams one key’s prompts and replies live for debugging. Off by default, in memory only, gone on restart.",
+    "note": "text (#use-cases)",
+    "hash": "12446d78110e"
+  },
+  "home.use-cases.span-7": {
+    "text": "See god mode",
+    "note": "text (#use-cases); short label, keep near 12 characters",
+    "hash": "eca4d500a3da"
+  },
+  "home.use-cases.li-8.aria-label": {
+    "text": "8 of 10",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "1170fb3f9b1b"
+  },
+  "home.use-cases.h3-8": {
+    "text": "One GPU box, shared by your team, your family and your agents.",
+    "note": "heading (#use-cases)",
+    "hash": "a04e398227ac"
+  },
+  "home.use-cases.p-8": {
+    "text": "As many keys as you need, each with a strict priority from 9 to 0 and its own usage page: the important agents are served first, everyone else gets what is left, and you see who used the box and how.",
+    "note": "text (#use-cases)",
+    "hash": "3acf884af623"
+  },
+  "home.use-cases.span-8": {
+    "text": "See keys and usage",
+    "note": "text (#use-cases); short label, keep near 18 characters",
+    "hash": "bb574d2be60e"
+  },
+  "home.use-cases.li-9.aria-label": {
+    "text": "9 of 10",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "7323df202723"
+  },
+  "home.use-cases.h3-9": {
+    "text": "Your hardware, honestly: from a Mac to eight B300s.",
+    "note": "heading (#use-cases)",
+    "hash": "3f3225bbc711"
+  },
+  "home.use-cases.p-9": {
+    "text": "One console for a 16&#8239;GB M1, two mismatched cards, or an NVSwitch server, and it names the narrow PCIe slot, inactive NVLink and ECC differences.",
+    "note": "text (#use-cases)",
+    "hash": "6ea6fbd502b6"
+  },
+  "home.use-cases.span-9": {
+    "text": "See the hardware pages",
+    "note": "text (#use-cases); short label, keep near 22 characters",
+    "hash": "c90b8269f1d8"
+  },
+  "home.use-cases.li-10.aria-label": {
+    "text": "10 of 10",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "aef48b281a1a"
+  },
+  "home.use-cases.h3-10": {
+    "text": "Coming soon: the appliance. A USB drive, a chassis with GPUs, one job.",
+    "note": "heading (#use-cases)",
+    "hash": "525b6691292f"
+  },
+  "home.use-cases.p-10": {
+    "text": "A stripped-down Linux that runs only LM Warden, sets up networking and model storage, and updates over the air or stays fully air-gapped. For a secure, dedicated LLM server.",
+    "note": "text (#use-cases)",
+    "hash": "9ab2a4e163b1"
+  },
+  "home.use-cases.span-10": {
+    "text": "Read about the appliance",
+    "note": "text (#use-cases); short label, keep near 24 characters",
+    "hash": "4ad529d919d4"
+  },
+  "home.use-cases.dot": {
+    "text": "Use case {n} of {m}",
+    "note": "label read by a script (#use-cases)",
+    "hash": "04227694e710"
+  },
+  "home.use-cases.div-1.aria-label": {
+    "text": "Choose a use case",
+    "note": "screen-reader label (#use-cases)",
+    "hash": "1bb48b8b99c4"
+  },
+  "home.install.h2-1": {
+    "text": "Where will you run it?",
+    "note": "section heading (#install-title)",
+    "hash": "249678c8eba2"
+  },
+  "home.install.p-1": {
+    "text": "Pick the machine the models will run on, not the one you are reading this on; a Mac visitor often installs on a Linux GPU server. Nothing is chosen for you and nothing is guessed from your browser.",
+    "note": "text (#install)",
+    "hash": "0c505d2d282e"
+  },
+  "home.install.div-1.aria-label": {
+    "text": "Platform",
+    "note": "screen-reader label (#install)",
+    "hash": "c78ffe195710"
+  },
+  "home.install.b-1": {
+    "text": "Linux + NVIDIA GPUs",
+    "note": "text (#install); short label, keep near 19 characters",
+    "hash": "23d8d6d2be9c"
+  },
+  "home.install.small-1": {
+    "text": "Docker Compose · one or many cards",
+    "note": "text (#install)",
+    "hash": "9849f7c407b4"
+  },
+  "home.install.span-1": {
+    "text": "main release",
+    "note": "text (#install); short label, keep near 12 characters",
+    "hash": "86f0f70c80d2"
+  },
+  "home.install.b-2": {
+    "text": "macOS, Apple silicon",
+    "note": "text (#install); short label, keep near 20 characters",
+    "hash": "0d7d5470afac"
+  },
+  "home.install.small-2": {
+    "text": "Menu-bar app · M1 or later",
+    "note": "text (#install); short label, keep near 26 characters",
+    "hash": "38cba54053bd"
+  },
+  "home.install.span-2": {
+    "text": "beta",
+    "note": "text (#install); short label, keep near 12 characters",
+    "hash": "f44e64e75f39"
+  },
+  "home.install.small-3": {
+    "text": "In progress · no date yet",
+    "note": "text (#install); short label, keep near 25 characters",
+    "hash": "1e554752120e"
+  },
+  "home.install.span-3": {
+    "text": "next",
+    "note": "text (#install); short label, keep near 12 characters",
+    "hash": "c6c1c9a9c854"
+  },
+  "home.install.b-3": {
+    "text": "Appliance",
+    "note": "text (#install); short label, keep near 12 characters",
+    "hash": "98432690c966"
+  },
+  "home.install.small-4": {
+    "text": "A USB drive that turns a GPU chassis into a dedicated LM Warden server",
+    "note": "text (#install)",
+    "hash": "dc3e1016c4ce"
+  },
+  "home.install.span-4": {
+    "text": "coming soon",
+    "note": "text (#install); short label, keep near 12 characters",
+    "hash": "62bfdf0b726c"
+  },
+  "home.install.p-2": {
+    "text": "Choose a platform above to see its steps, or <a href=\"#install-all\">show all four</a>.",
+    "note": "text (#install)",
+    "hash": "dd298d4e4a3b"
+  },
+  "home.p-linux.h3-1": {
+    "text": "One command on the GPU host.",
+    "note": "heading (#p-linux)",
+    "hash": "e261f30eb5f7"
+  },
+  "home.p-linux.span-1": {
+    "text": "Copy",
+    "note": "text (#p-linux); short label, keep near 12 characters",
+    "hash": "e21f935f11d7"
+  },
+  "home.p-linux.li-1": {
+    "text": "x86_64 host, Docker Compose v2.24+, the NVIDIA Container Toolkit, a Turing-or-newer card.",
+    "note": "text (#p-linux)",
+    "hash": "fc20ff032a73"
+  },
+  "home.p-linux.li-2": {
+    "text": "Then open <code>http://HOST:8080/ui/</code>, finish the first-run wizard, add a model, mint a key. Your endpoint is <code>http://HOST:8080/v1</code>.",
+    "note": "text (#p-linux)",
+    "hash": "33bfcbda3ad4"
+  },
+  "home.p-linux.li-3": {
+    "text": "Several GPUs in one box: tensor parallel, or one replica per card with cache-aware routing.",
+    "note": "text (#p-linux)",
+    "hash": "086f8aa8145e"
+  },
+  "home.p-linux.li-4": {
+    "text": "NVIDIA today. <b>AMD ROCm and Intel GPU support are coming soon</b>; no dates yet. Tell us which you would run it on: <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon\" rel=\"noopener\">Radeon</a> · <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel\" rel=\"noopener\">Intel</a>.",
+    "note": "text (#p-linux)",
+    "hash": "f17d08f00954"
+  },
+  "home.p-linux.a-1": {
+    "text": "Install guide",
+    "note": "link (#p-linux); short label, keep near 13 characters",
+    "hash": "e15a133068af"
+  },
+  "home.p-linux.a-2": {
+    "text": "Offline / air-gapped",
+    "note": "link (#p-linux); short label, keep near 20 characters",
+    "hash": "16289eae755d"
+  },
+  "home.p-linux.a-3": {
+    "text": "From source",
+    "note": "link (#p-linux); short label, keep near 12 characters",
+    "hash": "5be49bd81af3"
+  },
+  "home.p-linux.a-4": {
+    "text": "Upgrading",
+    "note": "link (#p-linux); short label, keep near 12 characters",
+    "hash": "d8f1ee5bd44a"
+  },
+  "home.p-linux.img-1.alt": {
+    "text": "A model load in progress on the Models page, each step with its elapsed and usual time",
+    "note": "image alt text (#p-linux)",
+    "hash": "41eaa58c37a4"
+  },
+  "home.p-linux.figcaption-1": {
+    "text": "A model loading after install: each step with the usual time from earlier loads.",
+    "note": "figure caption (#p-linux)",
+    "hash": "c6e56f837dad"
+  },
+  "home.p-mac.h3-1": {
+    "text": "A menu-bar app, in beta.",
+    "note": "heading (#p-mac)",
+    "hash": "93a681a12162"
+  },
+  "home.p-mac.a-1": {
+    "text": "Download for Mac (beta)",
+    "note": "link (#p-mac); at most 32 characters",
+    "hash": "95612856681e"
+  },
+  "home.p-mac.li-1": {
+    "text": "About 360&nbsp;MB. Apple silicon (M1 or later), macOS 14 or later. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">release notes</a>.",
+    "note": "text (#p-mac)",
+    "hash": "eb664f8f7d3a"
+  },
+  "home.p-mac.li-2": {
+    "text": "Engines: MLX and llama.cpp built with Metal. The same dashboard and the same OpenAI API; no vLLM, no power reading.",
+    "note": "text (#p-mac)",
+    "hash": "5ff95c0fa25d"
+  },
+  "home.p-mac.li-3": {
+    "text": "<b>Beta, plainly:</b> ad-hoc signed and not notarized, so macOS asks you to allow it under Privacy &amp; Security on first launch; updates are a new download. <a href=\"{{repo}}/blob/main/documents/INSTALL.md#beta-builds\" rel=\"noopener\">First-launch steps</a>.",
+    "note": "text (#p-mac)",
+    "hash": "cf254395b87e"
+  },
+  "home.p-mac.li-4": {
+    "text": "Serves on 127.0.0.1 until you choose <b>Share on Local Network</b>.",
+    "note": "text (#p-mac)",
+    "hash": "013272b7df36"
+  },
+  "home.p-mac.li-5": {
+    "text": "<b>Coming soon: mlx-rust-lm</b>, a third engine. The LM Warden team is porting Apple’s mlx-lm from Python to Rust on Apple’s official mlx-c bindings; it will run beside MLX and llama.cpp and in time replace the Python mlx-lm engine, which with Python and its libraries is most of today’s download. Unofficial, not affiliated with Apple.",
+    "note": "text (#p-mac)",
+    "hash": "8121128f773c"
+  },
+  "home.p-mac.img-1.alt": {
+    "text": "The LM Warden menu-bar menu on a Mac: Running, serving on this Mac only at 127.0.0.1:8080, no models loaded, a memory bar, Open Dashboard, Copy API Address, Share on Local Network",
+    "note": "image alt text (#p-mac)",
+    "hash": "45b8070949bb"
+  },
+  "home.p-mac.figcaption-1": {
+    "text": "The menu-bar menu of the beta on a 16&#8239;GB M1.",
+    "note": "figure caption (#p-mac)",
+    "hash": "785cc05a3c6d"
+  },
+  "home.p-win.h3-1": {
+    "text": "Windows is next. There is no date.",
+    "note": "heading (#p-win)",
+    "hash": "3e2f8c30fbd3"
+  },
+  "home.p-win.p-1": {
+    "text": "We are building it now and will put a build here the day it exists, not a sign-up form before. Until then, two honest options:",
+    "note": "text (#p-win)",
+    "hash": "7389debc8fd3"
+  },
+  "home.p-win.li-1": {
+    "text": "Run LM Warden on a Linux GPU box and use it from Windows: every OpenAI client, Claude Code and Codex connect over the network.",
+    "note": "text (#p-win)",
+    "hash": "1296afbbf883"
+  },
+  "home.p-win.li-2": {
+    "text": "<a href=\"{{repo}}/releases\" rel=\"noopener\">Watch releases on GitHub</a> to hear about the first Windows build.",
+    "note": "text (#p-win)",
+    "hash": "9a92060cedbe"
+  },
+  "home.p-win.li-3": {
+    "text": "AMD Radeon and Intel GPUs come after; tell us which you would run it on: <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon\" rel=\"noopener\">Radeon</a> · <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel\" rel=\"noopener\">Intel</a>.",
+    "note": "text (#p-win)",
+    "hash": "d85b661eb8e6"
+  },
+  "home.p-appliance.h3-1": {
+    "text": "The appliance: coming soon, no date.",
+    "note": "heading (#p-appliance)",
+    "hash": "e45c0fc37b2d"
+  },
+  "home.p-appliance.p-1": {
+    "text": "A fourth way to run LM Warden, for a box that should do nothing else.",
+    "note": "text (#p-appliance)",
+    "hash": "9ff6d73830b6"
+  },
+  "home.p-appliance.li-1": {
+    "text": "You put a USB drive into a chassis with GPUs. It installs a stripped-down Linux that does one thing: run LM Warden.",
+    "note": "text (#p-appliance)",
+    "hash": "47cb2ad65dc7"
+  },
+  "home.p-appliance.li-2": {
+    "text": "It configures networking and storage for models for you.",
+    "note": "text (#p-appliance)",
+    "hash": "a2a401f4b2c3"
+  },
+  "home.p-appliance.li-3": {
+    "text": "Updates arrive over the air, or the box works fully air-gapped.",
+    "note": "text (#p-appliance)",
+    "hash": "aa9d78e6b6fa"
+  },
+  "home.p-appliance.li-4": {
+    "text": "Made for a secure, dedicated LLM server: a team that wants a locked-down box, or a site with no route out.",
+    "note": "text (#p-appliance)",
+    "hash": "bbc615ea622b"
+  },
+  "home.p-appliance.p-2": {
+    "text": "Until it ships, the Linux install above does the same job on a host you set up yourself, including the <a href=\"{{repo}}/blob/main/documents/INSTALL.md#a7-offline--air-gapped-install\" rel=\"noopener\">offline / air-gapped install</a>. <a href=\"{{repo}}/releases\" rel=\"noopener\">Watch releases on GitHub</a>.",
+    "note": "text (#p-appliance)",
+    "hash": "177a91e7a6b4"
+  },
+  "home.p-appliance.div-1": {
+    "text": "No picture yet: there is no product name or hardware to show, and we will not draw one.",
+    "note": "text (#p-appliance)",
+    "hash": "8a3fbd7c91f0"
+  },
+  "home.upgrade.p-1": {
+    "text": "<b>Already running it?</b> Linux upgrades in place: pull the new images, restart, the database migrates forward. <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">Steps</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">Changelog</a>.",
+    "note": "text (#upgrade)",
+    "hash": "5566c16483a2"
+  },
+  "home.upgrade.p-2": {
+    "text": "<b>Formerly vLLM Warden.</b> The install directory <code>/opt/vllm-warden</code> and the <code>vw_</code> key prefix keep the old name, so existing keys keep working.",
+    "note": "text (#upgrade)",
+    "hash": "4ac584d252da"
+  },
+  "home.why.h2-1": {
+    "text": "Self-hosting has eight problems. Here is what each one looks like solved.",
+    "note": "section heading (#why-title)",
+    "hash": "65341f9c1497"
+  },
+  "home.why.p-1": {
+    "text": "A bare engine serves one model on one port. These are the parts around it, with our own numbers where we have them.",
+    "note": "text (#why)",
+    "hash": "1668b0870987"
+  },
+  "home.why-fit.h3-1": {
+    "text": "Will this model fit my GPU?",
+    "note": "heading (#why-fit)",
+    "hash": "631429e459b2"
+  },
+  "home.why-fit.p-1": {
+    "text": "Paste a Hugging Face repo into <b>Add model</b>. Every file is listed with a verdict against the cards you tick: fits, tight headroom, or won’t fit. Tick more cards and the budget adds up. Nothing downloads until something fits.",
+    "note": "text (#why-fit)",
+    "hash": "b0c5f5cbb2ee"
+  },
+  "home.why-fit.img-1.alt": {
+    "text": "The same 20.22&#8239;GiB file marked as fitting once four GPUs are selected",
+    "note": "image alt text (#why-fit)",
+    "hash": "906b74daf0f5"
+  },
+  "home.why-stats.h3-1": {
+    "text": "You bought GPUs. Are they working or waiting?",
+    "note": "heading (#why-stats)",
+    "hash": "7cd5266e1f4e"
+  },
+  "home.why-stats.p-1": {
+    "text": "Throughput is concurrency × prompt length × cache reuse, and a bare engine shows none of it together. The Stats page does, over 1&#8239;h to 7&#8239;d: VRAM, GPU utilisation, power (Linux), tokens per second with prompt tokens split into cached and computed, p50/p95 latency, prompt-cache hit rate, preemptions, requests per key and per client IP. Flat utilisation with a queue says “more concurrency”; a low cache share says “pin sessions”.",
+    "note": "text (#why-stats)",
+    "hash": "05ae743f085e"
+  },
+  "home.why-stats.img-1.alt": {
+    "text": "Tokens per second: prompt tokens split into cached and computed, completion tokens below",
+    "note": "image alt text (#why-stats)",
+    "hash": "94483285e732"
+  },
+  "home.why-chat.h3-1": {
+    "text": "Talk to the model before you wire anything up.",
+    "note": "heading (#why-chat)",
+    "hash": "83831d46fb09"
+  },
+  "home.why-chat.p-1": {
+    "text": "The chat is in the same window as everything else. Streaming Markdown with highlighted code and maths; up to eight PNG, JPEG or WebP images per message for a vision model; temperature, top-p, max tokens and system prompt per chat, saved as defaults; chats kept, titled, forkable. Tool calls the model makes are rendered, so you can check tool calling before an agent depends on it.",
+    "note": "text (#why-chat)",
+    "hash": "2e459441dc4f"
+  },
+  "home.why-chat.img-1.alt": {
+    "text": "The chat in the Mac app’s dashboard window, streaming from qwen2.5-3b with GPU 96% in the header",
+    "note": "image alt text (#why-chat)",
+    "hash": "da46ab93294b"
+  },
+  "home.why-god.h3-1": {
+    "text": "What did the model actually see, and say?",
+    "note": "heading (#why-god)",
+    "hash": "a49be301a05f"
+  },
+  "home.why-god.p-1": {
+    "text": "God mode, for debugging prompts: with <code>VW_GODMODE_ENABLED</code> on the deployment, each key’s page gets a dock that streams that key’s prompts and completions live. Off by default, and absent when off. A bounded in-memory ring: nothing to the database or disk, gone on restart. Anyone with the admin session can open it; the warden has one admin role and no others.",
+    "note": "text (#why-god)",
+    "hash": "a29986e09f7a"
+  },
+  "home.why-god.img-1.alt": {
+    "text": "The page of the API key coding-agent with the God mode dock open along the bottom: Live, 4 requests, 1 running; a qwen3.8-27b-fp8 request from 192.0.2.10 streaming, showing the user prompt about a flaky stats test and the model’s reply with a Python fix as it is written",
+    "note": "image alt text (#why-god)",
+    "hash": "171f585f7e38"
+  },
+  "home.cache.h2-1": {
+    "text": "Every agent turn re-reads the whole conversation.",
+    "note": "section heading (#cache-title)",
+    "hash": "d876efcb94ab"
+  },
+  "home.why-cache.p-1": {
+    "text": "An agent resends its whole history every turn, so a long conversation is mostly a prefix the engine has already read. vLLM keeps that work in its prefix cache, but only on the replica that did it, and its own balancer sends each turn to whichever replica has the shortest queue. LM Warden places each new conversation on the least-loaded replica and keeps it there, using the session id Claude Code already sends. It moves a request only when that replica passes its spill threshold.",
+    "note": "text (#why-cache)",
+    "hash": "03e36074672f"
+  },
+  "home.why-cache.figcaption-1": {
+    "text": "Four turns of one conversation on a four-replica model. With vLLM’s balancer, each turn is prefilled (its prompt read into the cache) almost from scratch on whichever replica got it. With LM Warden, the conversation stays on replica&nbsp;2 and only the new turn is prefilled. A drawing of the mechanism, not a measurement.",
+    "note": "figure caption (#why-cache)",
+    "hash": "0f19c82ec35c"
+  },
+  "home.why-cache.p-2": {
+    "text": "Measured on our four-card box (4&nbsp;×&nbsp;RTX&nbsp;A4000, Qwen3-4B as four one-card replicas, synthetic Claude Code-style sessions, affinity off then on, back to back): with conversations pinned, the share of prompt tokens served from the cache rose from 56 to 86% at 4 concurrent sessions, and the median time to first byte fell from 2.05 to 0.38&#8239;s. Output tokens a minute were higher at every step we ran, and the p95 time to first byte (the slowest 5%) was lower at every step. The number of replicas doing work barely moved (2.71 against 2.83 of four at 4 sessions): the gain is reuse of the cache, not more cards working.",
+    "note": "text (#why-cache)",
+    "hash": "9de8aa8aa7e1"
+  },
+  "home.why-cache.figcaption-2": {
+    "text": "Prefix-cache hit rate in each step: prompt tokens served from the cache over prompt tokens asked for, all four replicas pooled, from the change in vLLM’s own counters over the step. The gain holds while there is headroom and is gone at 32 sessions, where conversations spill.",
+    "note": "figure caption (#why-cache)",
+    "hash": "ff04da43c87a"
+  },
+  "home.why-cache.figcaption-3": {
+    "text": "Time to first byte at 4 to 32 concurrent sessions, median and p95, on a log scale so the sub-second steps read beside the minute-long ones. With affinity the median is far lower up to 16 sessions (0.38 against 2.05&#8239;s at 4) and higher at 24 and 32; the p95 is lower at every step, though at 16 the gap (24.9 against 26.2&#8239;s) is within the noise of one run per arm. Measured at the client, over the internet, to the first streamed token.",
+    "note": "figure caption (#why-cache)",
+    "hash": "0ec9d5ccf246"
+  },
+  "home.why-cache.h3-1": {
+    "text": "Every step of the ramp, affinity off → on",
+    "note": "heading (#why-cache)",
+    "hash": "684608311775"
+  },
+  "home.why-cache.p-3": {
+    "text": "Measured on our four-card box with a small model, affinity off first, then on, without restarting vLLM in between: the second arm started with a warm prefix cache, and both arms drew their prompts from the same seed. Each step lasts 3&nbsp;minutes, so it completes only 9 to 31 sessions and one session more or less moves sessions an hour by 20; output tokens a minute is the steadier column. Your model, cards and workload will differ; the replica card on a model’s page shows the same counters for yours.",
+    "note": "text (#why-cache)",
+    "hash": "4744b11be2ad"
+  },
+  "home.why-cache.img-1.alt": {
+    "text": "The Data-parallel routing card on a model’s page, with the pills Affinity on, Spill threshold 8 (auto), Sticky 100.0% and In flight 0. A table lists replicas 0 to 3 with in flight, sticky (38, 21, 19 and 29), spilled in, client-pinned, running and waiting, KV used and prefix-cache hit rate (82.2, 86.0, 69.0 and 80.0 percent), and a line saying the counters run since the warden started.",
+    "note": "image alt text (#why-cache)",
+    "hash": "f1bc7fbd6399"
+  },
+  "home.why-cache.figcaption-4": {
+    "text": "The same counters on a model’s page: one row per replica with the requests it holds, how many conversations stayed (<code>sticky</code>) or arrived by spilling, what is running and waiting, KV cache in use and the prefix-cache hit rate. Recorded on 4&nbsp;October&nbsp;2026 with affinity on and the spill threshold at 8 (auto): sticky 100%, and a prefix-cache hit rate of 82.2, 86.0, 69.0 and 80.0% on replicas 0 to 3. It is the card, not a result.<span class=\"cache-hint\"> Tap the card to enlarge it.</span>",
+    "note": "figure caption (#why-cache)",
+    "hash": "234d024e62df"
+  },
+  "home.why-cache.p-4": {
+    "text": "<b>Where it loses.</b> The 24 and 32 session steps are a deliberate overload of four small cards, and every replica is saturated. Output is still higher (11,178 against 9,048 and 16,638 against 14,760 tokens a minute) and the slow tail is much shorter (p95 38 against 59&#8239;s, and 39 against 83&#8239;s), but the median time to first byte is worse with affinity: 13.1 against 5.1&#8239;s at 24 sessions, 27.7 against 12.3&#8239;s at 32. We have not isolated why, and lowering the spill threshold from 8 to 4 did not change it.",
+    "note": "text (#why-cache)",
+    "hash": "2a468a4b1738"
+  },
+  "home.why-cache.p-5": {
+    "text": "<b>Measure both on a busy box.</b> The advantage is largest while there is headroom; a box that runs at its limit should measure both settings, and affinity can be switched off per model. Replicas, and so this routing, are part of the Linux install with NVIDIA GPUs; the <a href=\"#p-mac\">Mac app (beta)</a> has no tensor or data parallelism.",
+    "note": "text (#why-cache)",
+    "hash": "c245f8292ac7"
+  },
+  "home.why-cache.a-1": {
+    "text": "The full method: the workload, the harness, the spill threshold and a seven-GPU box that has run with it since →",
+    "note": "link (#why-cache)",
+    "hash": "cd240e4bc004"
+  },
+  "home.agents.h2-1": {
+    "text": "Point your coding agent at your own GPUs.",
+    "note": "section heading (#agents-title)",
+    "hash": "b01cff25d51f"
+  },
+  "home.agents.p-1": {
+    "text": "Ten harnesses connect with a base URL and a key; two of them can also keep a paid Claude subscription for the hard work.",
+    "note": "text (#agents)",
+    "hash": "26604da90050"
+  },
+  "home.agents.h3-1": {
+    "text": "Run fully on your models",
+    "note": "heading (#agents)",
+    "hash": "a87ec3988e0d"
+  },
+  "home.agents.p-2": {
+    "text": "Over the OpenAI-compatible API. Every request shows up per key and per session.",
+    "note": "text (#agents)",
+    "hash": "eed13d192862"
+  },
+  "home.agents.span-1": {
+    "text": "Custom model provider · Responses API",
+    "note": "text (#agents)",
+    "hash": "de3ecc4fe5d1"
+  },
+  "home.agents.span-2": {
+    "text": "OpenAI-compatible provider · <code>/v1</code>",
+    "note": "text (#agents)",
+    "hash": "cc7b475640bb"
+  },
+  "home.agents.span-3": {
+    "text": "OpenAI-compatible provider · <code>/v1</code>",
+    "note": "text (#agents)",
+    "hash": "cc7b475640bb"
+  },
+  "home.agents.span-4": {
+    "text": "Bring-your-own-key model · <code>/v1</code>",
+    "note": "text (#agents)",
+    "hash": "5a0628b4b02d"
+  },
+  "home.agents.span-5": {
+    "text": "OpenAI provider · one served model",
+    "note": "text (#agents)",
+    "hash": "8c2c30bf0764"
+  },
+  "home.agents.span-6": {
+    "text": "OpenAI Compatible provider · settings screen",
+    "note": "text (#agents)",
+    "hash": "09e5fe8af64a"
+  },
+  "home.agents.span-7": {
+    "text": "OpenAI base URL override · chat",
+    "note": "text (#agents)",
+    "hash": "9ad204014fc0"
+  },
+  "home.agents.h3-2": {
+    "text": "Keep your Claude subscription, offload the routine calls",
+    "note": "heading (#agents)",
+    "hash": "cfeda056d931"
+  },
+  "home.agents.p-3": {
+    "text": "Claude Code and the Anthropic SDK, through the router. A rule names the Claude models your GPUs answer for; everything else goes to Anthropic on your own login or key.",
+    "note": "text (#agents)",
+    "hash": "6995102b0af7"
+  },
+  "home.flow-t.title-1": {
+    "text": "Where a Claude Code request goes",
+    "note": "drawing title for screen readers (#flow-t)",
+    "hash": "d7db08f53325"
+  },
+  "home.flow-d.desc-1": {
+    "text": "The agent sends every request to LM Warden’s router. Requests for claude-haiku models go to a model on your GPU and are answered as that model. Every other model, Opus included, is passed to Anthropic on your own login.",
+    "note": "drawing description for screen readers (#flow-d)",
+    "hash": "5c598ca9bc7c"
+  },
+  "home.flow-t2.title-1": {
+    "text": "Where a Claude Code request goes",
+    "note": "drawing title for screen readers (#flow-t2)",
+    "hash": "d7db08f53325"
+  },
+  "home.flow-d2.desc-1": {
+    "text": "The agent sends every request to LM Warden’s router. Requests for claude-haiku models go to a model on your GPU and are answered as that model. Every other model, Opus included, is passed to Anthropic on your own login.",
+    "note": "drawing description for screen readers (#flow-d2)",
+    "hash": "5c598ca9bc7c"
+  },
+  "home.agents.b-1": {
+    "text": "1,981",
+    "note": "text (#agents); short label, keep near 12 characters",
+    "hash": "cdf3dc71b947"
+  },
+  "home.agents.span-8": {
+    "text": "requests answered locally, 99% of the box’s Claude Code traffic since its restart. From the Router page of our own seven-GPU box, 21 October 2026; 22 refused while the target was not loaded.",
+    "note": "text (#agents)",
+    "hash": "6f10abaf7726"
+  },
+  "home.agents.img-1.alt": {
+    "text": "The Claude Code router page: routing is on, 99% answered locally since 23:32; rule 1 sends claude-haiku* to qwen3.8-27b, 1,981 local and 22 refused; every other Claude model goes to Anthropic on the user’s own login",
+    "note": "image alt text (#agents)",
+    "hash": "d77bbac51675"
+  },
+  "home.agents.figcaption-1": {
+    "text": "Claude Code 2.1.227 or newer: <code>ANTHROPIC_BASE_URL</code> to the warden, the warden key in <code>ANTHROPIC_CUSTOM_HEADERS</code>, your login untouched. We have not benchmarked answer quality: give the local model the routine, well-specified work.",
+    "note": "figure caption (#agents)",
+    "hash": "bc31fcfd58c7"
+  },
+  "home.agents.h3-3": {
+    "text": "Connect writes each client’s config and sends a test request.",
+    "note": "heading (#agents)",
+    "hash": "0ceb9132d312"
+  },
+  "home.agents.p-4": {
+    "text": "Pick the client, a key and a loaded model in the console; it checks each requirement against what is actually loaded (context window, tool calling, router on) and gives you the files to paste. <a href=\"/coding-agents\">All coding agents</a>, one page per client with what works and what we saw.",
+    "note": "text (#agents)",
+    "hash": "0b548958da36"
+  },
+  "home.agents.img-2.alt": {
+    "text": "The Connect a client page: a key picker, the router rule claude-haiku* to qwen3.8-27b, clients grouped by protocol, and the Claude Code panel with its requirements checked",
+    "note": "image alt text (#agents)",
+    "hash": "6a234848eac5"
+  },
+  "home.tune.h2-1": {
+    "text": "Let the AI you already pay for tune your own GPUs.",
+    "note": "section heading (#tune-title)",
+    "hash": "c3ae8600a083"
+  },
+  "home.why-agent.p-1": {
+    "text": "Choosing a model for your cards means choosing a quantisation, an engine, how to split it across GPUs, how much context to give it and the KV-cache type; each guess costs a download and a load. Everything the console does is an API call, so Claude Code, Codex or another agent with a shell can run that search for you, on your hardware, against your workload.",
+    "note": "text (#why-agent)",
+    "hash": "4844283837a3"
+  },
+  "home.why-agent.h3-1": {
+    "text": "The loop",
+    "note": "heading (#why-agent)",
+    "hash": "85f5dae66c4f"
+  },
+  "home.loop-t.title-1": {
+    "text": "The tuning loop",
+    "note": "drawing title for screen readers (#loop-t)",
+    "hash": "3f22e76a3edc"
+  },
+  "home.loop-d.desc-1": {
+    "text": "Survey the GPUs, shortlist models with fit-preview before any download, load candidate layouts, benchmark them with real requests, adjust the settings, and keep the winner loaded. Benchmark and adjust repeat until the agent is satisfied.",
+    "note": "drawing description for screen readers (#loop-d)",
+    "hash": "dd7733aa80ef"
+  },
+  "home.loop-t2.title-1": {
+    "text": "The tuning loop",
+    "note": "drawing title for screen readers (#loop-t2)",
+    "hash": "3f22e76a3edc"
+  },
+  "home.loop-d2.desc-1": {
+    "text": "Survey the GPUs, shortlist models with fit-preview before any download, load candidate layouts, benchmark them with real requests, adjust the settings, and keep the winner loaded. Benchmark and adjust repeat until the agent is satisfied.",
+    "note": "drawing description for screen readers (#loop-d2)",
+    "hash": "dd7733aa80ef"
+  },
+  "home.why-agent.p-2": {
+    "text": "What the agent calls: <code>GET /api/system/gpus</code>, <code>POST /api/models/fit-preview</code> before any download, register and <code>suggest-config</code>, pull and load, a stress run that finds and applies the real context ceiling, <code>GET /api/stats/v2/throughput</code> and <code>latency</code>, and an inference key it issues to send test traffic. It reads <code>/agent-guide.md</code> first, a short description of these calls written for a language model.",
+    "note": "text (#why-agent)",
+    "hash": "35230c9469a2"
+  },
+  "home.why-agent.img-1.alt": {
+    "text": "A model load in progress on the Models page: each step with its elapsed and usual time",
+    "note": "image alt text (#why-agent)",
+    "hash": "afd3f600f638"
+  },
+  "home.why-agent.figcaption-1": {
+    "text": "What the agent watches while a layout loads: each step with the usual time from earlier loads. A load that stops making progress is stopped and its GPUs freed.",
+    "note": "figure caption (#why-agent)",
+    "hash": "4bb331f9f6fb"
+  },
+  "home.why-agent.h3-2": {
+    "text": "Four prompts to paste, and what comes back",
+    "note": "heading (#why-agent)",
+    "hash": "222000da96d1"
+  },
+  "home.why-agent.li-1": {
+    "text": "<b>Survey and shortlist.</b> <span class=\"ask\">Ask:</span> list my GPUs, shortlist three open-weight models for agentic coding that fit with at least 65,536 tokens of context, check each with fit-preview, download nothing. <span class=\"get\">You get:</span> a table of model, quantisation, engine, GPUs, context, and why.",
+    "note": "text (#why-agent)",
+    "hash": "4d737111bb76"
+  },
+  "home.why-agent.li-2": {
+    "text": "<b>Engine and layout for one model.</b> <span class=\"ask\">Ask:</span> decide vLLM or llama.cpp and tensor parallel or data-parallel replicas on my cards; load the best two layouts, send each the same 20 streaming requests, compare at concurrency 1 and 8. <span class=\"get\">You get:</span> time to first token and tokens per second for both, the winner left loaded, the other unloaded, the test key revoked.",
+    "note": "text (#why-agent)",
+    "hash": "aadee19b4763"
+  },
+  "home.why-agent.li-3": {
+    "text": "<b>Find the real limits and apply them.</b> <span class=\"ask\">Ask:</span> stress-run the loaded model, apply the measured context, then benchmark at concurrency 1, 4 and 16 with prompts of about 2k and 30k tokens. <span class=\"get\">You get:</span> the context ceiling written into the model’s settings and a table of time to first token and tokens per second per concurrency and prompt size.",
+    "note": "text (#why-agent)",
+    "hash": "5e697967b7ec"
+  },
+  "home.why-agent.li-4": {
+    "text": "<b>Compare two candidates on your own work.</b> <span class=\"ask\">Ask:</span> replay the prompts in <code>./workload/*.txt</code> against model A and model B at concurrency 4, judge each answer. <span class=\"get\">You get:</span> <code>model-comparison.md</code> with latency, tokens per second, correctness by the agent’s judgement and a recommendation; the recommended model stays loaded.",
+    "note": "text (#why-agent)",
+    "hash": "d25a394b9e41"
+  },
+  "home.why-agent.p-3": {
+    "text": "<b>Before you start.</b> An admin token has full admin rights over the warden (models, keys, settings; there are no narrower scopes yet): give it a short expiry and revoke it in Settings → Access Tokens when the job is done. A stress run deliberately crashes an engine to find its limit: run these prompts on a warden nobody else depends on. Downloads are large; the prompts check fit before pulling, but watch your disk.",
+    "note": "text (#why-agent)",
+    "hash": "505b9916712b"
+  },
+  "home.why-agent.p-4": {
+    "text": "Engine and layout choices (vLLM, tensor or data parallel) are the Linux install; on a Mac the choice is MLX or llama.cpp on one GPU. The model doing the tuning can be whichever you already pay for; the model it tunes is the one on your cards. <a href=\"/agent-tuning\">The agent-tuning page: the four prompts in full</a>.",
+    "note": "text (#why-agent)",
+    "hash": "bbeb89be5de6"
+  },
+  "home.share.h2-1": {
+    "text": "One GPU box, shared by your whole team, your family and your agents.",
+    "note": "section heading (#share-title)",
+    "hash": "f1e27da721b7"
+  },
+  "home.why-keys.p-1": {
+    "text": "Create as many API keys as you need and hand them out: a colleague, a family member, a CI job, an agent farm, each with its own key, its own priority and its own usage page. The hardware works for everyone, and the important work is never kept waiting.",
+    "note": "text (#why-keys)",
+    "hash": "dd9352746e6e"
+  },
+  "home.why-keys.h3-1": {
+    "text": "Strict priority: 9 is served first, 0 last",
+    "note": "heading (#why-keys)",
+    "hash": "51396907e61e"
+  },
+  "home.why-keys.p-2": {
+    "text": "A waiting higher-priority request always goes before a lower one. Under load, the capacity left after the important keys is what the lower keys get; on a busy box a low priority can wait indefinitely. Default is 5. There is no per-key rate limit; priority replaced it.",
+    "note": "text (#why-keys)",
+    "hash": "4dd4ec421cbe"
+  },
+  "home.why-keys.ol-1.aria-label": {
+    "text": "Example priority ladder",
+    "note": "screen-reader label (#why-keys)",
+    "hash": "1c1bcbbf1789"
+  },
+  "home.why-keys.b-1": {
+    "text": "The production agent",
+    "note": "text (#why-keys); short label, keep near 20 characters",
+    "hash": "c5da4041ea8e"
+  },
+  "home.why-keys.span-1": {
+    "text": "always answered first",
+    "note": "text (#why-keys); short label, keep near 21 characters",
+    "hash": "a2476d66a084"
+  },
+  "home.why-keys.b-2": {
+    "text": "Your own coding sessions",
+    "note": "text (#why-keys); short label, keep near 24 characters",
+    "hash": "6c8888f1d6dc"
+  },
+  "home.why-keys.span-2": {
+    "text": "next in line",
+    "note": "text (#why-keys); short label, keep near 12 characters",
+    "hash": "01b7a9f0d1d4"
+  },
+  "home.why-keys.b-3": {
+    "text": "Colleagues’ keys",
+    "note": "text (#why-keys); short label, keep near 16 characters",
+    "hash": "a76b6c1ae9be"
+  },
+  "home.why-keys.span-3": {
+    "text": "the default",
+    "note": "text (#why-keys); short label, keep near 12 characters",
+    "hash": "6d244abe081b"
+  },
+  "home.why-keys.b-4": {
+    "text": "Family and hobby projects",
+    "note": "text (#why-keys); short label, keep near 25 characters",
+    "hash": "724c4cb2e620"
+  },
+  "home.why-keys.span-4": {
+    "text": "whatever is left",
+    "note": "text (#why-keys); short label, keep near 16 characters",
+    "hash": "2c1097258738"
+  },
+  "home.why-keys.b-5": {
+    "text": "Overnight batch jobs",
+    "note": "text (#why-keys); short label, keep near 20 characters",
+    "hash": "96d527825b4b"
+  },
+  "home.why-keys.span-5": {
+    "text": "wait for idle time",
+    "note": "text (#why-keys); short label, keep near 18 characters",
+    "hash": "687891cb2f66"
+  },
+  "home.why-keys.p-3": {
+    "text": "An example ladder, not a rule: you choose the numbers. Each key can also be paused (new requests refused while the running ones finish), rotated with a grace window, and restricted to the models it may call.",
+    "note": "text (#why-keys)",
+    "hash": "ca3034a912dc"
+  },
+  "home.why-keys.img-1.alt": {
+    "text": "The page of the API key coding-agent: a Limits card with the P0 to P9 priority picker and the text Strict, a waiting P9 request always goes before a P8 one; a Usage panel over the last 7 days with 19k requests, 1.5B prompt tokens and 440k completion tokens; charts of tokens per minute and requests per minute; queue wait and latency panels below",
+    "note": "image alt text (#why-keys)",
+    "hash": "ae01537e1ee6"
+  },
+  "home.why-keys.figcaption-1": {
+    "text": "A key’s page: its priority, seven days of its own usage (19k requests, 1.5B prompt tokens), tokens and requests per minute, queue wait and latency. Windows of 1&#8239;h, 6&#8239;h, 24&#8239;h, 7&#8239;d or any custom range. Earlier keys it was rotated from can be included.",
+    "note": "figure caption (#why-keys)",
+    "hash": "a098f63084b6"
+  },
+  "home.why-keys.img-2.alt": {
+    "text": "The Stats requests chart over seven days, 28,906 requests, each mark coloured by the key that sent it: opencode-laptop, research-notebook, ui-refactor-agent, agent-sandbox, load-test-filler and demo-agent",
+    "note": "image alt text (#why-keys)",
+    "hash": "9ae6aeafcf56"
+  },
+  "home.why-keys.figcaption-2": {
+    "text": "The Stats page’s requests chart: one mark per finished request, placed at the time it finished and the height of its duration on a log scale, sized by the tokens it generated, shaped by how it ended, and coloured by the key that sent it (its name, or the client IP when a key has none). Colour by key switches on when two or more keys share the box and none of them carries 95% of the requests. The legend is a filter: click a key to see only its requests.",
+    "note": "figure caption (#why-keys)",
+    "hash": "348b1b23d393"
+  },
+  "home.why-keys.p-4": {
+    "text": "Who is using the box right now, and how, is on the same pages: every request in flight with its key, session and phase, a per-key table on the Stats page, and the <a href=\"#why-stats\">Stats panels</a> for the whole host.",
+    "note": "text (#why-keys)",
+    "hash": "b5718f9f8bb5"
+  },
+  "home.hw.h2-1": {
+    "text": "Your hardware, honestly: from a Mac to eight B300s.",
+    "note": "section heading (#hw-title)",
+    "hash": "3f3225bbc711"
+  },
+  "home.hardware.p-1": {
+    "text": "The same console reads a 16&#8239;GB M1, two mismatched cards under a desk, and an 8 × B300 NVSwitch server, and it names the bottleneck instead of averaging it away: a PCIe link that settled at x4 of x16, NVLink links that are inactive, ECC that differs between cards.",
+    "note": "text (#hardware)",
+    "hash": "f90e55953921"
+  },
+  "home.hardware.img-1.alt": {
+    "text": "System configuration on an 8 × B300 server: Intel Xeon 6776P, 3019&#8239;GiB RAM, eight NVIDIA B300 SXM6 panels each with 241 of 268.6&#8239;GiB in use, Link Gen 6 x16 of x16, NVLink 18 of 18 links active at 53.125&#8239;GB/s each, ECC on, and a server-architecture drawing of one NVSwitch joined to every card",
+    "note": "image alt text (#hardware)",
+    "hash": "60071766922d"
+  },
+  "home.hardware.figcaption-1": {
+    "text": "Eight B300 SXM6 cards on one NVSwitch: 18 of 18 NVLink links active per card, ECC on, PCIe Gen 6 x16, 241 of 268.6&#8239;GiB in use per card while serving GLM-5.2 NVFP4 at tensor-parallel 8.",
+    "note": "figure caption (#hardware)",
+    "hash": "937079060820"
+  },
+  "home.hardware.img-2.alt": {
+    "text": "Two mismatched GPUs: an NVIDIA RTX A4000 with a red Reduced link width x4 of x16 warning and Link Gen 1 now, up to Gen 3, beside a Quadro RTX 5000 whose architecture, VRAM, power cap, link, NVLink and ECC are each marked differs; below, a drawing of how the cards reach the CPU over x4 and x16 links",
+    "note": "image alt text (#hardware)",
+    "hash": "6006e1039ec1"
+  },
+  "home.hardware.figcaption-2": {
+    "text": "Two cards bought years apart: the A4000’s link has settled at x4 of x16 and is flagged in red; the Quadro’s architecture, power cap, NVLink (supported, links inactive) and ECC are each marked <em>differs</em>. The drawing shows which slot is the narrow one.",
+    "note": "figure caption (#hardware)",
+    "hash": "d67a36ee8dec"
+  },
+  "home.hardware.img-3.alt": {
+    "text": "Stats on the 8 × B300 server: VRAM 1932.1 of 2148.8&#8239;GiB, power 1893&#8239;W summed across the cards, GPU utilisation and power draw for the last hour, and prompt tokens per second split into cached and computed with a 93% cache hit",
+    "note": "image alt text (#hardware)",
+    "hash": "2b44277f55cd"
+  },
+  "home.hardware.figcaption-3": {
+    "text": "The same Stats page at the top of the range: 1,932 of 2,149&#8239;GiB VRAM, 1,893&#8239;W across the cards, a 4,351&#8239;W peak in the hour, and 93% of prompt tokens from the cache.",
+    "note": "figure caption (#hardware)",
+    "hash": "f3ceb6c33eb7"
+  },
+  "home.hardware.img-4.alt": {
+    "text": "The model page while GLM-5.2 NVFP4 loads on eight B300s: 9 min 17 s into a usual 10 min 46 s, steps Start engine, Load weights 47 of 47, Compile kernels and Size KV cache done, Tune kernels at op 21 of 22, with CPU and GPU-memory charts and the last log line",
+    "note": "image alt text (#hardware)",
+    "hash": "c1394a12d331"
+  },
+  "home.hardware.figcaption-4": {
+    "text": "A 10-minute load, step by step: GLM-5.2 NVFP4 on eight B300s, 9 min 17 s into a usual 10 min 46 s, nothing red while it is still moving.",
+    "note": "figure caption (#hardware)",
+    "hash": "cddfa5475f94"
+  },
+  "home.hardware.p-2": {
+    "text": "What each panel shows per card: temperature against its own throttle point, power against its cap, clocks, fan, the PCIe generation and width as negotiated right now, ECC and NVLink when the card has them, and the process holding the memory. The interconnect drawing is read from <code>nvidia-smi topo -m</code>. On a Mac: GPU use and the memory budget Metal reports, without power. And the engine under all of it is watched by its own <code>/health</code>, not its process table: a dead engine under a live wrapper is reloaded with its evidence kept.",
+    "note": "text (#hardware)",
+    "hash": "5a4e8569c432"
+  },
+  "home.features.h2-1": {
+    "text": "What it shows",
+    "note": "section heading (#features-title)",
+    "hash": "8e7ddf931c59"
+  },
+  "home.features.p-1": {
+    "text": "GPU monitoring",
+    "note": "text (#features)",
+    "hash": "cbdfccb24fcc"
+  },
+  "home.features.h3-1": {
+    "text": "Every card reports for itself.",
+    "note": "heading (#features)",
+    "hash": "65fb2dd50a89"
+  },
+  "home.features.p-2": {
+    "text": "Utilisation, temperature against that card’s own throttle point, power against its cap, VRAM, clocks, PCIe link and which process holds the memory. Not an average across the box.",
+    "note": "text (#features)",
+    "hash": "1bea9211a232"
+  },
+  "home.features.img-1.alt": {
+    "text": "System configuration and four GPU panels for NVIDIA RTX A4000 cards with per-card utilisation, temperature, VRAM, power, fan and clocks",
+    "note": "image alt text (#features)",
+    "hash": "0a8bc4d5312e"
+  },
+  "home.features.p-3": {
+    "text": "Requests in flight",
+    "note": "text (#features)",
+    "hash": "04423fe4175f"
+  },
+  "home.features.h3-2": {
+    "text": "See what each agent is doing right now.",
+    "note": "heading (#features)",
+    "hash": "e8070826221c"
+  },
+  "home.features.p-4": {
+    "text": "Every request with its key, its session and its phase: queued, prefill, thinking, tool call, answering. How much of each prompt came from the prefix cache, measured per request.",
+    "note": "text (#features)",
+    "hash": "49c151ca7020"
+  },
+  "home.features.img-2.alt": {
+    "text": "The in-flight requests table: ten active requests, each with key, session, phase and tokens",
+    "note": "image alt text (#features)",
+    "hash": "428dfb61458f"
+  },
+  "home.features.p-5": {
+    "text": "Coding agents",
+    "note": "text (#features)",
+    "hash": "707c65c28bca"
+  },
+  "home.features.h3-3": {
+    "text": "Claude Code, Codex and OpenCode, connected from one page.",
+    "note": "heading (#features)",
+    "hash": "ba721e4421e2"
+  },
+  "home.features.p-6": {
+    "text": "Connect writes each tool’s config with this warden’s address, a key and a loaded model, checks the requirements against what is actually loaded, and sends a test request.",
+    "note": "text (#features)",
+    "hash": "916edc5f7b60"
+  },
+  "home.features.img-3.alt": {
+    "text": "The Connect a client page with Claude Code selected and requirements checked",
+    "note": "image alt text (#features)",
+    "hash": "cc2b73368cf4"
+  },
+  "home.oss.h2-1": {
+    "text": "Free and open source, and built in the open.",
+    "note": "section heading (#oss-title)",
+    "hash": "3317e70f46b3"
+  },
+  "home.open-source.p-1": {
+    "text": "LM Warden is Apache-2.0 on <a href=\"{{repo}}\" rel=\"noopener\">GitHub</a>: the install script and the Compose file are the whole deployment, and you can read both. No account, no licence check, no telemetry. vLLM, llama.cpp and MLX are upstream projects we run unmodified.",
+    "note": "text (#open-source)",
+    "hash": "ba01b625fe70"
+  },
+  "home.open-source.h2-1": {
+    "text": "mlx-rust-lm <span class=\"soon\">coming soon</span>",
+    "note": "section heading (#open-source)",
+    "hash": "19dae78c985d"
+  },
+  "home.open-source.p-2": {
+    "text": "A port of Apple’s mlx-lm from Python to Rust on Apple’s official mlx-c bindings, developed and maintained by the LM Warden team as a standalone open-source project that LM Warden will use as a third Mac engine, eventually replacing the Python mlx-lm engine that makes up most of today’s Mac download. Unofficial, not affiliated with Apple.",
+    "note": "text (#open-source)",
+    "hash": "598b6f2514fd"
+  },
+  "home.lightbox.button-1": {
+    "text": "Close ✕",
+    "note": "button (#main); short label, keep near 12 characters",
+    "hash": "ce7bf15a4a85"
+  },
+  "home.lightbox.button-1.aria-label": {
+    "text": "Close enlarged screenshot",
+    "note": "screen-reader label (#main)",
+    "hash": "2d3b2f52a3dd"
+  },
+  "chrome.footer.about": {
+    "text": "Free software under the Apache License 2.0, by the team behind <a href=\"https://podwarden.com\" rel=\"noopener\">PodWarden</a>. vLLM, llama.cpp and MLX are upstream projects we run unmodified; we are not affiliated with them.",
+    "note": "text (#docs)",
+    "hash": "7f11ddd74f30"
+  },
+  "chrome.footer.source": {
+    "text": "Source on GitHub",
+    "note": "link (#docs); short label, keep near 16 characters",
+    "hash": "11506c59ef23"
+  },
+  "chrome.footer.install": {
+    "text": "Install guide",
+    "note": "link (#docs); short label, keep near 13 characters",
+    "hash": "e15a133068af"
+  },
+  "chrome.footer.changelog": {
+    "text": "Changelog",
+    "note": "link (#docs); short label, keep near 12 characters",
+    "hash": "ead07c84baac"
+  },
+  "chrome.footer.licence": {
+    "text": "Licence",
+    "note": "link (#docs); short label, keep near 12 characters",
+    "hash": "f3ec8e880a46"
+  },
+  "chrome.footer.tag-note": {
+    "text": "This page is served by LM Warden itself and loads Google’s tag to count visits. Cookies are set only if you accept them (<a href=\"/privacy\">privacy</a>, <a href=\"/privacy\" data-consent-open>cookie settings</a>).",
+    "note": "text (#docs)",
+    "hash": "09eab402684a"
+  },
+  "chrome.consent.aria-label": {
+    "text": "Cookie choice",
+    "note": "screen-reader label (top bar / footer)",
+    "hash": "38db21b38100"
+  },
+  "chrome.consent.text": {
+    "text": "This site uses Google Analytics cookies to count visits and measure ads, but only if you allow it. <a href=\"/privacy\">Privacy</a>",
+    "note": "text (top bar / footer)",
+    "hash": "cdf7e1f99a7b"
+  },
+  "chrome.consent.decline": {
+    "text": "Decline",
+    "note": "text (top bar / footer); short label, keep near 12 characters",
+    "hash": "a2d285b35287"
+  },
+  "chrome.consent.accept": {
+    "text": "Accept",
+    "note": "text (top bar / footer); short label, keep near 12 characters",
+    "hash": "89713b9c9c1b"
+  }
+}

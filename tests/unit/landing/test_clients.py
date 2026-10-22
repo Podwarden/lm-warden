@@ -6,7 +6,7 @@ import re
 from fastapi.testclient import TestClient
 
 from app.connect.catalog import CLIENTS
-from app.landing.clients import CLIENT_PAGES
+from app.landing.clients import CLIENT_PAGES, capability
 from app.landing.clients import _e as prose
 
 
@@ -33,14 +33,31 @@ def test_snippets_hold_placeholders_never_a_key(client: TestClient) -> None:
         assert not re.search(r"\bvw_(?!YOUR_KEY)[A-Za-z0-9]{6,}", body), c.id
 
 
-def test_verified_status_matches_the_catalogue(client: TestClient) -> None:
+def test_no_tested_versus_documented_status(client: TestClient) -> None:
+    """The website does not set the clients we ran apart from the ones
+    configured from their docs (owner, 2026-10-21; it replaced a guard that
+    pinned each client's verification date on its page). The catalogue keeps
+    the record for the console's Connect page; no page prints it, and the
+    one capability sentence that stated it is dropped from the site copy."""
+    pages = {f"/coding-agents/{c.id}" for c in CLIENTS} | {"/coding-agents", "/"}
+    for path in sorted(pages):
+        body = client.get("/_landing" if path == "/" else path).text
+        for wording in (
+            "Verified",
+            "Run live",
+            "docs only",
+            "Configured from its docs",
+            "Checked against its docs",
+            "Run against a live warden",
+            "Not yet run",
+            "was not run",
+            'class="badge',
+            "<b>documented</b>",
+        ):
+            assert wording not in body, (path, wording)
     for c in CLIENTS:
-        if c.verified is None:
-            continue
         body = client.get(f"/coding-agents/{c.id}").text
-        assert c.verified.date in body, c.id
-        if c.verified.client_version:
-            assert prose(c.verified.client_version) in body, c.id
+        assert prose(capability(c)) in body, c.id
 
 
 def test_hub_lists_and_links_every_client(client: TestClient) -> None:

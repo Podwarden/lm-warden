@@ -878,10 +878,12 @@ def test_drawn_figures_have_a_phone_cut(client: TestClient) -> None:
     cropped or shrunk to unreadable text on a phone; the narrow D1 has its own
     ids so the two drawings never collide."""
     body = site_html(client)
-    # 5 hand-drawn figures on the article pages (the agent pages' generated
+    # 5 hand-drawn figures on the article pages, plus the 3 that Home's cache
+    # section shows from /cache-aware-routing (the replica drawing, the hit
+    # rate and the TTFB chart; owner, 2026-10-21). The agent pages' generated
     # versions: test_diagrams.py; Home's router flow and tuning loop, which
-    # carry "flow v-wide" / "loop v-wide": test_home.py).
-    assert body.count('class="v-wide"') == body.count('class="v-narrow"') == 5
+    # carry "flow v-wide" / "loop v-wide": test_home.py.
+    assert body.count('class="v-wide"') == body.count('class="v-narrow"') == 8
     for svg_id in ("d1n-title", "d1n-desc", "d1n-head"):
         assert f'id="{svg_id}"' in body
     css = _css(client.get("/gpu-monitoring").text)

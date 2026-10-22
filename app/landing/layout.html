@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{lang}}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -132,6 +132,9 @@
   }
   /* Touch: every control in the bar is at least 44px tall. */
   @media (max-width:559px),(pointer:coarse){.bar-end .btn,.menu>summary{min-height:44px}}
+  /* 320-359px phones: the bar cannot hold Menu, Docs and Download & Install in every
+     language; Docs leaves the bar (the footer keeps Source on GitHub and the Install guide). */
+  @media (max-width:359px){.bar-end .btn.doc{display:none}.bar-end{gap:5px}.bar-end .btn{padding:0 8px}}
   /* From 1280px the menu's links sit in the bar: the layout script keeps the
      <details> open there, and where the browser can style a closed one's
      content, this shows the links even before (or without) the script. */
@@ -150,22 +153,73 @@
   .consent-actions{display:flex;gap:8px}
   .consent .btn{min-height:44px;padding:0 18px}
 
+  /* Language switcher (only once a translation is published): a <details>
+     in the bar, the globe and the current language's own name (the globe
+     alone where the bar is narrow). Under 768px the bar has no room: the
+     same list sits in the menu sheet instead. A translated page adds a plain
+     "English" link in the bar at every width ("EN" on phones). */
+  .langsw{position:relative}
+  .langsw>summary{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 10px;cursor:pointer;list-style:none;border:1px solid var(--rule);border-radius:var(--r);white-space:nowrap;font-size:var(--t-small)}
+  .langsw>summary::-webkit-details-marker{display:none}
+  .langsw>summary:hover{border-color:var(--ink)}
+  .langsw>summary svg{width:18px;height:18px;flex:none}
+  .langsw .langs{position:absolute;right:0;top:calc(100% + 6px);z-index:50;min-width:14rem;list-style:none;margin:0;padding:6px;background:var(--plate);border:1px solid var(--rule);border-radius:var(--r);box-shadow:0 12px 32px var(--shadow)}
+  .langsw .langs a{display:flex;align-items:center;min-height:44px;padding:6px 12px;border-radius:4px;text-decoration:none;color:var(--ink)}
+  .langsw .langs a:hover{background:var(--plate-2)}
+  .langsw .langs a[aria-current]{color:var(--amber);font-weight:600}
+  .en-link{display:inline-flex;align-items:center;min-height:40px;white-space:nowrap;font-size:var(--t-small);color:var(--ink-2)}
+  .en-link .short{display:none}
+  .menu .langs-m{display:none}
+  /* The name shows where the bar has room, 1024-1279px (links in the
+     menu); from 1280px the menu's links fill the bar, so the globe stands
+     alone and the GitHub link drops its licence suffix (still in its title,
+     the footer and the open-source section). */
+  @media (max-width:1023px),(min-width:1280px){.langsw .ln{display:none}}
+  @media (min-width:1280px){.masthead:has(.langsw) .gh .lic{display:none}}
+  /* A translated page also carries the English link, so it gives back that
+     room: the short Docs label, and from 1280px a tighter row of links. */
+  html:not([lang="en"]) .bar-end .btn.doc .full{display:none}
+  html:not([lang="en"]) .bar-end .btn.doc .short{display:inline}
+  @media (min-width:1280px){html:not([lang="en"]) .masthead nav ul{gap:20px}}
+  @media (max-width:767px){
+    .langsw{display:none}
+    .menu .langs-m{display:block;margin-top:24px}
+    .menu .langs-h{display:flex;align-items:center;gap:8px;padding:8px 0;color:var(--ink-2);font-size:var(--t-small)}
+    .menu .langs-h svg{width:18px;height:18px}
+    .menu .langs-m ul{list-style:none;padding:0;margin:0}
+    .menu .panel .langs-m a{font-size:1rem;padding-left:16px}
+    .menu .panel .langs-m a[aria-current]{color:var(--amber)}
+  }
+  @media (max-width:559px){.en-link{padding:0 2px} .en-link .full{display:none} .en-link .short{display:inline}}
+  @media (max-width:559px),(pointer:coarse){.langsw>summary,.en-link{min-height:44px}}
+
+  /* Scripts with no glyphs in Mona Sans: system stacks, no web fonts (epic
+     #2134, decision 6). Latin inside them stays Mona Sans; Cyrillic (ru, uk)
+     falls back glyph by glyph to the system stack already in --sans. CJK and
+     Devanagari get more leading and no negative tracking. */
+  html:lang(zh-CN){--sans:"Mona Sans","PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC",sans-serif}
+  html:lang(ja){--sans:"Mona Sans","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,"Noto Sans CJK JP","Noto Sans JP",sans-serif}
+  html:lang(hi){--sans:"Mona Sans","Noto Sans Devanagari","Nirmala UI",Mangal,"Kohinoor Devanagari",sans-serif}
+  html:lang(zh-CN) body,html:lang(ja) body,html:lang(hi) body{line-height:1.75}
+  html:lang(zh-CN) :is(h1,h2,h3),html:lang(ja) :is(h1,h2,h3),html:lang(hi) :is(h1,h2,h3){letter-spacing:0;line-height:1.35}
+  html:lang(ja) body{word-break:auto-phrase}
+
 {{page_css}}
   </style>
 </head>
-<body>
-<a class="skip" href="#main">Skip to content</a>
+<body data-l-copied="Copied" data-l-copyfail="Press Ctrl+C" data-t-data-l-copied="chrome.copy.done" data-t-data-l-copyfail="chrome.copy.fail">
+<a class="skip" href="#main" data-t="chrome.skip">Skip to content</a>
 
 <header class="masthead">
   <div class="wrap bar">
-    <a class="brand" href="/" aria-label="LM Warden home">
+    <a class="brand" href="{{home}}" aria-label="LM Warden home" data-t-aria-label="chrome.brand.aria-label">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
       <span>LM Warden</span>
     </a>
     <div class="bar-end">
       {{nav}}
-      <a class="btn doc" href="{{repo}}#readme" rel="noopener" aria-label="Documentation"><span class="full">Documentation</span><span class="short" aria-hidden="true">Docs</span></a>
-      <a class="btn go" href="/#install">Download &amp; Install</a>
+{{langs}}      <a class="btn doc" href="{{repo}}#readme" rel="noopener" aria-label="Documentation" data-t-aria-label="chrome.docs.aria-label"><span class="full" data-t="chrome.docs.full">Documentation</span><span class="short" aria-hidden="true" data-t="chrome.docs.short">Docs</span></a>
+      <a class="btn go" href="{{home}}#install" data-t="chrome.install">Download &amp; Install</a>
     </div>
   </div>
 </header>
@@ -176,8 +230,8 @@
 
 <footer class="colophon" id="docs">
   <div class="wrap">
-    <p>Free software under the Apache License 2.0, by the team behind <a href="https://podwarden.com" rel="noopener">PodWarden</a>. vLLM, llama.cpp and MLX are upstream projects we run unmodified; we are not affiliated with them.</p>
-    <ul><li><a href="{{repo}}" rel="noopener">Source on GitHub</a></li><li><a href="{{repo}}/blob/main/documents/INSTALL.md" rel="noopener">Install guide</a></li><li><a href="{{repo}}/blob/main/CHANGELOG.md" rel="noopener">Changelog</a></li><li><a href="{{repo}}/blob/main/LICENSE" rel="noopener">Licence</a></li><li><a href="/llms.txt">llms.txt</a></li></ul>
+    <p data-t="chrome.footer.about">Free software under the Apache License 2.0, by the team behind <a href="https://podwarden.com" rel="noopener">PodWarden</a>. vLLM, llama.cpp and MLX are upstream projects we run unmodified; we are not affiliated with them.</p>
+    <ul><li><a href="{{repo}}" rel="noopener" data-t="chrome.footer.source">Source on GitHub</a></li><li><a href="{{repo}}/blob/main/documents/INSTALL.md" rel="noopener" data-t="chrome.footer.install">Install guide</a></li><li><a href="{{repo}}/blob/main/CHANGELOG.md" rel="noopener" data-t="chrome.footer.changelog">Changelog</a></li><li><a href="{{repo}}/blob/main/LICENSE" rel="noopener" data-t="chrome.footer.licence">Licence</a></li><li><a href="/llms.txt">llms.txt</a></li></ul>
 {{thirdparty}}  </div>
 </footer>
 
@@ -197,14 +251,17 @@
           document.body.removeChild(ta);
         });
       }
+      // Labels come from <body data-l-*>, so this script reads the same in
+      // every language (and keeps one CSP hash).
+      var said = document.body.dataset;
       document.querySelectorAll("button[data-copy]").forEach(function (btn) {
-        var label = btn.querySelector("span");
+        var label = btn.querySelector("span"), idle = label.textContent;
         btn.addEventListener("click", function () {
           var src = document.getElementById(btn.getAttribute("data-copy"));
           copyText(src.textContent).then(function () {
-            btn.setAttribute("data-state", "done"); label.textContent = "Copied";
-            setTimeout(function () { btn.removeAttribute("data-state"); label.textContent = "Copy"; }, 1800);
-          }, function () { label.textContent = "Press Ctrl+C"; });
+            btn.setAttribute("data-state", "done"); label.textContent = said.lCopied || "Copied";
+            setTimeout(function () { btn.removeAttribute("data-state"); label.textContent = idle; }, 1800);
+          }, function () { label.textContent = said.lCopyfail || "Press Ctrl+C"; });
         });
       });
 
@@ -224,6 +281,18 @@
           if (ev.key === "Escape" && menu.open && !wide.matches) {
             menu.open = false; menu.querySelector("summary").focus();
           }
+        });
+      }
+
+      // Language switcher: a <details> that works without this script; a
+      // click elsewhere or Escape closes it.
+      var langs = document.querySelector(".langsw");
+      if (langs) {
+        document.addEventListener("click", function (ev) {
+          if (langs.open && !langs.contains(ev.target)) langs.open = false;
+        });
+        document.addEventListener("keydown", function (ev) {
+          if (ev.key === "Escape" && langs.open) { langs.open = false; langs.querySelector("summary").focus(); }
         });
       }
 

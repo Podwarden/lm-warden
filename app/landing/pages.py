@@ -151,6 +151,36 @@ PAGES: tuple[Page, ...] = (
     PRIVACY,
 )
 
+
+@dataclass(frozen=True)
+class Locale:
+    tag: str  # BCP 47, also the URL prefix: /de/, /pt-BR/
+    name: str  # the language's own name, as the switcher shows it
+    og: str  # og:locale
+
+
+#: Home is published in these languages (owner's request 2026-10-21). English
+#: is the source and has no prefix; each other locale answers at /<tag>/ only
+#: once app/landing/i18n/<tag>.json exists (app.landing.i18n.available).
+LOCALES: tuple[Locale, ...] = (
+    Locale("en", "English", "en_US"),
+    Locale("fr", "Français", "fr_FR"),
+    Locale("de", "Deutsch", "de_DE"),
+    Locale("es", "Español", "es_ES"),
+    Locale("pt-BR", "Português (Brasil)", "pt_BR"),
+    Locale("ru", "Русский", "ru_RU"),
+    Locale("uk", "Українська", "uk_UA"),
+    Locale("pl", "Polski", "pl_PL"),
+    Locale("zh-CN", "简体中文", "zh_CN"),
+    Locale("ja", "日本語", "ja_JP"),
+    Locale("hi", "हिन्दी", "hi_IN"),
+)
+#: The localized homes' paths, "/de/", and their slashless spellings, which
+#: redirect. Routed for every locale; unavailable ones answer 404.
+LOCALE_HOME_PATHS: frozenset[str] = frozenset(
+    p for loc in LOCALES if loc.tag != "en" for p in (f"/{loc.tag}/", f"/{loc.tag}")
+)
+
 #: Path template for generated client pages (app/landing/clients.py).
 CLIENT_PATH = "/coding-agents/{client_id}"
 
@@ -161,4 +191,5 @@ PUBLIC_PAGE_PATHS: frozenset[str] = frozenset(
     {p.path for p in PAGES}
     | {p.path + "/" for p in PAGES if p.path != "/"}
     | {CLIENT_PATH, CLIENT_PATH + "/"}
+    | LOCALE_HOME_PATHS
 )

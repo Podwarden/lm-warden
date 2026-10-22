@@ -18,6 +18,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from app.landing import i18n
 from app.landing.downloads import MAC_DMG_NAME, MAC_DMG_URL, MAC_RELEASE_URL
 from app.landing.pages import HOME, PAGES, Page
 from app.landing.site import Analytics
@@ -162,7 +163,9 @@ _LLMS_FULL_SRC: str = (_HERE / "llms-full.txt").read_text(encoding="utf-8")
 _AGENT_GUIDE_SRC: str = (_HERE / "agent-guide.md").read_text(encoding="utf-8")
 #: Page CSS, appended to the layout's shared <style> block: home.css for Home
 #: (the console-first landing page), content.css for every other page (the
-#: article styles the pages were written against, on the same dark tokens).
+#: article styles the pages were written against, on the same dark tokens),
+#: then figures.css on every page: the drawn figures and measured tables that
+#: Home's cache section shares with /cache-aware-routing.
 _STYLES: dict[str, str] = {
     p.stem: p.read_text(encoding="utf-8").strip() for p in sorted((_HERE / "styles").glob("*.css"))
 }
@@ -207,11 +210,48 @@ PODWARDEN: dict[str, Any] = {
 }
 
 
-def _url(origin: str, page: Page) -> str:
-    return origin + ("/" if page.path == "/" else page.path)
+def _url(origin: str, page: Page, locale: str = "en") -> str:
+    return origin + (i18n.home_path(locale) if page.path == "/" else page.path)
 
 
-def _jsonld(origin: str, page: Page) -> str:
+#: og:image:alt, the alt text a link preview shows with the image.
+_OG_IMAGE_ALT = (
+    "LM Warden: an OpenAI-compatible API on the GPUs under your desk or in your rack, beside "
+    "the Stats panel of one RTX A4000 with its driver-reported throttle point labelled"
+)
+
+#: The home page's translatable strings that live here rather than in the
+#: marked HTML: key -> (English, translator's note). Read by the source
+#: catalog (scripts/landing_i18n.py write-source) like the HTML markers.
+PY_SEGMENTS: dict[str, tuple[str, str]] = {
+    "meta.title": (
+        HOME.title,
+        "The browser tab and the search-result title. Keep LM Warden first and keep it under "
+        "65 characters; LLM stays as a search term.",
+    ),
+    "meta.description": (
+        HOME.description,
+        "The search-result snippet and link-preview text. At most 160 characters.",
+    ),
+    "meta.og-image-alt": (
+        _OG_IMAGE_ALT,
+        "Alt text of the link-preview image (a screenshot of the Stats page).",
+    ),
+    **{
+        f"jsonld.feature-{i}": (
+            feature,
+            "One entry of the structured-data feature list search engines read; plain text.",
+        )
+        for i, feature in enumerate(FEATURES, start=1)
+    },
+}
+
+
+def _t(locale: str, key: str) -> str:
+    return i18n.text(locale, key, PY_SEGMENTS[key][0])
+
+
+def _jsonld(origin: str, page: Page, locale: str = "en") -> str:
     def absolute(path: str) -> str:
         return origin + path
 
@@ -219,7 +259,8 @@ def _jsonld(origin: str, page: Page) -> str:
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
         "name": "LM Warden",
-        "description": DESCRIPTION,
+        "description": _t(locale, "meta.description"),
+        "inLanguage": locale,
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Linux, macOS (beta)",
         "softwareRequirements": (
@@ -234,15 +275,15 @@ def _jsonld(origin: str, page: Page) -> str:
         # script and the Mac beta DMG. Windows (next) and the appliance
         # (coming soon) have nothing to download yet, so they are not here.
         "downloadUrl": [INSTALL_SCRIPT_URL, MAC_DMG_URL],
-        "featureList": list(FEATURES),
+        "featureList": [_t(locale, f"jsonld.feature-{i}") for i in range(1, len(FEATURES) + 1)],
         "sameAs": [REPO_URL],
         "screenshot": absolute(asset_url(_OG_IMAGE)),
         "publisher": PODWARDEN,
         "author": PODWARDEN,
     }
     if origin:
-        app["url"] = origin + "/"
-        app["installUrl"] = origin + "/#install"
+        app["url"] = _url(origin, page, locale)
+        app["installUrl"] = _url(origin, page, locale) + "#install"
     faq = {
         "@context": "https://schema.org",
         "@type": "FAQPage",
@@ -310,27 +351,43 @@ def _jsonld(origin: str, page: Page) -> str:
     return "\n".join(blocks)
 
 
-def _head(origin: str, page: Page) -> str:
-    """The origin-dependent part of <head>: robots, canonical and OG URLs."""
+def _head(origin: str, page: Page, locale: str = "en") -> str:
+    """The origin-dependent part of <head>: robots, canonical and OG URLs,
+    and on Home the language alternates."""
     e = html.escape
     image = e(origin + asset_url(_OG_IMAGE))
+    home = page.path == "/"
     lines = []
     if origin:
         lines += [
             '<meta name="robots" content="index,follow">',
-            f'<link rel="canonical" href="{e(_url(origin, page))}">',
-            f'<meta property="og:url" content="{e(_url(origin, page))}">',
+            f'<link rel="canonical" href="{e(_url(origin, page, locale))}">',
+            f'<meta property="og:url" content="{e(_url(origin, page, locale))}">',
         ]
+        if home and len(i18n.available()) > 1:
+            # Every published language of Home, itself included, and
+            # x-default (English: the page a visitor with no match gets).
+            lines += [
+                f'<link rel="alternate" hreflang="{loc.tag}" '
+                f'href="{e(origin + i18n.home_path(loc.tag))}">'
+                for loc in i18n.available()
+            ]
+            lines.append(f'<link rel="alternate" hreflang="x-default" href="{e(origin)}/">')
     else:
         lines.append('<meta name="robots" content="noindex">')
+    if home and len(i18n.available()) > 1:
+        lines.append(f'<meta property="og:locale" content="{i18n.locale(locale).og}">')
+        lines += [
+            f'<meta property="og:locale:alternate" content="{loc.og}">'
+            for loc in i18n.available()
+            if loc.tag != locale
+        ]
     lines += [
         f'<meta property="og:image" content="{image}">',
         '<meta property="og:image:width" content="1200">',
         '<meta property="og:image:height" content="630">',
         '<meta property="og:image:type" content="image/jpeg">',
-        '<meta property="og:image:alt" content="LM Warden: an OpenAI-compatible API on the '
-        "GPUs under your desk or in your rack, beside the Stats panel of one RTX A4000 with its "
-        'driver-reported throttle point labelled">',
+        f'<meta property="og:image:alt" content="{e(_t(locale, "meta.og-image-alt"))}">',
         f'<meta name="twitter:image" content="{image}">',
     ]
     return "\n  ".join(lines)
@@ -391,51 +448,119 @@ _GH_MARK = (
 #: The menu's Download & Install sub-items: each opens its panel of the
 #: install chooser on Home through :target (nothing is pre-selected).
 _NAV_PLATFORMS = (
-    ("/#p-linux", "Linux + NVIDIA GPUs"),
-    ("/#p-mac", "macOS, Apple silicon (beta)"),
-    ("/#p-win", "Windows (next)"),
-    ("/#p-appliance", "Appliance (coming soon)"),
-    ("/#upgrade", "Upgrade an existing install"),
+    ("#p-linux", "linux", "Linux + NVIDIA GPUs"),
+    ("#p-mac", "mac", "macOS, Apple silicon (beta)"),
+    ("#p-win", "win", "Windows (next)"),
+    ("#p-appliance", "appliance", "Appliance (coming soon)"),
+    ("#upgrade", "upgrade", "Upgrade an existing install"),
 )
 
 
-def nav_html(current: Page) -> str:
+def nav_html(current: Page, locale: str = "en", *, every_part: bool = False) -> str:
     """The primary menu, shared by every page. A <details>: on a phone it is
     the Menu button that opens a full-screen sheet; from 1280px the layout
     script keeps it open and the CSS lays the links out in the bar. Links to
-    Home's sections are written "/#id" so they work from any page."""
+    Home's sections are written "/#id" (or "/de/#id" from a translated
+    Home) so they work from any page. Labels carry i18n markers."""
 
     marked: list[str] = []
+    home = i18n.home_path(locale)
 
-    def link(path: str, label: str) -> str:
+    def link(path: str, label: str, key: str) -> str:
         cur = ""
         if path == current.path and not marked:
             marked.append(path)
             cur = ' aria-current="page"'
-        return f'<a href="{path}"{cur}>{label}</a>'
+        return f'<a href="{path}"{cur} data-t="chrome.nav.{key}">{label}</a>'
 
-    plats = "".join(f'<li><a href="{p}">{label}</a></li>' for p, label in _NAV_PLATFORMS)
+    plats = "".join(
+        f'<li><a href="{home}{frag}" data-t="chrome.nav.plat-{key}">{label}</a></li>'
+        for frag, key, label in _NAV_PLATFORMS
+    )
     return (
-        '<nav aria-label="Primary">\n'
+        '<nav aria-label="Primary" data-t-aria-label="chrome.nav.aria-label">\n'
         '        <details class="menu">\n'
-        "          <summary>Menu</summary>\n"
+        '          <summary data-t="chrome.nav.menu">Menu</summary>\n'
         '          <div class="panel">\n'
         "            <ul>\n"
-        '              <li><a href="/#why">Use cases</a></li>\n'
-        '              <li><a href="/#features">Features</a></li>\n'
-        f"              <li>{link('/coding-agents', 'Coding agents')}</li>\n"
-        f"              <li>{link('/faq', 'FAQ')}</li>\n"
+        f'              <li><a href="{home}#why" data-t="chrome.nav.use-cases">Use cases</a></li>\n'
+        f'              <li><a href="{home}#features" data-t="chrome.nav.features">Features</a></li>\n'
+        f"              <li>{link('/coding-agents', 'Coding agents', 'coding-agents')}</li>\n"
+        f"              <li>{link('/faq', 'FAQ', 'faq')}</li>\n"
         f'              <li class="gh"><a href="{REPO_URL}" rel="noopener" '
-        f'title="Source on GitHub, Apache-2.0">{_GH_MARK}GitHub<span class="lic"> · '
-        "Apache-2.0</span></a></li>\n"
-        '              <li class="plats"><a href="/#install">Download &amp; Install</a>\n'
+        'title="Source on GitHub, Apache-2.0" data-t-title="chrome.nav.github.title">'
+        f'{_GH_MARK}GitHub<span class="lic"> · Apache-2.0</span></a></li>\n'
+        f'              <li class="plats"><a href="{home}#install" data-t="chrome.nav.install">'
+        "Download &amp; Install</a>\n"
         f'                <ul style="list-style:none;padding:0;margin:0">{plats}</ul></li>\n'
-        '              <li class="signin"><a href="/ui/login">Console sign-in</a></li>\n'
+        '              <li class="signin"><a href="/ui/login" data-t="chrome.nav.signin">'
+        "Console sign-in</a></li>\n"
+        f"{_langs_menu(locale, always=every_part)}"
         "            </ul>\n"
         "          </div>\n"
         "        </details>\n"
         "      </nav>"
     )
+
+
+#: A globe (16px, decorative) for the language switcher.
+_GLOBE = (
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" '
+    'stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 '
+    '3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9s1.3-6.3 3.8-9z"/></g></svg>'
+)
+
+
+def _lang_links(locale: str, locs: tuple[i18n.Locale, ...]) -> str:
+    current = ' aria-current="true"'
+    return "".join(
+        f'<li><a href="{i18n.home_path(loc.tag)}?lang={loc.tag}" hreflang="{loc.tag}" '
+        f'lang="{loc.tag}"{current if loc.tag == locale else ""}>{html.escape(loc.name)}</a></li>'
+        for loc in locs
+    )
+
+
+def _langs_menu(locale: str, *, always: bool = False) -> str:
+    """The same list inside the phone's menu sheet, where the bar has no
+    room for the switcher (the CSS shows one or the other)."""
+    locs = i18n.LOCALES if always else i18n.available()
+    if len(locs) < 2:
+        return ""
+    return (
+        f'              <li class="langs-m"><span class="langs-h">{_GLOBE}'
+        '<span data-t="chrome.lang.heading">Language</span></span>\n'
+        f"                <ul>{_lang_links(locale, locs)}</ul></li>\n"
+    )
+
+
+def langs_html(locale: str = "en", *, always: bool = False) -> str:
+    """The language switcher in the top bar: the current language's own
+    name, and a list of every published one, English first. Each item is a
+    plain link whose ?lang= the server turns into the lw_lang cookie before
+    redirecting to the clean URL, so it works without scripts. Translated
+    pages add a visible "English" link beside it. Nothing at all while
+    English is the only language published."""
+    locs = i18n.LOCALES if always else i18n.available()
+    if len(locs) < 2:
+        return ""
+    e = html.escape
+    here = i18n.locale(locale)
+    items = _lang_links(locale, locs)
+    out = (
+        '      <details class="langsw">\n'
+        f'        <summary>{_GLOBE}<span class="vh" data-t="chrome.lang.label">Language:</span> '
+        f'<span class="ln" lang="{here.tag}">{e(here.name)}</span></summary>\n'
+        f'        <ul class="langs">{items}</ul>\n'
+        "      </details>\n"
+    )
+    if locale != "en":
+        out += (
+            '      <a class="en-link" href="/?lang=en" hreflang="en" lang="en" '
+            'aria-label="English">'
+            '<span class="full">English</span><span class="short" aria-hidden="true">EN</span>'
+            "</a>\n"
+        )
+    return out
 
 
 def crumbs_html(page: Page) -> str:
@@ -483,13 +608,13 @@ _GENERIC_CAPTION = (
 )
 
 
-@lru_cache(maxsize=256)
-def render_page(page: Page, origin: str, analytics: Analytics) -> str:
-    """One page for one canonical origin ("" = private instance) and one set
-    of tracking IDs. Body first, then the layout, so tokens inside the body
-    (assets, figures, the FAQ) are filled by the same pass."""
-    from app.landing.clients import client_body, client_def, clients_table_html
-    from app.landing.diagrams import GENERIC, figure_html
+def page_source(
+    page: Page, analytics: Analytics, locale: str = "en", *, every_part: bool = False
+) -> str:
+    """The page's marked template: layout, body and the chrome generated
+    here (menu, switcher, cookie banner), with i18n markers and the
+    remaining {{tokens}} still in place."""
+    from app.landing.clients import client_body, client_def
 
     home = page.path == "/"
     if page.client_id:
@@ -498,31 +623,60 @@ def render_page(page: Page, origin: str, analytics: Analytics) -> str:
         body = _FRAGMENTS[page.fragment]
     src = _LAYOUT_SRC.replace("{{body}}\n", body)
     src = src.replace("{{preload}}", _POSTER_PRELOAD if home else "", 1)
+    chrome = {
+        "nav": nav_html(page, locale, every_part=every_part),
+        "langs": langs_html(locale, always=every_part),
+        "crumbs": crumbs_html(page),
+        "tag": tag_html(analytics),
+        "banner": banner_html(analytics),
+        # Only with a Google tag: the footer then says what loads and
+        # links the cookie settings (the banner's way back).
+        "thirdparty": (
+            f'      <p class="tag-note" data-t="chrome.footer.tag-note">{_WITH_TAG}</p>\n'
+            if analytics.tag_on
+            else ""
+        ),
+    }
+    for key, value in chrome.items():
+        src = src.replace("{{" + key + "}}", value)
+    return src
+
+
+@lru_cache(maxsize=256)
+def render_page(page: Page, origin: str, analytics: Analytics, locale: str = "en") -> str:
+    """One page for one canonical origin ("" = private instance), one set
+    of tracking IDs and one language (Home only; every other page is
+    English). Body first, then the layout, so tokens inside the body
+    (assets, figures, the FAQ) are filled by the same pass; segments are
+    translated before the tokens are filled, so a translation carries the
+    same {{tokens}} as its English."""
+    from app.landing.clients import clients_table_html
+    from app.landing.diagrams import GENERIC, figure_html
+
+    home = page.path == "/"
+    if not home:
+        locale = "en"
+    src = i18n.translate(page_source(page, analytics, locale), locale)
+    title = _t(locale, "meta.title") if home else page.title
+    description = _t(locale, "meta.description") if home else page.description
     return _fill(
         src,
         {
-            "title": html.escape(page.title),
-            "description": html.escape(page.description),
-            "head": _head(origin, page),
-            "jsonld": _jsonld(origin, page),
+            "lang": locale,
+            "home": i18n.home_path(locale),
+            "title": html.escape(title),
+            "description": html.escape(description),
+            "head": _head(origin, page, locale),
+            "jsonld": _jsonld(origin, page, locale),
             "faq": _faq_html(),
             "repo": REPO_URL,
             "mac_release": MAC_RELEASE_URL,
             "mac_dmg": MAC_DMG_NAME,
             "install": _install_html(),
-            "nav": nav_html(page),
-            "page_css": _STYLES["home" if home else "content"],
-            "crumbs": crumbs_html(page),
+            "page_css": _STYLES["home" if home else "content"] + "\n" + _STYLES["figures"],
             "anchors": _ANCHORS if home else "",
             "clients_table": clients_table_html(),
             "flow_generic": figure_html(GENERIC, "flow-generic", _GENERIC_CAPTION),
-            "tag": tag_html(analytics),
-            "banner": banner_html(analytics),
-            # Only with a Google tag: the footer then says what loads and
-            # links the cookie settings (the banner's way back).
-            "thirdparty": (
-                f'      <p class="tag-note">{_WITH_TAG}</p>\n' if analytics.tag_on else ""
-            ),
             "privacy_ads": (
                 " Google Ads measures whether ads bring people here, and its "
                 "advertising cookies follow the same consent choice."
@@ -543,6 +697,79 @@ def render_page(page: Page, origin: str, analytics: Analytics) -> str:
             ),
         },
     )
+
+
+def _note(seg: i18n.Segment, english: str) -> str:
+    """A translator's note for a marked segment: where it sits, and for
+    controls a length limit (the top bar must still fit a phone)."""
+    if seg.attr:
+        kind = {
+            "alt": "image alt text",
+            "aria-label": "screen-reader label",
+            "title": "tooltip",
+        }.get(seg.attr, "label read by a script")
+    else:
+        kind = {
+            "h1": "page headline", "h2": "section heading", "h3": "heading", "a": "link",
+            "button": "button", "figcaption": "figure caption", "summary": "menu button",
+            "title": "drawing title for screen readers", "desc": "drawing description for screen readers",
+        }.get(seg.tag, "text")  # fmt: skip
+    where = (
+        f"#{seg.scope}"
+        if seg.scope
+        else ("top bar / footer" if seg.key.startswith("chrome.") else "page")
+    )
+    note = f"{kind} ({where})"
+    limit = _LIMITS.get(seg.key)
+    if limit:
+        note += f"; at most {limit} characters"
+    elif (
+        len(english) <= 30
+        and not seg.attr
+        and seg.tag in {"a", "button", "summary", "span", "b", "small"}
+    ):
+        note += f"; short label, keep near {max(len(english), 12)} characters"
+    return note
+
+
+#: Hard length limits for labels that share the phone's top bar or a
+#: button: longer text would push the bar past 320px (README.md, "Layout").
+_LIMITS: dict[str, int] = {
+    "chrome.nav.menu": 8,
+    "chrome.nav.signin": 20,
+    "chrome.nav.features": 16,
+    "chrome.nav.use-cases": 18,
+    "chrome.nav.coding-agents": 16,
+    "chrome.docs.short": 6,
+    "chrome.docs.full": 16,
+    "chrome.install": 18,
+    "chrome.lang.heading": 20,
+    "chrome.lang.label": 20,
+    "chrome.copy.done": 14,
+    "home.hero.a-1": 30,
+    "home.hero.a-2": 30,
+    "home.p-mac.a-1": 32,
+}
+
+
+def source_catalog() -> dict[str, dict[str, str]]:
+    """Every translatable segment of Home and its chrome, in page order:
+    key -> {text, note, hash}. en.json is this, written to disk."""
+    tagged = Analytics(ga4_id="G-SOURCE")  # so the cookie banner's segments are present
+    src = page_source(HOME, tagged, "en", every_part=True)
+    out: dict[str, dict[str, str]] = {}
+    for key, (english, note) in PY_SEGMENTS.items():
+        out[key] = {"text": english, "note": note, "hash": i18n.source_hash(english)}
+    for seg in i18n.segments(src):
+        english = src[seg.start : seg.end]
+        if seg.key in out:
+            raise ValueError(f"segment key {seg.key!r} used twice")
+        out[seg.key] = {
+            "text": english,
+            "note": _note(seg, english),
+            "hash": i18n.source_hash(english),
+        }
+    return out
 
 
 def render_landing(origin: str) -> str:
@@ -797,12 +1024,15 @@ def banner_html(analytics: Analytics) -> str:
 
 
 _BANNER = (
-    '  <div class="consent" role="region" aria-label="Cookie choice" hidden>'
-    "<p>This site uses Google Analytics cookies to count visits and measure ads, but only if "
-    'you allow it. <a href="/privacy">Privacy</a></p>'
+    '  <div class="consent" role="region" aria-label="Cookie choice" '
+    'data-t-aria-label="chrome.consent.aria-label" hidden>'
+    '<p data-t="chrome.consent.text">This site uses Google Analytics cookies to count visits '
+    'and measure ads, but only if you allow it. <a href="/privacy">Privacy</a></p>'
     '<div class="consent-actions">'
-    '<button class="btn" type="button" data-consent="denied"><span>Decline</span></button>'
-    '<button class="btn" type="button" data-consent="granted"><span>Accept</span></button>'
+    '<button class="btn" type="button" data-consent="denied"><span data-t="chrome.consent.decline">'
+    "Decline</span></button>"
+    '<button class="btn" type="button" data-consent="granted"><span data-t="chrome.consent.accept">'
+    "Accept</span></button>"
     "</div></div>\n"
 )
 _WITH_TAG = (
