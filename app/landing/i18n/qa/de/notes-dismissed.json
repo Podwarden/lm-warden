@@ -1,0 +1,17 @@
+{
+ "r3_back_notes_reviewed_no_issue": {
+  "home.install.span-1": "Badge 'main release' rendered «stabil»: a short label beside the Linux install option whose referent (release channel) is visible on the page.",
+  "home.p-appliance.div-1": "'we will not draw one' is the English wording; «zeichnen» matches.",
+  "home.why-cache.p-4": "«ausgelastet» = saturated in context; fine.",
+  "home.why-agent.li-2": "«Auftrag:» is a natural German label for an instruction given to an agent.",
+  "home.hardware.p-2 / features.p-1": "'wrapper' is the English term too; standard in German dev usage.",
+  "home.why-keys.p-2": "Elliptical «die niedrigeren Schlüssel» mirrors the English 'the lower keys'.",
+  "clients.cursor.capability": "Word order acceptable German.",
+  "clients.codex-cli.capability": "'Reasoning' loanword is the site term.",
+  "claude-code-router.figcaption-3": "Ellipsis mirrors the English 'a rule went to Anthropic or refused'.",
+  "cache-aware-routing.p-7": "«brach liegen» is a standard German idiom for idle.",
+  "api-keys.p-1": "Drag-select is what 'drag' means; fine.",
+  "faq.a-7": "'offline or air-gapped' is equally redundant in English."
+ },
+ "earlier_rounds_dismissed": []
+}

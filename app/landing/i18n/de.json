@@ -948,7 +948,7 @@
     "source_hash": "ca3034a912dc"
   },
   "home.why-keys.img-1.alt": {
-    "text": "Die Seite des API-Schlüssels coding-agent: ein Panel Limits mit der Prioritätsauswahl P0 bis P9 und dem Text Strict, a waiting P9 request always goes before a P8 one; ein Panel Usage über die letzten 7 Tage mit 19 Tsd. Anfragen, 1,5 Mrd. Prompt-Token und 440 Tsd. Completion-Token; Diagramme der Token pro Minute und der Anfragen pro Minute; darunter Panels für Wartezeit und Latenz",
+    "text": "Die Seite des API-Schlüssels coding-agent: ein Panel Limits mit der Prioritätsauswahl P0 bis P9 und dem Text „Strict: a waiting P9 request always goes before a P8 one“; ein Panel Usage über die letzten 7 Tage mit 19 Tsd. Anfragen, 1,5 Mrd. Prompt-Token und 440 Tsd. Completion-Token; Diagramme der Token pro Minute und der Anfragen pro Minute; darunter Panels für Wartezeit und Latenz",
     "source_hash": "ae01537e1ee6"
   },
   "home.why-keys.figcaption-1": {

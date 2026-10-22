@@ -1,0 +1,5106 @@
+{
+  "locale": "hi",
+  "date": "2026-10-21",
+  "back_model": "claude-sonnet-5-5",
+  "fix_model": "claude-opus-5-5",
+  "published_segments": 666,
+  "covered_segments": 666,
+  "english_words": 14400,
+  "issues_found": {
+    "minor": 183,
+    "major": 32,
+    "critical": 0
+  },
+  "issues_remaining": {
+    "minor": 0,
+    "major": 0,
+    "critical": 0
+  },
+  "mqm_score": 0.0,
+  "max_score": 10.0,
+  "pass": true,
+  "segments": {
+    "meta.title": {
+      "part": "home",
+      "source_hash": "8b40be948ef4",
+      "target_hash": "6a188df327e1"
+    },
+    "meta.description": {
+      "part": "home",
+      "source_hash": "6cb271edae46",
+      "target_hash": "0f72ac8c9549"
+    },
+    "meta.og-image-alt": {
+      "part": "home",
+      "source_hash": "7f75ba3bcd9d",
+      "target_hash": "16b7da646353"
+    },
+    "jsonld.feature-1": {
+      "part": "home",
+      "source_hash": "615857f542c9",
+      "target_hash": "bd4f18cd0845"
+    },
+    "jsonld.feature-2": {
+      "part": "home",
+      "source_hash": "7b06e74713de",
+      "target_hash": "297afa2a29e6"
+    },
+    "jsonld.feature-3": {
+      "part": "home",
+      "source_hash": "1f350726cef9",
+      "target_hash": "82911c1e5d03"
+    },
+    "jsonld.feature-4": {
+      "part": "home",
+      "source_hash": "42d6cdab3fb6",
+      "target_hash": "0a739f1ba7c4"
+    },
+    "jsonld.feature-5": {
+      "part": "home",
+      "source_hash": "9791836d7920",
+      "target_hash": "d479b4db9a9a"
+    },
+    "jsonld.feature-6": {
+      "part": "home",
+      "source_hash": "b2f04e38f9aa",
+      "target_hash": "90309ecf6fc7"
+    },
+    "jsonld.feature-7": {
+      "part": "home",
+      "source_hash": "0740507f9225",
+      "target_hash": "20541aab120c"
+    },
+    "jsonld.feature-8": {
+      "part": "home",
+      "source_hash": "301c375d8a2f",
+      "target_hash": "d46fc5f09f57"
+    },
+    "jsonld.feature-9": {
+      "part": "home",
+      "source_hash": "89c7e3de3f80",
+      "target_hash": "b0e85506b7e1"
+    },
+    "jsonld.feature-10": {
+      "part": "home",
+      "source_hash": "bf6f8b147d8a",
+      "target_hash": "be03ccaa7bf4"
+    },
+    "chrome.copy.done": {
+      "part": "home",
+      "source_hash": "8d525e5f158b",
+      "target_hash": "9078df23e7da"
+    },
+    "chrome.copy.fail": {
+      "part": "home",
+      "source_hash": "e78ab3a91bf2",
+      "target_hash": "602854585f28"
+    },
+    "chrome.skip": {
+      "part": "home",
+      "source_hash": "ac576a66d456",
+      "target_hash": "e2829436d7d0"
+    },
+    "chrome.brand.aria-label": {
+      "part": "home",
+      "source_hash": "a007563c384d",
+      "target_hash": "41a7f8e2a627"
+    },
+    "chrome.nav.aria-label": {
+      "part": "home",
+      "source_hash": "efe10c80ec8a",
+      "target_hash": "5b5671c76d46"
+    },
+    "chrome.nav.menu": {
+      "part": "home",
+      "source_hash": "99af6606ff9d",
+      "target_hash": "9f2fd7ad73be"
+    },
+    "chrome.nav.use-cases": {
+      "part": "home",
+      "source_hash": "ff27a991e855",
+      "target_hash": "7248790c5a4f"
+    },
+    "chrome.nav.features": {
+      "part": "home",
+      "source_hash": "5697d03daef4",
+      "target_hash": "6eadb76d4001"
+    },
+    "chrome.nav.coding-agents": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "4bfdc71d1a11"
+    },
+    "chrome.nav.faq": {
+      "part": "home",
+      "source_hash": "dbc468a14b60",
+      "target_hash": "285f0d472151"
+    },
+    "chrome.nav.github.title": {
+      "part": "home",
+      "source_hash": "d2833070219a",
+      "target_hash": "9867d748e3f9"
+    },
+    "chrome.nav.install": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "7fac324316e5"
+    },
+    "chrome.nav.plat-linux": {
+      "part": "home",
+      "source_hash": "23d8d6d2be9c",
+      "target_hash": "5e8414090ce2"
+    },
+    "chrome.nav.plat-mac": {
+      "part": "home",
+      "source_hash": "d2364b229535",
+      "target_hash": "93c287018528"
+    },
+    "chrome.nav.plat-win": {
+      "part": "home",
+      "source_hash": "e5a1bb1c3085",
+      "target_hash": "224900777265"
+    },
+    "chrome.nav.plat-appliance": {
+      "part": "home",
+      "source_hash": "6a7fc115677a",
+      "target_hash": "fea22fa71bc0"
+    },
+    "chrome.nav.plat-upgrade": {
+      "part": "home",
+      "source_hash": "c1fe5f01dc6e",
+      "target_hash": "a8cec46628be"
+    },
+    "chrome.nav.signin": {
+      "part": "home",
+      "source_hash": "cb9ad9f4d662",
+      "target_hash": "053ced31a027"
+    },
+    "chrome.lang.heading": {
+      "part": "home",
+      "source_hash": "a4fe65264ef7",
+      "target_hash": "360090ad87ed"
+    },
+    "chrome.lang.label": {
+      "part": "home",
+      "source_hash": "8c16819a2bd4",
+      "target_hash": "652773940710"
+    },
+    "chrome.docs.aria-label": {
+      "part": "home",
+      "source_hash": "c205924de0fe",
+      "target_hash": "f01e8d2ae443"
+    },
+    "chrome.docs.full": {
+      "part": "home",
+      "source_hash": "c205924de0fe",
+      "target_hash": "f01e8d2ae443"
+    },
+    "chrome.docs.short": {
+      "part": "home",
+      "source_hash": "7af023c43013",
+      "target_hash": "b4537525be36"
+    },
+    "chrome.install": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "a598cbf5b6af"
+    },
+    "home.hero.h1-1": {
+      "part": "home",
+      "source_hash": "b24318c21e4f",
+      "target_hash": "b636b5e0187b"
+    },
+    "home.hero.p-1": {
+      "part": "home",
+      "source_hash": "e192caf6a5b3",
+      "target_hash": "46f7a9f90014"
+    },
+    "home.hero.a-1": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "ab2fdfc481ff"
+    },
+    "home.hero.a-2": {
+      "part": "home",
+      "source_hash": "51b46bd0add6",
+      "target_hash": "7e24e7de3a05"
+    },
+    "home.hero.span-1": {
+      "part": "home",
+      "source_hash": "2a43a93eceec",
+      "target_hash": "036b54bb1fd2"
+    },
+    "home.hero.span-2": {
+      "part": "home",
+      "source_hash": "035ccb7cad8a",
+      "target_hash": "0edf81a0e2b3"
+    },
+    "home.hero.span-3": {
+      "part": "home",
+      "source_hash": "1f8168eb854e",
+      "target_hash": "7eac6e1aa53e"
+    },
+    "home.hero.img-1.alt": {
+      "part": "home",
+      "source_hash": "46cb2df1ab06",
+      "target_hash": "ff539ce6af86"
+    },
+    "home.hero.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "46b396c85919",
+      "target_hash": "bfc5422f37ef"
+    },
+    "home.hero.b-1": {
+      "part": "home",
+      "source_hash": "d0656dfa424f",
+      "target_hash": "85f723ce4f51"
+    },
+    "home.hero.span-4": {
+      "part": "home",
+      "source_hash": "6b06ee360144",
+      "target_hash": "e1301435d176"
+    },
+    "home.hero.span-5": {
+      "part": "home",
+      "source_hash": "1b50b6d8401a",
+      "target_hash": "181ea25f1f0c"
+    },
+    "home.hero.b-2": {
+      "part": "home",
+      "source_hash": "f2287a1beeab",
+      "target_hash": "77edbd4f3d4d"
+    },
+    "home.hero.span-6": {
+      "part": "home",
+      "source_hash": "6a893fd85af2",
+      "target_hash": "dcf70f5fae37"
+    },
+    "home.hero.span-7": {
+      "part": "home",
+      "source_hash": "8d266d3e3abd",
+      "target_hash": "c8e5998f6a39"
+    },
+    "home.hero.b-3": {
+      "part": "home",
+      "source_hash": "3aeff05d5bf6",
+      "target_hash": "3a84c1e80120"
+    },
+    "home.hero.span-8": {
+      "part": "home",
+      "source_hash": "05261121948c",
+      "target_hash": "0114c1e1c7af"
+    },
+    "home.hero.span-9": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "4bfdc71d1a11"
+    },
+    "home.hero.b-4": {
+      "part": "home",
+      "source_hash": "544b91f8227b",
+      "target_hash": "12a8ef6b60e9"
+    },
+    "home.hero.span-10": {
+      "part": "home",
+      "source_hash": "48d1003061d4",
+      "target_hash": "e175fb1df746"
+    },
+    "home.uc.h2-1": {
+      "part": "home",
+      "source_hash": "a2bc7e06beef",
+      "target_hash": "2e12b8611bee"
+    },
+    "home.use-cases.button-1.aria-label": {
+      "part": "home",
+      "source_hash": "40a9d13608d2",
+      "target_hash": "3490877783a2"
+    },
+    "home.use-cases.button-2.aria-label": {
+      "part": "home",
+      "source_hash": "f1c27427e687",
+      "target_hash": "e35b213275ac"
+    },
+    "home.use-cases.button-2.resume": {
+      "part": "home",
+      "source_hash": "bb52c71e6d3b",
+      "target_hash": "6c1b1f2ebf2b"
+    },
+    "home.use-cases.button-3.aria-label": {
+      "part": "home",
+      "source_hash": "9220dc6514fb",
+      "target_hash": "8c42f8e1b2b7"
+    },
+    "home.use-cases.li-1.aria-label": {
+      "part": "home",
+      "source_hash": "b54457342c7d",
+      "target_hash": "33c8919be0ee"
+    },
+    "home.use-cases.h3-1": {
+      "part": "home",
+      "source_hash": "631429e459b2",
+      "target_hash": "a46e026e0d7f"
+    },
+    "home.use-cases.p-1": {
+      "part": "home",
+      "source_hash": "7dd1bdcba1fd",
+      "target_hash": "c738eb68bf44"
+    },
+    "home.use-cases.span-1": {
+      "part": "home",
+      "source_hash": "3bf0e7fd520d",
+      "target_hash": "4b22e8f1f9a6"
+    },
+    "home.use-cases.li-2.aria-label": {
+      "part": "home",
+      "source_hash": "264c35a47f15",
+      "target_hash": "594c5e9d08a1"
+    },
+    "home.use-cases.h3-2": {
+      "part": "home",
+      "source_hash": "b01cff25d51f",
+      "target_hash": "551d8645799a"
+    },
+    "home.use-cases.p-2": {
+      "part": "home",
+      "source_hash": "022970d73828",
+      "target_hash": "c3cda1529249"
+    },
+    "home.use-cases.span-2": {
+      "part": "home",
+      "source_hash": "19dc2417e144",
+      "target_hash": "6273f6b67630"
+    },
+    "home.use-cases.li-3.aria-label": {
+      "part": "home",
+      "source_hash": "24607ac1e731",
+      "target_hash": "d81715ff55f6"
+    },
+    "home.use-cases.h3-3": {
+      "part": "home",
+      "source_hash": "02e82cfefb89",
+      "target_hash": "d329829c982c"
+    },
+    "home.use-cases.p-3": {
+      "part": "home",
+      "source_hash": "ffc4dde74878",
+      "target_hash": "f94424ee5071"
+    },
+    "home.use-cases.span-3": {
+      "part": "home",
+      "source_hash": "4df7d5c583ae",
+      "target_hash": "481bf0d8c972"
+    },
+    "home.use-cases.li-4.aria-label": {
+      "part": "home",
+      "source_hash": "6f3c824e9ec3",
+      "target_hash": "7ebb5866d2e5"
+    },
+    "home.use-cases.h3-4": {
+      "part": "home",
+      "source_hash": "fd528e59f30f",
+      "target_hash": "22d19b430a9f"
+    },
+    "home.use-cases.p-4": {
+      "part": "home",
+      "source_hash": "3fd6f50887b9",
+      "target_hash": "de91aff83d60"
+    },
+    "home.use-cases.span-4": {
+      "part": "home",
+      "source_hash": "91753d838ca4",
+      "target_hash": "4b17d588ab40"
+    },
+    "home.use-cases.li-5.aria-label": {
+      "part": "home",
+      "source_hash": "4ff9c7d25432",
+      "target_hash": "38ea2303087c"
+    },
+    "home.use-cases.h3-5": {
+      "part": "home",
+      "source_hash": "c3ae8600a083",
+      "target_hash": "980273c21596"
+    },
+    "home.use-cases.p-5": {
+      "part": "home",
+      "source_hash": "bbfa0ef15601",
+      "target_hash": "f352236b9023"
+    },
+    "home.use-cases.span-5": {
+      "part": "home",
+      "source_hash": "ad84f405f980",
+      "target_hash": "727098ddd8c6"
+    },
+    "home.use-cases.li-6.aria-label": {
+      "part": "home",
+      "source_hash": "9f1b26eea525",
+      "target_hash": "f6481ecc8f37"
+    },
+    "home.use-cases.h3-6": {
+      "part": "home",
+      "source_hash": "bcd86e5acf2b",
+      "target_hash": "4c949da03229"
+    },
+    "home.use-cases.p-6": {
+      "part": "home",
+      "source_hash": "8ab616f9c47d",
+      "target_hash": "c97b941a26de"
+    },
+    "home.use-cases.span-6": {
+      "part": "home",
+      "source_hash": "6fd76cfcf4f3",
+      "target_hash": "1d53adbfd048"
+    },
+    "home.use-cases.li-7.aria-label": {
+      "part": "home",
+      "source_hash": "2991e046c7d6",
+      "target_hash": "0a3ef3c3477c"
+    },
+    "home.use-cases.h3-7": {
+      "part": "home",
+      "source_hash": "175c055be16a",
+      "target_hash": "2cc0aa702542"
+    },
+    "home.use-cases.p-7": {
+      "part": "home",
+      "source_hash": "12446d78110e",
+      "target_hash": "744665577058"
+    },
+    "home.use-cases.span-7": {
+      "part": "home",
+      "source_hash": "eca4d500a3da",
+      "target_hash": "0acb7f82569c"
+    },
+    "home.use-cases.li-8.aria-label": {
+      "part": "home",
+      "source_hash": "1170fb3f9b1b",
+      "target_hash": "7ce93a60e9e5"
+    },
+    "home.use-cases.h3-8": {
+      "part": "home",
+      "source_hash": "a04e398227ac",
+      "target_hash": "e89a350b18ae"
+    },
+    "home.use-cases.p-8": {
+      "part": "home",
+      "source_hash": "3acf884af623",
+      "target_hash": "3419e9136e16"
+    },
+    "home.use-cases.span-8": {
+      "part": "home",
+      "source_hash": "bb574d2be60e",
+      "target_hash": "42787fa287c2"
+    },
+    "home.use-cases.li-9.aria-label": {
+      "part": "home",
+      "source_hash": "7323df202723",
+      "target_hash": "93f918be4aeb"
+    },
+    "home.use-cases.h3-9": {
+      "part": "home",
+      "source_hash": "3f3225bbc711",
+      "target_hash": "4582818c0b31"
+    },
+    "home.use-cases.p-9": {
+      "part": "home",
+      "source_hash": "6ea6fbd502b6",
+      "target_hash": "07c4f894430b"
+    },
+    "home.use-cases.span-9": {
+      "part": "home",
+      "source_hash": "c90b8269f1d8",
+      "target_hash": "b1fdfc7ff4fd"
+    },
+    "home.use-cases.li-10.aria-label": {
+      "part": "home",
+      "source_hash": "aef48b281a1a",
+      "target_hash": "9dd8ed542147"
+    },
+    "home.use-cases.h3-10": {
+      "part": "home",
+      "source_hash": "525b6691292f",
+      "target_hash": "cf1a2ff24c1e"
+    },
+    "home.use-cases.p-10": {
+      "part": "home",
+      "source_hash": "9ab2a4e163b1",
+      "target_hash": "fb85eb9176c7"
+    },
+    "home.use-cases.span-10": {
+      "part": "home",
+      "source_hash": "4ad529d919d4",
+      "target_hash": "5f8294f8a943"
+    },
+    "home.use-cases.dot": {
+      "part": "home",
+      "source_hash": "04227694e710",
+      "target_hash": "97e223381c92"
+    },
+    "home.use-cases.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "1bb48b8b99c4",
+      "target_hash": "061dc7391853"
+    },
+    "home.install.h2-1": {
+      "part": "home",
+      "source_hash": "249678c8eba2",
+      "target_hash": "9e75b718b900"
+    },
+    "home.install.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "c78ffe195710",
+      "target_hash": "4c6cd0aa6436"
+    },
+    "home.install.b-1": {
+      "part": "home",
+      "source_hash": "23d8d6d2be9c",
+      "target_hash": "5e8414090ce2"
+    },
+    "home.install.small-1": {
+      "part": "home",
+      "source_hash": "9849f7c407b4",
+      "target_hash": "7e681de3954e"
+    },
+    "home.install.span-1": {
+      "part": "home",
+      "source_hash": "86f0f70c80d2",
+      "target_hash": "104c93ca869f"
+    },
+    "home.install.b-2": {
+      "part": "home",
+      "source_hash": "0d7d5470afac",
+      "target_hash": "781593799e33"
+    },
+    "home.install.small-2": {
+      "part": "home",
+      "source_hash": "38cba54053bd",
+      "target_hash": "0554d3c866a5"
+    },
+    "home.install.span-2": {
+      "part": "home",
+      "source_hash": "f44e64e75f39",
+      "target_hash": "33d32d043e08"
+    },
+    "home.install.small-3": {
+      "part": "home",
+      "source_hash": "1e554752120e",
+      "target_hash": "e887dc68f634"
+    },
+    "home.install.span-3": {
+      "part": "home",
+      "source_hash": "c6c1c9a9c854",
+      "target_hash": "24debf57a20c"
+    },
+    "home.install.b-3": {
+      "part": "home",
+      "source_hash": "98432690c966",
+      "target_hash": "dc3e4e757264"
+    },
+    "home.install.small-4": {
+      "part": "home",
+      "source_hash": "dc3e1016c4ce",
+      "target_hash": "3f03e388a958"
+    },
+    "home.install.span-4": {
+      "part": "home",
+      "source_hash": "62bfdf0b726c",
+      "target_hash": "3ed30ffd5f31"
+    },
+    "home.install.p-2": {
+      "part": "home",
+      "source_hash": "dd298d4e4a3b",
+      "target_hash": "69af8a1de8d1"
+    },
+    "home.p-linux.h3-1": {
+      "part": "home",
+      "source_hash": "e261f30eb5f7",
+      "target_hash": "3baca4673067"
+    },
+    "home.p-linux.span-1": {
+      "part": "home",
+      "source_hash": "e21f935f11d7",
+      "target_hash": "a079a15bf31e"
+    },
+    "home.p-linux.li-1": {
+      "part": "home",
+      "source_hash": "fc20ff032a73",
+      "target_hash": "95bf9b5e748b"
+    },
+    "home.p-linux.li-2": {
+      "part": "home",
+      "source_hash": "33bfcbda3ad4",
+      "target_hash": "80ded0d71a9d"
+    },
+    "home.p-linux.li-3": {
+      "part": "home",
+      "source_hash": "086f8aa8145e",
+      "target_hash": "ba105449ded9"
+    },
+    "home.p-linux.li-4": {
+      "part": "home",
+      "source_hash": "f17d08f00954",
+      "target_hash": "296ac675efea"
+    },
+    "home.p-linux.a-1": {
+      "part": "home",
+      "source_hash": "e15a133068af",
+      "target_hash": "187ce66f7ea9"
+    },
+    "home.p-linux.a-2": {
+      "part": "home",
+      "source_hash": "16289eae755d",
+      "target_hash": "ca322c523d24"
+    },
+    "home.p-linux.a-3": {
+      "part": "home",
+      "source_hash": "5be49bd81af3",
+      "target_hash": "96192eb1c0b0"
+    },
+    "home.p-linux.a-4": {
+      "part": "home",
+      "source_hash": "d8f1ee5bd44a",
+      "target_hash": "5fea9a7bf3c9"
+    },
+    "home.p-linux.img-1.alt": {
+      "part": "home",
+      "source_hash": "41eaa58c37a4",
+      "target_hash": "b673032f3183"
+    },
+    "home.p-linux.figcaption-1": {
+      "part": "home",
+      "source_hash": "c6e56f837dad",
+      "target_hash": "78282e8821fd"
+    },
+    "home.p-mac.h3-1": {
+      "part": "home",
+      "source_hash": "93a681a12162",
+      "target_hash": "151ffe116b94"
+    },
+    "home.p-mac.a-1": {
+      "part": "home",
+      "source_hash": "95612856681e",
+      "target_hash": "68eb22af934e"
+    },
+    "home.p-mac.li-1": {
+      "part": "home",
+      "source_hash": "eb664f8f7d3a",
+      "target_hash": "ae0eb3dc4e7b"
+    },
+    "home.p-mac.li-2": {
+      "part": "home",
+      "source_hash": "5ff95c0fa25d",
+      "target_hash": "beccf1f1c395"
+    },
+    "home.p-mac.li-3": {
+      "part": "home",
+      "source_hash": "cf254395b87e",
+      "target_hash": "656b019bf71c"
+    },
+    "home.p-mac.li-4": {
+      "part": "home",
+      "source_hash": "013272b7df36",
+      "target_hash": "70e234317bfb"
+    },
+    "home.p-mac.li-5": {
+      "part": "home",
+      "source_hash": "8121128f773c",
+      "target_hash": "e4f891319283"
+    },
+    "home.p-mac.img-1.alt": {
+      "part": "home",
+      "source_hash": "45b8070949bb",
+      "target_hash": "24f0ea0b1ece"
+    },
+    "home.p-mac.figcaption-1": {
+      "part": "home",
+      "source_hash": "785cc05a3c6d",
+      "target_hash": "e5e7f042db67"
+    },
+    "home.p-win.h3-1": {
+      "part": "home",
+      "source_hash": "3e2f8c30fbd3",
+      "target_hash": "7162dafb1da3"
+    },
+    "home.p-win.p-1": {
+      "part": "home",
+      "source_hash": "7389debc8fd3",
+      "target_hash": "6923373cf4c7"
+    },
+    "home.p-win.li-1": {
+      "part": "home",
+      "source_hash": "1296afbbf883",
+      "target_hash": "20f6da10194c"
+    },
+    "home.p-win.li-2": {
+      "part": "home",
+      "source_hash": "9a92060cedbe",
+      "target_hash": "9cfa858c111f"
+    },
+    "home.p-win.li-3": {
+      "part": "home",
+      "source_hash": "d85b661eb8e6",
+      "target_hash": "8fc5e88cb346"
+    },
+    "home.p-appliance.h3-1": {
+      "part": "home",
+      "source_hash": "e45c0fc37b2d",
+      "target_hash": "b9f07787ca35"
+    },
+    "home.p-appliance.p-1": {
+      "part": "home",
+      "source_hash": "9ff6d73830b6",
+      "target_hash": "f2bede901210"
+    },
+    "home.p-appliance.li-1": {
+      "part": "home",
+      "source_hash": "47cb2ad65dc7",
+      "target_hash": "9525608f90d1"
+    },
+    "home.p-appliance.li-2": {
+      "part": "home",
+      "source_hash": "a2a401f4b2c3",
+      "target_hash": "ed9d156e4ef5"
+    },
+    "home.p-appliance.li-3": {
+      "part": "home",
+      "source_hash": "aa9d78e6b6fa",
+      "target_hash": "85b0c2f815b2"
+    },
+    "home.p-appliance.li-4": {
+      "part": "home",
+      "source_hash": "bbc615ea622b",
+      "target_hash": "707c3ed606ba"
+    },
+    "home.p-appliance.p-2": {
+      "part": "home",
+      "source_hash": "177a91e7a6b4",
+      "target_hash": "0f9e213c8d3b"
+    },
+    "home.p-appliance.div-1": {
+      "part": "home",
+      "source_hash": "8a3fbd7c91f0",
+      "target_hash": "cbf147a960e7"
+    },
+    "home.upgrade.p-1": {
+      "part": "home",
+      "source_hash": "5566c16483a2",
+      "target_hash": "69102e3f7b47"
+    },
+    "home.why.h2-1": {
+      "part": "home",
+      "source_hash": "65341f9c1497",
+      "target_hash": "a0d45a656741"
+    },
+    "home.why.p-1": {
+      "part": "home",
+      "source_hash": "1668b0870987",
+      "target_hash": "63ed0a27ce9d"
+    },
+    "home.why-fit.h3-1": {
+      "part": "home",
+      "source_hash": "631429e459b2",
+      "target_hash": "a46e026e0d7f"
+    },
+    "home.why-fit.p-1": {
+      "part": "home",
+      "source_hash": "b0c5f5cbb2ee",
+      "target_hash": "e7ef968e2531"
+    },
+    "home.why-fit.img-1.alt": {
+      "part": "home",
+      "source_hash": "906b74daf0f5",
+      "target_hash": "64fb8a27ab54"
+    },
+    "home.why-stats.h3-1": {
+      "part": "home",
+      "source_hash": "7cd5266e1f4e",
+      "target_hash": "a30ef3d141e7"
+    },
+    "home.why-stats.p-1": {
+      "part": "home",
+      "source_hash": "05ae743f085e",
+      "target_hash": "b11afa522b6d"
+    },
+    "home.why-stats.img-1.alt": {
+      "part": "home",
+      "source_hash": "94483285e732",
+      "target_hash": "8a0b107057a0"
+    },
+    "home.why-chat.h3-1": {
+      "part": "home",
+      "source_hash": "83831d46fb09",
+      "target_hash": "059b0a944631"
+    },
+    "home.why-chat.p-1": {
+      "part": "home",
+      "source_hash": "2e459441dc4f",
+      "target_hash": "b83711f7893b"
+    },
+    "home.why-chat.img-1.alt": {
+      "part": "home",
+      "source_hash": "da46ab93294b",
+      "target_hash": "5dbf7141229c"
+    },
+    "home.why-god.h3-1": {
+      "part": "home",
+      "source_hash": "a49be301a05f",
+      "target_hash": "976d432191a6"
+    },
+    "home.why-god.p-1": {
+      "part": "home",
+      "source_hash": "a29986e09f7a",
+      "target_hash": "e1486e97413a"
+    },
+    "home.why-god.img-1.alt": {
+      "part": "home",
+      "source_hash": "171f585f7e38",
+      "target_hash": "6f4faeb1514c"
+    },
+    "home.cache.h2-1": {
+      "part": "home",
+      "source_hash": "d876efcb94ab",
+      "target_hash": "bcaecb98d05e"
+    },
+    "home.why-cache.p-1": {
+      "part": "home",
+      "source_hash": "03e36074672f",
+      "target_hash": "bd9ac5d52d42"
+    },
+    "home.why-cache.figcaption-1": {
+      "part": "home",
+      "source_hash": "0f19c82ec35c",
+      "target_hash": "f0ab0b1b61c9"
+    },
+    "home.why-cache.p-2": {
+      "part": "home",
+      "source_hash": "9de8aa8aa7e1",
+      "target_hash": "d988bae0889b"
+    },
+    "home.why-cache.figcaption-2": {
+      "part": "home",
+      "source_hash": "ff04da43c87a",
+      "target_hash": "4364230427f5"
+    },
+    "home.why-cache.figcaption-3": {
+      "part": "home",
+      "source_hash": "0ec9d5ccf246",
+      "target_hash": "a9639c88800c"
+    },
+    "home.why-cache.h3-1": {
+      "part": "home",
+      "source_hash": "684608311775",
+      "target_hash": "6306610067b6"
+    },
+    "home.why-cache.p-3": {
+      "part": "home",
+      "source_hash": "4744b11be2ad",
+      "target_hash": "df6c7f722fd8"
+    },
+    "home.why-cache.img-1.alt": {
+      "part": "home",
+      "source_hash": "f1bc7fbd6399",
+      "target_hash": "bc220f999bee"
+    },
+    "home.why-cache.figcaption-4": {
+      "part": "home",
+      "source_hash": "234d024e62df",
+      "target_hash": "870fb5eb092d"
+    },
+    "home.why-cache.p-4": {
+      "part": "home",
+      "source_hash": "2a468a4b1738",
+      "target_hash": "a6fc2453c3fa"
+    },
+    "home.why-cache.p-5": {
+      "part": "home",
+      "source_hash": "c245f8292ac7",
+      "target_hash": "5a8325e4054a"
+    },
+    "home.why-cache.a-1": {
+      "part": "home",
+      "source_hash": "cd240e4bc004",
+      "target_hash": "08b7a7874ed6"
+    },
+    "home.agents.h2-1": {
+      "part": "home",
+      "source_hash": "b01cff25d51f",
+      "target_hash": "551d8645799a"
+    },
+    "home.agents.p-1": {
+      "part": "home",
+      "source_hash": "26604da90050",
+      "target_hash": "446d8e0f8cf6"
+    },
+    "home.agents.h3-1": {
+      "part": "home",
+      "source_hash": "a87ec3988e0d",
+      "target_hash": "eecee96cc9d9"
+    },
+    "home.agents.p-2": {
+      "part": "home",
+      "source_hash": "eed13d192862",
+      "target_hash": "3c117717b592"
+    },
+    "home.agents.span-1": {
+      "part": "home",
+      "source_hash": "de3ecc4fe5d1",
+      "target_hash": "ed73f32d9bd7"
+    },
+    "home.agents.span-2": {
+      "part": "home",
+      "source_hash": "cc7b475640bb",
+      "target_hash": "dddba2b1db17"
+    },
+    "home.agents.span-3": {
+      "part": "home",
+      "source_hash": "cc7b475640bb",
+      "target_hash": "dddba2b1db17"
+    },
+    "home.agents.span-4": {
+      "part": "home",
+      "source_hash": "5a0628b4b02d",
+      "target_hash": "11b59e16fc42"
+    },
+    "home.agents.span-5": {
+      "part": "home",
+      "source_hash": "8c2c30bf0764",
+      "target_hash": "5ea2186211cd"
+    },
+    "home.agents.span-6": {
+      "part": "home",
+      "source_hash": "09e5fe8af64a",
+      "target_hash": "5ca432e45cff"
+    },
+    "home.agents.span-7": {
+      "part": "home",
+      "source_hash": "9ad204014fc0",
+      "target_hash": "4c075761c2da"
+    },
+    "home.agents.h3-2": {
+      "part": "home",
+      "source_hash": "cfeda056d931",
+      "target_hash": "e2808616fed9"
+    },
+    "home.agents.p-3": {
+      "part": "home",
+      "source_hash": "6995102b0af7",
+      "target_hash": "1d75767752d4"
+    },
+    "home.flow-t.title-1": {
+      "part": "home",
+      "source_hash": "d7db08f53325",
+      "target_hash": "6ec6e0fc3feb"
+    },
+    "home.flow-d.desc-1": {
+      "part": "home",
+      "source_hash": "5c598ca9bc7c",
+      "target_hash": "d4a0a53334b1"
+    },
+    "home.flow-t2.title-1": {
+      "part": "home",
+      "source_hash": "d7db08f53325",
+      "target_hash": "6ec6e0fc3feb"
+    },
+    "home.flow-d2.desc-1": {
+      "part": "home",
+      "source_hash": "5c598ca9bc7c",
+      "target_hash": "d4a0a53334b1"
+    },
+    "home.agents.b-1": {
+      "part": "home",
+      "source_hash": "cdf3dc71b947",
+      "target_hash": "b8dcab732493"
+    },
+    "home.agents.span-8": {
+      "part": "home",
+      "source_hash": "6f10abaf7726",
+      "target_hash": "de9201a601e4"
+    },
+    "home.agents.img-1.alt": {
+      "part": "home",
+      "source_hash": "d77bbac51675",
+      "target_hash": "26b9aba5ae63"
+    },
+    "home.agents.figcaption-1": {
+      "part": "home",
+      "source_hash": "bc31fcfd58c7",
+      "target_hash": "3af3be254f16"
+    },
+    "home.agents.h3-3": {
+      "part": "home",
+      "source_hash": "0ceb9132d312",
+      "target_hash": "8b3f489f8056"
+    },
+    "home.agents.p-4": {
+      "part": "home",
+      "source_hash": "0b548958da36",
+      "target_hash": "7dd1fd017fbc"
+    },
+    "home.agents.img-2.alt": {
+      "part": "home",
+      "source_hash": "6a234848eac5",
+      "target_hash": "ddf9cba8e6b4"
+    },
+    "home.tune.h2-1": {
+      "part": "home",
+      "source_hash": "c3ae8600a083",
+      "target_hash": "980273c21596"
+    },
+    "home.why-agent.p-1": {
+      "part": "home",
+      "source_hash": "4844283837a3",
+      "target_hash": "6ca3f27f1854"
+    },
+    "home.why-agent.h3-1": {
+      "part": "home",
+      "source_hash": "85f5dae66c4f",
+      "target_hash": "40350fc67305"
+    },
+    "home.loop-t.title-1": {
+      "part": "home",
+      "source_hash": "3f22e76a3edc",
+      "target_hash": "928d19ae09dc"
+    },
+    "home.loop-d.desc-1": {
+      "part": "home",
+      "source_hash": "dd7733aa80ef",
+      "target_hash": "fb738c4386fe"
+    },
+    "home.loop-t2.title-1": {
+      "part": "home",
+      "source_hash": "3f22e76a3edc",
+      "target_hash": "928d19ae09dc"
+    },
+    "home.loop-d2.desc-1": {
+      "part": "home",
+      "source_hash": "dd7733aa80ef",
+      "target_hash": "fb738c4386fe"
+    },
+    "home.why-agent.p-2": {
+      "part": "home",
+      "source_hash": "35230c9469a2",
+      "target_hash": "5f063d9383c6"
+    },
+    "home.why-agent.img-1.alt": {
+      "part": "home",
+      "source_hash": "afd3f600f638",
+      "target_hash": "f9f55b480b9f"
+    },
+    "home.why-agent.figcaption-1": {
+      "part": "home",
+      "source_hash": "4bb331f9f6fb",
+      "target_hash": "67fa00782a83"
+    },
+    "home.why-agent.h3-2": {
+      "part": "home",
+      "source_hash": "222000da96d1",
+      "target_hash": "7e1db99a957d"
+    },
+    "home.why-agent.li-1": {
+      "part": "home",
+      "source_hash": "4d737111bb76",
+      "target_hash": "cd1b28aaa252"
+    },
+    "home.why-agent.li-2": {
+      "part": "home",
+      "source_hash": "aadee19b4763",
+      "target_hash": "7ae9530090dd"
+    },
+    "home.why-agent.li-3": {
+      "part": "home",
+      "source_hash": "5e697967b7ec",
+      "target_hash": "505f6684c1a7"
+    },
+    "home.why-agent.li-4": {
+      "part": "home",
+      "source_hash": "d25a394b9e41",
+      "target_hash": "30b274b9c024"
+    },
+    "home.why-agent.p-3": {
+      "part": "home",
+      "source_hash": "505b9916712b",
+      "target_hash": "99967f32c112"
+    },
+    "home.why-agent.p-4": {
+      "part": "home",
+      "source_hash": "bbeb89be5de6",
+      "target_hash": "185c411a116d"
+    },
+    "home.share.h2-1": {
+      "part": "home",
+      "source_hash": "f1e27da721b7",
+      "target_hash": "17069b690d06"
+    },
+    "home.why-keys.p-1": {
+      "part": "home",
+      "source_hash": "dd9352746e6e",
+      "target_hash": "00f9f1d27509"
+    },
+    "home.why-keys.h3-1": {
+      "part": "home",
+      "source_hash": "51396907e61e",
+      "target_hash": "347c9e48dbb8"
+    },
+    "home.why-keys.p-2": {
+      "part": "home",
+      "source_hash": "4dd4ec421cbe",
+      "target_hash": "01641b69b15c"
+    },
+    "home.why-keys.ol-1.aria-label": {
+      "part": "home",
+      "source_hash": "1c1bcbbf1789",
+      "target_hash": "85bb513363c2"
+    },
+    "home.why-keys.b-1": {
+      "part": "home",
+      "source_hash": "c5da4041ea8e",
+      "target_hash": "1610325f7162"
+    },
+    "home.why-keys.span-1": {
+      "part": "home",
+      "source_hash": "a2476d66a084",
+      "target_hash": "645fd163c00f"
+    },
+    "home.why-keys.b-2": {
+      "part": "home",
+      "source_hash": "6c8888f1d6dc",
+      "target_hash": "5b14c8168eb8"
+    },
+    "home.why-keys.span-2": {
+      "part": "home",
+      "source_hash": "01b7a9f0d1d4",
+      "target_hash": "4ecc76af19dd"
+    },
+    "home.why-keys.b-3": {
+      "part": "home",
+      "source_hash": "a76b6c1ae9be",
+      "target_hash": "743e51c97ff4"
+    },
+    "home.why-keys.span-3": {
+      "part": "home",
+      "source_hash": "6d244abe081b",
+      "target_hash": "faa922d12f70"
+    },
+    "home.why-keys.b-4": {
+      "part": "home",
+      "source_hash": "724c4cb2e620",
+      "target_hash": "8e6ec74ed718"
+    },
+    "home.why-keys.span-4": {
+      "part": "home",
+      "source_hash": "2c1097258738",
+      "target_hash": "0ff237059138"
+    },
+    "home.why-keys.b-5": {
+      "part": "home",
+      "source_hash": "96d527825b4b",
+      "target_hash": "f0eac7592f6a"
+    },
+    "home.why-keys.span-5": {
+      "part": "home",
+      "source_hash": "687891cb2f66",
+      "target_hash": "3ed7083a6b21"
+    },
+    "home.why-keys.p-3": {
+      "part": "home",
+      "source_hash": "ca3034a912dc",
+      "target_hash": "57059c6a147e"
+    },
+    "home.why-keys.img-1.alt": {
+      "part": "home",
+      "source_hash": "ae01537e1ee6",
+      "target_hash": "bf0a26c4e075"
+    },
+    "home.why-keys.figcaption-1": {
+      "part": "home",
+      "source_hash": "a098f63084b6",
+      "target_hash": "9ba071ebb806"
+    },
+    "home.why-keys.img-2.alt": {
+      "part": "home",
+      "source_hash": "9ae6aeafcf56",
+      "target_hash": "b1cd9611c965"
+    },
+    "home.why-keys.figcaption-2": {
+      "part": "home",
+      "source_hash": "348b1b23d393",
+      "target_hash": "3a3a888c6c59"
+    },
+    "home.why-keys.p-4": {
+      "part": "home",
+      "source_hash": "b5718f9f8bb5",
+      "target_hash": "ca613469e31e"
+    },
+    "home.hw.h2-1": {
+      "part": "home",
+      "source_hash": "3f3225bbc711",
+      "target_hash": "4582818c0b31"
+    },
+    "home.hardware.p-1": {
+      "part": "home",
+      "source_hash": "f90e55953921",
+      "target_hash": "195439bc71d8"
+    },
+    "home.hardware.img-1.alt": {
+      "part": "home",
+      "source_hash": "60071766922d",
+      "target_hash": "f0659d028d76"
+    },
+    "home.hardware.figcaption-1": {
+      "part": "home",
+      "source_hash": "937079060820",
+      "target_hash": "fb92fe5c2643"
+    },
+    "home.hardware.img-2.alt": {
+      "part": "home",
+      "source_hash": "6006e1039ec1",
+      "target_hash": "f49e9e1e2864"
+    },
+    "home.hardware.figcaption-2": {
+      "part": "home",
+      "source_hash": "d67a36ee8dec",
+      "target_hash": "4dbcb3102df5"
+    },
+    "home.hardware.img-3.alt": {
+      "part": "home",
+      "source_hash": "2b44277f55cd",
+      "target_hash": "08c411d48d78"
+    },
+    "home.hardware.figcaption-3": {
+      "part": "home",
+      "source_hash": "f3ceb6c33eb7",
+      "target_hash": "a5e0640184a1"
+    },
+    "home.hardware.img-4.alt": {
+      "part": "home",
+      "source_hash": "c1394a12d331",
+      "target_hash": "3bf8fcb5e056"
+    },
+    "home.hardware.figcaption-4": {
+      "part": "home",
+      "source_hash": "cddfa5475f94",
+      "target_hash": "67eefd1e3b33"
+    },
+    "home.hardware.p-2": {
+      "part": "home",
+      "source_hash": "5a4e8569c432",
+      "target_hash": "51fbc221a1ac"
+    },
+    "home.features.h2-1": {
+      "part": "home",
+      "source_hash": "8e7ddf931c59",
+      "target_hash": "a6cc2e8607b5"
+    },
+    "home.features.p-1": {
+      "part": "home",
+      "source_hash": "cbdfccb24fcc",
+      "target_hash": "9d64a082bfdb"
+    },
+    "home.features.h3-1": {
+      "part": "home",
+      "source_hash": "65fb2dd50a89",
+      "target_hash": "fdd7b7cb0d45"
+    },
+    "home.features.p-2": {
+      "part": "home",
+      "source_hash": "1bea9211a232",
+      "target_hash": "00c182d66bbe"
+    },
+    "home.features.img-1.alt": {
+      "part": "home",
+      "source_hash": "0a8bc4d5312e",
+      "target_hash": "62076398e36c"
+    },
+    "home.features.p-3": {
+      "part": "home",
+      "source_hash": "04423fe4175f",
+      "target_hash": "75727b621c18"
+    },
+    "home.features.h3-2": {
+      "part": "home",
+      "source_hash": "e8070826221c",
+      "target_hash": "2a711c316913"
+    },
+    "home.features.p-4": {
+      "part": "home",
+      "source_hash": "49c151ca7020",
+      "target_hash": "60125187fc98"
+    },
+    "home.features.img-2.alt": {
+      "part": "home",
+      "source_hash": "428dfb61458f",
+      "target_hash": "8dc190906089"
+    },
+    "home.features.p-5": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "4bfdc71d1a11"
+    },
+    "home.features.h3-3": {
+      "part": "home",
+      "source_hash": "ba721e4421e2",
+      "target_hash": "fee4c9daa6a5"
+    },
+    "home.features.p-6": {
+      "part": "home",
+      "source_hash": "916edc5f7b60",
+      "target_hash": "770af1c63825"
+    },
+    "home.features.img-3.alt": {
+      "part": "home",
+      "source_hash": "cc2b73368cf4",
+      "target_hash": "e639e153f688"
+    },
+    "home.oss.h2-1": {
+      "part": "home",
+      "source_hash": "3317e70f46b3",
+      "target_hash": "544f4ca3313a"
+    },
+    "home.open-source.p-1": {
+      "part": "home",
+      "source_hash": "ba01b625fe70",
+      "target_hash": "e9bf055d09aa"
+    },
+    "home.open-source.h2-1": {
+      "part": "home",
+      "source_hash": "19dae78c985d",
+      "target_hash": "a954696b339c"
+    },
+    "home.open-source.p-2": {
+      "part": "home",
+      "source_hash": "598b6f2514fd",
+      "target_hash": "43b3ced2c9d3"
+    },
+    "home.lightbox.button-1": {
+      "part": "home",
+      "source_hash": "ce7bf15a4a85",
+      "target_hash": "8ea10b8eade0"
+    },
+    "home.lightbox.button-1.aria-label": {
+      "part": "home",
+      "source_hash": "2d3b2f52a3dd",
+      "target_hash": "3a9cb30d026e"
+    },
+    "chrome.footer.about": {
+      "part": "home",
+      "source_hash": "7f11ddd74f30",
+      "target_hash": "f22c38ec5813"
+    },
+    "chrome.footer.source": {
+      "part": "home",
+      "source_hash": "11506c59ef23",
+      "target_hash": "0142dd16405f"
+    },
+    "chrome.footer.install": {
+      "part": "home",
+      "source_hash": "e15a133068af",
+      "target_hash": "187ce66f7ea9"
+    },
+    "chrome.footer.changelog": {
+      "part": "home",
+      "source_hash": "ead07c84baac",
+      "target_hash": "f1e957f90f44"
+    },
+    "chrome.footer.licence": {
+      "part": "home",
+      "source_hash": "f3ec8e880a46",
+      "target_hash": "62fd6ed22a1f"
+    },
+    "chrome.footer.tag-note": {
+      "part": "home",
+      "source_hash": "09eab402684a",
+      "target_hash": "507f4de4c5c8"
+    },
+    "chrome.consent.aria-label": {
+      "part": "home",
+      "source_hash": "38db21b38100",
+      "target_hash": "484e700027d2"
+    },
+    "chrome.consent.text": {
+      "part": "home",
+      "source_hash": "cdf7e1f99a7b",
+      "target_hash": "a86cc9bea7bb"
+    },
+    "chrome.consent.decline": {
+      "part": "home",
+      "source_hash": "a2d285b35287",
+      "target_hash": "6301da27517f"
+    },
+    "chrome.consent.accept": {
+      "part": "home",
+      "source_hash": "89713b9c9c1b",
+      "target_hash": "313d9bb14782"
+    },
+    "common.crumbs.aria-label": {
+      "part": "common",
+      "source_hash": "2bd873d6c734",
+      "target_hash": "5121f24edefd"
+    },
+    "common.crumb.home": {
+      "part": "common",
+      "source_hash": "3a78695388b3",
+      "target_hash": "1d705ac2a3bd"
+    },
+    "common.crumb.coding-agents": {
+      "part": "common",
+      "source_hash": "707c65c28bca",
+      "target_hash": "4bfdc71d1a11"
+    },
+    "common.in-words": {
+      "part": "common",
+      "source_hash": "3cafefb13fa9",
+      "target_hash": "e5a85ff15e2e"
+    },
+    "common.clients.client": {
+      "part": "common",
+      "source_hash": "0c77fe09ab33",
+      "target_hash": "5bf2924d9672"
+    },
+    "common.client.protocol": {
+      "part": "common",
+      "source_hash": "cf0883343f4a",
+      "target_hash": "7ea266011e7a"
+    },
+    "common.client.support": {
+      "part": "common",
+      "source_hash": "be91940b79f4",
+      "target_hash": "5533931a09b7"
+    },
+    "common.support.full": {
+      "part": "common",
+      "source_hash": "1f95d1324a14",
+      "target_hash": "e1eaf3d84795"
+    },
+    "common.support.local-only": {
+      "part": "common",
+      "source_hash": "12d96c6fb40e",
+      "target_hash": "a1e7d446a767"
+    },
+    "common.crumb.agent-tuning": {
+      "part": "common",
+      "source_hash": "124c9615be9b",
+      "target_hash": "2887a38dae8d"
+    },
+    "common.copy": {
+      "part": "common",
+      "source_hash": "e21f935f11d7",
+      "target_hash": "a079a15bf31e"
+    },
+    "common.crumb.features": {
+      "part": "common",
+      "source_hash": "5697d03daef4",
+      "target_hash": "6eadb76d4001"
+    },
+    "common.crumb.gpu-monitoring": {
+      "part": "common",
+      "source_hash": "cbdfccb24fcc",
+      "target_hash": "9d64a082bfdb"
+    },
+    "common.crumb.cache-aware-routing": {
+      "part": "common",
+      "source_hash": "d45c5045a852",
+      "target_hash": "24a6ffc812d8"
+    },
+    "common.crumb.api-keys": {
+      "part": "common",
+      "source_hash": "98aae8972102",
+      "target_hash": "8cb31f1ac46b"
+    },
+    "common.crumb.faq": {
+      "part": "common",
+      "source_hash": "dbc468a14b60",
+      "target_hash": "285f0d472151"
+    },
+    "common.crumb.privacy": {
+      "part": "common",
+      "source_hash": "54a57c3147c4",
+      "target_hash": "a479e5eed9a3"
+    },
+    "common.client.setup-section.aria-label": {
+      "part": "common",
+      "source_hash": "7013af4c42fe",
+      "target_hash": "d386da2a48d5"
+    },
+    "common.client.requirements": {
+      "part": "common",
+      "source_hash": "e0cdd07f6a27",
+      "target_hash": "9cf5b194f82d"
+    },
+    "common.client.setup": {
+      "part": "common",
+      "source_hash": "7013af4c42fe",
+      "target_hash": "d386da2a48d5"
+    },
+    "common.client.setup-p": {
+      "part": "common",
+      "source_hash": "961b2c6bf48f",
+      "target_hash": "718651a59e59"
+    },
+    "common.file.shell": {
+      "part": "common",
+      "source_hash": "a733285486d5",
+      "target_hash": "9637f3f9a5be"
+    },
+    "common.client.docs": {
+      "part": "common",
+      "source_hash": "78599bc11885",
+      "target_hash": "6a58dd7d6b1b"
+    },
+    "common.client.related": {
+      "part": "common",
+      "source_hash": "5f736e0bdabc",
+      "target_hash": "567cbb1d4d1d"
+    },
+    "common.file.settings": {
+      "part": "common",
+      "source_hash": "74a883a037bc",
+      "target_hash": "f99e91326d70"
+    },
+    "coding-agents.meta.title": {
+      "part": "coding-agents",
+      "source_hash": "cec26df70a65",
+      "target_hash": "dd1bc3b808c8"
+    },
+    "coding-agents.meta.description": {
+      "part": "coding-agents",
+      "source_hash": "d4374722fecc",
+      "target_hash": "270050523b5d"
+    },
+    "coding-agents.agents.h1-1": {
+      "part": "coding-agents",
+      "source_hash": "e01f3269f454",
+      "target_hash": "80e6917fb029"
+    },
+    "coding-agents.p-1": {
+      "part": "coding-agents",
+      "source_hash": "b8783c59365c",
+      "target_hash": "f1b1f8e8410f"
+    },
+    "coding-agents.flow.title": {
+      "part": "coding-agents",
+      "source_hash": "b2c49ca0b033",
+      "target_hash": "deb31b5bd7a6"
+    },
+    "coding-agents.flow.desc": {
+      "part": "coding-agents",
+      "source_hash": "c24325d4bacf",
+      "target_hash": "4d0c9c095287"
+    },
+    "coding-agents.flow.caption": {
+      "part": "coding-agents",
+      "source_hash": "4c8a44e2f320",
+      "target_hash": "8f583159bb96"
+    },
+    "coding-agents.p-2": {
+      "part": "coding-agents",
+      "source_hash": "75d2dc8f6796",
+      "target_hash": "553c10626397"
+    },
+    "coding-agents.p-3": {
+      "part": "coding-agents",
+      "source_hash": "91f99cd9235e",
+      "target_hash": "0fdfe554d047"
+    },
+    "coding-agents.p-4": {
+      "part": "coding-agents",
+      "source_hash": "0ced1cfb6f5c",
+      "target_hash": "778c308c9cd7"
+    },
+    "clients.meta.title": {
+      "part": "clients",
+      "source_hash": "9a440e2e3c4a",
+      "target_hash": "934b4508da83"
+    },
+    "clients.meta.description": {
+      "part": "clients",
+      "source_hash": "9d9c76c6bb07",
+      "target_hash": "8d0326c65fee"
+    },
+    "clients.claude-code.h1": {
+      "part": "clients",
+      "source_hash": "9bb97352447d",
+      "target_hash": "177b52dff7c7"
+    },
+    "clients.claude-code.summary": {
+      "part": "clients",
+      "source_hash": "b46e643eeaac",
+      "target_hash": "da4d5cafaf66"
+    },
+    "clients.claude-code.capability": {
+      "part": "clients",
+      "source_hash": "79cee967a1ad",
+      "target_hash": "9e834f176d1a"
+    },
+    "clients.claude-code.req.client_version": {
+      "part": "clients",
+      "source_hash": "baf574b32f46",
+      "target_hash": "29cd5352efc8"
+    },
+    "clients.claude-code.req.router_on": {
+      "part": "clients",
+      "source_hash": "f0fd90d78fe4",
+      "target_hash": "4aa15c52af33"
+    },
+    "clients.claude-code.req.relay_key": {
+      "part": "clients",
+      "source_hash": "df8e31733077",
+      "target_hash": "f8795a6c3268"
+    },
+    "clients.claude-code.req.min_context": {
+      "part": "clients",
+      "source_hash": "5cc65b30acd7",
+      "target_hash": "42e2107fff5c"
+    },
+    "clients.claude-code.req.recommended_context": {
+      "part": "clients",
+      "source_hash": "82792a23c7a0",
+      "target_hash": "983c95875b0c"
+    },
+    "clients.claude-code.req.unknown_model_window": {
+      "part": "clients",
+      "source_hash": "c67abcb52ad3",
+      "target_hash": "201ca7862426"
+    },
+    "clients.claude-code.mode.router.title": {
+      "part": "clients",
+      "source_hash": "872bcc0e520c",
+      "target_hash": "b43a909fbc62"
+    },
+    "clients.claude-code.mode.router.desc": {
+      "part": "clients",
+      "source_hash": "9832c50a640e",
+      "target_hash": "1b2ccc178c74"
+    },
+    "clients.claude-code.mode.local.title": {
+      "part": "clients",
+      "source_hash": "2a51ef910e22",
+      "target_hash": "77623f28832a"
+    },
+    "clients.claude-code.mode.local.desc": {
+      "part": "clients",
+      "source_hash": "1dea6fe58a27",
+      "target_hash": "725fd870cf9f"
+    },
+    "clients.anthropic-sdk.h1": {
+      "part": "clients",
+      "source_hash": "4229892646ec",
+      "target_hash": "1a4b9399f08d"
+    },
+    "clients.anthropic-sdk.summary": {
+      "part": "clients",
+      "source_hash": "910172f40b64",
+      "target_hash": "3f166630a2bb"
+    },
+    "clients.anthropic-sdk.flow.title": {
+      "part": "clients",
+      "source_hash": "26e8b7e39b44",
+      "target_hash": "3ebf3ca96c90"
+    },
+    "clients.anthropic-sdk.flow.desc": {
+      "part": "clients",
+      "source_hash": "26917b07643f",
+      "target_hash": "a2d50667e5af"
+    },
+    "clients.anthropic-sdk.flow.caption": {
+      "part": "clients",
+      "source_hash": "a4ec23a63573",
+      "target_hash": "9339c71b9a30"
+    },
+    "clients.anthropic-sdk.capability": {
+      "part": "clients",
+      "source_hash": "3d9a6a025316",
+      "target_hash": "66a3966474ee"
+    },
+    "clients.anthropic-sdk.req.router_on": {
+      "part": "clients",
+      "source_hash": "f0fd90d78fe4",
+      "target_hash": "4aa15c52af33"
+    },
+    "clients.anthropic-sdk.req.relay_key": {
+      "part": "clients",
+      "source_hash": "df8e31733077",
+      "target_hash": "f8795a6c3268"
+    },
+    "clients.anthropic-sdk.mode.router.title": {
+      "part": "clients",
+      "source_hash": "5e22bff885a6",
+      "target_hash": "29d0b61ffd74"
+    },
+    "clients.anthropic-sdk.mode.router.desc": {
+      "part": "clients",
+      "source_hash": "fe17e904c7dd",
+      "target_hash": "731e2840c3c4"
+    },
+    "clients.anthropic-sdk.mode.local.title": {
+      "part": "clients",
+      "source_hash": "c905013aab29",
+      "target_hash": "039ca0964e90"
+    },
+    "clients.anthropic-sdk.mode.local.desc": {
+      "part": "clients",
+      "source_hash": "e1b1c200ccb3",
+      "target_hash": "a9ad4ad41cd6"
+    },
+    "clients.opencode.h1": {
+      "part": "clients",
+      "source_hash": "0f9f0d85229c",
+      "target_hash": "b77264ac1311"
+    },
+    "clients.opencode.summary": {
+      "part": "clients",
+      "source_hash": "0dbe773d1ba9",
+      "target_hash": "5a062179c368"
+    },
+    "clients.opencode.flow.title": {
+      "part": "clients",
+      "source_hash": "ae2c3d407d79",
+      "target_hash": "7b5d1a2c3dae"
+    },
+    "clients.opencode.flow.desc": {
+      "part": "clients",
+      "source_hash": "5a53f0ea3bba",
+      "target_hash": "c5b920c72856"
+    },
+    "clients.opencode.flow.caption": {
+      "part": "clients",
+      "source_hash": "774655618391",
+      "target_hash": "d4465c3cb067"
+    },
+    "clients.opencode.capability": {
+      "part": "clients",
+      "source_hash": "8901779665ff",
+      "target_hash": "33f6fea26ec5"
+    },
+    "clients.opencode.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "d6e2013f1b5d"
+    },
+    "clients.opencode.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "9df52e4d1baa"
+    },
+    "clients.opencode.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "437af26533b6"
+    },
+    "clients.opencode.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "e03771b96f12",
+      "target_hash": "45543d947f23"
+    },
+    "clients.aider.h1": {
+      "part": "clients",
+      "source_hash": "b1e1b6bd30b4",
+      "target_hash": "04259bbf949d"
+    },
+    "clients.aider.summary": {
+      "part": "clients",
+      "source_hash": "2a2e36942a30",
+      "target_hash": "ee2beb2360ae"
+    },
+    "clients.aider.flow.title": {
+      "part": "clients",
+      "source_hash": "32e01b3b0c97",
+      "target_hash": "e1421aa8d65d"
+    },
+    "clients.aider.flow.desc": {
+      "part": "clients",
+      "source_hash": "3b2c308c114e",
+      "target_hash": "5f6ed92a65dc"
+    },
+    "clients.aider.flow.caption": {
+      "part": "clients",
+      "source_hash": "e58a54a34cdc",
+      "target_hash": "10a549526734"
+    },
+    "clients.aider.capability": {
+      "part": "clients",
+      "source_hash": "922681946310",
+      "target_hash": "02f7764de9e2"
+    },
+    "clients.aider.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "9df52e4d1baa"
+    },
+    "clients.aider.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "437af26533b6"
+    },
+    "clients.aider.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "df94297df209",
+      "target_hash": "0cd858791938"
+    },
+    "clients.aider.mode.default.file.session": {
+      "part": "clients",
+      "source_hash": "c1f31c2b83f0",
+      "target_hash": "4779c4c6dfdf"
+    },
+    "clients.grok-cli.h1": {
+      "part": "clients",
+      "source_hash": "9e97001cf2f3",
+      "target_hash": "9f0068ebdd24"
+    },
+    "clients.grok-cli.summary": {
+      "part": "clients",
+      "source_hash": "be6e0d9a09ed",
+      "target_hash": "6403d82bd158"
+    },
+    "clients.grok-cli.flow.title": {
+      "part": "clients",
+      "source_hash": "eeb620d01d38",
+      "target_hash": "86a1b421d386"
+    },
+    "clients.grok-cli.flow.desc": {
+      "part": "clients",
+      "source_hash": "ef648e107c77",
+      "target_hash": "84ff61643bfc"
+    },
+    "clients.grok-cli.flow.caption": {
+      "part": "clients",
+      "source_hash": "b77ddcf1b78a",
+      "target_hash": "b481414aff5e"
+    },
+    "clients.grok-cli.capability": {
+      "part": "clients",
+      "source_hash": "03938abace0a",
+      "target_hash": "38f648b7ae69"
+    },
+    "clients.grok-cli.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "d6e2013f1b5d"
+    },
+    "clients.grok-cli.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "9df52e4d1baa"
+    },
+    "clients.grok-cli.mode.default.title": {
+      "part": "clients",
+      "source_hash": "1901a8b05d3b",
+      "target_hash": "a501fa4932cd"
+    },
+    "clients.grok-cli.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "b5943bc2443d",
+      "target_hash": "f81910427376"
+    },
+    "clients.grok-cli.mode.community.title": {
+      "part": "clients",
+      "source_hash": "28bbd28283a3",
+      "target_hash": "d441f444fbd4"
+    },
+    "clients.grok-cli.mode.community.desc": {
+      "part": "clients",
+      "source_hash": "0b589963361a",
+      "target_hash": "dce7f5f7f60f"
+    },
+    "clients.openai-sdk.h1": {
+      "part": "clients",
+      "source_hash": "db3661cee041",
+      "target_hash": "8ade0da701f8"
+    },
+    "clients.openai-sdk.summary": {
+      "part": "clients",
+      "source_hash": "16d05b661878",
+      "target_hash": "60fce3429283"
+    },
+    "clients.openai-sdk.flow.title": {
+      "part": "clients",
+      "source_hash": "13c7ed2b6c10",
+      "target_hash": "5a312ae2f17c"
+    },
+    "clients.openai-sdk.flow.desc": {
+      "part": "clients",
+      "source_hash": "9b9a5c752e5f",
+      "target_hash": "db210d428664"
+    },
+    "clients.openai-sdk.flow.caption": {
+      "part": "clients",
+      "source_hash": "0d8679dd39d0",
+      "target_hash": "817736b2065f"
+    },
+    "clients.openai-sdk.capability": {
+      "part": "clients",
+      "source_hash": "81a1f26dda28",
+      "target_hash": "42e171e101d2"
+    },
+    "clients.openai-sdk.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "437af26533b6"
+    },
+    "clients.openai-sdk.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "81e9b9ed3e66",
+      "target_hash": "ae6f82e0b232"
+    },
+    "clients.continue.h1": {
+      "part": "clients",
+      "source_hash": "f33c2b44b3be",
+      "target_hash": "a630fdbb8c90"
+    },
+    "clients.continue.summary": {
+      "part": "clients",
+      "source_hash": "4377b7395411",
+      "target_hash": "19562f54048b"
+    },
+    "clients.continue.flow.title": {
+      "part": "clients",
+      "source_hash": "a55ed462d54e",
+      "target_hash": "9520ff1732fb"
+    },
+    "clients.continue.flow.desc": {
+      "part": "clients",
+      "source_hash": "dfee5b6d070e",
+      "target_hash": "a0bb7f4af404"
+    },
+    "clients.continue.flow.caption": {
+      "part": "clients",
+      "source_hash": "c1f803ddf701",
+      "target_hash": "75469d77b881"
+    },
+    "clients.continue.capability": {
+      "part": "clients",
+      "source_hash": "d76f0ccb6e86",
+      "target_hash": "e82550c1bdae"
+    },
+    "clients.continue.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "9df52e4d1baa"
+    },
+    "clients.continue.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "437af26533b6"
+    },
+    "clients.continue.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "8c8d339555ff",
+      "target_hash": "cfa75879b624"
+    },
+    "clients.cline.h1": {
+      "part": "clients",
+      "source_hash": "d0efe15bdc4f",
+      "target_hash": "ba655281e971"
+    },
+    "clients.cline.summary": {
+      "part": "clients",
+      "source_hash": "d80b0d66c45e",
+      "target_hash": "0bd6e8e0f359"
+    },
+    "clients.cline.flow.title": {
+      "part": "clients",
+      "source_hash": "79932fc0e85c",
+      "target_hash": "241c0debe9f3"
+    },
+    "clients.cline.flow.desc": {
+      "part": "clients",
+      "source_hash": "300648093db4",
+      "target_hash": "b393c3037225"
+    },
+    "clients.cline.flow.caption": {
+      "part": "clients",
+      "source_hash": "26566cb52d8d",
+      "target_hash": "8462b0930b22"
+    },
+    "clients.cline.capability": {
+      "part": "clients",
+      "source_hash": "21110940c4cb",
+      "target_hash": "0f80da3b4497"
+    },
+    "clients.cline.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "d6e2013f1b5d"
+    },
+    "clients.cline.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "9df52e4d1baa"
+    },
+    "clients.cline.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "437af26533b6"
+    },
+    "clients.cline.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "f65c6df5377b",
+      "target_hash": "f65c6df5377b"
+    },
+    "clients.cursor.h1": {
+      "part": "clients",
+      "source_hash": "314536df2e7a",
+      "target_hash": "7c925b49661e"
+    },
+    "clients.cursor.summary": {
+      "part": "clients",
+      "source_hash": "1c8912c5ba32",
+      "target_hash": "01aecd7df5b7"
+    },
+    "clients.cursor.flow.title": {
+      "part": "clients",
+      "source_hash": "43c8f2aed837",
+      "target_hash": "3892fa4ed4dc"
+    },
+    "clients.cursor.flow.desc": {
+      "part": "clients",
+      "source_hash": "524789d9ea5d",
+      "target_hash": "963f8e5d7ede"
+    },
+    "clients.cursor.flow.caption": {
+      "part": "clients",
+      "source_hash": "79e33449f1a5",
+      "target_hash": "d69d6b3a480b"
+    },
+    "clients.cursor.capability": {
+      "part": "clients",
+      "source_hash": "e3b007a84e77",
+      "target_hash": "96f06287a2c7"
+    },
+    "clients.cursor.req.reachable": {
+      "part": "clients",
+      "source_hash": "0815103f2766",
+      "target_hash": "004257c04ab6"
+    },
+    "clients.cursor.mode.default.title": {
+      "part": "clients",
+      "source_hash": "5e7a9a7b90b9",
+      "target_hash": "5c28c1d72fbb"
+    },
+    "clients.cursor.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "fce3909f9e49",
+      "target_hash": "abf925a6d123"
+    },
+    "clients.codex-cli.h1": {
+      "part": "clients",
+      "source_hash": "ee03de1664ad",
+      "target_hash": "492f72f5af18"
+    },
+    "clients.codex-cli.summary": {
+      "part": "clients",
+      "source_hash": "4ffc9f534362",
+      "target_hash": "e255cc677826"
+    },
+    "clients.codex-cli.flow.title": {
+      "part": "clients",
+      "source_hash": "4d9d5da5c30b",
+      "target_hash": "bd283030c2ea"
+    },
+    "clients.codex-cli.flow.desc": {
+      "part": "clients",
+      "source_hash": "ae1c2b1f74bf",
+      "target_hash": "ae11d13af746"
+    },
+    "clients.codex-cli.flow.caption": {
+      "part": "clients",
+      "source_hash": "4596be3eb188",
+      "target_hash": "0a1fbdc0df9c"
+    },
+    "clients.codex-cli.capability": {
+      "part": "clients",
+      "source_hash": "b7c7ad7fa0c7",
+      "target_hash": "339f45bd495f"
+    },
+    "clients.codex-cli.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "d6e2013f1b5d"
+    },
+    "clients.codex-cli.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "9df52e4d1baa"
+    },
+    "clients.codex-cli.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "437af26533b6"
+    },
+    "clients.codex-cli.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "0e63a370854f",
+      "target_hash": "042fc992fe63"
+    },
+    "claude-code-router.router.h2-1": {
+      "part": "claude-code-router",
+      "source_hash": "88b4b60f90dc",
+      "target_hash": "a8f6642e39f9"
+    },
+    "claude-code-router.p-1": {
+      "part": "claude-code-router",
+      "source_hash": "47eae55f59c6",
+      "target_hash": "557152f03acb"
+    },
+    "claude-code-router.p-2": {
+      "part": "claude-code-router",
+      "source_hash": "23f00b590b6a",
+      "target_hash": "af4c6b93da29"
+    },
+    "claude-code-router.p-3": {
+      "part": "claude-code-router",
+      "source_hash": "b554407d17a9",
+      "target_hash": "a905edfe8223"
+    },
+    "claude-code-router.p-4": {
+      "part": "claude-code-router",
+      "source_hash": "f87b272c3f76",
+      "target_hash": "1b561cfd658b"
+    },
+    "claude-code-router.figcaption-1": {
+      "part": "claude-code-router",
+      "source_hash": "462151461bb5",
+      "target_hash": "81028878c3d5"
+    },
+    "claude-code-router.p-5": {
+      "part": "claude-code-router",
+      "source_hash": "038dbec78e21",
+      "target_hash": "cac381a659b6"
+    },
+    "claude-code-router.p-6": {
+      "part": "claude-code-router",
+      "source_hash": "bd9385d02ca7",
+      "target_hash": "cc48508d9ffc"
+    },
+    "claude-code-router.img-1.alt": {
+      "part": "claude-code-router",
+      "source_hash": "3f1f5682c2a4",
+      "target_hash": "a0532bed257e"
+    },
+    "claude-code-router.span-1": {
+      "part": "claude-code-router",
+      "source_hash": "d0410896bcb4",
+      "target_hash": "1dfdd34430cf"
+    },
+    "claude-code-router.span-2": {
+      "part": "claude-code-router",
+      "source_hash": "6d3dcb885877",
+      "target_hash": "56c5be6507f3"
+    },
+    "claude-code-router.figcaption-2": {
+      "part": "claude-code-router",
+      "source_hash": "b4aee34de008",
+      "target_hash": "28deaa6e724a"
+    },
+    "claude-code-router.p-7": {
+      "part": "claude-code-router",
+      "source_hash": "174e92b8be51",
+      "target_hash": "4ddc5dde71ed"
+    },
+    "claude-code-router.img-2.alt": {
+      "part": "claude-code-router",
+      "source_hash": "1dcf45e042e8",
+      "target_hash": "ed9467e03284"
+    },
+    "claude-code-router.span-3": {
+      "part": "claude-code-router",
+      "source_hash": "e7811be1957f",
+      "target_hash": "0c2e07337bca"
+    },
+    "claude-code-router.span-4": {
+      "part": "claude-code-router",
+      "source_hash": "8c3c6830836a",
+      "target_hash": "309eec99c20c"
+    },
+    "claude-code-router.figcaption-3": {
+      "part": "claude-code-router",
+      "source_hash": "e6294c26fbc5",
+      "target_hash": "d179d697d14c"
+    },
+    "agent-tuning.meta.title": {
+      "part": "agent-tuning",
+      "source_hash": "c73577a9e93d",
+      "target_hash": "2f7a977743ac"
+    },
+    "agent-tuning.meta.description": {
+      "part": "agent-tuning",
+      "source_hash": "42f223176a20",
+      "target_hash": "f2dd0a8e1545"
+    },
+    "agent-tuning.jsonld.name": {
+      "part": "agent-tuning",
+      "source_hash": "d38cc5b44b81",
+      "target_hash": "c87965f53281"
+    },
+    "agent-tuning.jsonld.step-1": {
+      "part": "agent-tuning",
+      "source_hash": "ea9ef62b2144",
+      "target_hash": "7cb452ac530b"
+    },
+    "agent-tuning.jsonld.step-2": {
+      "part": "agent-tuning",
+      "source_hash": "02b6962c341f",
+      "target_hash": "adcb5aa8481d"
+    },
+    "agent-tuning.jsonld.step-3": {
+      "part": "agent-tuning",
+      "source_hash": "23149cd56616",
+      "target_hash": "d61f1f54ea07"
+    },
+    "agent-tuning.jsonld.step-4": {
+      "part": "agent-tuning",
+      "source_hash": "2580a4baddda",
+      "target_hash": "3cef706792d2"
+    },
+    "agent-tuning.tuning.h1-1": {
+      "part": "agent-tuning",
+      "source_hash": "2df23e8f7918",
+      "target_hash": "26ca299f03df"
+    },
+    "agent-tuning.p-1": {
+      "part": "agent-tuning",
+      "source_hash": "47320716621f",
+      "target_hash": "819a8571d8a6"
+    },
+    "agent-tuning.h2-1": {
+      "part": "agent-tuning",
+      "source_hash": "2a300da26a75",
+      "target_hash": "66f98d5e33fd"
+    },
+    "agent-tuning.li-1": {
+      "part": "agent-tuning",
+      "source_hash": "45b78d2f8e02",
+      "target_hash": "626664b5f3a7"
+    },
+    "agent-tuning.li-2": {
+      "part": "agent-tuning",
+      "source_hash": "a316c0dc85b5",
+      "target_hash": "0a2dd3eab54e"
+    },
+    "agent-tuning.li-3": {
+      "part": "agent-tuning",
+      "source_hash": "45f30ab355a5",
+      "target_hash": "91a67f449159"
+    },
+    "agent-tuning.h2-2": {
+      "part": "agent-tuning",
+      "source_hash": "676f21721809",
+      "target_hash": "d0b0ac714008"
+    },
+    "agent-tuning.th-1": {
+      "part": "agent-tuning",
+      "source_hash": "8e6a6cca7aae",
+      "target_hash": "c39fbf83f1c0"
+    },
+    "agent-tuning.th-2": {
+      "part": "agent-tuning",
+      "source_hash": "3df9726c68ba",
+      "target_hash": "fc1944dea5d5"
+    },
+    "agent-tuning.th-3": {
+      "part": "agent-tuning",
+      "source_hash": "982d52862acc",
+      "target_hash": "6c6397f45401"
+    },
+    "agent-tuning.th-4": {
+      "part": "agent-tuning",
+      "source_hash": "966e8813028c",
+      "target_hash": "6fd9cbed3c0b"
+    },
+    "agent-tuning.th-5": {
+      "part": "agent-tuning",
+      "source_hash": "6fb4184c2d5a",
+      "target_hash": "c9008ab9eec9"
+    },
+    "agent-tuning.th-6": {
+      "part": "agent-tuning",
+      "source_hash": "a632bbe8e8aa",
+      "target_hash": "bec25495393d"
+    },
+    "agent-tuning.th-7": {
+      "part": "agent-tuning",
+      "source_hash": "4c3b52acd644",
+      "target_hash": "d1f487a54b29"
+    },
+    "agent-tuning.td-1": {
+      "part": "agent-tuning",
+      "source_hash": "51491b72ded1",
+      "target_hash": "138cab9f18f6"
+    },
+    "agent-tuning.th-8": {
+      "part": "agent-tuning",
+      "source_hash": "ead961a24dc4",
+      "target_hash": "083df2322d81"
+    },
+    "agent-tuning.th-9": {
+      "part": "agent-tuning",
+      "source_hash": "70356d606d14",
+      "target_hash": "45231fc449bb"
+    },
+    "agent-tuning.td-2": {
+      "part": "agent-tuning",
+      "source_hash": "9a72b9938ec6",
+      "target_hash": "715f7b9e829d"
+    },
+    "agent-tuning.p-2": {
+      "part": "agent-tuning",
+      "source_hash": "c3bff7c1a9d1",
+      "target_hash": "acffbe7d4d8a"
+    },
+    "agent-tuning.h2-3": {
+      "part": "agent-tuning",
+      "source_hash": "b273921d2e33",
+      "target_hash": "036af7389b74"
+    },
+    "agent-tuning.p-3": {
+      "part": "agent-tuning",
+      "source_hash": "a74bbbec589e",
+      "target_hash": "a36b3b10389b"
+    },
+    "agent-tuning.h3-1": {
+      "part": "agent-tuning",
+      "source_hash": "c1ebd00d0f72",
+      "target_hash": "72ace050311d"
+    },
+    "agent-tuning.h3-2": {
+      "part": "agent-tuning",
+      "source_hash": "0cc405dce7f8",
+      "target_hash": "81e037441233"
+    },
+    "agent-tuning.h3-3": {
+      "part": "agent-tuning",
+      "source_hash": "906f71857682",
+      "target_hash": "e078d3795ed8"
+    },
+    "agent-tuning.h3-4": {
+      "part": "agent-tuning",
+      "source_hash": "d6e1c2c66dff",
+      "target_hash": "a84e09db6ffd"
+    },
+    "agent-tuning.h2-4": {
+      "part": "agent-tuning",
+      "source_hash": "74e492d5d0df",
+      "target_hash": "3223632a4bdf"
+    },
+    "agent-tuning.li-4": {
+      "part": "agent-tuning",
+      "source_hash": "4a1f64b32132",
+      "target_hash": "b31e0a605a40"
+    },
+    "agent-tuning.li-5": {
+      "part": "agent-tuning",
+      "source_hash": "e127f19fe7da",
+      "target_hash": "5f5dfd5a824b"
+    },
+    "agent-tuning.li-6": {
+      "part": "agent-tuning",
+      "source_hash": "dabc7d95f036",
+      "target_hash": "30ac4d8c2f2f"
+    },
+    "agent-tuning.li-7": {
+      "part": "agent-tuning",
+      "source_hash": "cc61ece33dc3",
+      "target_hash": "be5591873c7e"
+    },
+    "agent-tuning.p-4": {
+      "part": "agent-tuning",
+      "source_hash": "cfe5bc772213",
+      "target_hash": "41575e4b5773"
+    },
+    "gpu-monitoring.meta.title": {
+      "part": "gpu-monitoring",
+      "source_hash": "d27814ed8b63",
+      "target_hash": "3bd7fdccea59"
+    },
+    "gpu-monitoring.meta.description": {
+      "part": "gpu-monitoring",
+      "source_hash": "507736e1bea9",
+      "target_hash": "b5f9c35dbe17"
+    },
+    "gpu-monitoring.box.h1-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "cc0f4c9bbf2b",
+      "target_hash": "db6ac1067f1d"
+    },
+    "gpu-monitoring.p-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "a9ca4640a6e7",
+      "target_hash": "11e61a907e10"
+    },
+    "gpu-monitoring.p-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "e6e25a4491ad",
+      "target_hash": "9101c6f91f2c"
+    },
+    "gpu-monitoring.dt-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "8f0474fb0c5b",
+      "target_hash": "ea49523d744c"
+    },
+    "gpu-monitoring.dd-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "065609784858",
+      "target_hash": "34dd439dd440"
+    },
+    "gpu-monitoring.dt-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "60de0ad7eb70",
+      "target_hash": "046f4188fddc"
+    },
+    "gpu-monitoring.dd-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "2a58556c9272",
+      "target_hash": "df0b832eb633"
+    },
+    "gpu-monitoring.dd-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "a85ab5eb706a",
+      "target_hash": "73aea8984741"
+    },
+    "gpu-monitoring.dt-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "9fe4c68ec20d",
+      "target_hash": "7338b1ea744a"
+    },
+    "gpu-monitoring.dd-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "a041ea9e5251",
+      "target_hash": "a041ea9e5251"
+    },
+    "gpu-monitoring.caption-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "db678a93d309",
+      "target_hash": "71f68e5c4179"
+    },
+    "gpu-monitoring.th-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "463816d07097",
+      "target_hash": "59f4b184fb84"
+    },
+    "gpu-monitoring.th-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "5e1bc5df87b6",
+      "target_hash": "9077e6fa9dfb"
+    },
+    "gpu-monitoring.th-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "af088ec66533",
+      "target_hash": "a481d1f00101"
+    },
+    "gpu-monitoring.th-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "0cb077815ec8",
+      "target_hash": "7ee128864f86"
+    },
+    "gpu-monitoring.th-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "9739b22b0dce",
+      "target_hash": "ed16f150742a"
+    },
+    "gpu-monitoring.col-capture.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "5e1bc5df87b6",
+      "target_hash": "9077e6fa9dfb"
+    },
+    "gpu-monitoring.col-median.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "e6245b901702",
+      "target_hash": "93cf79fc6ffa"
+    },
+    "gpu-monitoring.col-peak.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "0cb077815ec8",
+      "target_hash": "7ee128864f86"
+    },
+    "gpu-monitoring.th-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "6554b6cbd5f4",
+      "target_hash": "3df97372e6f3"
+    },
+    "gpu-monitoring.th-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "eb7b7fd32e11",
+      "target_hash": "267e4c0a64fd"
+    },
+    "gpu-monitoring.span-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "0bedd95628dd",
+      "target_hash": "7b61bb9b8e93"
+    },
+    "gpu-monitoring.td-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "eaa6d59dc9be",
+      "target_hash": "eaa6d59dc9be"
+    },
+    "gpu-monitoring.td-8": {
+      "part": "gpu-monitoring",
+      "source_hash": "8678af14d6a2",
+      "target_hash": "8678af14d6a2"
+    },
+    "gpu-monitoring.p-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "fc86e0160504",
+      "target_hash": "cb83c6292101"
+    },
+    "gpu-monitoring.cards.h2-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "036e83c1af39",
+      "target_hash": "bab747b51374"
+    },
+    "gpu-monitoring.p-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "f87275635f5c",
+      "target_hash": "5ab74e7bd8bf"
+    },
+    "gpu-monitoring.img-1.alt": {
+      "part": "gpu-monitoring",
+      "source_hash": "55b551e38c61",
+      "target_hash": "d13eaa9eebd7"
+    },
+    "gpu-monitoring.span-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "b3bd726e07ac",
+      "target_hash": "21a3a8d970b8"
+    },
+    "gpu-monitoring.span-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "7be6f5cf26b2",
+      "target_hash": "e79138633305"
+    },
+    "gpu-monitoring.span-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "ef8ca2bcafce",
+      "target_hash": "32525c44102f"
+    },
+    "gpu-monitoring.span-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "c4d22dc73625",
+      "target_hash": "50ad297da051"
+    },
+    "gpu-monitoring.figcaption-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "7aa9957f224d",
+      "target_hash": "8f8d5c4b58a8"
+    },
+    "gpu-monitoring.caption-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "fd76edd0a9d5",
+      "target_hash": "a446aa376cb2"
+    },
+    "gpu-monitoring.th-8": {
+      "part": "gpu-monitoring",
+      "source_hash": "b596b0114ded",
+      "target_hash": "47655728f7b9"
+    },
+    "gpu-monitoring.td-9": {
+      "part": "gpu-monitoring",
+      "source_hash": "1f5a45a29bdc",
+      "target_hash": "55e1f638c7cf"
+    },
+    "gpu-monitoring.th-9": {
+      "part": "gpu-monitoring",
+      "source_hash": "fd8f8648eb41",
+      "target_hash": "c45157a21f6d"
+    },
+    "gpu-monitoring.td-10": {
+      "part": "gpu-monitoring",
+      "source_hash": "d8e9193ca58e",
+      "target_hash": "f565298ac24b"
+    },
+    "gpu-monitoring.th-10": {
+      "part": "gpu-monitoring",
+      "source_hash": "c01f2094044d",
+      "target_hash": "b1bc69c18038"
+    },
+    "gpu-monitoring.td-11": {
+      "part": "gpu-monitoring",
+      "source_hash": "92c8d3b9a423",
+      "target_hash": "0db58d65c3f9"
+    },
+    "gpu-monitoring.inflight.h2-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "87e975182d2c",
+      "target_hash": "bc8e66f21f56"
+    },
+    "gpu-monitoring.p-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "4d6984e02a57",
+      "target_hash": "d764e31b7434"
+    },
+    "gpu-monitoring.img-2.alt": {
+      "part": "gpu-monitoring",
+      "source_hash": "850b1ebebfcc",
+      "target_hash": "43f46c29d0f4"
+    },
+    "gpu-monitoring.span-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "807aafa43674",
+      "target_hash": "a2a573f6db7e"
+    },
+    "gpu-monitoring.span-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "c6220dc860be",
+      "target_hash": "22391265e50b"
+    },
+    "gpu-monitoring.figcaption-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "cb4966892bbc",
+      "target_hash": "a019190d937c"
+    },
+    "gpu-monitoring.p-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "1669f0782d97",
+      "target_hash": "68a595fa197a"
+    },
+    "cache-aware-routing.meta.title": {
+      "part": "cache-aware-routing",
+      "source_hash": "74d5770bf736",
+      "target_hash": "770f529c1a0f"
+    },
+    "cache-aware-routing.meta.description": {
+      "part": "cache-aware-routing",
+      "source_hash": "055a37ed3302",
+      "target_hash": "5295d270994e"
+    },
+    "cache-aware-routing.replica.h1-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "7b4386acadc3",
+      "target_hash": "0562e3ae7144"
+    },
+    "cache-aware-routing.p-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "6a215639b7d8",
+      "target_hash": "8853c851eb0d"
+    },
+    "cache-aware-routing.p-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "2022d3c80a9f",
+      "target_hash": "e1f0f303f3db"
+    },
+    "cache-aware-routing.figcaption-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "a3b037946eda",
+      "target_hash": "b2e54846300a"
+    },
+    "cache-aware-routing.p-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "91272c526688",
+      "target_hash": "e174056a3661"
+    },
+    "cache-aware-routing.p-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "22167404e1cf",
+      "target_hash": "231a253d1aaa"
+    },
+    "cache-aware-routing.dt-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "8f0474fb0c5b",
+      "target_hash": "ea49523d744c"
+    },
+    "cache-aware-routing.dd-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "a2a87a6a413f",
+      "target_hash": "6015bfe2bd4d"
+    },
+    "cache-aware-routing.dt-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "5e2c614c23f0",
+      "target_hash": "681561437fc5"
+    },
+    "cache-aware-routing.dd-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "ca64e381cd89",
+      "target_hash": "ca64e381cd89"
+    },
+    "cache-aware-routing.dt-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "a511909161e1",
+      "target_hash": "c161f5ab30e3"
+    },
+    "cache-aware-routing.dd-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "2d27d2565f76",
+      "target_hash": "2d27d2565f76"
+    },
+    "cache-aware-routing.dd-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "056adfd1d823",
+      "target_hash": "eb17df8042cb"
+    },
+    "cache-aware-routing.dt-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "8a03fa9ad749",
+      "target_hash": "751d55af2f56"
+    },
+    "cache-aware-routing.dd-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "616bab8cda85",
+      "target_hash": "f3390eb2a1c0"
+    },
+    "cache-aware-routing.dt-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "8a6bdb6b18da",
+      "target_hash": "4dd6e5b25818"
+    },
+    "cache-aware-routing.dd-7": {
+      "part": "cache-aware-routing",
+      "source_hash": "bf79aedc37a9",
+      "target_hash": "cc1aded316fc"
+    },
+    "cache-aware-routing.figcaption-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "4104b97ee062",
+      "target_hash": "157f87c3728e"
+    },
+    "cache-aware-routing.p-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "4744b11be2ad",
+      "target_hash": "df6c7f722fd8"
+    },
+    "cache-aware-routing.p-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "8ab22b61f669",
+      "target_hash": "230109109e79"
+    },
+    "cache-aware-routing.figcaption-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "d3b521cd1c61",
+      "target_hash": "182ed7996058"
+    },
+    "cache-aware-routing.figcaption-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "7721bb0a3fe0",
+      "target_hash": "585be13597ef"
+    },
+    "cache-aware-routing.img-1.alt": {
+      "part": "cache-aware-routing",
+      "source_hash": "f1bc7fbd6399",
+      "target_hash": "bc220f999bee"
+    },
+    "cache-aware-routing.span-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "afd07a294687",
+      "target_hash": "de50fdb9c9a8"
+    },
+    "cache-aware-routing.span-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "aeb0dd495f94",
+      "target_hash": "7396a2343e48"
+    },
+    "cache-aware-routing.figcaption-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "c5c62f4909c8",
+      "target_hash": "7e4387f3734c"
+    },
+    "cache-aware-routing.p-7": {
+      "part": "cache-aware-routing",
+      "source_hash": "36247db6bebb",
+      "target_hash": "cb1964b8db00"
+    },
+    "cache-aware-routing.img-2.alt": {
+      "part": "cache-aware-routing",
+      "source_hash": "a40bcea9f2f2",
+      "target_hash": "855f00160d24"
+    },
+    "cache-aware-routing.span-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "30f9cc329d1b",
+      "target_hash": "f81f6c3726a0"
+    },
+    "cache-aware-routing.figcaption-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "8b698966274e",
+      "target_hash": "01968688f65b"
+    },
+    "cache-aware-routing.p-8": {
+      "part": "cache-aware-routing",
+      "source_hash": "f55143f36cbe",
+      "target_hash": "53149faef5e9"
+    },
+    "api-keys.meta.title": {
+      "part": "api-keys",
+      "source_hash": "36d31214a489",
+      "target_hash": "e04903a0cddc"
+    },
+    "api-keys.meta.description": {
+      "part": "api-keys",
+      "source_hash": "dc32185af3f0",
+      "target_hash": "573f73614916"
+    },
+    "api-keys.keys.h1-1": {
+      "part": "api-keys",
+      "source_hash": "478db02e5440",
+      "target_hash": "514a00fb710b"
+    },
+    "api-keys.p-1": {
+      "part": "api-keys",
+      "source_hash": "128af00fcd92",
+      "target_hash": "ed9777616de1"
+    },
+    "api-keys.p-2": {
+      "part": "api-keys",
+      "source_hash": "24b259f012c7",
+      "target_hash": "b2933a6420b7"
+    },
+    "api-keys.p-3": {
+      "part": "api-keys",
+      "source_hash": "992b035b09f7",
+      "target_hash": "062aa6c4442c"
+    },
+    "api-keys.video-1.aria-label": {
+      "part": "api-keys",
+      "source_hash": "146ed912c7a6",
+      "target_hash": "63b6b4317e57"
+    },
+    "api-keys.figcaption-1": {
+      "part": "api-keys",
+      "source_hash": "389cdbc39b42",
+      "target_hash": "ded53568bcb9"
+    },
+    "api-keys.img-1.alt": {
+      "part": "api-keys",
+      "source_hash": "e3200603dcf6",
+      "target_hash": "d0a3f228e53d"
+    },
+    "api-keys.figcaption-2": {
+      "part": "api-keys",
+      "source_hash": "1a43a2ba1520",
+      "target_hash": "a4755df6a9ce"
+    },
+    "api-keys.leave.h2-1": {
+      "part": "api-keys",
+      "source_hash": "8f28f88090a1",
+      "target_hash": "e7b5af42d279"
+    },
+    "api-keys.p-4": {
+      "part": "api-keys",
+      "source_hash": "18372068885f",
+      "target_hash": "81325f722688"
+    },
+    "api-keys.p-5": {
+      "part": "api-keys",
+      "source_hash": "cfe5bc772213",
+      "target_hash": "41575e4b5773"
+    },
+    "features.meta.title": {
+      "part": "features",
+      "source_hash": "ba96eee84458",
+      "target_hash": "124d6ea8dd71"
+    },
+    "features.meta.description": {
+      "part": "features",
+      "source_hash": "6e9623164c58",
+      "target_hash": "b7a76fda83ab"
+    },
+    "features.small.h1-1": {
+      "part": "features",
+      "source_hash": "32313b57288c",
+      "target_hash": "223325981f5c"
+    },
+    "features.dd-1": {
+      "part": "features",
+      "source_hash": "30b3b2877354",
+      "target_hash": "ed0875e23c9c"
+    },
+    "features.dt-1": {
+      "part": "features",
+      "source_hash": "c0b53878c4d4",
+      "target_hash": "747dd1aed490"
+    },
+    "features.dd-2": {
+      "part": "features",
+      "source_hash": "332151669674",
+      "target_hash": "9e3680c6d9e1"
+    },
+    "features.dt-2": {
+      "part": "features",
+      "source_hash": "3b9fd142bcdf",
+      "target_hash": "b0070fe17eab"
+    },
+    "features.dd-3": {
+      "part": "features",
+      "source_hash": "9d11305af39b",
+      "target_hash": "81b38d47813f"
+    },
+    "features.dt-3": {
+      "part": "features",
+      "source_hash": "db562f172ced",
+      "target_hash": "f1f80cb60d27"
+    },
+    "features.dd-4": {
+      "part": "features",
+      "source_hash": "0e54e933002b",
+      "target_hash": "be36478adb6c"
+    },
+    "features.dt-4": {
+      "part": "features",
+      "source_hash": "afddbc532ecf",
+      "target_hash": "e09b78299a60"
+    },
+    "features.dd-5": {
+      "part": "features",
+      "source_hash": "b61634fa6450",
+      "target_hash": "90e193d80d51"
+    },
+    "features.dt-5": {
+      "part": "features",
+      "source_hash": "bf3c9855201c",
+      "target_hash": "bf0cd4f8de7b"
+    },
+    "features.dd-6": {
+      "part": "features",
+      "source_hash": "8500a2b3792f",
+      "target_hash": "ddaeb87698ff"
+    },
+    "features.dt-6": {
+      "part": "features",
+      "source_hash": "2384f4730652",
+      "target_hash": "70845c4555cb"
+    },
+    "features.dd-7": {
+      "part": "features",
+      "source_hash": "2bc91137abf9",
+      "target_hash": "18a9e29bf32f"
+    },
+    "features.dd-8": {
+      "part": "features",
+      "source_hash": "93a18b286b4e",
+      "target_hash": "76a93cbfe982"
+    },
+    "features.dt-7": {
+      "part": "features",
+      "source_hash": "989e5691fd83",
+      "target_hash": "3aacb0efe2f1"
+    },
+    "features.dd-9": {
+      "part": "features",
+      "source_hash": "7c8ef7303dc3",
+      "target_hash": "1390180b0bf5"
+    },
+    "features.lessons.h2-1": {
+      "part": "features",
+      "source_hash": "b2e61284634a",
+      "target_hash": "9e1e3700713d"
+    },
+    "features.h3-1": {
+      "part": "features",
+      "source_hash": "a3c2a4abe3bf",
+      "target_hash": "0f9ef0234b8a"
+    },
+    "features.p-1": {
+      "part": "features",
+      "source_hash": "8d323d1c089b",
+      "target_hash": "cf3a1292b199"
+    },
+    "features.img-1.alt": {
+      "part": "features",
+      "source_hash": "a4f74c626a7f",
+      "target_hash": "885cb331b471"
+    },
+    "features.span-1": {
+      "part": "features",
+      "source_hash": "e1d7e982a29c",
+      "target_hash": "ea7f90601786"
+    },
+    "features.figcaption-1": {
+      "part": "features",
+      "source_hash": "40a242621e22",
+      "target_hash": "8318603bd142"
+    },
+    "features.h3-2": {
+      "part": "features",
+      "source_hash": "69140856abf8",
+      "target_hash": "5a7c32d48544"
+    },
+    "features.p-2": {
+      "part": "features",
+      "source_hash": "cceedae9466e",
+      "target_hash": "e86aae526142"
+    },
+    "features.img-2.alt": {
+      "part": "features",
+      "source_hash": "e3cc9ae4cf3b",
+      "target_hash": "59ee817ab457"
+    },
+    "features.figcaption-2": {
+      "part": "features",
+      "source_hash": "981fef031d3d",
+      "target_hash": "c6be435de41b"
+    },
+    "features.h3-3": {
+      "part": "features",
+      "source_hash": "2269d7489768",
+      "target_hash": "239581a204ba"
+    },
+    "features.p-3": {
+      "part": "features",
+      "source_hash": "a34f00101361",
+      "target_hash": "8c3f7039ce7c"
+    },
+    "features.th-1": {
+      "part": "features",
+      "source_hash": "5e2c614c23f0",
+      "target_hash": "681561437fc5"
+    },
+    "features.th-2": {
+      "part": "features",
+      "source_hash": "ea5522c7c85e",
+      "target_hash": "becec9fffb18"
+    },
+    "features.th-3": {
+      "part": "features",
+      "source_hash": "9bebcd3482a7",
+      "target_hash": "e94f7385a832"
+    },
+    "features.col-works.data-h": {
+      "part": "features",
+      "source_hash": "2b4c8c6d38db",
+      "target_hash": "1c64067a1494"
+    },
+    "features.td-1": {
+      "part": "features",
+      "source_hash": "4516d9c167db",
+      "target_hash": "44589af2dd25"
+    },
+    "features.col-does-not.data-h": {
+      "part": "features",
+      "source_hash": "73a6fc7836b8",
+      "target_hash": "4aa2493f5f6c"
+    },
+    "features.td-2": {
+      "part": "features",
+      "source_hash": "6b644f502c34",
+      "target_hash": "2d540e0282a5"
+    },
+    "features.th-4": {
+      "part": "features",
+      "source_hash": "c2f2a5cd5d41",
+      "target_hash": "fff6e59328db"
+    },
+    "features.td-3": {
+      "part": "features",
+      "source_hash": "baa3aea88f30",
+      "target_hash": "7d5cd3694c82"
+    },
+    "features.td-4": {
+      "part": "features",
+      "source_hash": "1ce2fc0f7104",
+      "target_hash": "e751ecc36d1e"
+    },
+    "features.th-5": {
+      "part": "features",
+      "source_hash": "3bc589f1752e",
+      "target_hash": "ae8964b9e0b8"
+    },
+    "features.td-5": {
+      "part": "features",
+      "source_hash": "6fed9ca4f3d2",
+      "target_hash": "cf48f757ae3f"
+    },
+    "features.td-6": {
+      "part": "features",
+      "source_hash": "296d7ad75ac3",
+      "target_hash": "3b787a176557"
+    },
+    "features.p-4": {
+      "part": "features",
+      "source_hash": "d5f7cb24d2cc",
+      "target_hash": "8bdfff6a21ae"
+    },
+    "features.p-5": {
+      "part": "features",
+      "source_hash": "4c5ddc0960f7",
+      "target_hash": "a24783a418f6"
+    },
+    "faq.meta.title": {
+      "part": "faq",
+      "source_hash": "fb9dd5739289",
+      "target_hash": "feafbb89c7e1"
+    },
+    "faq.meta.description": {
+      "part": "faq",
+      "source_hash": "4c424d1bb872",
+      "target_hash": "e23867b23a94"
+    },
+    "faq.faq.h1-1": {
+      "part": "faq",
+      "source_hash": "b14e49a87fdf",
+      "target_hash": "89edce550471"
+    },
+    "faq.q-1": {
+      "part": "faq",
+      "source_hash": "37148ce83843",
+      "target_hash": "3b9e8d867b1f"
+    },
+    "faq.a-1": {
+      "part": "faq",
+      "source_hash": "5098435c4cfe",
+      "target_hash": "791f53c04b63"
+    },
+    "faq.q-2": {
+      "part": "faq",
+      "source_hash": "fd575095e092",
+      "target_hash": "e0e61dfededc"
+    },
+    "faq.a-2": {
+      "part": "faq",
+      "source_hash": "af7c57748da9",
+      "target_hash": "b65c15d35963"
+    },
+    "faq.q-3": {
+      "part": "faq",
+      "source_hash": "07d287af578c",
+      "target_hash": "25539a6e084c"
+    },
+    "faq.a-3": {
+      "part": "faq",
+      "source_hash": "6aa388b69fbe",
+      "target_hash": "db1ef2baaea5"
+    },
+    "faq.q-4": {
+      "part": "faq",
+      "source_hash": "3cb57cff1faf",
+      "target_hash": "108918ab1bea"
+    },
+    "faq.a-4": {
+      "part": "faq",
+      "source_hash": "680fb986650c",
+      "target_hash": "ac0b905cdff8"
+    },
+    "faq.q-5": {
+      "part": "faq",
+      "source_hash": "0e5c302159a3",
+      "target_hash": "2b0797dd2086"
+    },
+    "faq.a-5": {
+      "part": "faq",
+      "source_hash": "36a441a68717",
+      "target_hash": "2a58fb0e811f"
+    },
+    "faq.q-6": {
+      "part": "faq",
+      "source_hash": "af507f756ef8",
+      "target_hash": "7b592d00145f"
+    },
+    "faq.a-6": {
+      "part": "faq",
+      "source_hash": "71d96023e2e8",
+      "target_hash": "137a4b4fcd3d"
+    },
+    "faq.q-7": {
+      "part": "faq",
+      "source_hash": "2e943e3c5431",
+      "target_hash": "3701bcb3f4d0"
+    },
+    "faq.a-7": {
+      "part": "faq",
+      "source_hash": "728ba07e9c96",
+      "target_hash": "bfbd686d2c1e"
+    },
+    "faq.q-8": {
+      "part": "faq",
+      "source_hash": "5cba7fae2cca",
+      "target_hash": "10443b5b36a1"
+    },
+    "faq.a-8": {
+      "part": "faq",
+      "source_hash": "f047e1060aa4",
+      "target_hash": "aab24f549dd0"
+    },
+    "faq.q-9": {
+      "part": "faq",
+      "source_hash": "138d847537f5",
+      "target_hash": "4af616b8cad6"
+    },
+    "faq.a-9": {
+      "part": "faq",
+      "source_hash": "37fb94868ccc",
+      "target_hash": "e377f8f1fc00"
+    },
+    "faq.q-10": {
+      "part": "faq",
+      "source_hash": "300a4b4adf9a",
+      "target_hash": "267a116503d7"
+    },
+    "faq.a-10": {
+      "part": "faq",
+      "source_hash": "c4ef5c9a9c54",
+      "target_hash": "7a3ae89dbefe"
+    },
+    "faq.q-11": {
+      "part": "faq",
+      "source_hash": "889f53a02753",
+      "target_hash": "de4ad7fea7e3"
+    },
+    "faq.a-11": {
+      "part": "faq",
+      "source_hash": "f7c42330b71d",
+      "target_hash": "07c0cc44152d"
+    },
+    "faq.q-12": {
+      "part": "faq",
+      "source_hash": "e8dc9deba44c",
+      "target_hash": "12ecfa4c3a3a"
+    },
+    "faq.a-12": {
+      "part": "faq",
+      "source_hash": "97000d243331",
+      "target_hash": "0a2d4d8436d5"
+    },
+    "faq.p-1": {
+      "part": "faq",
+      "source_hash": "8e86209820fa",
+      "target_hash": "3e5bf70740bf"
+    },
+    "privacy.meta.title": {
+      "part": "privacy",
+      "source_hash": "ec9b140b1cc8",
+      "target_hash": "529d059c1d42"
+    },
+    "privacy.meta.description": {
+      "part": "privacy",
+      "source_hash": "de30b21dbdc3",
+      "target_hash": "30acbceac20f"
+    },
+    "privacy.ads": {
+      "part": "privacy",
+      "source_hash": "9b2a078e8838",
+      "target_hash": "3a18c0cef8f7"
+    },
+    "privacy.contact-official": {
+      "part": "privacy",
+      "source_hash": "eebc1d21c39b",
+      "target_hash": "00c54d075892"
+    },
+    "privacy.contact-operator": {
+      "part": "privacy",
+      "source_hash": "914390fc9adc",
+      "target_hash": "9648984683e3"
+    },
+    "privacy.privacy.h1-1": {
+      "part": "privacy",
+      "source_hash": "f940c0a0e353",
+      "target_hash": "f3860fce9ea7"
+    },
+    "privacy.p-1": {
+      "part": "privacy",
+      "source_hash": "b3509e8a2750",
+      "target_hash": "d2f22dccecd6"
+    },
+    "privacy.h2-1": {
+      "part": "privacy",
+      "source_hash": "dd9acabe8622",
+      "target_hash": "41f294349217"
+    },
+    "privacy.p-2": {
+      "part": "privacy",
+      "source_hash": "8de08e36eb6d",
+      "target_hash": "595c36a6c16d"
+    },
+    "privacy.h2-2": {
+      "part": "privacy",
+      "source_hash": "910b22425fed",
+      "target_hash": "82a67d4b4a07"
+    },
+    "privacy.p-3": {
+      "part": "privacy",
+      "source_hash": "9405f2778a61",
+      "target_hash": "2a481e86f041"
+    },
+    "privacy.h2-3": {
+      "part": "privacy",
+      "source_hash": "3aa95e4c746f",
+      "target_hash": "c99044c4ace3"
+    },
+    "privacy.p-4": {
+      "part": "privacy",
+      "source_hash": "319e165f9018",
+      "target_hash": "a6372d00af44"
+    },
+    "privacy.h2-4": {
+      "part": "privacy",
+      "source_hash": "795028f063d5",
+      "target_hash": "e44245834f8f"
+    },
+    "privacy.p-5": {
+      "part": "privacy",
+      "source_hash": "112b969b0be0",
+      "target_hash": "5b74878d38ef"
+    },
+    "privacy.p-6": {
+      "part": "privacy",
+      "source_hash": "0d38cc82e109",
+      "target_hash": "cbac78f2559e"
+    },
+    "not-found.meta.title": {
+      "part": "not-found",
+      "source_hash": "9997b967a0f9",
+      "target_hash": "8a4f5d19ce90"
+    },
+    "not-found.meta.description": {
+      "part": "not-found",
+      "source_hash": "f56b56b08c51",
+      "target_hash": "f4d6d26c5b28"
+    },
+    "not-found.nf.h1-1": {
+      "part": "not-found",
+      "source_hash": "0a4c2fc34b17",
+      "target_hash": "003222d80407"
+    },
+    "not-found.p-1": {
+      "part": "not-found",
+      "source_hash": "701d00dd6585",
+      "target_hash": "7378e673197a"
+    }
+  },
+  "back_notes": {
+    "chrome.copy.done": "\"कॉपी हो गया\" mixes gender/agreement colloquially (should be \"हो गई\" for a feminine noun is not at issue; reads fine but casual).",
+    "chrome.docs.full": "Both \"दस्तावेज़\" and the short form \"डॉक्स\" exist; \"दस्तावेज़\" repeated for full/aria.",
+    "home.hero.span-2": "\"न अकाउंट, न टेलीमेट्री\" is idiomatic but terse; fine.",
+    "home.p-mac.li-5": "A very long single sentence with nested relative clauses.",
+    "home.why.h2-1": "\"हर एक का हल कैसा दिखता है\" reads naturally but is slightly colloquial.",
+    "home.why-cache.figcaption-1": "The parenthetical gloss for 'prefill' ('its prompt is read in the cache') reads oddly / is imprecise in Hindi; 'वहाँ' and 'जिस रेप्लिका पर' sentence is also clumsy.",
+    "home.hardware.img-2.alt": "\"Gen 3 तक\" after \"Link Gen 1\" is clipped.",
+    "home.open-source.p-2": "The sentence is an extended noun phrase without a verb in the first part.",
+    "common.in-words": "\"शब्दों में:\" is a literal label for text description.",
+    "clients.claude-code.req.relay_key": "\"(May relay)\" left untranslated in Hindi text.",
+    "clients.anthropic-sdk.req.relay_key": "\"(May relay)\" left untranslated in Hindi text.",
+    "clients.grok-cli.mode.community.desc": "\"जैसे vLLM उन्हें स्ट्रीम करता है\" is loosely connected.",
+    "agent-tuning.meta.description": "\"फ़्लैग\" (flags) differs from parameters.",
+    "gpu-monitoring.img-2.alt": "\"रेत-घड़ी बैज\" is a literal compound for hourglass.",
+    "cache-aware-routing.dd-5": "\"यह रिलीज़\" (this release) is a bare fragment without context.",
+    "features.h3-1": "\"प्रॉक्सी उसे अनुरोध भेजती रही\" uses feminine for proxy; fine, but ambiguous with \"agent\".",
+    "features.td-6": "Table cell is a bare noun phrase, no verb.",
+    "faq.a-4": "Quoted English flag \"May relay to Anthropic\" left untranslated.",
+    "faq.a-5": "\"पास-थ्रू हुए अनुरोध की कोई भी चीज़\" is vague.",
+    "faq.a-6": "\"बिना बदलाव के चलते हैं\" / \"मंकीपैचिंग\" transliterated jargon.",
+    "faq.a-7": "Quoted English flag untranslated; \"जिसकी जगह ... <code>docker load</code> लेता है\" is a long relative clause."
+  },
+  "issues": [
+    {
+      "key": "api-keys.p-1",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"usage\" rendered as \"उसने कितना ख़र्च किया\" (how much it spent) — implies money; now \"कितना उपयोग किया\"",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.figcaption-2",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] division \"X over Y\" rendered as bare \"X भाग Y\" — reads as a noun string or \"part\"; now \"X को Y से भाग देकर\"",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.figcaption-4",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] same ambiguous division as home.why-cache.figcaption-2",
+      "round": 1
+    },
+    {
+      "key": "home.p-appliance.li-4",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"no route out\" rendered \"जहाँ से बाहर कोई रास्ता नहीं\" (no way out / no exit); now \"बाहरी इंटरनेट कनेक्शन ही नहीं\"",
+      "round": 1
+    },
+    {
+      "key": "features.dt-4",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"No route out needed\" rendered \"बाहर का रास्ता ज़रूरी नहीं\" (exit not needed)",
+      "round": 1
+    },
+    {
+      "key": "home.why-stats.p-1",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"flat utilisation with a queue\" literal and opaque; plus case error \"कम कैश हिस्सा का\"",
+      "round": 1
+    },
+    {
+      "key": "home.hero.h1-1",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"सर्व किए हुए\" reads as food being served; hero rewritten \"अपने GPU को होस्टेड API की तरह इस्तेमाल करें\"",
+      "round": 1
+    },
+    {
+      "key": "home.agents.p-1",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"दस हार्नेस\" jargon; readers do not know these are client tools",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.ol-1.aria-label",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"प्राथमिकता सीढ़ी\" calque of ladder (owner-rejected pattern)",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.p-3",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"उदाहरण सीढ़ी\" calque; \"ग्रेस विंडो\" vs \"ग्रेस अवधि\" elsewhere",
+      "round": 1
+    },
+    {
+      "key": "home.flow-d.desc-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"उसी मॉडल के रूप में जवाब पाते हैं\" unclear whose name is used",
+      "round": 1
+    },
+    {
+      "key": "home.flow-d2.desc-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] same as home.flow-d.desc-1",
+      "round": 1
+    },
+    {
+      "key": "faq.a-2",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"MLX और llama.cpp के Metal बिल्ड\" made MLX a Metal build too; EN: MLX and a Metal build of llama.cpp; also मेन्यू-बार spelling",
+      "round": 1
+    },
+    {
+      "key": "privacy.p-2",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] three actions listed as two (\"GitHub या PodWarden के लिंक पर जाना\")",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.li-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"Survey and shortlist\" rendered \"जाँच और छँटाई\" (check and sort)",
+      "round": 1
+    },
+    {
+      "key": "agent-tuning.h3-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"shortlist\" rendered as sorting",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-4",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] comparatives lost: \"tail still shorter / median longer\" became absolute \"छोटी/लंबा\"; \"समझौता\" for trade-off",
+      "round": 1
+    },
+    {
+      "key": "coding-agents.p-3",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"Missing a client?\" rendered \"आपका क्लाइंट नहीं है?\" (you have no client?)",
+      "round": 1
+    },
+    {
+      "key": "api-keys.p-4",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"read the diff backwards\" rendered \"उल्टा पढ़ें\" (read upside down); \"एक GET की दूरी पर\" calque",
+      "round": 1
+    },
+    {
+      "key": "home.p-appliance.li-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] verb agreed with ड्राइव (feminine) then Linux (masc.); stripped-down rendered छोटा, हल्का",
+      "round": 1
+    },
+    {
+      "key": "home.p-linux.li-4",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"which you would run it on\" rendered as future \"चलाएँगे\"; \"आज NVIDIA\" fragment",
+      "round": 1
+    },
+    {
+      "key": "home.p-win.li-3",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] same \"would run\" → future",
+      "round": 1
+    },
+    {
+      "key": "clients.claude-code.capability",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"that would replace your login\" rendered \"लॉगिन बदल जाएगा\" (login will change); \"सर्व किए गए\"",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.p-4",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"as negotiated right now\" rendered \"अभी तय हुआ\" (just settled)",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.p-2",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"dead engine under a live wrapper\" rendered figuratively \"ज़िंदा रैपर के नीचे बंद पड़ा इंजन\"",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.figcaption-4",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"It is the card, not a result\" terse/opaque; clarified as a sample of the card, not a benchmark result",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.figcaption-5",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] same as home.why-cache.figcaption-4; scroll hint calque",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.span-4",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"a rule went to Anthropic\" — the request goes, not the rule",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.figcaption-3",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] same rule/request confusion; scroll hint calque",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.figcaption-2",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] odd tense \"जब warden 13:38 से चल रहा था\"; कैच-ऑल; scroll hint calque",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.p-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"verdict\" rendered \"फ़ैसला मिलता है\"",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.p-9",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"narrow PCIe slot\" calque संकरे; \"नाम लेकर बताता है\"",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-10",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"संकरे PCIe लिंक\" calque; latin x for ×",
+      "round": 1
+    },
+    {
+      "key": "home.hero.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"उनके आगे एक … पोर्ट रखता है\" calque of \"puts a port in front\" (term kept पोर्ट where EN says port)",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-9",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"हार्डवेयर, ईमानदारी से\" calque of honestly",
+      "round": 1
+    },
+    {
+      "key": "home.hw.h2-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"हार्डवेयर, ईमानदारी से\" calque of honestly",
+      "round": 1
+    },
+    {
+      "key": "home.p-win.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"दो ईमानदार विकल्प\" calque",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.h3-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"रैंप\" transliteration meaningless to Hindi readers",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.img-1.alt",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"पिल\" (pill = medicine) for UI pills; now लेबल",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.img-1.alt",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"पिल\" for UI pills",
+      "round": 1
+    },
+    {
+      "key": "meta.og-image-alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"आपकी डेस्क के नीचे\" — \"under your desk\" का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.hero.span-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"Apple सिलिकॉन\" और बाकी जगह \"Apple silicon\" — असंगत।",
+      "round": 1
+    },
+    {
+      "key": "home.install.b-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"Apple सिलिकॉन\" और बाकी जगह \"Apple silicon\" — असंगत।",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-9",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"हर कुंजी का अलग उपयोग वाली\" — कारक/लिंग गड़बड़।",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-10",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] गुणा-चिह्न के लिए लैटिन \"x\"; \"×\" लिखें।",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-10",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"संकरे PCIe लिंक\" — \"narrow link\" का शाब्दिक अनुवाद; आशय कम लिंक-चौड़ाई है।",
+      "round": 1
+    },
+    {
+      "key": "home.hero.h1-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"आपके GPU, होस्टेड API की तरह सर्व किए हुए\" — अंग्रेज़ी ढाँचे का अनुवाद; \"सर्व किए हुए\" खाना परोसने जैसा पढ़ा जाता है।",
+      "round": 1
+    },
+    {
+      "key": "home.hero.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"उनके आगे एक … पोर्ट रखता है\" — \"puts a port in front\" का शाब्दिक अनुवाद; साथ ही बाकी जगह \"एंडपॉइंट\" है।",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] वाक्य अधूरा: \"या इंतज़ार?\"",
+      "round": 1
+    },
+    {
+      "key": "home.why-stats.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] वाक्य अधूरा: \"या इंतज़ार?\"",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] अंग्रेज़ी संज्ञा-वाक्यांश का शब्दशः अनुवाद, शीर्षक में क्रिया नहीं।",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-9",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"हार्डवेयर, ईमानदारी से\" — \"honestly\" का शाब्दिक अनुवाद; हार्डवेयर के साथ बेतुका।",
+      "round": 1
+    },
+    {
+      "key": "home.hw.h2-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"हार्डवेयर, ईमानदारी से\" — शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.p-9",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"संकरे PCIe स्लॉट\" — \"narrow\" का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"कौन-सा स्लॉट संकरा है\" — शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-10",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"एक USB ड्राइव, एक चेसिस, एक ही काम\" — अंग्रेज़ी सूची-शैली का शब्दशः अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.p-linux.li-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"आज NVIDIA।\" — टेलीग्राफ़िक शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.p-win.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"दो ईमानदार विकल्प\" — \"honest options\" का शाब्दिक अनुवाद; अर्थहीन।",
+      "round": 1
+    },
+    {
+      "key": "home.p-appliance.li-4",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"जहाँ से बाहर कोई रास्ता नहीं\" — \"no egress\" को \"निकलने का रास्ता नहीं\" बना दिया; अर्थ बदल गया।",
+      "round": 1
+    },
+    {
+      "key": "features.dt-4",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"बाहर का रास्ता ज़रूरी नहीं\" — \"No egress needed\" का शाब्दिक अनुवाद; \"निकास\" जैसा पढ़ा जाता है।",
+      "round": 1
+    },
+    {
+      "key": "home.upgrade.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"आगे माइग्रेट हो जाता है\" — \"migrates forward\" का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.why.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"उसके आसपास के हिस्से\" — \"the pieces around it\" का अस्पष्ट शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.why-fit.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"बजट जुड़ता जाता है\" — \"budget\" का शाब्दिक अनुवाद; जुड़ती है उपलब्ध VRAM।",
+      "round": 1
+    },
+    {
+      "key": "home.why-stats.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"क़तार के साथ सपाट उपयोग\" — \"flat utilisation with a queue\" का शाब्दिक अनुवाद, अर्थ नहीं खुलता; \"कम कैश हिस्सा का\" व्याकरण-दोष; \"कैश्ड और कंप्यूटेड\" अनावश्यक हिंग्लिश।",
+      "round": 1
+    },
+    {
+      "key": "home.why-stats.img-1.alt",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"कैश्ड और कंप्यूटेड\" — अनावश्यक हिंग्लिश।",
+      "round": 1
+    },
+    {
+      "key": "home.why-god.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"एक सीमित इन-मेमोरी रिंग\" — अधूरा तकनीकी शब्द।",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"सेशन id\" — बाकी जगह \"ID\"।",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.h3-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"रैंप का हर चरण\" — \"ramp\" का शाब्दिक अनुवाद; हिंदी पाठक के लिए अर्थहीन।",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"पक्ष\" (side) और \"गर्म कैश\" — \"arm\"/\"warm cache\" का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"पक्ष\" और \"गर्म कैश\" — शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.figcaption-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"हर पक्ष के एक ही रन\" — \"arm\" का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"हर पक्ष के एक ही रन\" — शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.dd-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"दोनों पक्ष लगातार\" — \"both arms back to back\" का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.img-1.alt",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"पिल\" — UI शब्द \"pill\" का शाब्दिक अनुवाद; हिंदी में \"गोली/दवा\" पढ़ा जाता है।",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.img-1.alt",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"पिल\" — \"pill\" का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.agents.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"दस हार्नेस\" — अंग्रेज़ी जार्गन; पाठक नहीं समझेगा कि ये क्लाइंट/टूल हैं।",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.a-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] अकेला \"हार्नेस\" अस्पष्ट; \"टेस्ट हार्नेस\" लिखें।",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.dd-7",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] अकेला \"हार्नेस\" अस्पष्ट।",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.ol-1.aria-label",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"प्राथमिकता सीढ़ी\" — अंग्रेज़ी \"ladder\" रूपक का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.p-3",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] मालिक के कैलिब्रेशन जैसा ही मामला: \"उदाहरण सीढ़ी\" उधार लिया रूपक, \"संख्याएँ आप चुनते हैं\" रूखा; \"ग्रेस विंडो\" बाकी जगह \"ग्रेस अवधि\"।",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"डेस्क के नीचे\" — \"under your desk\" का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.figcaption-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"रेंज के ऊपरी सिरे पर\" — शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "home.oss.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"खुले में बनाया गया\" — \"built in the open\" का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "chrome.footer.about",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"PodWarden के पीछे वाली टीम\" — \"the team behind\" का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "clients.opencode.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] क्रिया-रहित टुकड़ा; \"सर्व किया हुआ मॉडल\" अटपटा (परोसा हुआ)।",
+      "round": 1
+    },
+    {
+      "key": "clients.codex-cli.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] क्रिया-रहित टुकड़ा; \"सर्व किया हुआ मॉडल\" अटपटा।",
+      "round": 1
+    },
+    {
+      "key": "clients.continue.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] क्रिया-रहित टुकड़ा; \"सर्व किया हुआ मॉडल\" अटपटा।",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"उन्हें उन कार्ड पर जवाब दें\" — व्याकरण/अर्थ गड़बड़ (आप कार्ड पर जवाब नहीं देते)।",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"पहला मेल जीतता है\" — \"first match wins\" का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.span-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"पहला मेल जीतता है\" — शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.span-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"कोई नियम Anthropic को क्यों गया\" — नियम नहीं, अनुरोध जाता है।",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.figcaption-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"जिनसे कोई नियम Anthropic को गया\" — नियम नहीं, अनुरोध जाता है।",
+      "round": 1
+    },
+    {
+      "key": "api-keys.leave.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"छोड़ना बस एक base_url बदलाव है\" — अंग्रेज़ी वाक्य-संरचना।",
+      "round": 1
+    },
+    {
+      "key": "api-keys.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"एक GET की दूरी पर है\" — \"one GET away\" का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "features.dd-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"कुकी जार\" — अंग्रेज़ी जार्गन का शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "features.dd-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"पूरा ट्रांसपोर्ट हैं\" — शाब्दिक अनुवाद।",
+      "round": 1
+    },
+    {
+      "key": "features.dd-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"प्रॉम्प्ट और जवाब होते समय देखें\" — अटपटा।",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"इस पेज के रीडिंग\" — लिंग-दोष।",
+      "round": 1
+    },
+    {
+      "key": "faq.a-12",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"Apache-2.0 के तहत लाइसेंस है\" — व्याकरण अधूरा।",
+      "round": 1
+    },
+    {
+      "key": "faq.a-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] macOS मेनू पथ अंग्रेज़ी में, जबकि Mac सेक्शन में \"गोपनीयता और सुरक्षा\"; \"मेन्यू-बार\" बनाम बाकी जगह \"मेनू-बार\"।",
+      "round": 1
+    },
+    {
+      "key": "agent-tuning.li-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"अभी इससे सीमित स्कोप नहीं हैं\" — अधूरा वाक्य।",
+      "round": 1
+    },
+    {
+      "key": "home.agents.span-8",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"22 अस्वीकार हुए जब लक्ष्य मॉडल लोड नहीं था\" — अंग्रेज़ी उपवाक्य-क्रम।",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.img-2.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"कैश्ड, मापा गया, नीले रंग में और कंप्यूटेड…\" — अल्पविराम-शृंखला उलझी हुई।",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.li-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"एजेंट के आकलन से सही होना\" — अटपटा।",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"बगल में स्क्रॉल करें\" — \"scroll sideways\" का शाब्दिक अनुवाद; हिंदी UI में \"दाएँ-बाएँ स्क्रॉल करें\"।",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.figcaption-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"बगल में स्क्रॉल करें\" — \"scroll sideways\" का शाब्दिक अनुवाद; हिंदी UI में \"दाएँ-बाएँ स्क्रॉल करें\"।",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"बगल में स्क्रॉल करें\" — \"scroll sideways\" का शाब्दिक अनुवाद; हिंदी UI में \"दाएँ-बाएँ स्क्रॉल करें\"।",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"बगल में स्क्रॉल करें\" — \"scroll sideways\" का शाब्दिक अनुवाद; हिंदी UI में \"दाएँ-बाएँ स्क्रॉल करें\"।",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.figcaption-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"बगल में स्क्रॉल करें\" — \"scroll sideways\" का शाब्दिक अनुवाद; हिंदी UI में \"दाएँ-बाएँ स्क्रॉल करें\"।",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.figcaption-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"बगल में स्क्रॉल करें\" — \"scroll sideways\" का शाब्दिक अनुवाद; हिंदी UI में \"दाएँ-बाएँ स्क्रॉल करें\"।",
+      "round": 1
+    },
+    {
+      "key": "api-keys.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"बगल में स्क्रॉल करें\" — \"scroll sideways\" का शाब्दिक अनुवाद; हिंदी UI में \"दाएँ-बाएँ स्क्रॉल करें\"।",
+      "round": 1
+    },
+    {
+      "key": "features.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"बगल में स्क्रॉल करें\" — \"scroll sideways\" का शाब्दिक अनुवाद; हिंदी UI में \"दाएँ-बाएँ स्क्रॉल करें\"।",
+      "round": 1
+    },
+    {
+      "key": "coding-agents.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] वाक्य के अंत में लटकता अंग्रेज़ी-शैली का टुकड़ा \", हर GPU पर मॉडल की एक कॉपी।\"",
+      "round": 1
+    },
+    {
+      "key": "clients.anthropic-sdk.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] वाक्य के अंत में लटकता अंग्रेज़ी-शैली का टुकड़ा \", हर GPU पर मॉडल की एक कॉपी।\"",
+      "round": 1
+    },
+    {
+      "key": "clients.opencode.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] वाक्य के अंत में लटकता अंग्रेज़ी-शैली का टुकड़ा \", हर GPU पर मॉडल की एक कॉपी।\"",
+      "round": 1
+    },
+    {
+      "key": "clients.aider.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] वाक्य के अंत में लटकता अंग्रेज़ी-शैली का टुकड़ा \", हर GPU पर मॉडल की एक कॉपी।\"",
+      "round": 1
+    },
+    {
+      "key": "clients.grok-cli.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] वाक्य के अंत में लटकता अंग्रेज़ी-शैली का टुकड़ा \", हर GPU पर मॉडल की एक कॉपी।\"",
+      "round": 1
+    },
+    {
+      "key": "clients.openai-sdk.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] वाक्य के अंत में लटकता अंग्रेज़ी-शैली का टुकड़ा \", हर GPU पर मॉडल की एक कॉपी।\"",
+      "round": 1
+    },
+    {
+      "key": "clients.continue.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] वाक्य के अंत में लटकता अंग्रेज़ी-शैली का टुकड़ा \", हर GPU पर मॉडल की एक कॉपी।\"",
+      "round": 1
+    },
+    {
+      "key": "clients.cline.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] वाक्य के अंत में लटकता अंग्रेज़ी-शैली का टुकड़ा \", हर GPU पर मॉडल की एक कॉपी।\"",
+      "round": 1
+    },
+    {
+      "key": "clients.cursor.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] वाक्य के अंत में लटकता अंग्रेज़ी-शैली का टुकड़ा \", हर GPU पर मॉडल की एक कॉपी।\"",
+      "round": 1
+    },
+    {
+      "key": "clients.codex-cli.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] वाक्य के अंत में लटकता अंग्रेज़ी-शैली का टुकड़ा \", हर GPU पर मॉडल की एक कॉपी।\"",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] The final participle phrase \"आपके लिए कॉन्फ़िगर किए हुए\" dangles after a long list.",
+      "round": 1
+    },
+    {
+      "key": "chrome.nav.aria-label",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"मुख्य\" (Main) alone is a bare adjective with no noun.",
+      "round": 1
+    },
+    {
+      "key": "chrome.nav.plat-win",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"Windows (अगला)\" (\"Windows (next)\") is terse and unclear as a status label.",
+      "round": 1
+    },
+    {
+      "key": "home.hero.span-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "home.install.span-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"अगला\" alone as a status badge is ambiguous.",
+      "round": 1
+    },
+    {
+      "key": "home.install.span-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "home.p-mac.li-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"साफ़-साफ़ कहें तो बीटा:\" is a colloquial lead-in; \"अपडेट के लिए नया डाउनलोड करना होता है\" ok.",
+      "round": 1
+    },
+    {
+      "key": "home.p-mac.li-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "home.p-mac.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "home.p-win.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "home.p-appliance.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"जिसे और कुछ नहीं करना है\" (which has nothing else to do) personifies the machine.",
+      "round": 1
+    },
+    {
+      "key": "home.p-appliance.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"आपकी अपनी सेट की हुई होस्ट\" uses feminine \"होस्ट\" for a masculine-usage loanword, and is awkward.",
+      "round": 1
+    },
+    {
+      "key": "home.why-chat.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"मॉडल जो टूल कॉल करता है वे दिखाई जाती हैं\" has a plural/gender mismatch with \"टूल कॉल\"; very long semicolon chain.",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"जिस भी रेप्लिका को वह मिला\" is awkward (\"whichever replica it got\").",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"हमने जो भी चरण चलाए, हर चरण में\" is repetitive.",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"जानबूझकर डाला गया ओवरलोड\" and \"हमने इसकी वजह अलग से नहीं पहचानी है\" (separately identified) are awkward; \"धीमी टेल\" is jargon.",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.p-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"रेप्लिका, और इसलिए यह रूटिंग, ... हिस्सा हैं\" is an odd inference (\"and therefore this routing\"); \"टेंसर या डेटा पैरेललिज़्म\" is a clumsy transliteration.",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] Very long sentence chain; \"जिसने आम तौर पर वह बातचीत कभी नहीं देखी होती\" is a tangled relative clause.",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"हमने इसका कारण अलग से नहीं पकड़ा है\" is an odd idiom; \"हर रेप्लिका संतृप्त है\" uses a formal word for saturated.",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"ख़ाली बैठी रहीं\" (sat empty) and \"वर्किंग सेट ... समा जाएँ\" are colloquial; \"मोटा नियम\" (rough rule) is informal.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.p-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"बिना किसी ऐसे कारण के धीमा जिसे warden देख सके\" is convoluted; \"pi\" is an unexplained tool name; \"उसके लिए बताया जाता है कि वह शायद क्यों रुका है\" is impersonal passive.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.span-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"नहीं दिखाया\" is a bare fragment (\"not shown\").",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.cards.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"जो आँकड़ा यह माप नहीं सकता\" with the quoted English \"not reported\" left untranslated.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"उन्हें मापने का मक़सद यही है\" is a literal rendering.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.td-11",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"टोकन के बीच की लेटेंसी और अवधि, ... मापी गई\" -- agreement of the final participle is unclear.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.th-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"24 h व्यस्त मीडियन\" is clipped.",
+      "round": 1
+    },
+    {
+      "key": "clients.claude-code.mode.local.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"ऑथ टोकन\" is a clipped transliteration of \"auth token\".",
+      "round": 1
+    },
+    {
+      "key": "clients.anthropic-sdk.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "clients.anthropic-sdk.mode.local.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "clients.opencode.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"जिसे यह warden सिर्फ़ Codex CLI के लिए अनुवादित करता है\" uses \"अनुवादित\" (translated) for a protocol conversion.",
+      "round": 1
+    },
+    {
+      "key": "clients.aider.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] Fragment with no verb (\"Aider ... एक सर्व किए गए मॉडल पर।\").",
+      "round": 1
+    },
+    {
+      "key": "clients.openai-sdk.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"Chat Completions और Completions सर्व किए जाते हैं\" uses transliterated \"सर्व\" for \"served\".",
+      "round": 1
+    },
+    {
+      "key": "clients.cursor.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] Fragment; \"चैट के लिए\" attaches loosely.",
+      "round": 1
+    },
+    {
+      "key": "clients.cursor.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"यह Cursor स्टाफ़ के फ़ोरम जवाबों से पता है\" is unusually candid for product copy.",
+      "round": 1
+    },
+    {
+      "key": "clients.codex-cli.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"Codex सिर्फ़ Responses API समझता है\" and \"अनुवादित करता है\" for protocol conversion are stilted.",
+      "round": 1
+    },
+    {
+      "key": "clients.cline.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"उसकी सेटिंग्स स्क्रीन से भरा हुआ\" is a participial fragment.",
+      "round": 1
+    },
+    {
+      "key": "clients.grok-cli.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"अपनी-कुंजी-लाएँ\" is a hyphenated literal calque of \"bring your own key\".",
+      "round": 1
+    },
+    {
+      "key": "clients.grok-cli.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"xAI तक कोई पास-थ्रू नहीं है\" is clipped.",
+      "round": 1
+    },
+    {
+      "key": "clients.claude-code.req.unknown_model_window",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"अपने-आप कॉम्पैक्ट करता है\" mixes English loanword; \"वह 200k की विंडो मान लेता है\" fine.",
+      "round": 1
+    },
+    {
+      "key": "chrome.footer.tag-note",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "privacy.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"LM Warden से सर्व होती है\" (served from LM Warden) is ambiguous; \"सिर्फ़ वही निजी डेटा छू सकती है\" personifies the website.",
+      "round": 1
+    },
+    {
+      "key": "home.agents.span-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "home.agents.span-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"अपनी कुंजी वाला मॉडल\" is an awkward rendering of bring-your-own-key.",
+      "round": 1
+    },
+    {
+      "key": "home.agents.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"आपके GPU किन Claude मॉडल की जगह जवाब देंगे\" is ambiguous (answer in place of which models).",
+      "round": 1
+    },
+    {
+      "key": "home.agents.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.router.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"जवाब आने की दो जगहें\" (two places of answer-coming) is a clumsy rendering.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] Quoted English flag \"May relay to Anthropic\" left untranslated; \"लॉगिन को कभी छुआ नहीं जाता\" is passive and odd.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"कैच-ऑल यही करता है\" -- transliterated \"catch-all\" is unexplained; \"यह रेखा खिसका देता है\" is metaphorical.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] Abrupt imperative; \"चैट के लिए नहीं, Claude Code के लिए तय करें\" is terse.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] Many untranslated English UI strings embedded in Hindi; \"कैच-ऑल\" transliterated.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.span-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"Anthropic तक यूज़र के अपने लॉगिन से पहुँचा जाता है\" is an impersonal passive that is unnatural in Hindi.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"उम्मीद रखें कि पहला टर्न धीमा होगा\" is an unusual lead; \"उनके प्रॉम्प्ट का ज़्यादातर हिस्सा\" uses plural \"उनके\" for a singular antecedent; \"कैश में अभी कुछ नहीं था\" fine.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.img-2.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] The sentence about the \"By rule\" table is a stack of nouns with a verb (\"है\") only at the end, hard to parse.",
+      "round": 1
+    },
+    {
+      "key": "agent-tuning.li-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"कमांड ... के नीचे है\" (the command is below) is a literal rendering of \"in\".",
+      "round": 1
+    },
+    {
+      "key": "features.small.h1-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"इसके चलने के बाद आपको मिलेंगी\" (that you will get after it runs) is slightly odd.",
+      "round": 1
+    },
+    {
+      "key": "features.dd-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"अनाथ फ़ाइलें\" (orphan files) and \"गार्बेज-कलेक्ट\" are literal/transliterated.",
+      "round": 1
+    },
+    {
+      "key": "features.dd-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"इनग्रेस\" transliterated; \"बिना बदलाव के इसके आगे लगता है\" is clumsy.",
+      "round": 1
+    },
+    {
+      "key": "features.dd-8",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"एक warden पर चलाया गया\" -- missing subject.",
+      "round": 1
+    },
+    {
+      "key": "features.h3-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"हिसाब से कम समाता है\" (holds less than the calculation) is idiomatic but cryptic as a heading.",
+      "round": 1
+    },
+    {
+      "key": "features.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"उसकी मेमोरी ख़त्म हो जाती है\" (its memory runs out) has a vague antecedent; \"उसे हेल्थ चेक पर भरोसा करके नहीं\" structure is awkward.",
+      "round": 1
+    },
+    {
+      "key": "features.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "faq.a-9",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"पुराना सीक्रेट\" (old secret) uses a different term from \"कुंजी\"; \"जिसमें पुराना सीक्रेट काम करता रहता है\" is a loose relative clause.",
+      "round": 1
+    },
+    {
+      "key": "faq.a-10",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"हर GPU पर एक लोड किया हुआ मॉडल, यह नियम\" is a comma-spliced fragment.",
+      "round": 1
+    },
+    {
+      "key": "faq.a-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] The answer starts with a noun phrase and lacks a main verb in the first sentence; \"एक ब्राउज़र UI में ... शामिल है\" is awkward.",
+      "round": 1
+    },
+    {
+      "key": "faq.a-11",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] The first sentence is a long noun phrase with no main verb.",
+      "round": 1
+    },
+    {
+      "key": "privacy.h2-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"आपसे पहले कब पूछा जाता है\" is awkward.",
+      "round": 1
+    },
+    {
+      "key": "not-found.nf.h1-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"वह पेज यहाँ नहीं है\" uses a distal \"वह\" (that page) where \"यह\" is expected.",
+      "round": 1
+    },
+    {
+      "key": "not-found.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"हो सकता है यह तब कहीं और चला गया हो जब यह साइट एक पेज से बढ़कर कई पेज की हुई\" is an oddly worded explanation.",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"9 को सबसे पहले, 0 को सबसे आख़िर में\" is stilted in structure.",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"प्राथमिकता ने उसकी जगह ली है\" past-perfect for a present feature.",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.span-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.span-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"खाली समय का इंतज़ार\" is a fragment (\"waiting for free time\").",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"1h, 6h, 24h, 7d की समय-अवधि या कोई भी कस्टम रेंज।\" is a verbless fragment; \"जिन पुरानी कुंजियों से इसे रोटेट किया गया था\" is awkward.",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"रूप\" (form) used for the shape of a mark; \"जो उसके पूरा होने के समय पर रखा गया है, उसकी ऊँचाई ...\" is a tangled relative chain.",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.figcaption-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"कुछ भी लाल नहीं\" is a fragment.",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.img-3.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "common.client.docs",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"({{docs_date}} को पढ़ा गया)\" is a literal calque.",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"उसे GPU में कैसे बाँटें\" has an unclear antecedent for \"उसे\".",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"वह आपके कार्ड पर चलने वाला है\" (\"is the one that runs on your card\") is awkward.",
+      "round": 1
+    },
+    {
+      "key": "home.p-win.li-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "agent-tuning.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "features.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "features.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[back-translation note] \"संकेतों\" (signs) for \"vital signs\" and \"सामान्य समय\" are fine; \"तय घड़ी\" (fixed clock) is figurative.",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.replica.h1-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] calque/awkward phrasing or terminology alignment (सर्व→लोड किया गया/चलता है, बगल में→दाएँ-बाएँ स्क्रॉल, पक्ष→रन, कैश्ड/कंप्यूटेड→कैश से मिले/गणना किए गए, Windows next→तैयारी में/अब Windows की बारी)",
+      "round": 1
+    },
+    {
+      "key": "home.agents.span-8",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "round": 3,
+      "change": "minor wording",
+      "note": "[final review r3, minor wording] The big number home.agents.b-1 already reads '1,981 अनुरोध', so the fragment opening 'अनुरोधों का जवाब…' repeated the noun ('1,981 अनुरोध अनुरोधों…'). Now 'लोकल रूप से निपटाए गए, यानी…'."
+    },
+    {
+      "key": "home.why-cache.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "minor wording",
+      "note": "[final review r3, minor wording] Clumsy 'जिस रेप्लिका पर … वहाँ' sentence and imprecise prefill gloss rewritten: the balancer sends each turn to any replica, which prefills it almost from scratch (prefill = the engine reads the whole prompt into the cache)."
+    },
+    {
+      "key": "faq.a-12",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "minor wording",
+      "note": "[final review r3, minor wording] Blunt opener 'कुछ नहीं।' replaced with 'यह पूरी तरह मुफ़्त है।'."
+    },
+    {
+      "key": "api-keys.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "meaning-changing (clarifies meaning)",
+      "note": "[final review r3, meaning-changing (clarifies meaning)] Ending 'बस यही छोड़ने का तरीक़ा है' was clumsy and obscure. Now: read the diff below in reverse; to leave you just undo those same changes."
+    },
+    {
+      "key": "home.why-cache.figcaption-4",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "meaning-changing (clarifies meaning)",
+      "note": "[final review r3, meaning-changing (clarifies meaning)] 'It is the card, not a result' rendered as 'कार्ड का नमूना' (a sample of the card, ambiguous with GPU card). Now: a screenshot of the console card, not a benchmark result."
+    },
+    {
+      "key": "cache-aware-routing.figcaption-5",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "meaning-changing (clarifies meaning)",
+      "note": "[final review r3, meaning-changing (clarifies meaning)] Same 'It is the card, not a result' fix as home.why-cache.figcaption-4."
+    },
+    {
+      "key": "home.why-keys.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "minor wording",
+      "note": "[final review r3, minor wording] English UI text was unquoted inside Hindi; now quoted as a UI string with “…”."
+    }
+  ]
+}

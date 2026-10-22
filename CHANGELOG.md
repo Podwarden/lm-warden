@@ -7,6 +7,12 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.21.8] — 2026-10-21
+
+### Changed
+
+- **Final translation QA pass for all ten languages, and QA is now required.** A last blind back-translation of every rewritten segment found the remaining rough spots (a few cryptic sentences, UI-panel captions, quoted UI strings), now fixed. Every language has a recorded QA report (`app/landing/i18n/qa/<loc>/`) with zero critical and zero major issues, and the landing tests fail if a published language lacks a passing, current report.
+
 ## [v2026.10.21.7] — 2026-10-21
 
 ### Added

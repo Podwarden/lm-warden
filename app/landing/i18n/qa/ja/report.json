@@ -1,0 +1,4669 @@
+{
+  "locale": "ja",
+  "date": "2026-10-21",
+  "back_model": "claude-sonnet-5-5",
+  "fix_model": "claude-opus-5-5",
+  "published_segments": 666,
+  "covered_segments": 666,
+  "english_words": 14400,
+  "issues_found": {
+    "minor": 135,
+    "major": 26,
+    "critical": 1
+  },
+  "issues_remaining": {
+    "minor": 7,
+    "major": 0,
+    "critical": 0
+  },
+  "mqm_score": 0.49,
+  "max_score": 10.0,
+  "pass": true,
+  "segments": {
+    "meta.title": {
+      "part": "home",
+      "source_hash": "8b40be948ef4",
+      "target_hash": "89b8b64a8db6"
+    },
+    "meta.description": {
+      "part": "home",
+      "source_hash": "6cb271edae46",
+      "target_hash": "41c53f0c915e"
+    },
+    "meta.og-image-alt": {
+      "part": "home",
+      "source_hash": "7f75ba3bcd9d",
+      "target_hash": "0c9197935262"
+    },
+    "jsonld.feature-1": {
+      "part": "home",
+      "source_hash": "615857f542c9",
+      "target_hash": "374cdfd402ec"
+    },
+    "jsonld.feature-2": {
+      "part": "home",
+      "source_hash": "7b06e74713de",
+      "target_hash": "48bc2616d686"
+    },
+    "jsonld.feature-3": {
+      "part": "home",
+      "source_hash": "1f350726cef9",
+      "target_hash": "0a5a77cc5182"
+    },
+    "jsonld.feature-4": {
+      "part": "home",
+      "source_hash": "42d6cdab3fb6",
+      "target_hash": "9b555ee19b70"
+    },
+    "jsonld.feature-5": {
+      "part": "home",
+      "source_hash": "9791836d7920",
+      "target_hash": "a39b92abf3bc"
+    },
+    "jsonld.feature-6": {
+      "part": "home",
+      "source_hash": "b2f04e38f9aa",
+      "target_hash": "aeeb9ac754d9"
+    },
+    "jsonld.feature-7": {
+      "part": "home",
+      "source_hash": "0740507f9225",
+      "target_hash": "c01295f1b5bc"
+    },
+    "jsonld.feature-8": {
+      "part": "home",
+      "source_hash": "301c375d8a2f",
+      "target_hash": "e41c564d0d6e"
+    },
+    "jsonld.feature-9": {
+      "part": "home",
+      "source_hash": "89c7e3de3f80",
+      "target_hash": "a3c75d419092"
+    },
+    "jsonld.feature-10": {
+      "part": "home",
+      "source_hash": "bf6f8b147d8a",
+      "target_hash": "06881b4e3426"
+    },
+    "chrome.copy.done": {
+      "part": "home",
+      "source_hash": "8d525e5f158b",
+      "target_hash": "1ec775aad70e"
+    },
+    "chrome.copy.fail": {
+      "part": "home",
+      "source_hash": "e78ab3a91bf2",
+      "target_hash": "f6fccaf8c0b9"
+    },
+    "chrome.skip": {
+      "part": "home",
+      "source_hash": "ac576a66d456",
+      "target_hash": "a28547de5359"
+    },
+    "chrome.brand.aria-label": {
+      "part": "home",
+      "source_hash": "a007563c384d",
+      "target_hash": "73c58523fcf1"
+    },
+    "chrome.nav.aria-label": {
+      "part": "home",
+      "source_hash": "efe10c80ec8a",
+      "target_hash": "7ebb1903a5df"
+    },
+    "chrome.nav.menu": {
+      "part": "home",
+      "source_hash": "99af6606ff9d",
+      "target_hash": "6f3443ca32a1"
+    },
+    "chrome.nav.use-cases": {
+      "part": "home",
+      "source_hash": "ff27a991e855",
+      "target_hash": "89d9329e8768"
+    },
+    "chrome.nav.features": {
+      "part": "home",
+      "source_hash": "5697d03daef4",
+      "target_hash": "b0e21b8e8a05"
+    },
+    "chrome.nav.coding-agents": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "f5cbe2616f48"
+    },
+    "chrome.nav.faq": {
+      "part": "home",
+      "source_hash": "dbc468a14b60",
+      "target_hash": "aac36ecc7cb2"
+    },
+    "chrome.nav.github.title": {
+      "part": "home",
+      "source_hash": "d2833070219a",
+      "target_hash": "935b6233e49d"
+    },
+    "chrome.nav.install": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "50ac7485cf5d"
+    },
+    "chrome.nav.plat-linux": {
+      "part": "home",
+      "source_hash": "23d8d6d2be9c",
+      "target_hash": "5e8414090ce2"
+    },
+    "chrome.nav.plat-mac": {
+      "part": "home",
+      "source_hash": "d2364b229535",
+      "target_hash": "d86fbb1dc9aa"
+    },
+    "chrome.nav.plat-win": {
+      "part": "home",
+      "source_hash": "e5a1bb1c3085",
+      "target_hash": "9d527e7aade9"
+    },
+    "chrome.nav.plat-appliance": {
+      "part": "home",
+      "source_hash": "6a7fc115677a",
+      "target_hash": "69e35a2911b4"
+    },
+    "chrome.nav.plat-upgrade": {
+      "part": "home",
+      "source_hash": "c1fe5f01dc6e",
+      "target_hash": "df348e73abc1"
+    },
+    "chrome.nav.signin": {
+      "part": "home",
+      "source_hash": "cb9ad9f4d662",
+      "target_hash": "a5a66ebbb4a7"
+    },
+    "chrome.lang.heading": {
+      "part": "home",
+      "source_hash": "a4fe65264ef7",
+      "target_hash": "9682ba3b92f7"
+    },
+    "chrome.lang.label": {
+      "part": "home",
+      "source_hash": "8c16819a2bd4",
+      "target_hash": "c05ee3f9a24e"
+    },
+    "chrome.docs.aria-label": {
+      "part": "home",
+      "source_hash": "c205924de0fe",
+      "target_hash": "a59285c4f03a"
+    },
+    "chrome.docs.full": {
+      "part": "home",
+      "source_hash": "c205924de0fe",
+      "target_hash": "a59285c4f03a"
+    },
+    "chrome.docs.short": {
+      "part": "home",
+      "source_hash": "7af023c43013",
+      "target_hash": "a59285c4f03a"
+    },
+    "chrome.install": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "b85d7a94ae57"
+    },
+    "home.hero.h1-1": {
+      "part": "home",
+      "source_hash": "b24318c21e4f",
+      "target_hash": "ba9f5f31229d"
+    },
+    "home.hero.p-1": {
+      "part": "home",
+      "source_hash": "e192caf6a5b3",
+      "target_hash": "8665cbf51d77"
+    },
+    "home.hero.a-1": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "50ac7485cf5d"
+    },
+    "home.hero.a-2": {
+      "part": "home",
+      "source_hash": "51b46bd0add6",
+      "target_hash": "e1b086784e47"
+    },
+    "home.hero.span-1": {
+      "part": "home",
+      "source_hash": "2a43a93eceec",
+      "target_hash": "970fdf04ca68"
+    },
+    "home.hero.span-2": {
+      "part": "home",
+      "source_hash": "035ccb7cad8a",
+      "target_hash": "cfa08562ceee"
+    },
+    "home.hero.span-3": {
+      "part": "home",
+      "source_hash": "1f8168eb854e",
+      "target_hash": "57626b2614d3"
+    },
+    "home.hero.img-1.alt": {
+      "part": "home",
+      "source_hash": "46cb2df1ab06",
+      "target_hash": "8cc42ac244fd"
+    },
+    "home.hero.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "46b396c85919",
+      "target_hash": "aaaf449bd4ea"
+    },
+    "home.hero.b-1": {
+      "part": "home",
+      "source_hash": "d0656dfa424f",
+      "target_hash": "1eddcdea3a15"
+    },
+    "home.hero.span-4": {
+      "part": "home",
+      "source_hash": "6b06ee360144",
+      "target_hash": "e21182431f00"
+    },
+    "home.hero.span-5": {
+      "part": "home",
+      "source_hash": "1b50b6d8401a",
+      "target_hash": "2c7f623fcd84"
+    },
+    "home.hero.b-2": {
+      "part": "home",
+      "source_hash": "f2287a1beeab",
+      "target_hash": "ddb938458e81"
+    },
+    "home.hero.span-6": {
+      "part": "home",
+      "source_hash": "6a893fd85af2",
+      "target_hash": "29b5923f278a"
+    },
+    "home.hero.span-7": {
+      "part": "home",
+      "source_hash": "8d266d3e3abd",
+      "target_hash": "c8e5998f6a39"
+    },
+    "home.hero.b-3": {
+      "part": "home",
+      "source_hash": "3aeff05d5bf6",
+      "target_hash": "08eb19b99670"
+    },
+    "home.hero.span-8": {
+      "part": "home",
+      "source_hash": "05261121948c",
+      "target_hash": "c34e14a7aa4c"
+    },
+    "home.hero.span-9": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "f5cbe2616f48"
+    },
+    "home.hero.b-4": {
+      "part": "home",
+      "source_hash": "544b91f8227b",
+      "target_hash": "e80d33fbd9dd"
+    },
+    "home.hero.span-10": {
+      "part": "home",
+      "source_hash": "48d1003061d4",
+      "target_hash": "4dc5b9d9bda0"
+    },
+    "home.uc.h2-1": {
+      "part": "home",
+      "source_hash": "a2bc7e06beef",
+      "target_hash": "c5d6a84d8e0d"
+    },
+    "home.use-cases.button-1.aria-label": {
+      "part": "home",
+      "source_hash": "40a9d13608d2",
+      "target_hash": "a0549819518a"
+    },
+    "home.use-cases.button-2.aria-label": {
+      "part": "home",
+      "source_hash": "f1c27427e687",
+      "target_hash": "c5d43d00546b"
+    },
+    "home.use-cases.button-2.resume": {
+      "part": "home",
+      "source_hash": "bb52c71e6d3b",
+      "target_hash": "2a3d55705783"
+    },
+    "home.use-cases.button-3.aria-label": {
+      "part": "home",
+      "source_hash": "9220dc6514fb",
+      "target_hash": "c11707d9c428"
+    },
+    "home.use-cases.li-1.aria-label": {
+      "part": "home",
+      "source_hash": "b54457342c7d",
+      "target_hash": "66fcd918d413"
+    },
+    "home.use-cases.h3-1": {
+      "part": "home",
+      "source_hash": "631429e459b2",
+      "target_hash": "ef36601e3f08"
+    },
+    "home.use-cases.p-1": {
+      "part": "home",
+      "source_hash": "7dd1bdcba1fd",
+      "target_hash": "5e8e3ca08132"
+    },
+    "home.use-cases.span-1": {
+      "part": "home",
+      "source_hash": "3bf0e7fd520d",
+      "target_hash": "717bb75b6e09"
+    },
+    "home.use-cases.li-2.aria-label": {
+      "part": "home",
+      "source_hash": "264c35a47f15",
+      "target_hash": "9160ad556a84"
+    },
+    "home.use-cases.h3-2": {
+      "part": "home",
+      "source_hash": "b01cff25d51f",
+      "target_hash": "be281d7ff80b"
+    },
+    "home.use-cases.p-2": {
+      "part": "home",
+      "source_hash": "022970d73828",
+      "target_hash": "6d7f0fe5dfdb"
+    },
+    "home.use-cases.span-2": {
+      "part": "home",
+      "source_hash": "19dc2417e144",
+      "target_hash": "e0f96c824171"
+    },
+    "home.use-cases.li-3.aria-label": {
+      "part": "home",
+      "source_hash": "24607ac1e731",
+      "target_hash": "f0b54442d456"
+    },
+    "home.use-cases.h3-3": {
+      "part": "home",
+      "source_hash": "02e82cfefb89",
+      "target_hash": "ef5b14317aa1"
+    },
+    "home.use-cases.p-3": {
+      "part": "home",
+      "source_hash": "ffc4dde74878",
+      "target_hash": "8c6822a64a98"
+    },
+    "home.use-cases.span-3": {
+      "part": "home",
+      "source_hash": "4df7d5c583ae",
+      "target_hash": "5b414abca5cc"
+    },
+    "home.use-cases.li-4.aria-label": {
+      "part": "home",
+      "source_hash": "6f3c824e9ec3",
+      "target_hash": "0c5546c40857"
+    },
+    "home.use-cases.h3-4": {
+      "part": "home",
+      "source_hash": "fd528e59f30f",
+      "target_hash": "b663b96b4521"
+    },
+    "home.use-cases.p-4": {
+      "part": "home",
+      "source_hash": "3fd6f50887b9",
+      "target_hash": "1cf4738cd93e"
+    },
+    "home.use-cases.span-4": {
+      "part": "home",
+      "source_hash": "91753d838ca4",
+      "target_hash": "92cc45050c2d"
+    },
+    "home.use-cases.li-5.aria-label": {
+      "part": "home",
+      "source_hash": "4ff9c7d25432",
+      "target_hash": "e19d33478637"
+    },
+    "home.use-cases.h3-5": {
+      "part": "home",
+      "source_hash": "c3ae8600a083",
+      "target_hash": "25b5268d4032"
+    },
+    "home.use-cases.p-5": {
+      "part": "home",
+      "source_hash": "bbfa0ef15601",
+      "target_hash": "f88baac30dfe"
+    },
+    "home.use-cases.span-5": {
+      "part": "home",
+      "source_hash": "ad84f405f980",
+      "target_hash": "98285e26f391"
+    },
+    "home.use-cases.li-6.aria-label": {
+      "part": "home",
+      "source_hash": "9f1b26eea525",
+      "target_hash": "0c18bdbab360"
+    },
+    "home.use-cases.h3-6": {
+      "part": "home",
+      "source_hash": "bcd86e5acf2b",
+      "target_hash": "e4eee0d45964"
+    },
+    "home.use-cases.p-6": {
+      "part": "home",
+      "source_hash": "8ab616f9c47d",
+      "target_hash": "c56d0504b5ba"
+    },
+    "home.use-cases.span-6": {
+      "part": "home",
+      "source_hash": "6fd76cfcf4f3",
+      "target_hash": "07f697d99584"
+    },
+    "home.use-cases.li-7.aria-label": {
+      "part": "home",
+      "source_hash": "2991e046c7d6",
+      "target_hash": "e38d2d4c84a9"
+    },
+    "home.use-cases.h3-7": {
+      "part": "home",
+      "source_hash": "175c055be16a",
+      "target_hash": "5ef57f41c8ce"
+    },
+    "home.use-cases.p-7": {
+      "part": "home",
+      "source_hash": "12446d78110e",
+      "target_hash": "5b96690caebb"
+    },
+    "home.use-cases.span-7": {
+      "part": "home",
+      "source_hash": "eca4d500a3da",
+      "target_hash": "4f2af0cc4f40"
+    },
+    "home.use-cases.li-8.aria-label": {
+      "part": "home",
+      "source_hash": "1170fb3f9b1b",
+      "target_hash": "a75b515a35e5"
+    },
+    "home.use-cases.h3-8": {
+      "part": "home",
+      "source_hash": "a04e398227ac",
+      "target_hash": "40114a825228"
+    },
+    "home.use-cases.p-8": {
+      "part": "home",
+      "source_hash": "3acf884af623",
+      "target_hash": "c7a3e96f5dee"
+    },
+    "home.use-cases.span-8": {
+      "part": "home",
+      "source_hash": "bb574d2be60e",
+      "target_hash": "37932adf2642"
+    },
+    "home.use-cases.li-9.aria-label": {
+      "part": "home",
+      "source_hash": "7323df202723",
+      "target_hash": "5daaf4fec0b6"
+    },
+    "home.use-cases.h3-9": {
+      "part": "home",
+      "source_hash": "3f3225bbc711",
+      "target_hash": "ea98383c7771"
+    },
+    "home.use-cases.p-9": {
+      "part": "home",
+      "source_hash": "6ea6fbd502b6",
+      "target_hash": "83a3ffe59990"
+    },
+    "home.use-cases.span-9": {
+      "part": "home",
+      "source_hash": "c90b8269f1d8",
+      "target_hash": "5531f785692d"
+    },
+    "home.use-cases.li-10.aria-label": {
+      "part": "home",
+      "source_hash": "aef48b281a1a",
+      "target_hash": "673d834866b5"
+    },
+    "home.use-cases.h3-10": {
+      "part": "home",
+      "source_hash": "525b6691292f",
+      "target_hash": "cdad6cd692b8"
+    },
+    "home.use-cases.p-10": {
+      "part": "home",
+      "source_hash": "9ab2a4e163b1",
+      "target_hash": "c7e2ec4d89a5"
+    },
+    "home.use-cases.span-10": {
+      "part": "home",
+      "source_hash": "4ad529d919d4",
+      "target_hash": "cbcb003e77cd"
+    },
+    "home.use-cases.dot": {
+      "part": "home",
+      "source_hash": "04227694e710",
+      "target_hash": "0047faf37203"
+    },
+    "home.use-cases.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "1bb48b8b99c4",
+      "target_hash": "619ef796c085"
+    },
+    "home.install.h2-1": {
+      "part": "home",
+      "source_hash": "249678c8eba2",
+      "target_hash": "17bf4195ea8b"
+    },
+    "home.install.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "c78ffe195710",
+      "target_hash": "4bf4082c3f31"
+    },
+    "home.install.b-1": {
+      "part": "home",
+      "source_hash": "23d8d6d2be9c",
+      "target_hash": "5e8414090ce2"
+    },
+    "home.install.small-1": {
+      "part": "home",
+      "source_hash": "9849f7c407b4",
+      "target_hash": "0b5e33b09dc2"
+    },
+    "home.install.span-1": {
+      "part": "home",
+      "source_hash": "86f0f70c80d2",
+      "target_hash": "5d668d3de562"
+    },
+    "home.install.b-2": {
+      "part": "home",
+      "source_hash": "0d7d5470afac",
+      "target_hash": "b884fb38b2f8"
+    },
+    "home.install.small-2": {
+      "part": "home",
+      "source_hash": "38cba54053bd",
+      "target_hash": "21f432febe55"
+    },
+    "home.install.span-2": {
+      "part": "home",
+      "source_hash": "f44e64e75f39",
+      "target_hash": "07158138a8e3"
+    },
+    "home.install.small-3": {
+      "part": "home",
+      "source_hash": "1e554752120e",
+      "target_hash": "476a9701f4f4"
+    },
+    "home.install.span-3": {
+      "part": "home",
+      "source_hash": "c6c1c9a9c854",
+      "target_hash": "93917b6ed9e6"
+    },
+    "home.install.b-3": {
+      "part": "home",
+      "source_hash": "98432690c966",
+      "target_hash": "06256922858d"
+    },
+    "home.install.small-4": {
+      "part": "home",
+      "source_hash": "dc3e1016c4ce",
+      "target_hash": "49e0da81b929"
+    },
+    "home.install.span-4": {
+      "part": "home",
+      "source_hash": "62bfdf0b726c",
+      "target_hash": "3495dc990165"
+    },
+    "home.install.p-2": {
+      "part": "home",
+      "source_hash": "dd298d4e4a3b",
+      "target_hash": "56aa22064a03"
+    },
+    "home.p-linux.h3-1": {
+      "part": "home",
+      "source_hash": "e261f30eb5f7",
+      "target_hash": "55055907311e"
+    },
+    "home.p-linux.span-1": {
+      "part": "home",
+      "source_hash": "e21f935f11d7",
+      "target_hash": "70f7ae4afacd"
+    },
+    "home.p-linux.li-1": {
+      "part": "home",
+      "source_hash": "fc20ff032a73",
+      "target_hash": "cf9aebd26f91"
+    },
+    "home.p-linux.li-2": {
+      "part": "home",
+      "source_hash": "33bfcbda3ad4",
+      "target_hash": "eb77e0c74c0b"
+    },
+    "home.p-linux.li-3": {
+      "part": "home",
+      "source_hash": "086f8aa8145e",
+      "target_hash": "bf254218ffdf"
+    },
+    "home.p-linux.li-4": {
+      "part": "home",
+      "source_hash": "f17d08f00954",
+      "target_hash": "1eadfefa2e52"
+    },
+    "home.p-linux.a-1": {
+      "part": "home",
+      "source_hash": "e15a133068af",
+      "target_hash": "c2742ff4c3fd"
+    },
+    "home.p-linux.a-2": {
+      "part": "home",
+      "source_hash": "16289eae755d",
+      "target_hash": "ae8e41aeee9e"
+    },
+    "home.p-linux.a-3": {
+      "part": "home",
+      "source_hash": "5be49bd81af3",
+      "target_hash": "ff15ff7b48be"
+    },
+    "home.p-linux.a-4": {
+      "part": "home",
+      "source_hash": "d8f1ee5bd44a",
+      "target_hash": "32a0b3dd37cc"
+    },
+    "home.p-linux.img-1.alt": {
+      "part": "home",
+      "source_hash": "41eaa58c37a4",
+      "target_hash": "1396a1193fa6"
+    },
+    "home.p-linux.figcaption-1": {
+      "part": "home",
+      "source_hash": "c6e56f837dad",
+      "target_hash": "e046b6c60055"
+    },
+    "home.p-mac.h3-1": {
+      "part": "home",
+      "source_hash": "93a681a12162",
+      "target_hash": "03ff15dee91a"
+    },
+    "home.p-mac.a-1": {
+      "part": "home",
+      "source_hash": "95612856681e",
+      "target_hash": "5c0f6b3ba260"
+    },
+    "home.p-mac.li-1": {
+      "part": "home",
+      "source_hash": "eb664f8f7d3a",
+      "target_hash": "6084cbbbf708"
+    },
+    "home.p-mac.li-2": {
+      "part": "home",
+      "source_hash": "5ff95c0fa25d",
+      "target_hash": "6e39a3a70746"
+    },
+    "home.p-mac.li-3": {
+      "part": "home",
+      "source_hash": "cf254395b87e",
+      "target_hash": "6971e146eac6"
+    },
+    "home.p-mac.li-4": {
+      "part": "home",
+      "source_hash": "013272b7df36",
+      "target_hash": "fb1776d4d8aa"
+    },
+    "home.p-mac.li-5": {
+      "part": "home",
+      "source_hash": "8121128f773c",
+      "target_hash": "138f0f6cbcc5"
+    },
+    "home.p-mac.img-1.alt": {
+      "part": "home",
+      "source_hash": "45b8070949bb",
+      "target_hash": "cc7f502eef1c"
+    },
+    "home.p-mac.figcaption-1": {
+      "part": "home",
+      "source_hash": "785cc05a3c6d",
+      "target_hash": "2bc015fb53a3"
+    },
+    "home.p-win.h3-1": {
+      "part": "home",
+      "source_hash": "3e2f8c30fbd3",
+      "target_hash": "0f03e413dfca"
+    },
+    "home.p-win.p-1": {
+      "part": "home",
+      "source_hash": "7389debc8fd3",
+      "target_hash": "c7155b892fdc"
+    },
+    "home.p-win.li-1": {
+      "part": "home",
+      "source_hash": "1296afbbf883",
+      "target_hash": "3d1907afc7ee"
+    },
+    "home.p-win.li-2": {
+      "part": "home",
+      "source_hash": "9a92060cedbe",
+      "target_hash": "445ee27fdbdb"
+    },
+    "home.p-win.li-3": {
+      "part": "home",
+      "source_hash": "d85b661eb8e6",
+      "target_hash": "2016e4340c31"
+    },
+    "home.p-appliance.h3-1": {
+      "part": "home",
+      "source_hash": "e45c0fc37b2d",
+      "target_hash": "4e28172d965c"
+    },
+    "home.p-appliance.p-1": {
+      "part": "home",
+      "source_hash": "9ff6d73830b6",
+      "target_hash": "502ba1a2c3f9"
+    },
+    "home.p-appliance.li-1": {
+      "part": "home",
+      "source_hash": "47cb2ad65dc7",
+      "target_hash": "7f212b8a4ce3"
+    },
+    "home.p-appliance.li-2": {
+      "part": "home",
+      "source_hash": "a2a401f4b2c3",
+      "target_hash": "8701fd7d4b10"
+    },
+    "home.p-appliance.li-3": {
+      "part": "home",
+      "source_hash": "aa9d78e6b6fa",
+      "target_hash": "a9c277569c7a"
+    },
+    "home.p-appliance.li-4": {
+      "part": "home",
+      "source_hash": "bbc615ea622b",
+      "target_hash": "73dd6793d38b"
+    },
+    "home.p-appliance.p-2": {
+      "part": "home",
+      "source_hash": "177a91e7a6b4",
+      "target_hash": "78622c276b1a"
+    },
+    "home.p-appliance.div-1": {
+      "part": "home",
+      "source_hash": "8a3fbd7c91f0",
+      "target_hash": "4e890198af0a"
+    },
+    "home.upgrade.p-1": {
+      "part": "home",
+      "source_hash": "5566c16483a2",
+      "target_hash": "4329679b091a"
+    },
+    "home.why.h2-1": {
+      "part": "home",
+      "source_hash": "65341f9c1497",
+      "target_hash": "4950661a7d97"
+    },
+    "home.why.p-1": {
+      "part": "home",
+      "source_hash": "1668b0870987",
+      "target_hash": "8c9776e60356"
+    },
+    "home.why-fit.h3-1": {
+      "part": "home",
+      "source_hash": "631429e459b2",
+      "target_hash": "ef36601e3f08"
+    },
+    "home.why-fit.p-1": {
+      "part": "home",
+      "source_hash": "b0c5f5cbb2ee",
+      "target_hash": "332a569b7fb6"
+    },
+    "home.why-fit.img-1.alt": {
+      "part": "home",
+      "source_hash": "906b74daf0f5",
+      "target_hash": "b8c1af424c93"
+    },
+    "home.why-stats.h3-1": {
+      "part": "home",
+      "source_hash": "7cd5266e1f4e",
+      "target_hash": "85ff85e43765"
+    },
+    "home.why-stats.p-1": {
+      "part": "home",
+      "source_hash": "05ae743f085e",
+      "target_hash": "eeb33f3a5a03"
+    },
+    "home.why-stats.img-1.alt": {
+      "part": "home",
+      "source_hash": "94483285e732",
+      "target_hash": "8fd9d32e42b9"
+    },
+    "home.why-chat.h3-1": {
+      "part": "home",
+      "source_hash": "83831d46fb09",
+      "target_hash": "0323796d767d"
+    },
+    "home.why-chat.p-1": {
+      "part": "home",
+      "source_hash": "2e459441dc4f",
+      "target_hash": "63e86f461cf0"
+    },
+    "home.why-chat.img-1.alt": {
+      "part": "home",
+      "source_hash": "da46ab93294b",
+      "target_hash": "07354daacd13"
+    },
+    "home.why-god.h3-1": {
+      "part": "home",
+      "source_hash": "a49be301a05f",
+      "target_hash": "96d9b1cd7b95"
+    },
+    "home.why-god.p-1": {
+      "part": "home",
+      "source_hash": "a29986e09f7a",
+      "target_hash": "1e7d3d3ead03"
+    },
+    "home.why-god.img-1.alt": {
+      "part": "home",
+      "source_hash": "171f585f7e38",
+      "target_hash": "b56fd07982d6"
+    },
+    "home.cache.h2-1": {
+      "part": "home",
+      "source_hash": "d876efcb94ab",
+      "target_hash": "5e29edbb930e"
+    },
+    "home.why-cache.p-1": {
+      "part": "home",
+      "source_hash": "03e36074672f",
+      "target_hash": "3239b682d5bc"
+    },
+    "home.why-cache.figcaption-1": {
+      "part": "home",
+      "source_hash": "0f19c82ec35c",
+      "target_hash": "2b6e76e364d4"
+    },
+    "home.why-cache.p-2": {
+      "part": "home",
+      "source_hash": "9de8aa8aa7e1",
+      "target_hash": "6532df6fe7fa"
+    },
+    "home.why-cache.figcaption-2": {
+      "part": "home",
+      "source_hash": "ff04da43c87a",
+      "target_hash": "bf92a5f4fd2b"
+    },
+    "home.why-cache.figcaption-3": {
+      "part": "home",
+      "source_hash": "0ec9d5ccf246",
+      "target_hash": "8bdde8ff2ce3"
+    },
+    "home.why-cache.h3-1": {
+      "part": "home",
+      "source_hash": "684608311775",
+      "target_hash": "321cc18afe01"
+    },
+    "home.why-cache.p-3": {
+      "part": "home",
+      "source_hash": "4744b11be2ad",
+      "target_hash": "22f8991d3464"
+    },
+    "home.why-cache.img-1.alt": {
+      "part": "home",
+      "source_hash": "f1bc7fbd6399",
+      "target_hash": "48e5e98df104"
+    },
+    "home.why-cache.figcaption-4": {
+      "part": "home",
+      "source_hash": "234d024e62df",
+      "target_hash": "f7cec1f2073e"
+    },
+    "home.why-cache.p-4": {
+      "part": "home",
+      "source_hash": "2a468a4b1738",
+      "target_hash": "b5d4d66f7b48"
+    },
+    "home.why-cache.p-5": {
+      "part": "home",
+      "source_hash": "c245f8292ac7",
+      "target_hash": "5b0b291fb005"
+    },
+    "home.why-cache.a-1": {
+      "part": "home",
+      "source_hash": "cd240e4bc004",
+      "target_hash": "8d5b746f4198"
+    },
+    "home.agents.h2-1": {
+      "part": "home",
+      "source_hash": "b01cff25d51f",
+      "target_hash": "be281d7ff80b"
+    },
+    "home.agents.p-1": {
+      "part": "home",
+      "source_hash": "26604da90050",
+      "target_hash": "e111997ef020"
+    },
+    "home.agents.h3-1": {
+      "part": "home",
+      "source_hash": "a87ec3988e0d",
+      "target_hash": "9b7adcb9be65"
+    },
+    "home.agents.p-2": {
+      "part": "home",
+      "source_hash": "eed13d192862",
+      "target_hash": "1d105a6538a0"
+    },
+    "home.agents.span-1": {
+      "part": "home",
+      "source_hash": "de3ecc4fe5d1",
+      "target_hash": "b3155a6031fa"
+    },
+    "home.agents.span-2": {
+      "part": "home",
+      "source_hash": "cc7b475640bb",
+      "target_hash": "699ef9fded30"
+    },
+    "home.agents.span-3": {
+      "part": "home",
+      "source_hash": "cc7b475640bb",
+      "target_hash": "699ef9fded30"
+    },
+    "home.agents.span-4": {
+      "part": "home",
+      "source_hash": "5a0628b4b02d",
+      "target_hash": "03ed7b1e7b4f"
+    },
+    "home.agents.span-5": {
+      "part": "home",
+      "source_hash": "8c2c30bf0764",
+      "target_hash": "1318984c3760"
+    },
+    "home.agents.span-6": {
+      "part": "home",
+      "source_hash": "09e5fe8af64a",
+      "target_hash": "602d2ec8aa5a"
+    },
+    "home.agents.span-7": {
+      "part": "home",
+      "source_hash": "9ad204014fc0",
+      "target_hash": "c2898311452d"
+    },
+    "home.agents.h3-2": {
+      "part": "home",
+      "source_hash": "cfeda056d931",
+      "target_hash": "51d9889b0e11"
+    },
+    "home.agents.p-3": {
+      "part": "home",
+      "source_hash": "6995102b0af7",
+      "target_hash": "04f656324b36"
+    },
+    "home.flow-t.title-1": {
+      "part": "home",
+      "source_hash": "d7db08f53325",
+      "target_hash": "3a8a170f3ec6"
+    },
+    "home.flow-d.desc-1": {
+      "part": "home",
+      "source_hash": "5c598ca9bc7c",
+      "target_hash": "45f5d82c4afb"
+    },
+    "home.flow-t2.title-1": {
+      "part": "home",
+      "source_hash": "d7db08f53325",
+      "target_hash": "3a8a170f3ec6"
+    },
+    "home.flow-d2.desc-1": {
+      "part": "home",
+      "source_hash": "5c598ca9bc7c",
+      "target_hash": "45f5d82c4afb"
+    },
+    "home.agents.b-1": {
+      "part": "home",
+      "source_hash": "cdf3dc71b947",
+      "target_hash": "0463f932a8ae"
+    },
+    "home.agents.span-8": {
+      "part": "home",
+      "source_hash": "6f10abaf7726",
+      "target_hash": "45e0496ba79c"
+    },
+    "home.agents.img-1.alt": {
+      "part": "home",
+      "source_hash": "d77bbac51675",
+      "target_hash": "ee1c7df870de"
+    },
+    "home.agents.figcaption-1": {
+      "part": "home",
+      "source_hash": "bc31fcfd58c7",
+      "target_hash": "909893192de1"
+    },
+    "home.agents.h3-3": {
+      "part": "home",
+      "source_hash": "0ceb9132d312",
+      "target_hash": "a9c348825827"
+    },
+    "home.agents.p-4": {
+      "part": "home",
+      "source_hash": "0b548958da36",
+      "target_hash": "58b8ee85e22f"
+    },
+    "home.agents.img-2.alt": {
+      "part": "home",
+      "source_hash": "6a234848eac5",
+      "target_hash": "f0d809c8bf38"
+    },
+    "home.tune.h2-1": {
+      "part": "home",
+      "source_hash": "c3ae8600a083",
+      "target_hash": "25b5268d4032"
+    },
+    "home.why-agent.p-1": {
+      "part": "home",
+      "source_hash": "4844283837a3",
+      "target_hash": "e007548d45c9"
+    },
+    "home.why-agent.h3-1": {
+      "part": "home",
+      "source_hash": "85f5dae66c4f",
+      "target_hash": "ff39e6ff1ad2"
+    },
+    "home.loop-t.title-1": {
+      "part": "home",
+      "source_hash": "3f22e76a3edc",
+      "target_hash": "4c163d4411d0"
+    },
+    "home.loop-d.desc-1": {
+      "part": "home",
+      "source_hash": "dd7733aa80ef",
+      "target_hash": "298c350eff9d"
+    },
+    "home.loop-t2.title-1": {
+      "part": "home",
+      "source_hash": "3f22e76a3edc",
+      "target_hash": "4c163d4411d0"
+    },
+    "home.loop-d2.desc-1": {
+      "part": "home",
+      "source_hash": "dd7733aa80ef",
+      "target_hash": "298c350eff9d"
+    },
+    "home.why-agent.p-2": {
+      "part": "home",
+      "source_hash": "35230c9469a2",
+      "target_hash": "e61ac56b6a57"
+    },
+    "home.why-agent.img-1.alt": {
+      "part": "home",
+      "source_hash": "afd3f600f638",
+      "target_hash": "d7ea1c41b73a"
+    },
+    "home.why-agent.figcaption-1": {
+      "part": "home",
+      "source_hash": "4bb331f9f6fb",
+      "target_hash": "08f9ba93d716"
+    },
+    "home.why-agent.h3-2": {
+      "part": "home",
+      "source_hash": "222000da96d1",
+      "target_hash": "96b20d1c2a0b"
+    },
+    "home.why-agent.li-1": {
+      "part": "home",
+      "source_hash": "4d737111bb76",
+      "target_hash": "fea39b0bf8c9"
+    },
+    "home.why-agent.li-2": {
+      "part": "home",
+      "source_hash": "aadee19b4763",
+      "target_hash": "da31c597d03b"
+    },
+    "home.why-agent.li-3": {
+      "part": "home",
+      "source_hash": "5e697967b7ec",
+      "target_hash": "76a0353f23c1"
+    },
+    "home.why-agent.li-4": {
+      "part": "home",
+      "source_hash": "d25a394b9e41",
+      "target_hash": "792daed65ca8"
+    },
+    "home.why-agent.p-3": {
+      "part": "home",
+      "source_hash": "505b9916712b",
+      "target_hash": "196ef5c6c9e3"
+    },
+    "home.why-agent.p-4": {
+      "part": "home",
+      "source_hash": "bbeb89be5de6",
+      "target_hash": "684e2e25cf22"
+    },
+    "home.share.h2-1": {
+      "part": "home",
+      "source_hash": "f1e27da721b7",
+      "target_hash": "226ac846bc3f"
+    },
+    "home.why-keys.p-1": {
+      "part": "home",
+      "source_hash": "dd9352746e6e",
+      "target_hash": "33874ea48a4b"
+    },
+    "home.why-keys.h3-1": {
+      "part": "home",
+      "source_hash": "51396907e61e",
+      "target_hash": "abcdcb22d201"
+    },
+    "home.why-keys.p-2": {
+      "part": "home",
+      "source_hash": "4dd4ec421cbe",
+      "target_hash": "0543c3078cde"
+    },
+    "home.why-keys.ol-1.aria-label": {
+      "part": "home",
+      "source_hash": "1c1bcbbf1789",
+      "target_hash": "d0c9c2581b2e"
+    },
+    "home.why-keys.b-1": {
+      "part": "home",
+      "source_hash": "c5da4041ea8e",
+      "target_hash": "b6e4d93ffb58"
+    },
+    "home.why-keys.span-1": {
+      "part": "home",
+      "source_hash": "a2476d66a084",
+      "target_hash": "2eae82b66466"
+    },
+    "home.why-keys.b-2": {
+      "part": "home",
+      "source_hash": "6c8888f1d6dc",
+      "target_hash": "1d4f34f64b41"
+    },
+    "home.why-keys.span-2": {
+      "part": "home",
+      "source_hash": "01b7a9f0d1d4",
+      "target_hash": "8796c83e8c0c"
+    },
+    "home.why-keys.b-3": {
+      "part": "home",
+      "source_hash": "a76b6c1ae9be",
+      "target_hash": "0e124e1cff68"
+    },
+    "home.why-keys.span-3": {
+      "part": "home",
+      "source_hash": "6d244abe081b",
+      "target_hash": "fac217dc4092"
+    },
+    "home.why-keys.b-4": {
+      "part": "home",
+      "source_hash": "724c4cb2e620",
+      "target_hash": "b3b7e5274e02"
+    },
+    "home.why-keys.span-4": {
+      "part": "home",
+      "source_hash": "2c1097258738",
+      "target_hash": "57bf93979775"
+    },
+    "home.why-keys.b-5": {
+      "part": "home",
+      "source_hash": "96d527825b4b",
+      "target_hash": "f0e0ff9ef4dd"
+    },
+    "home.why-keys.span-5": {
+      "part": "home",
+      "source_hash": "687891cb2f66",
+      "target_hash": "64bd7c98ccf4"
+    },
+    "home.why-keys.p-3": {
+      "part": "home",
+      "source_hash": "ca3034a912dc",
+      "target_hash": "4628d60e13bf"
+    },
+    "home.why-keys.img-1.alt": {
+      "part": "home",
+      "source_hash": "ae01537e1ee6",
+      "target_hash": "c89ac2f743c5"
+    },
+    "home.why-keys.figcaption-1": {
+      "part": "home",
+      "source_hash": "a098f63084b6",
+      "target_hash": "dcf60f7d5ea8"
+    },
+    "home.why-keys.img-2.alt": {
+      "part": "home",
+      "source_hash": "9ae6aeafcf56",
+      "target_hash": "fc7b47e04a0b"
+    },
+    "home.why-keys.figcaption-2": {
+      "part": "home",
+      "source_hash": "348b1b23d393",
+      "target_hash": "bd96854bd6ac"
+    },
+    "home.why-keys.p-4": {
+      "part": "home",
+      "source_hash": "b5718f9f8bb5",
+      "target_hash": "6d571a0e4dbc"
+    },
+    "home.hw.h2-1": {
+      "part": "home",
+      "source_hash": "3f3225bbc711",
+      "target_hash": "ea98383c7771"
+    },
+    "home.hardware.p-1": {
+      "part": "home",
+      "source_hash": "f90e55953921",
+      "target_hash": "7c73c82842ed"
+    },
+    "home.hardware.img-1.alt": {
+      "part": "home",
+      "source_hash": "60071766922d",
+      "target_hash": "3214127780bd"
+    },
+    "home.hardware.figcaption-1": {
+      "part": "home",
+      "source_hash": "937079060820",
+      "target_hash": "c759b6ebb43e"
+    },
+    "home.hardware.img-2.alt": {
+      "part": "home",
+      "source_hash": "6006e1039ec1",
+      "target_hash": "b0b555e16dba"
+    },
+    "home.hardware.figcaption-2": {
+      "part": "home",
+      "source_hash": "d67a36ee8dec",
+      "target_hash": "6e6011cf967c"
+    },
+    "home.hardware.img-3.alt": {
+      "part": "home",
+      "source_hash": "2b44277f55cd",
+      "target_hash": "0bc5259421e8"
+    },
+    "home.hardware.figcaption-3": {
+      "part": "home",
+      "source_hash": "f3ceb6c33eb7",
+      "target_hash": "461c09621139"
+    },
+    "home.hardware.img-4.alt": {
+      "part": "home",
+      "source_hash": "c1394a12d331",
+      "target_hash": "0fd833318166"
+    },
+    "home.hardware.figcaption-4": {
+      "part": "home",
+      "source_hash": "cddfa5475f94",
+      "target_hash": "99800f88c9ba"
+    },
+    "home.hardware.p-2": {
+      "part": "home",
+      "source_hash": "5a4e8569c432",
+      "target_hash": "9181e32ecada"
+    },
+    "home.features.h2-1": {
+      "part": "home",
+      "source_hash": "8e7ddf931c59",
+      "target_hash": "23d04b129111"
+    },
+    "home.features.p-1": {
+      "part": "home",
+      "source_hash": "cbdfccb24fcc",
+      "target_hash": "d46d58987c7a"
+    },
+    "home.features.h3-1": {
+      "part": "home",
+      "source_hash": "65fb2dd50a89",
+      "target_hash": "3591d2db6dbe"
+    },
+    "home.features.p-2": {
+      "part": "home",
+      "source_hash": "1bea9211a232",
+      "target_hash": "a9ebe710a96b"
+    },
+    "home.features.img-1.alt": {
+      "part": "home",
+      "source_hash": "0a8bc4d5312e",
+      "target_hash": "346a883bcdad"
+    },
+    "home.features.p-3": {
+      "part": "home",
+      "source_hash": "04423fe4175f",
+      "target_hash": "3361fa48fbd7"
+    },
+    "home.features.h3-2": {
+      "part": "home",
+      "source_hash": "e8070826221c",
+      "target_hash": "7f2c6a56522e"
+    },
+    "home.features.p-4": {
+      "part": "home",
+      "source_hash": "49c151ca7020",
+      "target_hash": "a776ab93ad8f"
+    },
+    "home.features.img-2.alt": {
+      "part": "home",
+      "source_hash": "428dfb61458f",
+      "target_hash": "b0b1b266a0cc"
+    },
+    "home.features.p-5": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "f5cbe2616f48"
+    },
+    "home.features.h3-3": {
+      "part": "home",
+      "source_hash": "ba721e4421e2",
+      "target_hash": "feb79eb1d141"
+    },
+    "home.features.p-6": {
+      "part": "home",
+      "source_hash": "916edc5f7b60",
+      "target_hash": "3c8272ca4893"
+    },
+    "home.features.img-3.alt": {
+      "part": "home",
+      "source_hash": "cc2b73368cf4",
+      "target_hash": "82895b82d8d5"
+    },
+    "home.oss.h2-1": {
+      "part": "home",
+      "source_hash": "3317e70f46b3",
+      "target_hash": "072de9fe1f82"
+    },
+    "home.open-source.p-1": {
+      "part": "home",
+      "source_hash": "ba01b625fe70",
+      "target_hash": "7269f4498875"
+    },
+    "home.open-source.h2-1": {
+      "part": "home",
+      "source_hash": "19dae78c985d",
+      "target_hash": "23d4dc4298c9"
+    },
+    "home.open-source.p-2": {
+      "part": "home",
+      "source_hash": "598b6f2514fd",
+      "target_hash": "1f9b20eeaf13"
+    },
+    "home.lightbox.button-1": {
+      "part": "home",
+      "source_hash": "ce7bf15a4a85",
+      "target_hash": "52aeda76c0bb"
+    },
+    "home.lightbox.button-1.aria-label": {
+      "part": "home",
+      "source_hash": "2d3b2f52a3dd",
+      "target_hash": "6c4d90ec2359"
+    },
+    "chrome.footer.about": {
+      "part": "home",
+      "source_hash": "7f11ddd74f30",
+      "target_hash": "c25faf240db2"
+    },
+    "chrome.footer.source": {
+      "part": "home",
+      "source_hash": "11506c59ef23",
+      "target_hash": "e60b7a3062e5"
+    },
+    "chrome.footer.install": {
+      "part": "home",
+      "source_hash": "e15a133068af",
+      "target_hash": "c2742ff4c3fd"
+    },
+    "chrome.footer.changelog": {
+      "part": "home",
+      "source_hash": "ead07c84baac",
+      "target_hash": "a7268afd6a6c"
+    },
+    "chrome.footer.licence": {
+      "part": "home",
+      "source_hash": "f3ec8e880a46",
+      "target_hash": "f52c3ba0fc99"
+    },
+    "chrome.footer.tag-note": {
+      "part": "home",
+      "source_hash": "09eab402684a",
+      "target_hash": "dd5044b9d31d"
+    },
+    "chrome.consent.aria-label": {
+      "part": "home",
+      "source_hash": "38db21b38100",
+      "target_hash": "77ffb5d083c2"
+    },
+    "chrome.consent.text": {
+      "part": "home",
+      "source_hash": "cdf7e1f99a7b",
+      "target_hash": "ed12fc29dc5a"
+    },
+    "chrome.consent.decline": {
+      "part": "home",
+      "source_hash": "a2d285b35287",
+      "target_hash": "11095d97586f"
+    },
+    "chrome.consent.accept": {
+      "part": "home",
+      "source_hash": "89713b9c9c1b",
+      "target_hash": "905819e2e3a0"
+    },
+    "common.crumbs.aria-label": {
+      "part": "common",
+      "source_hash": "2bd873d6c734",
+      "target_hash": "f6c5f7686c68"
+    },
+    "common.crumb.home": {
+      "part": "common",
+      "source_hash": "3a78695388b3",
+      "target_hash": "49339890223b"
+    },
+    "common.crumb.coding-agents": {
+      "part": "common",
+      "source_hash": "707c65c28bca",
+      "target_hash": "f5cbe2616f48"
+    },
+    "common.in-words": {
+      "part": "common",
+      "source_hash": "3cafefb13fa9",
+      "target_hash": "12283b6116f4"
+    },
+    "common.clients.client": {
+      "part": "common",
+      "source_hash": "0c77fe09ab33",
+      "target_hash": "dbf11036f277"
+    },
+    "common.client.protocol": {
+      "part": "common",
+      "source_hash": "cf0883343f4a",
+      "target_hash": "f2d42967cfb6"
+    },
+    "common.client.support": {
+      "part": "common",
+      "source_hash": "be91940b79f4",
+      "target_hash": "bdbdb22b4f96"
+    },
+    "common.support.full": {
+      "part": "common",
+      "source_hash": "1f95d1324a14",
+      "target_hash": "9119fb33064e"
+    },
+    "common.support.local-only": {
+      "part": "common",
+      "source_hash": "12d96c6fb40e",
+      "target_hash": "2b1169a5a703"
+    },
+    "common.crumb.agent-tuning": {
+      "part": "common",
+      "source_hash": "124c9615be9b",
+      "target_hash": "cd0e0638e182"
+    },
+    "common.copy": {
+      "part": "common",
+      "source_hash": "e21f935f11d7",
+      "target_hash": "70f7ae4afacd"
+    },
+    "common.crumb.features": {
+      "part": "common",
+      "source_hash": "5697d03daef4",
+      "target_hash": "b0e21b8e8a05"
+    },
+    "common.crumb.gpu-monitoring": {
+      "part": "common",
+      "source_hash": "cbdfccb24fcc",
+      "target_hash": "d46d58987c7a"
+    },
+    "common.crumb.cache-aware-routing": {
+      "part": "common",
+      "source_hash": "d45c5045a852",
+      "target_hash": "c3d023250b6d"
+    },
+    "common.crumb.api-keys": {
+      "part": "common",
+      "source_hash": "98aae8972102",
+      "target_hash": "4923a7f07bab"
+    },
+    "common.crumb.faq": {
+      "part": "common",
+      "source_hash": "dbc468a14b60",
+      "target_hash": "aac36ecc7cb2"
+    },
+    "common.crumb.privacy": {
+      "part": "common",
+      "source_hash": "54a57c3147c4",
+      "target_hash": "fd55785d8031"
+    },
+    "common.client.setup-section.aria-label": {
+      "part": "common",
+      "source_hash": "7013af4c42fe",
+      "target_hash": "2124a787cfb2"
+    },
+    "common.client.requirements": {
+      "part": "common",
+      "source_hash": "e0cdd07f6a27",
+      "target_hash": "55f1af66b877"
+    },
+    "common.client.setup": {
+      "part": "common",
+      "source_hash": "7013af4c42fe",
+      "target_hash": "2124a787cfb2"
+    },
+    "common.client.setup-p": {
+      "part": "common",
+      "source_hash": "961b2c6bf48f",
+      "target_hash": "bf35ad234dde"
+    },
+    "common.file.shell": {
+      "part": "common",
+      "source_hash": "a733285486d5",
+      "target_hash": "40be3fe1a542"
+    },
+    "common.client.docs": {
+      "part": "common",
+      "source_hash": "78599bc11885",
+      "target_hash": "0c2f6752d363"
+    },
+    "common.client.related": {
+      "part": "common",
+      "source_hash": "5f736e0bdabc",
+      "target_hash": "5ba1b734f061"
+    },
+    "common.file.settings": {
+      "part": "common",
+      "source_hash": "74a883a037bc",
+      "target_hash": "0d8619aae051"
+    },
+    "coding-agents.meta.title": {
+      "part": "coding-agents",
+      "source_hash": "cec26df70a65",
+      "target_hash": "d39b540aa6c8"
+    },
+    "coding-agents.meta.description": {
+      "part": "coding-agents",
+      "source_hash": "d4374722fecc",
+      "target_hash": "09e4564c1dbf"
+    },
+    "coding-agents.agents.h1-1": {
+      "part": "coding-agents",
+      "source_hash": "e01f3269f454",
+      "target_hash": "8f442a7200c7"
+    },
+    "coding-agents.p-1": {
+      "part": "coding-agents",
+      "source_hash": "b8783c59365c",
+      "target_hash": "a6b188dcd409"
+    },
+    "coding-agents.flow.title": {
+      "part": "coding-agents",
+      "source_hash": "b2c49ca0b033",
+      "target_hash": "0b2af1d45a24"
+    },
+    "coding-agents.flow.desc": {
+      "part": "coding-agents",
+      "source_hash": "c24325d4bacf",
+      "target_hash": "e804dfd201fd"
+    },
+    "coding-agents.flow.caption": {
+      "part": "coding-agents",
+      "source_hash": "4c8a44e2f320",
+      "target_hash": "3c3f08d0fffb"
+    },
+    "coding-agents.p-2": {
+      "part": "coding-agents",
+      "source_hash": "75d2dc8f6796",
+      "target_hash": "a22b487d4ceb"
+    },
+    "coding-agents.p-3": {
+      "part": "coding-agents",
+      "source_hash": "91f99cd9235e",
+      "target_hash": "b511d78f41d1"
+    },
+    "coding-agents.p-4": {
+      "part": "coding-agents",
+      "source_hash": "0ced1cfb6f5c",
+      "target_hash": "6ec73d7610af"
+    },
+    "clients.meta.title": {
+      "part": "clients",
+      "source_hash": "9a440e2e3c4a",
+      "target_hash": "11c5c3a1c804"
+    },
+    "clients.meta.description": {
+      "part": "clients",
+      "source_hash": "9d9c76c6bb07",
+      "target_hash": "4289f90fb474"
+    },
+    "clients.claude-code.h1": {
+      "part": "clients",
+      "source_hash": "9bb97352447d",
+      "target_hash": "3cfa73c350de"
+    },
+    "clients.claude-code.summary": {
+      "part": "clients",
+      "source_hash": "b46e643eeaac",
+      "target_hash": "083bd136e555"
+    },
+    "clients.claude-code.capability": {
+      "part": "clients",
+      "source_hash": "79cee967a1ad",
+      "target_hash": "bf4624023c52"
+    },
+    "clients.claude-code.req.client_version": {
+      "part": "clients",
+      "source_hash": "baf574b32f46",
+      "target_hash": "39190351c86d"
+    },
+    "clients.claude-code.req.router_on": {
+      "part": "clients",
+      "source_hash": "f0fd90d78fe4",
+      "target_hash": "b5818ef1e0c2"
+    },
+    "clients.claude-code.req.relay_key": {
+      "part": "clients",
+      "source_hash": "df8e31733077",
+      "target_hash": "69e390eacf3c"
+    },
+    "clients.claude-code.req.min_context": {
+      "part": "clients",
+      "source_hash": "5cc65b30acd7",
+      "target_hash": "78f8283cf6dd"
+    },
+    "clients.claude-code.req.recommended_context": {
+      "part": "clients",
+      "source_hash": "82792a23c7a0",
+      "target_hash": "ea862c92d4d2"
+    },
+    "clients.claude-code.req.unknown_model_window": {
+      "part": "clients",
+      "source_hash": "c67abcb52ad3",
+      "target_hash": "2ad4ca06d30a"
+    },
+    "clients.claude-code.mode.router.title": {
+      "part": "clients",
+      "source_hash": "872bcc0e520c",
+      "target_hash": "ab39052370c1"
+    },
+    "clients.claude-code.mode.router.desc": {
+      "part": "clients",
+      "source_hash": "9832c50a640e",
+      "target_hash": "272b77c84e52"
+    },
+    "clients.claude-code.mode.local.title": {
+      "part": "clients",
+      "source_hash": "2a51ef910e22",
+      "target_hash": "1b1a03358ea5"
+    },
+    "clients.claude-code.mode.local.desc": {
+      "part": "clients",
+      "source_hash": "1dea6fe58a27",
+      "target_hash": "9cd4ac2554ec"
+    },
+    "clients.anthropic-sdk.h1": {
+      "part": "clients",
+      "source_hash": "4229892646ec",
+      "target_hash": "4e1b006b37f7"
+    },
+    "clients.anthropic-sdk.summary": {
+      "part": "clients",
+      "source_hash": "910172f40b64",
+      "target_hash": "805578b9bf20"
+    },
+    "clients.anthropic-sdk.flow.title": {
+      "part": "clients",
+      "source_hash": "26e8b7e39b44",
+      "target_hash": "ab03715b8130"
+    },
+    "clients.anthropic-sdk.flow.desc": {
+      "part": "clients",
+      "source_hash": "26917b07643f",
+      "target_hash": "7b64959e21ce"
+    },
+    "clients.anthropic-sdk.flow.caption": {
+      "part": "clients",
+      "source_hash": "a4ec23a63573",
+      "target_hash": "05593c597209"
+    },
+    "clients.anthropic-sdk.capability": {
+      "part": "clients",
+      "source_hash": "3d9a6a025316",
+      "target_hash": "a1a6b17f19ad"
+    },
+    "clients.anthropic-sdk.req.router_on": {
+      "part": "clients",
+      "source_hash": "f0fd90d78fe4",
+      "target_hash": "b5818ef1e0c2"
+    },
+    "clients.anthropic-sdk.req.relay_key": {
+      "part": "clients",
+      "source_hash": "df8e31733077",
+      "target_hash": "69e390eacf3c"
+    },
+    "clients.anthropic-sdk.mode.router.title": {
+      "part": "clients",
+      "source_hash": "5e22bff885a6",
+      "target_hash": "acc2499285a9"
+    },
+    "clients.anthropic-sdk.mode.router.desc": {
+      "part": "clients",
+      "source_hash": "fe17e904c7dd",
+      "target_hash": "3d7a852c9ae7"
+    },
+    "clients.anthropic-sdk.mode.local.title": {
+      "part": "clients",
+      "source_hash": "c905013aab29",
+      "target_hash": "b6dfe89b3869"
+    },
+    "clients.anthropic-sdk.mode.local.desc": {
+      "part": "clients",
+      "source_hash": "e1b1c200ccb3",
+      "target_hash": "9c0e47d58b5e"
+    },
+    "clients.opencode.h1": {
+      "part": "clients",
+      "source_hash": "0f9f0d85229c",
+      "target_hash": "0486a18b7b29"
+    },
+    "clients.opencode.summary": {
+      "part": "clients",
+      "source_hash": "0dbe773d1ba9",
+      "target_hash": "d8f8846c110d"
+    },
+    "clients.opencode.flow.title": {
+      "part": "clients",
+      "source_hash": "ae2c3d407d79",
+      "target_hash": "0b854eddc21f"
+    },
+    "clients.opencode.flow.desc": {
+      "part": "clients",
+      "source_hash": "5a53f0ea3bba",
+      "target_hash": "c1ed0636e680"
+    },
+    "clients.opencode.flow.caption": {
+      "part": "clients",
+      "source_hash": "774655618391",
+      "target_hash": "121fbe646aa6"
+    },
+    "clients.opencode.capability": {
+      "part": "clients",
+      "source_hash": "8901779665ff",
+      "target_hash": "ae376bc48b41"
+    },
+    "clients.opencode.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "3a9bfef76d87"
+    },
+    "clients.opencode.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "3a5dcda61bb9"
+    },
+    "clients.opencode.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "8bc1f592110e"
+    },
+    "clients.opencode.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "e03771b96f12",
+      "target_hash": "8d9a2d334190"
+    },
+    "clients.aider.h1": {
+      "part": "clients",
+      "source_hash": "b1e1b6bd30b4",
+      "target_hash": "dcef9d403786"
+    },
+    "clients.aider.summary": {
+      "part": "clients",
+      "source_hash": "2a2e36942a30",
+      "target_hash": "f34d89e1b687"
+    },
+    "clients.aider.flow.title": {
+      "part": "clients",
+      "source_hash": "32e01b3b0c97",
+      "target_hash": "8b2ab2faf1d3"
+    },
+    "clients.aider.flow.desc": {
+      "part": "clients",
+      "source_hash": "3b2c308c114e",
+      "target_hash": "3d3187afe476"
+    },
+    "clients.aider.flow.caption": {
+      "part": "clients",
+      "source_hash": "e58a54a34cdc",
+      "target_hash": "d82dfa472bf9"
+    },
+    "clients.aider.capability": {
+      "part": "clients",
+      "source_hash": "922681946310",
+      "target_hash": "56ea5b3e9698"
+    },
+    "clients.aider.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "3a5dcda61bb9"
+    },
+    "clients.aider.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "8bc1f592110e"
+    },
+    "clients.aider.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "df94297df209",
+      "target_hash": "49ac7ed56930"
+    },
+    "clients.aider.mode.default.file.session": {
+      "part": "clients",
+      "source_hash": "c1f31c2b83f0",
+      "target_hash": "1f165c3f3067"
+    },
+    "clients.grok-cli.h1": {
+      "part": "clients",
+      "source_hash": "9e97001cf2f3",
+      "target_hash": "61d669a565cd"
+    },
+    "clients.grok-cli.summary": {
+      "part": "clients",
+      "source_hash": "be6e0d9a09ed",
+      "target_hash": "826be0b27795"
+    },
+    "clients.grok-cli.flow.title": {
+      "part": "clients",
+      "source_hash": "eeb620d01d38",
+      "target_hash": "2abe587d9473"
+    },
+    "clients.grok-cli.flow.desc": {
+      "part": "clients",
+      "source_hash": "ef648e107c77",
+      "target_hash": "55e6e79b3dce"
+    },
+    "clients.grok-cli.flow.caption": {
+      "part": "clients",
+      "source_hash": "b77ddcf1b78a",
+      "target_hash": "6baca4c67bb3"
+    },
+    "clients.grok-cli.capability": {
+      "part": "clients",
+      "source_hash": "03938abace0a",
+      "target_hash": "d628b88e9062"
+    },
+    "clients.grok-cli.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "3a9bfef76d87"
+    },
+    "clients.grok-cli.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "3a5dcda61bb9"
+    },
+    "clients.grok-cli.mode.default.title": {
+      "part": "clients",
+      "source_hash": "1901a8b05d3b",
+      "target_hash": "2958e51ea549"
+    },
+    "clients.grok-cli.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "b5943bc2443d",
+      "target_hash": "4efbd9c7b07f"
+    },
+    "clients.grok-cli.mode.community.title": {
+      "part": "clients",
+      "source_hash": "28bbd28283a3",
+      "target_hash": "dd8e3609861a"
+    },
+    "clients.grok-cli.mode.community.desc": {
+      "part": "clients",
+      "source_hash": "0b589963361a",
+      "target_hash": "301bf03bf544"
+    },
+    "clients.openai-sdk.h1": {
+      "part": "clients",
+      "source_hash": "db3661cee041",
+      "target_hash": "e66820d12e29"
+    },
+    "clients.openai-sdk.summary": {
+      "part": "clients",
+      "source_hash": "16d05b661878",
+      "target_hash": "7863a2a615d5"
+    },
+    "clients.openai-sdk.flow.title": {
+      "part": "clients",
+      "source_hash": "13c7ed2b6c10",
+      "target_hash": "761998a94927"
+    },
+    "clients.openai-sdk.flow.desc": {
+      "part": "clients",
+      "source_hash": "9b9a5c752e5f",
+      "target_hash": "9606c886a364"
+    },
+    "clients.openai-sdk.flow.caption": {
+      "part": "clients",
+      "source_hash": "0d8679dd39d0",
+      "target_hash": "c646a721cd39"
+    },
+    "clients.openai-sdk.capability": {
+      "part": "clients",
+      "source_hash": "81a1f26dda28",
+      "target_hash": "7511615ccbb4"
+    },
+    "clients.openai-sdk.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "8bc1f592110e"
+    },
+    "clients.openai-sdk.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "81e9b9ed3e66",
+      "target_hash": "1850e96ccae5"
+    },
+    "clients.continue.h1": {
+      "part": "clients",
+      "source_hash": "f33c2b44b3be",
+      "target_hash": "9dafe7d6ebe2"
+    },
+    "clients.continue.summary": {
+      "part": "clients",
+      "source_hash": "4377b7395411",
+      "target_hash": "0a1d8437eda0"
+    },
+    "clients.continue.flow.title": {
+      "part": "clients",
+      "source_hash": "a55ed462d54e",
+      "target_hash": "500c072949c6"
+    },
+    "clients.continue.flow.desc": {
+      "part": "clients",
+      "source_hash": "dfee5b6d070e",
+      "target_hash": "1130943e3923"
+    },
+    "clients.continue.flow.caption": {
+      "part": "clients",
+      "source_hash": "c1f803ddf701",
+      "target_hash": "b01b91bf9045"
+    },
+    "clients.continue.capability": {
+      "part": "clients",
+      "source_hash": "d76f0ccb6e86",
+      "target_hash": "dc2bcd4d0cf9"
+    },
+    "clients.continue.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "3a5dcda61bb9"
+    },
+    "clients.continue.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "8bc1f592110e"
+    },
+    "clients.continue.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "8c8d339555ff",
+      "target_hash": "da1543186bb2"
+    },
+    "clients.cline.h1": {
+      "part": "clients",
+      "source_hash": "d0efe15bdc4f",
+      "target_hash": "58e8630c34f9"
+    },
+    "clients.cline.summary": {
+      "part": "clients",
+      "source_hash": "d80b0d66c45e",
+      "target_hash": "fe08dfe76d8d"
+    },
+    "clients.cline.flow.title": {
+      "part": "clients",
+      "source_hash": "79932fc0e85c",
+      "target_hash": "4a2420001a01"
+    },
+    "clients.cline.flow.desc": {
+      "part": "clients",
+      "source_hash": "300648093db4",
+      "target_hash": "54bdf8582bcd"
+    },
+    "clients.cline.flow.caption": {
+      "part": "clients",
+      "source_hash": "26566cb52d8d",
+      "target_hash": "aec456aa6615"
+    },
+    "clients.cline.capability": {
+      "part": "clients",
+      "source_hash": "21110940c4cb",
+      "target_hash": "508a6d94dabe"
+    },
+    "clients.cline.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "3a9bfef76d87"
+    },
+    "clients.cline.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "3a5dcda61bb9"
+    },
+    "clients.cline.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "8bc1f592110e"
+    },
+    "clients.cline.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "f65c6df5377b",
+      "target_hash": "6cd906808cbd"
+    },
+    "clients.cursor.h1": {
+      "part": "clients",
+      "source_hash": "314536df2e7a",
+      "target_hash": "03a127b65f14"
+    },
+    "clients.cursor.summary": {
+      "part": "clients",
+      "source_hash": "1c8912c5ba32",
+      "target_hash": "5206a72e6a0e"
+    },
+    "clients.cursor.flow.title": {
+      "part": "clients",
+      "source_hash": "43c8f2aed837",
+      "target_hash": "cc55da769b7a"
+    },
+    "clients.cursor.flow.desc": {
+      "part": "clients",
+      "source_hash": "524789d9ea5d",
+      "target_hash": "6b9fbb24a12e"
+    },
+    "clients.cursor.flow.caption": {
+      "part": "clients",
+      "source_hash": "79e33449f1a5",
+      "target_hash": "691e7bb237e1"
+    },
+    "clients.cursor.capability": {
+      "part": "clients",
+      "source_hash": "e3b007a84e77",
+      "target_hash": "31c190203cc1"
+    },
+    "clients.cursor.req.reachable": {
+      "part": "clients",
+      "source_hash": "0815103f2766",
+      "target_hash": "ba327246caf0"
+    },
+    "clients.cursor.mode.default.title": {
+      "part": "clients",
+      "source_hash": "5e7a9a7b90b9",
+      "target_hash": "735e08aca51e"
+    },
+    "clients.cursor.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "fce3909f9e49",
+      "target_hash": "7dbb181fb17e"
+    },
+    "clients.codex-cli.h1": {
+      "part": "clients",
+      "source_hash": "ee03de1664ad",
+      "target_hash": "c5f5e211db2a"
+    },
+    "clients.codex-cli.summary": {
+      "part": "clients",
+      "source_hash": "4ffc9f534362",
+      "target_hash": "d00965ff26d3"
+    },
+    "clients.codex-cli.flow.title": {
+      "part": "clients",
+      "source_hash": "4d9d5da5c30b",
+      "target_hash": "8c9b2e21710a"
+    },
+    "clients.codex-cli.flow.desc": {
+      "part": "clients",
+      "source_hash": "ae1c2b1f74bf",
+      "target_hash": "d6ef27ea36cb"
+    },
+    "clients.codex-cli.flow.caption": {
+      "part": "clients",
+      "source_hash": "4596be3eb188",
+      "target_hash": "74c08ac407c8"
+    },
+    "clients.codex-cli.capability": {
+      "part": "clients",
+      "source_hash": "b7c7ad7fa0c7",
+      "target_hash": "a1bacc568f44"
+    },
+    "clients.codex-cli.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "3a9bfef76d87"
+    },
+    "clients.codex-cli.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "3a5dcda61bb9"
+    },
+    "clients.codex-cli.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "8bc1f592110e"
+    },
+    "clients.codex-cli.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "0e63a370854f",
+      "target_hash": "c930737f3490"
+    },
+    "claude-code-router.router.h2-1": {
+      "part": "claude-code-router",
+      "source_hash": "88b4b60f90dc",
+      "target_hash": "34463d96ab03"
+    },
+    "claude-code-router.p-1": {
+      "part": "claude-code-router",
+      "source_hash": "47eae55f59c6",
+      "target_hash": "18d73e5d5fc4"
+    },
+    "claude-code-router.p-2": {
+      "part": "claude-code-router",
+      "source_hash": "23f00b590b6a",
+      "target_hash": "99a650895f2a"
+    },
+    "claude-code-router.p-3": {
+      "part": "claude-code-router",
+      "source_hash": "b554407d17a9",
+      "target_hash": "f995efbd1fff"
+    },
+    "claude-code-router.p-4": {
+      "part": "claude-code-router",
+      "source_hash": "f87b272c3f76",
+      "target_hash": "4a5a92286ded"
+    },
+    "claude-code-router.figcaption-1": {
+      "part": "claude-code-router",
+      "source_hash": "462151461bb5",
+      "target_hash": "ae427f3702d8"
+    },
+    "claude-code-router.p-5": {
+      "part": "claude-code-router",
+      "source_hash": "038dbec78e21",
+      "target_hash": "d700bddc8ae2"
+    },
+    "claude-code-router.p-6": {
+      "part": "claude-code-router",
+      "source_hash": "bd9385d02ca7",
+      "target_hash": "17daa62d4e65"
+    },
+    "claude-code-router.img-1.alt": {
+      "part": "claude-code-router",
+      "source_hash": "3f1f5682c2a4",
+      "target_hash": "ee5eae7354a0"
+    },
+    "claude-code-router.span-1": {
+      "part": "claude-code-router",
+      "source_hash": "d0410896bcb4",
+      "target_hash": "465cb9be9abf"
+    },
+    "claude-code-router.span-2": {
+      "part": "claude-code-router",
+      "source_hash": "6d3dcb885877",
+      "target_hash": "981440ceec60"
+    },
+    "claude-code-router.figcaption-2": {
+      "part": "claude-code-router",
+      "source_hash": "b4aee34de008",
+      "target_hash": "24df74ef1060"
+    },
+    "claude-code-router.p-7": {
+      "part": "claude-code-router",
+      "source_hash": "174e92b8be51",
+      "target_hash": "261591f9716a"
+    },
+    "claude-code-router.img-2.alt": {
+      "part": "claude-code-router",
+      "source_hash": "1dcf45e042e8",
+      "target_hash": "644206df65dd"
+    },
+    "claude-code-router.span-3": {
+      "part": "claude-code-router",
+      "source_hash": "e7811be1957f",
+      "target_hash": "86f64b06057d"
+    },
+    "claude-code-router.span-4": {
+      "part": "claude-code-router",
+      "source_hash": "8c3c6830836a",
+      "target_hash": "9e47dfea66c2"
+    },
+    "claude-code-router.figcaption-3": {
+      "part": "claude-code-router",
+      "source_hash": "e6294c26fbc5",
+      "target_hash": "6e0eece43255"
+    },
+    "agent-tuning.meta.title": {
+      "part": "agent-tuning",
+      "source_hash": "c73577a9e93d",
+      "target_hash": "a69b8a5dd1eb"
+    },
+    "agent-tuning.meta.description": {
+      "part": "agent-tuning",
+      "source_hash": "42f223176a20",
+      "target_hash": "862db727c247"
+    },
+    "agent-tuning.jsonld.name": {
+      "part": "agent-tuning",
+      "source_hash": "d38cc5b44b81",
+      "target_hash": "3c1de7eacd4c"
+    },
+    "agent-tuning.jsonld.step-1": {
+      "part": "agent-tuning",
+      "source_hash": "ea9ef62b2144",
+      "target_hash": "aaa7a661d6c0"
+    },
+    "agent-tuning.jsonld.step-2": {
+      "part": "agent-tuning",
+      "source_hash": "02b6962c341f",
+      "target_hash": "aee5b9cdb7c1"
+    },
+    "agent-tuning.jsonld.step-3": {
+      "part": "agent-tuning",
+      "source_hash": "23149cd56616",
+      "target_hash": "522ccc31873c"
+    },
+    "agent-tuning.jsonld.step-4": {
+      "part": "agent-tuning",
+      "source_hash": "2580a4baddda",
+      "target_hash": "432a3556318c"
+    },
+    "agent-tuning.tuning.h1-1": {
+      "part": "agent-tuning",
+      "source_hash": "2df23e8f7918",
+      "target_hash": "64dc6c6fd605"
+    },
+    "agent-tuning.p-1": {
+      "part": "agent-tuning",
+      "source_hash": "47320716621f",
+      "target_hash": "432bdf332a04"
+    },
+    "agent-tuning.h2-1": {
+      "part": "agent-tuning",
+      "source_hash": "2a300da26a75",
+      "target_hash": "ffb6dc6f6ddc"
+    },
+    "agent-tuning.li-1": {
+      "part": "agent-tuning",
+      "source_hash": "45b78d2f8e02",
+      "target_hash": "546350610af1"
+    },
+    "agent-tuning.li-2": {
+      "part": "agent-tuning",
+      "source_hash": "a316c0dc85b5",
+      "target_hash": "a922cbcd8928"
+    },
+    "agent-tuning.li-3": {
+      "part": "agent-tuning",
+      "source_hash": "45f30ab355a5",
+      "target_hash": "dbe6de0731eb"
+    },
+    "agent-tuning.h2-2": {
+      "part": "agent-tuning",
+      "source_hash": "676f21721809",
+      "target_hash": "32947b2c825e"
+    },
+    "agent-tuning.th-1": {
+      "part": "agent-tuning",
+      "source_hash": "8e6a6cca7aae",
+      "target_hash": "a7a63832b26b"
+    },
+    "agent-tuning.th-2": {
+      "part": "agent-tuning",
+      "source_hash": "3df9726c68ba",
+      "target_hash": "e1ecb7f59002"
+    },
+    "agent-tuning.th-3": {
+      "part": "agent-tuning",
+      "source_hash": "982d52862acc",
+      "target_hash": "35be7952d51a"
+    },
+    "agent-tuning.th-4": {
+      "part": "agent-tuning",
+      "source_hash": "966e8813028c",
+      "target_hash": "622681ab587a"
+    },
+    "agent-tuning.th-5": {
+      "part": "agent-tuning",
+      "source_hash": "6fb4184c2d5a",
+      "target_hash": "bc6f1f194abe"
+    },
+    "agent-tuning.th-6": {
+      "part": "agent-tuning",
+      "source_hash": "a632bbe8e8aa",
+      "target_hash": "c450e088a775"
+    },
+    "agent-tuning.th-7": {
+      "part": "agent-tuning",
+      "source_hash": "4c3b52acd644",
+      "target_hash": "1ea520253b6b"
+    },
+    "agent-tuning.td-1": {
+      "part": "agent-tuning",
+      "source_hash": "51491b72ded1",
+      "target_hash": "7118836756e9"
+    },
+    "agent-tuning.th-8": {
+      "part": "agent-tuning",
+      "source_hash": "ead961a24dc4",
+      "target_hash": "c7cdd7b26d67"
+    },
+    "agent-tuning.th-9": {
+      "part": "agent-tuning",
+      "source_hash": "70356d606d14",
+      "target_hash": "847808b17b78"
+    },
+    "agent-tuning.td-2": {
+      "part": "agent-tuning",
+      "source_hash": "9a72b9938ec6",
+      "target_hash": "10c337abf20e"
+    },
+    "agent-tuning.p-2": {
+      "part": "agent-tuning",
+      "source_hash": "c3bff7c1a9d1",
+      "target_hash": "285881ad50f5"
+    },
+    "agent-tuning.h2-3": {
+      "part": "agent-tuning",
+      "source_hash": "b273921d2e33",
+      "target_hash": "314f8df65bb3"
+    },
+    "agent-tuning.p-3": {
+      "part": "agent-tuning",
+      "source_hash": "a74bbbec589e",
+      "target_hash": "97412911ac81"
+    },
+    "agent-tuning.h3-1": {
+      "part": "agent-tuning",
+      "source_hash": "c1ebd00d0f72",
+      "target_hash": "6bae05674412"
+    },
+    "agent-tuning.h3-2": {
+      "part": "agent-tuning",
+      "source_hash": "0cc405dce7f8",
+      "target_hash": "dad6af878a7b"
+    },
+    "agent-tuning.h3-3": {
+      "part": "agent-tuning",
+      "source_hash": "906f71857682",
+      "target_hash": "5edb8d4570e3"
+    },
+    "agent-tuning.h3-4": {
+      "part": "agent-tuning",
+      "source_hash": "d6e1c2c66dff",
+      "target_hash": "c8bf10372bbf"
+    },
+    "agent-tuning.h2-4": {
+      "part": "agent-tuning",
+      "source_hash": "74e492d5d0df",
+      "target_hash": "7c74999c279d"
+    },
+    "agent-tuning.li-4": {
+      "part": "agent-tuning",
+      "source_hash": "4a1f64b32132",
+      "target_hash": "357937f404fc"
+    },
+    "agent-tuning.li-5": {
+      "part": "agent-tuning",
+      "source_hash": "e127f19fe7da",
+      "target_hash": "8007a3142426"
+    },
+    "agent-tuning.li-6": {
+      "part": "agent-tuning",
+      "source_hash": "dabc7d95f036",
+      "target_hash": "01a30abc7e1b"
+    },
+    "agent-tuning.li-7": {
+      "part": "agent-tuning",
+      "source_hash": "cc61ece33dc3",
+      "target_hash": "3465fce143f4"
+    },
+    "agent-tuning.p-4": {
+      "part": "agent-tuning",
+      "source_hash": "cfe5bc772213",
+      "target_hash": "8e8023b08507"
+    },
+    "gpu-monitoring.meta.title": {
+      "part": "gpu-monitoring",
+      "source_hash": "d27814ed8b63",
+      "target_hash": "85c4dcd555ea"
+    },
+    "gpu-monitoring.meta.description": {
+      "part": "gpu-monitoring",
+      "source_hash": "507736e1bea9",
+      "target_hash": "3a6f0d6efb9b"
+    },
+    "gpu-monitoring.box.h1-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "cc0f4c9bbf2b",
+      "target_hash": "2f847ec335b2"
+    },
+    "gpu-monitoring.p-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "a9ca4640a6e7",
+      "target_hash": "a49a3ed688cb"
+    },
+    "gpu-monitoring.p-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "e6e25a4491ad",
+      "target_hash": "146bd6d9d61d"
+    },
+    "gpu-monitoring.dt-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "8f0474fb0c5b",
+      "target_hash": "ea49523d744c"
+    },
+    "gpu-monitoring.dd-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "065609784858",
+      "target_hash": "251e3e7cf640"
+    },
+    "gpu-monitoring.dt-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "60de0ad7eb70",
+      "target_hash": "f35c469530ac"
+    },
+    "gpu-monitoring.dd-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "2a58556c9272",
+      "target_hash": "531dc18de782"
+    },
+    "gpu-monitoring.dd-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "a85ab5eb706a",
+      "target_hash": "1a941eb6b719"
+    },
+    "gpu-monitoring.dt-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "9fe4c68ec20d",
+      "target_hash": "3eeb25ee6621"
+    },
+    "gpu-monitoring.dd-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "a041ea9e5251",
+      "target_hash": "ae4a36fd41d4"
+    },
+    "gpu-monitoring.caption-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "db678a93d309",
+      "target_hash": "ac9caec4de3c"
+    },
+    "gpu-monitoring.th-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "463816d07097",
+      "target_hash": "0943908e8c16"
+    },
+    "gpu-monitoring.th-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "5e1bc5df87b6",
+      "target_hash": "1eff56491675"
+    },
+    "gpu-monitoring.th-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "af088ec66533",
+      "target_hash": "05c8caffebeb"
+    },
+    "gpu-monitoring.th-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "0cb077815ec8",
+      "target_hash": "7da6339f7b0b"
+    },
+    "gpu-monitoring.th-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "9739b22b0dce",
+      "target_hash": "5b14ccc456c8"
+    },
+    "gpu-monitoring.col-capture.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "5e1bc5df87b6",
+      "target_hash": "1eff56491675"
+    },
+    "gpu-monitoring.col-median.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "e6245b901702",
+      "target_hash": "62f428843b0a"
+    },
+    "gpu-monitoring.col-peak.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "0cb077815ec8",
+      "target_hash": "7da6339f7b0b"
+    },
+    "gpu-monitoring.th-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "6554b6cbd5f4",
+      "target_hash": "e3441cf2fd99"
+    },
+    "gpu-monitoring.th-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "eb7b7fd32e11",
+      "target_hash": "bde9f38e0807"
+    },
+    "gpu-monitoring.span-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "0bedd95628dd",
+      "target_hash": "725de0bd1247"
+    },
+    "gpu-monitoring.td-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "eaa6d59dc9be",
+      "target_hash": "eaa6d59dc9be"
+    },
+    "gpu-monitoring.td-8": {
+      "part": "gpu-monitoring",
+      "source_hash": "8678af14d6a2",
+      "target_hash": "8678af14d6a2"
+    },
+    "gpu-monitoring.p-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "fc86e0160504",
+      "target_hash": "8823605df0a1"
+    },
+    "gpu-monitoring.cards.h2-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "036e83c1af39",
+      "target_hash": "6e35848ebffb"
+    },
+    "gpu-monitoring.p-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "f87275635f5c",
+      "target_hash": "a6c42cffba3e"
+    },
+    "gpu-monitoring.img-1.alt": {
+      "part": "gpu-monitoring",
+      "source_hash": "55b551e38c61",
+      "target_hash": "9d6a157a5e8b"
+    },
+    "gpu-monitoring.span-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "b3bd726e07ac",
+      "target_hash": "b5fa192e654e"
+    },
+    "gpu-monitoring.span-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "7be6f5cf26b2",
+      "target_hash": "a16771f62081"
+    },
+    "gpu-monitoring.span-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "ef8ca2bcafce",
+      "target_hash": "9144a0579062"
+    },
+    "gpu-monitoring.span-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "c4d22dc73625",
+      "target_hash": "d20177969325"
+    },
+    "gpu-monitoring.figcaption-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "7aa9957f224d",
+      "target_hash": "9d13b95f46b7"
+    },
+    "gpu-monitoring.caption-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "fd76edd0a9d5",
+      "target_hash": "25945a70cc7d"
+    },
+    "gpu-monitoring.th-8": {
+      "part": "gpu-monitoring",
+      "source_hash": "b596b0114ded",
+      "target_hash": "4ec07079d654"
+    },
+    "gpu-monitoring.td-9": {
+      "part": "gpu-monitoring",
+      "source_hash": "1f5a45a29bdc",
+      "target_hash": "0461df6d8754"
+    },
+    "gpu-monitoring.th-9": {
+      "part": "gpu-monitoring",
+      "source_hash": "fd8f8648eb41",
+      "target_hash": "142030405fa3"
+    },
+    "gpu-monitoring.td-10": {
+      "part": "gpu-monitoring",
+      "source_hash": "d8e9193ca58e",
+      "target_hash": "2e091cfc33c4"
+    },
+    "gpu-monitoring.th-10": {
+      "part": "gpu-monitoring",
+      "source_hash": "c01f2094044d",
+      "target_hash": "20d9a81aff09"
+    },
+    "gpu-monitoring.td-11": {
+      "part": "gpu-monitoring",
+      "source_hash": "92c8d3b9a423",
+      "target_hash": "c9baa676bc15"
+    },
+    "gpu-monitoring.inflight.h2-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "87e975182d2c",
+      "target_hash": "505a2ca6427e"
+    },
+    "gpu-monitoring.p-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "4d6984e02a57",
+      "target_hash": "b34b5715b002"
+    },
+    "gpu-monitoring.img-2.alt": {
+      "part": "gpu-monitoring",
+      "source_hash": "850b1ebebfcc",
+      "target_hash": "fb31a9a4d108"
+    },
+    "gpu-monitoring.span-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "807aafa43674",
+      "target_hash": "566c1083410c"
+    },
+    "gpu-monitoring.span-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "c6220dc860be",
+      "target_hash": "4d3bf9eb0a89"
+    },
+    "gpu-monitoring.figcaption-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "cb4966892bbc",
+      "target_hash": "5313ecb38128"
+    },
+    "gpu-monitoring.p-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "1669f0782d97",
+      "target_hash": "5123688d8645"
+    },
+    "cache-aware-routing.meta.title": {
+      "part": "cache-aware-routing",
+      "source_hash": "74d5770bf736",
+      "target_hash": "efe8642ce299"
+    },
+    "cache-aware-routing.meta.description": {
+      "part": "cache-aware-routing",
+      "source_hash": "055a37ed3302",
+      "target_hash": "abbe5abdfb2c"
+    },
+    "cache-aware-routing.replica.h1-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "7b4386acadc3",
+      "target_hash": "3166e4f5f199"
+    },
+    "cache-aware-routing.p-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "6a215639b7d8",
+      "target_hash": "62763289b224"
+    },
+    "cache-aware-routing.p-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "2022d3c80a9f",
+      "target_hash": "1ba0c72f67bd"
+    },
+    "cache-aware-routing.figcaption-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "a3b037946eda",
+      "target_hash": "50693750a9b9"
+    },
+    "cache-aware-routing.p-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "91272c526688",
+      "target_hash": "65bc7026d379"
+    },
+    "cache-aware-routing.p-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "22167404e1cf",
+      "target_hash": "50c6404cbd03"
+    },
+    "cache-aware-routing.dt-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "8f0474fb0c5b",
+      "target_hash": "ea49523d744c"
+    },
+    "cache-aware-routing.dd-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "a2a87a6a413f",
+      "target_hash": "2944eb8a0d45"
+    },
+    "cache-aware-routing.dt-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "5e2c614c23f0",
+      "target_hash": "94591749a325"
+    },
+    "cache-aware-routing.dd-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "ca64e381cd89",
+      "target_hash": "d6509dcde8b5"
+    },
+    "cache-aware-routing.dt-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "a511909161e1",
+      "target_hash": "584d8222964d"
+    },
+    "cache-aware-routing.dd-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "2d27d2565f76",
+      "target_hash": "ae97f7a37358"
+    },
+    "cache-aware-routing.dd-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "056adfd1d823",
+      "target_hash": "f2bb42e80527"
+    },
+    "cache-aware-routing.dt-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "8a03fa9ad749",
+      "target_hash": "73443bb46a34"
+    },
+    "cache-aware-routing.dd-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "616bab8cda85",
+      "target_hash": "c9892c60f696"
+    },
+    "cache-aware-routing.dt-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "8a6bdb6b18da",
+      "target_hash": "32479fc15c77"
+    },
+    "cache-aware-routing.dd-7": {
+      "part": "cache-aware-routing",
+      "source_hash": "bf79aedc37a9",
+      "target_hash": "8cc595c08800"
+    },
+    "cache-aware-routing.figcaption-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "4104b97ee062",
+      "target_hash": "0779de64fa54"
+    },
+    "cache-aware-routing.p-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "4744b11be2ad",
+      "target_hash": "22f8991d3464"
+    },
+    "cache-aware-routing.p-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "8ab22b61f669",
+      "target_hash": "9edbf2269526"
+    },
+    "cache-aware-routing.figcaption-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "d3b521cd1c61",
+      "target_hash": "fe6bd9711897"
+    },
+    "cache-aware-routing.figcaption-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "7721bb0a3fe0",
+      "target_hash": "1d33a3421554"
+    },
+    "cache-aware-routing.img-1.alt": {
+      "part": "cache-aware-routing",
+      "source_hash": "f1bc7fbd6399",
+      "target_hash": "48e5e98df104"
+    },
+    "cache-aware-routing.span-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "afd07a294687",
+      "target_hash": "8576ee9fadfe"
+    },
+    "cache-aware-routing.span-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "aeb0dd495f94",
+      "target_hash": "86a0b8870375"
+    },
+    "cache-aware-routing.figcaption-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "c5c62f4909c8",
+      "target_hash": "47927cd759d0"
+    },
+    "cache-aware-routing.p-7": {
+      "part": "cache-aware-routing",
+      "source_hash": "36247db6bebb",
+      "target_hash": "bf36b327b9a7"
+    },
+    "cache-aware-routing.img-2.alt": {
+      "part": "cache-aware-routing",
+      "source_hash": "a40bcea9f2f2",
+      "target_hash": "5e7c5ecceff4"
+    },
+    "cache-aware-routing.span-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "30f9cc329d1b",
+      "target_hash": "c575bed34484"
+    },
+    "cache-aware-routing.figcaption-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "8b698966274e",
+      "target_hash": "e5769da55129"
+    },
+    "cache-aware-routing.p-8": {
+      "part": "cache-aware-routing",
+      "source_hash": "f55143f36cbe",
+      "target_hash": "e50cd512e5bf"
+    },
+    "api-keys.meta.title": {
+      "part": "api-keys",
+      "source_hash": "36d31214a489",
+      "target_hash": "fc51754c2ac0"
+    },
+    "api-keys.meta.description": {
+      "part": "api-keys",
+      "source_hash": "dc32185af3f0",
+      "target_hash": "62ee5e350c47"
+    },
+    "api-keys.keys.h1-1": {
+      "part": "api-keys",
+      "source_hash": "478db02e5440",
+      "target_hash": "cb297cece236"
+    },
+    "api-keys.p-1": {
+      "part": "api-keys",
+      "source_hash": "128af00fcd92",
+      "target_hash": "f210a47973af"
+    },
+    "api-keys.p-2": {
+      "part": "api-keys",
+      "source_hash": "24b259f012c7",
+      "target_hash": "435f3ca6ab7f"
+    },
+    "api-keys.p-3": {
+      "part": "api-keys",
+      "source_hash": "992b035b09f7",
+      "target_hash": "19935e3ba6e0"
+    },
+    "api-keys.video-1.aria-label": {
+      "part": "api-keys",
+      "source_hash": "146ed912c7a6",
+      "target_hash": "929ee5a40863"
+    },
+    "api-keys.figcaption-1": {
+      "part": "api-keys",
+      "source_hash": "389cdbc39b42",
+      "target_hash": "1faaf99bd0e8"
+    },
+    "api-keys.img-1.alt": {
+      "part": "api-keys",
+      "source_hash": "e3200603dcf6",
+      "target_hash": "a7345bca5ac1"
+    },
+    "api-keys.figcaption-2": {
+      "part": "api-keys",
+      "source_hash": "1a43a2ba1520",
+      "target_hash": "b1d7e948011d"
+    },
+    "api-keys.leave.h2-1": {
+      "part": "api-keys",
+      "source_hash": "8f28f88090a1",
+      "target_hash": "9447e0cf556f"
+    },
+    "api-keys.p-4": {
+      "part": "api-keys",
+      "source_hash": "18372068885f",
+      "target_hash": "6f64cb997e64"
+    },
+    "api-keys.p-5": {
+      "part": "api-keys",
+      "source_hash": "cfe5bc772213",
+      "target_hash": "8e8023b08507"
+    },
+    "features.meta.title": {
+      "part": "features",
+      "source_hash": "ba96eee84458",
+      "target_hash": "6c468fe38245"
+    },
+    "features.meta.description": {
+      "part": "features",
+      "source_hash": "6e9623164c58",
+      "target_hash": "7a6f1f24820d"
+    },
+    "features.small.h1-1": {
+      "part": "features",
+      "source_hash": "32313b57288c",
+      "target_hash": "8f18e23df133"
+    },
+    "features.dd-1": {
+      "part": "features",
+      "source_hash": "30b3b2877354",
+      "target_hash": "071c9931b780"
+    },
+    "features.dt-1": {
+      "part": "features",
+      "source_hash": "c0b53878c4d4",
+      "target_hash": "1e5095fbbf7d"
+    },
+    "features.dd-2": {
+      "part": "features",
+      "source_hash": "332151669674",
+      "target_hash": "aa974df570df"
+    },
+    "features.dt-2": {
+      "part": "features",
+      "source_hash": "3b9fd142bcdf",
+      "target_hash": "9c0e5efc12b5"
+    },
+    "features.dd-3": {
+      "part": "features",
+      "source_hash": "9d11305af39b",
+      "target_hash": "463e4ed49bad"
+    },
+    "features.dt-3": {
+      "part": "features",
+      "source_hash": "db562f172ced",
+      "target_hash": "c094d2284111"
+    },
+    "features.dd-4": {
+      "part": "features",
+      "source_hash": "0e54e933002b",
+      "target_hash": "fe9532e4079c"
+    },
+    "features.dt-4": {
+      "part": "features",
+      "source_hash": "afddbc532ecf",
+      "target_hash": "ffb1014aedf0"
+    },
+    "features.dd-5": {
+      "part": "features",
+      "source_hash": "b61634fa6450",
+      "target_hash": "092aaff3985b"
+    },
+    "features.dt-5": {
+      "part": "features",
+      "source_hash": "bf3c9855201c",
+      "target_hash": "61bc4c7b7663"
+    },
+    "features.dd-6": {
+      "part": "features",
+      "source_hash": "8500a2b3792f",
+      "target_hash": "18b4c4f0a1c1"
+    },
+    "features.dt-6": {
+      "part": "features",
+      "source_hash": "2384f4730652",
+      "target_hash": "9d355b6244d9"
+    },
+    "features.dd-7": {
+      "part": "features",
+      "source_hash": "2bc91137abf9",
+      "target_hash": "c12775020910"
+    },
+    "features.dd-8": {
+      "part": "features",
+      "source_hash": "93a18b286b4e",
+      "target_hash": "0e4f7eb06214"
+    },
+    "features.dt-7": {
+      "part": "features",
+      "source_hash": "989e5691fd83",
+      "target_hash": "62c0f49ca146"
+    },
+    "features.dd-9": {
+      "part": "features",
+      "source_hash": "7c8ef7303dc3",
+      "target_hash": "4937fd03242b"
+    },
+    "features.lessons.h2-1": {
+      "part": "features",
+      "source_hash": "b2e61284634a",
+      "target_hash": "e498bf3a989b"
+    },
+    "features.h3-1": {
+      "part": "features",
+      "source_hash": "a3c2a4abe3bf",
+      "target_hash": "4ceb4ca09ef1"
+    },
+    "features.p-1": {
+      "part": "features",
+      "source_hash": "8d323d1c089b",
+      "target_hash": "f3b566882a22"
+    },
+    "features.img-1.alt": {
+      "part": "features",
+      "source_hash": "a4f74c626a7f",
+      "target_hash": "c6edc9a159fb"
+    },
+    "features.span-1": {
+      "part": "features",
+      "source_hash": "e1d7e982a29c",
+      "target_hash": "810cbf14d493"
+    },
+    "features.figcaption-1": {
+      "part": "features",
+      "source_hash": "40a242621e22",
+      "target_hash": "d93be7365fc2"
+    },
+    "features.h3-2": {
+      "part": "features",
+      "source_hash": "69140856abf8",
+      "target_hash": "472a2473d969"
+    },
+    "features.p-2": {
+      "part": "features",
+      "source_hash": "cceedae9466e",
+      "target_hash": "d1fee9853b52"
+    },
+    "features.img-2.alt": {
+      "part": "features",
+      "source_hash": "e3cc9ae4cf3b",
+      "target_hash": "034d20202385"
+    },
+    "features.figcaption-2": {
+      "part": "features",
+      "source_hash": "981fef031d3d",
+      "target_hash": "b395c13594bd"
+    },
+    "features.h3-3": {
+      "part": "features",
+      "source_hash": "2269d7489768",
+      "target_hash": "016b85df59b3"
+    },
+    "features.p-3": {
+      "part": "features",
+      "source_hash": "a34f00101361",
+      "target_hash": "f65e57d9eddb"
+    },
+    "features.th-1": {
+      "part": "features",
+      "source_hash": "5e2c614c23f0",
+      "target_hash": "94591749a325"
+    },
+    "features.th-2": {
+      "part": "features",
+      "source_hash": "ea5522c7c85e",
+      "target_hash": "8b324ef5fead"
+    },
+    "features.th-3": {
+      "part": "features",
+      "source_hash": "9bebcd3482a7",
+      "target_hash": "ca5461f52dc0"
+    },
+    "features.col-works.data-h": {
+      "part": "features",
+      "source_hash": "2b4c8c6d38db",
+      "target_hash": "c8dae5721326"
+    },
+    "features.td-1": {
+      "part": "features",
+      "source_hash": "4516d9c167db",
+      "target_hash": "7e00e6e2af35"
+    },
+    "features.col-does-not.data-h": {
+      "part": "features",
+      "source_hash": "73a6fc7836b8",
+      "target_hash": "4d453d203e6e"
+    },
+    "features.td-2": {
+      "part": "features",
+      "source_hash": "6b644f502c34",
+      "target_hash": "977ae52cdefb"
+    },
+    "features.th-4": {
+      "part": "features",
+      "source_hash": "c2f2a5cd5d41",
+      "target_hash": "249ae24305b1"
+    },
+    "features.td-3": {
+      "part": "features",
+      "source_hash": "baa3aea88f30",
+      "target_hash": "1b4f4d715049"
+    },
+    "features.td-4": {
+      "part": "features",
+      "source_hash": "1ce2fc0f7104",
+      "target_hash": "36c94aec7b05"
+    },
+    "features.th-5": {
+      "part": "features",
+      "source_hash": "3bc589f1752e",
+      "target_hash": "7c01d064523e"
+    },
+    "features.td-5": {
+      "part": "features",
+      "source_hash": "6fed9ca4f3d2",
+      "target_hash": "93b33dd07168"
+    },
+    "features.td-6": {
+      "part": "features",
+      "source_hash": "296d7ad75ac3",
+      "target_hash": "73ab9abc04be"
+    },
+    "features.p-4": {
+      "part": "features",
+      "source_hash": "d5f7cb24d2cc",
+      "target_hash": "11ca23e7bfcb"
+    },
+    "features.p-5": {
+      "part": "features",
+      "source_hash": "4c5ddc0960f7",
+      "target_hash": "961e3a9c9a19"
+    },
+    "faq.meta.title": {
+      "part": "faq",
+      "source_hash": "fb9dd5739289",
+      "target_hash": "0d8ebc3721f8"
+    },
+    "faq.meta.description": {
+      "part": "faq",
+      "source_hash": "4c424d1bb872",
+      "target_hash": "6c8da3c1d432"
+    },
+    "faq.faq.h1-1": {
+      "part": "faq",
+      "source_hash": "b14e49a87fdf",
+      "target_hash": "7116a044297d"
+    },
+    "faq.q-1": {
+      "part": "faq",
+      "source_hash": "37148ce83843",
+      "target_hash": "8b37d81b73b3"
+    },
+    "faq.a-1": {
+      "part": "faq",
+      "source_hash": "5098435c4cfe",
+      "target_hash": "93772cbb7098"
+    },
+    "faq.q-2": {
+      "part": "faq",
+      "source_hash": "fd575095e092",
+      "target_hash": "ccd7a7586ba7"
+    },
+    "faq.a-2": {
+      "part": "faq",
+      "source_hash": "af7c57748da9",
+      "target_hash": "fea293293e52"
+    },
+    "faq.q-3": {
+      "part": "faq",
+      "source_hash": "07d287af578c",
+      "target_hash": "10925c2d81d9"
+    },
+    "faq.a-3": {
+      "part": "faq",
+      "source_hash": "6aa388b69fbe",
+      "target_hash": "d8256fee42c8"
+    },
+    "faq.q-4": {
+      "part": "faq",
+      "source_hash": "3cb57cff1faf",
+      "target_hash": "6a26f80219f0"
+    },
+    "faq.a-4": {
+      "part": "faq",
+      "source_hash": "680fb986650c",
+      "target_hash": "9bb612ad422c"
+    },
+    "faq.q-5": {
+      "part": "faq",
+      "source_hash": "0e5c302159a3",
+      "target_hash": "0f2e6a7857f9"
+    },
+    "faq.a-5": {
+      "part": "faq",
+      "source_hash": "36a441a68717",
+      "target_hash": "e51289e7c413"
+    },
+    "faq.q-6": {
+      "part": "faq",
+      "source_hash": "af507f756ef8",
+      "target_hash": "4ebd1cc0b862"
+    },
+    "faq.a-6": {
+      "part": "faq",
+      "source_hash": "71d96023e2e8",
+      "target_hash": "13da70d3e080"
+    },
+    "faq.q-7": {
+      "part": "faq",
+      "source_hash": "2e943e3c5431",
+      "target_hash": "345785619af4"
+    },
+    "faq.a-7": {
+      "part": "faq",
+      "source_hash": "728ba07e9c96",
+      "target_hash": "46fa49da3cce"
+    },
+    "faq.q-8": {
+      "part": "faq",
+      "source_hash": "5cba7fae2cca",
+      "target_hash": "f075fb030915"
+    },
+    "faq.a-8": {
+      "part": "faq",
+      "source_hash": "f047e1060aa4",
+      "target_hash": "c86dd551db19"
+    },
+    "faq.q-9": {
+      "part": "faq",
+      "source_hash": "138d847537f5",
+      "target_hash": "948dc3b01bb9"
+    },
+    "faq.a-9": {
+      "part": "faq",
+      "source_hash": "37fb94868ccc",
+      "target_hash": "9c4021eff709"
+    },
+    "faq.q-10": {
+      "part": "faq",
+      "source_hash": "300a4b4adf9a",
+      "target_hash": "b3365a338cb3"
+    },
+    "faq.a-10": {
+      "part": "faq",
+      "source_hash": "c4ef5c9a9c54",
+      "target_hash": "37b0fb795595"
+    },
+    "faq.q-11": {
+      "part": "faq",
+      "source_hash": "889f53a02753",
+      "target_hash": "94f012acc21b"
+    },
+    "faq.a-11": {
+      "part": "faq",
+      "source_hash": "f7c42330b71d",
+      "target_hash": "986e98cf44d7"
+    },
+    "faq.q-12": {
+      "part": "faq",
+      "source_hash": "e8dc9deba44c",
+      "target_hash": "a08621ee12f9"
+    },
+    "faq.a-12": {
+      "part": "faq",
+      "source_hash": "97000d243331",
+      "target_hash": "90be213ada2e"
+    },
+    "faq.p-1": {
+      "part": "faq",
+      "source_hash": "8e86209820fa",
+      "target_hash": "7c565ba84f6f"
+    },
+    "privacy.meta.title": {
+      "part": "privacy",
+      "source_hash": "ec9b140b1cc8",
+      "target_hash": "38fa009c3084"
+    },
+    "privacy.meta.description": {
+      "part": "privacy",
+      "source_hash": "de30b21dbdc3",
+      "target_hash": "d29fefb49135"
+    },
+    "privacy.ads": {
+      "part": "privacy",
+      "source_hash": "9b2a078e8838",
+      "target_hash": "c49341b265f7"
+    },
+    "privacy.contact-official": {
+      "part": "privacy",
+      "source_hash": "eebc1d21c39b",
+      "target_hash": "f7e1eae4f4b9"
+    },
+    "privacy.contact-operator": {
+      "part": "privacy",
+      "source_hash": "914390fc9adc",
+      "target_hash": "ef93c56b0683"
+    },
+    "privacy.privacy.h1-1": {
+      "part": "privacy",
+      "source_hash": "f940c0a0e353",
+      "target_hash": "f1acbcb764f3"
+    },
+    "privacy.p-1": {
+      "part": "privacy",
+      "source_hash": "b3509e8a2750",
+      "target_hash": "64a31f6019b7"
+    },
+    "privacy.h2-1": {
+      "part": "privacy",
+      "source_hash": "dd9acabe8622",
+      "target_hash": "471fa0f1b98f"
+    },
+    "privacy.p-2": {
+      "part": "privacy",
+      "source_hash": "8de08e36eb6d",
+      "target_hash": "1639d110f706"
+    },
+    "privacy.h2-2": {
+      "part": "privacy",
+      "source_hash": "910b22425fed",
+      "target_hash": "3990e7a05736"
+    },
+    "privacy.p-3": {
+      "part": "privacy",
+      "source_hash": "9405f2778a61",
+      "target_hash": "24a131f2112f"
+    },
+    "privacy.h2-3": {
+      "part": "privacy",
+      "source_hash": "3aa95e4c746f",
+      "target_hash": "ea7e253f4ded"
+    },
+    "privacy.p-4": {
+      "part": "privacy",
+      "source_hash": "319e165f9018",
+      "target_hash": "ea53edb0e4df"
+    },
+    "privacy.h2-4": {
+      "part": "privacy",
+      "source_hash": "795028f063d5",
+      "target_hash": "c5a6baea2fa2"
+    },
+    "privacy.p-5": {
+      "part": "privacy",
+      "source_hash": "112b969b0be0",
+      "target_hash": "4da3e778da56"
+    },
+    "privacy.p-6": {
+      "part": "privacy",
+      "source_hash": "0d38cc82e109",
+      "target_hash": "6f081c071982"
+    },
+    "not-found.meta.title": {
+      "part": "not-found",
+      "source_hash": "9997b967a0f9",
+      "target_hash": "98d857b06cae"
+    },
+    "not-found.meta.description": {
+      "part": "not-found",
+      "source_hash": "f56b56b08c51",
+      "target_hash": "b50fb91ab87a"
+    },
+    "not-found.nf.h1-1": {
+      "part": "not-found",
+      "source_hash": "0a4c2fc34b17",
+      "target_hash": "ef1ee7daef16"
+    },
+    "not-found.p-1": {
+      "part": "not-found",
+      "source_hash": "701d00dd6585",
+      "target_hash": "5f012c150f0f"
+    }
+  },
+  "back_notes": {
+    "chrome.nav.aria-label": "\"メイン\" (Main) alone is a bare, context-free label for a navigation landmark.",
+    "home.why-stats.p-1": "\"セッションを固定する\" and \"キューがあるのに\" are somewhat abrupt; whole sentence is dense.",
+    "home.why-cache.p-2": "\"処理を行っているレプリカ数\" and the \"(4 セッションで四つのうち 2.71 対 2.83)\" parenthetical are clipped and hard to parse.",
+    "home.agents.span-8": "Fragment: begins with 'の' (possessive/'s) after an implied preceding number or element; unreadable on its own.",
+    "agent-tuning.meta.description": "\"エンジン、フラグ\" (flags) is a slightly different concept from parameters/settings.",
+    "gpu-monitoring.span-1": "\"表示なし\" (not shown) is a bare fragment without context.",
+    "cache-aware-routing.dd-5": "\"このリリース\" (this release) is a bare fragment with no context.",
+    "features.dd-8": "Sentence fragments with no subject at start.",
+    "faq.a-2": "Very long single block; mixed bracket styles [ ] for UI paths.",
+    "privacy.p-1": "\"配信され\" (delivered/distributed) is ambiguous for \"served by\"."
+  },
+  "issues": [
+    {
+      "key": "faq.a-7",
+      "category": "mistranslation",
+      "severity": "critical",
+      "status": "fixed",
+      "note": "First sentence inverted the condition: read \"unless you turn on the router and do NOT flag a key\", so a reader would think flagging a key keeps traffic local. Rewritten as 「…フラグを付けた場合を除き」; also flag kept as 「May relay to Anthropic」.",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.p-10",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "\"over the air\" rendered as 無線で (wireless/radio): changes the claim; now OTA アップデート.",
+      "round": 1
+    },
+    {
+      "key": "home.p-appliance.li-3",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "\"over the air\" rendered as 無線で (wireless/radio): changes the claim; now OTA アップデート.",
+      "round": 1
+    },
+    {
+      "key": "home.upgrade.p-1",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "\"migrates forward\" calqued as 前方に移行 (meaningless); now データベースは自動的に新しいスキーマへ移行.",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.p-5",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "\"Replicas, and so this routing\" rendered with つまり, equating replicas with routing; now 「レプリカと、それを前提とするこのルーティング」.",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-2",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "\"Replicas, and so this routing\" rendered with つまり, equating replicas with routing; now 「レプリカと、それを前提とするこのルーティング」.",
+      "round": 1
+    },
+    {
+      "key": "chrome.nav.coding-agents",
+      "category": "omission",
+      "severity": "major",
+      "status": "fixed",
+      "note": "\"agents\" dropped: コーディング alone does not name the page; now コーディング エージェント (13 chars, within the 16-char hint).",
+      "round": 1
+    },
+    {
+      "key": "common.crumb.coding-agents",
+      "category": "omission",
+      "severity": "major",
+      "status": "fixed",
+      "note": "\"agents\" dropped: コーディング alone does not name the page; now コーディング エージェント (13 chars, within the 16-char hint).",
+      "round": 1
+    },
+    {
+      "key": "home.agents.span-8",
+      "category": "locale-convention",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Date 「2026 年十月 21 日」 mixed kanji/digits and the line began as a bare fragment; now 2026 年 10 月 21 日 and 「のリクエストにローカルで応答」 continuing the 1,981 figure. numbers_ok entry added for the month digits.",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.figcaption-4",
+      "category": "locale-convention",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Date 「2026 年十月 4 日」 → 2026 年 10 月 4 日; numbers_ok entry added.",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-4",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "「アフィニティありでもテールは短いまま」 says \"even with affinity\"; English says the tail is shorter WITH affinity. Fixed.",
+      "round": 1
+    },
+    {
+      "key": "home.why-fit.p-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"budget\" calqued as 予算; what adds up is usable VRAM. Fixed.",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.dd-7",
+      "category": "omission",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"five MORE turns\" lost \"more\"; also テスト ハーネス. Fixed.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.img-1.alt",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "throttle mark rendered as 目安 (rough guide); now スロットリング ポイント, consistent with the page.",
+      "round": 1
+    },
+    {
+      "key": "home.why-god.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "「オフのときは存在しません」 literal; now 「オフのときはドック自体が表示されません」.",
+      "round": 1
+    },
+    {
+      "key": "home.p-linux.li-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "近日公開予定 + 時期は未定 read contradictory; now 近日対応予定 / 時期はまだ決まっていません.",
+      "round": 1
+    },
+    {
+      "key": "chrome.install",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "入手 stiff and inconsistent with ダウンロードとインストール; shortest natural form ダウンロード used (top-bar button).",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.ol-1.aria-label",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"priority ladder\" calque (owner rejected the same calque in ru); now 優先度の設定例.",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.p-3",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"example ladder, not a rule\" → 設定例であって、決まりではありません.",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.p-2",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "優先度がそれに代わりました past tense for a current design; now その役割は優先度が担います.",
+      "round": 1
+    },
+    {
+      "key": "features.h3-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Heading in plain form while headings site-wide use です/ます or noun endings; made polite.",
+      "round": 1
+    },
+    {
+      "key": "features.h3-2",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Heading in plain form while headings site-wide use です/ます or noun endings; made polite.",
+      "round": 1
+    },
+    {
+      "key": "features.h3-3",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Heading in plain form while headings site-wide use です/ます or noun endings; made polite.",
+      "round": 1
+    },
+    {
+      "key": "home.why-god.h3-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Heading in plain form while headings site-wide use です/ます or noun endings; made polite.",
+      "round": 1
+    },
+    {
+      "key": "coding-agents.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"speaks <protocol>\" calqued as に対応し in a request-flow caption, and 「GPU ごとにモデルのコピーが一つです。」 dangling; now 「…形式でリクエストを受け付け」 and the replica gloss folded in.",
+      "round": 1
+    },
+    {
+      "key": "clients.anthropic-sdk.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"speaks <protocol>\" calqued as に対応し in a request-flow caption, and 「GPU ごとにモデルのコピーが一つです。」 dangling; now 「…形式でリクエストを受け付け」 and the replica gloss folded in.",
+      "round": 1
+    },
+    {
+      "key": "clients.opencode.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"speaks <protocol>\" calqued as に対応し in a request-flow caption, and 「GPU ごとにモデルのコピーが一つです。」 dangling; now 「…形式でリクエストを受け付け」 and the replica gloss folded in.",
+      "round": 1
+    },
+    {
+      "key": "clients.aider.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"speaks <protocol>\" calqued as に対応し in a request-flow caption, and 「GPU ごとにモデルのコピーが一つです。」 dangling; now 「…形式でリクエストを受け付け」 and the replica gloss folded in.",
+      "round": 1
+    },
+    {
+      "key": "clients.grok-cli.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"speaks <protocol>\" calqued as に対応し in a request-flow caption, and 「GPU ごとにモデルのコピーが一つです。」 dangling; now 「…形式でリクエストを受け付け」 and the replica gloss folded in.",
+      "round": 1
+    },
+    {
+      "key": "clients.openai-sdk.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"speaks <protocol>\" calqued as に対応し in a request-flow caption, and 「GPU ごとにモデルのコピーが一つです。」 dangling; now 「…形式でリクエストを受け付け」 and the replica gloss folded in.",
+      "round": 1
+    },
+    {
+      "key": "clients.continue.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"speaks <protocol>\" calqued as に対応し in a request-flow caption, and 「GPU ごとにモデルのコピーが一つです。」 dangling; now 「…形式でリクエストを受け付け」 and the replica gloss folded in.",
+      "round": 1
+    },
+    {
+      "key": "clients.cline.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"speaks <protocol>\" calqued as に対応し in a request-flow caption, and 「GPU ごとにモデルのコピーが一つです。」 dangling; now 「…形式でリクエストを受け付け」 and the replica gloss folded in.",
+      "round": 1
+    },
+    {
+      "key": "clients.cursor.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"speaks <protocol>\" calqued as に対応し in a request-flow caption, and 「GPU ごとにモデルのコピーが一つです。」 dangling; now 「…形式でリクエストを受け付け」 and the replica gloss folded in.",
+      "round": 1
+    },
+    {
+      "key": "clients.codex-cli.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "\"speaks <protocol>\" calqued as に対応し in a request-flow caption, and 「GPU ごとにモデルのコピーが一つです。」 dangling; now 「…形式でリクエストを受け付け」 and the replica gloss folded in.",
+      "round": 1
+    },
+    {
+      "key": "coding-agents.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Base URL / ベース URL mixed in prose; prose uses ベース URL, literal UI field names (Cline, Cursor) stay English.",
+      "round": 1
+    },
+    {
+      "key": "coding-agents.flow.caption",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Base URL / ベース URL mixed in prose; prose uses ベース URL, literal UI field names (Cline, Cursor) stay English.",
+      "round": 1
+    },
+    {
+      "key": "clients.openai-sdk.summary",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Base URL / ベース URL mixed in prose; prose uses ベース URL, literal UI field names (Cline, Cursor) stay English.",
+      "round": 1
+    },
+    {
+      "key": "clients.cline.capability",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Base URL / ベース URL mixed in prose; prose uses ベース URL, literal UI field names (Cline, Cursor) stay English.",
+      "round": 1
+    },
+    {
+      "key": "clients.cursor.summary",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Base URL / ベース URL mixed in prose; prose uses ベース URL, literal UI field names (Cline, Cursor) stay English.",
+      "round": 1
+    },
+    {
+      "key": "clients.grok-cli.mode.community.desc",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Base URL / ベース URL mixed in prose; prose uses ベース URL, literal UI field names (Cline, Cursor) stay English.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "English UI strings in curly quotes; now in 「」 per Microsoft ja style.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.img-2.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "English UI strings in curly quotes; now in 「」 per Microsoft ja style.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.cards.h2-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "English UI strings in curly quotes; now in 「」 per Microsoft ja style.",
+      "round": 1
+    },
+    {
+      "key": "features.p-2",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "English UI strings in curly quotes; now in 「」 per Microsoft ja style.",
+      "round": 1
+    },
+    {
+      "key": "faq.a-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "English UI strings in curly quotes; now in 「」 per Microsoft ja style.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.figcaption-2",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "English UI strings in curly quotes; now in 「」 per Microsoft ja style.",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Embedded English UI sentence not delimited; now in 「」.",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.figcaption-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Counter mixed (B300 八基 vs カード八枚 on one page); now 八基 for SXM modules.",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "遊んでいる (colloquial) and stilted rule-of-thumb sentence; GPU 七基 → 七枚 for PCIe cards. Fixed.",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.a-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Counter for the RTX 5090 box: GPU 七基 → GPU 七枚 (cards), consistent with 「RTX 5090 を七枚」.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.figcaption-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Counter for the RTX 5090 box: GPU 七基 → GPU 七枚 (cards), consistent with 「RTX 5090 を七枚」.",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.figcaption-6",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Counter for the RTX 5090 box: GPU 七基 → GPU 七枚 (cards), consistent with 「RTX 5090 を七枚」.",
+      "round": 1
+    },
+    {
+      "key": "meta.og-image-alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「机の下」は \"under your desk\" の直訳。",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-10",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 乗算記号に半角 x を使用。「×」に。",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-10",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「狭い PCIe リンク」は \"narrow link\" の直訳。リンク幅の縮退を指す。",
+      "round": 1
+    },
+    {
+      "key": "chrome.nav.coding-agents",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「コーディング」だけでは \"coding\" の意味になり、ページ (コーディング エージェント) を指さない。",
+      "round": 1
+    },
+    {
+      "key": "common.crumb.coding-agents",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「コーディング」だけではページ名にならない。",
+      "round": 1
+    },
+    {
+      "key": "chrome.docs.short",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「文書」と「ドキュメント」が混在。",
+      "round": 1
+    },
+    {
+      "key": "home.hero.h1-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「あなたの GPU を」は翻訳調で、述語のない体言止めが不自然。",
+      "round": 1
+    },
+    {
+      "key": "home.hero.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「その前に…ポートを一つ置きます」は \"puts a port in front\" の直訳で「その前に」が時間の意味に読める。またエンドポイントをポートと呼んでおり用語不一致。",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 見出しの疑問文が普通体。他の見出し (働いていますか) と文体を揃える。",
+      "round": 1
+    },
+    {
+      "key": "home.why-fit.h3-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 見出しの疑問文が普通体で、です/ます体と不統一。",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-2",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「GPU に向けましょう」は \"point your agent at\" の直訳で意味が通らない。",
+      "round": 1
+    },
+    {
+      "key": "home.agents.h2-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「GPU に向けましょう」は \"point at\" の直訳。",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 英語の名詞句をそのまま訳した見出しで、主述がない。",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「自分のレプリカ」は \"its own replica\" の直訳で擬人的。",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-10",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: \"one USB drive, a chassis, one job\" の列挙をそのまま訳している。",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.p-10",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「無線で更新」は \"over the air\" の誤訳 (OTA = オンライン更新)。",
+      "round": 1
+    },
+    {
+      "key": "home.p-appliance.li-3",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「更新は無線で届きます」は OTA の誤訳。",
+      "round": 1
+    },
+    {
+      "key": "home.install.span-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「次の対応」は不自然なバッジ表現。",
+      "round": 1
+    },
+    {
+      "key": "home.p-win.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「正直な選択肢」は \"honest options\" の直訳で、日本語では意味をなさない。",
+      "round": 1
+    },
+    {
+      "key": "home.upgrade.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「前方に移行されます」は \"migrates forward\" の直訳で意味不明。",
+      "round": 1
+    },
+    {
+      "key": "home.why.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「その周りの部分」は \"the pieces around it\" の直訳で何を指すか曖昧。",
+      "round": 1
+    },
+    {
+      "key": "home.why-fit.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「予算が合算されます」は \"budget\" の直訳。合算されるのは使える VRAM。",
+      "round": 1
+    },
+    {
+      "key": "home.why-chat.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 和文中に不要な半角スペース (「には メッセージ」)。",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.img-1.alt",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「ピル」は UI 用語 \"pill\" の直訳で、日本語では薬 (錠剤) と読まれる。",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.img-1.alt",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「ピル」は \"pill\" の直訳で、薬と読まれる。",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.figcaption-4",
+      "category": "locale-convention",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 日付が「2026 年十月 4 日」と漢数字と算用数字の混在。",
+      "round": 1
+    },
+    {
+      "key": "home.agents.span-8",
+      "category": "locale-convention",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 日付が「2026 年十月 21 日」と混在。",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.p-5",
+      "category": "grammar",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「レプリカ、つまりこのルーティングは」は「レプリカ＝ルーティング」と同一視する誤読を生む (\"and therefore\" の誤訳)。",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-2",
+      "category": "grammar",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「つまり」が \"and therefore\" の誤訳で、レプリカとルーティングを同一視している。",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「遅いテール」は \"slow tail\" の直訳。テール レイテンシが定訳。",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「遅いテール」は \"slow tail\" の直訳。",
+      "round": 1
+    },
+    {
+      "key": "home.agents.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "Native editor: 「ハーネス」はエージェント クライアントを指す英語の業界スラングで、日本語読者には通じない。",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.a-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 単独の「ハーネス」は意味が取りにくい。テスト ハーネスと明示。",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.dd-7",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 単独の「ハーネス」は意味が取りにくい。",
+      "round": 1
+    },
+    {
+      "key": "home.agents.span-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「自前キーのモデル」と Grok ページの「BYOK (独自キー持ち込み)」が不統一。",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.p-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「ストレス実行」は \"stress run\" の直訳。定訳はストレス テスト。",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.li-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「ストレス実行して」は直訳。",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.p-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「ストレス実行」は直訳。",
+      "round": 1
+    },
+    {
+      "key": "agent-tuning.li-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「ストレス実行」は直訳。",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「残りの能力」は \"capacity\" の直訳。処理能力・余力が自然。",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.p-8",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「残りの能力」は \"capacity\" の直訳。",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「机の下の」は \"under your desk\" の直訳。",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「何年も離れて買った」は \"bought years apart\" の直訳。",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「十八か月違いで買った」は直訳調。",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.p-9",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「狭い PCIe スロット」は \"narrow slot\" の直訳。",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.span-4",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「ルールが Anthropic に送られた」と、ルール自体が送られたように読める。",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.figcaption-3",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「ルールが Anthropic に送られた理由」と、ルール自体が送られたように読める。",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「コールドから読み込み」は \"read cold\" の直訳。",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「この線は動きます」は \"moves the line\" の直訳。",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「ストリーミングも含めてです。」が後付けの断片になっている。",
+      "round": 1
+    },
+    {
+      "key": "agent-tuning.li-7",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「取り消す」と他所の「失効させる」が不統一。",
+      "round": 1
+    },
+    {
+      "key": "common.in-words",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「文章で：」は \"In words\" の直訳。",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「文章で：」は \"In words\" の直訳。「Claude Code の再試行する 529」も不自然。",
+      "round": 1
+    },
+    {
+      "key": "features.dd-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「Cookie jar」が未訳のまま。",
+      "round": 1
+    },
+    {
+      "key": "features.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「バイタル サイン」は \"vitals\" の直訳。",
+      "round": 1
+    },
+    {
+      "key": "privacy.h2-4",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「データを処理する者」は硬い直訳調。",
+      "round": 1
+    },
+    {
+      "key": "clients.opencode.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「使い、…使います」と動詞が重複。",
+      "round": 1
+    },
+    {
+      "key": "clients.codex-cli.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「使い、…使います」と動詞が重複。",
+      "round": 1
+    },
+    {
+      "key": "common.crumb.cache-aware-routing",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Native editor: 「キャッシュ考慮ルーティング」と他所の「キャッシュを考慮したルーティング」が不統一。",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-9",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "ありのままに vague (honestly); now ハードウェアの実態をそのまま表示.",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Run-on 「それは処理したレプリカの上だけで」 split.",
+      "round": 1
+    },
+    {
+      "key": "home.agents.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "貼り付けるファイルを出力 → 貼り付けるだけの設定ファイルを用意.",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.li-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "勝者 calque → 優れたほう.",
+      "round": 1
+    },
+    {
+      "key": "home.hw.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Same heading as use-cases.h3-9; aligned.",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Abrupt そしてその下のエンジン; 生きている/死んでいる → 動いている/停止; メモリ予算 → メモリ上限.",
+      "round": 1
+    },
+    {
+      "key": "home.features.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "「カードはそれぞれ自分で報告します」 literal; now カードごとに、それぞれの状態を表示します.",
+      "round": 1
+    },
+    {
+      "key": "home.oss.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Loose slogan clause tightened.",
+      "round": 1
+    },
+    {
+      "key": "chrome.consent.text",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Afterthought sentence ただし…限ります merged into one sentence.",
+      "round": 1
+    },
+    {
+      "key": "common.crumbs.aria-label",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "階層リンク non-standard; now パンくずリスト.",
+      "round": 1
+    },
+    {
+      "key": "common.client.docs",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "「閲覧」 calque of \"read on\"; now 「時点」.",
+      "round": 1
+    },
+    {
+      "key": "common.client.setup-p",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Stiff phrasing smoothed.",
+      "round": 1
+    },
+    {
+      "key": "clients.opencode.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Elliptical \"translates for Codex CLI only\" made explicit.",
+      "round": 1
+    },
+    {
+      "key": "clients.aider.mode.default.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "「向けます」 (point at) calque; now 接続先を…に設定.",
+      "round": 1
+    },
+    {
+      "key": "clients.continue.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "「向け」 calque; now 接続先を…に設定.",
+      "round": 1
+    },
+    {
+      "key": "clients.cursor.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "「…で知られています」 odd; now スタッフがフォーラムで説明しています.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "私たちの → 自社の.",
+      "round": 1
+    },
+    {
+      "key": "agent-tuning.li-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Fragment after the verb restructured.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.box.h1-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "「数値を出したマシン」 vague; now 数値を測定したマシン.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "自分たちの → 自社の.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "メモリ予算 → メモリ上限; consistent with home.hardware.p-2.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.dd-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Dangling 「…にまたがって」 completed.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "統計パネル → Stats パネル (product UI name); preachy line softened.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "撮影 (photographed) → キャプチャ.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.p-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "「理由が分からないまま遅い」 odd; now 原因が見えないまま遅れている.",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Colloquial そこは…見ていない and ambiguous scope fixed.",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.figcaption-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Clipped 四つのうち稼働中のレプリカ数 restructured.",
+      "round": 1
+    },
+    {
+      "key": "api-keys.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Clumsy range clause smoothed.",
+      "round": 1
+    },
+    {
+      "key": "api-keys.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "私たち → 自社.",
+      "round": 1
+    },
+    {
+      "key": "api-keys.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "十五件に一件を描画 cryptic; now の割合で描画.",
+      "round": 1
+    },
+    {
+      "key": "api-keys.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "「逆から読めば、それが乗り換え方」 colloquial; rewritten.",
+      "round": 1
+    },
+    {
+      "key": "features.dd-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "ガベージ コレクション jargon as a verb; now 孤立したファイルを削除.",
+      "round": 1
+    },
+    {
+      "key": "features.img-2.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Garbled 「op 2 の 22 中 21」 clarified.",
+      "round": 1
+    },
+    {
+      "key": "faq.a-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Clumsy 何も保存されず → 一切保存されず.",
+      "round": 1
+    },
+    {
+      "key": "faq.a-9",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "古いシークレット inconsistent with キー.",
+      "round": 1
+    },
+    {
+      "key": "faq.a-12",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Colloquial 支払いが済めば.",
+      "round": 1
+    },
+    {
+      "key": "privacy.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Fragmented list of three actions joined.",
+      "round": 1
+    },
+    {
+      "key": "privacy.h2-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "「事前に確認される場合」 awkward; now 事前に同意を求める場合.",
+      "round": 1
+    },
+    {
+      "key": "not-found.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "Oddly worded move explanation.",
+      "round": 1
+    },
+    {
+      "key": "chrome.nav.aria-label",
+      "category": "style",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "メイン for the nav landmark: screen readers append \"navigation\"; kept.",
+      "round": 1
+    },
+    {
+      "key": "privacy.p-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "配信され for \"served by\" is standard; kept.",
+      "round": 1
+    },
+    {
+      "key": "faq.a-2",
+      "category": "style",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "[ ] around translated macOS UI paths follows Microsoft ja style; kept.",
+      "round": 1
+    },
+    {
+      "key": "features.dd-8",
+      "category": "style",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "Noun-phrase fragments in a definition list are acceptable; kept.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.span-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "表示なし in a table cell; kept.",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.p-2",
+      "category": "style",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "Dense parenthetical (2.71 対 2.83) correct; kept.",
+      "round": 1
+    },
+    {
+      "key": "agent-tuning.meta.description",
+      "category": "style",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "フラグ for engine flags is accurate; kept.",
+      "round": 1
+    },
+    {
+      "key": "home.agents.span-8",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "round": 3,
+      "change": "minor wording",
+      "note": "[final review r3, minor wording] Fragment began with の, in a grid column of its own beside the big number 1,981 件, so the line started with a particle. Rewritten as a standalone label: ローカルで応答したリクエスト。"
+    },
+    {
+      "key": "gpu-monitoring.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "minor wording",
+      "note": "[final review r3, minor wording] 「一つのモデルを全体で読み込み」 was awkward; now 「四枚にまたがって一つのモデルを読み込み」."
+    },
+    {
+      "key": "home.why-cache.figcaption-4",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "meaning-changing (clarifies meaning)",
+      "note": "[final review r3, meaning-changing (clarifies meaning)] 'It is the card, not a result' rendered as カードの画面 (unclear); now says the image is the console card itself, not a benchmark result."
+    },
+    {
+      "key": "cache-aware-routing.figcaption-5",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "meaning-changing (clarifies meaning)",
+      "note": "[final review r3, meaning-changing (clarifies meaning)] Same 'It is the card, not a result' fix as home.why-cache.figcaption-4."
+    },
+    {
+      "key": "home.why-keys.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "minor wording",
+      "note": "[final review r3, minor wording] Stray half-width space before 「 removed. The English UI string is quoted in 「」."
+    }
+  ]
+}

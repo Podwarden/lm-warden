@@ -32,7 +32,7 @@
     "source_hash": "9791836d7920"
   },
   "jsonld.feature-6": {
-    "text": "Réglage par agent : via l’API, un agent de codage choisit le modèle, le moteur et la répartition sur vos GPU, en mesurant les performances à chaque étape",
+    "text": "Réglage par un agent : via l’API, un agent de codage choisit le modèle, le moteur et la répartition sur vos GPU, en mesurant les performances à chaque étape",
     "source_hash": "b2f04e38f9aa"
   },
   "jsonld.feature-7": {
@@ -880,7 +880,7 @@
     "source_hash": "505b9916712b"
   },
   "home.why-agent.p-4": {
-    "text": "Les choix de moteur et de répartition (vLLM, parallélisme de tenseurs ou de données) concernent l’installation Linux ; sur un Mac, le choix se limite à MLX ou llama.cpp sur un seul GPU. Le modèle qui effectue le réglage peut être celui que vous payez déjà ; le modèle réglé est celui qui tourne sur vos cartes. <a href=\"/agent-tuning\">La page Réglage par agent : les quatre prompts en entier</a>.",
+    "text": "Les choix de moteur et de répartition (vLLM, parallélisme de tenseurs ou de données) concernent l’installation Linux ; sur un Mac, le choix se limite à MLX ou llama.cpp sur un seul GPU. Le modèle qui effectue le réglage peut être celui que vous payez déjà ; le modèle réglé est celui qui tourne sur vos cartes. <a href=\"/agent-tuning\">La page Réglage par un agent : les quatre prompts en entier</a>.",
     "source_hash": "bbeb89be5de6"
   },
   "home.share.h2-1": {
@@ -940,7 +940,7 @@
     "source_hash": "96d527825b4b"
   },
   "home.why-keys.span-5": {
-    "text": "en heures creuses",
+    "text": "attendent que la machine soit libre",
     "source_hash": "687891cb2f66"
   },
   "home.why-keys.p-3": {
@@ -948,7 +948,7 @@
     "source_hash": "ca3034a912dc"
   },
   "home.why-keys.img-1.alt": {
-    "text": "La page de la clé API coding-agent : un panneau Limits avec le sélecteur de priorité P0 à P9 et le texte Strict, a waiting P9 request always goes before a P8 one ; un panneau Usage sur les 7 derniers jours avec 19 k requêtes, 1,5 milliard de jetons de prompt et 440 k jetons de complétion ; des graphiques des jetons et des requêtes par minute ; en dessous, des panneaux d’attente en file et de latence",
+    "text": "La page de la clé API coding-agent : un panneau Limits avec le sélecteur de priorité P0 à P9 et le texte « Strict: a waiting P9 request always goes before a P8 one » ; un panneau Usage sur les 7 derniers jours avec 19 k requêtes, 1,5 milliard de jetons de prompt et 440 k jetons de complétion ; des graphiques des jetons et des requêtes par minute ; en dessous, des panneaux d’attente en file et de latence",
     "source_hash": "ae01537e1ee6"
   },
   "home.why-keys.figcaption-1": {

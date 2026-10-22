@@ -4,14 +4,24 @@
 // Behaviour is driven by capabilities, never by the OS.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+  waitFor,
+} from "@testing-library/react";
 import { SWRConfig } from "swr";
 import { AddModelModal } from "@/components/models/add-model-modal";
 import { setAccessToken, setCsrfToken } from "@/lib/auth-fetch";
 
 const GIB = 1024 * 1024 * 1024;
 
-const cap = (name: string, display_name: string, extra: Record<string, unknown> = {}) => ({
+const cap = (
+  name: string,
+  display_name: string,
+  extra: Record<string, unknown> = {},
+) => ({
   name,
   display_name,
   version: null,
@@ -39,15 +49,30 @@ const LINUX = {
   driver: "subprocess",
   engine_version: null,
   backends: [
-    cap("vllm", "vLLM", { supports_tensor_parallel: true, supports_data_parallel: true }),
+    cap("vllm", "vLLM", {
+      supports_tensor_parallel: true,
+      supports_data_parallel: true,
+    }),
     cap("llamacpp", "llama.cpp", { needs_local_model_path: true }),
   ],
 };
 
 const SAFETENSORS_REPO = {
   files: [
-    { filename: "model.safetensors", size: 2 * GIB, kind: "safetensors_single", quant: "4bit", params: 3_000_000_000 },
-    { filename: "config.json", size: 1024, kind: "config", quant: null, params: null },
+    {
+      filename: "model.safetensors",
+      size: 2 * GIB,
+      kind: "safetensors_single",
+      quant: "4bit",
+      params: 3_000_000_000,
+    },
+    {
+      filename: "config.json",
+      size: 1024,
+      kind: "config",
+      quant: null,
+      params: null,
+    },
   ],
   config: { architectures: ["Qwen2ForCausalLM"] },
   repo: { id: "mlx-community/Qwen2.5-3B-4bit" },
@@ -55,8 +80,20 @@ const SAFETENSORS_REPO = {
 };
 const GGUF_REPO = {
   files: [
-    { filename: "model-Q4.gguf", size: 2 * GIB, kind: "gguf", quant: "Q4", params: 3_000_000_000 },
-    { filename: "model-Q8.gguf", size: 3 * GIB, kind: "gguf", quant: "Q8", params: 3_000_000_000 },
+    {
+      filename: "model-Q4.gguf",
+      size: 2 * GIB,
+      kind: "gguf",
+      quant: "Q4",
+      params: 3_000_000_000,
+    },
+    {
+      filename: "model-Q8.gguf",
+      size: 3 * GIB,
+      kind: "gguf",
+      quant: "Q8",
+      params: 3_000_000_000,
+    },
   ],
   config: null,
   repo: { id: "org/gguf" },
@@ -65,22 +102,34 @@ const GGUF_REPO = {
 const FIT = {
   verdict: "green",
   breakdown: {
-    total_vram: 24 * GIB, weights_budget: 20 * GIB, kv_reserve: GIB, file_size: 2 * GIB,
-    ratio: 0.1, dtype_bytes: 2, max_model_len_used: 4096,
+    total_vram: 24 * GIB,
+    weights_budget: 20 * GIB,
+    kv_reserve: GIB,
+    file_size: 2 * GIB,
+    ratio: 0.1,
+    dtype_bytes: 2,
+    max_model_len_used: 4096,
   },
   recommended_max_model_len: null,
   warnings: [],
 };
 
 function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 let posted: Record<string, unknown> | null = null;
 
 type BackendsMode = "pending" | "reject";
 
-async function openAt(backends: unknown, discovery: unknown, mode?: BackendsMode) {
+async function openAt(
+  backends: unknown,
+  discovery: unknown,
+  mode?: BackendsMode,
+) {
   posted = null;
   vi.stubGlobal(
     "fetch",
@@ -98,25 +147,52 @@ async function openAt(backends: unknown, discovery: unknown, mode?: BackendsMode
       if (url === "/api/models/templates") return json([]);
       if (url === "/api/system/gpus")
         return json({
-          probed_at: "x", probe_error: null,
-          gpus: [{ index: 0, name: "GPU", memory_total_mib: 24576, memory_used_mib: 0, utilization_pct: 0 }],
+          probed_at: "x",
+          probe_error: null,
+          gpus: [
+            {
+              index: 0,
+              name: "GPU",
+              memory_total_mib: 24576,
+              memory_used_mib: 0,
+              utilization_pct: 0,
+            },
+          ],
         });
       if (url === "/api/models" && init?.method === "POST") {
         posted = JSON.parse(init.body as string);
         return json({ id: "m1", served_model_name: "x" }, 201);
       }
-      if (/^\/api\/models\/.+\/pull$/.test(url)) return new Response(null, { status: 202 });
+      if (/^\/api\/models\/.+\/pull$/.test(url))
+        return new Response(null, { status: 202 });
       throw new Error(`Unmocked fetch: ${init?.method ?? "GET"} ${url}`);
     }),
   );
   render(
-    <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0, shouldRetryOnError: false }}>
+    <SWRConfig
+      value={{
+        provider: () => new Map(),
+        dedupingInterval: 0,
+        shouldRetryOnError: false,
+      }}
+    >
       <AddModelModal open onClose={() => {}} />
     </SWRConfig>,
   );
-  fireEvent.change(screen.getByLabelText(/hf repo/i), { target: { value: "org/repo" } });
+  fireEvent.change(screen.getByLabelText(/hf repo/i), {
+    target: { value: "org/repo" },
+  });
   fireEvent.click(screen.getByRole("button", { name: /discover/i }));
   await screen.findByTestId("file-table");
+  // The GPU list loads independently; Add before it lands is refused
+  // ("Select at least one GPU"), which on a slow runner raced the click.
+  await waitFor(() =>
+    expect(
+      screen
+        .getAllByRole("checkbox")
+        .some((c) => (c as HTMLInputElement).checked),
+    ).toBe(true),
+  );
   if (mode) return;
   // the capability list lands independently of discovery
   await waitFor(() => {
@@ -146,7 +222,9 @@ describe("add model — engines come from the server", () => {
     expect(values).toContain("mlx");
     expect(values).not.toContain("vllm");
     expect(select().value).toBe("mlx");
-    expect(screen.getByTestId("backend-description").textContent).not.toMatch(/tensor-parallel multi-GPU/);
+    expect(screen.getByTestId("backend-description").textContent).not.toMatch(
+      /tensor-parallel multi-GPU/,
+    );
   });
 
   it("Mac response: picking a .gguf switches to llama.cpp", async () => {
@@ -167,11 +245,16 @@ describe("add model — engines come from the server", () => {
   it("Linux response: unchanged — vLLM preselected, sends its filename, TP copy shown", async () => {
     await openAt(LINUX, SAFETENSORS_REPO);
     expect(select().value).toBe("vllm");
-    expect(screen.getByTestId("backend-description").textContent).toMatch(/tensor-parallel multi-GPU/);
+    expect(screen.getByTestId("backend-description").textContent).toMatch(
+      /tensor-parallel multi-GPU/,
+    );
     fireEvent.click(screen.getByLabelText("select model.safetensors"));
     fireEvent.click(screen.getByRole("button", { name: /^add$/i }));
     await waitFor(() => expect(posted).not.toBeNull());
-    expect(posted).toMatchObject({ backend: "vllm", filename: "model.safetensors" });
+    expect(posted).toMatchObject({
+      backend: "vllm",
+      filename: "model.safetensors",
+    });
   });
 
   it("Linux response: a .gguf still pre-selects llama.cpp and sends its filename", async () => {
@@ -180,7 +263,10 @@ describe("add model — engines come from the server", () => {
     expect(select().value).toBe("llamacpp");
     fireEvent.click(screen.getByRole("button", { name: /^add$/i }));
     await waitFor(() => expect(posted).not.toBeNull());
-    expect(posted).toMatchObject({ backend: "llamacpp", filename: "model-Q4.gguf" });
+    expect(posted).toMatchObject({
+      backend: "llamacpp",
+      filename: "model-Q4.gguf",
+    });
   });
 
   it.each<BackendsMode>(["pending", "reject"])(
@@ -188,13 +274,6 @@ describe("add model — engines come from the server", () => {
     async (mode) => {
       await openAt(LINUX, SAFETENSORS_REPO, mode);
       fireEvent.click(screen.getByLabelText("select model.safetensors"));
-      // The GPU list loads independently; Add before it lands is refused
-      // ("Select at least one GPU"), which on a slow runner raced the click.
-      await waitFor(() =>
-        expect(
-          screen.getAllByRole("checkbox").some((c) => (c as HTMLInputElement).checked),
-        ).toBe(true),
-      );
       fireEvent.click(screen.getByRole("button", { name: /^add$/i }));
       await waitFor(() => expect(posted).not.toBeNull());
       expect(posted).toMatchObject({ hf_repo: "org/repo" });
@@ -208,14 +287,23 @@ describe("add model — engines come from the server", () => {
     fireEvent.click(screen.getByLabelText("select model.safetensors"));
     fireEvent.click(screen.getByRole("button", { name: /^add$/i }));
     await waitFor(() => expect(posted).not.toBeNull());
-    expect(posted).toMatchObject({ backend: "llamacpp", filename: "model.safetensors" });
+    expect(posted).toMatchObject({
+      backend: "llamacpp",
+      filename: "model.safetensors",
+    });
   });
 
   it("engine copy: llama.cpp says single .gguf, MLX says whole repository", async () => {
     await openAt(MAC, SAFETENSORS_REPO);
-    expect(screen.getByTestId("backend-description").textContent).toMatch(/whole repository/);
+    expect(screen.getByTestId("backend-description").textContent).toMatch(
+      /whole repository/,
+    );
     fireEvent.change(select(), { target: { value: "llamacpp" } });
-    expect(screen.getByTestId("backend-description").textContent).toMatch(/single \.gguf/);
-    expect(screen.getByTestId("backend-description").textContent).not.toMatch(/whole repository/);
+    expect(screen.getByTestId("backend-description").textContent).toMatch(
+      /single \.gguf/,
+    );
+    expect(screen.getByTestId("backend-description").textContent).not.toMatch(
+      /whole repository/,
+    );
   });
 });

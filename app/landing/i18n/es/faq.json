@@ -16,7 +16,7 @@
     "source_hash": "37148ce83843"
   },
   "faq.a-1": {
-    "text": "Un plano de control para motores de inferencia en tu propio hardware: vLLM y llama.cpp en un host Linux con GPU NVIDIA, o MLX y llama.cpp en una app beta en un Mac con chip de Apple. Descargas un modelo de HuggingFace, lo cargas en tu propia GPU, generas una clave de API y lo llamas a través de un punto de conexión <code>/v1</code> compatible con OpenAI. Desde una interfaz web puedes cargar y descargar modelos y consultar los registros de los motores en directo, un chat de pruebas, las estadísticas de GPU y de tokens, y una página por clave de API. No hace los modelos más rápidos ni modifica los motores: añade lo que un motor por sí solo no ofrece.",
+    "text": "Un plano de control para motores de inferencia en tu propio hardware: vLLM y llama.cpp en un host Linux con GPU NVIDIA, o MLX y llama.cpp en una app beta en un Mac con chip de Apple. Descargas un modelo de HuggingFace, lo cargas en tu propia GPU, generas una clave de API y lo llamas a través de un punto de conexión <code>/v1</code> compatible con OpenAI. Desde una interfaz web puedes cargar y descargar modelos, seguir en directo los registros de los motores, probar los modelos en un chat y consultar las estadísticas de GPU y de tokens; además, cada clave de API tiene su propia página. No hace los modelos más rápidos ni modifica los motores: añade lo que un motor por sí solo no ofrece.",
     "source_hash": "5098435c4cfe"
   },
   "faq.q-2": {
@@ -104,7 +104,7 @@
     "source_hash": "e8dc9deba44c"
   },
   "faq.a-12": {
-    "text": "Nada. LM Warden tiene licencia Apache-2.0. Es software que ejecutas tú, no una API en la nube: tú pones el hardware, el controlador, el disco y la electricidad, y una vez amortizado el hardware, cada solicitud cuesta electricidad, no una tarifa por token.",
+    "text": "Nada. LM Warden tiene licencia Apache-2.0. Es software que ejecutas tú, no una API en la nube: tú pones el hardware, el controlador, el disco y la electricidad, y, una vez pagado el hardware, cada solicitud cuesta electricidad, no una tarifa por token.",
     "source_hash": "97000d243331"
   },
   "faq.p-1": {

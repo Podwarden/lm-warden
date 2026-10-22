@@ -536,7 +536,7 @@
     "source_hash": "5ff95c0fa25d"
   },
   "home.p-mac.li-3": {
-    "text": "<b>Beta, bez owijania w bawełnę:</b> podpisana ad hoc i nienotaryzowana, więc przy pierwszym uruchomieniu macOS poprosi o zezwolenie w ustawieniach Prywatność i ochrona; każda aktualizacja to ponowne pobranie. <a href=\"{{repo}}/blob/main/documents/INSTALL.md#beta-builds\" rel=\"noopener\">Kroki pierwszego uruchomienia</a>.",
+    "text": "<b>Co oznacza wersja beta:</b> podpisana ad hoc i nienotaryzowana, więc przy pierwszym uruchomieniu macOS poprosi o zezwolenie w ustawieniach Prywatność i ochrona; każda aktualizacja to ponowne pobranie. <a href=\"{{repo}}/blob/main/documents/INSTALL.md#beta-builds\" rel=\"noopener\">Kroki pierwszego uruchomienia</a>.",
     "source_hash": "cf254395b87e"
   },
   "home.p-mac.li-4": {
@@ -704,7 +704,7 @@
     "source_hash": "f1bc7fbd6399"
   },
   "home.why-cache.figcaption-4": {
-    "text": "Te same liczniki na stronie modelu: jeden wiersz na replikę z żądaniami, które obsługuje, liczbą rozmów, które zostały (<code>sticky</code>) lub trafiły tu po przepełnieniu innej repliki, tym, co działa i czeka, użyciem cache KV i współczynnikiem trafień w cache prefiksów. Zarejestrowano 4&nbsp;października&nbsp;2026&nbsp;r. z włączoną koligacją i progiem przepełnienia 8 (auto): sticky 100% i współczynnik trafień w cache prefiksów 82,2; 86,0; 69,0 i 80,0% na replikach od 0 do 3. To karta, a nie wynik.<span class=\"cache-hint\"> Dotknij karty, aby ją powiększyć.</span>",
+    "text": "Te same liczniki na stronie modelu: jeden wiersz na replikę z żądaniami, które obsługuje, liczbą rozmów, które zostały (<code>sticky</code>) lub trafiły tu po przepełnieniu innej repliki, tym, co działa i czeka, użyciem cache KV i współczynnikiem trafień w cache prefiksów. Zarejestrowano 4&nbsp;października&nbsp;2026&nbsp;r. z włączoną koligacją i progiem przepełnienia 8 (auto): sticky 100% i współczynnik trafień w cache prefiksów 82,2; 86,0; 69,0 i 80,0% na replikach od 0 do 3. To zrzut panelu, a nie wynik testu.<span class=\"cache-hint\"> Dotknij obrazu, aby go powiększyć.</span>",
     "source_hash": "234d024e62df"
   },
   "home.why-cache.p-4": {
@@ -948,7 +948,7 @@
     "source_hash": "ca3034a912dc"
   },
   "home.why-keys.img-1.alt": {
-    "text": "Strona klucza API coding-agent: karta Limits z wyborem priorytetu od P0 do P9 i tekstem Strict, a waiting P9 request always goes before a P8 one; panel Usage z ostatnich 7 dni z 19 tys. żądań, 1,5 mld tokenów promptu i 440 tys. tokenów odpowiedzi; wykresy tokenów na minutę i żądań na minutę; poniżej panele czasu oczekiwania w kolejce i opóźnienia",
+    "text": "Strona klucza API coding-agent: karta Limits z wyborem priorytetu od P0 do P9 i tekstem „Strict: a waiting P9 request always goes before a P8 one”; panel Usage z ostatnich 7 dni z 19 tys. żądań, 1,5 mld tokenów promptu i 440 tys. tokenów odpowiedzi; wykresy tokenów na minutę i żądań na minutę; poniżej panele czasu oczekiwania w kolejce i opóźnienia",
     "source_hash": "ae01537e1ee6"
   },
   "home.why-keys.figcaption-1": {

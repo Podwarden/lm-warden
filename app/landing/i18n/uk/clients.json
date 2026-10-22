@@ -208,7 +208,7 @@
     "source_hash": "b77ddcf1b78a"
   },
   "clients.grok-cli.capability": {
-    "text": "Лише локальні моделі, через Chat Completions (<code>api_backend = chat_completions</code>). Запити до xAI не пересилаються, і для моделі BYOK обліковий запис xAI не потрібен. <code>session_summary</code> залишає запити Grok на назву сеансу на цій моделі; без нього Grok запитує в цього LM Warden <code>grok-4.6</code> й отримує 404. Під час роботи Grok додає власні розділи до <code>config.toml</code>. Спільнотний grok-cli (npm <code>grok-dev</code>) — інший інструмент: чат працює, виклики інструментів — ні.",
+    "text": "Лише локальні моделі, через Chat Completions (<code>api_backend = chat_completions</code>). Запити до xAI не пересилаються, і для моделі BYOK обліковий запис xAI не потрібен. <code>session_summary</code> змушує Grok надсилати запити на генерацію назви сеансу цій самій моделі; без нього Grok запитує в цього LM Warden <code>grok-4.6</code> й отримує 404. Під час роботи Grok додає власні розділи до <code>config.toml</code>. Спільнотний grok-cli (npm <code>grok-dev</code>) — інший інструмент: чат працює, виклики інструментів — ні.",
     "source_hash": "03938abace0a"
   },
   "clients.grok-cli.req.tools": {

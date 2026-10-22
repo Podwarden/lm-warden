@@ -216,7 +216,7 @@
     "source_hash": "05261121948c"
   },
   "home.hero.span-9": {
-    "text": "Agentes",
+    "text": "Agentes de programación",
     "source_hash": "707c65c28bca"
   },
   "home.hero.b-4": {
@@ -704,7 +704,7 @@
     "source_hash": "f1bc7fbd6399"
   },
   "home.why-cache.figcaption-4": {
-    "text": "Los mismos contadores en la página de un modelo: una fila por réplica con las solicitudes que tiene en curso, cuántas conversaciones se quedaron (<code>sticky</code>) o llegaron por desbordamiento, lo que se está ejecutando y lo que espera, la caché KV en uso y la tasa de aciertos de la caché de prefijos. Captura del 4&nbsp;de&nbsp;octubre&nbsp;de&nbsp;2026 con la afinidad activada y el umbral de desbordamiento en 8 (auto): sticky 100 % y una tasa de aciertos de la caché de prefijos de 82,2; 86,0; 69,0 y 80,0 % en las réplicas 0 a 3. Muestra el panel, no un resultado de medición.<span class=\"cache-hint\"> Toca la imagen para ampliarla.</span>",
+    "text": "Los mismos contadores en la página de un modelo: una fila por réplica con las solicitudes que tiene en curso, cuántas conversaciones se quedaron (<code>sticky</code>) o llegaron por desbordamiento, lo que se está ejecutando y lo que espera, la caché KV en uso y la tasa de aciertos de la caché de prefijos. Captura del 4&nbsp;de&nbsp;octubre&nbsp;de&nbsp;2026 con la afinidad activada y el umbral de desbordamiento en 8 (auto): sticky 100 % y una tasa de aciertos de la caché de prefijos de 82,2; 86,0; 69,0 y 80,0 % en las réplicas 0 a 3. Es una captura del panel, no un resultado de medición.<span class=\"cache-hint\"> Toca la imagen para ampliarla.</span>",
     "source_hash": "234d024e62df"
   },
   "home.why-cache.p-4": {
@@ -748,7 +748,7 @@
     "source_hash": "cc7b475640bb"
   },
   "home.agents.span-4": {
-    "text": "Modelo con clave propia · <code>/v1</code>",
+    "text": "Modelo BYOK (con tu propia clave) · <code>/v1</code>",
     "source_hash": "5a0628b4b02d"
   },
   "home.agents.span-5": {
@@ -948,7 +948,7 @@
     "source_hash": "ca3034a912dc"
   },
   "home.why-keys.img-1.alt": {
-    "text": "La página de la clave de API coding-agent: un panel Limits con el selector de prioridad de P0 a P9 y el texto Strict, a waiting P9 request always goes before a P8 one; un panel Usage de los últimos 7 días con 19 mil solicitudes, 1,5 mil millones de tokens de prompt y 440 mil tokens de respuesta; gráficos de tokens por minuto y de solicitudes por minuto; debajo, paneles de espera en cola y de latencia",
+    "text": "La página de la clave de API coding-agent: un panel Limits con el selector de prioridad de P0 a P9 y el texto «Strict: a waiting P9 request always goes before a P8 one»; un panel Usage de los últimos 7 días con 19 mil solicitudes, 1,5 mil millones de tokens de prompt y 440 mil tokens de respuesta; gráficos de tokens por minuto y de solicitudes por minuto; debajo, paneles de espera en cola y de latencia",
     "source_hash": "ae01537e1ee6"
   },
   "home.why-keys.figcaption-1": {
@@ -1008,7 +1008,7 @@
     "source_hash": "cddfa5475f94"
   },
   "home.hardware.p-2": {
-    "text": "Lo que muestra cada panel por tarjeta: la temperatura frente a su propio umbral de limitación térmica, la potencia frente a su límite, frecuencias, ventilador, la generación y el ancho PCIe negociados en ese momento, ECC y NVLink si la tarjeta los tiene, y el proceso que ocupa la memoria. El esquema de interconexión se obtiene de <code>nvidia-smi topo -m</code>. En un Mac: el uso de GPU y el presupuesto de memoria que indica Metal, sin potencia. Y el motor que hay debajo de todo se vigila con su propio <code>/health</code>, no con la tabla de procesos: si el motor se cae mientras su proceso envolvente sigue vivo, se recarga y se conservan los datos de diagnóstico.",
+    "text": "Lo que muestra cada panel por tarjeta: la temperatura frente a su propio umbral de limitación térmica, la potencia frente a su límite, frecuencias, ventilador, la generación y el ancho PCIe negociados en ese momento, ECC y NVLink si la tarjeta los tiene, y el proceso que ocupa la memoria. El esquema de interconexión se obtiene de <code>nvidia-smi topo -m</code>. En un Mac: el uso de GPU y el presupuesto de memoria que indica Metal, sin potencia. Y el motor que hay debajo de todo se vigila con su propio <code>/health</code>, no con la tabla de procesos: si el motor se cae mientras el proceso que lo envuelve sigue vivo, se recarga y se conservan los datos de diagnóstico.",
     "source_hash": "5a4e8569c432"
   },
   "home.features.h2-1": {
@@ -1068,7 +1068,7 @@
     "source_hash": "3317e70f46b3"
   },
   "home.open-source.p-1": {
-    "text": "LM Warden tiene licencia Apache-2.0 y está en <a href=\"{{repo}}\" rel=\"noopener\">GitHub</a>: el script de instalación y el archivo Compose son toda la implementación, y puedes leer ambos. Sin cuenta, sin comprobación de licencia y sin telemetría. vLLM, llama.cpp y MLX son proyectos upstream que ejecutamos sin modificar.",
+    "text": "LM Warden tiene licencia Apache-2.0 y está en <a href=\"{{repo}}\" rel=\"noopener\">GitHub</a>: el script de instalación y el archivo Compose son todo el despliegue, y puedes leer ambos. Sin cuenta, sin comprobación de licencia y sin telemetría. vLLM, llama.cpp y MLX son proyectos upstream que ejecutamos sin modificar.",
     "source_hash": "ba01b625fe70"
   },
   "home.open-source.h2-1": {

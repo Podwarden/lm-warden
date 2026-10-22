@@ -1,0 +1,6108 @@
+{
+  "locale": "fr",
+  "date": "2026-10-21",
+  "back_model": "claude-sonnet-5-5",
+  "fix_model": "claude-opus-5-5",
+  "published_segments": 666,
+  "covered_segments": 666,
+  "english_words": 14400,
+  "issues_found": {
+    "minor": 313,
+    "major": 29,
+    "critical": 0
+  },
+  "issues_remaining": {
+    "minor": 3,
+    "major": 0,
+    "critical": 0
+  },
+  "mqm_score": 0.21,
+  "max_score": 10.0,
+  "pass": true,
+  "segments": {
+    "meta.title": {
+      "part": "home",
+      "source_hash": "8b40be948ef4",
+      "target_hash": "2c5c66dc64fd"
+    },
+    "meta.description": {
+      "part": "home",
+      "source_hash": "6cb271edae46",
+      "target_hash": "73d388f7fd20"
+    },
+    "meta.og-image-alt": {
+      "part": "home",
+      "source_hash": "7f75ba3bcd9d",
+      "target_hash": "1b8e7ffd46b9"
+    },
+    "jsonld.feature-1": {
+      "part": "home",
+      "source_hash": "615857f542c9",
+      "target_hash": "d4cf62b8577c"
+    },
+    "jsonld.feature-2": {
+      "part": "home",
+      "source_hash": "7b06e74713de",
+      "target_hash": "babc786854a6"
+    },
+    "jsonld.feature-3": {
+      "part": "home",
+      "source_hash": "1f350726cef9",
+      "target_hash": "a32632c305b5"
+    },
+    "jsonld.feature-4": {
+      "part": "home",
+      "source_hash": "42d6cdab3fb6",
+      "target_hash": "c5f6f10cda59"
+    },
+    "jsonld.feature-5": {
+      "part": "home",
+      "source_hash": "9791836d7920",
+      "target_hash": "08b26a3ad78b"
+    },
+    "jsonld.feature-6": {
+      "part": "home",
+      "source_hash": "b2f04e38f9aa",
+      "target_hash": "4daf914a262d"
+    },
+    "jsonld.feature-7": {
+      "part": "home",
+      "source_hash": "0740507f9225",
+      "target_hash": "f9f6509263eb"
+    },
+    "jsonld.feature-8": {
+      "part": "home",
+      "source_hash": "301c375d8a2f",
+      "target_hash": "d27162a7307b"
+    },
+    "jsonld.feature-9": {
+      "part": "home",
+      "source_hash": "89c7e3de3f80",
+      "target_hash": "ad9e16e225f3"
+    },
+    "jsonld.feature-10": {
+      "part": "home",
+      "source_hash": "bf6f8b147d8a",
+      "target_hash": "982c772dc793"
+    },
+    "chrome.copy.done": {
+      "part": "home",
+      "source_hash": "8d525e5f158b",
+      "target_hash": "00181a49f63e"
+    },
+    "chrome.copy.fail": {
+      "part": "home",
+      "source_hash": "e78ab3a91bf2",
+      "target_hash": "57303027bf5a"
+    },
+    "chrome.skip": {
+      "part": "home",
+      "source_hash": "ac576a66d456",
+      "target_hash": "4d1606f6a962"
+    },
+    "chrome.brand.aria-label": {
+      "part": "home",
+      "source_hash": "a007563c384d",
+      "target_hash": "53127db95a09"
+    },
+    "chrome.nav.aria-label": {
+      "part": "home",
+      "source_hash": "efe10c80ec8a",
+      "target_hash": "4ea15f9a0d37"
+    },
+    "chrome.nav.menu": {
+      "part": "home",
+      "source_hash": "99af6606ff9d",
+      "target_hash": "99af6606ff9d"
+    },
+    "chrome.nav.use-cases": {
+      "part": "home",
+      "source_hash": "ff27a991e855",
+      "target_hash": "bb3b8399621f"
+    },
+    "chrome.nav.features": {
+      "part": "home",
+      "source_hash": "5697d03daef4",
+      "target_hash": "bd2158c13de5"
+    },
+    "chrome.nav.coding-agents": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "9e574b692913"
+    },
+    "chrome.nav.faq": {
+      "part": "home",
+      "source_hash": "dbc468a14b60",
+      "target_hash": "dbc468a14b60"
+    },
+    "chrome.nav.github.title": {
+      "part": "home",
+      "source_hash": "d2833070219a",
+      "target_hash": "4979751621b2"
+    },
+    "chrome.nav.install": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "e2722d51522e"
+    },
+    "chrome.nav.plat-linux": {
+      "part": "home",
+      "source_hash": "23d8d6d2be9c",
+      "target_hash": "653ce726787e"
+    },
+    "chrome.nav.plat-mac": {
+      "part": "home",
+      "source_hash": "d2364b229535",
+      "target_hash": "2524248af9b4"
+    },
+    "chrome.nav.plat-win": {
+      "part": "home",
+      "source_hash": "e5a1bb1c3085",
+      "target_hash": "9d459c773143"
+    },
+    "chrome.nav.plat-appliance": {
+      "part": "home",
+      "source_hash": "6a7fc115677a",
+      "target_hash": "9183472ebf7c"
+    },
+    "chrome.nav.plat-upgrade": {
+      "part": "home",
+      "source_hash": "c1fe5f01dc6e",
+      "target_hash": "3397f79dadc6"
+    },
+    "chrome.nav.signin": {
+      "part": "home",
+      "source_hash": "cb9ad9f4d662",
+      "target_hash": "9358a2169665"
+    },
+    "chrome.lang.heading": {
+      "part": "home",
+      "source_hash": "a4fe65264ef7",
+      "target_hash": "5f6baab4dbe1"
+    },
+    "chrome.lang.label": {
+      "part": "home",
+      "source_hash": "8c16819a2bd4",
+      "target_hash": "c7c210c41160"
+    },
+    "chrome.docs.aria-label": {
+      "part": "home",
+      "source_hash": "c205924de0fe",
+      "target_hash": "ecfa496738c5"
+    },
+    "chrome.docs.full": {
+      "part": "home",
+      "source_hash": "c205924de0fe",
+      "target_hash": "c205924de0fe"
+    },
+    "chrome.docs.short": {
+      "part": "home",
+      "source_hash": "7af023c43013",
+      "target_hash": "7af023c43013"
+    },
+    "chrome.install": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "bb6b121974b6"
+    },
+    "home.hero.h1-1": {
+      "part": "home",
+      "source_hash": "b24318c21e4f",
+      "target_hash": "70399fda2005"
+    },
+    "home.hero.p-1": {
+      "part": "home",
+      "source_hash": "e192caf6a5b3",
+      "target_hash": "de5292e5f211"
+    },
+    "home.hero.a-1": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "e2722d51522e"
+    },
+    "home.hero.a-2": {
+      "part": "home",
+      "source_hash": "51b46bd0add6",
+      "target_hash": "96a2ddaa0eb1"
+    },
+    "home.hero.span-1": {
+      "part": "home",
+      "source_hash": "2a43a93eceec",
+      "target_hash": "e3fb2d150a62"
+    },
+    "home.hero.span-2": {
+      "part": "home",
+      "source_hash": "035ccb7cad8a",
+      "target_hash": "1fa9bc833b11"
+    },
+    "home.hero.span-3": {
+      "part": "home",
+      "source_hash": "1f8168eb854e",
+      "target_hash": "5005da6ecf7f"
+    },
+    "home.hero.img-1.alt": {
+      "part": "home",
+      "source_hash": "46cb2df1ab06",
+      "target_hash": "03e35ff01e29"
+    },
+    "home.hero.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "46b396c85919",
+      "target_hash": "d897b3a9f502"
+    },
+    "home.hero.b-1": {
+      "part": "home",
+      "source_hash": "d0656dfa424f",
+      "target_hash": "634a9ef7314f"
+    },
+    "home.hero.span-4": {
+      "part": "home",
+      "source_hash": "6b06ee360144",
+      "target_hash": "7e45d9d906c6"
+    },
+    "home.hero.span-5": {
+      "part": "home",
+      "source_hash": "1b50b6d8401a",
+      "target_hash": "5b61529a8fe3"
+    },
+    "home.hero.b-2": {
+      "part": "home",
+      "source_hash": "f2287a1beeab",
+      "target_hash": "7479f91fbf3e"
+    },
+    "home.hero.span-6": {
+      "part": "home",
+      "source_hash": "6a893fd85af2",
+      "target_hash": "30909f6480cb"
+    },
+    "home.hero.span-7": {
+      "part": "home",
+      "source_hash": "8d266d3e3abd",
+      "target_hash": "c8e5998f6a39"
+    },
+    "home.hero.b-3": {
+      "part": "home",
+      "source_hash": "3aeff05d5bf6",
+      "target_hash": "b9e496f92c8f"
+    },
+    "home.hero.span-8": {
+      "part": "home",
+      "source_hash": "05261121948c",
+      "target_hash": "4ae6ecb72b20"
+    },
+    "home.hero.span-9": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "9e574b692913"
+    },
+    "home.hero.b-4": {
+      "part": "home",
+      "source_hash": "544b91f8227b",
+      "target_hash": "f9c1f45cb2f3"
+    },
+    "home.hero.span-10": {
+      "part": "home",
+      "source_hash": "48d1003061d4",
+      "target_hash": "b8fe51831a0a"
+    },
+    "home.uc.h2-1": {
+      "part": "home",
+      "source_hash": "a2bc7e06beef",
+      "target_hash": "d8c5016aeefc"
+    },
+    "home.use-cases.button-1.aria-label": {
+      "part": "home",
+      "source_hash": "40a9d13608d2",
+      "target_hash": "501dc1e0abeb"
+    },
+    "home.use-cases.button-2.aria-label": {
+      "part": "home",
+      "source_hash": "f1c27427e687",
+      "target_hash": "8de8e67794b6"
+    },
+    "home.use-cases.button-2.resume": {
+      "part": "home",
+      "source_hash": "bb52c71e6d3b",
+      "target_hash": "5ee51de758a8"
+    },
+    "home.use-cases.button-3.aria-label": {
+      "part": "home",
+      "source_hash": "9220dc6514fb",
+      "target_hash": "87456915d53d"
+    },
+    "home.use-cases.li-1.aria-label": {
+      "part": "home",
+      "source_hash": "b54457342c7d",
+      "target_hash": "f7dea13b909a"
+    },
+    "home.use-cases.h3-1": {
+      "part": "home",
+      "source_hash": "631429e459b2",
+      "target_hash": "67928e10cae7"
+    },
+    "home.use-cases.p-1": {
+      "part": "home",
+      "source_hash": "7dd1bdcba1fd",
+      "target_hash": "58f62215c6c4"
+    },
+    "home.use-cases.span-1": {
+      "part": "home",
+      "source_hash": "3bf0e7fd520d",
+      "target_hash": "9325e9708d65"
+    },
+    "home.use-cases.li-2.aria-label": {
+      "part": "home",
+      "source_hash": "264c35a47f15",
+      "target_hash": "c4e01376f55b"
+    },
+    "home.use-cases.h3-2": {
+      "part": "home",
+      "source_hash": "b01cff25d51f",
+      "target_hash": "e0136844a390"
+    },
+    "home.use-cases.p-2": {
+      "part": "home",
+      "source_hash": "022970d73828",
+      "target_hash": "64e7b6dbcf91"
+    },
+    "home.use-cases.span-2": {
+      "part": "home",
+      "source_hash": "19dc2417e144",
+      "target_hash": "386bacd11798"
+    },
+    "home.use-cases.li-3.aria-label": {
+      "part": "home",
+      "source_hash": "24607ac1e731",
+      "target_hash": "b94242d8b16a"
+    },
+    "home.use-cases.h3-3": {
+      "part": "home",
+      "source_hash": "02e82cfefb89",
+      "target_hash": "63c39a9147f1"
+    },
+    "home.use-cases.p-3": {
+      "part": "home",
+      "source_hash": "ffc4dde74878",
+      "target_hash": "f2198e9b375f"
+    },
+    "home.use-cases.span-3": {
+      "part": "home",
+      "source_hash": "4df7d5c583ae",
+      "target_hash": "cbf142ce139d"
+    },
+    "home.use-cases.li-4.aria-label": {
+      "part": "home",
+      "source_hash": "6f3c824e9ec3",
+      "target_hash": "2a7bd7bf5e73"
+    },
+    "home.use-cases.h3-4": {
+      "part": "home",
+      "source_hash": "fd528e59f30f",
+      "target_hash": "ac189579f491"
+    },
+    "home.use-cases.p-4": {
+      "part": "home",
+      "source_hash": "3fd6f50887b9",
+      "target_hash": "8c016175ec27"
+    },
+    "home.use-cases.span-4": {
+      "part": "home",
+      "source_hash": "91753d838ca4",
+      "target_hash": "dee87df64f48"
+    },
+    "home.use-cases.li-5.aria-label": {
+      "part": "home",
+      "source_hash": "4ff9c7d25432",
+      "target_hash": "bf606f0c5aa0"
+    },
+    "home.use-cases.h3-5": {
+      "part": "home",
+      "source_hash": "c3ae8600a083",
+      "target_hash": "50f6ee89df7a"
+    },
+    "home.use-cases.p-5": {
+      "part": "home",
+      "source_hash": "bbfa0ef15601",
+      "target_hash": "53746c7be170"
+    },
+    "home.use-cases.span-5": {
+      "part": "home",
+      "source_hash": "ad84f405f980",
+      "target_hash": "5f7b15e0cb9e"
+    },
+    "home.use-cases.li-6.aria-label": {
+      "part": "home",
+      "source_hash": "9f1b26eea525",
+      "target_hash": "88efbe6a05b8"
+    },
+    "home.use-cases.h3-6": {
+      "part": "home",
+      "source_hash": "bcd86e5acf2b",
+      "target_hash": "c7992b7e17dd"
+    },
+    "home.use-cases.p-6": {
+      "part": "home",
+      "source_hash": "8ab616f9c47d",
+      "target_hash": "8cffb272437b"
+    },
+    "home.use-cases.span-6": {
+      "part": "home",
+      "source_hash": "6fd76cfcf4f3",
+      "target_hash": "1ae75614f70d"
+    },
+    "home.use-cases.li-7.aria-label": {
+      "part": "home",
+      "source_hash": "2991e046c7d6",
+      "target_hash": "93e9a179187a"
+    },
+    "home.use-cases.h3-7": {
+      "part": "home",
+      "source_hash": "175c055be16a",
+      "target_hash": "fa201b12b4f6"
+    },
+    "home.use-cases.p-7": {
+      "part": "home",
+      "source_hash": "12446d78110e",
+      "target_hash": "f390dfa7db33"
+    },
+    "home.use-cases.span-7": {
+      "part": "home",
+      "source_hash": "eca4d500a3da",
+      "target_hash": "4525ec8f9cc0"
+    },
+    "home.use-cases.li-8.aria-label": {
+      "part": "home",
+      "source_hash": "1170fb3f9b1b",
+      "target_hash": "ac0d71fc1476"
+    },
+    "home.use-cases.h3-8": {
+      "part": "home",
+      "source_hash": "a04e398227ac",
+      "target_hash": "6b5f49056ff9"
+    },
+    "home.use-cases.p-8": {
+      "part": "home",
+      "source_hash": "3acf884af623",
+      "target_hash": "48ff6d30918b"
+    },
+    "home.use-cases.span-8": {
+      "part": "home",
+      "source_hash": "bb574d2be60e",
+      "target_hash": "6c9fadb7a085"
+    },
+    "home.use-cases.li-9.aria-label": {
+      "part": "home",
+      "source_hash": "7323df202723",
+      "target_hash": "119e475b25ac"
+    },
+    "home.use-cases.h3-9": {
+      "part": "home",
+      "source_hash": "3f3225bbc711",
+      "target_hash": "bb492384dee0"
+    },
+    "home.use-cases.p-9": {
+      "part": "home",
+      "source_hash": "6ea6fbd502b6",
+      "target_hash": "2bc6245e593d"
+    },
+    "home.use-cases.span-9": {
+      "part": "home",
+      "source_hash": "c90b8269f1d8",
+      "target_hash": "9b5383d0a4c1"
+    },
+    "home.use-cases.li-10.aria-label": {
+      "part": "home",
+      "source_hash": "aef48b281a1a",
+      "target_hash": "67950a95966f"
+    },
+    "home.use-cases.h3-10": {
+      "part": "home",
+      "source_hash": "525b6691292f",
+      "target_hash": "0d87db7c6953"
+    },
+    "home.use-cases.p-10": {
+      "part": "home",
+      "source_hash": "9ab2a4e163b1",
+      "target_hash": "ad1c491040cc"
+    },
+    "home.use-cases.span-10": {
+      "part": "home",
+      "source_hash": "4ad529d919d4",
+      "target_hash": "f9215a44b3e3"
+    },
+    "home.use-cases.dot": {
+      "part": "home",
+      "source_hash": "04227694e710",
+      "target_hash": "e00d380be08f"
+    },
+    "home.use-cases.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "1bb48b8b99c4",
+      "target_hash": "2b61ccb4b9ce"
+    },
+    "home.install.h2-1": {
+      "part": "home",
+      "source_hash": "249678c8eba2",
+      "target_hash": "f2e6aafca17c"
+    },
+    "home.install.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "c78ffe195710",
+      "target_hash": "5ee2ea8e63ba"
+    },
+    "home.install.b-1": {
+      "part": "home",
+      "source_hash": "23d8d6d2be9c",
+      "target_hash": "653ce726787e"
+    },
+    "home.install.small-1": {
+      "part": "home",
+      "source_hash": "9849f7c407b4",
+      "target_hash": "012cdde3f1dc"
+    },
+    "home.install.span-1": {
+      "part": "home",
+      "source_hash": "86f0f70c80d2",
+      "target_hash": "396f90ce576f"
+    },
+    "home.install.b-2": {
+      "part": "home",
+      "source_hash": "0d7d5470afac",
+      "target_hash": "fc7b12ebe552"
+    },
+    "home.install.small-2": {
+      "part": "home",
+      "source_hash": "38cba54053bd",
+      "target_hash": "3e82c377b28a"
+    },
+    "home.install.span-2": {
+      "part": "home",
+      "source_hash": "f44e64e75f39",
+      "target_hash": "8c6c279d784c"
+    },
+    "home.install.small-3": {
+      "part": "home",
+      "source_hash": "1e554752120e",
+      "target_hash": "9df9af98bc50"
+    },
+    "home.install.span-3": {
+      "part": "home",
+      "source_hash": "c6c1c9a9c854",
+      "target_hash": "5dc6d86e649f"
+    },
+    "home.install.b-3": {
+      "part": "home",
+      "source_hash": "98432690c966",
+      "target_hash": "9bf6f1bb2927"
+    },
+    "home.install.small-4": {
+      "part": "home",
+      "source_hash": "dc3e1016c4ce",
+      "target_hash": "d1414aa6774f"
+    },
+    "home.install.span-4": {
+      "part": "home",
+      "source_hash": "62bfdf0b726c",
+      "target_hash": "3f61b1c03484"
+    },
+    "home.install.p-2": {
+      "part": "home",
+      "source_hash": "dd298d4e4a3b",
+      "target_hash": "def6ec42db4f"
+    },
+    "home.p-linux.h3-1": {
+      "part": "home",
+      "source_hash": "e261f30eb5f7",
+      "target_hash": "ef1a2cd83e2d"
+    },
+    "home.p-linux.span-1": {
+      "part": "home",
+      "source_hash": "e21f935f11d7",
+      "target_hash": "84b03702780e"
+    },
+    "home.p-linux.li-1": {
+      "part": "home",
+      "source_hash": "fc20ff032a73",
+      "target_hash": "1fd0290ab19d"
+    },
+    "home.p-linux.li-2": {
+      "part": "home",
+      "source_hash": "33bfcbda3ad4",
+      "target_hash": "b2a0095cc6f4"
+    },
+    "home.p-linux.li-3": {
+      "part": "home",
+      "source_hash": "086f8aa8145e",
+      "target_hash": "29629040429a"
+    },
+    "home.p-linux.li-4": {
+      "part": "home",
+      "source_hash": "f17d08f00954",
+      "target_hash": "942d856c6db1"
+    },
+    "home.p-linux.a-1": {
+      "part": "home",
+      "source_hash": "e15a133068af",
+      "target_hash": "c3fc54aa5390"
+    },
+    "home.p-linux.a-2": {
+      "part": "home",
+      "source_hash": "16289eae755d",
+      "target_hash": "d65e3537b81a"
+    },
+    "home.p-linux.a-3": {
+      "part": "home",
+      "source_hash": "5be49bd81af3",
+      "target_hash": "cabeb8881c46"
+    },
+    "home.p-linux.a-4": {
+      "part": "home",
+      "source_hash": "d8f1ee5bd44a",
+      "target_hash": "65c1796eabb2"
+    },
+    "home.p-linux.img-1.alt": {
+      "part": "home",
+      "source_hash": "41eaa58c37a4",
+      "target_hash": "f5b72147d31a"
+    },
+    "home.p-linux.figcaption-1": {
+      "part": "home",
+      "source_hash": "c6e56f837dad",
+      "target_hash": "18dbb29b6a5d"
+    },
+    "home.p-mac.h3-1": {
+      "part": "home",
+      "source_hash": "93a681a12162",
+      "target_hash": "60a4771bb361"
+    },
+    "home.p-mac.a-1": {
+      "part": "home",
+      "source_hash": "95612856681e",
+      "target_hash": "34f90a60b5e8"
+    },
+    "home.p-mac.li-1": {
+      "part": "home",
+      "source_hash": "eb664f8f7d3a",
+      "target_hash": "b587435f9ff7"
+    },
+    "home.p-mac.li-2": {
+      "part": "home",
+      "source_hash": "5ff95c0fa25d",
+      "target_hash": "ed770608cff7"
+    },
+    "home.p-mac.li-3": {
+      "part": "home",
+      "source_hash": "cf254395b87e",
+      "target_hash": "43ce5cc08132"
+    },
+    "home.p-mac.li-4": {
+      "part": "home",
+      "source_hash": "013272b7df36",
+      "target_hash": "9febe94b21c0"
+    },
+    "home.p-mac.li-5": {
+      "part": "home",
+      "source_hash": "8121128f773c",
+      "target_hash": "9a10997bb568"
+    },
+    "home.p-mac.img-1.alt": {
+      "part": "home",
+      "source_hash": "45b8070949bb",
+      "target_hash": "f41d5a2f79c9"
+    },
+    "home.p-mac.figcaption-1": {
+      "part": "home",
+      "source_hash": "785cc05a3c6d",
+      "target_hash": "a60695dd6dba"
+    },
+    "home.p-win.h3-1": {
+      "part": "home",
+      "source_hash": "3e2f8c30fbd3",
+      "target_hash": "e948773d8f70"
+    },
+    "home.p-win.p-1": {
+      "part": "home",
+      "source_hash": "7389debc8fd3",
+      "target_hash": "39a0bd40e5e8"
+    },
+    "home.p-win.li-1": {
+      "part": "home",
+      "source_hash": "1296afbbf883",
+      "target_hash": "cd01d85e4749"
+    },
+    "home.p-win.li-2": {
+      "part": "home",
+      "source_hash": "9a92060cedbe",
+      "target_hash": "bf6f1e541b69"
+    },
+    "home.p-win.li-3": {
+      "part": "home",
+      "source_hash": "d85b661eb8e6",
+      "target_hash": "b8600f38e0ff"
+    },
+    "home.p-appliance.h3-1": {
+      "part": "home",
+      "source_hash": "e45c0fc37b2d",
+      "target_hash": "a76287ced3b3"
+    },
+    "home.p-appliance.p-1": {
+      "part": "home",
+      "source_hash": "9ff6d73830b6",
+      "target_hash": "a6cdc1f7f90c"
+    },
+    "home.p-appliance.li-1": {
+      "part": "home",
+      "source_hash": "47cb2ad65dc7",
+      "target_hash": "2da230ae0466"
+    },
+    "home.p-appliance.li-2": {
+      "part": "home",
+      "source_hash": "a2a401f4b2c3",
+      "target_hash": "65eb7a729b7c"
+    },
+    "home.p-appliance.li-3": {
+      "part": "home",
+      "source_hash": "aa9d78e6b6fa",
+      "target_hash": "d4f8f0a6c787"
+    },
+    "home.p-appliance.li-4": {
+      "part": "home",
+      "source_hash": "bbc615ea622b",
+      "target_hash": "355c71bed23b"
+    },
+    "home.p-appliance.p-2": {
+      "part": "home",
+      "source_hash": "177a91e7a6b4",
+      "target_hash": "9c6b796d0211"
+    },
+    "home.p-appliance.div-1": {
+      "part": "home",
+      "source_hash": "8a3fbd7c91f0",
+      "target_hash": "a8f157a97df7"
+    },
+    "home.upgrade.p-1": {
+      "part": "home",
+      "source_hash": "5566c16483a2",
+      "target_hash": "baca535c0aef"
+    },
+    "home.why.h2-1": {
+      "part": "home",
+      "source_hash": "65341f9c1497",
+      "target_hash": "4b9b17fd51c5"
+    },
+    "home.why.p-1": {
+      "part": "home",
+      "source_hash": "1668b0870987",
+      "target_hash": "fda5520d0f8b"
+    },
+    "home.why-fit.h3-1": {
+      "part": "home",
+      "source_hash": "631429e459b2",
+      "target_hash": "67928e10cae7"
+    },
+    "home.why-fit.p-1": {
+      "part": "home",
+      "source_hash": "b0c5f5cbb2ee",
+      "target_hash": "903939d1b52e"
+    },
+    "home.why-fit.img-1.alt": {
+      "part": "home",
+      "source_hash": "906b74daf0f5",
+      "target_hash": "c50b8144155d"
+    },
+    "home.why-stats.h3-1": {
+      "part": "home",
+      "source_hash": "7cd5266e1f4e",
+      "target_hash": "b9f895fbafc1"
+    },
+    "home.why-stats.p-1": {
+      "part": "home",
+      "source_hash": "05ae743f085e",
+      "target_hash": "666efcecb67a"
+    },
+    "home.why-stats.img-1.alt": {
+      "part": "home",
+      "source_hash": "94483285e732",
+      "target_hash": "aa4a7b5d88dc"
+    },
+    "home.why-chat.h3-1": {
+      "part": "home",
+      "source_hash": "83831d46fb09",
+      "target_hash": "048fc5263cf7"
+    },
+    "home.why-chat.p-1": {
+      "part": "home",
+      "source_hash": "2e459441dc4f",
+      "target_hash": "ae06cbeb08e3"
+    },
+    "home.why-chat.img-1.alt": {
+      "part": "home",
+      "source_hash": "da46ab93294b",
+      "target_hash": "50b7a249ac70"
+    },
+    "home.why-god.h3-1": {
+      "part": "home",
+      "source_hash": "a49be301a05f",
+      "target_hash": "eb01d46dcc33"
+    },
+    "home.why-god.p-1": {
+      "part": "home",
+      "source_hash": "a29986e09f7a",
+      "target_hash": "22b85255c890"
+    },
+    "home.why-god.img-1.alt": {
+      "part": "home",
+      "source_hash": "171f585f7e38",
+      "target_hash": "6be8026a675b"
+    },
+    "home.cache.h2-1": {
+      "part": "home",
+      "source_hash": "d876efcb94ab",
+      "target_hash": "62066fc4c6ef"
+    },
+    "home.why-cache.p-1": {
+      "part": "home",
+      "source_hash": "03e36074672f",
+      "target_hash": "daf514d536b7"
+    },
+    "home.why-cache.figcaption-1": {
+      "part": "home",
+      "source_hash": "0f19c82ec35c",
+      "target_hash": "d632ff58e16f"
+    },
+    "home.why-cache.p-2": {
+      "part": "home",
+      "source_hash": "9de8aa8aa7e1",
+      "target_hash": "a2672aeea7a1"
+    },
+    "home.why-cache.figcaption-2": {
+      "part": "home",
+      "source_hash": "ff04da43c87a",
+      "target_hash": "07f5175dd83b"
+    },
+    "home.why-cache.figcaption-3": {
+      "part": "home",
+      "source_hash": "0ec9d5ccf246",
+      "target_hash": "a14ba0eb0999"
+    },
+    "home.why-cache.h3-1": {
+      "part": "home",
+      "source_hash": "684608311775",
+      "target_hash": "330cef417e4e"
+    },
+    "home.why-cache.p-3": {
+      "part": "home",
+      "source_hash": "4744b11be2ad",
+      "target_hash": "ff75fd36c0a8"
+    },
+    "home.why-cache.img-1.alt": {
+      "part": "home",
+      "source_hash": "f1bc7fbd6399",
+      "target_hash": "01926923e852"
+    },
+    "home.why-cache.figcaption-4": {
+      "part": "home",
+      "source_hash": "234d024e62df",
+      "target_hash": "13214a287119"
+    },
+    "home.why-cache.p-4": {
+      "part": "home",
+      "source_hash": "2a468a4b1738",
+      "target_hash": "54be68e975d5"
+    },
+    "home.why-cache.p-5": {
+      "part": "home",
+      "source_hash": "c245f8292ac7",
+      "target_hash": "011325c710eb"
+    },
+    "home.why-cache.a-1": {
+      "part": "home",
+      "source_hash": "cd240e4bc004",
+      "target_hash": "10d0d180c7f9"
+    },
+    "home.agents.h2-1": {
+      "part": "home",
+      "source_hash": "b01cff25d51f",
+      "target_hash": "e0136844a390"
+    },
+    "home.agents.p-1": {
+      "part": "home",
+      "source_hash": "26604da90050",
+      "target_hash": "4b9b38ff16f8"
+    },
+    "home.agents.h3-1": {
+      "part": "home",
+      "source_hash": "a87ec3988e0d",
+      "target_hash": "e350fad3de30"
+    },
+    "home.agents.p-2": {
+      "part": "home",
+      "source_hash": "eed13d192862",
+      "target_hash": "14a761782433"
+    },
+    "home.agents.span-1": {
+      "part": "home",
+      "source_hash": "de3ecc4fe5d1",
+      "target_hash": "56fd0a8a31cc"
+    },
+    "home.agents.span-2": {
+      "part": "home",
+      "source_hash": "cc7b475640bb",
+      "target_hash": "0b1a0e6f445a"
+    },
+    "home.agents.span-3": {
+      "part": "home",
+      "source_hash": "cc7b475640bb",
+      "target_hash": "0b1a0e6f445a"
+    },
+    "home.agents.span-4": {
+      "part": "home",
+      "source_hash": "5a0628b4b02d",
+      "target_hash": "7401f9cb3725"
+    },
+    "home.agents.span-5": {
+      "part": "home",
+      "source_hash": "8c2c30bf0764",
+      "target_hash": "80553a5620c6"
+    },
+    "home.agents.span-6": {
+      "part": "home",
+      "source_hash": "09e5fe8af64a",
+      "target_hash": "e971b911425c"
+    },
+    "home.agents.span-7": {
+      "part": "home",
+      "source_hash": "9ad204014fc0",
+      "target_hash": "002bc53da14b"
+    },
+    "home.agents.h3-2": {
+      "part": "home",
+      "source_hash": "cfeda056d931",
+      "target_hash": "caad120fa54d"
+    },
+    "home.agents.p-3": {
+      "part": "home",
+      "source_hash": "6995102b0af7",
+      "target_hash": "4276a43c9ebd"
+    },
+    "home.flow-t.title-1": {
+      "part": "home",
+      "source_hash": "d7db08f53325",
+      "target_hash": "a8b862dfddba"
+    },
+    "home.flow-d.desc-1": {
+      "part": "home",
+      "source_hash": "5c598ca9bc7c",
+      "target_hash": "ce926147cde7"
+    },
+    "home.flow-t2.title-1": {
+      "part": "home",
+      "source_hash": "d7db08f53325",
+      "target_hash": "a8b862dfddba"
+    },
+    "home.flow-d2.desc-1": {
+      "part": "home",
+      "source_hash": "5c598ca9bc7c",
+      "target_hash": "ce926147cde7"
+    },
+    "home.agents.b-1": {
+      "part": "home",
+      "source_hash": "cdf3dc71b947",
+      "target_hash": "96aa26a45b06"
+    },
+    "home.agents.span-8": {
+      "part": "home",
+      "source_hash": "6f10abaf7726",
+      "target_hash": "7a7753068741"
+    },
+    "home.agents.img-1.alt": {
+      "part": "home",
+      "source_hash": "d77bbac51675",
+      "target_hash": "413cedc80498"
+    },
+    "home.agents.figcaption-1": {
+      "part": "home",
+      "source_hash": "bc31fcfd58c7",
+      "target_hash": "a9a0952ca5cd"
+    },
+    "home.agents.h3-3": {
+      "part": "home",
+      "source_hash": "0ceb9132d312",
+      "target_hash": "d3af52af2d30"
+    },
+    "home.agents.p-4": {
+      "part": "home",
+      "source_hash": "0b548958da36",
+      "target_hash": "b60a841cbdad"
+    },
+    "home.agents.img-2.alt": {
+      "part": "home",
+      "source_hash": "6a234848eac5",
+      "target_hash": "f70b5715631c"
+    },
+    "home.tune.h2-1": {
+      "part": "home",
+      "source_hash": "c3ae8600a083",
+      "target_hash": "50f6ee89df7a"
+    },
+    "home.why-agent.p-1": {
+      "part": "home",
+      "source_hash": "4844283837a3",
+      "target_hash": "54781d3d04a1"
+    },
+    "home.why-agent.h3-1": {
+      "part": "home",
+      "source_hash": "85f5dae66c4f",
+      "target_hash": "c39249d47857"
+    },
+    "home.loop-t.title-1": {
+      "part": "home",
+      "source_hash": "3f22e76a3edc",
+      "target_hash": "f4ba99e052c7"
+    },
+    "home.loop-d.desc-1": {
+      "part": "home",
+      "source_hash": "dd7733aa80ef",
+      "target_hash": "b0c29afc0654"
+    },
+    "home.loop-t2.title-1": {
+      "part": "home",
+      "source_hash": "3f22e76a3edc",
+      "target_hash": "f4ba99e052c7"
+    },
+    "home.loop-d2.desc-1": {
+      "part": "home",
+      "source_hash": "dd7733aa80ef",
+      "target_hash": "b0c29afc0654"
+    },
+    "home.why-agent.p-2": {
+      "part": "home",
+      "source_hash": "35230c9469a2",
+      "target_hash": "0a8f9e288d5c"
+    },
+    "home.why-agent.img-1.alt": {
+      "part": "home",
+      "source_hash": "afd3f600f638",
+      "target_hash": "e9037bb88800"
+    },
+    "home.why-agent.figcaption-1": {
+      "part": "home",
+      "source_hash": "4bb331f9f6fb",
+      "target_hash": "4c2dd16be830"
+    },
+    "home.why-agent.h3-2": {
+      "part": "home",
+      "source_hash": "222000da96d1",
+      "target_hash": "5278cb36fae8"
+    },
+    "home.why-agent.li-1": {
+      "part": "home",
+      "source_hash": "4d737111bb76",
+      "target_hash": "b4a140f1dd17"
+    },
+    "home.why-agent.li-2": {
+      "part": "home",
+      "source_hash": "aadee19b4763",
+      "target_hash": "3cde9ac7b90d"
+    },
+    "home.why-agent.li-3": {
+      "part": "home",
+      "source_hash": "5e697967b7ec",
+      "target_hash": "3f14c49f4b29"
+    },
+    "home.why-agent.li-4": {
+      "part": "home",
+      "source_hash": "d25a394b9e41",
+      "target_hash": "8276000d8da0"
+    },
+    "home.why-agent.p-3": {
+      "part": "home",
+      "source_hash": "505b9916712b",
+      "target_hash": "1d573848e38f"
+    },
+    "home.why-agent.p-4": {
+      "part": "home",
+      "source_hash": "bbeb89be5de6",
+      "target_hash": "de4d29e7bd52"
+    },
+    "home.share.h2-1": {
+      "part": "home",
+      "source_hash": "f1e27da721b7",
+      "target_hash": "9af64b26fa61"
+    },
+    "home.why-keys.p-1": {
+      "part": "home",
+      "source_hash": "dd9352746e6e",
+      "target_hash": "b7a9ffb6088f"
+    },
+    "home.why-keys.h3-1": {
+      "part": "home",
+      "source_hash": "51396907e61e",
+      "target_hash": "c25b84dfd6a9"
+    },
+    "home.why-keys.p-2": {
+      "part": "home",
+      "source_hash": "4dd4ec421cbe",
+      "target_hash": "b9fc48a11956"
+    },
+    "home.why-keys.ol-1.aria-label": {
+      "part": "home",
+      "source_hash": "1c1bcbbf1789",
+      "target_hash": "5ca6b9bdc981"
+    },
+    "home.why-keys.b-1": {
+      "part": "home",
+      "source_hash": "c5da4041ea8e",
+      "target_hash": "1e074b169127"
+    },
+    "home.why-keys.span-1": {
+      "part": "home",
+      "source_hash": "a2476d66a084",
+      "target_hash": "5028afbbbee2"
+    },
+    "home.why-keys.b-2": {
+      "part": "home",
+      "source_hash": "6c8888f1d6dc",
+      "target_hash": "6d8de2982d03"
+    },
+    "home.why-keys.span-2": {
+      "part": "home",
+      "source_hash": "01b7a9f0d1d4",
+      "target_hash": "b649b80cea10"
+    },
+    "home.why-keys.b-3": {
+      "part": "home",
+      "source_hash": "a76b6c1ae9be",
+      "target_hash": "dce3e65e27a5"
+    },
+    "home.why-keys.span-3": {
+      "part": "home",
+      "source_hash": "6d244abe081b",
+      "target_hash": "58e9f8db6bc4"
+    },
+    "home.why-keys.b-4": {
+      "part": "home",
+      "source_hash": "724c4cb2e620",
+      "target_hash": "255f8a45d2b7"
+    },
+    "home.why-keys.span-4": {
+      "part": "home",
+      "source_hash": "2c1097258738",
+      "target_hash": "56ba3b181e37"
+    },
+    "home.why-keys.b-5": {
+      "part": "home",
+      "source_hash": "96d527825b4b",
+      "target_hash": "b2fe4025fdc4"
+    },
+    "home.why-keys.span-5": {
+      "part": "home",
+      "source_hash": "687891cb2f66",
+      "target_hash": "b3ae99bd572b"
+    },
+    "home.why-keys.p-3": {
+      "part": "home",
+      "source_hash": "ca3034a912dc",
+      "target_hash": "8f6ddcc9aa64"
+    },
+    "home.why-keys.img-1.alt": {
+      "part": "home",
+      "source_hash": "ae01537e1ee6",
+      "target_hash": "e16c896597a6"
+    },
+    "home.why-keys.figcaption-1": {
+      "part": "home",
+      "source_hash": "a098f63084b6",
+      "target_hash": "7185f6195e4a"
+    },
+    "home.why-keys.img-2.alt": {
+      "part": "home",
+      "source_hash": "9ae6aeafcf56",
+      "target_hash": "ffff9ec2d64e"
+    },
+    "home.why-keys.figcaption-2": {
+      "part": "home",
+      "source_hash": "348b1b23d393",
+      "target_hash": "0e8bdbc4ad03"
+    },
+    "home.why-keys.p-4": {
+      "part": "home",
+      "source_hash": "b5718f9f8bb5",
+      "target_hash": "289e8fbe06b9"
+    },
+    "home.hw.h2-1": {
+      "part": "home",
+      "source_hash": "3f3225bbc711",
+      "target_hash": "bb492384dee0"
+    },
+    "home.hardware.p-1": {
+      "part": "home",
+      "source_hash": "f90e55953921",
+      "target_hash": "e5f239757be6"
+    },
+    "home.hardware.img-1.alt": {
+      "part": "home",
+      "source_hash": "60071766922d",
+      "target_hash": "5f4062e73c08"
+    },
+    "home.hardware.figcaption-1": {
+      "part": "home",
+      "source_hash": "937079060820",
+      "target_hash": "c366cf6a87bd"
+    },
+    "home.hardware.img-2.alt": {
+      "part": "home",
+      "source_hash": "6006e1039ec1",
+      "target_hash": "3f6b2e1255e3"
+    },
+    "home.hardware.figcaption-2": {
+      "part": "home",
+      "source_hash": "d67a36ee8dec",
+      "target_hash": "a1d5fecce2c6"
+    },
+    "home.hardware.img-3.alt": {
+      "part": "home",
+      "source_hash": "2b44277f55cd",
+      "target_hash": "ef8415af7046"
+    },
+    "home.hardware.figcaption-3": {
+      "part": "home",
+      "source_hash": "f3ceb6c33eb7",
+      "target_hash": "feca86c53990"
+    },
+    "home.hardware.img-4.alt": {
+      "part": "home",
+      "source_hash": "c1394a12d331",
+      "target_hash": "bef79c5ceb7f"
+    },
+    "home.hardware.figcaption-4": {
+      "part": "home",
+      "source_hash": "cddfa5475f94",
+      "target_hash": "416f13db39a8"
+    },
+    "home.hardware.p-2": {
+      "part": "home",
+      "source_hash": "5a4e8569c432",
+      "target_hash": "39ef8075af19"
+    },
+    "home.features.h2-1": {
+      "part": "home",
+      "source_hash": "8e7ddf931c59",
+      "target_hash": "31d4e5d0c649"
+    },
+    "home.features.p-1": {
+      "part": "home",
+      "source_hash": "cbdfccb24fcc",
+      "target_hash": "e6d726b2089f"
+    },
+    "home.features.h3-1": {
+      "part": "home",
+      "source_hash": "65fb2dd50a89",
+      "target_hash": "1238da79fb31"
+    },
+    "home.features.p-2": {
+      "part": "home",
+      "source_hash": "1bea9211a232",
+      "target_hash": "5c58eace16d7"
+    },
+    "home.features.img-1.alt": {
+      "part": "home",
+      "source_hash": "0a8bc4d5312e",
+      "target_hash": "17459b07dda6"
+    },
+    "home.features.p-3": {
+      "part": "home",
+      "source_hash": "04423fe4175f",
+      "target_hash": "061aa1200c47"
+    },
+    "home.features.h3-2": {
+      "part": "home",
+      "source_hash": "e8070826221c",
+      "target_hash": "d6a0f3c6b06c"
+    },
+    "home.features.p-4": {
+      "part": "home",
+      "source_hash": "49c151ca7020",
+      "target_hash": "e7ea9b8e6bda"
+    },
+    "home.features.img-2.alt": {
+      "part": "home",
+      "source_hash": "428dfb61458f",
+      "target_hash": "b73e1bd228de"
+    },
+    "home.features.p-5": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "9e574b692913"
+    },
+    "home.features.h3-3": {
+      "part": "home",
+      "source_hash": "ba721e4421e2",
+      "target_hash": "cca35ad82651"
+    },
+    "home.features.p-6": {
+      "part": "home",
+      "source_hash": "916edc5f7b60",
+      "target_hash": "f011cbab66ae"
+    },
+    "home.features.img-3.alt": {
+      "part": "home",
+      "source_hash": "cc2b73368cf4",
+      "target_hash": "59fc68a494bb"
+    },
+    "home.oss.h2-1": {
+      "part": "home",
+      "source_hash": "3317e70f46b3",
+      "target_hash": "32c34db51f16"
+    },
+    "home.open-source.p-1": {
+      "part": "home",
+      "source_hash": "ba01b625fe70",
+      "target_hash": "ee9f53dbbfc6"
+    },
+    "home.open-source.h2-1": {
+      "part": "home",
+      "source_hash": "19dae78c985d",
+      "target_hash": "53a260e03a6f"
+    },
+    "home.open-source.p-2": {
+      "part": "home",
+      "source_hash": "598b6f2514fd",
+      "target_hash": "43ac3c5e00ab"
+    },
+    "home.lightbox.button-1": {
+      "part": "home",
+      "source_hash": "ce7bf15a4a85",
+      "target_hash": "d501e4ebea9c"
+    },
+    "home.lightbox.button-1.aria-label": {
+      "part": "home",
+      "source_hash": "2d3b2f52a3dd",
+      "target_hash": "4d5ce0f9b5b3"
+    },
+    "chrome.footer.about": {
+      "part": "home",
+      "source_hash": "7f11ddd74f30",
+      "target_hash": "8e8043490bc0"
+    },
+    "chrome.footer.source": {
+      "part": "home",
+      "source_hash": "11506c59ef23",
+      "target_hash": "98f72d06359d"
+    },
+    "chrome.footer.install": {
+      "part": "home",
+      "source_hash": "e15a133068af",
+      "target_hash": "c3fc54aa5390"
+    },
+    "chrome.footer.changelog": {
+      "part": "home",
+      "source_hash": "ead07c84baac",
+      "target_hash": "789201f14f14"
+    },
+    "chrome.footer.licence": {
+      "part": "home",
+      "source_hash": "f3ec8e880a46",
+      "target_hash": "f3ec8e880a46"
+    },
+    "chrome.footer.tag-note": {
+      "part": "home",
+      "source_hash": "09eab402684a",
+      "target_hash": "5339c8a7dacc"
+    },
+    "chrome.consent.aria-label": {
+      "part": "home",
+      "source_hash": "38db21b38100",
+      "target_hash": "378826937ec5"
+    },
+    "chrome.consent.text": {
+      "part": "home",
+      "source_hash": "cdf7e1f99a7b",
+      "target_hash": "25cb5b0c4d6a"
+    },
+    "chrome.consent.decline": {
+      "part": "home",
+      "source_hash": "a2d285b35287",
+      "target_hash": "283348d05e1c"
+    },
+    "chrome.consent.accept": {
+      "part": "home",
+      "source_hash": "89713b9c9c1b",
+      "target_hash": "8393b7bd1e85"
+    },
+    "common.crumbs.aria-label": {
+      "part": "common",
+      "source_hash": "2bd873d6c734",
+      "target_hash": "729d5d0dea80"
+    },
+    "common.crumb.home": {
+      "part": "common",
+      "source_hash": "3a78695388b3",
+      "target_hash": "533161735639"
+    },
+    "common.crumb.coding-agents": {
+      "part": "common",
+      "source_hash": "707c65c28bca",
+      "target_hash": "9e574b692913"
+    },
+    "common.in-words": {
+      "part": "common",
+      "source_hash": "3cafefb13fa9",
+      "target_hash": "468ae99c4c5c"
+    },
+    "common.clients.client": {
+      "part": "common",
+      "source_hash": "0c77fe09ab33",
+      "target_hash": "0c77fe09ab33"
+    },
+    "common.client.protocol": {
+      "part": "common",
+      "source_hash": "cf0883343f4a",
+      "target_hash": "3f3dfe57d1b7"
+    },
+    "common.client.support": {
+      "part": "common",
+      "source_hash": "be91940b79f4",
+      "target_hash": "5bc7805ede6e"
+    },
+    "common.support.full": {
+      "part": "common",
+      "source_hash": "1f95d1324a14",
+      "target_hash": "a85bdd7b2a7b"
+    },
+    "common.support.local-only": {
+      "part": "common",
+      "source_hash": "12d96c6fb40e",
+      "target_hash": "51a786a7e1d1"
+    },
+    "common.crumb.agent-tuning": {
+      "part": "common",
+      "source_hash": "124c9615be9b",
+      "target_hash": "10db84d0d2b6"
+    },
+    "common.copy": {
+      "part": "common",
+      "source_hash": "e21f935f11d7",
+      "target_hash": "84b03702780e"
+    },
+    "common.crumb.features": {
+      "part": "common",
+      "source_hash": "5697d03daef4",
+      "target_hash": "bd2158c13de5"
+    },
+    "common.crumb.gpu-monitoring": {
+      "part": "common",
+      "source_hash": "cbdfccb24fcc",
+      "target_hash": "e6d726b2089f"
+    },
+    "common.crumb.cache-aware-routing": {
+      "part": "common",
+      "source_hash": "d45c5045a852",
+      "target_hash": "e83956951f30"
+    },
+    "common.crumb.api-keys": {
+      "part": "common",
+      "source_hash": "98aae8972102",
+      "target_hash": "b2af93f82822"
+    },
+    "common.crumb.faq": {
+      "part": "common",
+      "source_hash": "dbc468a14b60",
+      "target_hash": "dbc468a14b60"
+    },
+    "common.crumb.privacy": {
+      "part": "common",
+      "source_hash": "54a57c3147c4",
+      "target_hash": "f19bb4113daf"
+    },
+    "common.client.setup-section.aria-label": {
+      "part": "common",
+      "source_hash": "7013af4c42fe",
+      "target_hash": "b332c3492d5e"
+    },
+    "common.client.requirements": {
+      "part": "common",
+      "source_hash": "e0cdd07f6a27",
+      "target_hash": "bd25ab27d465"
+    },
+    "common.client.setup": {
+      "part": "common",
+      "source_hash": "7013af4c42fe",
+      "target_hash": "b332c3492d5e"
+    },
+    "common.client.setup-p": {
+      "part": "common",
+      "source_hash": "961b2c6bf48f",
+      "target_hash": "20378ce4a528"
+    },
+    "common.file.shell": {
+      "part": "common",
+      "source_hash": "a733285486d5",
+      "target_hash": "a733285486d5"
+    },
+    "common.client.docs": {
+      "part": "common",
+      "source_hash": "78599bc11885",
+      "target_hash": "7a9316241246"
+    },
+    "common.client.related": {
+      "part": "common",
+      "source_hash": "5f736e0bdabc",
+      "target_hash": "b2a31a325aa4"
+    },
+    "common.file.settings": {
+      "part": "common",
+      "source_hash": "74a883a037bc",
+      "target_hash": "01923df7a446"
+    },
+    "coding-agents.meta.title": {
+      "part": "coding-agents",
+      "source_hash": "cec26df70a65",
+      "target_hash": "b75dd53c752b"
+    },
+    "coding-agents.meta.description": {
+      "part": "coding-agents",
+      "source_hash": "d4374722fecc",
+      "target_hash": "6e11160dbf7c"
+    },
+    "coding-agents.agents.h1-1": {
+      "part": "coding-agents",
+      "source_hash": "e01f3269f454",
+      "target_hash": "e2d9ac6d6ed3"
+    },
+    "coding-agents.p-1": {
+      "part": "coding-agents",
+      "source_hash": "b8783c59365c",
+      "target_hash": "a3ead1539496"
+    },
+    "coding-agents.flow.title": {
+      "part": "coding-agents",
+      "source_hash": "b2c49ca0b033",
+      "target_hash": "0f4ec8fca237"
+    },
+    "coding-agents.flow.desc": {
+      "part": "coding-agents",
+      "source_hash": "c24325d4bacf",
+      "target_hash": "b9daaab074ff"
+    },
+    "coding-agents.flow.caption": {
+      "part": "coding-agents",
+      "source_hash": "4c8a44e2f320",
+      "target_hash": "3fbd3413828c"
+    },
+    "coding-agents.p-2": {
+      "part": "coding-agents",
+      "source_hash": "75d2dc8f6796",
+      "target_hash": "48c3623b8e4e"
+    },
+    "coding-agents.p-3": {
+      "part": "coding-agents",
+      "source_hash": "91f99cd9235e",
+      "target_hash": "8920be0e04fb"
+    },
+    "coding-agents.p-4": {
+      "part": "coding-agents",
+      "source_hash": "0ced1cfb6f5c",
+      "target_hash": "0795728b57a1"
+    },
+    "clients.meta.title": {
+      "part": "clients",
+      "source_hash": "9a440e2e3c4a",
+      "target_hash": "9eaa89cf6a09"
+    },
+    "clients.meta.description": {
+      "part": "clients",
+      "source_hash": "9d9c76c6bb07",
+      "target_hash": "6b002efcf659"
+    },
+    "clients.claude-code.h1": {
+      "part": "clients",
+      "source_hash": "9bb97352447d",
+      "target_hash": "8fc8cb3327c1"
+    },
+    "clients.claude-code.summary": {
+      "part": "clients",
+      "source_hash": "b46e643eeaac",
+      "target_hash": "5c5adfa995d5"
+    },
+    "clients.claude-code.capability": {
+      "part": "clients",
+      "source_hash": "79cee967a1ad",
+      "target_hash": "212afe63bda1"
+    },
+    "clients.claude-code.req.client_version": {
+      "part": "clients",
+      "source_hash": "baf574b32f46",
+      "target_hash": "1bd6d5e2c448"
+    },
+    "clients.claude-code.req.router_on": {
+      "part": "clients",
+      "source_hash": "f0fd90d78fe4",
+      "target_hash": "f7b7fd1cccfc"
+    },
+    "clients.claude-code.req.relay_key": {
+      "part": "clients",
+      "source_hash": "df8e31733077",
+      "target_hash": "4d7ab871bb1d"
+    },
+    "clients.claude-code.req.min_context": {
+      "part": "clients",
+      "source_hash": "5cc65b30acd7",
+      "target_hash": "2f7f1ad5ba38"
+    },
+    "clients.claude-code.req.recommended_context": {
+      "part": "clients",
+      "source_hash": "82792a23c7a0",
+      "target_hash": "3768c5ddabab"
+    },
+    "clients.claude-code.req.unknown_model_window": {
+      "part": "clients",
+      "source_hash": "c67abcb52ad3",
+      "target_hash": "9497f3a70bbe"
+    },
+    "clients.claude-code.mode.router.title": {
+      "part": "clients",
+      "source_hash": "872bcc0e520c",
+      "target_hash": "c45c22fd0101"
+    },
+    "clients.claude-code.mode.router.desc": {
+      "part": "clients",
+      "source_hash": "9832c50a640e",
+      "target_hash": "89313837d4cf"
+    },
+    "clients.claude-code.mode.local.title": {
+      "part": "clients",
+      "source_hash": "2a51ef910e22",
+      "target_hash": "34fcea7c32ec"
+    },
+    "clients.claude-code.mode.local.desc": {
+      "part": "clients",
+      "source_hash": "1dea6fe58a27",
+      "target_hash": "ca3080dc591d"
+    },
+    "clients.anthropic-sdk.h1": {
+      "part": "clients",
+      "source_hash": "4229892646ec",
+      "target_hash": "588b3a4ee3a8"
+    },
+    "clients.anthropic-sdk.summary": {
+      "part": "clients",
+      "source_hash": "910172f40b64",
+      "target_hash": "158b3a7ead2b"
+    },
+    "clients.anthropic-sdk.flow.title": {
+      "part": "clients",
+      "source_hash": "26e8b7e39b44",
+      "target_hash": "cc05229b60d1"
+    },
+    "clients.anthropic-sdk.flow.desc": {
+      "part": "clients",
+      "source_hash": "26917b07643f",
+      "target_hash": "90a9a44341fe"
+    },
+    "clients.anthropic-sdk.flow.caption": {
+      "part": "clients",
+      "source_hash": "a4ec23a63573",
+      "target_hash": "2a4de35edafb"
+    },
+    "clients.anthropic-sdk.capability": {
+      "part": "clients",
+      "source_hash": "3d9a6a025316",
+      "target_hash": "7e906739504b"
+    },
+    "clients.anthropic-sdk.req.router_on": {
+      "part": "clients",
+      "source_hash": "f0fd90d78fe4",
+      "target_hash": "f7b7fd1cccfc"
+    },
+    "clients.anthropic-sdk.req.relay_key": {
+      "part": "clients",
+      "source_hash": "df8e31733077",
+      "target_hash": "4d7ab871bb1d"
+    },
+    "clients.anthropic-sdk.mode.router.title": {
+      "part": "clients",
+      "source_hash": "5e22bff885a6",
+      "target_hash": "87e3e9c1d4ec"
+    },
+    "clients.anthropic-sdk.mode.router.desc": {
+      "part": "clients",
+      "source_hash": "fe17e904c7dd",
+      "target_hash": "009b76486214"
+    },
+    "clients.anthropic-sdk.mode.local.title": {
+      "part": "clients",
+      "source_hash": "c905013aab29",
+      "target_hash": "62c5e1652680"
+    },
+    "clients.anthropic-sdk.mode.local.desc": {
+      "part": "clients",
+      "source_hash": "e1b1c200ccb3",
+      "target_hash": "30750c2475ee"
+    },
+    "clients.opencode.h1": {
+      "part": "clients",
+      "source_hash": "0f9f0d85229c",
+      "target_hash": "cbd3170203f5"
+    },
+    "clients.opencode.summary": {
+      "part": "clients",
+      "source_hash": "0dbe773d1ba9",
+      "target_hash": "9ee4a14b6bd9"
+    },
+    "clients.opencode.flow.title": {
+      "part": "clients",
+      "source_hash": "ae2c3d407d79",
+      "target_hash": "9a3ae9d0e5fd"
+    },
+    "clients.opencode.flow.desc": {
+      "part": "clients",
+      "source_hash": "5a53f0ea3bba",
+      "target_hash": "956a37907a9b"
+    },
+    "clients.opencode.flow.caption": {
+      "part": "clients",
+      "source_hash": "774655618391",
+      "target_hash": "a853937eb064"
+    },
+    "clients.opencode.capability": {
+      "part": "clients",
+      "source_hash": "8901779665ff",
+      "target_hash": "79abd397cd3f"
+    },
+    "clients.opencode.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "96c33d87d492"
+    },
+    "clients.opencode.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "bbffa93717aa"
+    },
+    "clients.opencode.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "72502a38c825"
+    },
+    "clients.opencode.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "e03771b96f12",
+      "target_hash": "f1f87c868dba"
+    },
+    "clients.aider.h1": {
+      "part": "clients",
+      "source_hash": "b1e1b6bd30b4",
+      "target_hash": "10ce24b43134"
+    },
+    "clients.aider.summary": {
+      "part": "clients",
+      "source_hash": "2a2e36942a30",
+      "target_hash": "f68c3c68232d"
+    },
+    "clients.aider.flow.title": {
+      "part": "clients",
+      "source_hash": "32e01b3b0c97",
+      "target_hash": "31041e5f52d6"
+    },
+    "clients.aider.flow.desc": {
+      "part": "clients",
+      "source_hash": "3b2c308c114e",
+      "target_hash": "08bcd4b18a60"
+    },
+    "clients.aider.flow.caption": {
+      "part": "clients",
+      "source_hash": "e58a54a34cdc",
+      "target_hash": "7754caeb49be"
+    },
+    "clients.aider.capability": {
+      "part": "clients",
+      "source_hash": "922681946310",
+      "target_hash": "0d40213071b2"
+    },
+    "clients.aider.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "bbffa93717aa"
+    },
+    "clients.aider.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "72502a38c825"
+    },
+    "clients.aider.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "df94297df209",
+      "target_hash": "734002d554db"
+    },
+    "clients.aider.mode.default.file.session": {
+      "part": "clients",
+      "source_hash": "c1f31c2b83f0",
+      "target_hash": "bfb7ef8528ba"
+    },
+    "clients.grok-cli.h1": {
+      "part": "clients",
+      "source_hash": "9e97001cf2f3",
+      "target_hash": "703ee1d6508d"
+    },
+    "clients.grok-cli.summary": {
+      "part": "clients",
+      "source_hash": "be6e0d9a09ed",
+      "target_hash": "7c8c18812c42"
+    },
+    "clients.grok-cli.flow.title": {
+      "part": "clients",
+      "source_hash": "eeb620d01d38",
+      "target_hash": "7e6d4554a7d2"
+    },
+    "clients.grok-cli.flow.desc": {
+      "part": "clients",
+      "source_hash": "ef648e107c77",
+      "target_hash": "8f75c384a2ac"
+    },
+    "clients.grok-cli.flow.caption": {
+      "part": "clients",
+      "source_hash": "b77ddcf1b78a",
+      "target_hash": "ddd712a69a16"
+    },
+    "clients.grok-cli.capability": {
+      "part": "clients",
+      "source_hash": "03938abace0a",
+      "target_hash": "bf5be449469d"
+    },
+    "clients.grok-cli.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "96c33d87d492"
+    },
+    "clients.grok-cli.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "bbffa93717aa"
+    },
+    "clients.grok-cli.mode.default.title": {
+      "part": "clients",
+      "source_hash": "1901a8b05d3b",
+      "target_hash": "0ddf93b7d369"
+    },
+    "clients.grok-cli.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "b5943bc2443d",
+      "target_hash": "41317cf32b65"
+    },
+    "clients.grok-cli.mode.community.title": {
+      "part": "clients",
+      "source_hash": "28bbd28283a3",
+      "target_hash": "26e4c16ee09b"
+    },
+    "clients.grok-cli.mode.community.desc": {
+      "part": "clients",
+      "source_hash": "0b589963361a",
+      "target_hash": "cf70b897b7a7"
+    },
+    "clients.openai-sdk.h1": {
+      "part": "clients",
+      "source_hash": "db3661cee041",
+      "target_hash": "121f21274630"
+    },
+    "clients.openai-sdk.summary": {
+      "part": "clients",
+      "source_hash": "16d05b661878",
+      "target_hash": "731088b1c841"
+    },
+    "clients.openai-sdk.flow.title": {
+      "part": "clients",
+      "source_hash": "13c7ed2b6c10",
+      "target_hash": "86b6e05a5ed8"
+    },
+    "clients.openai-sdk.flow.desc": {
+      "part": "clients",
+      "source_hash": "9b9a5c752e5f",
+      "target_hash": "7644702c22be"
+    },
+    "clients.openai-sdk.flow.caption": {
+      "part": "clients",
+      "source_hash": "0d8679dd39d0",
+      "target_hash": "dc8d5c0a209e"
+    },
+    "clients.openai-sdk.capability": {
+      "part": "clients",
+      "source_hash": "81a1f26dda28",
+      "target_hash": "2b6587bfcd6b"
+    },
+    "clients.openai-sdk.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "72502a38c825"
+    },
+    "clients.openai-sdk.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "81e9b9ed3e66",
+      "target_hash": "6d046bf44640"
+    },
+    "clients.continue.h1": {
+      "part": "clients",
+      "source_hash": "f33c2b44b3be",
+      "target_hash": "42d55049e9b0"
+    },
+    "clients.continue.summary": {
+      "part": "clients",
+      "source_hash": "4377b7395411",
+      "target_hash": "43dabf023f1d"
+    },
+    "clients.continue.flow.title": {
+      "part": "clients",
+      "source_hash": "a55ed462d54e",
+      "target_hash": "af8fb7b68543"
+    },
+    "clients.continue.flow.desc": {
+      "part": "clients",
+      "source_hash": "dfee5b6d070e",
+      "target_hash": "19ae61a3b387"
+    },
+    "clients.continue.flow.caption": {
+      "part": "clients",
+      "source_hash": "c1f803ddf701",
+      "target_hash": "4d9cf47814df"
+    },
+    "clients.continue.capability": {
+      "part": "clients",
+      "source_hash": "d76f0ccb6e86",
+      "target_hash": "9a43093bede4"
+    },
+    "clients.continue.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "bbffa93717aa"
+    },
+    "clients.continue.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "72502a38c825"
+    },
+    "clients.continue.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "8c8d339555ff",
+      "target_hash": "560946a5052a"
+    },
+    "clients.cline.h1": {
+      "part": "clients",
+      "source_hash": "d0efe15bdc4f",
+      "target_hash": "399d6426cc90"
+    },
+    "clients.cline.summary": {
+      "part": "clients",
+      "source_hash": "d80b0d66c45e",
+      "target_hash": "0d2007500c97"
+    },
+    "clients.cline.flow.title": {
+      "part": "clients",
+      "source_hash": "79932fc0e85c",
+      "target_hash": "61272a9387d9"
+    },
+    "clients.cline.flow.desc": {
+      "part": "clients",
+      "source_hash": "300648093db4",
+      "target_hash": "d7423825a709"
+    },
+    "clients.cline.flow.caption": {
+      "part": "clients",
+      "source_hash": "26566cb52d8d",
+      "target_hash": "7790cbc8a4b2"
+    },
+    "clients.cline.capability": {
+      "part": "clients",
+      "source_hash": "21110940c4cb",
+      "target_hash": "a21403b13d93"
+    },
+    "clients.cline.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "96c33d87d492"
+    },
+    "clients.cline.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "bbffa93717aa"
+    },
+    "clients.cline.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "72502a38c825"
+    },
+    "clients.cline.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "f65c6df5377b",
+      "target_hash": "f65c6df5377b"
+    },
+    "clients.cursor.h1": {
+      "part": "clients",
+      "source_hash": "314536df2e7a",
+      "target_hash": "1fcfc6e820de"
+    },
+    "clients.cursor.summary": {
+      "part": "clients",
+      "source_hash": "1c8912c5ba32",
+      "target_hash": "177f28846fcd"
+    },
+    "clients.cursor.flow.title": {
+      "part": "clients",
+      "source_hash": "43c8f2aed837",
+      "target_hash": "150f6522ffbd"
+    },
+    "clients.cursor.flow.desc": {
+      "part": "clients",
+      "source_hash": "524789d9ea5d",
+      "target_hash": "7bd26ab95c2b"
+    },
+    "clients.cursor.flow.caption": {
+      "part": "clients",
+      "source_hash": "79e33449f1a5",
+      "target_hash": "0534c9460c63"
+    },
+    "clients.cursor.capability": {
+      "part": "clients",
+      "source_hash": "e3b007a84e77",
+      "target_hash": "dd42a0f0b568"
+    },
+    "clients.cursor.req.reachable": {
+      "part": "clients",
+      "source_hash": "0815103f2766",
+      "target_hash": "c49959f188ac"
+    },
+    "clients.cursor.mode.default.title": {
+      "part": "clients",
+      "source_hash": "5e7a9a7b90b9",
+      "target_hash": "8725c4100caf"
+    },
+    "clients.cursor.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "fce3909f9e49",
+      "target_hash": "aeaf555531e7"
+    },
+    "clients.codex-cli.h1": {
+      "part": "clients",
+      "source_hash": "ee03de1664ad",
+      "target_hash": "a0bfb06ac2f9"
+    },
+    "clients.codex-cli.summary": {
+      "part": "clients",
+      "source_hash": "4ffc9f534362",
+      "target_hash": "5f972e7c50cc"
+    },
+    "clients.codex-cli.flow.title": {
+      "part": "clients",
+      "source_hash": "4d9d5da5c30b",
+      "target_hash": "eef133df6352"
+    },
+    "clients.codex-cli.flow.desc": {
+      "part": "clients",
+      "source_hash": "ae1c2b1f74bf",
+      "target_hash": "1e8c0b2e2639"
+    },
+    "clients.codex-cli.flow.caption": {
+      "part": "clients",
+      "source_hash": "4596be3eb188",
+      "target_hash": "aa0d9c118bc0"
+    },
+    "clients.codex-cli.capability": {
+      "part": "clients",
+      "source_hash": "b7c7ad7fa0c7",
+      "target_hash": "8a4da8098423"
+    },
+    "clients.codex-cli.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "96c33d87d492"
+    },
+    "clients.codex-cli.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "bbffa93717aa"
+    },
+    "clients.codex-cli.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "72502a38c825"
+    },
+    "clients.codex-cli.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "0e63a370854f",
+      "target_hash": "41089e6dc088"
+    },
+    "claude-code-router.router.h2-1": {
+      "part": "claude-code-router",
+      "source_hash": "88b4b60f90dc",
+      "target_hash": "1738613eac95"
+    },
+    "claude-code-router.p-1": {
+      "part": "claude-code-router",
+      "source_hash": "47eae55f59c6",
+      "target_hash": "c88d12d89064"
+    },
+    "claude-code-router.p-2": {
+      "part": "claude-code-router",
+      "source_hash": "23f00b590b6a",
+      "target_hash": "ebc987e2f0b6"
+    },
+    "claude-code-router.p-3": {
+      "part": "claude-code-router",
+      "source_hash": "b554407d17a9",
+      "target_hash": "443737f5ee3a"
+    },
+    "claude-code-router.p-4": {
+      "part": "claude-code-router",
+      "source_hash": "f87b272c3f76",
+      "target_hash": "23fa7b08cb46"
+    },
+    "claude-code-router.figcaption-1": {
+      "part": "claude-code-router",
+      "source_hash": "462151461bb5",
+      "target_hash": "e72f4e35aa9f"
+    },
+    "claude-code-router.p-5": {
+      "part": "claude-code-router",
+      "source_hash": "038dbec78e21",
+      "target_hash": "cd12f3eb7a36"
+    },
+    "claude-code-router.p-6": {
+      "part": "claude-code-router",
+      "source_hash": "bd9385d02ca7",
+      "target_hash": "894756565aa5"
+    },
+    "claude-code-router.img-1.alt": {
+      "part": "claude-code-router",
+      "source_hash": "3f1f5682c2a4",
+      "target_hash": "43d74931dc59"
+    },
+    "claude-code-router.span-1": {
+      "part": "claude-code-router",
+      "source_hash": "d0410896bcb4",
+      "target_hash": "b5635d1209bd"
+    },
+    "claude-code-router.span-2": {
+      "part": "claude-code-router",
+      "source_hash": "6d3dcb885877",
+      "target_hash": "48c3d9dab322"
+    },
+    "claude-code-router.figcaption-2": {
+      "part": "claude-code-router",
+      "source_hash": "b4aee34de008",
+      "target_hash": "983314153621"
+    },
+    "claude-code-router.p-7": {
+      "part": "claude-code-router",
+      "source_hash": "174e92b8be51",
+      "target_hash": "013a434fccb8"
+    },
+    "claude-code-router.img-2.alt": {
+      "part": "claude-code-router",
+      "source_hash": "1dcf45e042e8",
+      "target_hash": "b7bbd8b513da"
+    },
+    "claude-code-router.span-3": {
+      "part": "claude-code-router",
+      "source_hash": "e7811be1957f",
+      "target_hash": "f2d8b7a9924a"
+    },
+    "claude-code-router.span-4": {
+      "part": "claude-code-router",
+      "source_hash": "8c3c6830836a",
+      "target_hash": "9cabf09e9a36"
+    },
+    "claude-code-router.figcaption-3": {
+      "part": "claude-code-router",
+      "source_hash": "e6294c26fbc5",
+      "target_hash": "be7b59493b1e"
+    },
+    "agent-tuning.meta.title": {
+      "part": "agent-tuning",
+      "source_hash": "c73577a9e93d",
+      "target_hash": "4cc3a60593b9"
+    },
+    "agent-tuning.meta.description": {
+      "part": "agent-tuning",
+      "source_hash": "42f223176a20",
+      "target_hash": "e08cb99cea72"
+    },
+    "agent-tuning.jsonld.name": {
+      "part": "agent-tuning",
+      "source_hash": "d38cc5b44b81",
+      "target_hash": "8eb57d5673e7"
+    },
+    "agent-tuning.jsonld.step-1": {
+      "part": "agent-tuning",
+      "source_hash": "ea9ef62b2144",
+      "target_hash": "6480db6d82c3"
+    },
+    "agent-tuning.jsonld.step-2": {
+      "part": "agent-tuning",
+      "source_hash": "02b6962c341f",
+      "target_hash": "a6876f0212cf"
+    },
+    "agent-tuning.jsonld.step-3": {
+      "part": "agent-tuning",
+      "source_hash": "23149cd56616",
+      "target_hash": "ed038ccbf8d5"
+    },
+    "agent-tuning.jsonld.step-4": {
+      "part": "agent-tuning",
+      "source_hash": "2580a4baddda",
+      "target_hash": "6dfb91b6739e"
+    },
+    "agent-tuning.tuning.h1-1": {
+      "part": "agent-tuning",
+      "source_hash": "2df23e8f7918",
+      "target_hash": "37d197d8ac21"
+    },
+    "agent-tuning.p-1": {
+      "part": "agent-tuning",
+      "source_hash": "47320716621f",
+      "target_hash": "5ac287bd754b"
+    },
+    "agent-tuning.h2-1": {
+      "part": "agent-tuning",
+      "source_hash": "2a300da26a75",
+      "target_hash": "6469120481ed"
+    },
+    "agent-tuning.li-1": {
+      "part": "agent-tuning",
+      "source_hash": "45b78d2f8e02",
+      "target_hash": "ef4b86433e10"
+    },
+    "agent-tuning.li-2": {
+      "part": "agent-tuning",
+      "source_hash": "a316c0dc85b5",
+      "target_hash": "d64d185dfcfe"
+    },
+    "agent-tuning.li-3": {
+      "part": "agent-tuning",
+      "source_hash": "45f30ab355a5",
+      "target_hash": "583fc9e57a78"
+    },
+    "agent-tuning.h2-2": {
+      "part": "agent-tuning",
+      "source_hash": "676f21721809",
+      "target_hash": "1f4a0bf2c738"
+    },
+    "agent-tuning.th-1": {
+      "part": "agent-tuning",
+      "source_hash": "8e6a6cca7aae",
+      "target_hash": "194421837657"
+    },
+    "agent-tuning.th-2": {
+      "part": "agent-tuning",
+      "source_hash": "3df9726c68ba",
+      "target_hash": "a74e9ce5dc85"
+    },
+    "agent-tuning.th-3": {
+      "part": "agent-tuning",
+      "source_hash": "982d52862acc",
+      "target_hash": "385e3593bc7b"
+    },
+    "agent-tuning.th-4": {
+      "part": "agent-tuning",
+      "source_hash": "966e8813028c",
+      "target_hash": "7cef20f5a313"
+    },
+    "agent-tuning.th-5": {
+      "part": "agent-tuning",
+      "source_hash": "6fb4184c2d5a",
+      "target_hash": "9d53326da0f8"
+    },
+    "agent-tuning.th-6": {
+      "part": "agent-tuning",
+      "source_hash": "a632bbe8e8aa",
+      "target_hash": "96619925335b"
+    },
+    "agent-tuning.th-7": {
+      "part": "agent-tuning",
+      "source_hash": "4c3b52acd644",
+      "target_hash": "dfaec0efadac"
+    },
+    "agent-tuning.td-1": {
+      "part": "agent-tuning",
+      "source_hash": "51491b72ded1",
+      "target_hash": "e920b8a3b2bf"
+    },
+    "agent-tuning.th-8": {
+      "part": "agent-tuning",
+      "source_hash": "ead961a24dc4",
+      "target_hash": "de0af8de601c"
+    },
+    "agent-tuning.th-9": {
+      "part": "agent-tuning",
+      "source_hash": "70356d606d14",
+      "target_hash": "cf5e229cb8e8"
+    },
+    "agent-tuning.td-2": {
+      "part": "agent-tuning",
+      "source_hash": "9a72b9938ec6",
+      "target_hash": "1698572c9db0"
+    },
+    "agent-tuning.p-2": {
+      "part": "agent-tuning",
+      "source_hash": "c3bff7c1a9d1",
+      "target_hash": "dbb5a713dd9d"
+    },
+    "agent-tuning.h2-3": {
+      "part": "agent-tuning",
+      "source_hash": "b273921d2e33",
+      "target_hash": "93b38e9df516"
+    },
+    "agent-tuning.p-3": {
+      "part": "agent-tuning",
+      "source_hash": "a74bbbec589e",
+      "target_hash": "f89aad581e11"
+    },
+    "agent-tuning.h3-1": {
+      "part": "agent-tuning",
+      "source_hash": "c1ebd00d0f72",
+      "target_hash": "4a3a6e419a0f"
+    },
+    "agent-tuning.h3-2": {
+      "part": "agent-tuning",
+      "source_hash": "0cc405dce7f8",
+      "target_hash": "1b31d75922f4"
+    },
+    "agent-tuning.h3-3": {
+      "part": "agent-tuning",
+      "source_hash": "906f71857682",
+      "target_hash": "71f6e3f57a00"
+    },
+    "agent-tuning.h3-4": {
+      "part": "agent-tuning",
+      "source_hash": "d6e1c2c66dff",
+      "target_hash": "0aa5a00449e2"
+    },
+    "agent-tuning.h2-4": {
+      "part": "agent-tuning",
+      "source_hash": "74e492d5d0df",
+      "target_hash": "11a1dd1ac7fc"
+    },
+    "agent-tuning.li-4": {
+      "part": "agent-tuning",
+      "source_hash": "4a1f64b32132",
+      "target_hash": "8225e52fb083"
+    },
+    "agent-tuning.li-5": {
+      "part": "agent-tuning",
+      "source_hash": "e127f19fe7da",
+      "target_hash": "7bd26acc2d32"
+    },
+    "agent-tuning.li-6": {
+      "part": "agent-tuning",
+      "source_hash": "dabc7d95f036",
+      "target_hash": "1986c2c6fbd1"
+    },
+    "agent-tuning.li-7": {
+      "part": "agent-tuning",
+      "source_hash": "cc61ece33dc3",
+      "target_hash": "361420b4a13c"
+    },
+    "agent-tuning.p-4": {
+      "part": "agent-tuning",
+      "source_hash": "cfe5bc772213",
+      "target_hash": "fdef6df80eee"
+    },
+    "gpu-monitoring.meta.title": {
+      "part": "gpu-monitoring",
+      "source_hash": "d27814ed8b63",
+      "target_hash": "c6b7be3d8400"
+    },
+    "gpu-monitoring.meta.description": {
+      "part": "gpu-monitoring",
+      "source_hash": "507736e1bea9",
+      "target_hash": "0feb9ab73350"
+    },
+    "gpu-monitoring.box.h1-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "cc0f4c9bbf2b",
+      "target_hash": "1c1a82371662"
+    },
+    "gpu-monitoring.p-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "a9ca4640a6e7",
+      "target_hash": "63fe7fd836c1"
+    },
+    "gpu-monitoring.p-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "e6e25a4491ad",
+      "target_hash": "5e60ee5872a9"
+    },
+    "gpu-monitoring.dt-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "8f0474fb0c5b",
+      "target_hash": "ea49523d744c"
+    },
+    "gpu-monitoring.dd-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "065609784858",
+      "target_hash": "e8706951dc84"
+    },
+    "gpu-monitoring.dt-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "60de0ad7eb70",
+      "target_hash": "fb30929d1502"
+    },
+    "gpu-monitoring.dd-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "2a58556c9272",
+      "target_hash": "b4d07803318c"
+    },
+    "gpu-monitoring.dd-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "a85ab5eb706a",
+      "target_hash": "a01717ffd75c"
+    },
+    "gpu-monitoring.dt-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "9fe4c68ec20d",
+      "target_hash": "b38f20071104"
+    },
+    "gpu-monitoring.dd-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "a041ea9e5251",
+      "target_hash": "a041ea9e5251"
+    },
+    "gpu-monitoring.caption-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "db678a93d309",
+      "target_hash": "1d8e8522e4fa"
+    },
+    "gpu-monitoring.th-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "463816d07097",
+      "target_hash": "af62b7421b5d"
+    },
+    "gpu-monitoring.th-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "5e1bc5df87b6",
+      "target_hash": "1ebaa1485bd0"
+    },
+    "gpu-monitoring.th-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "af088ec66533",
+      "target_hash": "a75eddf1ab86"
+    },
+    "gpu-monitoring.th-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "0cb077815ec8",
+      "target_hash": "d7212e7a41e9"
+    },
+    "gpu-monitoring.th-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "9739b22b0dce",
+      "target_hash": "ae8b7d22e134"
+    },
+    "gpu-monitoring.col-capture.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "5e1bc5df87b6",
+      "target_hash": "1ebaa1485bd0"
+    },
+    "gpu-monitoring.col-median.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "e6245b901702",
+      "target_hash": "e5a8cba0a45c"
+    },
+    "gpu-monitoring.col-peak.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "0cb077815ec8",
+      "target_hash": "89c0c3409238"
+    },
+    "gpu-monitoring.th-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "6554b6cbd5f4",
+      "target_hash": "757eb3300050"
+    },
+    "gpu-monitoring.th-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "eb7b7fd32e11",
+      "target_hash": "c7b9b398b4cb"
+    },
+    "gpu-monitoring.span-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "0bedd95628dd",
+      "target_hash": "fff123da0ac5"
+    },
+    "gpu-monitoring.td-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "eaa6d59dc9be",
+      "target_hash": "e1c3862d5d65"
+    },
+    "gpu-monitoring.td-8": {
+      "part": "gpu-monitoring",
+      "source_hash": "8678af14d6a2",
+      "target_hash": "e6dca5d58e7d"
+    },
+    "gpu-monitoring.p-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "fc86e0160504",
+      "target_hash": "f819bda4add6"
+    },
+    "gpu-monitoring.cards.h2-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "036e83c1af39",
+      "target_hash": "a51f4e93d43a"
+    },
+    "gpu-monitoring.p-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "f87275635f5c",
+      "target_hash": "f39425a149f4"
+    },
+    "gpu-monitoring.img-1.alt": {
+      "part": "gpu-monitoring",
+      "source_hash": "55b551e38c61",
+      "target_hash": "95c628575cb1"
+    },
+    "gpu-monitoring.span-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "b3bd726e07ac",
+      "target_hash": "cd09b5c1e806"
+    },
+    "gpu-monitoring.span-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "7be6f5cf26b2",
+      "target_hash": "d5e784a2194d"
+    },
+    "gpu-monitoring.span-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "ef8ca2bcafce",
+      "target_hash": "3b30530a415f"
+    },
+    "gpu-monitoring.span-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "c4d22dc73625",
+      "target_hash": "0de086579123"
+    },
+    "gpu-monitoring.figcaption-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "7aa9957f224d",
+      "target_hash": "537099aa81c9"
+    },
+    "gpu-monitoring.caption-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "fd76edd0a9d5",
+      "target_hash": "bf178a9a3f0b"
+    },
+    "gpu-monitoring.th-8": {
+      "part": "gpu-monitoring",
+      "source_hash": "b596b0114ded",
+      "target_hash": "1e1399ecb571"
+    },
+    "gpu-monitoring.td-9": {
+      "part": "gpu-monitoring",
+      "source_hash": "1f5a45a29bdc",
+      "target_hash": "9e572caa0eaf"
+    },
+    "gpu-monitoring.th-9": {
+      "part": "gpu-monitoring",
+      "source_hash": "fd8f8648eb41",
+      "target_hash": "ebc571c6e53e"
+    },
+    "gpu-monitoring.td-10": {
+      "part": "gpu-monitoring",
+      "source_hash": "d8e9193ca58e",
+      "target_hash": "f87fdc395230"
+    },
+    "gpu-monitoring.th-10": {
+      "part": "gpu-monitoring",
+      "source_hash": "c01f2094044d",
+      "target_hash": "e853777c0722"
+    },
+    "gpu-monitoring.td-11": {
+      "part": "gpu-monitoring",
+      "source_hash": "92c8d3b9a423",
+      "target_hash": "c5c2933ab0ef"
+    },
+    "gpu-monitoring.inflight.h2-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "87e975182d2c",
+      "target_hash": "4f70197e7743"
+    },
+    "gpu-monitoring.p-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "4d6984e02a57",
+      "target_hash": "d956d9b54180"
+    },
+    "gpu-monitoring.img-2.alt": {
+      "part": "gpu-monitoring",
+      "source_hash": "850b1ebebfcc",
+      "target_hash": "63ada7a85b09"
+    },
+    "gpu-monitoring.span-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "807aafa43674",
+      "target_hash": "3d29174e80f4"
+    },
+    "gpu-monitoring.span-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "c6220dc860be",
+      "target_hash": "7f31e3b2955e"
+    },
+    "gpu-monitoring.figcaption-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "cb4966892bbc",
+      "target_hash": "6fa8d1413cf6"
+    },
+    "gpu-monitoring.p-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "1669f0782d97",
+      "target_hash": "1303a201b2ae"
+    },
+    "cache-aware-routing.meta.title": {
+      "part": "cache-aware-routing",
+      "source_hash": "74d5770bf736",
+      "target_hash": "02a243b809e9"
+    },
+    "cache-aware-routing.meta.description": {
+      "part": "cache-aware-routing",
+      "source_hash": "055a37ed3302",
+      "target_hash": "b6fdb7c26377"
+    },
+    "cache-aware-routing.replica.h1-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "7b4386acadc3",
+      "target_hash": "f541c1efe801"
+    },
+    "cache-aware-routing.p-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "6a215639b7d8",
+      "target_hash": "9d4beb6badfc"
+    },
+    "cache-aware-routing.p-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "2022d3c80a9f",
+      "target_hash": "ebbcd0bde075"
+    },
+    "cache-aware-routing.figcaption-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "a3b037946eda",
+      "target_hash": "a05a6fea967f"
+    },
+    "cache-aware-routing.p-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "91272c526688",
+      "target_hash": "c7a1eeb842f6"
+    },
+    "cache-aware-routing.p-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "22167404e1cf",
+      "target_hash": "a56d09297ed4"
+    },
+    "cache-aware-routing.dt-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "8f0474fb0c5b",
+      "target_hash": "ea49523d744c"
+    },
+    "cache-aware-routing.dd-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "a2a87a6a413f",
+      "target_hash": "079bc8b5e9c9"
+    },
+    "cache-aware-routing.dt-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "5e2c614c23f0",
+      "target_hash": "e61bbb839ef8"
+    },
+    "cache-aware-routing.dd-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "ca64e381cd89",
+      "target_hash": "ca64e381cd89"
+    },
+    "cache-aware-routing.dt-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "a511909161e1",
+      "target_hash": "be908fcd0f8c"
+    },
+    "cache-aware-routing.dd-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "2d27d2565f76",
+      "target_hash": "2d27d2565f76"
+    },
+    "cache-aware-routing.dd-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "056adfd1d823",
+      "target_hash": "6e751b1eb6e6"
+    },
+    "cache-aware-routing.dt-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "8a03fa9ad749",
+      "target_hash": "98d4551a796a"
+    },
+    "cache-aware-routing.dd-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "616bab8cda85",
+      "target_hash": "70edec59e319"
+    },
+    "cache-aware-routing.dt-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "8a6bdb6b18da",
+      "target_hash": "ff9f88ce353a"
+    },
+    "cache-aware-routing.dd-7": {
+      "part": "cache-aware-routing",
+      "source_hash": "bf79aedc37a9",
+      "target_hash": "864b0835e1af"
+    },
+    "cache-aware-routing.figcaption-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "4104b97ee062",
+      "target_hash": "486fffbe4a87"
+    },
+    "cache-aware-routing.p-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "4744b11be2ad",
+      "target_hash": "ff75fd36c0a8"
+    },
+    "cache-aware-routing.p-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "8ab22b61f669",
+      "target_hash": "7ae324292ad9"
+    },
+    "cache-aware-routing.figcaption-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "d3b521cd1c61",
+      "target_hash": "67370fc5f95d"
+    },
+    "cache-aware-routing.figcaption-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "7721bb0a3fe0",
+      "target_hash": "596f2047f4eb"
+    },
+    "cache-aware-routing.img-1.alt": {
+      "part": "cache-aware-routing",
+      "source_hash": "f1bc7fbd6399",
+      "target_hash": "01926923e852"
+    },
+    "cache-aware-routing.span-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "afd07a294687",
+      "target_hash": "28fac92b4c60"
+    },
+    "cache-aware-routing.span-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "aeb0dd495f94",
+      "target_hash": "43f6cd266910"
+    },
+    "cache-aware-routing.figcaption-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "c5c62f4909c8",
+      "target_hash": "29f240f960e8"
+    },
+    "cache-aware-routing.p-7": {
+      "part": "cache-aware-routing",
+      "source_hash": "36247db6bebb",
+      "target_hash": "e5e5bcb07b0d"
+    },
+    "cache-aware-routing.img-2.alt": {
+      "part": "cache-aware-routing",
+      "source_hash": "a40bcea9f2f2",
+      "target_hash": "aa115e5cdb61"
+    },
+    "cache-aware-routing.span-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "30f9cc329d1b",
+      "target_hash": "a840e5a83194"
+    },
+    "cache-aware-routing.figcaption-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "8b698966274e",
+      "target_hash": "a41d86472ac6"
+    },
+    "cache-aware-routing.p-8": {
+      "part": "cache-aware-routing",
+      "source_hash": "f55143f36cbe",
+      "target_hash": "03d440ef96a9"
+    },
+    "api-keys.meta.title": {
+      "part": "api-keys",
+      "source_hash": "36d31214a489",
+      "target_hash": "07a6dc686dcd"
+    },
+    "api-keys.meta.description": {
+      "part": "api-keys",
+      "source_hash": "dc32185af3f0",
+      "target_hash": "ca74ecb296a6"
+    },
+    "api-keys.keys.h1-1": {
+      "part": "api-keys",
+      "source_hash": "478db02e5440",
+      "target_hash": "e4cd540b9c6b"
+    },
+    "api-keys.p-1": {
+      "part": "api-keys",
+      "source_hash": "128af00fcd92",
+      "target_hash": "2e9c6c588dd9"
+    },
+    "api-keys.p-2": {
+      "part": "api-keys",
+      "source_hash": "24b259f012c7",
+      "target_hash": "a989571f7cfc"
+    },
+    "api-keys.p-3": {
+      "part": "api-keys",
+      "source_hash": "992b035b09f7",
+      "target_hash": "d197d9e5a528"
+    },
+    "api-keys.video-1.aria-label": {
+      "part": "api-keys",
+      "source_hash": "146ed912c7a6",
+      "target_hash": "edf2f5b95030"
+    },
+    "api-keys.figcaption-1": {
+      "part": "api-keys",
+      "source_hash": "389cdbc39b42",
+      "target_hash": "0c56106fc4f4"
+    },
+    "api-keys.img-1.alt": {
+      "part": "api-keys",
+      "source_hash": "e3200603dcf6",
+      "target_hash": "f5d83ed6fc49"
+    },
+    "api-keys.figcaption-2": {
+      "part": "api-keys",
+      "source_hash": "1a43a2ba1520",
+      "target_hash": "46dd067b7b8a"
+    },
+    "api-keys.leave.h2-1": {
+      "part": "api-keys",
+      "source_hash": "8f28f88090a1",
+      "target_hash": "71fe3ef9903d"
+    },
+    "api-keys.p-4": {
+      "part": "api-keys",
+      "source_hash": "18372068885f",
+      "target_hash": "5fb9201457a0"
+    },
+    "api-keys.p-5": {
+      "part": "api-keys",
+      "source_hash": "cfe5bc772213",
+      "target_hash": "fdef6df80eee"
+    },
+    "features.meta.title": {
+      "part": "features",
+      "source_hash": "ba96eee84458",
+      "target_hash": "05466191c026"
+    },
+    "features.meta.description": {
+      "part": "features",
+      "source_hash": "6e9623164c58",
+      "target_hash": "b07eac21f021"
+    },
+    "features.small.h1-1": {
+      "part": "features",
+      "source_hash": "32313b57288c",
+      "target_hash": "630ec336b6a3"
+    },
+    "features.dd-1": {
+      "part": "features",
+      "source_hash": "30b3b2877354",
+      "target_hash": "b4686323cb7c"
+    },
+    "features.dt-1": {
+      "part": "features",
+      "source_hash": "c0b53878c4d4",
+      "target_hash": "ad1280a9189b"
+    },
+    "features.dd-2": {
+      "part": "features",
+      "source_hash": "332151669674",
+      "target_hash": "f9dffb7bb709"
+    },
+    "features.dt-2": {
+      "part": "features",
+      "source_hash": "3b9fd142bcdf",
+      "target_hash": "ced14b4a23cd"
+    },
+    "features.dd-3": {
+      "part": "features",
+      "source_hash": "9d11305af39b",
+      "target_hash": "d99d0ca943b6"
+    },
+    "features.dt-3": {
+      "part": "features",
+      "source_hash": "db562f172ced",
+      "target_hash": "5ced121bd47c"
+    },
+    "features.dd-4": {
+      "part": "features",
+      "source_hash": "0e54e933002b",
+      "target_hash": "b688f4201f94"
+    },
+    "features.dt-4": {
+      "part": "features",
+      "source_hash": "afddbc532ecf",
+      "target_hash": "d70718387293"
+    },
+    "features.dd-5": {
+      "part": "features",
+      "source_hash": "b61634fa6450",
+      "target_hash": "403e5ee7cced"
+    },
+    "features.dt-5": {
+      "part": "features",
+      "source_hash": "bf3c9855201c",
+      "target_hash": "a8996036ec18"
+    },
+    "features.dd-6": {
+      "part": "features",
+      "source_hash": "8500a2b3792f",
+      "target_hash": "03769c6d0600"
+    },
+    "features.dt-6": {
+      "part": "features",
+      "source_hash": "2384f4730652",
+      "target_hash": "a0455d1b184b"
+    },
+    "features.dd-7": {
+      "part": "features",
+      "source_hash": "2bc91137abf9",
+      "target_hash": "5f2c30de652c"
+    },
+    "features.dd-8": {
+      "part": "features",
+      "source_hash": "93a18b286b4e",
+      "target_hash": "2eed3bf22119"
+    },
+    "features.dt-7": {
+      "part": "features",
+      "source_hash": "989e5691fd83",
+      "target_hash": "3cf4e098c173"
+    },
+    "features.dd-9": {
+      "part": "features",
+      "source_hash": "7c8ef7303dc3",
+      "target_hash": "e7b0c18abefe"
+    },
+    "features.lessons.h2-1": {
+      "part": "features",
+      "source_hash": "b2e61284634a",
+      "target_hash": "a8ee158bf8ff"
+    },
+    "features.h3-1": {
+      "part": "features",
+      "source_hash": "a3c2a4abe3bf",
+      "target_hash": "eae63ea573d8"
+    },
+    "features.p-1": {
+      "part": "features",
+      "source_hash": "8d323d1c089b",
+      "target_hash": "650fe62a0067"
+    },
+    "features.img-1.alt": {
+      "part": "features",
+      "source_hash": "a4f74c626a7f",
+      "target_hash": "77c8e4dc7357"
+    },
+    "features.span-1": {
+      "part": "features",
+      "source_hash": "e1d7e982a29c",
+      "target_hash": "7001de6abdd8"
+    },
+    "features.figcaption-1": {
+      "part": "features",
+      "source_hash": "40a242621e22",
+      "target_hash": "5c9433e36ca6"
+    },
+    "features.h3-2": {
+      "part": "features",
+      "source_hash": "69140856abf8",
+      "target_hash": "c6ada88f23e8"
+    },
+    "features.p-2": {
+      "part": "features",
+      "source_hash": "cceedae9466e",
+      "target_hash": "10a37aed6b34"
+    },
+    "features.img-2.alt": {
+      "part": "features",
+      "source_hash": "e3cc9ae4cf3b",
+      "target_hash": "bba632953d9e"
+    },
+    "features.figcaption-2": {
+      "part": "features",
+      "source_hash": "981fef031d3d",
+      "target_hash": "120554e3b072"
+    },
+    "features.h3-3": {
+      "part": "features",
+      "source_hash": "2269d7489768",
+      "target_hash": "3c8cddfdda54"
+    },
+    "features.p-3": {
+      "part": "features",
+      "source_hash": "a34f00101361",
+      "target_hash": "a502c2b3fba3"
+    },
+    "features.th-1": {
+      "part": "features",
+      "source_hash": "5e2c614c23f0",
+      "target_hash": "e61bbb839ef8"
+    },
+    "features.th-2": {
+      "part": "features",
+      "source_hash": "ea5522c7c85e",
+      "target_hash": "c41e293da455"
+    },
+    "features.th-3": {
+      "part": "features",
+      "source_hash": "9bebcd3482a7",
+      "target_hash": "c0d050ad9013"
+    },
+    "features.col-works.data-h": {
+      "part": "features",
+      "source_hash": "2b4c8c6d38db",
+      "target_hash": "0e0472fdba19"
+    },
+    "features.td-1": {
+      "part": "features",
+      "source_hash": "4516d9c167db",
+      "target_hash": "38d768ccb5a0"
+    },
+    "features.col-does-not.data-h": {
+      "part": "features",
+      "source_hash": "73a6fc7836b8",
+      "target_hash": "d4a70cd031be"
+    },
+    "features.td-2": {
+      "part": "features",
+      "source_hash": "6b644f502c34",
+      "target_hash": "7e68588e2220"
+    },
+    "features.th-4": {
+      "part": "features",
+      "source_hash": "c2f2a5cd5d41",
+      "target_hash": "24d3c4556552"
+    },
+    "features.td-3": {
+      "part": "features",
+      "source_hash": "baa3aea88f30",
+      "target_hash": "532a2723ac71"
+    },
+    "features.td-4": {
+      "part": "features",
+      "source_hash": "1ce2fc0f7104",
+      "target_hash": "42bee5fd6caf"
+    },
+    "features.th-5": {
+      "part": "features",
+      "source_hash": "3bc589f1752e",
+      "target_hash": "4716be6d0755"
+    },
+    "features.td-5": {
+      "part": "features",
+      "source_hash": "6fed9ca4f3d2",
+      "target_hash": "4d844fc8a757"
+    },
+    "features.td-6": {
+      "part": "features",
+      "source_hash": "296d7ad75ac3",
+      "target_hash": "e9ec18d0b97f"
+    },
+    "features.p-4": {
+      "part": "features",
+      "source_hash": "d5f7cb24d2cc",
+      "target_hash": "833f78dda787"
+    },
+    "features.p-5": {
+      "part": "features",
+      "source_hash": "4c5ddc0960f7",
+      "target_hash": "e537a233a5c4"
+    },
+    "faq.meta.title": {
+      "part": "faq",
+      "source_hash": "fb9dd5739289",
+      "target_hash": "28191b0fb367"
+    },
+    "faq.meta.description": {
+      "part": "faq",
+      "source_hash": "4c424d1bb872",
+      "target_hash": "a33ca29d97a7"
+    },
+    "faq.faq.h1-1": {
+      "part": "faq",
+      "source_hash": "b14e49a87fdf",
+      "target_hash": "c4845e52f52b"
+    },
+    "faq.q-1": {
+      "part": "faq",
+      "source_hash": "37148ce83843",
+      "target_hash": "939a75046d88"
+    },
+    "faq.a-1": {
+      "part": "faq",
+      "source_hash": "5098435c4cfe",
+      "target_hash": "04821dc92734"
+    },
+    "faq.q-2": {
+      "part": "faq",
+      "source_hash": "fd575095e092",
+      "target_hash": "3fbbc014b9c8"
+    },
+    "faq.a-2": {
+      "part": "faq",
+      "source_hash": "af7c57748da9",
+      "target_hash": "6dd3999626d1"
+    },
+    "faq.q-3": {
+      "part": "faq",
+      "source_hash": "07d287af578c",
+      "target_hash": "5138315c3638"
+    },
+    "faq.a-3": {
+      "part": "faq",
+      "source_hash": "6aa388b69fbe",
+      "target_hash": "b19727ee5a8f"
+    },
+    "faq.q-4": {
+      "part": "faq",
+      "source_hash": "3cb57cff1faf",
+      "target_hash": "da6d98c21eaa"
+    },
+    "faq.a-4": {
+      "part": "faq",
+      "source_hash": "680fb986650c",
+      "target_hash": "4847369ae401"
+    },
+    "faq.q-5": {
+      "part": "faq",
+      "source_hash": "0e5c302159a3",
+      "target_hash": "6d1c226d2175"
+    },
+    "faq.a-5": {
+      "part": "faq",
+      "source_hash": "36a441a68717",
+      "target_hash": "8e315e69e55a"
+    },
+    "faq.q-6": {
+      "part": "faq",
+      "source_hash": "af507f756ef8",
+      "target_hash": "ff500f58c2fd"
+    },
+    "faq.a-6": {
+      "part": "faq",
+      "source_hash": "71d96023e2e8",
+      "target_hash": "00e74589d4de"
+    },
+    "faq.q-7": {
+      "part": "faq",
+      "source_hash": "2e943e3c5431",
+      "target_hash": "5f021214a111"
+    },
+    "faq.a-7": {
+      "part": "faq",
+      "source_hash": "728ba07e9c96",
+      "target_hash": "ee541442a419"
+    },
+    "faq.q-8": {
+      "part": "faq",
+      "source_hash": "5cba7fae2cca",
+      "target_hash": "81485965ca6b"
+    },
+    "faq.a-8": {
+      "part": "faq",
+      "source_hash": "f047e1060aa4",
+      "target_hash": "f1b4834db4d6"
+    },
+    "faq.q-9": {
+      "part": "faq",
+      "source_hash": "138d847537f5",
+      "target_hash": "0364d4320255"
+    },
+    "faq.a-9": {
+      "part": "faq",
+      "source_hash": "37fb94868ccc",
+      "target_hash": "063e8f586e35"
+    },
+    "faq.q-10": {
+      "part": "faq",
+      "source_hash": "300a4b4adf9a",
+      "target_hash": "0e1a76914734"
+    },
+    "faq.a-10": {
+      "part": "faq",
+      "source_hash": "c4ef5c9a9c54",
+      "target_hash": "3e2f6674892b"
+    },
+    "faq.q-11": {
+      "part": "faq",
+      "source_hash": "889f53a02753",
+      "target_hash": "4dc39d143267"
+    },
+    "faq.a-11": {
+      "part": "faq",
+      "source_hash": "f7c42330b71d",
+      "target_hash": "09103c22bfd7"
+    },
+    "faq.q-12": {
+      "part": "faq",
+      "source_hash": "e8dc9deba44c",
+      "target_hash": "2d9c8f1d636b"
+    },
+    "faq.a-12": {
+      "part": "faq",
+      "source_hash": "97000d243331",
+      "target_hash": "41e837d9b896"
+    },
+    "faq.p-1": {
+      "part": "faq",
+      "source_hash": "8e86209820fa",
+      "target_hash": "d81eb99462dd"
+    },
+    "privacy.meta.title": {
+      "part": "privacy",
+      "source_hash": "ec9b140b1cc8",
+      "target_hash": "3eeb5307002b"
+    },
+    "privacy.meta.description": {
+      "part": "privacy",
+      "source_hash": "de30b21dbdc3",
+      "target_hash": "efeabd1a11be"
+    },
+    "privacy.ads": {
+      "part": "privacy",
+      "source_hash": "9b2a078e8838",
+      "target_hash": "51d1507dca9e"
+    },
+    "privacy.contact-official": {
+      "part": "privacy",
+      "source_hash": "eebc1d21c39b",
+      "target_hash": "1a6e5903e5dd"
+    },
+    "privacy.contact-operator": {
+      "part": "privacy",
+      "source_hash": "914390fc9adc",
+      "target_hash": "203aa7b04897"
+    },
+    "privacy.privacy.h1-1": {
+      "part": "privacy",
+      "source_hash": "f940c0a0e353",
+      "target_hash": "bfd981b026ba"
+    },
+    "privacy.p-1": {
+      "part": "privacy",
+      "source_hash": "b3509e8a2750",
+      "target_hash": "a7f9a1656482"
+    },
+    "privacy.h2-1": {
+      "part": "privacy",
+      "source_hash": "dd9acabe8622",
+      "target_hash": "96c9796ec273"
+    },
+    "privacy.p-2": {
+      "part": "privacy",
+      "source_hash": "8de08e36eb6d",
+      "target_hash": "2a4c0c6c9222"
+    },
+    "privacy.h2-2": {
+      "part": "privacy",
+      "source_hash": "910b22425fed",
+      "target_hash": "ab369d4bc65a"
+    },
+    "privacy.p-3": {
+      "part": "privacy",
+      "source_hash": "9405f2778a61",
+      "target_hash": "ae8204895c0f"
+    },
+    "privacy.h2-3": {
+      "part": "privacy",
+      "source_hash": "3aa95e4c746f",
+      "target_hash": "053996cf6a04"
+    },
+    "privacy.p-4": {
+      "part": "privacy",
+      "source_hash": "319e165f9018",
+      "target_hash": "40b563dfd7c0"
+    },
+    "privacy.h2-4": {
+      "part": "privacy",
+      "source_hash": "795028f063d5",
+      "target_hash": "3d0cca5b5dd7"
+    },
+    "privacy.p-5": {
+      "part": "privacy",
+      "source_hash": "112b969b0be0",
+      "target_hash": "dfd724026ae9"
+    },
+    "privacy.p-6": {
+      "part": "privacy",
+      "source_hash": "0d38cc82e109",
+      "target_hash": "7ed313d7061f"
+    },
+    "not-found.meta.title": {
+      "part": "not-found",
+      "source_hash": "9997b967a0f9",
+      "target_hash": "31a8f0532839"
+    },
+    "not-found.meta.description": {
+      "part": "not-found",
+      "source_hash": "f56b56b08c51",
+      "target_hash": "c809fd0e3770"
+    },
+    "not-found.nf.h1-1": {
+      "part": "not-found",
+      "source_hash": "0a4c2fc34b17",
+      "target_hash": "5d10c027e8c0"
+    },
+    "not-found.p-1": {
+      "part": "not-found",
+      "source_hash": "701d00dd6585",
+      "target_hash": "483fe8ac89cf"
+    }
+  },
+  "back_notes": {
+    "home.p-appliance.div-1": "Slightly stilted: the \"no product name nor hardware to show\" justification reads as a note to the reader rather than a caption.",
+    "home.agents.p-4": "\"it checks\" is ambiguous: the antecedent could be the console or Connect (only the console appears as a noun, with Connect as the feature name).",
+    "claude-code-router.figcaption-1": "No space between the figure label and the caption text (\"Fig. 2\" runs straight into \"Where a request goes\").",
+    "claude-code-router.figcaption-2": "No space between the figure label and the caption text.",
+    "claude-code-router.figcaption-3": "No space between the figure label and the caption text.",
+    "gpu-monitoring.p-4": "\"melt four cards into a single average curve\" (fondent) is a slightly figurative verb choice; \"display a missing value as a 0\" is clear.",
+    "features.td-2": "Cell is a fragment without the model name ('Une carte : le MoE 20B ne tient pas'); reads incomplete in isolation"
+  },
+  "issues": [
+    {
+      "key": "home.p-linux.a-3",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"From source\" (build from source) rendered \"Code source\" (source code)",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.figcaption-1",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] gloss \"son prompt lu dans le cache\" says the prompt is read from the cache; English: the prompt is read into the cache (prefill)",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-3",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"L’affinité ne la change presque pas\" refers back to GPU utilisation; English: affinity barely changes the busy-replica count",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.p-4",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"est à un GET près\" means \"give or take a GET\" (approximately); English: retrievable with one GET request",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-8",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"ID de jeton\" reads as LLM token ids; English \"token ids\" are the API key (vw_ token) ids",
+      "round": "r1"
+    },
+    {
+      "key": "home.install.small-2",
+      "category": "omission",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"Menu-bar app\" rendered as \"Barre des menus\" only: the app was dropped",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.span-2",
+      "category": "omission",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"See the coding agents\" shortened to \"Voir les agents\"",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.span-7",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"base URL override\" (a setting) rendered as a past participle \"URL de base OpenAI remplacée\"",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.h3-1",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] \"Tout sur vos modèles\" reads as \"all about your models\"; English says the agents run entirely on your models",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.figcaption-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning review] \"Un échec local ... part chez Anthropic\": the failure, not the request, is said to go to Anthropic",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-1",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning review] gloss \"son prompt lu dans le cache\" says the prompt is read from the cache; English: read into the cache (prefill)",
+      "round": "r1"
+    },
+    {
+      "key": "meta.og-image-alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « sur les GPU sous votre bureau » : calque de « under your desk », sonne étrange en français.",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « votre propre identifiant » (au singulier) alterne avec « votre connexion » ailleurs pour la même notion (credential Anthropic) ; « répond pour » est ambigu.",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « Routage tenant compte du cache » alors que le fil d’Ariane, les liens et le titre de page disent « Routage selon le cache ».",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-10",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Unités anglaises (GB) et « 8 x B300 » avec un x latin ; en français : Go, et le signe ×.",
+      "round": "r1"
+    },
+    {
+      "key": "home.hero.h1-1",
+      "category": "style",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « Vos GPU, servis comme une API hébergée » : calque ; on sert des modèles, pas des GPU. Le titre principal ne veut rien dire tel quel.",
+      "round": "r1"
+    },
+    {
+      "key": "home.hero.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « place devant un seul port » : complément manquant (placer quoi devant quoi ?), la phrase se lit « place quelque chose devant un port ».",
+      "round": "r1"
+    },
+    {
+      "key": "home.uc.h2-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « Ce qu’on en fait » : registre familier et vague pour un titre de section.",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « l’OpenAI SDK / l’Anthropic SDK » : ordre anglais (ailleurs « les SDK OpenAI et Anthropic ») ; des agents qui « conservent votre abonnement » est un calque. — fixed the subscription calque; \"l’OpenAI SDK\"/\"l’Anthropic SDK\" kept because both are do-not-translate terms",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « de 56 à 86 % », « de 2,05 à 0,38 s » sans verbe : on ne sait pas si c’est une plage ou une évolution.",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.h3-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « sur place » : calque de « right there / on-prem », sens flou.",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-9",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Unité anglaise GB ; en français : Go.",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.li-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Unité anglaise MB ; en français : Mo.",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.li-3",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « Bêta, pour être clair : » est un calque de « Beta, to be clear: ».",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.li-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « non notariée » ici, « non notarisée » dans la FAQ ; Apple France emploie « notarisée ».",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.li-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Phrase sans sujet et « sert sur 127.0.0.1 » calqué de « serves on ».",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.figcaption-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Unité GB ; en français : Go.",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-win.h3-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Deux phrases sèches calquées (« Windows is next. There is no date. »).",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-win.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « deux options honnêtes » : calque de « two honest options » ; « publierons une build ici le jour où elle existera, pas un formulaire d’inscription avant » est lourd.",
+      "round": "r1"
+    },
+    {
+      "key": "home.upgrade.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « la base de données migre vers l’avant » : calque de « migrates forward », incompréhensible en français.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why.h2-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « Voici à quoi ressemble chacun, une fois résolu » : tournure calquée et lourde.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-fit.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « le budget s’additionne » : calque (memory budget) ; on parle de mémoire disponible.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-stats.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « Une utilisation plate avec une file d’attente signifie « plus de concurrence » ; … « épinglez les sessions » » : deux calques (flat, pin) qui obscurcissent le conseil.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-chat.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Répétition maladroite « Les appels d’outils … pour vérifier l’appel d’outils ».",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.figcaption-1",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « pré-rempli (son prompt lu dans le cache) » : calque de « prefilled » et glose fausse (le prompt est écrit dans le cache, pas lu depuis) ; ailleurs « prefill » ou « préremplissage ».",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-3",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « la carte des réplicas » : « carte » désigne partout les GPU ; employé pour un élément d’interface, il crée une confusion réelle.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.img-1.alt",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « La carte … avec les pastilles » : « carte » (UI) se confond avec les cartes GPU.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.figcaption-4",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « C’est la carte, pas un résultat » et « Touchez la carte » : calques vides de sens ; « carte » = GPU partout ailleurs.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-4",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « Là où il perd. » calque de « Where it loses » ; « la traîne lente » peu idiomatique.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Séparateurs de milliers incohérents (espace fine dans « 11 178 », espace normale dans « 9 048 »).",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « une machine qui tourne à sa limite devrait mesurer » : la machine ne mesure pas, c’est vous.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.a-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « qui tourne avec depuis » : préposition orpheline, tournure orale fautive.",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « conserver un abonnement Claude payant pour le travail difficile » : calque (« keep a paid subscription for the hard work »).",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.h3-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « Tout sur vos modèles » se lit « Tout savoir sur vos modèles » ; le sens voulu (tout exécuté sur vos modèles) est perdu.",
+      "round": "r1"
+    },
+    {
+      "key": "home.flow-d.desc-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « qui répond en tant que ce modèle » : calque de « answers as » ; « identifiant » au singulier.",
+      "round": "r1"
+    },
+    {
+      "key": "home.flow-d2.desc-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Même calque que flow-d.desc-1 (« répond en tant que ce modèle »).",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.h3-3",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « Connect écrit la configuration » : calque de « writes » ; en français on « génère » une configuration.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.li-3",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « 2k et 30k » : notation anglaise ; en français « 2 k » avec espace, ou « 2 000 ».",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.ol-1.aria-label",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « Exemple d’échelle de priorités » : métaphore anglaise (priority ladder) sans écho en français — même cas que l’étalonnage du propriétaire.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.p-3",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « Un exemple d’échelle, pas une règle : c’est vous qui choisissez les chiffres » : calque du « ladder » et tournure raide.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « 19k », « 440k » : notation anglaise ; et « une carte Limits » (carte = GPU ailleurs).",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.figcaption-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « 19k requêtes » : notation anglaise.",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « un lien PCIe stabilisé en x4 sur x16 » : calque de « settled at x4 of x16 », se lit comme une proportion ; « sous un bureau » calqué ; GB au lieu de Go.",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.figcaption-2",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « s’est stabilisé en x4 sur x16 » : même calque, sens obscur.",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.figcaption-4",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « tant que ça avance » : registre oral.",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.p-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « wrapper » anglais alors que features.p-1 dit « enveloppe ».",
+      "round": "r1"
+    },
+    {
+      "key": "home.oss.h2-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « développé en public » : calque de « built in public ».",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.footer.about",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « l’équipe derrière PodWarden » : calque de « the team behind ».",
+      "round": "r1"
+    },
+    {
+      "key": "coding-agents.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « LM Warden parle les trois protocoles » : calque de « speaks » (même tournure dans tous les flow.desc) ; « prend en charge » est attendu.",
+      "round": "r1"
+    },
+    {
+      "key": "coding-agents.p-2",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « Connect choisit votre client, votre modèle et votre clé » : c’est l’utilisateur qui choisit ; le sens est inversé.",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.summary",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « votre connexion Claude » : calque de « your Claude login » ; « les modèles que vos règles nomment » est raide.",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.capability",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « votre propre connexion » (calque de login) et « que vos règles nomment ».",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.mode.router.title",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « gardez votre connexion Claude » : calque.",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.mode.router.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « votre connexion … continue d’aller », « voyage dans son propre en-tête », « reçoivent leur réponse ici » : enchaînement de calques.",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.mode.local.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « Chaque emplacement de modèle reçoit » : calque de « model slot ».",
+      "round": "r1"
+    },
+    {
+      "key": "clients.anthropic-sdk.capability",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « votre propre connexion » pour un SDK qui utilise une clé API (le résumé et le flow.desc disent « clé API ») ; « nomment ».",
+      "round": "r1"
+    },
+    {
+      "key": "clients.codex-cli.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « la recherche web hébergée est abandonnée » : « dropped » = ignorée ; « abandonnée » est ambigu.",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « votre propre connexion », « la connexion n’est jamais touchée », « voyage » : calques de login/travels ; « Une règle nomme ».",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « Un échec local avant le premier octet part chez Anthropic » : c’est la requête qui part, pas l’échec.",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « sa propre connexion Anthropic », « la connexion transférée », « un modèle qu’une règle nomme » : calques récurrents.",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.figcaption-2",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Heure au format anglais « 13:38 » dans la prose ; en français : 13 h 38.",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-7",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Unité GiB ; en français : Gio.",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.p-1",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « Les tests d’ajustement » : « ajustement » = tuning ; il s’agit de tests de capacité mémoire (ce qui tient sur quelle carte).",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.cards.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « Une valeur qu’il ne peut pas mesurer » (« il » sans antécédent) et « non rapportée », calque de « not reported ».",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.meta.description",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « les longues conversations sautent l’essentiel du prefill » : calque de « skip ».",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-1",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] Même glose erronée que sur l’accueil : « pré-rempli (son prompt lu dans le cache) ».",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-5",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « la carte des réplicas » : ambiguïté avec les cartes GPU.",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « l’affinité est devant », « la traîne lente » : calques (ahead, slow tail).",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.img-1.alt",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « La carte … pastilles » : « carte » (UI) confondue avec les GPU.",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-5",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « C’est la carte, pas un résultat » : calque vide de sens.",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-7",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « c’était collant, mais aveugle à la charge » : double calque (sticky, load-blind) ; « tourne avec depuis » : préposition orpheline.",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « Faites tourner une clé » : calque de « rotate a key » (évoque une clé qu’on tourne dans une serrure) ; l’accueil dit « renouvelée ». « fenêtre » pour une période.",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.p-4",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « est à un GET près » signifie « à un GET près = approximativement », contresens sur « one GET away » ; « Il parle /v1/… » calque ; « Lisez le diff … à l’envers, et c’est ainsi que vous partez » obscur.",
+      "round": "r1"
+    },
+    {
+      "key": "features.meta.title",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « leçons apprises » : calque de « lessons learned » ; « retours d’expérience » est l’usage.",
+      "round": "r1"
+    },
+    {
+      "key": "features.small.h1-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « une fois lancé » : participe sans référent clair (qui est lancé ?).",
+      "round": "r1"
+    },
+    {
+      "key": "features.dd-2",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « ni bocal à cookies » : calque littéral de « cookie jar », incompréhensible.",
+      "round": "r1"
+    },
+    {
+      "key": "features.dd-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « constituent tout le transport vers un hôte isolé » : calque, sens flou.",
+      "round": "r1"
+    },
+    {
+      "key": "features.dd-6",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « Par processus, jamais un en-tête ni un corps. » : fragment calqué, on ne comprend pas qu’aucun en-tête/corps n’est enregistré.",
+      "round": "r1"
+    },
+    {
+      "key": "features.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « il conserve les preuves » : calque de « evidence » ; « une fin de journal bornée » calque de « bounded log tail ».",
+      "round": "r1"
+    },
+    {
+      "key": "features.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « le warden surveillait une horloge fixe » : calque de « watched a fixed clock » ; « signes vitaux » calqué de « vitals ».",
+      "round": "r1"
+    },
+    {
+      "key": "features.p-4",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « Les règles d’ajustement » : « ajustement » = tuning, il s’agit des règles de capacité (ce qui tient sur quelle carte).",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « Il n’y a pas de prise en charge ROCm, des GPU Intel ou du CPU » : coordination bancale ; « barre de menus » vs « barre des menus » ailleurs ; « non notarisée » vs « non notariée » ; MB.",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « votre connexion Anthropic » ×2 : calque de « login » ; « identifiants » attendu.",
+      "round": "r1"
+    },
+    {
+      "key": "faq.q-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « le warden ma connexion Anthropic » : calque de login.",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « ni analytique » : « analytique » n’est pas un nom ; « propre connexion Anthropic » calqué.",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-9",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] « faites-la tourner » : calque de « rotate » ; ailleurs « renouvelée ».",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-11",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Unité GB ; en français : Go.",
+      "round": "r1"
+    },
+    {
+      "key": "privacy.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « les seules données personnelles qu’il peut toucher » : calque de « touch » ; « traiter » attendu.",
+      "round": "r1"
+    },
+    {
+      "key": "not-found.nf.h1-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « Cette page n’est pas ici. » : calque de « This page isn’t here ».",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.nav.signin",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] « Connexion console » : juxtaposition anglaise ; un libellé d’action est attendu.",
+      "round": "r1"
+    },
+    {
+      "key": "meta.description",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] fit preview: \"aperçu de compatibilité\" → \"aperçu de capacité\" (fit ≠ compatibility/tuning)",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-9",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.hero.span-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.hero.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] units GB/GiB/MB → Go/Gio/Mo (Microsoft fr style)",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.button-2.aria-label",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.button-2.resume",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.span-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.h3-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.h3-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.span-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.h3-8",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-8",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.span-8",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.h3-9",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.h3-10",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-10",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.span-10",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.install.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-linux.li-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] cache-aware routing → \"routage selon le cache\" everywhere",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-linux.li-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-linux.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-linux.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.li-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.li-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-win.li-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-win.li-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-appliance.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-appliance.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-appliance.li-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-appliance.li-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-appliance.li-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-appliance.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-appliance.div-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-fit.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] units GB/GiB/MB → Go/Gio/Mo (Microsoft fr style)",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-stats.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-chat.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-god.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-god.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.cache.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.figcaption-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.dd-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.dd-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.span-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.img-2.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-6",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] scroll hint: \"latéralement\" → \"horizontalement\", consistent across figures",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.meta.title",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.keys.h1-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.video-1.aria-label",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.figcaption-2",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] scroll hint: \"latéralement\" → \"horizontalement\", consistent across figures",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.leave.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "features.meta.description",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "features.dd-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "features.dd-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "features.dt-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "features.dd-7",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Connect \"écrit\" la configuration → \"génère\"",
+      "round": "r1"
+    },
+    {
+      "key": "features.dd-8",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "features.dt-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "features.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "features.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "features.figcaption-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] scroll hint: \"latéralement\" → \"horizontalement\", consistent across figures",
+      "round": "r1"
+    },
+    {
+      "key": "features.h3-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "features.img-2.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] units GB/GiB/MB → Go/Gio/Mo (Microsoft fr style)",
+      "round": "r1"
+    },
+    {
+      "key": "features.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "features.h3-3",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] units GB/GiB/MB → Go/Gio/Mo (Microsoft fr style)",
+      "round": "r1"
+    },
+    {
+      "key": "features.p-3",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] units GB/GiB/MB → Go/Gio/Mo (Microsoft fr style)",
+      "round": "r1"
+    },
+    {
+      "key": "features.td-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] units GB/GiB/MB → Go/Gio/Mo (Microsoft fr style)",
+      "round": "r1"
+    },
+    {
+      "key": "faq.meta.description",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] \"parle <protocole>\" calque of \"speaks\" → interprète / prend en charge",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Claude/Anthropic login → identifiants (one term site-wide)",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-10",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "faq.q-12",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-12",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "faq.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] agent tuning → \"réglage par agent\"",
+      "round": "r1"
+    },
+    {
+      "key": "privacy.meta.description",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "privacy.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "privacy.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "not-found.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] agent tuning → \"réglage par agent\"",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.h3-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.span-8",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.figcaption-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] version wording unified: \"ou version ultérieure\"",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.tune.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.loop-d.desc-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] fit preview: \"aperçu de compatibilité\" → \"aperçu de capacité\" (fit ≠ compatibility/tuning)",
+      "round": "r1"
+    },
+    {
+      "key": "home.loop-d2.desc-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] fit preview: \"aperçu de compatibilité\" → \"aperçu de capacité\" (fit ≠ compatibility/tuning)",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.li-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.li-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.li-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.p-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] fit preview: \"aperçu de compatibilité\" → \"aperçu de capacité\" (fit ≠ compatibility/tuning)",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.share.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.span-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.b-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.b-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.span-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.hw.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] units GB/GiB/MB → Go/Gio/Mo (Microsoft fr style)",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.figcaption-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] units GB/GiB/MB → Go/Gio/Mo (Microsoft fr style)",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.img-2.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.img-3.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] units GB/GiB/MB → Go/Gio/Mo (Microsoft fr style)",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.figcaption-3",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] units GB/GiB/MB → Go/Gio/Mo (Microsoft fr style)",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.img-4.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.features.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.features.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "home.features.p-6",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Connect \"écrit\" la configuration → \"génère\"",
+      "round": "r1"
+    },
+    {
+      "key": "home.open-source.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.footer.source",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.footer.tag-note",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "common.support.local-only",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "common.crumb.agent-tuning",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] agent tuning → \"réglage par agent\"",
+      "round": "r1"
+    },
+    {
+      "key": "common.client.setup-p",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Connect \"écrit\" la configuration → \"génère\"",
+      "round": "r1"
+    },
+    {
+      "key": "coding-agents.meta.description",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "coding-agents.flow.desc",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Claude/Anthropic login → identifiants (one term site-wide)",
+      "round": "r1"
+    },
+    {
+      "key": "coding-agents.flow.caption",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.req.client_version",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] version wording unified: \"ou version ultérieure\"",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.req.unknown_model_window",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.anthropic-sdk.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.anthropic-sdk.mode.router.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.anthropic-sdk.mode.local.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.opencode.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.aider.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.anthropic-sdk.flow.title",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.anthropic-sdk.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] \"parle <protocole>\" calque of \"speaks\" → interprète / prend en charge",
+      "round": "r1"
+    },
+    {
+      "key": "clients.anthropic-sdk.flow.caption",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Connect \"écrit\" la configuration → \"génère\"",
+      "round": "r1"
+    },
+    {
+      "key": "clients.opencode.flow.title",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.opencode.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] \"parle <protocole>\" calque of \"speaks\" → interprète / prend en charge",
+      "round": "r1"
+    },
+    {
+      "key": "clients.opencode.flow.caption",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Connect \"écrit\" la configuration → \"génère\"",
+      "round": "r1"
+    },
+    {
+      "key": "clients.aider.flow.title",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.aider.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] \"parle <protocole>\" calque of \"speaks\" → interprète / prend en charge",
+      "round": "r1"
+    },
+    {
+      "key": "clients.aider.flow.caption",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Connect \"écrit\" la configuration → \"génère\"",
+      "round": "r1"
+    },
+    {
+      "key": "clients.grok-cli.flow.title",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.grok-cli.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] \"parle <protocole>\" calque of \"speaks\" → interprète / prend en charge",
+      "round": "r1"
+    },
+    {
+      "key": "clients.grok-cli.flow.caption",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Connect \"écrit\" la configuration → \"génère\"",
+      "round": "r1"
+    },
+    {
+      "key": "clients.openai-sdk.flow.title",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.openai-sdk.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] \"parle <protocole>\" calque of \"speaks\" → interprète / prend en charge",
+      "round": "r1"
+    },
+    {
+      "key": "clients.openai-sdk.flow.caption",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Connect \"écrit\" la configuration → \"génère\"",
+      "round": "r1"
+    },
+    {
+      "key": "clients.continue.flow.title",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.continue.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] \"parle <protocole>\" calque of \"speaks\" → interprète / prend en charge",
+      "round": "r1"
+    },
+    {
+      "key": "clients.continue.flow.caption",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Connect \"écrit\" la configuration → \"génère\"",
+      "round": "r1"
+    },
+    {
+      "key": "clients.cline.flow.title",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.cline.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] \"parle <protocole>\" calque of \"speaks\" → interprète / prend en charge",
+      "round": "r1"
+    },
+    {
+      "key": "clients.cline.flow.caption",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Connect \"écrit\" la configuration → \"génère\"",
+      "round": "r1"
+    },
+    {
+      "key": "clients.cursor.flow.title",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.cursor.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] \"parle <protocole>\" calque of \"speaks\" → interprète / prend en charge",
+      "round": "r1"
+    },
+    {
+      "key": "clients.cursor.flow.caption",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Connect \"écrit\" la configuration → \"génère\"",
+      "round": "r1"
+    },
+    {
+      "key": "clients.codex-cli.flow.title",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.codex-cli.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] \"parle <protocole>\" calque of \"speaks\" → interprète / prend en charge",
+      "round": "r1"
+    },
+    {
+      "key": "clients.codex-cli.flow.caption",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Connect \"écrit\" la configuration → \"génère\"",
+      "round": "r1"
+    },
+    {
+      "key": "clients.aider.mode.default.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.grok-cli.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.grok-cli.mode.community.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.openai-sdk.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.openai-sdk.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.openai-sdk.mode.default.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.continue.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.cline.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.cursor.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "clients.codex-cli.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.router.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-6",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] version wording unified: \"ou version ultérieure\"",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.img-1.alt",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Claude/Anthropic login → identifiants (one term site-wide)",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.span-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] Claude/Anthropic login → identifiants (one term site-wide)",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.span-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.figcaption-3",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] scroll hint: \"latéralement\" → \"horizontalement\", consistent across figures",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.meta.description",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.jsonld.step-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.li-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.li-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.th-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.th-8",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.li-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.li-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.meta.title",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.meta.description",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.dd-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] units GB/GiB/MB → Go/Gio/Mo (Microsoft fr style)",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.dd-2",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] units GB/GiB/MB → Go/Gio/Mo (Microsoft fr style)",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.caption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.th-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.figcaption-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] scroll hint: \"latéralement\" → \"horizontalement\", consistent across figures",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.td-10",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.td-11",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.p-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.img-2.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.span-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.span-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.figcaption-2",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] scroll hint: \"latéralement\" → \"horizontalement\", consistent across figures",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.replica.h1-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.dd-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] units GB/GiB/MB → Go/Gio/Mo (Microsoft fr style)",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[bilingual editor] senior-editor rewrite: literal/calqued phrasing re-expressed in natural French",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.nav.plat-upgrade",
+      "category": "omission",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "[meaning review] \"existing\" not rendered (\"Mettre à jour une installation\"): the nav label is limited to ~27 characters and the meaning is clear from context",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.install",
+      "category": "omission",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "[meaning review] \"Download & Install\" rendered \"Installer\": the label has an 18-character limit; the full \"Télécharger et installer\" is used where space allows",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.docs.aria-label",
+      "category": "addition",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "[meaning review] \"Documentation du projet\" adds \"du projet\" to a screen-reader label; harmless and disambiguates it from the visible \"Documentation\" link",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.img-1.alt",
+      "category": "untranslated",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "[meaning review r3] UI text quoted mid-sentence as bare English; now set off as a quoted UI string «Strict: a waiting P9 request always goes before a P8 one»",
+      "back_covered_by": "r2 back-translation; r3 change is a minor wording fix"
+    },
+    {
+      "key": "home.why-keys.span-5",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "[meaning review r3] «en heures creuses» (off-peak hours) for 'wait for idle time'; now «attendent que la machine soit libre».",
+      "back_covered_by": "r2 back-translation; r3 change is a minor wording fix"
+    },
+    {
+      "key": "jsonld.feature-6",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "[meaning review r3] «Réglage par agent» reads as per-agent tuning; the concept is tuning done by an agent. Now «Réglage par un agent».",
+      "back_covered_by": "r2 back-translation; r3 change is a minor wording fix"
+    },
+    {
+      "key": "common.crumb.agent-tuning",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "[meaning review r3] «Réglage par agent» reads as per-agent tuning; the concept is tuning done by an agent. Now «Réglage par un agent».",
+      "back_covered_by": "r2 back-translation; r3 change is a minor wording fix"
+    },
+    {
+      "key": "faq.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "[meaning review r3] «Réglage par agent» reads as per-agent tuning; the concept is tuning done by an agent. Now «Réglage par un agent».",
+      "back_covered_by": "r2 back-translation; r3 change is a minor wording fix"
+    },
+    {
+      "key": "not-found.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "[meaning review r3] «Réglage par agent» reads as per-agent tuning; the concept is tuning done by an agent. Now «Réglage par un agent».",
+      "back_covered_by": "r2 back-translation; r3 change is a minor wording fix"
+    },
+    {
+      "key": "home.why-agent.p-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "[meaning review r3] «Réglage par agent» reads as per-agent tuning; the concept is tuning done by an agent. Now «Réglage par un agent».",
+      "back_covered_by": "r2 back-translation; r3 change is a minor wording fix"
+    }
+  ]
+}

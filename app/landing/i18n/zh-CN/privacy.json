@@ -32,7 +32,7 @@
     "source_hash": "dd9acabe8622"
   },
   "privacy.p-2": {
-    "text": "本网站的运营者使用 Google Analytics 4 统计访问量，并了解人们阅读了哪些页面。{{privacy_ads}}会记录三种操作：复制安装命令、点击前往 GitHub 的链接，以及点击前往 PodWarden 的链接。",
+    "text": "本网站的运营者使用 Google Analytics 4 统计访问量，并了解人们阅读了哪些页面。{{privacy_ads}}本网站会记录三种操作：复制安装命令、点击前往 GitHub 的链接，以及点击前往 PodWarden 的链接。",
     "source_hash": "8de08e36eb6d"
   },
   "privacy.h2-2": {

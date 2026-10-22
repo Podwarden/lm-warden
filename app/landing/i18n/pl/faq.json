@@ -32,7 +32,7 @@
     "source_hash": "07d287af578c"
   },
   "faq.a-3": {
-    "text": "Tak. Bramka pod <code>/v1/*</code> jest zgodna z OpenAI, więc SDK <code>openai</code>, LangChain, OpenWebUI i Twoi własni agenci działają bez zmian, gdy tylko zmienisz <code>base_url</code> i klucz. <code>GET /v1/models</code> podaje też <code>max_model_len</code> każdego modelu, więc klient nie musi zgadywać rozmiaru okna kontekstu. Codex&nbsp;CLI, który obsługuje tylko OpenAI Responses API, też działa: <code>POST /v1/responses</code> jest tłumaczone na Chat Completions dla załadowanego przez ciebie modelu (bezstanowo i tylko lokalnie: reguły routera nie mają zastosowania).",
+    "text": "Tak. Bramka pod <code>/v1/*</code> jest zgodna z OpenAI, więc SDK <code>openai</code>, LangChain, OpenWebUI i twoi własni agenci działają bez zmian, gdy tylko zmienisz <code>base_url</code> i klucz. <code>GET /v1/models</code> podaje też <code>max_model_len</code> każdego modelu, więc klient nie musi zgadywać rozmiaru okna kontekstu. Codex&nbsp;CLI, który obsługuje tylko OpenAI Responses API, też działa: <code>POST /v1/responses</code> jest tłumaczone na Chat Completions dla załadowanego przez ciebie modelu (bezstanowo i tylko lokalnie: reguły routera nie mają zastosowania).",
     "source_hash": "6aa388b69fbe"
   },
   "faq.q-4": {
@@ -96,7 +96,7 @@
     "source_hash": "889f53a02753"
   },
   "faq.a-11": {
-    "text": "W systemie Linux: hosta z Docker, Docker Compose&nbsp;v2.24 lub nowszym, karty NVIDIA, NVIDIA Container Toolkit i około 40&#8239;GB wolnego miejsca tam, gdzie Docker trzyma obrazy. Instalator sprawdza hosta, pozwala wybrać karty GPU, generuje sekrety, pobiera obrazy wydania i proponuje uruchomienie stosu. Następnie kreator pierwszego uruchomienia w przeglądarce pyta o karty GPU do użycia, token HuggingFace i twoje konto administratora. Na Macu z procesorem Apple wystarczy zamiast tego pobrać aplikację beta; zobacz <a href=\"/#p-mac\">sekcję o Macu</a>.",
+    "text": "W systemie Linux potrzebny jest host z Dockerem, Docker Compose&nbsp;v2.24 lub nowszym, kartą NVIDIA, NVIDIA Container Toolkit i około 40&#8239;GB wolnego miejsca tam, gdzie Docker trzyma obrazy. Instalator sprawdza hosta, pozwala wybrać karty GPU, generuje sekrety, pobiera obrazy wydania i proponuje uruchomienie stosu. Następnie kreator pierwszego uruchomienia w przeglądarce pyta o karty GPU do użycia, token HuggingFace i twoje konto administratora. Na Macu z procesorem Apple wystarczy zamiast tego pobrać aplikację beta; zobacz <a href=\"/#p-mac\">sekcję o Macu</a>.",
     "source_hash": "f7c42330b71d"
   },
   "faq.q-12": {

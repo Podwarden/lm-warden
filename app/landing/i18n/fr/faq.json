@@ -108,7 +108,7 @@
     "source_hash": "97000d243331"
   },
   "faq.p-1": {
-    "text": "Voir aussi : <a href=\"/coding-agents\">agents de codage</a> · <a href=\"/agent-tuning\">réglage par agent</a> · <a href=\"/features\">fonctionnalités</a>",
+    "text": "Voir aussi : <a href=\"/coding-agents\">agents de codage</a> · <a href=\"/agent-tuning\">réglage par un agent</a> · <a href=\"/features\">fonctionnalités</a>",
     "source_hash": "8e86209820fa"
   }
 }

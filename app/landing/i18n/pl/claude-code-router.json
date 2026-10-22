@@ -20,11 +20,11 @@
     "source_hash": "f87b272c3f76"
   },
   "claude-code-router.figcaption-1": {
-    "text": "<b>Rys.&nbsp;2</b>Dokąd trafia żądanie. Reguły są sprawdzane po kolei i decyduje pierwsze dopasowanie. Odpowiedź lokalna przechodzi przez ten sam harmonogram i router replik co każde inne żądanie; replika to jedna pełna kopia modelu, tutaj po jednej na kartę GPU. Błąd lokalny przed pierwszym bajtem trafia do Anthropic albo wraca jako 529, który Claude Code ponawia, a po 3 błędach z rzędu bezpiecznik modelu się otwiera: przez 60&#8239;s nic nie jest do niego wysyłane.",
+    "text": "<b>Rys.&nbsp;2</b>Dokąd trafia żądanie. Reguły są sprawdzane po kolei i decyduje pierwsze dopasowanie. Odpowiedź lokalna przechodzi przez tego samego planistę żądań i ten sam router replik co każde inne żądanie; replika to jedna pełna kopia modelu, tutaj po jednej na kartę GPU. Błąd lokalny przed pierwszym bajtem trafia do Anthropic albo wraca jako 529, który Claude Code ponawia, a po 3 błędach z rzędu bezpiecznik modelu się otwiera: przez 60&#8239;s nic nie jest do niego wysyłane.",
     "source_hash": "462151461bb5"
   },
   "claude-code-router.p-5": {
-    "text": "Opis słowny: Claude Code wysyła żądanie do LM Warden z własnymi danymi logowania Anthropic w Authorization i kluczem LM Warden w X-LMWarden-Key. LM Warden sprawdza swoje reguły po kolei. Żądanie do modelu wskazanego w regule jest tłumaczone, ustawiane w kolejce przez harmonogram i wysyłane przez router replik do jednej repliki vLLM. Każde inne żądanie, na przykład do Opus, jest przekazywane do api.anthropic.com z przekazanymi danymi logowania i usuniętym kluczem LM Warden. Jeśli część lokalna zawiedzie przed pierwszym bajtem, żądanie trafia do Anthropic albo reguła je odrzuca z kodem 529, który Claude Code ponawia.",
+    "text": "Opis słowny: Claude Code wysyła żądanie do LM Warden z własnymi danymi logowania Anthropic w Authorization i kluczem LM Warden w X-LMWarden-Key. LM Warden sprawdza swoje reguły po kolei. Żądanie do modelu wskazanego w regule jest tłumaczone, ustawiane w kolejce przez planistę żądań i wysyłane przez router replik do jednej repliki vLLM. Każde inne żądanie, na przykład do Opus, jest przekazywane do api.anthropic.com z przekazanymi danymi logowania i usuniętym kluczem LM Warden. Jeśli część lokalna zawiedzie przed pierwszym bajtem, żądanie trafia do Anthropic albo reguła je odrzuca z kodem 529, który Claude Code ponawia.",
     "source_hash": "038dbec78e21"
   },
   "claude-code-router.p-6": {

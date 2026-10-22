@@ -44,7 +44,7 @@
     "source_hash": "afddbc532ecf"
   },
   "features.dd-5": {
-    "text": "Tres archivos tar de imágenes y, opcionalmente, uno con la caché de modelos es todo lo que hay que llevar a un host aislado de la red. <code>HF_HUB_OFFLINE=1</code> impide incluso la descarga de pesos.",
+    "text": "Tres archivos tar de imágenes y, opcionalmente, uno con la caché de modelos son todo lo que hay que llevar a un host aislado de la red. <code>HF_HUB_OFFLINE=1</code> impide incluso la descarga de pesos.",
     "source_hash": "b61634fa6450"
   },
   "features.dt-5": {
@@ -84,7 +84,7 @@
     "source_hash": "a3c2a4abe3bf"
   },
   "features.p-1": {
-    "text": "El núcleo del motor vLLM fallaba mientras el proceso envolvente <code>vllm serve</code> seguía en marcha, así que el proceso parecía vivo y se le seguían enviando solicitudes. Ahora un watchdog consulta el propio punto de conexión <code>/health</code> del motor en lugar de la tabla de procesos. Cuando el motor deja de responder, conserva los datos de diagnóstico, incluidas las últimas líneas del registro, y vuelve a cargar el modelo.",
+    "text": "El núcleo del motor vLLM fallaba mientras el proceso <code>vllm serve</code> que lo envuelve seguía en marcha, así que el proceso parecía vivo y se le seguían enviando solicitudes. Ahora un watchdog consulta el propio punto de conexión <code>/health</code> del motor en lugar de la tabla de procesos. Cuando el motor deja de responder, conserva los datos de diagnóstico, incluidas las últimas líneas del registro, y vuelve a cargar el modelo.",
     "source_hash": "8d323d1c089b"
   },
   "features.img-1.alt": {

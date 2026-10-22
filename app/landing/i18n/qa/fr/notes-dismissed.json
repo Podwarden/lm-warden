@@ -1,0 +1,9 @@
+{
+ "r3_back_notes_reviewed_no_issue": {
+  "claude-code-router.figcaption-1/2/3": "No space after <b>Fig. N</b> is the shared template (the label is styled as a block); same in English.",
+  "home.p-appliance.div-1": "Placeholder note addressed to the reader by design (same in English).",
+  "home.agents.p-4": "'it checks' is equally ambiguous in English; the console/Connect referent is on the page.",
+  "gpu-monitoring.p-4": "«fondent» is a natural French figurative verb."
+ },
+ "earlier_rounds_dismissed": []
+}

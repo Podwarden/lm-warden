@@ -40,7 +40,7 @@
     "source_hash": "82792a23c7a0"
   },
   "clients.claude-code.req.unknown_model_window": {
-    "text": "Claude Code może ostrzec, że nazwy modelu nie ma w jego katalogu. To tylko informacja: zakłada okno 200 tys. tokenów i automatycznie kompresuje kontekst odpowiednio do tego okna. Ustaw <code>CLAUDE_CODE_MAX_CONTEXT_TOKENS</code> na rzeczywiste okno kontekstu modelu.",
+    "text": "Claude Code może ostrzec, że nazwy modelu nie ma w jego katalogu. To tylko informacja: zakłada okno 200 tys. tokenów i odpowiednio do niego automatycznie kompresuje kontekst. Ustaw <code>CLAUDE_CODE_MAX_CONTEXT_TOKENS</code> na rzeczywiste okno kontekstu modelu.",
     "source_hash": "c67abcb52ad3"
   },
   "clients.claude-code.mode.router.title": {

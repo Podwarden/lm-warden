@@ -1,0 +1,4852 @@
+{
+  "locale": "zh-CN",
+  "date": "2026-10-21",
+  "back_model": "claude-sonnet-5-5",
+  "fix_model": "claude-opus-5-5",
+  "published_segments": 666,
+  "covered_segments": 666,
+  "english_words": 14400,
+  "issues_found": {
+    "minor": 162,
+    "major": 23,
+    "critical": 0
+  },
+  "issues_remaining": {
+    "minor": 0,
+    "major": 0,
+    "critical": 0
+  },
+  "mqm_score": 0.0,
+  "max_score": 10.0,
+  "pass": true,
+  "segments": {
+    "meta.title": {
+      "part": "home",
+      "source_hash": "8b40be948ef4",
+      "target_hash": "0ae59b6a406e"
+    },
+    "meta.description": {
+      "part": "home",
+      "source_hash": "6cb271edae46",
+      "target_hash": "e98bdc82c38b"
+    },
+    "meta.og-image-alt": {
+      "part": "home",
+      "source_hash": "7f75ba3bcd9d",
+      "target_hash": "fc9e9094b50f"
+    },
+    "jsonld.feature-1": {
+      "part": "home",
+      "source_hash": "615857f542c9",
+      "target_hash": "7ec81c7d5757"
+    },
+    "jsonld.feature-2": {
+      "part": "home",
+      "source_hash": "7b06e74713de",
+      "target_hash": "8b91658511a8"
+    },
+    "jsonld.feature-3": {
+      "part": "home",
+      "source_hash": "1f350726cef9",
+      "target_hash": "15cd3f22df28"
+    },
+    "jsonld.feature-4": {
+      "part": "home",
+      "source_hash": "42d6cdab3fb6",
+      "target_hash": "1eab90106cc7"
+    },
+    "jsonld.feature-5": {
+      "part": "home",
+      "source_hash": "9791836d7920",
+      "target_hash": "bd80807b9bf6"
+    },
+    "jsonld.feature-6": {
+      "part": "home",
+      "source_hash": "b2f04e38f9aa",
+      "target_hash": "390ac8621c22"
+    },
+    "jsonld.feature-7": {
+      "part": "home",
+      "source_hash": "0740507f9225",
+      "target_hash": "2d6cd4c7f848"
+    },
+    "jsonld.feature-8": {
+      "part": "home",
+      "source_hash": "301c375d8a2f",
+      "target_hash": "6e1c9525902d"
+    },
+    "jsonld.feature-9": {
+      "part": "home",
+      "source_hash": "89c7e3de3f80",
+      "target_hash": "75fdbf780eda"
+    },
+    "jsonld.feature-10": {
+      "part": "home",
+      "source_hash": "bf6f8b147d8a",
+      "target_hash": "70cf9e4ff77f"
+    },
+    "chrome.copy.done": {
+      "part": "home",
+      "source_hash": "8d525e5f158b",
+      "target_hash": "8f6f8d979c98"
+    },
+    "chrome.copy.fail": {
+      "part": "home",
+      "source_hash": "e78ab3a91bf2",
+      "target_hash": "26d5caa969be"
+    },
+    "chrome.skip": {
+      "part": "home",
+      "source_hash": "ac576a66d456",
+      "target_hash": "bf95a4da167f"
+    },
+    "chrome.brand.aria-label": {
+      "part": "home",
+      "source_hash": "a007563c384d",
+      "target_hash": "73f2d61ba353"
+    },
+    "chrome.nav.aria-label": {
+      "part": "home",
+      "source_hash": "efe10c80ec8a",
+      "target_hash": "9bae68040509"
+    },
+    "chrome.nav.menu": {
+      "part": "home",
+      "source_hash": "99af6606ff9d",
+      "target_hash": "4ce4cafdd056"
+    },
+    "chrome.nav.use-cases": {
+      "part": "home",
+      "source_hash": "ff27a991e855",
+      "target_hash": "c222fdf19e47"
+    },
+    "chrome.nav.features": {
+      "part": "home",
+      "source_hash": "5697d03daef4",
+      "target_hash": "25f5ce57a190"
+    },
+    "chrome.nav.coding-agents": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "c42167109ad7"
+    },
+    "chrome.nav.faq": {
+      "part": "home",
+      "source_hash": "dbc468a14b60",
+      "target_hash": "45a6d115fdfb"
+    },
+    "chrome.nav.github.title": {
+      "part": "home",
+      "source_hash": "d2833070219a",
+      "target_hash": "f14040a27ab2"
+    },
+    "chrome.nav.install": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "ac69f68b7010"
+    },
+    "chrome.nav.plat-linux": {
+      "part": "home",
+      "source_hash": "23d8d6d2be9c",
+      "target_hash": "5e8414090ce2"
+    },
+    "chrome.nav.plat-mac": {
+      "part": "home",
+      "source_hash": "d2364b229535",
+      "target_hash": "82e97bfdc238"
+    },
+    "chrome.nav.plat-win": {
+      "part": "home",
+      "source_hash": "e5a1bb1c3085",
+      "target_hash": "7a2a470252cb"
+    },
+    "chrome.nav.plat-appliance": {
+      "part": "home",
+      "source_hash": "6a7fc115677a",
+      "target_hash": "0831e1cad85f"
+    },
+    "chrome.nav.plat-upgrade": {
+      "part": "home",
+      "source_hash": "c1fe5f01dc6e",
+      "target_hash": "1118c014ce15"
+    },
+    "chrome.nav.signin": {
+      "part": "home",
+      "source_hash": "cb9ad9f4d662",
+      "target_hash": "d19038809234"
+    },
+    "chrome.lang.heading": {
+      "part": "home",
+      "source_hash": "a4fe65264ef7",
+      "target_hash": "9f6fee1aba17"
+    },
+    "chrome.lang.label": {
+      "part": "home",
+      "source_hash": "8c16819a2bd4",
+      "target_hash": "a540dbede76d"
+    },
+    "chrome.docs.aria-label": {
+      "part": "home",
+      "source_hash": "c205924de0fe",
+      "target_hash": "2687ccdbb1d2"
+    },
+    "chrome.docs.full": {
+      "part": "home",
+      "source_hash": "c205924de0fe",
+      "target_hash": "2687ccdbb1d2"
+    },
+    "chrome.docs.short": {
+      "part": "home",
+      "source_hash": "7af023c43013",
+      "target_hash": "2687ccdbb1d2"
+    },
+    "chrome.install": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "ac69f68b7010"
+    },
+    "home.hero.h1-1": {
+      "part": "home",
+      "source_hash": "b24318c21e4f",
+      "target_hash": "7c0c293975d4"
+    },
+    "home.hero.p-1": {
+      "part": "home",
+      "source_hash": "e192caf6a5b3",
+      "target_hash": "be6bee809bd9"
+    },
+    "home.hero.a-1": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "ac69f68b7010"
+    },
+    "home.hero.a-2": {
+      "part": "home",
+      "source_hash": "51b46bd0add6",
+      "target_hash": "a04fc43aec2e"
+    },
+    "home.hero.span-1": {
+      "part": "home",
+      "source_hash": "2a43a93eceec",
+      "target_hash": "34f115f0d614"
+    },
+    "home.hero.span-2": {
+      "part": "home",
+      "source_hash": "035ccb7cad8a",
+      "target_hash": "0bc068cb6617"
+    },
+    "home.hero.span-3": {
+      "part": "home",
+      "source_hash": "1f8168eb854e",
+      "target_hash": "132a750c182a"
+    },
+    "home.hero.img-1.alt": {
+      "part": "home",
+      "source_hash": "46cb2df1ab06",
+      "target_hash": "68d689faa113"
+    },
+    "home.hero.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "46b396c85919",
+      "target_hash": "fea405f9b01d"
+    },
+    "home.hero.b-1": {
+      "part": "home",
+      "source_hash": "d0656dfa424f",
+      "target_hash": "b35e169e209d"
+    },
+    "home.hero.span-4": {
+      "part": "home",
+      "source_hash": "6b06ee360144",
+      "target_hash": "1f5d50f9ccdb"
+    },
+    "home.hero.span-5": {
+      "part": "home",
+      "source_hash": "1b50b6d8401a",
+      "target_hash": "3c6100eeab3e"
+    },
+    "home.hero.b-2": {
+      "part": "home",
+      "source_hash": "f2287a1beeab",
+      "target_hash": "fdfcac8b935a"
+    },
+    "home.hero.span-6": {
+      "part": "home",
+      "source_hash": "6a893fd85af2",
+      "target_hash": "14c5054e27b9"
+    },
+    "home.hero.span-7": {
+      "part": "home",
+      "source_hash": "8d266d3e3abd",
+      "target_hash": "c8e5998f6a39"
+    },
+    "home.hero.b-3": {
+      "part": "home",
+      "source_hash": "3aeff05d5bf6",
+      "target_hash": "7fba8c261ceb"
+    },
+    "home.hero.span-8": {
+      "part": "home",
+      "source_hash": "05261121948c",
+      "target_hash": "68ec25a10d0d"
+    },
+    "home.hero.span-9": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "c42167109ad7"
+    },
+    "home.hero.b-4": {
+      "part": "home",
+      "source_hash": "544b91f8227b",
+      "target_hash": "5dde9d971f45"
+    },
+    "home.hero.span-10": {
+      "part": "home",
+      "source_hash": "48d1003061d4",
+      "target_hash": "83550872e202"
+    },
+    "home.uc.h2-1": {
+      "part": "home",
+      "source_hash": "a2bc7e06beef",
+      "target_hash": "b3db6d9e5051"
+    },
+    "home.use-cases.button-1.aria-label": {
+      "part": "home",
+      "source_hash": "40a9d13608d2",
+      "target_hash": "3beab77a979c"
+    },
+    "home.use-cases.button-2.aria-label": {
+      "part": "home",
+      "source_hash": "f1c27427e687",
+      "target_hash": "74b47498568f"
+    },
+    "home.use-cases.button-2.resume": {
+      "part": "home",
+      "source_hash": "bb52c71e6d3b",
+      "target_hash": "db29c1c57c7a"
+    },
+    "home.use-cases.button-3.aria-label": {
+      "part": "home",
+      "source_hash": "9220dc6514fb",
+      "target_hash": "570d40a2d569"
+    },
+    "home.use-cases.li-1.aria-label": {
+      "part": "home",
+      "source_hash": "b54457342c7d",
+      "target_hash": "d96c088da1bb"
+    },
+    "home.use-cases.h3-1": {
+      "part": "home",
+      "source_hash": "631429e459b2",
+      "target_hash": "1ce40ab959bd"
+    },
+    "home.use-cases.p-1": {
+      "part": "home",
+      "source_hash": "7dd1bdcba1fd",
+      "target_hash": "ddc6b6583641"
+    },
+    "home.use-cases.span-1": {
+      "part": "home",
+      "source_hash": "3bf0e7fd520d",
+      "target_hash": "ca84ae1231fb"
+    },
+    "home.use-cases.li-2.aria-label": {
+      "part": "home",
+      "source_hash": "264c35a47f15",
+      "target_hash": "b25db3380285"
+    },
+    "home.use-cases.h3-2": {
+      "part": "home",
+      "source_hash": "b01cff25d51f",
+      "target_hash": "1a5f58641c2e"
+    },
+    "home.use-cases.p-2": {
+      "part": "home",
+      "source_hash": "022970d73828",
+      "target_hash": "2ff50d8f9cbb"
+    },
+    "home.use-cases.span-2": {
+      "part": "home",
+      "source_hash": "19dc2417e144",
+      "target_hash": "5a85e3a6fac8"
+    },
+    "home.use-cases.li-3.aria-label": {
+      "part": "home",
+      "source_hash": "24607ac1e731",
+      "target_hash": "8d47f2de7d1c"
+    },
+    "home.use-cases.h3-3": {
+      "part": "home",
+      "source_hash": "02e82cfefb89",
+      "target_hash": "c3d341dc9a47"
+    },
+    "home.use-cases.p-3": {
+      "part": "home",
+      "source_hash": "ffc4dde74878",
+      "target_hash": "2a423603fd90"
+    },
+    "home.use-cases.span-3": {
+      "part": "home",
+      "source_hash": "4df7d5c583ae",
+      "target_hash": "fabde6c02bce"
+    },
+    "home.use-cases.li-4.aria-label": {
+      "part": "home",
+      "source_hash": "6f3c824e9ec3",
+      "target_hash": "43e85168bf91"
+    },
+    "home.use-cases.h3-4": {
+      "part": "home",
+      "source_hash": "fd528e59f30f",
+      "target_hash": "7533ba0016ee"
+    },
+    "home.use-cases.p-4": {
+      "part": "home",
+      "source_hash": "3fd6f50887b9",
+      "target_hash": "c993abeb1441"
+    },
+    "home.use-cases.span-4": {
+      "part": "home",
+      "source_hash": "91753d838ca4",
+      "target_hash": "997916251470"
+    },
+    "home.use-cases.li-5.aria-label": {
+      "part": "home",
+      "source_hash": "4ff9c7d25432",
+      "target_hash": "97df91032c45"
+    },
+    "home.use-cases.h3-5": {
+      "part": "home",
+      "source_hash": "c3ae8600a083",
+      "target_hash": "d444776980b0"
+    },
+    "home.use-cases.p-5": {
+      "part": "home",
+      "source_hash": "bbfa0ef15601",
+      "target_hash": "cafb86b18f28"
+    },
+    "home.use-cases.span-5": {
+      "part": "home",
+      "source_hash": "ad84f405f980",
+      "target_hash": "dd4df2a9cb4e"
+    },
+    "home.use-cases.li-6.aria-label": {
+      "part": "home",
+      "source_hash": "9f1b26eea525",
+      "target_hash": "145c0f0b0160"
+    },
+    "home.use-cases.h3-6": {
+      "part": "home",
+      "source_hash": "bcd86e5acf2b",
+      "target_hash": "ce6d20ca2bfc"
+    },
+    "home.use-cases.p-6": {
+      "part": "home",
+      "source_hash": "8ab616f9c47d",
+      "target_hash": "e7db7580f8dd"
+    },
+    "home.use-cases.span-6": {
+      "part": "home",
+      "source_hash": "6fd76cfcf4f3",
+      "target_hash": "e239bf99f79e"
+    },
+    "home.use-cases.li-7.aria-label": {
+      "part": "home",
+      "source_hash": "2991e046c7d6",
+      "target_hash": "e91437a35cd5"
+    },
+    "home.use-cases.h3-7": {
+      "part": "home",
+      "source_hash": "175c055be16a",
+      "target_hash": "1cfa1f30335b"
+    },
+    "home.use-cases.p-7": {
+      "part": "home",
+      "source_hash": "12446d78110e",
+      "target_hash": "eff4448b03a2"
+    },
+    "home.use-cases.span-7": {
+      "part": "home",
+      "source_hash": "eca4d500a3da",
+      "target_hash": "60bf695366fb"
+    },
+    "home.use-cases.li-8.aria-label": {
+      "part": "home",
+      "source_hash": "1170fb3f9b1b",
+      "target_hash": "41d8cbe08884"
+    },
+    "home.use-cases.h3-8": {
+      "part": "home",
+      "source_hash": "a04e398227ac",
+      "target_hash": "5bd2e990d90f"
+    },
+    "home.use-cases.p-8": {
+      "part": "home",
+      "source_hash": "3acf884af623",
+      "target_hash": "bca6728d757c"
+    },
+    "home.use-cases.span-8": {
+      "part": "home",
+      "source_hash": "bb574d2be60e",
+      "target_hash": "75986b576091"
+    },
+    "home.use-cases.li-9.aria-label": {
+      "part": "home",
+      "source_hash": "7323df202723",
+      "target_hash": "7b740acc7ef8"
+    },
+    "home.use-cases.h3-9": {
+      "part": "home",
+      "source_hash": "3f3225bbc711",
+      "target_hash": "e1b6fb856b6c"
+    },
+    "home.use-cases.p-9": {
+      "part": "home",
+      "source_hash": "6ea6fbd502b6",
+      "target_hash": "70ca34ff20e6"
+    },
+    "home.use-cases.span-9": {
+      "part": "home",
+      "source_hash": "c90b8269f1d8",
+      "target_hash": "4e1e94ed2063"
+    },
+    "home.use-cases.li-10.aria-label": {
+      "part": "home",
+      "source_hash": "aef48b281a1a",
+      "target_hash": "421aef3b16af"
+    },
+    "home.use-cases.h3-10": {
+      "part": "home",
+      "source_hash": "525b6691292f",
+      "target_hash": "869c1aa68608"
+    },
+    "home.use-cases.p-10": {
+      "part": "home",
+      "source_hash": "9ab2a4e163b1",
+      "target_hash": "5c65ad097a3f"
+    },
+    "home.use-cases.span-10": {
+      "part": "home",
+      "source_hash": "4ad529d919d4",
+      "target_hash": "cbe3d3388221"
+    },
+    "home.use-cases.dot": {
+      "part": "home",
+      "source_hash": "04227694e710",
+      "target_hash": "4da1a4b8739f"
+    },
+    "home.use-cases.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "1bb48b8b99c4",
+      "target_hash": "bc436f8b7283"
+    },
+    "home.install.h2-1": {
+      "part": "home",
+      "source_hash": "249678c8eba2",
+      "target_hash": "5b964cae4355"
+    },
+    "home.install.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "c78ffe195710",
+      "target_hash": "910887705c7a"
+    },
+    "home.install.b-1": {
+      "part": "home",
+      "source_hash": "23d8d6d2be9c",
+      "target_hash": "5e8414090ce2"
+    },
+    "home.install.small-1": {
+      "part": "home",
+      "source_hash": "9849f7c407b4",
+      "target_hash": "0fe329a24fe4"
+    },
+    "home.install.span-1": {
+      "part": "home",
+      "source_hash": "86f0f70c80d2",
+      "target_hash": "ef0bd88b011b"
+    },
+    "home.install.b-2": {
+      "part": "home",
+      "source_hash": "0d7d5470afac",
+      "target_hash": "af71aeef1906"
+    },
+    "home.install.small-2": {
+      "part": "home",
+      "source_hash": "38cba54053bd",
+      "target_hash": "5847698ba4fb"
+    },
+    "home.install.span-2": {
+      "part": "home",
+      "source_hash": "f44e64e75f39",
+      "target_hash": "065d4b037ce5"
+    },
+    "home.install.small-3": {
+      "part": "home",
+      "source_hash": "1e554752120e",
+      "target_hash": "07e57ad9cb4b"
+    },
+    "home.install.span-3": {
+      "part": "home",
+      "source_hash": "c6c1c9a9c854",
+      "target_hash": "de8b8f7b30e3"
+    },
+    "home.install.b-3": {
+      "part": "home",
+      "source_hash": "98432690c966",
+      "target_hash": "aec40c1523f8"
+    },
+    "home.install.small-4": {
+      "part": "home",
+      "source_hash": "dc3e1016c4ce",
+      "target_hash": "cb7a545ef523"
+    },
+    "home.install.span-4": {
+      "part": "home",
+      "source_hash": "62bfdf0b726c",
+      "target_hash": "18722bdc7cc3"
+    },
+    "home.install.p-2": {
+      "part": "home",
+      "source_hash": "dd298d4e4a3b",
+      "target_hash": "795adb753858"
+    },
+    "home.p-linux.h3-1": {
+      "part": "home",
+      "source_hash": "e261f30eb5f7",
+      "target_hash": "c153d8188228"
+    },
+    "home.p-linux.span-1": {
+      "part": "home",
+      "source_hash": "e21f935f11d7",
+      "target_hash": "63d90d977348"
+    },
+    "home.p-linux.li-1": {
+      "part": "home",
+      "source_hash": "fc20ff032a73",
+      "target_hash": "3d3a55c8c4a8"
+    },
+    "home.p-linux.li-2": {
+      "part": "home",
+      "source_hash": "33bfcbda3ad4",
+      "target_hash": "49a7bb7d8cf6"
+    },
+    "home.p-linux.li-3": {
+      "part": "home",
+      "source_hash": "086f8aa8145e",
+      "target_hash": "31532691ddcf"
+    },
+    "home.p-linux.li-4": {
+      "part": "home",
+      "source_hash": "f17d08f00954",
+      "target_hash": "3f6a9972201c"
+    },
+    "home.p-linux.a-1": {
+      "part": "home",
+      "source_hash": "e15a133068af",
+      "target_hash": "533e0d86c743"
+    },
+    "home.p-linux.a-2": {
+      "part": "home",
+      "source_hash": "16289eae755d",
+      "target_hash": "9ca12619694f"
+    },
+    "home.p-linux.a-3": {
+      "part": "home",
+      "source_hash": "5be49bd81af3",
+      "target_hash": "7d3511b1e57d"
+    },
+    "home.p-linux.a-4": {
+      "part": "home",
+      "source_hash": "d8f1ee5bd44a",
+      "target_hash": "94996ca62233"
+    },
+    "home.p-linux.img-1.alt": {
+      "part": "home",
+      "source_hash": "41eaa58c37a4",
+      "target_hash": "1a862fd1c04e"
+    },
+    "home.p-linux.figcaption-1": {
+      "part": "home",
+      "source_hash": "c6e56f837dad",
+      "target_hash": "83b5a14ffd8d"
+    },
+    "home.p-mac.h3-1": {
+      "part": "home",
+      "source_hash": "93a681a12162",
+      "target_hash": "89cfdbee2cc7"
+    },
+    "home.p-mac.a-1": {
+      "part": "home",
+      "source_hash": "95612856681e",
+      "target_hash": "6603c54a225f"
+    },
+    "home.p-mac.li-1": {
+      "part": "home",
+      "source_hash": "eb664f8f7d3a",
+      "target_hash": "1b398422aaed"
+    },
+    "home.p-mac.li-2": {
+      "part": "home",
+      "source_hash": "5ff95c0fa25d",
+      "target_hash": "2a1ce5aa943d"
+    },
+    "home.p-mac.li-3": {
+      "part": "home",
+      "source_hash": "cf254395b87e",
+      "target_hash": "dda8e60a74bc"
+    },
+    "home.p-mac.li-4": {
+      "part": "home",
+      "source_hash": "013272b7df36",
+      "target_hash": "18d491740af6"
+    },
+    "home.p-mac.li-5": {
+      "part": "home",
+      "source_hash": "8121128f773c",
+      "target_hash": "7aa30bf327a3"
+    },
+    "home.p-mac.img-1.alt": {
+      "part": "home",
+      "source_hash": "45b8070949bb",
+      "target_hash": "6241455c54a1"
+    },
+    "home.p-mac.figcaption-1": {
+      "part": "home",
+      "source_hash": "785cc05a3c6d",
+      "target_hash": "bc5767f53598"
+    },
+    "home.p-win.h3-1": {
+      "part": "home",
+      "source_hash": "3e2f8c30fbd3",
+      "target_hash": "9d81a22a4a45"
+    },
+    "home.p-win.p-1": {
+      "part": "home",
+      "source_hash": "7389debc8fd3",
+      "target_hash": "85e01b890061"
+    },
+    "home.p-win.li-1": {
+      "part": "home",
+      "source_hash": "1296afbbf883",
+      "target_hash": "3aa3f58e4a34"
+    },
+    "home.p-win.li-2": {
+      "part": "home",
+      "source_hash": "9a92060cedbe",
+      "target_hash": "db4cb9ce2126"
+    },
+    "home.p-win.li-3": {
+      "part": "home",
+      "source_hash": "d85b661eb8e6",
+      "target_hash": "e51ebbc49b00"
+    },
+    "home.p-appliance.h3-1": {
+      "part": "home",
+      "source_hash": "e45c0fc37b2d",
+      "target_hash": "82f798dfc9eb"
+    },
+    "home.p-appliance.p-1": {
+      "part": "home",
+      "source_hash": "9ff6d73830b6",
+      "target_hash": "f0dabd70bf7b"
+    },
+    "home.p-appliance.li-1": {
+      "part": "home",
+      "source_hash": "47cb2ad65dc7",
+      "target_hash": "261d49f335d3"
+    },
+    "home.p-appliance.li-2": {
+      "part": "home",
+      "source_hash": "a2a401f4b2c3",
+      "target_hash": "6371356c5fe1"
+    },
+    "home.p-appliance.li-3": {
+      "part": "home",
+      "source_hash": "aa9d78e6b6fa",
+      "target_hash": "19131182b9e3"
+    },
+    "home.p-appliance.li-4": {
+      "part": "home",
+      "source_hash": "bbc615ea622b",
+      "target_hash": "d0341e55bb29"
+    },
+    "home.p-appliance.p-2": {
+      "part": "home",
+      "source_hash": "177a91e7a6b4",
+      "target_hash": "6f7a741da11c"
+    },
+    "home.p-appliance.div-1": {
+      "part": "home",
+      "source_hash": "8a3fbd7c91f0",
+      "target_hash": "c5d4b3f7d36e"
+    },
+    "home.upgrade.p-1": {
+      "part": "home",
+      "source_hash": "5566c16483a2",
+      "target_hash": "87e315df2e5b"
+    },
+    "home.why.h2-1": {
+      "part": "home",
+      "source_hash": "65341f9c1497",
+      "target_hash": "3acaaf362ea8"
+    },
+    "home.why.p-1": {
+      "part": "home",
+      "source_hash": "1668b0870987",
+      "target_hash": "f374b1bacc1c"
+    },
+    "home.why-fit.h3-1": {
+      "part": "home",
+      "source_hash": "631429e459b2",
+      "target_hash": "1ce40ab959bd"
+    },
+    "home.why-fit.p-1": {
+      "part": "home",
+      "source_hash": "b0c5f5cbb2ee",
+      "target_hash": "08c0fd086e23"
+    },
+    "home.why-fit.img-1.alt": {
+      "part": "home",
+      "source_hash": "906b74daf0f5",
+      "target_hash": "9cafd0d621f5"
+    },
+    "home.why-stats.h3-1": {
+      "part": "home",
+      "source_hash": "7cd5266e1f4e",
+      "target_hash": "c12791671663"
+    },
+    "home.why-stats.p-1": {
+      "part": "home",
+      "source_hash": "05ae743f085e",
+      "target_hash": "db66aebe2b24"
+    },
+    "home.why-stats.img-1.alt": {
+      "part": "home",
+      "source_hash": "94483285e732",
+      "target_hash": "0e5d49fadc79"
+    },
+    "home.why-chat.h3-1": {
+      "part": "home",
+      "source_hash": "83831d46fb09",
+      "target_hash": "bd158fa97976"
+    },
+    "home.why-chat.p-1": {
+      "part": "home",
+      "source_hash": "2e459441dc4f",
+      "target_hash": "9595ce93cf21"
+    },
+    "home.why-chat.img-1.alt": {
+      "part": "home",
+      "source_hash": "da46ab93294b",
+      "target_hash": "c87dd323bdf4"
+    },
+    "home.why-god.h3-1": {
+      "part": "home",
+      "source_hash": "a49be301a05f",
+      "target_hash": "d3199f9238d3"
+    },
+    "home.why-god.p-1": {
+      "part": "home",
+      "source_hash": "a29986e09f7a",
+      "target_hash": "6d6c68b18ee7"
+    },
+    "home.why-god.img-1.alt": {
+      "part": "home",
+      "source_hash": "171f585f7e38",
+      "target_hash": "70321abaf65d"
+    },
+    "home.cache.h2-1": {
+      "part": "home",
+      "source_hash": "d876efcb94ab",
+      "target_hash": "cbf414b6c088"
+    },
+    "home.why-cache.p-1": {
+      "part": "home",
+      "source_hash": "03e36074672f",
+      "target_hash": "e295237cec03"
+    },
+    "home.why-cache.figcaption-1": {
+      "part": "home",
+      "source_hash": "0f19c82ec35c",
+      "target_hash": "6fb7b54f61e8"
+    },
+    "home.why-cache.p-2": {
+      "part": "home",
+      "source_hash": "9de8aa8aa7e1",
+      "target_hash": "bbda79ade096"
+    },
+    "home.why-cache.figcaption-2": {
+      "part": "home",
+      "source_hash": "ff04da43c87a",
+      "target_hash": "a46c5c3a51f7"
+    },
+    "home.why-cache.figcaption-3": {
+      "part": "home",
+      "source_hash": "0ec9d5ccf246",
+      "target_hash": "e644f7c9b2ec"
+    },
+    "home.why-cache.h3-1": {
+      "part": "home",
+      "source_hash": "684608311775",
+      "target_hash": "a39bf2401b8c"
+    },
+    "home.why-cache.p-3": {
+      "part": "home",
+      "source_hash": "4744b11be2ad",
+      "target_hash": "e39d7f86ac0d"
+    },
+    "home.why-cache.img-1.alt": {
+      "part": "home",
+      "source_hash": "f1bc7fbd6399",
+      "target_hash": "35b5eeb58054"
+    },
+    "home.why-cache.figcaption-4": {
+      "part": "home",
+      "source_hash": "234d024e62df",
+      "target_hash": "8a59ebcaeb64"
+    },
+    "home.why-cache.p-4": {
+      "part": "home",
+      "source_hash": "2a468a4b1738",
+      "target_hash": "8109497c74b4"
+    },
+    "home.why-cache.p-5": {
+      "part": "home",
+      "source_hash": "c245f8292ac7",
+      "target_hash": "ef72f9cc543f"
+    },
+    "home.why-cache.a-1": {
+      "part": "home",
+      "source_hash": "cd240e4bc004",
+      "target_hash": "a7a70e042476"
+    },
+    "home.agents.h2-1": {
+      "part": "home",
+      "source_hash": "b01cff25d51f",
+      "target_hash": "1a5f58641c2e"
+    },
+    "home.agents.p-1": {
+      "part": "home",
+      "source_hash": "26604da90050",
+      "target_hash": "845485729add"
+    },
+    "home.agents.h3-1": {
+      "part": "home",
+      "source_hash": "a87ec3988e0d",
+      "target_hash": "5870532e4ab3"
+    },
+    "home.agents.p-2": {
+      "part": "home",
+      "source_hash": "eed13d192862",
+      "target_hash": "b5fa41ff93dd"
+    },
+    "home.agents.span-1": {
+      "part": "home",
+      "source_hash": "de3ecc4fe5d1",
+      "target_hash": "7e9eca3073b2"
+    },
+    "home.agents.span-2": {
+      "part": "home",
+      "source_hash": "cc7b475640bb",
+      "target_hash": "d2472cce21ef"
+    },
+    "home.agents.span-3": {
+      "part": "home",
+      "source_hash": "cc7b475640bb",
+      "target_hash": "d2472cce21ef"
+    },
+    "home.agents.span-4": {
+      "part": "home",
+      "source_hash": "5a0628b4b02d",
+      "target_hash": "13abb04eabf9"
+    },
+    "home.agents.span-5": {
+      "part": "home",
+      "source_hash": "8c2c30bf0764",
+      "target_hash": "d6d27c6df3cd"
+    },
+    "home.agents.span-6": {
+      "part": "home",
+      "source_hash": "09e5fe8af64a",
+      "target_hash": "913d84f3e2ad"
+    },
+    "home.agents.span-7": {
+      "part": "home",
+      "source_hash": "9ad204014fc0",
+      "target_hash": "d22a0dd823c7"
+    },
+    "home.agents.h3-2": {
+      "part": "home",
+      "source_hash": "cfeda056d931",
+      "target_hash": "0cda27366bce"
+    },
+    "home.agents.p-3": {
+      "part": "home",
+      "source_hash": "6995102b0af7",
+      "target_hash": "10eaacf8d5a0"
+    },
+    "home.flow-t.title-1": {
+      "part": "home",
+      "source_hash": "d7db08f53325",
+      "target_hash": "7df0d8488631"
+    },
+    "home.flow-d.desc-1": {
+      "part": "home",
+      "source_hash": "5c598ca9bc7c",
+      "target_hash": "05034049364a"
+    },
+    "home.flow-t2.title-1": {
+      "part": "home",
+      "source_hash": "d7db08f53325",
+      "target_hash": "7df0d8488631"
+    },
+    "home.flow-d2.desc-1": {
+      "part": "home",
+      "source_hash": "5c598ca9bc7c",
+      "target_hash": "05034049364a"
+    },
+    "home.agents.b-1": {
+      "part": "home",
+      "source_hash": "cdf3dc71b947",
+      "target_hash": "ca6dca1a559f"
+    },
+    "home.agents.span-8": {
+      "part": "home",
+      "source_hash": "6f10abaf7726",
+      "target_hash": "15eadb1d227e"
+    },
+    "home.agents.img-1.alt": {
+      "part": "home",
+      "source_hash": "d77bbac51675",
+      "target_hash": "427261c26e22"
+    },
+    "home.agents.figcaption-1": {
+      "part": "home",
+      "source_hash": "bc31fcfd58c7",
+      "target_hash": "eea6117953fb"
+    },
+    "home.agents.h3-3": {
+      "part": "home",
+      "source_hash": "0ceb9132d312",
+      "target_hash": "c7965fa43e72"
+    },
+    "home.agents.p-4": {
+      "part": "home",
+      "source_hash": "0b548958da36",
+      "target_hash": "96be659a245c"
+    },
+    "home.agents.img-2.alt": {
+      "part": "home",
+      "source_hash": "6a234848eac5",
+      "target_hash": "377f54e4d986"
+    },
+    "home.tune.h2-1": {
+      "part": "home",
+      "source_hash": "c3ae8600a083",
+      "target_hash": "d444776980b0"
+    },
+    "home.why-agent.p-1": {
+      "part": "home",
+      "source_hash": "4844283837a3",
+      "target_hash": "01cb7b381bf0"
+    },
+    "home.why-agent.h3-1": {
+      "part": "home",
+      "source_hash": "85f5dae66c4f",
+      "target_hash": "482995e4f138"
+    },
+    "home.loop-t.title-1": {
+      "part": "home",
+      "source_hash": "3f22e76a3edc",
+      "target_hash": "147c56a277ac"
+    },
+    "home.loop-d.desc-1": {
+      "part": "home",
+      "source_hash": "dd7733aa80ef",
+      "target_hash": "7bdc1d393575"
+    },
+    "home.loop-t2.title-1": {
+      "part": "home",
+      "source_hash": "3f22e76a3edc",
+      "target_hash": "147c56a277ac"
+    },
+    "home.loop-d2.desc-1": {
+      "part": "home",
+      "source_hash": "dd7733aa80ef",
+      "target_hash": "7bdc1d393575"
+    },
+    "home.why-agent.p-2": {
+      "part": "home",
+      "source_hash": "35230c9469a2",
+      "target_hash": "4d2d787b427c"
+    },
+    "home.why-agent.img-1.alt": {
+      "part": "home",
+      "source_hash": "afd3f600f638",
+      "target_hash": "3b89185f8691"
+    },
+    "home.why-agent.figcaption-1": {
+      "part": "home",
+      "source_hash": "4bb331f9f6fb",
+      "target_hash": "b55ad44e996d"
+    },
+    "home.why-agent.h3-2": {
+      "part": "home",
+      "source_hash": "222000da96d1",
+      "target_hash": "926910168789"
+    },
+    "home.why-agent.li-1": {
+      "part": "home",
+      "source_hash": "4d737111bb76",
+      "target_hash": "a9515952c075"
+    },
+    "home.why-agent.li-2": {
+      "part": "home",
+      "source_hash": "aadee19b4763",
+      "target_hash": "5dc15fba7ec2"
+    },
+    "home.why-agent.li-3": {
+      "part": "home",
+      "source_hash": "5e697967b7ec",
+      "target_hash": "b82c2d0b3b2b"
+    },
+    "home.why-agent.li-4": {
+      "part": "home",
+      "source_hash": "d25a394b9e41",
+      "target_hash": "012ee17528aa"
+    },
+    "home.why-agent.p-3": {
+      "part": "home",
+      "source_hash": "505b9916712b",
+      "target_hash": "eb08b9c80f23"
+    },
+    "home.why-agent.p-4": {
+      "part": "home",
+      "source_hash": "bbeb89be5de6",
+      "target_hash": "7fcf0a7d06f4"
+    },
+    "home.share.h2-1": {
+      "part": "home",
+      "source_hash": "f1e27da721b7",
+      "target_hash": "afc297aa6169"
+    },
+    "home.why-keys.p-1": {
+      "part": "home",
+      "source_hash": "dd9352746e6e",
+      "target_hash": "a5ca7370161b"
+    },
+    "home.why-keys.h3-1": {
+      "part": "home",
+      "source_hash": "51396907e61e",
+      "target_hash": "57c86fcb7b60"
+    },
+    "home.why-keys.p-2": {
+      "part": "home",
+      "source_hash": "4dd4ec421cbe",
+      "target_hash": "88c360f655f5"
+    },
+    "home.why-keys.ol-1.aria-label": {
+      "part": "home",
+      "source_hash": "1c1bcbbf1789",
+      "target_hash": "7a097f1b9a4f"
+    },
+    "home.why-keys.b-1": {
+      "part": "home",
+      "source_hash": "c5da4041ea8e",
+      "target_hash": "799cdf4e7af7"
+    },
+    "home.why-keys.span-1": {
+      "part": "home",
+      "source_hash": "a2476d66a084",
+      "target_hash": "0307b18dbae0"
+    },
+    "home.why-keys.b-2": {
+      "part": "home",
+      "source_hash": "6c8888f1d6dc",
+      "target_hash": "a70903ff1778"
+    },
+    "home.why-keys.span-2": {
+      "part": "home",
+      "source_hash": "01b7a9f0d1d4",
+      "target_hash": "55337881320e"
+    },
+    "home.why-keys.b-3": {
+      "part": "home",
+      "source_hash": "a76b6c1ae9be",
+      "target_hash": "a23d47f5a98f"
+    },
+    "home.why-keys.span-3": {
+      "part": "home",
+      "source_hash": "6d244abe081b",
+      "target_hash": "306da767a461"
+    },
+    "home.why-keys.b-4": {
+      "part": "home",
+      "source_hash": "724c4cb2e620",
+      "target_hash": "e8466ecf98e1"
+    },
+    "home.why-keys.span-4": {
+      "part": "home",
+      "source_hash": "2c1097258738",
+      "target_hash": "8f1a9bb2e983"
+    },
+    "home.why-keys.b-5": {
+      "part": "home",
+      "source_hash": "96d527825b4b",
+      "target_hash": "3ec4a1ac5923"
+    },
+    "home.why-keys.span-5": {
+      "part": "home",
+      "source_hash": "687891cb2f66",
+      "target_hash": "d3daa2606741"
+    },
+    "home.why-keys.p-3": {
+      "part": "home",
+      "source_hash": "ca3034a912dc",
+      "target_hash": "fe26c894ddf8"
+    },
+    "home.why-keys.img-1.alt": {
+      "part": "home",
+      "source_hash": "ae01537e1ee6",
+      "target_hash": "e051879ca8c0"
+    },
+    "home.why-keys.figcaption-1": {
+      "part": "home",
+      "source_hash": "a098f63084b6",
+      "target_hash": "9302baf6eb1c"
+    },
+    "home.why-keys.img-2.alt": {
+      "part": "home",
+      "source_hash": "9ae6aeafcf56",
+      "target_hash": "8eb42482a636"
+    },
+    "home.why-keys.figcaption-2": {
+      "part": "home",
+      "source_hash": "348b1b23d393",
+      "target_hash": "fda606f76c22"
+    },
+    "home.why-keys.p-4": {
+      "part": "home",
+      "source_hash": "b5718f9f8bb5",
+      "target_hash": "9c6aafb63752"
+    },
+    "home.hw.h2-1": {
+      "part": "home",
+      "source_hash": "3f3225bbc711",
+      "target_hash": "e1b6fb856b6c"
+    },
+    "home.hardware.p-1": {
+      "part": "home",
+      "source_hash": "f90e55953921",
+      "target_hash": "d3c40a90c71e"
+    },
+    "home.hardware.img-1.alt": {
+      "part": "home",
+      "source_hash": "60071766922d",
+      "target_hash": "0406e5e67684"
+    },
+    "home.hardware.figcaption-1": {
+      "part": "home",
+      "source_hash": "937079060820",
+      "target_hash": "62ec933a90f7"
+    },
+    "home.hardware.img-2.alt": {
+      "part": "home",
+      "source_hash": "6006e1039ec1",
+      "target_hash": "61ea1eeebc7c"
+    },
+    "home.hardware.figcaption-2": {
+      "part": "home",
+      "source_hash": "d67a36ee8dec",
+      "target_hash": "d4964a75c146"
+    },
+    "home.hardware.img-3.alt": {
+      "part": "home",
+      "source_hash": "2b44277f55cd",
+      "target_hash": "ec56ed167394"
+    },
+    "home.hardware.figcaption-3": {
+      "part": "home",
+      "source_hash": "f3ceb6c33eb7",
+      "target_hash": "6f34880fafea"
+    },
+    "home.hardware.img-4.alt": {
+      "part": "home",
+      "source_hash": "c1394a12d331",
+      "target_hash": "aa5fcb6988bc"
+    },
+    "home.hardware.figcaption-4": {
+      "part": "home",
+      "source_hash": "cddfa5475f94",
+      "target_hash": "d86fd6e996e2"
+    },
+    "home.hardware.p-2": {
+      "part": "home",
+      "source_hash": "5a4e8569c432",
+      "target_hash": "d246e39be17d"
+    },
+    "home.features.h2-1": {
+      "part": "home",
+      "source_hash": "8e7ddf931c59",
+      "target_hash": "8f01ea810342"
+    },
+    "home.features.p-1": {
+      "part": "home",
+      "source_hash": "cbdfccb24fcc",
+      "target_hash": "064aad69ddb9"
+    },
+    "home.features.h3-1": {
+      "part": "home",
+      "source_hash": "65fb2dd50a89",
+      "target_hash": "fa603c6a3ec7"
+    },
+    "home.features.p-2": {
+      "part": "home",
+      "source_hash": "1bea9211a232",
+      "target_hash": "200e7f0c812d"
+    },
+    "home.features.img-1.alt": {
+      "part": "home",
+      "source_hash": "0a8bc4d5312e",
+      "target_hash": "2d535625f65f"
+    },
+    "home.features.p-3": {
+      "part": "home",
+      "source_hash": "04423fe4175f",
+      "target_hash": "9ab631a23996"
+    },
+    "home.features.h3-2": {
+      "part": "home",
+      "source_hash": "e8070826221c",
+      "target_hash": "bbd6765dd125"
+    },
+    "home.features.p-4": {
+      "part": "home",
+      "source_hash": "49c151ca7020",
+      "target_hash": "dd3717853f4f"
+    },
+    "home.features.img-2.alt": {
+      "part": "home",
+      "source_hash": "428dfb61458f",
+      "target_hash": "b7e3e25cbb2b"
+    },
+    "home.features.p-5": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "c42167109ad7"
+    },
+    "home.features.h3-3": {
+      "part": "home",
+      "source_hash": "ba721e4421e2",
+      "target_hash": "16107de5e8d0"
+    },
+    "home.features.p-6": {
+      "part": "home",
+      "source_hash": "916edc5f7b60",
+      "target_hash": "f76a07542cdb"
+    },
+    "home.features.img-3.alt": {
+      "part": "home",
+      "source_hash": "cc2b73368cf4",
+      "target_hash": "0345eb0fed9e"
+    },
+    "home.oss.h2-1": {
+      "part": "home",
+      "source_hash": "3317e70f46b3",
+      "target_hash": "233c6fd11086"
+    },
+    "home.open-source.p-1": {
+      "part": "home",
+      "source_hash": "ba01b625fe70",
+      "target_hash": "464bb63d94cc"
+    },
+    "home.open-source.h2-1": {
+      "part": "home",
+      "source_hash": "19dae78c985d",
+      "target_hash": "fad12afa45c8"
+    },
+    "home.open-source.p-2": {
+      "part": "home",
+      "source_hash": "598b6f2514fd",
+      "target_hash": "228fcbd0267e"
+    },
+    "home.lightbox.button-1": {
+      "part": "home",
+      "source_hash": "ce7bf15a4a85",
+      "target_hash": "296950af0cdc"
+    },
+    "home.lightbox.button-1.aria-label": {
+      "part": "home",
+      "source_hash": "2d3b2f52a3dd",
+      "target_hash": "d37036167ae9"
+    },
+    "chrome.footer.about": {
+      "part": "home",
+      "source_hash": "7f11ddd74f30",
+      "target_hash": "75823e098980"
+    },
+    "chrome.footer.source": {
+      "part": "home",
+      "source_hash": "11506c59ef23",
+      "target_hash": "c88a4122faab"
+    },
+    "chrome.footer.install": {
+      "part": "home",
+      "source_hash": "e15a133068af",
+      "target_hash": "533e0d86c743"
+    },
+    "chrome.footer.changelog": {
+      "part": "home",
+      "source_hash": "ead07c84baac",
+      "target_hash": "de6811e73d40"
+    },
+    "chrome.footer.licence": {
+      "part": "home",
+      "source_hash": "f3ec8e880a46",
+      "target_hash": "1b2ad79bbbda"
+    },
+    "chrome.footer.tag-note": {
+      "part": "home",
+      "source_hash": "09eab402684a",
+      "target_hash": "14ceb85cbfeb"
+    },
+    "chrome.consent.aria-label": {
+      "part": "home",
+      "source_hash": "38db21b38100",
+      "target_hash": "216aa0bf3273"
+    },
+    "chrome.consent.text": {
+      "part": "home",
+      "source_hash": "cdf7e1f99a7b",
+      "target_hash": "eb21548beadd"
+    },
+    "chrome.consent.decline": {
+      "part": "home",
+      "source_hash": "a2d285b35287",
+      "target_hash": "136de7a8c46f"
+    },
+    "chrome.consent.accept": {
+      "part": "home",
+      "source_hash": "89713b9c9c1b",
+      "target_hash": "329fcec61856"
+    },
+    "common.crumbs.aria-label": {
+      "part": "common",
+      "source_hash": "2bd873d6c734",
+      "target_hash": "6c3f7b6a12a9"
+    },
+    "common.crumb.home": {
+      "part": "common",
+      "source_hash": "3a78695388b3",
+      "target_hash": "203c08e0d44a"
+    },
+    "common.crumb.coding-agents": {
+      "part": "common",
+      "source_hash": "707c65c28bca",
+      "target_hash": "c42167109ad7"
+    },
+    "common.in-words": {
+      "part": "common",
+      "source_hash": "3cafefb13fa9",
+      "target_hash": "a94cf3f35e9b"
+    },
+    "common.clients.client": {
+      "part": "common",
+      "source_hash": "0c77fe09ab33",
+      "target_hash": "477581b84e50"
+    },
+    "common.client.protocol": {
+      "part": "common",
+      "source_hash": "cf0883343f4a",
+      "target_hash": "ab2f31f30acf"
+    },
+    "common.client.support": {
+      "part": "common",
+      "source_hash": "be91940b79f4",
+      "target_hash": "bb27db10ce18"
+    },
+    "common.support.full": {
+      "part": "common",
+      "source_hash": "1f95d1324a14",
+      "target_hash": "55a990ab1f01"
+    },
+    "common.support.local-only": {
+      "part": "common",
+      "source_hash": "12d96c6fb40e",
+      "target_hash": "2b94add42f8a"
+    },
+    "common.crumb.agent-tuning": {
+      "part": "common",
+      "source_hash": "124c9615be9b",
+      "target_hash": "b7ef18dc6fa5"
+    },
+    "common.copy": {
+      "part": "common",
+      "source_hash": "e21f935f11d7",
+      "target_hash": "63d90d977348"
+    },
+    "common.crumb.features": {
+      "part": "common",
+      "source_hash": "5697d03daef4",
+      "target_hash": "25f5ce57a190"
+    },
+    "common.crumb.gpu-monitoring": {
+      "part": "common",
+      "source_hash": "cbdfccb24fcc",
+      "target_hash": "064aad69ddb9"
+    },
+    "common.crumb.cache-aware-routing": {
+      "part": "common",
+      "source_hash": "d45c5045a852",
+      "target_hash": "8bdf0b219800"
+    },
+    "common.crumb.api-keys": {
+      "part": "common",
+      "source_hash": "98aae8972102",
+      "target_hash": "5f600b307b4e"
+    },
+    "common.crumb.faq": {
+      "part": "common",
+      "source_hash": "dbc468a14b60",
+      "target_hash": "45a6d115fdfb"
+    },
+    "common.crumb.privacy": {
+      "part": "common",
+      "source_hash": "54a57c3147c4",
+      "target_hash": "86651d17a401"
+    },
+    "common.client.setup-section.aria-label": {
+      "part": "common",
+      "source_hash": "7013af4c42fe",
+      "target_hash": "df3d58c7d84b"
+    },
+    "common.client.requirements": {
+      "part": "common",
+      "source_hash": "e0cdd07f6a27",
+      "target_hash": "268d6546e069"
+    },
+    "common.client.setup": {
+      "part": "common",
+      "source_hash": "7013af4c42fe",
+      "target_hash": "df3d58c7d84b"
+    },
+    "common.client.setup-p": {
+      "part": "common",
+      "source_hash": "961b2c6bf48f",
+      "target_hash": "598de97c4a4f"
+    },
+    "common.file.shell": {
+      "part": "common",
+      "source_hash": "a733285486d5",
+      "target_hash": "a733285486d5"
+    },
+    "common.client.docs": {
+      "part": "common",
+      "source_hash": "78599bc11885",
+      "target_hash": "9f0d4953a4e0"
+    },
+    "common.client.related": {
+      "part": "common",
+      "source_hash": "5f736e0bdabc",
+      "target_hash": "cb90b2b86ff9"
+    },
+    "common.file.settings": {
+      "part": "common",
+      "source_hash": "74a883a037bc",
+      "target_hash": "df3d58c7d84b"
+    },
+    "coding-agents.meta.title": {
+      "part": "coding-agents",
+      "source_hash": "cec26df70a65",
+      "target_hash": "0d132785d651"
+    },
+    "coding-agents.meta.description": {
+      "part": "coding-agents",
+      "source_hash": "d4374722fecc",
+      "target_hash": "c280c48cfff1"
+    },
+    "coding-agents.agents.h1-1": {
+      "part": "coding-agents",
+      "source_hash": "e01f3269f454",
+      "target_hash": "d9ffa8ae3fb4"
+    },
+    "coding-agents.p-1": {
+      "part": "coding-agents",
+      "source_hash": "b8783c59365c",
+      "target_hash": "2ed41dc8fdb3"
+    },
+    "coding-agents.flow.title": {
+      "part": "coding-agents",
+      "source_hash": "b2c49ca0b033",
+      "target_hash": "7c301cacf6a4"
+    },
+    "coding-agents.flow.desc": {
+      "part": "coding-agents",
+      "source_hash": "c24325d4bacf",
+      "target_hash": "c795b692abf4"
+    },
+    "coding-agents.flow.caption": {
+      "part": "coding-agents",
+      "source_hash": "4c8a44e2f320",
+      "target_hash": "fc952aa3e5b0"
+    },
+    "coding-agents.p-2": {
+      "part": "coding-agents",
+      "source_hash": "75d2dc8f6796",
+      "target_hash": "08444dd107f9"
+    },
+    "coding-agents.p-3": {
+      "part": "coding-agents",
+      "source_hash": "91f99cd9235e",
+      "target_hash": "62340366a397"
+    },
+    "coding-agents.p-4": {
+      "part": "coding-agents",
+      "source_hash": "0ced1cfb6f5c",
+      "target_hash": "7f0fad0eabe9"
+    },
+    "clients.meta.title": {
+      "part": "clients",
+      "source_hash": "9a440e2e3c4a",
+      "target_hash": "cba65064622d"
+    },
+    "clients.meta.description": {
+      "part": "clients",
+      "source_hash": "9d9c76c6bb07",
+      "target_hash": "92c97699b212"
+    },
+    "clients.claude-code.h1": {
+      "part": "clients",
+      "source_hash": "9bb97352447d",
+      "target_hash": "d1599833336e"
+    },
+    "clients.claude-code.summary": {
+      "part": "clients",
+      "source_hash": "b46e643eeaac",
+      "target_hash": "fe7120a0b504"
+    },
+    "clients.claude-code.capability": {
+      "part": "clients",
+      "source_hash": "79cee967a1ad",
+      "target_hash": "76e43ffe70b6"
+    },
+    "clients.claude-code.req.client_version": {
+      "part": "clients",
+      "source_hash": "baf574b32f46",
+      "target_hash": "f73776d1437c"
+    },
+    "clients.claude-code.req.router_on": {
+      "part": "clients",
+      "source_hash": "f0fd90d78fe4",
+      "target_hash": "133329384520"
+    },
+    "clients.claude-code.req.relay_key": {
+      "part": "clients",
+      "source_hash": "df8e31733077",
+      "target_hash": "0951214b669e"
+    },
+    "clients.claude-code.req.min_context": {
+      "part": "clients",
+      "source_hash": "5cc65b30acd7",
+      "target_hash": "1d3b055a92e5"
+    },
+    "clients.claude-code.req.recommended_context": {
+      "part": "clients",
+      "source_hash": "82792a23c7a0",
+      "target_hash": "5d3dbfcb9e3a"
+    },
+    "clients.claude-code.req.unknown_model_window": {
+      "part": "clients",
+      "source_hash": "c67abcb52ad3",
+      "target_hash": "6ebc3b0de5fe"
+    },
+    "clients.claude-code.mode.router.title": {
+      "part": "clients",
+      "source_hash": "872bcc0e520c",
+      "target_hash": "09025ba2c90b"
+    },
+    "clients.claude-code.mode.router.desc": {
+      "part": "clients",
+      "source_hash": "9832c50a640e",
+      "target_hash": "0b58d63ab81c"
+    },
+    "clients.claude-code.mode.local.title": {
+      "part": "clients",
+      "source_hash": "2a51ef910e22",
+      "target_hash": "71886275dc56"
+    },
+    "clients.claude-code.mode.local.desc": {
+      "part": "clients",
+      "source_hash": "1dea6fe58a27",
+      "target_hash": "9cc7daac4fa1"
+    },
+    "clients.anthropic-sdk.h1": {
+      "part": "clients",
+      "source_hash": "4229892646ec",
+      "target_hash": "9d1684be71aa"
+    },
+    "clients.anthropic-sdk.summary": {
+      "part": "clients",
+      "source_hash": "910172f40b64",
+      "target_hash": "458f2f922558"
+    },
+    "clients.anthropic-sdk.flow.title": {
+      "part": "clients",
+      "source_hash": "26e8b7e39b44",
+      "target_hash": "06d428025572"
+    },
+    "clients.anthropic-sdk.flow.desc": {
+      "part": "clients",
+      "source_hash": "26917b07643f",
+      "target_hash": "96c4763c03f9"
+    },
+    "clients.anthropic-sdk.flow.caption": {
+      "part": "clients",
+      "source_hash": "a4ec23a63573",
+      "target_hash": "77dfc749a086"
+    },
+    "clients.anthropic-sdk.capability": {
+      "part": "clients",
+      "source_hash": "3d9a6a025316",
+      "target_hash": "6247357b8680"
+    },
+    "clients.anthropic-sdk.req.router_on": {
+      "part": "clients",
+      "source_hash": "f0fd90d78fe4",
+      "target_hash": "133329384520"
+    },
+    "clients.anthropic-sdk.req.relay_key": {
+      "part": "clients",
+      "source_hash": "df8e31733077",
+      "target_hash": "0951214b669e"
+    },
+    "clients.anthropic-sdk.mode.router.title": {
+      "part": "clients",
+      "source_hash": "5e22bff885a6",
+      "target_hash": "08d27a0bd0c9"
+    },
+    "clients.anthropic-sdk.mode.router.desc": {
+      "part": "clients",
+      "source_hash": "fe17e904c7dd",
+      "target_hash": "70e0842d5210"
+    },
+    "clients.anthropic-sdk.mode.local.title": {
+      "part": "clients",
+      "source_hash": "c905013aab29",
+      "target_hash": "221c5bce132b"
+    },
+    "clients.anthropic-sdk.mode.local.desc": {
+      "part": "clients",
+      "source_hash": "e1b1c200ccb3",
+      "target_hash": "2ca47e4cc142"
+    },
+    "clients.opencode.h1": {
+      "part": "clients",
+      "source_hash": "0f9f0d85229c",
+      "target_hash": "059d6b672010"
+    },
+    "clients.opencode.summary": {
+      "part": "clients",
+      "source_hash": "0dbe773d1ba9",
+      "target_hash": "c89b323e9605"
+    },
+    "clients.opencode.flow.title": {
+      "part": "clients",
+      "source_hash": "ae2c3d407d79",
+      "target_hash": "dae81984bd6a"
+    },
+    "clients.opencode.flow.desc": {
+      "part": "clients",
+      "source_hash": "5a53f0ea3bba",
+      "target_hash": "36079b8c0b8c"
+    },
+    "clients.opencode.flow.caption": {
+      "part": "clients",
+      "source_hash": "774655618391",
+      "target_hash": "79279752cfdf"
+    },
+    "clients.opencode.capability": {
+      "part": "clients",
+      "source_hash": "8901779665ff",
+      "target_hash": "771685c5ae10"
+    },
+    "clients.opencode.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "bad4686a3b11"
+    },
+    "clients.opencode.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "d6c0c255c2ec"
+    },
+    "clients.opencode.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "44ac539067ed"
+    },
+    "clients.opencode.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "e03771b96f12",
+      "target_hash": "122efa6fe78a"
+    },
+    "clients.aider.h1": {
+      "part": "clients",
+      "source_hash": "b1e1b6bd30b4",
+      "target_hash": "48dbe326f3e8"
+    },
+    "clients.aider.summary": {
+      "part": "clients",
+      "source_hash": "2a2e36942a30",
+      "target_hash": "8682279e7ac2"
+    },
+    "clients.aider.flow.title": {
+      "part": "clients",
+      "source_hash": "32e01b3b0c97",
+      "target_hash": "2e955f852cbe"
+    },
+    "clients.aider.flow.desc": {
+      "part": "clients",
+      "source_hash": "3b2c308c114e",
+      "target_hash": "ab2d6247201c"
+    },
+    "clients.aider.flow.caption": {
+      "part": "clients",
+      "source_hash": "e58a54a34cdc",
+      "target_hash": "1a10ad305347"
+    },
+    "clients.aider.capability": {
+      "part": "clients",
+      "source_hash": "922681946310",
+      "target_hash": "1ae562f841a2"
+    },
+    "clients.aider.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "d6c0c255c2ec"
+    },
+    "clients.aider.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "44ac539067ed"
+    },
+    "clients.aider.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "df94297df209",
+      "target_hash": "0e3e95c79976"
+    },
+    "clients.aider.mode.default.file.session": {
+      "part": "clients",
+      "source_hash": "c1f31c2b83f0",
+      "target_hash": "a801424a5218"
+    },
+    "clients.grok-cli.h1": {
+      "part": "clients",
+      "source_hash": "9e97001cf2f3",
+      "target_hash": "21ad06476fc2"
+    },
+    "clients.grok-cli.summary": {
+      "part": "clients",
+      "source_hash": "be6e0d9a09ed",
+      "target_hash": "a83fab976482"
+    },
+    "clients.grok-cli.flow.title": {
+      "part": "clients",
+      "source_hash": "eeb620d01d38",
+      "target_hash": "fb6f331fff18"
+    },
+    "clients.grok-cli.flow.desc": {
+      "part": "clients",
+      "source_hash": "ef648e107c77",
+      "target_hash": "46b1123502b5"
+    },
+    "clients.grok-cli.flow.caption": {
+      "part": "clients",
+      "source_hash": "b77ddcf1b78a",
+      "target_hash": "36f79bca11d2"
+    },
+    "clients.grok-cli.capability": {
+      "part": "clients",
+      "source_hash": "03938abace0a",
+      "target_hash": "aa5c4c1fdd33"
+    },
+    "clients.grok-cli.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "bad4686a3b11"
+    },
+    "clients.grok-cli.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "d6c0c255c2ec"
+    },
+    "clients.grok-cli.mode.default.title": {
+      "part": "clients",
+      "source_hash": "1901a8b05d3b",
+      "target_hash": "8d5388c6d432"
+    },
+    "clients.grok-cli.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "b5943bc2443d",
+      "target_hash": "67b52a63a256"
+    },
+    "clients.grok-cli.mode.community.title": {
+      "part": "clients",
+      "source_hash": "28bbd28283a3",
+      "target_hash": "a3decd0da721"
+    },
+    "clients.grok-cli.mode.community.desc": {
+      "part": "clients",
+      "source_hash": "0b589963361a",
+      "target_hash": "ff09bc8b7321"
+    },
+    "clients.openai-sdk.h1": {
+      "part": "clients",
+      "source_hash": "db3661cee041",
+      "target_hash": "b9ceff33d71f"
+    },
+    "clients.openai-sdk.summary": {
+      "part": "clients",
+      "source_hash": "16d05b661878",
+      "target_hash": "94869f95c7a6"
+    },
+    "clients.openai-sdk.flow.title": {
+      "part": "clients",
+      "source_hash": "13c7ed2b6c10",
+      "target_hash": "ce0fc72d1b38"
+    },
+    "clients.openai-sdk.flow.desc": {
+      "part": "clients",
+      "source_hash": "9b9a5c752e5f",
+      "target_hash": "70cc83aca955"
+    },
+    "clients.openai-sdk.flow.caption": {
+      "part": "clients",
+      "source_hash": "0d8679dd39d0",
+      "target_hash": "be585ec9e597"
+    },
+    "clients.openai-sdk.capability": {
+      "part": "clients",
+      "source_hash": "81a1f26dda28",
+      "target_hash": "bd8cdb549317"
+    },
+    "clients.openai-sdk.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "44ac539067ed"
+    },
+    "clients.openai-sdk.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "81e9b9ed3e66",
+      "target_hash": "2cad519fe8d8"
+    },
+    "clients.continue.h1": {
+      "part": "clients",
+      "source_hash": "f33c2b44b3be",
+      "target_hash": "a5ffc44bd772"
+    },
+    "clients.continue.summary": {
+      "part": "clients",
+      "source_hash": "4377b7395411",
+      "target_hash": "a9846445f962"
+    },
+    "clients.continue.flow.title": {
+      "part": "clients",
+      "source_hash": "a55ed462d54e",
+      "target_hash": "5b33b966280d"
+    },
+    "clients.continue.flow.desc": {
+      "part": "clients",
+      "source_hash": "dfee5b6d070e",
+      "target_hash": "26e8a1d56975"
+    },
+    "clients.continue.flow.caption": {
+      "part": "clients",
+      "source_hash": "c1f803ddf701",
+      "target_hash": "6dca56226991"
+    },
+    "clients.continue.capability": {
+      "part": "clients",
+      "source_hash": "d76f0ccb6e86",
+      "target_hash": "07d58be872c5"
+    },
+    "clients.continue.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "d6c0c255c2ec"
+    },
+    "clients.continue.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "44ac539067ed"
+    },
+    "clients.continue.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "8c8d339555ff",
+      "target_hash": "091b365e51d7"
+    },
+    "clients.cline.h1": {
+      "part": "clients",
+      "source_hash": "d0efe15bdc4f",
+      "target_hash": "7a0ae64c5afd"
+    },
+    "clients.cline.summary": {
+      "part": "clients",
+      "source_hash": "d80b0d66c45e",
+      "target_hash": "beef12e7af31"
+    },
+    "clients.cline.flow.title": {
+      "part": "clients",
+      "source_hash": "79932fc0e85c",
+      "target_hash": "8b7f3b950132"
+    },
+    "clients.cline.flow.desc": {
+      "part": "clients",
+      "source_hash": "300648093db4",
+      "target_hash": "e88a18f562da"
+    },
+    "clients.cline.flow.caption": {
+      "part": "clients",
+      "source_hash": "26566cb52d8d",
+      "target_hash": "d05185df5a01"
+    },
+    "clients.cline.capability": {
+      "part": "clients",
+      "source_hash": "21110940c4cb",
+      "target_hash": "f649a49098d5"
+    },
+    "clients.cline.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "bad4686a3b11"
+    },
+    "clients.cline.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "d6c0c255c2ec"
+    },
+    "clients.cline.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "44ac539067ed"
+    },
+    "clients.cline.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "f65c6df5377b",
+      "target_hash": "6cd906808cbd"
+    },
+    "clients.cursor.h1": {
+      "part": "clients",
+      "source_hash": "314536df2e7a",
+      "target_hash": "de03197ed794"
+    },
+    "clients.cursor.summary": {
+      "part": "clients",
+      "source_hash": "1c8912c5ba32",
+      "target_hash": "e7ee42e3f621"
+    },
+    "clients.cursor.flow.title": {
+      "part": "clients",
+      "source_hash": "43c8f2aed837",
+      "target_hash": "223e760d6cd8"
+    },
+    "clients.cursor.flow.desc": {
+      "part": "clients",
+      "source_hash": "524789d9ea5d",
+      "target_hash": "554d32f363be"
+    },
+    "clients.cursor.flow.caption": {
+      "part": "clients",
+      "source_hash": "79e33449f1a5",
+      "target_hash": "2658873bd9fe"
+    },
+    "clients.cursor.capability": {
+      "part": "clients",
+      "source_hash": "e3b007a84e77",
+      "target_hash": "d73b0332f7ea"
+    },
+    "clients.cursor.req.reachable": {
+      "part": "clients",
+      "source_hash": "0815103f2766",
+      "target_hash": "c71be459ce1c"
+    },
+    "clients.cursor.mode.default.title": {
+      "part": "clients",
+      "source_hash": "5e7a9a7b90b9",
+      "target_hash": "92eb033f384b"
+    },
+    "clients.cursor.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "fce3909f9e49",
+      "target_hash": "120a3fd4c75b"
+    },
+    "clients.codex-cli.h1": {
+      "part": "clients",
+      "source_hash": "ee03de1664ad",
+      "target_hash": "82fb36495a4b"
+    },
+    "clients.codex-cli.summary": {
+      "part": "clients",
+      "source_hash": "4ffc9f534362",
+      "target_hash": "8ba9a3828147"
+    },
+    "clients.codex-cli.flow.title": {
+      "part": "clients",
+      "source_hash": "4d9d5da5c30b",
+      "target_hash": "f4247dc5f4f3"
+    },
+    "clients.codex-cli.flow.desc": {
+      "part": "clients",
+      "source_hash": "ae1c2b1f74bf",
+      "target_hash": "5148238a5ac5"
+    },
+    "clients.codex-cli.flow.caption": {
+      "part": "clients",
+      "source_hash": "4596be3eb188",
+      "target_hash": "931a4de6c374"
+    },
+    "clients.codex-cli.capability": {
+      "part": "clients",
+      "source_hash": "b7c7ad7fa0c7",
+      "target_hash": "fcf536b0abf2"
+    },
+    "clients.codex-cli.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "bad4686a3b11"
+    },
+    "clients.codex-cli.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "d6c0c255c2ec"
+    },
+    "clients.codex-cli.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "44ac539067ed"
+    },
+    "clients.codex-cli.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "0e63a370854f",
+      "target_hash": "73b2486ea1b9"
+    },
+    "claude-code-router.router.h2-1": {
+      "part": "claude-code-router",
+      "source_hash": "88b4b60f90dc",
+      "target_hash": "c22ffb894129"
+    },
+    "claude-code-router.p-1": {
+      "part": "claude-code-router",
+      "source_hash": "47eae55f59c6",
+      "target_hash": "3d4f2d2c7018"
+    },
+    "claude-code-router.p-2": {
+      "part": "claude-code-router",
+      "source_hash": "23f00b590b6a",
+      "target_hash": "6f28a545eaf5"
+    },
+    "claude-code-router.p-3": {
+      "part": "claude-code-router",
+      "source_hash": "b554407d17a9",
+      "target_hash": "05361482d012"
+    },
+    "claude-code-router.p-4": {
+      "part": "claude-code-router",
+      "source_hash": "f87b272c3f76",
+      "target_hash": "061bc3c1b234"
+    },
+    "claude-code-router.figcaption-1": {
+      "part": "claude-code-router",
+      "source_hash": "462151461bb5",
+      "target_hash": "526c884a57fc"
+    },
+    "claude-code-router.p-5": {
+      "part": "claude-code-router",
+      "source_hash": "038dbec78e21",
+      "target_hash": "9da5561c61c9"
+    },
+    "claude-code-router.p-6": {
+      "part": "claude-code-router",
+      "source_hash": "bd9385d02ca7",
+      "target_hash": "795594e36a32"
+    },
+    "claude-code-router.img-1.alt": {
+      "part": "claude-code-router",
+      "source_hash": "3f1f5682c2a4",
+      "target_hash": "41f1a4f8ba88"
+    },
+    "claude-code-router.span-1": {
+      "part": "claude-code-router",
+      "source_hash": "d0410896bcb4",
+      "target_hash": "312eccaa868c"
+    },
+    "claude-code-router.span-2": {
+      "part": "claude-code-router",
+      "source_hash": "6d3dcb885877",
+      "target_hash": "df9d1e54d9ae"
+    },
+    "claude-code-router.figcaption-2": {
+      "part": "claude-code-router",
+      "source_hash": "b4aee34de008",
+      "target_hash": "fd8669047451"
+    },
+    "claude-code-router.p-7": {
+      "part": "claude-code-router",
+      "source_hash": "174e92b8be51",
+      "target_hash": "a8522d80b1dc"
+    },
+    "claude-code-router.img-2.alt": {
+      "part": "claude-code-router",
+      "source_hash": "1dcf45e042e8",
+      "target_hash": "1d6ee489cac6"
+    },
+    "claude-code-router.span-3": {
+      "part": "claude-code-router",
+      "source_hash": "e7811be1957f",
+      "target_hash": "f23ab3798ae0"
+    },
+    "claude-code-router.span-4": {
+      "part": "claude-code-router",
+      "source_hash": "8c3c6830836a",
+      "target_hash": "3ba9f8dc8d38"
+    },
+    "claude-code-router.figcaption-3": {
+      "part": "claude-code-router",
+      "source_hash": "e6294c26fbc5",
+      "target_hash": "f00be220a0da"
+    },
+    "agent-tuning.meta.title": {
+      "part": "agent-tuning",
+      "source_hash": "c73577a9e93d",
+      "target_hash": "641228f99740"
+    },
+    "agent-tuning.meta.description": {
+      "part": "agent-tuning",
+      "source_hash": "42f223176a20",
+      "target_hash": "b962af058e7a"
+    },
+    "agent-tuning.jsonld.name": {
+      "part": "agent-tuning",
+      "source_hash": "d38cc5b44b81",
+      "target_hash": "1b7a0c80a8ec"
+    },
+    "agent-tuning.jsonld.step-1": {
+      "part": "agent-tuning",
+      "source_hash": "ea9ef62b2144",
+      "target_hash": "03fa43ccc745"
+    },
+    "agent-tuning.jsonld.step-2": {
+      "part": "agent-tuning",
+      "source_hash": "02b6962c341f",
+      "target_hash": "fe0e1fcc501e"
+    },
+    "agent-tuning.jsonld.step-3": {
+      "part": "agent-tuning",
+      "source_hash": "23149cd56616",
+      "target_hash": "a16b0a77080d"
+    },
+    "agent-tuning.jsonld.step-4": {
+      "part": "agent-tuning",
+      "source_hash": "2580a4baddda",
+      "target_hash": "c4a841fcf037"
+    },
+    "agent-tuning.tuning.h1-1": {
+      "part": "agent-tuning",
+      "source_hash": "2df23e8f7918",
+      "target_hash": "9f7e10a4f7e7"
+    },
+    "agent-tuning.p-1": {
+      "part": "agent-tuning",
+      "source_hash": "47320716621f",
+      "target_hash": "42f07b1ccc05"
+    },
+    "agent-tuning.h2-1": {
+      "part": "agent-tuning",
+      "source_hash": "2a300da26a75",
+      "target_hash": "3ac2ad0665e1"
+    },
+    "agent-tuning.li-1": {
+      "part": "agent-tuning",
+      "source_hash": "45b78d2f8e02",
+      "target_hash": "659851bc973d"
+    },
+    "agent-tuning.li-2": {
+      "part": "agent-tuning",
+      "source_hash": "a316c0dc85b5",
+      "target_hash": "a3a265dc14e1"
+    },
+    "agent-tuning.li-3": {
+      "part": "agent-tuning",
+      "source_hash": "45f30ab355a5",
+      "target_hash": "40ecfe95a5fa"
+    },
+    "agent-tuning.h2-2": {
+      "part": "agent-tuning",
+      "source_hash": "676f21721809",
+      "target_hash": "0cc6d70fa987"
+    },
+    "agent-tuning.th-1": {
+      "part": "agent-tuning",
+      "source_hash": "8e6a6cca7aae",
+      "target_hash": "4ec7d4554df9"
+    },
+    "agent-tuning.th-2": {
+      "part": "agent-tuning",
+      "source_hash": "3df9726c68ba",
+      "target_hash": "52fff1680de1"
+    },
+    "agent-tuning.th-3": {
+      "part": "agent-tuning",
+      "source_hash": "982d52862acc",
+      "target_hash": "ff9967bf6b82"
+    },
+    "agent-tuning.th-4": {
+      "part": "agent-tuning",
+      "source_hash": "966e8813028c",
+      "target_hash": "3b19fc446f82"
+    },
+    "agent-tuning.th-5": {
+      "part": "agent-tuning",
+      "source_hash": "6fb4184c2d5a",
+      "target_hash": "8515df37c2e6"
+    },
+    "agent-tuning.th-6": {
+      "part": "agent-tuning",
+      "source_hash": "a632bbe8e8aa",
+      "target_hash": "fe035c8f7403"
+    },
+    "agent-tuning.th-7": {
+      "part": "agent-tuning",
+      "source_hash": "4c3b52acd644",
+      "target_hash": "e1d293f52dbe"
+    },
+    "agent-tuning.td-1": {
+      "part": "agent-tuning",
+      "source_hash": "51491b72ded1",
+      "target_hash": "5c0dc75cc274"
+    },
+    "agent-tuning.th-8": {
+      "part": "agent-tuning",
+      "source_hash": "ead961a24dc4",
+      "target_hash": "17e3dfcebee9"
+    },
+    "agent-tuning.th-9": {
+      "part": "agent-tuning",
+      "source_hash": "70356d606d14",
+      "target_hash": "e531c6320477"
+    },
+    "agent-tuning.td-2": {
+      "part": "agent-tuning",
+      "source_hash": "9a72b9938ec6",
+      "target_hash": "6995cd9dcb27"
+    },
+    "agent-tuning.p-2": {
+      "part": "agent-tuning",
+      "source_hash": "c3bff7c1a9d1",
+      "target_hash": "012e89628792"
+    },
+    "agent-tuning.h2-3": {
+      "part": "agent-tuning",
+      "source_hash": "b273921d2e33",
+      "target_hash": "aa7b6122962b"
+    },
+    "agent-tuning.p-3": {
+      "part": "agent-tuning",
+      "source_hash": "a74bbbec589e",
+      "target_hash": "fb0b2fb15d07"
+    },
+    "agent-tuning.h3-1": {
+      "part": "agent-tuning",
+      "source_hash": "c1ebd00d0f72",
+      "target_hash": "35d07a6a7a30"
+    },
+    "agent-tuning.h3-2": {
+      "part": "agent-tuning",
+      "source_hash": "0cc405dce7f8",
+      "target_hash": "e058e1ca07b4"
+    },
+    "agent-tuning.h3-3": {
+      "part": "agent-tuning",
+      "source_hash": "906f71857682",
+      "target_hash": "8f88e72a5947"
+    },
+    "agent-tuning.h3-4": {
+      "part": "agent-tuning",
+      "source_hash": "d6e1c2c66dff",
+      "target_hash": "512388f3a643"
+    },
+    "agent-tuning.h2-4": {
+      "part": "agent-tuning",
+      "source_hash": "74e492d5d0df",
+      "target_hash": "35fa2caa4fd0"
+    },
+    "agent-tuning.li-4": {
+      "part": "agent-tuning",
+      "source_hash": "4a1f64b32132",
+      "target_hash": "28a185c391bf"
+    },
+    "agent-tuning.li-5": {
+      "part": "agent-tuning",
+      "source_hash": "e127f19fe7da",
+      "target_hash": "9783527fdc0c"
+    },
+    "agent-tuning.li-6": {
+      "part": "agent-tuning",
+      "source_hash": "dabc7d95f036",
+      "target_hash": "a37400f314d8"
+    },
+    "agent-tuning.li-7": {
+      "part": "agent-tuning",
+      "source_hash": "cc61ece33dc3",
+      "target_hash": "afae9c684cd1"
+    },
+    "agent-tuning.p-4": {
+      "part": "agent-tuning",
+      "source_hash": "cfe5bc772213",
+      "target_hash": "42307a02cc8e"
+    },
+    "gpu-monitoring.meta.title": {
+      "part": "gpu-monitoring",
+      "source_hash": "d27814ed8b63",
+      "target_hash": "34c3d979d4bb"
+    },
+    "gpu-monitoring.meta.description": {
+      "part": "gpu-monitoring",
+      "source_hash": "507736e1bea9",
+      "target_hash": "1049b5a02d25"
+    },
+    "gpu-monitoring.box.h1-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "cc0f4c9bbf2b",
+      "target_hash": "d2d8a611c6c0"
+    },
+    "gpu-monitoring.p-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "a9ca4640a6e7",
+      "target_hash": "071acf43a3cb"
+    },
+    "gpu-monitoring.p-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "e6e25a4491ad",
+      "target_hash": "b7c03c9aa389"
+    },
+    "gpu-monitoring.dt-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "8f0474fb0c5b",
+      "target_hash": "ea49523d744c"
+    },
+    "gpu-monitoring.dd-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "065609784858",
+      "target_hash": "3f853de842e5"
+    },
+    "gpu-monitoring.dt-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "60de0ad7eb70",
+      "target_hash": "c4004e4de199"
+    },
+    "gpu-monitoring.dd-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "2a58556c9272",
+      "target_hash": "dd7500aee4b0"
+    },
+    "gpu-monitoring.dd-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "a85ab5eb706a",
+      "target_hash": "777311033c53"
+    },
+    "gpu-monitoring.dt-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "9fe4c68ec20d",
+      "target_hash": "8d72392edabe"
+    },
+    "gpu-monitoring.dd-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "a041ea9e5251",
+      "target_hash": "ea59ed57acc2"
+    },
+    "gpu-monitoring.caption-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "db678a93d309",
+      "target_hash": "2f32e6d76d68"
+    },
+    "gpu-monitoring.th-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "463816d07097",
+      "target_hash": "e877a0054149"
+    },
+    "gpu-monitoring.th-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "5e1bc5df87b6",
+      "target_hash": "333c0f802c8c"
+    },
+    "gpu-monitoring.th-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "af088ec66533",
+      "target_hash": "642af912fe0f"
+    },
+    "gpu-monitoring.th-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "0cb077815ec8",
+      "target_hash": "25704d10cf81"
+    },
+    "gpu-monitoring.th-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "9739b22b0dce",
+      "target_hash": "3771b45e7a41"
+    },
+    "gpu-monitoring.col-capture.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "5e1bc5df87b6",
+      "target_hash": "333c0f802c8c"
+    },
+    "gpu-monitoring.col-median.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "e6245b901702",
+      "target_hash": "e26c5c5eafef"
+    },
+    "gpu-monitoring.col-peak.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "0cb077815ec8",
+      "target_hash": "25704d10cf81"
+    },
+    "gpu-monitoring.th-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "6554b6cbd5f4",
+      "target_hash": "b35a8aab84bd"
+    },
+    "gpu-monitoring.th-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "eb7b7fd32e11",
+      "target_hash": "c6e59a11e6a3"
+    },
+    "gpu-monitoring.span-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "0bedd95628dd",
+      "target_hash": "53161137c87a"
+    },
+    "gpu-monitoring.td-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "eaa6d59dc9be",
+      "target_hash": "eaa6d59dc9be"
+    },
+    "gpu-monitoring.td-8": {
+      "part": "gpu-monitoring",
+      "source_hash": "8678af14d6a2",
+      "target_hash": "8678af14d6a2"
+    },
+    "gpu-monitoring.p-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "fc86e0160504",
+      "target_hash": "b39c4229150f"
+    },
+    "gpu-monitoring.cards.h2-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "036e83c1af39",
+      "target_hash": "f6e0271ab9bd"
+    },
+    "gpu-monitoring.p-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "f87275635f5c",
+      "target_hash": "72ebe937c7b1"
+    },
+    "gpu-monitoring.img-1.alt": {
+      "part": "gpu-monitoring",
+      "source_hash": "55b551e38c61",
+      "target_hash": "e70302ac94fc"
+    },
+    "gpu-monitoring.span-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "b3bd726e07ac",
+      "target_hash": "f5b15f6f06e9"
+    },
+    "gpu-monitoring.span-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "7be6f5cf26b2",
+      "target_hash": "39c33ecd1b11"
+    },
+    "gpu-monitoring.span-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "ef8ca2bcafce",
+      "target_hash": "c3c65b42dd70"
+    },
+    "gpu-monitoring.span-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "c4d22dc73625",
+      "target_hash": "c81f68405f2e"
+    },
+    "gpu-monitoring.figcaption-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "7aa9957f224d",
+      "target_hash": "eaf1323285e8"
+    },
+    "gpu-monitoring.caption-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "fd76edd0a9d5",
+      "target_hash": "355e0392f42b"
+    },
+    "gpu-monitoring.th-8": {
+      "part": "gpu-monitoring",
+      "source_hash": "b596b0114ded",
+      "target_hash": "28d02daa1116"
+    },
+    "gpu-monitoring.td-9": {
+      "part": "gpu-monitoring",
+      "source_hash": "1f5a45a29bdc",
+      "target_hash": "f27a9b2eb5b9"
+    },
+    "gpu-monitoring.th-9": {
+      "part": "gpu-monitoring",
+      "source_hash": "fd8f8648eb41",
+      "target_hash": "245815c12296"
+    },
+    "gpu-monitoring.td-10": {
+      "part": "gpu-monitoring",
+      "source_hash": "d8e9193ca58e",
+      "target_hash": "84b1bc0e2eb8"
+    },
+    "gpu-monitoring.th-10": {
+      "part": "gpu-monitoring",
+      "source_hash": "c01f2094044d",
+      "target_hash": "623d8e0736a4"
+    },
+    "gpu-monitoring.td-11": {
+      "part": "gpu-monitoring",
+      "source_hash": "92c8d3b9a423",
+      "target_hash": "877aa1cfd56f"
+    },
+    "gpu-monitoring.inflight.h2-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "87e975182d2c",
+      "target_hash": "1f65b9d6da2a"
+    },
+    "gpu-monitoring.p-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "4d6984e02a57",
+      "target_hash": "a2495e237ac2"
+    },
+    "gpu-monitoring.img-2.alt": {
+      "part": "gpu-monitoring",
+      "source_hash": "850b1ebebfcc",
+      "target_hash": "22e23d8f789d"
+    },
+    "gpu-monitoring.span-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "807aafa43674",
+      "target_hash": "d18eec1a5ffd"
+    },
+    "gpu-monitoring.span-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "c6220dc860be",
+      "target_hash": "c74254d0dab8"
+    },
+    "gpu-monitoring.figcaption-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "cb4966892bbc",
+      "target_hash": "a7f260451f83"
+    },
+    "gpu-monitoring.p-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "1669f0782d97",
+      "target_hash": "135af4736e79"
+    },
+    "cache-aware-routing.meta.title": {
+      "part": "cache-aware-routing",
+      "source_hash": "74d5770bf736",
+      "target_hash": "1ae62e95c4c5"
+    },
+    "cache-aware-routing.meta.description": {
+      "part": "cache-aware-routing",
+      "source_hash": "055a37ed3302",
+      "target_hash": "2ea8b573497a"
+    },
+    "cache-aware-routing.replica.h1-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "7b4386acadc3",
+      "target_hash": "e4013b8edb25"
+    },
+    "cache-aware-routing.p-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "6a215639b7d8",
+      "target_hash": "7a33c62e3667"
+    },
+    "cache-aware-routing.p-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "2022d3c80a9f",
+      "target_hash": "3c7d01277cca"
+    },
+    "cache-aware-routing.figcaption-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "a3b037946eda",
+      "target_hash": "b240f0dc96f7"
+    },
+    "cache-aware-routing.p-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "91272c526688",
+      "target_hash": "869296b69ef2"
+    },
+    "cache-aware-routing.p-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "22167404e1cf",
+      "target_hash": "9dc5fccf5909"
+    },
+    "cache-aware-routing.dt-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "8f0474fb0c5b",
+      "target_hash": "ea49523d744c"
+    },
+    "cache-aware-routing.dd-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "a2a87a6a413f",
+      "target_hash": "e8ab8e310d89"
+    },
+    "cache-aware-routing.dt-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "5e2c614c23f0",
+      "target_hash": "c98e118e0a43"
+    },
+    "cache-aware-routing.dd-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "ca64e381cd89",
+      "target_hash": "c8cc37ff30eb"
+    },
+    "cache-aware-routing.dt-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "a511909161e1",
+      "target_hash": "a7159e5be02e"
+    },
+    "cache-aware-routing.dd-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "2d27d2565f76",
+      "target_hash": "93e02b4bc72c"
+    },
+    "cache-aware-routing.dd-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "056adfd1d823",
+      "target_hash": "29fc45d6294c"
+    },
+    "cache-aware-routing.dt-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "8a03fa9ad749",
+      "target_hash": "fbfb60e549f4"
+    },
+    "cache-aware-routing.dd-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "616bab8cda85",
+      "target_hash": "5140d51bc273"
+    },
+    "cache-aware-routing.dt-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "8a6bdb6b18da",
+      "target_hash": "dccf0e30783d"
+    },
+    "cache-aware-routing.dd-7": {
+      "part": "cache-aware-routing",
+      "source_hash": "bf79aedc37a9",
+      "target_hash": "0672debcfc84"
+    },
+    "cache-aware-routing.figcaption-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "4104b97ee062",
+      "target_hash": "d6d0fc78acf5"
+    },
+    "cache-aware-routing.p-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "4744b11be2ad",
+      "target_hash": "e39d7f86ac0d"
+    },
+    "cache-aware-routing.p-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "8ab22b61f669",
+      "target_hash": "fad61dd8c7c7"
+    },
+    "cache-aware-routing.figcaption-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "d3b521cd1c61",
+      "target_hash": "2174ae9cb687"
+    },
+    "cache-aware-routing.figcaption-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "7721bb0a3fe0",
+      "target_hash": "ac69b7b99732"
+    },
+    "cache-aware-routing.img-1.alt": {
+      "part": "cache-aware-routing",
+      "source_hash": "f1bc7fbd6399",
+      "target_hash": "35b5eeb58054"
+    },
+    "cache-aware-routing.span-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "afd07a294687",
+      "target_hash": "d31817005b83"
+    },
+    "cache-aware-routing.span-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "aeb0dd495f94",
+      "target_hash": "bbf40a0ec6b0"
+    },
+    "cache-aware-routing.figcaption-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "c5c62f4909c8",
+      "target_hash": "911d03970b31"
+    },
+    "cache-aware-routing.p-7": {
+      "part": "cache-aware-routing",
+      "source_hash": "36247db6bebb",
+      "target_hash": "a8eca00d0adc"
+    },
+    "cache-aware-routing.img-2.alt": {
+      "part": "cache-aware-routing",
+      "source_hash": "a40bcea9f2f2",
+      "target_hash": "ce368a0cfadd"
+    },
+    "cache-aware-routing.span-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "30f9cc329d1b",
+      "target_hash": "dd7f015f0d29"
+    },
+    "cache-aware-routing.figcaption-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "8b698966274e",
+      "target_hash": "3cb542b9b185"
+    },
+    "cache-aware-routing.p-8": {
+      "part": "cache-aware-routing",
+      "source_hash": "f55143f36cbe",
+      "target_hash": "132d56a5592d"
+    },
+    "api-keys.meta.title": {
+      "part": "api-keys",
+      "source_hash": "36d31214a489",
+      "target_hash": "624eb9efcf28"
+    },
+    "api-keys.meta.description": {
+      "part": "api-keys",
+      "source_hash": "dc32185af3f0",
+      "target_hash": "3b98135bad2d"
+    },
+    "api-keys.keys.h1-1": {
+      "part": "api-keys",
+      "source_hash": "478db02e5440",
+      "target_hash": "980ee601a44d"
+    },
+    "api-keys.p-1": {
+      "part": "api-keys",
+      "source_hash": "128af00fcd92",
+      "target_hash": "e1a21fc36c14"
+    },
+    "api-keys.p-2": {
+      "part": "api-keys",
+      "source_hash": "24b259f012c7",
+      "target_hash": "d6395b1b05cd"
+    },
+    "api-keys.p-3": {
+      "part": "api-keys",
+      "source_hash": "992b035b09f7",
+      "target_hash": "8299f9315a4c"
+    },
+    "api-keys.video-1.aria-label": {
+      "part": "api-keys",
+      "source_hash": "146ed912c7a6",
+      "target_hash": "1e3974905ba5"
+    },
+    "api-keys.figcaption-1": {
+      "part": "api-keys",
+      "source_hash": "389cdbc39b42",
+      "target_hash": "f51fa7a6fd38"
+    },
+    "api-keys.img-1.alt": {
+      "part": "api-keys",
+      "source_hash": "e3200603dcf6",
+      "target_hash": "a71011e059d8"
+    },
+    "api-keys.figcaption-2": {
+      "part": "api-keys",
+      "source_hash": "1a43a2ba1520",
+      "target_hash": "65973ef47629"
+    },
+    "api-keys.leave.h2-1": {
+      "part": "api-keys",
+      "source_hash": "8f28f88090a1",
+      "target_hash": "b9535a1e7066"
+    },
+    "api-keys.p-4": {
+      "part": "api-keys",
+      "source_hash": "18372068885f",
+      "target_hash": "2e4696dff6ee"
+    },
+    "api-keys.p-5": {
+      "part": "api-keys",
+      "source_hash": "cfe5bc772213",
+      "target_hash": "42307a02cc8e"
+    },
+    "features.meta.title": {
+      "part": "features",
+      "source_hash": "ba96eee84458",
+      "target_hash": "e6b30d0175cd"
+    },
+    "features.meta.description": {
+      "part": "features",
+      "source_hash": "6e9623164c58",
+      "target_hash": "40a8ac76af93"
+    },
+    "features.small.h1-1": {
+      "part": "features",
+      "source_hash": "32313b57288c",
+      "target_hash": "e3dd92f402bc"
+    },
+    "features.dd-1": {
+      "part": "features",
+      "source_hash": "30b3b2877354",
+      "target_hash": "4f4a954831a2"
+    },
+    "features.dt-1": {
+      "part": "features",
+      "source_hash": "c0b53878c4d4",
+      "target_hash": "c306e696fbbb"
+    },
+    "features.dd-2": {
+      "part": "features",
+      "source_hash": "332151669674",
+      "target_hash": "a01d624c84e0"
+    },
+    "features.dt-2": {
+      "part": "features",
+      "source_hash": "3b9fd142bcdf",
+      "target_hash": "94ff89c9b726"
+    },
+    "features.dd-3": {
+      "part": "features",
+      "source_hash": "9d11305af39b",
+      "target_hash": "f4ea8a80f0e6"
+    },
+    "features.dt-3": {
+      "part": "features",
+      "source_hash": "db562f172ced",
+      "target_hash": "f9bd82c94527"
+    },
+    "features.dd-4": {
+      "part": "features",
+      "source_hash": "0e54e933002b",
+      "target_hash": "a4856a9d5f18"
+    },
+    "features.dt-4": {
+      "part": "features",
+      "source_hash": "afddbc532ecf",
+      "target_hash": "9241b3b5da8f"
+    },
+    "features.dd-5": {
+      "part": "features",
+      "source_hash": "b61634fa6450",
+      "target_hash": "18a0fea11ca8"
+    },
+    "features.dt-5": {
+      "part": "features",
+      "source_hash": "bf3c9855201c",
+      "target_hash": "b3cacfae40e3"
+    },
+    "features.dd-6": {
+      "part": "features",
+      "source_hash": "8500a2b3792f",
+      "target_hash": "d2aa6f88488c"
+    },
+    "features.dt-6": {
+      "part": "features",
+      "source_hash": "2384f4730652",
+      "target_hash": "7cc2486b6961"
+    },
+    "features.dd-7": {
+      "part": "features",
+      "source_hash": "2bc91137abf9",
+      "target_hash": "dbf99d664186"
+    },
+    "features.dd-8": {
+      "part": "features",
+      "source_hash": "93a18b286b4e",
+      "target_hash": "1debb581edcc"
+    },
+    "features.dt-7": {
+      "part": "features",
+      "source_hash": "989e5691fd83",
+      "target_hash": "d4e9f942ecd0"
+    },
+    "features.dd-9": {
+      "part": "features",
+      "source_hash": "7c8ef7303dc3",
+      "target_hash": "5ac80400b997"
+    },
+    "features.lessons.h2-1": {
+      "part": "features",
+      "source_hash": "b2e61284634a",
+      "target_hash": "0a7bce349788"
+    },
+    "features.h3-1": {
+      "part": "features",
+      "source_hash": "a3c2a4abe3bf",
+      "target_hash": "143805b7c4b7"
+    },
+    "features.p-1": {
+      "part": "features",
+      "source_hash": "8d323d1c089b",
+      "target_hash": "e757b6828bf3"
+    },
+    "features.img-1.alt": {
+      "part": "features",
+      "source_hash": "a4f74c626a7f",
+      "target_hash": "ade6f0f1ae3b"
+    },
+    "features.span-1": {
+      "part": "features",
+      "source_hash": "e1d7e982a29c",
+      "target_hash": "97f10bc8c5d2"
+    },
+    "features.figcaption-1": {
+      "part": "features",
+      "source_hash": "40a242621e22",
+      "target_hash": "64d4eb6ad98b"
+    },
+    "features.h3-2": {
+      "part": "features",
+      "source_hash": "69140856abf8",
+      "target_hash": "9d21f60e4dbd"
+    },
+    "features.p-2": {
+      "part": "features",
+      "source_hash": "cceedae9466e",
+      "target_hash": "a94e4d0c240a"
+    },
+    "features.img-2.alt": {
+      "part": "features",
+      "source_hash": "e3cc9ae4cf3b",
+      "target_hash": "2333d79815fe"
+    },
+    "features.figcaption-2": {
+      "part": "features",
+      "source_hash": "981fef031d3d",
+      "target_hash": "ddb925053bfe"
+    },
+    "features.h3-3": {
+      "part": "features",
+      "source_hash": "2269d7489768",
+      "target_hash": "1cb6f296299a"
+    },
+    "features.p-3": {
+      "part": "features",
+      "source_hash": "a34f00101361",
+      "target_hash": "da17f7ab23f6"
+    },
+    "features.th-1": {
+      "part": "features",
+      "source_hash": "5e2c614c23f0",
+      "target_hash": "c98e118e0a43"
+    },
+    "features.th-2": {
+      "part": "features",
+      "source_hash": "ea5522c7c85e",
+      "target_hash": "8822f9a00265"
+    },
+    "features.th-3": {
+      "part": "features",
+      "source_hash": "9bebcd3482a7",
+      "target_hash": "0f0791636a9e"
+    },
+    "features.col-works.data-h": {
+      "part": "features",
+      "source_hash": "2b4c8c6d38db",
+      "target_hash": "d6fbc7b63021"
+    },
+    "features.td-1": {
+      "part": "features",
+      "source_hash": "4516d9c167db",
+      "target_hash": "79b939b8776b"
+    },
+    "features.col-does-not.data-h": {
+      "part": "features",
+      "source_hash": "73a6fc7836b8",
+      "target_hash": "bc8f9430fa4b"
+    },
+    "features.td-2": {
+      "part": "features",
+      "source_hash": "6b644f502c34",
+      "target_hash": "07beb850fe09"
+    },
+    "features.th-4": {
+      "part": "features",
+      "source_hash": "c2f2a5cd5d41",
+      "target_hash": "9c6e663ab4d0"
+    },
+    "features.td-3": {
+      "part": "features",
+      "source_hash": "baa3aea88f30",
+      "target_hash": "323d4e360994"
+    },
+    "features.td-4": {
+      "part": "features",
+      "source_hash": "1ce2fc0f7104",
+      "target_hash": "199a4295704a"
+    },
+    "features.th-5": {
+      "part": "features",
+      "source_hash": "3bc589f1752e",
+      "target_hash": "360ef3fd0e1f"
+    },
+    "features.td-5": {
+      "part": "features",
+      "source_hash": "6fed9ca4f3d2",
+      "target_hash": "1cb82e0d1800"
+    },
+    "features.td-6": {
+      "part": "features",
+      "source_hash": "296d7ad75ac3",
+      "target_hash": "ce6700a31bc4"
+    },
+    "features.p-4": {
+      "part": "features",
+      "source_hash": "d5f7cb24d2cc",
+      "target_hash": "4a6829fa28cf"
+    },
+    "features.p-5": {
+      "part": "features",
+      "source_hash": "4c5ddc0960f7",
+      "target_hash": "ec2fefe66089"
+    },
+    "faq.meta.title": {
+      "part": "faq",
+      "source_hash": "fb9dd5739289",
+      "target_hash": "a1e81377dab1"
+    },
+    "faq.meta.description": {
+      "part": "faq",
+      "source_hash": "4c424d1bb872",
+      "target_hash": "1a7a55dfca90"
+    },
+    "faq.faq.h1-1": {
+      "part": "faq",
+      "source_hash": "b14e49a87fdf",
+      "target_hash": "b35f0082a534"
+    },
+    "faq.q-1": {
+      "part": "faq",
+      "source_hash": "37148ce83843",
+      "target_hash": "b4bb80af1808"
+    },
+    "faq.a-1": {
+      "part": "faq",
+      "source_hash": "5098435c4cfe",
+      "target_hash": "e9fce516df78"
+    },
+    "faq.q-2": {
+      "part": "faq",
+      "source_hash": "fd575095e092",
+      "target_hash": "86188a43e9bc"
+    },
+    "faq.a-2": {
+      "part": "faq",
+      "source_hash": "af7c57748da9",
+      "target_hash": "9c12bc6600c9"
+    },
+    "faq.q-3": {
+      "part": "faq",
+      "source_hash": "07d287af578c",
+      "target_hash": "d6b6f115b6e3"
+    },
+    "faq.a-3": {
+      "part": "faq",
+      "source_hash": "6aa388b69fbe",
+      "target_hash": "e7a478eaf1a4"
+    },
+    "faq.q-4": {
+      "part": "faq",
+      "source_hash": "3cb57cff1faf",
+      "target_hash": "90d40953a801"
+    },
+    "faq.a-4": {
+      "part": "faq",
+      "source_hash": "680fb986650c",
+      "target_hash": "965fdc83b615"
+    },
+    "faq.q-5": {
+      "part": "faq",
+      "source_hash": "0e5c302159a3",
+      "target_hash": "8dd617ce8f08"
+    },
+    "faq.a-5": {
+      "part": "faq",
+      "source_hash": "36a441a68717",
+      "target_hash": "fa67fdb55f60"
+    },
+    "faq.q-6": {
+      "part": "faq",
+      "source_hash": "af507f756ef8",
+      "target_hash": "0abb209bfdaa"
+    },
+    "faq.a-6": {
+      "part": "faq",
+      "source_hash": "71d96023e2e8",
+      "target_hash": "6b814ae8117d"
+    },
+    "faq.q-7": {
+      "part": "faq",
+      "source_hash": "2e943e3c5431",
+      "target_hash": "e292ab0ee77a"
+    },
+    "faq.a-7": {
+      "part": "faq",
+      "source_hash": "728ba07e9c96",
+      "target_hash": "6f2f0da0d01e"
+    },
+    "faq.q-8": {
+      "part": "faq",
+      "source_hash": "5cba7fae2cca",
+      "target_hash": "8e9851dae593"
+    },
+    "faq.a-8": {
+      "part": "faq",
+      "source_hash": "f047e1060aa4",
+      "target_hash": "70a3193389eb"
+    },
+    "faq.q-9": {
+      "part": "faq",
+      "source_hash": "138d847537f5",
+      "target_hash": "9ad2af8bee52"
+    },
+    "faq.a-9": {
+      "part": "faq",
+      "source_hash": "37fb94868ccc",
+      "target_hash": "71747d2be1f7"
+    },
+    "faq.q-10": {
+      "part": "faq",
+      "source_hash": "300a4b4adf9a",
+      "target_hash": "a38667f529be"
+    },
+    "faq.a-10": {
+      "part": "faq",
+      "source_hash": "c4ef5c9a9c54",
+      "target_hash": "25d958c1cfb6"
+    },
+    "faq.q-11": {
+      "part": "faq",
+      "source_hash": "889f53a02753",
+      "target_hash": "a188629df931"
+    },
+    "faq.a-11": {
+      "part": "faq",
+      "source_hash": "f7c42330b71d",
+      "target_hash": "f5f37548c4f3"
+    },
+    "faq.q-12": {
+      "part": "faq",
+      "source_hash": "e8dc9deba44c",
+      "target_hash": "40117437865c"
+    },
+    "faq.a-12": {
+      "part": "faq",
+      "source_hash": "97000d243331",
+      "target_hash": "8720657fb92b"
+    },
+    "faq.p-1": {
+      "part": "faq",
+      "source_hash": "8e86209820fa",
+      "target_hash": "8d1fa7a29f90"
+    },
+    "privacy.meta.title": {
+      "part": "privacy",
+      "source_hash": "ec9b140b1cc8",
+      "target_hash": "40ca2e665efa"
+    },
+    "privacy.meta.description": {
+      "part": "privacy",
+      "source_hash": "de30b21dbdc3",
+      "target_hash": "2c127bd56674"
+    },
+    "privacy.ads": {
+      "part": "privacy",
+      "source_hash": "9b2a078e8838",
+      "target_hash": "90a6c8b7ca15"
+    },
+    "privacy.contact-official": {
+      "part": "privacy",
+      "source_hash": "eebc1d21c39b",
+      "target_hash": "4dde95b86dd5"
+    },
+    "privacy.contact-operator": {
+      "part": "privacy",
+      "source_hash": "914390fc9adc",
+      "target_hash": "9e6585c95253"
+    },
+    "privacy.privacy.h1-1": {
+      "part": "privacy",
+      "source_hash": "f940c0a0e353",
+      "target_hash": "9e9040b3e356"
+    },
+    "privacy.p-1": {
+      "part": "privacy",
+      "source_hash": "b3509e8a2750",
+      "target_hash": "922ce8f87423"
+    },
+    "privacy.h2-1": {
+      "part": "privacy",
+      "source_hash": "dd9acabe8622",
+      "target_hash": "b10218225147"
+    },
+    "privacy.p-2": {
+      "part": "privacy",
+      "source_hash": "8de08e36eb6d",
+      "target_hash": "a6e2b1b1466b"
+    },
+    "privacy.h2-2": {
+      "part": "privacy",
+      "source_hash": "910b22425fed",
+      "target_hash": "7ffeea55ad64"
+    },
+    "privacy.p-3": {
+      "part": "privacy",
+      "source_hash": "9405f2778a61",
+      "target_hash": "f26997ac282c"
+    },
+    "privacy.h2-3": {
+      "part": "privacy",
+      "source_hash": "3aa95e4c746f",
+      "target_hash": "f295cb577781"
+    },
+    "privacy.p-4": {
+      "part": "privacy",
+      "source_hash": "319e165f9018",
+      "target_hash": "1e3e8ca2ce86"
+    },
+    "privacy.h2-4": {
+      "part": "privacy",
+      "source_hash": "795028f063d5",
+      "target_hash": "1cb3c5197356"
+    },
+    "privacy.p-5": {
+      "part": "privacy",
+      "source_hash": "112b969b0be0",
+      "target_hash": "54e1028ee9fe"
+    },
+    "privacy.p-6": {
+      "part": "privacy",
+      "source_hash": "0d38cc82e109",
+      "target_hash": "11fb2882467f"
+    },
+    "not-found.meta.title": {
+      "part": "not-found",
+      "source_hash": "9997b967a0f9",
+      "target_hash": "008af3e7afec"
+    },
+    "not-found.meta.description": {
+      "part": "not-found",
+      "source_hash": "f56b56b08c51",
+      "target_hash": "2329f46639e4"
+    },
+    "not-found.nf.h1-1": {
+      "part": "not-found",
+      "source_hash": "0a4c2fc34b17",
+      "target_hash": "cffe86fed791"
+    },
+    "not-found.p-1": {
+      "part": "not-found",
+      "source_hash": "701d00dd6585",
+      "target_hash": "0d0f7587d909"
+    }
+  },
+  "back_notes": {
+    "home.agents.span-1": "These tags are bare fragments with no clear subject (which tool each describes is missing).",
+    "home.agents.span-8": "Fragment: begins with the verb and no subject/number (presumably a number precedes in a separate element); 占...的99% is a bit odd.",
+    "clients.grok-cli.mode.default.desc": "Contains a raw shell command with a pipe; also \"Add a model entry\" is terse imperative.",
+    "clients.cursor.capability": "\"这一设置是从 Cursor 员工在论坛上的回复中得知的\" is unusually candid for product copy.",
+    "claude-code-router.figcaption-1": "\"图&nbsp;2\" figure numbering assumes a Figure 1 elsewhere on the page.",
+    "gpu-monitoring.th-7": "\"9 月 23 日的面板\" has no year, a bare date inside a table header.",
+    "gpu-monitoring.span-1": "\"未显示\" (not shown) is a bare fragment with unclear context.",
+    "cache-aware-routing.dd-5": "\"本版本\" (this version) is a bare fragment with no context.",
+    "features.td-6": "Table cells are bare fragments without a verb.",
+    "privacy.p-2": "'{{privacy_ads}}会记录三种操作' has an unclear subject (the placeholder presumably inserts a sentence ending and the subject of the recording is implied)."
+  },
+  "issues": [
+    {
+      "key": "meta.og-image-alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"在你桌下\" calques \"under your desk\"; reads oddly in zh-CN.",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-10",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Latin \"x\" used as multiplication sign; use \"×\".",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-10",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"变窄的 PCIe 链路\" calques \"narrow link\"; the zh term is link width degradation.",
+      "round": 1
+    },
+    {
+      "key": "home.hero.h1-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] Headline is a subjectless fragment (\"Your GPU, served like a hosted API\") that reads as broken zh.",
+      "round": 1
+    },
+    {
+      "key": "home.hero.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"在前面提供一个……端口\" calques \"puts a port in front\"; and \"端口\" (network port) conflicts with \"端点\" used in meta/FAQ for the OpenAI endpoint.",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-10",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Telegraphic English triad (\"a USB drive, a chassis, one job\"); \"USB 驱动器\" is not the zh-CN word for a USB stick.",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.p-10",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"无线更新\" mistranslates \"over the air\" as \"wireless update\"; zh-CN uses 在线更新 / OTA.",
+      "round": 1
+    },
+    {
+      "key": "home.p-appliance.li-3",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"无线接收更新\" = \"receive updates wirelessly\"; the meaning is OTA/online updates.",
+      "round": 1
+    },
+    {
+      "key": "home.install.span-1",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"主要版本\" means \"major version\", not the primary/flagship platform badge.",
+      "round": 1
+    },
+    {
+      "key": "home.install.span-3",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"下一步\" means \"next step\"; the badge means \"next platform to be supported\".",
+      "round": 1
+    },
+    {
+      "key": "home.install.small-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"USB 驱动器\" is a calque; zh-CN says U 盘.",
+      "round": 1
+    },
+    {
+      "key": "home.p-appliance.li-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"USB 驱动器\" is a calque; zh-CN says U 盘.",
+      "round": 1
+    },
+    {
+      "key": "home.p-mac.li-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"仪表板\" here vs \"控制台\" for the same UI everywhere else.",
+      "round": 1
+    },
+    {
+      "key": "home.why-chat.img-1.alt",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"仪表板窗口\" vs \"控制台\" elsewhere for the same UI.",
+      "round": 1
+    },
+    {
+      "key": "faq.a-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"同样的仪表板\" vs \"控制台\" elsewhere for the same UI.",
+      "round": 1
+    },
+    {
+      "key": "home.p-mac.img-1.alt",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"一条内存条\" reads as \"a RAM stick\"; the menu shows a memory-usage bar.",
+      "round": 1
+    },
+    {
+      "key": "home.upgrade.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"向前迁移\" calques \"migrates forward\".",
+      "round": 1
+    },
+    {
+      "key": "home.why.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"裸引擎\" calques \"bare engine\", and \"围绕它的各个部分\" (\"the pieces around it\") is vague; a native reader cannot tell what is being listed.",
+      "round": 1
+    },
+    {
+      "key": "home.why-stats.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"裸引擎\" calque (bare engine); \"利用率持平而队列积压\" puts the English cause/effect order.",
+      "round": 1
+    },
+    {
+      "key": "faq.a-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"裸引擎\" calques \"bare engine\".",
+      "round": 1
+    },
+    {
+      "key": "home.why-fit.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"预算会相应累加\" calques \"budget\"; the thing that adds up is available VRAM.",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.p-2",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"背靠背运行\" is a literal calque of \"back to back\"; meaningless in zh technical prose.",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.dd-6",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"背靠背运行\" is a literal calque of \"back to back\".",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.figcaption-4",
+      "category": "locale-convention",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] Mixed date format \"2026 年十月 4 日\"; zh-CN uses Arabic numerals throughout.",
+      "round": 1
+    },
+    {
+      "key": "home.agents.span-8",
+      "category": "locale-convention",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] Mixed date format \"2026 年十月 21 日\".",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"它在哪里吃亏\" and \"慢尾\" calque \"where it loses\" / \"slow tail\"; zh uses 代价 / 长尾延迟.",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"慢尾\" calques \"slow tail\"; use 长尾延迟.",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"负载爬升的每一级\" calques \"every step of the ramp\".",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Trailing English-order adjuncts (\"…搜索，在你的硬件上，针对你的工作负载。\").",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Over-long attributive chain \"一次找出并应用真实上下文上限的压力测试\".",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.ol-1.aria-label",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] \"优先级阶梯\" calques the English \"priority ladder\" metaphor.",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.p-3",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] Same case as the owner calibration: \"示例阶梯\" (ladder) is a borrowed metaphor and \"数字由你决定\" is stiff.",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"桌下\" calques \"under your desk\"; \"停留在 x16 中 x4\" is a stiff rendering of \"stuck at x4 of x16\".",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.figcaption-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"在规模上限处\" calques \"at the top of the range\".",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"外壳还活着而引擎已死\" calques \"shell alive, engine dead\".",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-2",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Spaces around Chinese quotation marks; zh-CN puts no space between “” and adjacent text.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Spaces around Chinese quotation marks.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.img-2.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Spaces after Chinese closing quotation marks.",
+      "round": 1
+    },
+    {
+      "key": "faq.a-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Spaces around Chinese quotation marks.",
+      "round": 1
+    },
+    {
+      "key": "faq.a-7",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Spaces around Chinese quotation marks.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"除非你添加规则，兜底规则就是这么做的\" is a confusing literal clause order; \"移动这条界线\" calques \"moves the line\".",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"冷读取\" calques \"read cold\".",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.span-4",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Says the rule itself \"went to Anthropic\"; it is the request that is sent or refused.",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.figcaption-3",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Says the rule itself \"went to Anthropic\"; it is the request.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.p-3",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"早于……之前\" is redundant/ungrammatical.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.p-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"慢得没有 warden 能看出的原因\" is a word-for-word rendering.",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"替代名\" calques \"stand-ins\".",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.box.h1-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"这些数字背后的主机\" calques \"the box behind the numbers\".",
+      "round": 1
+    },
+    {
+      "key": "features.dd-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"驱动控制 API\" calques \"drive the control API\"; zh says 调用.",
+      "round": 1
+    },
+    {
+      "key": "faq.a-9",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"驱动控制 API\" calques \"drive the control API\".",
+      "round": 1
+    },
+    {
+      "key": "features.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"内存的生命体征\" calques \"vitals\".",
+      "round": 1
+    },
+    {
+      "key": "features.dd-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"响应\" here vs \"回复\" in every other God mode description.",
+      "round": 1
+    },
+    {
+      "key": "api-keys.video-1.aria-label",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"响应\" here vs \"回复\" in every other God mode description.",
+      "round": 1
+    },
+    {
+      "key": "faq.q-8",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"响应\" vs \"回复\" used for model output elsewhere.",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.replica.h1-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] \"落在\" calques \"lands\"; the subject (a request) and the destination (replica) are left implicit.",
+      "round": 1
+    },
+    {
+      "key": "home.install.span-1",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning] 'main release' badge rendered 主要版本 (= major version); now 主力平台",
+      "round": 1
+    },
+    {
+      "key": "home.install.span-3",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning] 'next' badge rendered 下一步 (= next step); now 即将支持",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.p-10",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning] 'over the air' rendered 无线 (wireless); now 在线（OTA）更新",
+      "round": 1
+    },
+    {
+      "key": "home.p-appliance.li-3",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning] OTA updates rendered as wireless updates",
+      "round": 1
+    },
+    {
+      "key": "home.p-mac.img-1.alt",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning] 'a memory bar' rendered 一条内存条 (a RAM stick); now 内存用量条",
+      "round": 1
+    },
+    {
+      "key": "faq.a-9",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning] 带宽限期轮换 parses as 带宽 (bandwidth); rotation with a grace window rewritten; 驱动控制 API -> 调用",
+      "round": 1
+    },
+    {
+      "key": "faq.a-7",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[meaning] convoluted relative clause made the relay condition hard to follow; split into clear sentences, 标志 -> 标记",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.p-2",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'pinned' / 'replicas doing work 2.71 against 2.83 of four' clipped; clarified; 背靠背 -> 连续运行",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-3",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] '四个中的 2.71 对 2.83' hard to parse; clarified",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] run-on chain; parenthetical on least-loaded criteria rewritten",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'tail' rendered 尾部; unified as 长尾延迟",
+      "round": 1
+    },
+    {
+      "key": "coding-agents.p-2",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] said Connect itself picks the client; the user picks in Connect",
+      "round": 1
+    },
+    {
+      "key": "api-keys.meta.description",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'behind ... endpoints' rendered 背后是 (backed by); keys apply to those endpoints",
+      "round": 1
+    },
+    {
+      "key": "api-keys.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'one in fifteen drawn' rendered cryptically; now 按十五分之一抽样绘制",
+      "round": 1
+    },
+    {
+      "key": "api-keys.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] window clause fused into rotation sentence; split",
+      "round": 1
+    },
+    {
+      "key": "api-keys.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'read the diff backwards' calque; argv glossed",
+      "round": 1
+    },
+    {
+      "key": "api-keys.leave.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 离开只需修改 literal; headline rewritten",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 准确看到模型看到了 repetitive calque",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] convoluted 用剩的容量才归 structure",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.img-1.alt",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] English UI sentence now framed in quotes",
+      "round": 1
+    },
+    {
+      "key": "home.agents.p-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'harnesses' -> 十种工具 and 'hard work' -> 难题 vague; now 十款编程智能体 / 更难的任务",
+      "round": 1
+    },
+    {
+      "key": "home.agents.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] fragment 'Claude Code 和 Anthropic SDK，通过路由器。'",
+      "round": 1
+    },
+    {
+      "key": "home.agents.h3-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 分流出去 unclear where; now 交给本地模型",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 分流出去 unclear where; now 交给本地模型",
+      "round": 1
+    },
+    {
+      "key": "home.hero.span-8",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 端口 vs 端点; endpoint unified as 端点",
+      "round": 1
+    },
+    {
+      "key": "features.p-3",
+      "category": "omission",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] dropped that OOM happens on these 16 GiB cards; 内存 -> 显存",
+      "round": 1
+    },
+    {
+      "key": "features.td-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 内存 -> 显存 (GPU memory)",
+      "round": 1
+    },
+    {
+      "key": "features.td-5",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 各自放得下自己的显卡 garbled",
+      "round": 1
+    },
+    {
+      "key": "features.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 响应 vs 应答/回复 unified; subject of 保留证据 made explicit",
+      "round": 1
+    },
+    {
+      "key": "features.h3-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 代理 ambiguous with agent; now 代理服务",
+      "round": 1
+    },
+    {
+      "key": "faq.a-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 任何内容 ambiguous",
+      "round": 1
+    },
+    {
+      "key": "faq.a-12",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 硬件的钱付清 colloquial",
+      "round": 1
+    },
+    {
+      "key": "privacy.p-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'served by LM Warden' read as 'provided by'; now 运行在 LM Warden 上",
+      "round": 1
+    },
+    {
+      "key": "privacy.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] three recorded actions listed ambiguously",
+      "round": 1
+    },
+    {
+      "key": "privacy.p-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] stacked 使用来自使用其服务 link text",
+      "round": 1
+    },
+    {
+      "key": "not-found.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] odd causal phrasing",
+      "round": 1
+    },
+    {
+      "key": "not-found.nf.h1-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 不在这里 literal",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-10",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] USB 驱动器 calque; USB is do-not-translate so U 盘 not allowed -> USB 启动盘",
+      "round": 1
+    },
+    {
+      "key": "home.install.small-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] USB 驱动器 -> USB 启动盘 (USB must stay; editor's U 盘 not used)",
+      "round": 1
+    },
+    {
+      "key": "home.p-appliance.li-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] USB 驱动器 -> USB 启动盘",
+      "round": 1
+    },
+    {
+      "key": "meta.description",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-6",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'layout' rendered 布局 (UI layout); unified as 切分方式/切分方案",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "jsonld.feature-9",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.p-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'layout' rendered 布局 (UI layout); unified as 切分方式/切分方案",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.h3-9",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "home.hw.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "home.use-cases.p-9",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "home.why.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "home.why-cache.a-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.figcaption-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'layout' rendered 布局 (UI layout); unified as 切分方式/切分方案",
+      "round": 1
+    },
+    {
+      "key": "home.loop-d.desc-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'layout' rendered 布局 (UI layout); unified as 切分方式/切分方案",
+      "round": 1
+    },
+    {
+      "key": "home.loop-d2.desc-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'layout' rendered 布局 (UI layout); unified as 切分方式/切分方案",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.li-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.li-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'layout' rendered 布局 (UI layout); unified as 切分方式/切分方案",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "home.why-agent.p-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'layout' rendered 布局 (UI layout); unified as 切分方式/切分方案",
+      "round": 1
+    },
+    {
+      "key": "home.why-keys.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "home.hardware.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "home.features.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "home.open-source.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "chrome.footer.tag-note",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "chrome.consent.text",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "common.client.setup-p",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "common.client.docs",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "coding-agents.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] run-on; 每块 GPU 一个模型副本 made a parenthetical",
+      "round": 1
+    },
+    {
+      "key": "clients.meta.title",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "clients.claude-code.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "clients.claude-code.req.relay_key",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "clients.anthropic-sdk.req.relay_key",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "clients.claude-code.mode.local.desc",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'served model' rendered 已提供 (calque); unified as 已部署的模型",
+      "round": 1
+    },
+    {
+      "key": "clients.anthropic-sdk.capability",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'served model' rendered 已提供 (calque); unified as 已部署的模型",
+      "round": 1
+    },
+    {
+      "key": "clients.anthropic-sdk.mode.local.desc",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'served model' rendered 已提供 (calque); unified as 已部署的模型",
+      "round": 1
+    },
+    {
+      "key": "clients.opencode.summary",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'served model' rendered 已提供 (calque); unified as 已部署的模型",
+      "round": 1
+    },
+    {
+      "key": "clients.opencode.capability",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'served model' rendered 已提供 (calque); unified as 已部署的模型",
+      "round": 1
+    },
+    {
+      "key": "clients.aider.summary",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'served model' rendered 已提供 (calque); unified as 已部署的模型",
+      "round": 1
+    },
+    {
+      "key": "clients.grok-cli.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "clients.grok-cli.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "clients.continue.summary",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'served model' rendered 已提供 (calque); unified as 已部署的模型",
+      "round": 1
+    },
+    {
+      "key": "clients.cursor.summary",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'served model' rendered 已提供 (calque); unified as 已部署的模型",
+      "round": 1
+    },
+    {
+      "key": "clients.codex-cli.summary",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'served model' rendered 已提供 (calque); unified as 已部署的模型",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.router.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "claude-code-router.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "agent-tuning.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'layout' rendered 布局 (UI layout); unified as 切分方式/切分方案",
+      "round": 1
+    },
+    {
+      "key": "agent-tuning.h2-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "agent-tuning.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "agent-tuning.h3-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'layout' rendered 布局 (UI layout); unified as 切分方式/切分方案",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.p-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'throttle point' unified as 降频温度",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.cards.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.img-1.alt",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'throttle point' unified as 降频温度",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.span-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'throttle point' unified as 降频温度",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.span-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.span-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.caption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.td-11",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.img-2.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.dt-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'layout' rendered 布局 (UI layout); unified as 切分方式/切分方案",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.dd-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "cache-aware-routing.p-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "features.small.h1-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "features.dd-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "features.dd-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "features.dd-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "features.dd-8",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "features.h3-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "features.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "privacy.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "privacy.p-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "privacy.contact-operator",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[senior editor] calque or stiff phrasing rewritten for natural zh-CN",
+      "round": 1
+    },
+    {
+      "key": "home.features.p-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'throttle point' unified as 降频温度",
+      "round": 1
+    },
+    {
+      "key": "clients.claude-code.capability",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'served model' rendered 已提供 (calque); unified as 已部署的模型",
+      "round": 1
+    },
+    {
+      "key": "clients.anthropic-sdk.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] run-on; 每块 GPU 一个模型副本 made a parenthetical",
+      "round": 1
+    },
+    {
+      "key": "clients.opencode.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] run-on; 每块 GPU 一个模型副本 made a parenthetical",
+      "round": 1
+    },
+    {
+      "key": "clients.aider.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] run-on; 每块 GPU 一个模型副本 made a parenthetical",
+      "round": 1
+    },
+    {
+      "key": "clients.grok-cli.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] run-on; 每块 GPU 一个模型副本 made a parenthetical",
+      "round": 1
+    },
+    {
+      "key": "clients.openai-sdk.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] run-on; 每块 GPU 一个模型副本 made a parenthetical",
+      "round": 1
+    },
+    {
+      "key": "clients.continue.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] run-on; 每块 GPU 一个模型副本 made a parenthetical",
+      "round": 1
+    },
+    {
+      "key": "clients.cline.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] run-on; 每块 GPU 一个模型副本 made a parenthetical",
+      "round": 1
+    },
+    {
+      "key": "clients.cursor.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] run-on; 每块 GPU 一个模型副本 made a parenthetical",
+      "round": 1
+    },
+    {
+      "key": "clients.codex-cli.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] run-on; 每块 GPU 一个模型副本 made a parenthetical",
+      "round": 1
+    },
+    {
+      "key": "clients.codex-cli.capability",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'served model' rendered 已提供 (calque); unified as 已部署的模型",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.meta.description",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'throttle point' unified as 降频温度",
+      "round": 1
+    },
+    {
+      "key": "gpu-monitoring.td-9",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[meaning] 'throttle point' unified as 降频温度",
+      "round": 1
+    },
+    {
+      "key": "privacy.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "minor wording",
+      "note": "[final review r3, minor wording] Sentence after {{privacy_ads}} had no subject (back-translation note). Added 本网站 as subject."
+    },
+    {
+      "key": "faq.a-12",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "minor wording",
+      "note": "[final review r3, minor wording] Blunt opener 不花钱。 replaced with the natural answer 完全免费。"
+    },
+    {
+      "key": "home.why-cache.figcaption-4",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "meaning-changing (clarifies meaning)",
+      "note": "[final review r3, meaning-changing (clarifies meaning)] 'It is the card, not a result' rendered as 卡片截图 (ambiguous); now says the image is the console's counter card, not a benchmark result."
+    },
+    {
+      "key": "cache-aware-routing.figcaption-5",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "round": 3,
+      "change": "meaning-changing (clarifies meaning)",
+      "note": "[final review r3, meaning-changing (clarifies meaning)] Same 'It is the card, not a result' fix as home.why-cache.figcaption-4."
+    }
+  ]
+}

@@ -23,7 +23,7 @@ from app.landing import i18n
 from app.landing.pages import LOCALES
 
 #: The one-line switch: True once every published locale has been through QA.
-REQUIRE_QA_REPORT = False
+REQUIRE_QA_REPORT = True
 
 SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "landing_i18n_qa.py"
 

@@ -536,11 +536,11 @@
     "source_hash": "5ff95c0fa25d"
   },
   "home.p-mac.li-3": {
-    "text": "<b>Beta, sem rodeios:</b> assinado ad hoc e não notarizado, então, na primeira execução, o macOS pede que você o autorize em Privacidade e Segurança; para atualizar, é preciso baixar de novo. <a href=\"{{repo}}/blob/main/documents/INSTALL.md#beta-builds\" rel=\"noopener\">Como abrir pela primeira vez</a>.",
+    "text": "<b>O que significa ser beta:</b> assinado ad hoc e não notarizado, então, na primeira execução, o macOS pede que você o autorize em Privacidade e Segurança; para atualizar, é preciso baixar de novo. <a href=\"{{repo}}/blob/main/documents/INSTALL.md#beta-builds\" rel=\"noopener\">Como abrir pela primeira vez</a>.",
     "source_hash": "cf254395b87e"
   },
   "home.p-mac.li-4": {
-    "text": "Atende apenas em 127.0.0.1 até você escolher <b>Share on Local Network</b>.",
+    "text": "Escuta apenas em 127.0.0.1 até você escolher <b>Share on Local Network</b>.",
     "source_hash": "013272b7df36"
   },
   "home.p-mac.li-5": {
@@ -560,7 +560,7 @@
     "source_hash": "3e2f8c30fbd3"
   },
   "home.p-win.p-1": {
-    "text": "Estamos desenvolvendo agora e vamos publicar uma build aqui no dia em que ela existir, e não um formulário de cadastro antes disso. Até lá, há duas opções concretas:",
+    "text": "Estamos desenvolvendo a versão para Windows agora e vamos publicar a build aqui no dia em que ela existir, sem formulário de cadastro antes disso. Até lá, há duas opções concretas:",
     "source_hash": "7389debc8fd3"
   },
   "home.p-win.li-1": {
@@ -708,7 +708,7 @@
     "source_hash": "234d024e62df"
   },
   "home.why-cache.p-4": {
-    "text": "<b>Onde ele sai perdendo.</b> As etapas de 24 e 32 sessões são uma sobrecarga proposital de quatro placas pequenas, e todas as réplicas estão saturadas. A saída ainda é maior (11.178 contra 9.048 e 16.638 contra 14.760 tokens por minuto) e a cauda lenta é bem mais curta (p95 38 contra 59&#8239;s, e 39 contra 83&#8239;s), mas o tempo mediano até o primeiro byte é pior com afinidade: 13,1 contra 5,1&#8239;s com 24 sessões, 27,7 contra 12,3&#8239;s com 32. Não isolamos a causa, e baixar o limite de transbordo de 8 para 4 não mudou isso.",
+    "text": "<b>Onde a afinidade perde.</b> As etapas de 24 e 32 sessões são uma sobrecarga proposital de quatro placas pequenas, e todas as réplicas estão saturadas. O número de tokens de saída ainda é maior (11.178 contra 9.048 e 16.638 contra 14.760 tokens por minuto) e a cauda lenta é bem mais curta (p95 38 contra 59&#8239;s, e 39 contra 83&#8239;s), mas o tempo mediano até o primeiro byte é pior com afinidade: 13,1 contra 5,1&#8239;s com 24 sessões, 27,7 contra 12,3&#8239;s com 32. Não isolamos a causa, e baixar o limite de transbordo de 8 para 4 não mudou isso.",
     "source_hash": "2a468a4b1738"
   },
   "home.why-cache.p-5": {
@@ -948,7 +948,7 @@
     "source_hash": "ca3034a912dc"
   },
   "home.why-keys.img-1.alt": {
-    "text": "A página da chave de API coding-agent: um painel Limits com o seletor de prioridade de P0 a P9 e o texto Strict, a waiting P9 request always goes before a P8 one; um painel Usage dos últimos 7 dias com 19 mil solicitações, 1,5 bilhão de tokens de prompt e 440 mil tokens de resposta; gráficos de tokens por minuto e solicitações por minuto; abaixo, painéis de espera na fila e latência",
+    "text": "A página da chave de API coding-agent: um painel Limits com o seletor de prioridade de P0 a P9 e o texto “Strict: a waiting P9 request always goes before a P8 one”; um painel Usage dos últimos 7 dias com 19 mil solicitações, 1,5 bilhão de tokens de prompt e 440 mil tokens de resposta; gráficos de tokens por minuto e solicitações por minuto; abaixo, painéis de espera na fila e latência",
     "source_hash": "ae01537e1ee6"
   },
   "home.why-keys.figcaption-1": {

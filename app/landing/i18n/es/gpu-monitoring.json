@@ -108,7 +108,7 @@
     "source_hash": "fc86e0160504"
   },
   "gpu-monitoring.cards.h2-1": {
-    "text": "Lo que no se puede medir aparece como «no disponible».",
+    "text": "Lo que no se puede medir aparece como «not reported».",
     "source_hash": "036e83c1af39"
   },
   "gpu-monitoring.p-4": {

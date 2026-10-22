@@ -120,7 +120,7 @@
     "source_hash": "2269d7489768"
   },
   "features.p-3": {
-    "text": "Os pesos de um modelo bf16 8B ocupam cerca de 15&#8239;GiB por si só, e ele fica sem memória durante o carregamento. Testamos cada linha abaixo em placas RTX&nbsp;A4000 e Quadro RTX&nbsp;5000 de 16&#8239;GiB e avaliamos o resultado lendo as respostas do modelo no playground de chat, sem confiar em uma verificação de saúde.",
+    "text": "Os pesos de um modelo bf16 8B ocupam cerca de 15&#8239;GiB por si só, e o modelo fica sem memória durante o carregamento. Testamos cada linha abaixo em placas RTX&nbsp;A4000 e Quadro RTX&nbsp;5000 de 16&#8239;GiB e avaliamos o resultado lendo as respostas do modelo no playground de chat, sem confiar em uma verificação de saúde.",
     "source_hash": "a34f00101361"
   },
   "features.th-1": {

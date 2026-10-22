@@ -1,0 +1,15 @@
+{
+ "r3_back_notes_reviewed_no_issue": {
+  "privacy.ads / privacy.contact-operator": "Leading space joins the template sentence; correct by design.",
+  "home.hero.a-2, home.hero.span-8": "Short labels whose referent is visible on the page.",
+  "home.why-keys.span-2, home.why-keys.span-5": "Ladder labels beside the tier names on the page.",
+  "cache-aware-routing.dt-4": "«Captura» is a definition-list term beside its date value.",
+  "cache-aware-routing.p-4": "«contrapartida» is natural Spanish for trade-off.",
+  "claude-code-router.p-5 (common.in-words)": "«Descripción:» is the label of the prose version of the diagram; acceptable.",
+  "claude-code-router.span-1": "Label length acceptable in an alt/caption fragment.",
+  "faq.a-2": "Elliptical «…, no.» is idiomatic Spanish.",
+  "faq.a-11, clients.opencode.capability, home.why-chat.p-1, home.why-keys.p-1, meta.og-image-alt, clients.codex-cli.capability, api-keys.p-4": "Register remarks on correct, natural Spanish; meaning matches.",
+  "gpu-monitoring / features (punto de conexión)": "'endpoint' as «punto de conexión» is the site-wide glossary term."
+ },
+ "earlier_rounds_dismissed": []
+}

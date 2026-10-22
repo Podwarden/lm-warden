@@ -16,7 +16,7 @@
     "source_hash": "b554407d17a9"
   },
   "claude-code-router.p-4": {
-    "text": "Calcula el contexto pensando en Claude Code, no en un chat: su primer turno en nuestra sesión tuvo 38.167 tokens, así que el modelo local necesita bastante más de 40 mil tokens de contexto.",
+    "text": "Dimensiona el contexto para Claude Code, no para un chat: su primer turno en nuestra sesión tuvo 38.167 tokens, así que el modelo local necesita bastante más de 40 mil tokens de contexto.",
     "source_hash": "f87b272c3f76"
   },
   "claude-code-router.figcaption-1": {

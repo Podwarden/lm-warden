@@ -94,7 +94,8 @@ def test_part_catalog_is_complete_fresh_and_faithful(tag: str, part: str) -> Non
 def test_part_files_are_only_known_parts_and_locales() -> None:
     tags = {loc.tag for loc in LOCALES}
     for d in i18n.DIR.iterdir():
-        if d.is_dir() and not d.name.startswith("__"):
+        # qa/ holds the translation-QA records (scripts/landing_i18n_qa.py record).
+        if d.is_dir() and not d.name.startswith("__") and d.name != "qa":
             assert d.name in tags, d
             assert {f.stem for f in d.glob("*.json")} <= set(i18n.PARTS), d
 

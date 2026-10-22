@@ -12,7 +12,7 @@
     "source_hash": "0a4c2fc34b17"
   },
   "not-found.p-1": {
-    "text": "Elle a peut-être été déplacée quand ce site est passé d’une page à plusieurs. Essayez <a href=\"/\">la page d’accueil</a>, <a href=\"/coding-agents\">les agents de codage</a>, <a href=\"/agent-tuning\">le réglage par agent</a> ou <a href=\"/faq\">la FAQ</a>.",
+    "text": "Elle a peut-être été déplacée quand ce site est passé d’une page à plusieurs. Essayez <a href=\"/\">la page d’accueil</a>, <a href=\"/coding-agents\">les agents de codage</a>, <a href=\"/agent-tuning\">le réglage par un agent</a> ou <a href=\"/faq\">la FAQ</a>.",
     "source_hash": "701d00dd6585"
   }
 }

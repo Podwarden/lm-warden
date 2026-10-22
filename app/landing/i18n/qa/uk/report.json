@@ -1,0 +1,6324 @@
+{
+  "locale": "uk",
+  "date": "2026-10-21",
+  "back_model": "claude-sonnet-5-5",
+  "fix_model": "claude-opus-5-5",
+  "published_segments": 666,
+  "covered_segments": 666,
+  "english_words": 14400,
+  "issues_found": {
+    "minor": 332,
+    "major": 35,
+    "critical": 0
+  },
+  "issues_remaining": {
+    "minor": 5,
+    "major": 0,
+    "critical": 0
+  },
+  "mqm_score": 0.35,
+  "max_score": 10.0,
+  "pass": true,
+  "segments": {
+    "meta.title": {
+      "part": "home",
+      "source_hash": "8b40be948ef4",
+      "target_hash": "dd3e45b241ef"
+    },
+    "meta.description": {
+      "part": "home",
+      "source_hash": "6cb271edae46",
+      "target_hash": "fd0a942dc498"
+    },
+    "meta.og-image-alt": {
+      "part": "home",
+      "source_hash": "7f75ba3bcd9d",
+      "target_hash": "60ef5bd3bcea"
+    },
+    "jsonld.feature-1": {
+      "part": "home",
+      "source_hash": "615857f542c9",
+      "target_hash": "4181c26775fd"
+    },
+    "jsonld.feature-2": {
+      "part": "home",
+      "source_hash": "7b06e74713de",
+      "target_hash": "4d0896ce234a"
+    },
+    "jsonld.feature-3": {
+      "part": "home",
+      "source_hash": "1f350726cef9",
+      "target_hash": "8dd896c8bb48"
+    },
+    "jsonld.feature-4": {
+      "part": "home",
+      "source_hash": "42d6cdab3fb6",
+      "target_hash": "7d6cdb5d540f"
+    },
+    "jsonld.feature-5": {
+      "part": "home",
+      "source_hash": "9791836d7920",
+      "target_hash": "dea3a3e76ac7"
+    },
+    "jsonld.feature-6": {
+      "part": "home",
+      "source_hash": "b2f04e38f9aa",
+      "target_hash": "a3c1beecf63b"
+    },
+    "jsonld.feature-7": {
+      "part": "home",
+      "source_hash": "0740507f9225",
+      "target_hash": "caf0d3aa92b8"
+    },
+    "jsonld.feature-8": {
+      "part": "home",
+      "source_hash": "301c375d8a2f",
+      "target_hash": "d090551f5913"
+    },
+    "jsonld.feature-9": {
+      "part": "home",
+      "source_hash": "89c7e3de3f80",
+      "target_hash": "9e97f6ca2e0f"
+    },
+    "jsonld.feature-10": {
+      "part": "home",
+      "source_hash": "bf6f8b147d8a",
+      "target_hash": "b7b938b98168"
+    },
+    "chrome.copy.done": {
+      "part": "home",
+      "source_hash": "8d525e5f158b",
+      "target_hash": "d19980613c41"
+    },
+    "chrome.copy.fail": {
+      "part": "home",
+      "source_hash": "e78ab3a91bf2",
+      "target_hash": "bd41a0be4b85"
+    },
+    "chrome.skip": {
+      "part": "home",
+      "source_hash": "ac576a66d456",
+      "target_hash": "9c24f3831d61"
+    },
+    "chrome.brand.aria-label": {
+      "part": "home",
+      "source_hash": "a007563c384d",
+      "target_hash": "4913c7b0c70f"
+    },
+    "chrome.nav.aria-label": {
+      "part": "home",
+      "source_hash": "efe10c80ec8a",
+      "target_hash": "6c63a66be147"
+    },
+    "chrome.nav.menu": {
+      "part": "home",
+      "source_hash": "99af6606ff9d",
+      "target_hash": "122f71765026"
+    },
+    "chrome.nav.use-cases": {
+      "part": "home",
+      "source_hash": "ff27a991e855",
+      "target_hash": "b865a6714a1b"
+    },
+    "chrome.nav.features": {
+      "part": "home",
+      "source_hash": "5697d03daef4",
+      "target_hash": "de578ba8bb35"
+    },
+    "chrome.nav.coding-agents": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "96e168d5ab18"
+    },
+    "chrome.nav.faq": {
+      "part": "home",
+      "source_hash": "dbc468a14b60",
+      "target_hash": "0e5dc81b9a69"
+    },
+    "chrome.nav.github.title": {
+      "part": "home",
+      "source_hash": "d2833070219a",
+      "target_hash": "6f94a0fa48ed"
+    },
+    "chrome.nav.install": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "5e2b524e690a"
+    },
+    "chrome.nav.plat-linux": {
+      "part": "home",
+      "source_hash": "23d8d6d2be9c",
+      "target_hash": "653ce726787e"
+    },
+    "chrome.nav.plat-mac": {
+      "part": "home",
+      "source_hash": "d2364b229535",
+      "target_hash": "022d84950187"
+    },
+    "chrome.nav.plat-win": {
+      "part": "home",
+      "source_hash": "e5a1bb1c3085",
+      "target_hash": "d3938417962b"
+    },
+    "chrome.nav.plat-appliance": {
+      "part": "home",
+      "source_hash": "6a7fc115677a",
+      "target_hash": "5bd33b2ee0ef"
+    },
+    "chrome.nav.plat-upgrade": {
+      "part": "home",
+      "source_hash": "c1fe5f01dc6e",
+      "target_hash": "7452f6aff8ac"
+    },
+    "chrome.nav.signin": {
+      "part": "home",
+      "source_hash": "cb9ad9f4d662",
+      "target_hash": "eef01eb7095b"
+    },
+    "chrome.lang.heading": {
+      "part": "home",
+      "source_hash": "a4fe65264ef7",
+      "target_hash": "5c2fbc335f7c"
+    },
+    "chrome.lang.label": {
+      "part": "home",
+      "source_hash": "8c16819a2bd4",
+      "target_hash": "1a9b8ecc4ab9"
+    },
+    "chrome.docs.aria-label": {
+      "part": "home",
+      "source_hash": "c205924de0fe",
+      "target_hash": "da84bbbb609c"
+    },
+    "chrome.docs.full": {
+      "part": "home",
+      "source_hash": "c205924de0fe",
+      "target_hash": "da84bbbb609c"
+    },
+    "chrome.docs.short": {
+      "part": "home",
+      "source_hash": "7af023c43013",
+      "target_hash": "dc45e92a4eb1"
+    },
+    "chrome.install": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "17dd7be4c6d8"
+    },
+    "home.hero.h1-1": {
+      "part": "home",
+      "source_hash": "b24318c21e4f",
+      "target_hash": "e81e07cfb93f"
+    },
+    "home.hero.p-1": {
+      "part": "home",
+      "source_hash": "e192caf6a5b3",
+      "target_hash": "58426944ceb1"
+    },
+    "home.hero.a-1": {
+      "part": "home",
+      "source_hash": "4120132397fd",
+      "target_hash": "5e2b524e690a"
+    },
+    "home.hero.a-2": {
+      "part": "home",
+      "source_hash": "51b46bd0add6",
+      "target_hash": "d40cae85d60c"
+    },
+    "home.hero.span-1": {
+      "part": "home",
+      "source_hash": "2a43a93eceec",
+      "target_hash": "2be76ccf8485"
+    },
+    "home.hero.span-2": {
+      "part": "home",
+      "source_hash": "035ccb7cad8a",
+      "target_hash": "b9e290222039"
+    },
+    "home.hero.span-3": {
+      "part": "home",
+      "source_hash": "1f8168eb854e",
+      "target_hash": "ba71906240da"
+    },
+    "home.hero.img-1.alt": {
+      "part": "home",
+      "source_hash": "46cb2df1ab06",
+      "target_hash": "986d2cf23119"
+    },
+    "home.hero.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "46b396c85919",
+      "target_hash": "3a42d2327c1e"
+    },
+    "home.hero.b-1": {
+      "part": "home",
+      "source_hash": "d0656dfa424f",
+      "target_hash": "dfb2df8046e0"
+    },
+    "home.hero.span-4": {
+      "part": "home",
+      "source_hash": "6b06ee360144",
+      "target_hash": "7c8c0e6ae518"
+    },
+    "home.hero.span-5": {
+      "part": "home",
+      "source_hash": "1b50b6d8401a",
+      "target_hash": "e583c7f61387"
+    },
+    "home.hero.b-2": {
+      "part": "home",
+      "source_hash": "f2287a1beeab",
+      "target_hash": "32768e851cc8"
+    },
+    "home.hero.span-6": {
+      "part": "home",
+      "source_hash": "6a893fd85af2",
+      "target_hash": "5df71657474d"
+    },
+    "home.hero.span-7": {
+      "part": "home",
+      "source_hash": "8d266d3e3abd",
+      "target_hash": "c8e5998f6a39"
+    },
+    "home.hero.b-3": {
+      "part": "home",
+      "source_hash": "3aeff05d5bf6",
+      "target_hash": "0ec6b41b59c9"
+    },
+    "home.hero.span-8": {
+      "part": "home",
+      "source_hash": "05261121948c",
+      "target_hash": "b365a93ba584"
+    },
+    "home.hero.span-9": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "96e168d5ab18"
+    },
+    "home.hero.b-4": {
+      "part": "home",
+      "source_hash": "544b91f8227b",
+      "target_hash": "b528e98fc0d7"
+    },
+    "home.hero.span-10": {
+      "part": "home",
+      "source_hash": "48d1003061d4",
+      "target_hash": "66f295820af6"
+    },
+    "home.uc.h2-1": {
+      "part": "home",
+      "source_hash": "a2bc7e06beef",
+      "target_hash": "03a5ac55f0f9"
+    },
+    "home.use-cases.button-1.aria-label": {
+      "part": "home",
+      "source_hash": "40a9d13608d2",
+      "target_hash": "acc9601f5884"
+    },
+    "home.use-cases.button-2.aria-label": {
+      "part": "home",
+      "source_hash": "f1c27427e687",
+      "target_hash": "fa9e349a948f"
+    },
+    "home.use-cases.button-2.resume": {
+      "part": "home",
+      "source_hash": "bb52c71e6d3b",
+      "target_hash": "b76fa2866e98"
+    },
+    "home.use-cases.button-3.aria-label": {
+      "part": "home",
+      "source_hash": "9220dc6514fb",
+      "target_hash": "cc2e2fc0583a"
+    },
+    "home.use-cases.li-1.aria-label": {
+      "part": "home",
+      "source_hash": "b54457342c7d",
+      "target_hash": "abea98258e73"
+    },
+    "home.use-cases.h3-1": {
+      "part": "home",
+      "source_hash": "631429e459b2",
+      "target_hash": "16dce9e202df"
+    },
+    "home.use-cases.p-1": {
+      "part": "home",
+      "source_hash": "7dd1bdcba1fd",
+      "target_hash": "1c6fbb18f026"
+    },
+    "home.use-cases.span-1": {
+      "part": "home",
+      "source_hash": "3bf0e7fd520d",
+      "target_hash": "174aac1b564f"
+    },
+    "home.use-cases.li-2.aria-label": {
+      "part": "home",
+      "source_hash": "264c35a47f15",
+      "target_hash": "6b1faff2eaa4"
+    },
+    "home.use-cases.h3-2": {
+      "part": "home",
+      "source_hash": "b01cff25d51f",
+      "target_hash": "5d3dd898954f"
+    },
+    "home.use-cases.p-2": {
+      "part": "home",
+      "source_hash": "022970d73828",
+      "target_hash": "c433d3fd3c81"
+    },
+    "home.use-cases.span-2": {
+      "part": "home",
+      "source_hash": "19dc2417e144",
+      "target_hash": "652bdaa21d95"
+    },
+    "home.use-cases.li-3.aria-label": {
+      "part": "home",
+      "source_hash": "24607ac1e731",
+      "target_hash": "312faac8ecbe"
+    },
+    "home.use-cases.h3-3": {
+      "part": "home",
+      "source_hash": "02e82cfefb89",
+      "target_hash": "74852695ddfd"
+    },
+    "home.use-cases.p-3": {
+      "part": "home",
+      "source_hash": "ffc4dde74878",
+      "target_hash": "3dc9dadb1b73"
+    },
+    "home.use-cases.span-3": {
+      "part": "home",
+      "source_hash": "4df7d5c583ae",
+      "target_hash": "1256a120383c"
+    },
+    "home.use-cases.li-4.aria-label": {
+      "part": "home",
+      "source_hash": "6f3c824e9ec3",
+      "target_hash": "9229970003c6"
+    },
+    "home.use-cases.h3-4": {
+      "part": "home",
+      "source_hash": "fd528e59f30f",
+      "target_hash": "50f97de7a5a3"
+    },
+    "home.use-cases.p-4": {
+      "part": "home",
+      "source_hash": "3fd6f50887b9",
+      "target_hash": "84b85dbd3ed0"
+    },
+    "home.use-cases.span-4": {
+      "part": "home",
+      "source_hash": "91753d838ca4",
+      "target_hash": "6c72c3b6a356"
+    },
+    "home.use-cases.li-5.aria-label": {
+      "part": "home",
+      "source_hash": "4ff9c7d25432",
+      "target_hash": "0bad95cac58c"
+    },
+    "home.use-cases.h3-5": {
+      "part": "home",
+      "source_hash": "c3ae8600a083",
+      "target_hash": "3763eb3392f7"
+    },
+    "home.use-cases.p-5": {
+      "part": "home",
+      "source_hash": "bbfa0ef15601",
+      "target_hash": "f26f4d960e2a"
+    },
+    "home.use-cases.span-5": {
+      "part": "home",
+      "source_hash": "ad84f405f980",
+      "target_hash": "eb104a0953f8"
+    },
+    "home.use-cases.li-6.aria-label": {
+      "part": "home",
+      "source_hash": "9f1b26eea525",
+      "target_hash": "a0becb2ee4b1"
+    },
+    "home.use-cases.h3-6": {
+      "part": "home",
+      "source_hash": "bcd86e5acf2b",
+      "target_hash": "781fd64dd91c"
+    },
+    "home.use-cases.p-6": {
+      "part": "home",
+      "source_hash": "8ab616f9c47d",
+      "target_hash": "86190f81941f"
+    },
+    "home.use-cases.span-6": {
+      "part": "home",
+      "source_hash": "6fd76cfcf4f3",
+      "target_hash": "917bb522937a"
+    },
+    "home.use-cases.li-7.aria-label": {
+      "part": "home",
+      "source_hash": "2991e046c7d6",
+      "target_hash": "d0034aa4a8cd"
+    },
+    "home.use-cases.h3-7": {
+      "part": "home",
+      "source_hash": "175c055be16a",
+      "target_hash": "1ee6b4124881"
+    },
+    "home.use-cases.p-7": {
+      "part": "home",
+      "source_hash": "12446d78110e",
+      "target_hash": "d8be7ecca244"
+    },
+    "home.use-cases.span-7": {
+      "part": "home",
+      "source_hash": "eca4d500a3da",
+      "target_hash": "3bc302497112"
+    },
+    "home.use-cases.li-8.aria-label": {
+      "part": "home",
+      "source_hash": "1170fb3f9b1b",
+      "target_hash": "983a3d8bf0ed"
+    },
+    "home.use-cases.h3-8": {
+      "part": "home",
+      "source_hash": "a04e398227ac",
+      "target_hash": "fc769a1bbf96"
+    },
+    "home.use-cases.p-8": {
+      "part": "home",
+      "source_hash": "3acf884af623",
+      "target_hash": "e96350ba1595"
+    },
+    "home.use-cases.span-8": {
+      "part": "home",
+      "source_hash": "bb574d2be60e",
+      "target_hash": "96ba81e8a67a"
+    },
+    "home.use-cases.li-9.aria-label": {
+      "part": "home",
+      "source_hash": "7323df202723",
+      "target_hash": "46ae193db178"
+    },
+    "home.use-cases.h3-9": {
+      "part": "home",
+      "source_hash": "3f3225bbc711",
+      "target_hash": "fb22dd02d81f"
+    },
+    "home.use-cases.p-9": {
+      "part": "home",
+      "source_hash": "6ea6fbd502b6",
+      "target_hash": "c6c1df990c65"
+    },
+    "home.use-cases.span-9": {
+      "part": "home",
+      "source_hash": "c90b8269f1d8",
+      "target_hash": "365c9a067373"
+    },
+    "home.use-cases.li-10.aria-label": {
+      "part": "home",
+      "source_hash": "aef48b281a1a",
+      "target_hash": "57735dac2a4a"
+    },
+    "home.use-cases.h3-10": {
+      "part": "home",
+      "source_hash": "525b6691292f",
+      "target_hash": "9db0d97a95f9"
+    },
+    "home.use-cases.p-10": {
+      "part": "home",
+      "source_hash": "9ab2a4e163b1",
+      "target_hash": "b605eaf6ec6b"
+    },
+    "home.use-cases.span-10": {
+      "part": "home",
+      "source_hash": "4ad529d919d4",
+      "target_hash": "e037f3cdb106"
+    },
+    "home.use-cases.dot": {
+      "part": "home",
+      "source_hash": "04227694e710",
+      "target_hash": "8db4bba4d11b"
+    },
+    "home.use-cases.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "1bb48b8b99c4",
+      "target_hash": "2c86eb5c9b45"
+    },
+    "home.install.h2-1": {
+      "part": "home",
+      "source_hash": "249678c8eba2",
+      "target_hash": "c37364564db6"
+    },
+    "home.install.div-1.aria-label": {
+      "part": "home",
+      "source_hash": "c78ffe195710",
+      "target_hash": "18f132164568"
+    },
+    "home.install.b-1": {
+      "part": "home",
+      "source_hash": "23d8d6d2be9c",
+      "target_hash": "653ce726787e"
+    },
+    "home.install.small-1": {
+      "part": "home",
+      "source_hash": "9849f7c407b4",
+      "target_hash": "cb701d8b7cb5"
+    },
+    "home.install.span-1": {
+      "part": "home",
+      "source_hash": "86f0f70c80d2",
+      "target_hash": "53d99713a450"
+    },
+    "home.install.b-2": {
+      "part": "home",
+      "source_hash": "0d7d5470afac",
+      "target_hash": "65ff18517d42"
+    },
+    "home.install.small-2": {
+      "part": "home",
+      "source_hash": "38cba54053bd",
+      "target_hash": "7dac207465f4"
+    },
+    "home.install.span-2": {
+      "part": "home",
+      "source_hash": "f44e64e75f39",
+      "target_hash": "244c14c5aa4a"
+    },
+    "home.install.small-3": {
+      "part": "home",
+      "source_hash": "1e554752120e",
+      "target_hash": "8f663a94f819"
+    },
+    "home.install.span-3": {
+      "part": "home",
+      "source_hash": "c6c1c9a9c854",
+      "target_hash": "d5eed09dbf31"
+    },
+    "home.install.b-3": {
+      "part": "home",
+      "source_hash": "98432690c966",
+      "target_hash": "ae4dd341d7ad"
+    },
+    "home.install.small-4": {
+      "part": "home",
+      "source_hash": "dc3e1016c4ce",
+      "target_hash": "f38dd6b740d0"
+    },
+    "home.install.span-4": {
+      "part": "home",
+      "source_hash": "62bfdf0b726c",
+      "target_hash": "aa54d54bf37c"
+    },
+    "home.install.p-2": {
+      "part": "home",
+      "source_hash": "dd298d4e4a3b",
+      "target_hash": "76050f06e8ae"
+    },
+    "home.p-linux.h3-1": {
+      "part": "home",
+      "source_hash": "e261f30eb5f7",
+      "target_hash": "81a8fa24d059"
+    },
+    "home.p-linux.span-1": {
+      "part": "home",
+      "source_hash": "e21f935f11d7",
+      "target_hash": "649c3911c670"
+    },
+    "home.p-linux.li-1": {
+      "part": "home",
+      "source_hash": "fc20ff032a73",
+      "target_hash": "577e07dbc865"
+    },
+    "home.p-linux.li-2": {
+      "part": "home",
+      "source_hash": "33bfcbda3ad4",
+      "target_hash": "490f5b1daa85"
+    },
+    "home.p-linux.li-3": {
+      "part": "home",
+      "source_hash": "086f8aa8145e",
+      "target_hash": "d13830392530"
+    },
+    "home.p-linux.li-4": {
+      "part": "home",
+      "source_hash": "f17d08f00954",
+      "target_hash": "2da7bf34ca55"
+    },
+    "home.p-linux.a-1": {
+      "part": "home",
+      "source_hash": "e15a133068af",
+      "target_hash": "14cf9b656150"
+    },
+    "home.p-linux.a-2": {
+      "part": "home",
+      "source_hash": "16289eae755d",
+      "target_hash": "aa7232d3dd10"
+    },
+    "home.p-linux.a-3": {
+      "part": "home",
+      "source_hash": "5be49bd81af3",
+      "target_hash": "220ac7651728"
+    },
+    "home.p-linux.a-4": {
+      "part": "home",
+      "source_hash": "d8f1ee5bd44a",
+      "target_hash": "01ab1be01a23"
+    },
+    "home.p-linux.img-1.alt": {
+      "part": "home",
+      "source_hash": "41eaa58c37a4",
+      "target_hash": "01bde81f846a"
+    },
+    "home.p-linux.figcaption-1": {
+      "part": "home",
+      "source_hash": "c6e56f837dad",
+      "target_hash": "f2b2474cdd90"
+    },
+    "home.p-mac.h3-1": {
+      "part": "home",
+      "source_hash": "93a681a12162",
+      "target_hash": "635ae8fb940d"
+    },
+    "home.p-mac.a-1": {
+      "part": "home",
+      "source_hash": "95612856681e",
+      "target_hash": "82c0b6e97bd3"
+    },
+    "home.p-mac.li-1": {
+      "part": "home",
+      "source_hash": "eb664f8f7d3a",
+      "target_hash": "a426d0f71cf2"
+    },
+    "home.p-mac.li-2": {
+      "part": "home",
+      "source_hash": "5ff95c0fa25d",
+      "target_hash": "6daac9037f7e"
+    },
+    "home.p-mac.li-3": {
+      "part": "home",
+      "source_hash": "cf254395b87e",
+      "target_hash": "6eece625ebd9"
+    },
+    "home.p-mac.li-4": {
+      "part": "home",
+      "source_hash": "013272b7df36",
+      "target_hash": "dabdbf2a65a7"
+    },
+    "home.p-mac.li-5": {
+      "part": "home",
+      "source_hash": "8121128f773c",
+      "target_hash": "58558e10f12b"
+    },
+    "home.p-mac.img-1.alt": {
+      "part": "home",
+      "source_hash": "45b8070949bb",
+      "target_hash": "22b5812c4ecb"
+    },
+    "home.p-mac.figcaption-1": {
+      "part": "home",
+      "source_hash": "785cc05a3c6d",
+      "target_hash": "1027c31e1471"
+    },
+    "home.p-win.h3-1": {
+      "part": "home",
+      "source_hash": "3e2f8c30fbd3",
+      "target_hash": "4a5f68f3888b"
+    },
+    "home.p-win.p-1": {
+      "part": "home",
+      "source_hash": "7389debc8fd3",
+      "target_hash": "3bec2a617f75"
+    },
+    "home.p-win.li-1": {
+      "part": "home",
+      "source_hash": "1296afbbf883",
+      "target_hash": "0ca99a933a2b"
+    },
+    "home.p-win.li-2": {
+      "part": "home",
+      "source_hash": "9a92060cedbe",
+      "target_hash": "78890b3bd99e"
+    },
+    "home.p-win.li-3": {
+      "part": "home",
+      "source_hash": "d85b661eb8e6",
+      "target_hash": "633ff8f8ee38"
+    },
+    "home.p-appliance.h3-1": {
+      "part": "home",
+      "source_hash": "e45c0fc37b2d",
+      "target_hash": "dfa5d1d14f28"
+    },
+    "home.p-appliance.p-1": {
+      "part": "home",
+      "source_hash": "9ff6d73830b6",
+      "target_hash": "688101a8e298"
+    },
+    "home.p-appliance.li-1": {
+      "part": "home",
+      "source_hash": "47cb2ad65dc7",
+      "target_hash": "aa524a4e3fc8"
+    },
+    "home.p-appliance.li-2": {
+      "part": "home",
+      "source_hash": "a2a401f4b2c3",
+      "target_hash": "d22ee96384f1"
+    },
+    "home.p-appliance.li-3": {
+      "part": "home",
+      "source_hash": "aa9d78e6b6fa",
+      "target_hash": "b2960a11774a"
+    },
+    "home.p-appliance.li-4": {
+      "part": "home",
+      "source_hash": "bbc615ea622b",
+      "target_hash": "89491d695c6b"
+    },
+    "home.p-appliance.p-2": {
+      "part": "home",
+      "source_hash": "177a91e7a6b4",
+      "target_hash": "7d724fa81176"
+    },
+    "home.p-appliance.div-1": {
+      "part": "home",
+      "source_hash": "8a3fbd7c91f0",
+      "target_hash": "9da1324bf8ab"
+    },
+    "home.upgrade.p-1": {
+      "part": "home",
+      "source_hash": "5566c16483a2",
+      "target_hash": "89d7f7684118"
+    },
+    "home.why.h2-1": {
+      "part": "home",
+      "source_hash": "65341f9c1497",
+      "target_hash": "f40cfeed003c"
+    },
+    "home.why.p-1": {
+      "part": "home",
+      "source_hash": "1668b0870987",
+      "target_hash": "b656eda87e05"
+    },
+    "home.why-fit.h3-1": {
+      "part": "home",
+      "source_hash": "631429e459b2",
+      "target_hash": "16dce9e202df"
+    },
+    "home.why-fit.p-1": {
+      "part": "home",
+      "source_hash": "b0c5f5cbb2ee",
+      "target_hash": "9725b69b2653"
+    },
+    "home.why-fit.img-1.alt": {
+      "part": "home",
+      "source_hash": "906b74daf0f5",
+      "target_hash": "38e9d6dc563c"
+    },
+    "home.why-stats.h3-1": {
+      "part": "home",
+      "source_hash": "7cd5266e1f4e",
+      "target_hash": "fc1c7c0d36db"
+    },
+    "home.why-stats.p-1": {
+      "part": "home",
+      "source_hash": "05ae743f085e",
+      "target_hash": "be7f093b6a70"
+    },
+    "home.why-stats.img-1.alt": {
+      "part": "home",
+      "source_hash": "94483285e732",
+      "target_hash": "8c6cfde89217"
+    },
+    "home.why-chat.h3-1": {
+      "part": "home",
+      "source_hash": "83831d46fb09",
+      "target_hash": "2635a4bec143"
+    },
+    "home.why-chat.p-1": {
+      "part": "home",
+      "source_hash": "2e459441dc4f",
+      "target_hash": "f366ded3baa9"
+    },
+    "home.why-chat.img-1.alt": {
+      "part": "home",
+      "source_hash": "da46ab93294b",
+      "target_hash": "6996256ea8b6"
+    },
+    "home.why-god.h3-1": {
+      "part": "home",
+      "source_hash": "a49be301a05f",
+      "target_hash": "3dc321acedc3"
+    },
+    "home.why-god.p-1": {
+      "part": "home",
+      "source_hash": "a29986e09f7a",
+      "target_hash": "1bb832323721"
+    },
+    "home.why-god.img-1.alt": {
+      "part": "home",
+      "source_hash": "171f585f7e38",
+      "target_hash": "fa7a26dedfeb"
+    },
+    "home.cache.h2-1": {
+      "part": "home",
+      "source_hash": "d876efcb94ab",
+      "target_hash": "2650d7b30823"
+    },
+    "home.why-cache.p-1": {
+      "part": "home",
+      "source_hash": "03e36074672f",
+      "target_hash": "74cb249ddfa8"
+    },
+    "home.why-cache.figcaption-1": {
+      "part": "home",
+      "source_hash": "0f19c82ec35c",
+      "target_hash": "dfa2dd527412"
+    },
+    "home.why-cache.p-2": {
+      "part": "home",
+      "source_hash": "9de8aa8aa7e1",
+      "target_hash": "3686bd4c4559"
+    },
+    "home.why-cache.figcaption-2": {
+      "part": "home",
+      "source_hash": "ff04da43c87a",
+      "target_hash": "06fe9f534e35"
+    },
+    "home.why-cache.figcaption-3": {
+      "part": "home",
+      "source_hash": "0ec9d5ccf246",
+      "target_hash": "89ba8149000d"
+    },
+    "home.why-cache.h3-1": {
+      "part": "home",
+      "source_hash": "684608311775",
+      "target_hash": "f2720e1389c9"
+    },
+    "home.why-cache.p-3": {
+      "part": "home",
+      "source_hash": "4744b11be2ad",
+      "target_hash": "30a501229b85"
+    },
+    "home.why-cache.img-1.alt": {
+      "part": "home",
+      "source_hash": "f1bc7fbd6399",
+      "target_hash": "06ab780b3461"
+    },
+    "home.why-cache.figcaption-4": {
+      "part": "home",
+      "source_hash": "234d024e62df",
+      "target_hash": "15231346a2cc"
+    },
+    "home.why-cache.p-4": {
+      "part": "home",
+      "source_hash": "2a468a4b1738",
+      "target_hash": "17dc39161b4d"
+    },
+    "home.why-cache.p-5": {
+      "part": "home",
+      "source_hash": "c245f8292ac7",
+      "target_hash": "48946215da9b"
+    },
+    "home.why-cache.a-1": {
+      "part": "home",
+      "source_hash": "cd240e4bc004",
+      "target_hash": "3a5b0aff782d"
+    },
+    "home.agents.h2-1": {
+      "part": "home",
+      "source_hash": "b01cff25d51f",
+      "target_hash": "5d3dd898954f"
+    },
+    "home.agents.p-1": {
+      "part": "home",
+      "source_hash": "26604da90050",
+      "target_hash": "1313b5f48f5a"
+    },
+    "home.agents.h3-1": {
+      "part": "home",
+      "source_hash": "a87ec3988e0d",
+      "target_hash": "baf5fe9a7263"
+    },
+    "home.agents.p-2": {
+      "part": "home",
+      "source_hash": "eed13d192862",
+      "target_hash": "650505daa5d2"
+    },
+    "home.agents.span-1": {
+      "part": "home",
+      "source_hash": "de3ecc4fe5d1",
+      "target_hash": "3bde12b730e5"
+    },
+    "home.agents.span-2": {
+      "part": "home",
+      "source_hash": "cc7b475640bb",
+      "target_hash": "dd6af0ceb0cf"
+    },
+    "home.agents.span-3": {
+      "part": "home",
+      "source_hash": "cc7b475640bb",
+      "target_hash": "dd6af0ceb0cf"
+    },
+    "home.agents.span-4": {
+      "part": "home",
+      "source_hash": "5a0628b4b02d",
+      "target_hash": "0395d813de33"
+    },
+    "home.agents.span-5": {
+      "part": "home",
+      "source_hash": "8c2c30bf0764",
+      "target_hash": "25c9b7759204"
+    },
+    "home.agents.span-6": {
+      "part": "home",
+      "source_hash": "09e5fe8af64a",
+      "target_hash": "748b807496dd"
+    },
+    "home.agents.span-7": {
+      "part": "home",
+      "source_hash": "9ad204014fc0",
+      "target_hash": "d0be0f42d8cd"
+    },
+    "home.agents.h3-2": {
+      "part": "home",
+      "source_hash": "cfeda056d931",
+      "target_hash": "cf18b0876fe0"
+    },
+    "home.agents.p-3": {
+      "part": "home",
+      "source_hash": "6995102b0af7",
+      "target_hash": "b1dc2274ccfc"
+    },
+    "home.flow-t.title-1": {
+      "part": "home",
+      "source_hash": "d7db08f53325",
+      "target_hash": "a63442811384"
+    },
+    "home.flow-d.desc-1": {
+      "part": "home",
+      "source_hash": "5c598ca9bc7c",
+      "target_hash": "2406f75c6289"
+    },
+    "home.flow-t2.title-1": {
+      "part": "home",
+      "source_hash": "d7db08f53325",
+      "target_hash": "a63442811384"
+    },
+    "home.flow-d2.desc-1": {
+      "part": "home",
+      "source_hash": "5c598ca9bc7c",
+      "target_hash": "2406f75c6289"
+    },
+    "home.agents.b-1": {
+      "part": "home",
+      "source_hash": "cdf3dc71b947",
+      "target_hash": "161481221337"
+    },
+    "home.agents.span-8": {
+      "part": "home",
+      "source_hash": "6f10abaf7726",
+      "target_hash": "9453093233c2"
+    },
+    "home.agents.img-1.alt": {
+      "part": "home",
+      "source_hash": "d77bbac51675",
+      "target_hash": "82e8cbf61cfc"
+    },
+    "home.agents.figcaption-1": {
+      "part": "home",
+      "source_hash": "bc31fcfd58c7",
+      "target_hash": "ef5700c4c5f8"
+    },
+    "home.agents.h3-3": {
+      "part": "home",
+      "source_hash": "0ceb9132d312",
+      "target_hash": "f0c4d57272f9"
+    },
+    "home.agents.p-4": {
+      "part": "home",
+      "source_hash": "0b548958da36",
+      "target_hash": "e4fe767270d8"
+    },
+    "home.agents.img-2.alt": {
+      "part": "home",
+      "source_hash": "6a234848eac5",
+      "target_hash": "09c2d52a6e97"
+    },
+    "home.tune.h2-1": {
+      "part": "home",
+      "source_hash": "c3ae8600a083",
+      "target_hash": "3763eb3392f7"
+    },
+    "home.why-agent.p-1": {
+      "part": "home",
+      "source_hash": "4844283837a3",
+      "target_hash": "357c37d4adfd"
+    },
+    "home.why-agent.h3-1": {
+      "part": "home",
+      "source_hash": "85f5dae66c4f",
+      "target_hash": "3430719cec0c"
+    },
+    "home.loop-t.title-1": {
+      "part": "home",
+      "source_hash": "3f22e76a3edc",
+      "target_hash": "e01888f01957"
+    },
+    "home.loop-d.desc-1": {
+      "part": "home",
+      "source_hash": "dd7733aa80ef",
+      "target_hash": "1ec0dfc9a4ef"
+    },
+    "home.loop-t2.title-1": {
+      "part": "home",
+      "source_hash": "3f22e76a3edc",
+      "target_hash": "e01888f01957"
+    },
+    "home.loop-d2.desc-1": {
+      "part": "home",
+      "source_hash": "dd7733aa80ef",
+      "target_hash": "1ec0dfc9a4ef"
+    },
+    "home.why-agent.p-2": {
+      "part": "home",
+      "source_hash": "35230c9469a2",
+      "target_hash": "2895753bcc1a"
+    },
+    "home.why-agent.img-1.alt": {
+      "part": "home",
+      "source_hash": "afd3f600f638",
+      "target_hash": "01bde81f846a"
+    },
+    "home.why-agent.figcaption-1": {
+      "part": "home",
+      "source_hash": "4bb331f9f6fb",
+      "target_hash": "2e258f3ceed8"
+    },
+    "home.why-agent.h3-2": {
+      "part": "home",
+      "source_hash": "222000da96d1",
+      "target_hash": "86c949e64228"
+    },
+    "home.why-agent.li-1": {
+      "part": "home",
+      "source_hash": "4d737111bb76",
+      "target_hash": "c4ba11618b14"
+    },
+    "home.why-agent.li-2": {
+      "part": "home",
+      "source_hash": "aadee19b4763",
+      "target_hash": "57c071fbb7b2"
+    },
+    "home.why-agent.li-3": {
+      "part": "home",
+      "source_hash": "5e697967b7ec",
+      "target_hash": "7a5642a795e6"
+    },
+    "home.why-agent.li-4": {
+      "part": "home",
+      "source_hash": "d25a394b9e41",
+      "target_hash": "ea555b10c615"
+    },
+    "home.why-agent.p-3": {
+      "part": "home",
+      "source_hash": "505b9916712b",
+      "target_hash": "c7e516c12f74"
+    },
+    "home.why-agent.p-4": {
+      "part": "home",
+      "source_hash": "bbeb89be5de6",
+      "target_hash": "79d346860bd2"
+    },
+    "home.share.h2-1": {
+      "part": "home",
+      "source_hash": "f1e27da721b7",
+      "target_hash": "6699a4be3e80"
+    },
+    "home.why-keys.p-1": {
+      "part": "home",
+      "source_hash": "dd9352746e6e",
+      "target_hash": "77af2c3fd20d"
+    },
+    "home.why-keys.h3-1": {
+      "part": "home",
+      "source_hash": "51396907e61e",
+      "target_hash": "9b54bc8a7ce3"
+    },
+    "home.why-keys.p-2": {
+      "part": "home",
+      "source_hash": "4dd4ec421cbe",
+      "target_hash": "aba3aa203034"
+    },
+    "home.why-keys.ol-1.aria-label": {
+      "part": "home",
+      "source_hash": "1c1bcbbf1789",
+      "target_hash": "0fed8eee4815"
+    },
+    "home.why-keys.b-1": {
+      "part": "home",
+      "source_hash": "c5da4041ea8e",
+      "target_hash": "f155e5716ecb"
+    },
+    "home.why-keys.span-1": {
+      "part": "home",
+      "source_hash": "a2476d66a084",
+      "target_hash": "df76493565cb"
+    },
+    "home.why-keys.b-2": {
+      "part": "home",
+      "source_hash": "6c8888f1d6dc",
+      "target_hash": "a338e22800d5"
+    },
+    "home.why-keys.span-2": {
+      "part": "home",
+      "source_hash": "01b7a9f0d1d4",
+      "target_hash": "bd8cbf8d38a2"
+    },
+    "home.why-keys.b-3": {
+      "part": "home",
+      "source_hash": "a76b6c1ae9be",
+      "target_hash": "1ee04bcd5aa8"
+    },
+    "home.why-keys.span-3": {
+      "part": "home",
+      "source_hash": "6d244abe081b",
+      "target_hash": "61c053dfb809"
+    },
+    "home.why-keys.b-4": {
+      "part": "home",
+      "source_hash": "724c4cb2e620",
+      "target_hash": "492ff90e91d7"
+    },
+    "home.why-keys.span-4": {
+      "part": "home",
+      "source_hash": "2c1097258738",
+      "target_hash": "80627e0c176d"
+    },
+    "home.why-keys.b-5": {
+      "part": "home",
+      "source_hash": "96d527825b4b",
+      "target_hash": "ef282846fc18"
+    },
+    "home.why-keys.span-5": {
+      "part": "home",
+      "source_hash": "687891cb2f66",
+      "target_hash": "4dde4b2833ac"
+    },
+    "home.why-keys.p-3": {
+      "part": "home",
+      "source_hash": "ca3034a912dc",
+      "target_hash": "3c1953a83c46"
+    },
+    "home.why-keys.img-1.alt": {
+      "part": "home",
+      "source_hash": "ae01537e1ee6",
+      "target_hash": "43adefe77401"
+    },
+    "home.why-keys.figcaption-1": {
+      "part": "home",
+      "source_hash": "a098f63084b6",
+      "target_hash": "13d20f5ed798"
+    },
+    "home.why-keys.img-2.alt": {
+      "part": "home",
+      "source_hash": "9ae6aeafcf56",
+      "target_hash": "f92631f2fe42"
+    },
+    "home.why-keys.figcaption-2": {
+      "part": "home",
+      "source_hash": "348b1b23d393",
+      "target_hash": "71bb4085d171"
+    },
+    "home.why-keys.p-4": {
+      "part": "home",
+      "source_hash": "b5718f9f8bb5",
+      "target_hash": "94fa3a14058a"
+    },
+    "home.hw.h2-1": {
+      "part": "home",
+      "source_hash": "3f3225bbc711",
+      "target_hash": "fb22dd02d81f"
+    },
+    "home.hardware.p-1": {
+      "part": "home",
+      "source_hash": "f90e55953921",
+      "target_hash": "e3abe7ffc653"
+    },
+    "home.hardware.img-1.alt": {
+      "part": "home",
+      "source_hash": "60071766922d",
+      "target_hash": "34c1a674155f"
+    },
+    "home.hardware.figcaption-1": {
+      "part": "home",
+      "source_hash": "937079060820",
+      "target_hash": "9e6773d3b613"
+    },
+    "home.hardware.img-2.alt": {
+      "part": "home",
+      "source_hash": "6006e1039ec1",
+      "target_hash": "261663a0f1f2"
+    },
+    "home.hardware.figcaption-2": {
+      "part": "home",
+      "source_hash": "d67a36ee8dec",
+      "target_hash": "6c4602773fdc"
+    },
+    "home.hardware.img-3.alt": {
+      "part": "home",
+      "source_hash": "2b44277f55cd",
+      "target_hash": "cc6e2800438f"
+    },
+    "home.hardware.figcaption-3": {
+      "part": "home",
+      "source_hash": "f3ceb6c33eb7",
+      "target_hash": "5b4639c5ea3b"
+    },
+    "home.hardware.img-4.alt": {
+      "part": "home",
+      "source_hash": "c1394a12d331",
+      "target_hash": "e72d4f673e37"
+    },
+    "home.hardware.figcaption-4": {
+      "part": "home",
+      "source_hash": "cddfa5475f94",
+      "target_hash": "39be949e5282"
+    },
+    "home.hardware.p-2": {
+      "part": "home",
+      "source_hash": "5a4e8569c432",
+      "target_hash": "62edc58ec65f"
+    },
+    "home.features.h2-1": {
+      "part": "home",
+      "source_hash": "8e7ddf931c59",
+      "target_hash": "d40cae85d60c"
+    },
+    "home.features.p-1": {
+      "part": "home",
+      "source_hash": "cbdfccb24fcc",
+      "target_hash": "cf9c0090e94b"
+    },
+    "home.features.h3-1": {
+      "part": "home",
+      "source_hash": "65fb2dd50a89",
+      "target_hash": "6a7971710c0f"
+    },
+    "home.features.p-2": {
+      "part": "home",
+      "source_hash": "1bea9211a232",
+      "target_hash": "44342c91fa67"
+    },
+    "home.features.img-1.alt": {
+      "part": "home",
+      "source_hash": "0a8bc4d5312e",
+      "target_hash": "c62502aacc98"
+    },
+    "home.features.p-3": {
+      "part": "home",
+      "source_hash": "04423fe4175f",
+      "target_hash": "ef29ebde11b6"
+    },
+    "home.features.h3-2": {
+      "part": "home",
+      "source_hash": "e8070826221c",
+      "target_hash": "5a2fbd5667e8"
+    },
+    "home.features.p-4": {
+      "part": "home",
+      "source_hash": "49c151ca7020",
+      "target_hash": "64aaf80ac209"
+    },
+    "home.features.img-2.alt": {
+      "part": "home",
+      "source_hash": "428dfb61458f",
+      "target_hash": "29bd43f3b133"
+    },
+    "home.features.p-5": {
+      "part": "home",
+      "source_hash": "707c65c28bca",
+      "target_hash": "652bdaa21d95"
+    },
+    "home.features.h3-3": {
+      "part": "home",
+      "source_hash": "ba721e4421e2",
+      "target_hash": "75ca8c99dcd8"
+    },
+    "home.features.p-6": {
+      "part": "home",
+      "source_hash": "916edc5f7b60",
+      "target_hash": "444147f9e444"
+    },
+    "home.features.img-3.alt": {
+      "part": "home",
+      "source_hash": "cc2b73368cf4",
+      "target_hash": "786197f12f7c"
+    },
+    "home.oss.h2-1": {
+      "part": "home",
+      "source_hash": "3317e70f46b3",
+      "target_hash": "de631cf16530"
+    },
+    "home.open-source.p-1": {
+      "part": "home",
+      "source_hash": "ba01b625fe70",
+      "target_hash": "e0929bf58bf1"
+    },
+    "home.open-source.h2-1": {
+      "part": "home",
+      "source_hash": "19dae78c985d",
+      "target_hash": "9123338d7388"
+    },
+    "home.open-source.p-2": {
+      "part": "home",
+      "source_hash": "598b6f2514fd",
+      "target_hash": "5701f966e70a"
+    },
+    "home.lightbox.button-1": {
+      "part": "home",
+      "source_hash": "ce7bf15a4a85",
+      "target_hash": "fdfdce9f9526"
+    },
+    "home.lightbox.button-1.aria-label": {
+      "part": "home",
+      "source_hash": "2d3b2f52a3dd",
+      "target_hash": "2ba3a9878240"
+    },
+    "chrome.footer.about": {
+      "part": "home",
+      "source_hash": "7f11ddd74f30",
+      "target_hash": "3a2a7f4e09fa"
+    },
+    "chrome.footer.source": {
+      "part": "home",
+      "source_hash": "11506c59ef23",
+      "target_hash": "822b3a463b8d"
+    },
+    "chrome.footer.install": {
+      "part": "home",
+      "source_hash": "e15a133068af",
+      "target_hash": "14cf9b656150"
+    },
+    "chrome.footer.changelog": {
+      "part": "home",
+      "source_hash": "ead07c84baac",
+      "target_hash": "fe5504d030ba"
+    },
+    "chrome.footer.licence": {
+      "part": "home",
+      "source_hash": "f3ec8e880a46",
+      "target_hash": "1ef43581f725"
+    },
+    "chrome.footer.tag-note": {
+      "part": "home",
+      "source_hash": "09eab402684a",
+      "target_hash": "874f137abd02"
+    },
+    "chrome.consent.aria-label": {
+      "part": "home",
+      "source_hash": "38db21b38100",
+      "target_hash": "6bb45db6f894"
+    },
+    "chrome.consent.text": {
+      "part": "home",
+      "source_hash": "cdf7e1f99a7b",
+      "target_hash": "29e288009135"
+    },
+    "chrome.consent.decline": {
+      "part": "home",
+      "source_hash": "a2d285b35287",
+      "target_hash": "dc437b5ea871"
+    },
+    "chrome.consent.accept": {
+      "part": "home",
+      "source_hash": "89713b9c9c1b",
+      "target_hash": "c409eeeda591"
+    },
+    "common.crumbs.aria-label": {
+      "part": "common",
+      "source_hash": "2bd873d6c734",
+      "target_hash": "e800f9a7e1a8"
+    },
+    "common.crumb.home": {
+      "part": "common",
+      "source_hash": "3a78695388b3",
+      "target_hash": "df5c53bd0a07"
+    },
+    "common.crumb.coding-agents": {
+      "part": "common",
+      "source_hash": "707c65c28bca",
+      "target_hash": "96e168d5ab18"
+    },
+    "common.in-words": {
+      "part": "common",
+      "source_hash": "3cafefb13fa9",
+      "target_hash": "a3b65b18419d"
+    },
+    "common.clients.client": {
+      "part": "common",
+      "source_hash": "0c77fe09ab33",
+      "target_hash": "956dd08aa303"
+    },
+    "common.client.protocol": {
+      "part": "common",
+      "source_hash": "cf0883343f4a",
+      "target_hash": "b3680d4b2071"
+    },
+    "common.client.support": {
+      "part": "common",
+      "source_hash": "be91940b79f4",
+      "target_hash": "a398555cccd6"
+    },
+    "common.support.full": {
+      "part": "common",
+      "source_hash": "1f95d1324a14",
+      "target_hash": "7431b62c5b5b"
+    },
+    "common.support.local-only": {
+      "part": "common",
+      "source_hash": "12d96c6fb40e",
+      "target_hash": "7d31f0246f95"
+    },
+    "common.crumb.agent-tuning": {
+      "part": "common",
+      "source_hash": "124c9615be9b",
+      "target_hash": "be4e17341808"
+    },
+    "common.copy": {
+      "part": "common",
+      "source_hash": "e21f935f11d7",
+      "target_hash": "649c3911c670"
+    },
+    "common.crumb.features": {
+      "part": "common",
+      "source_hash": "5697d03daef4",
+      "target_hash": "de578ba8bb35"
+    },
+    "common.crumb.gpu-monitoring": {
+      "part": "common",
+      "source_hash": "cbdfccb24fcc",
+      "target_hash": "cf9c0090e94b"
+    },
+    "common.crumb.cache-aware-routing": {
+      "part": "common",
+      "source_hash": "d45c5045a852",
+      "target_hash": "cf54f78955d4"
+    },
+    "common.crumb.api-keys": {
+      "part": "common",
+      "source_hash": "98aae8972102",
+      "target_hash": "b06af452a3da"
+    },
+    "common.crumb.faq": {
+      "part": "common",
+      "source_hash": "dbc468a14b60",
+      "target_hash": "0e5dc81b9a69"
+    },
+    "common.crumb.privacy": {
+      "part": "common",
+      "source_hash": "54a57c3147c4",
+      "target_hash": "dca43e30fc12"
+    },
+    "common.client.setup-section.aria-label": {
+      "part": "common",
+      "source_hash": "7013af4c42fe",
+      "target_hash": "16e671aa4e14"
+    },
+    "common.client.requirements": {
+      "part": "common",
+      "source_hash": "e0cdd07f6a27",
+      "target_hash": "06f262048a2d"
+    },
+    "common.client.setup": {
+      "part": "common",
+      "source_hash": "7013af4c42fe",
+      "target_hash": "16e671aa4e14"
+    },
+    "common.client.setup-p": {
+      "part": "common",
+      "source_hash": "961b2c6bf48f",
+      "target_hash": "e60ee60fc17c"
+    },
+    "common.file.shell": {
+      "part": "common",
+      "source_hash": "a733285486d5",
+      "target_hash": "3b840f06e9a9"
+    },
+    "common.client.docs": {
+      "part": "common",
+      "source_hash": "78599bc11885",
+      "target_hash": "15c807246e4e"
+    },
+    "common.client.related": {
+      "part": "common",
+      "source_hash": "5f736e0bdabc",
+      "target_hash": "d6b71cfa7ea1"
+    },
+    "common.file.settings": {
+      "part": "common",
+      "source_hash": "74a883a037bc",
+      "target_hash": "16e671aa4e14"
+    },
+    "coding-agents.meta.title": {
+      "part": "coding-agents",
+      "source_hash": "cec26df70a65",
+      "target_hash": "92d1f88b10c0"
+    },
+    "coding-agents.meta.description": {
+      "part": "coding-agents",
+      "source_hash": "d4374722fecc",
+      "target_hash": "815812a2f126"
+    },
+    "coding-agents.agents.h1-1": {
+      "part": "coding-agents",
+      "source_hash": "e01f3269f454",
+      "target_hash": "1cb64cdd97cb"
+    },
+    "coding-agents.p-1": {
+      "part": "coding-agents",
+      "source_hash": "b8783c59365c",
+      "target_hash": "725ee3fdb7ee"
+    },
+    "coding-agents.flow.title": {
+      "part": "coding-agents",
+      "source_hash": "b2c49ca0b033",
+      "target_hash": "fb014a955db8"
+    },
+    "coding-agents.flow.desc": {
+      "part": "coding-agents",
+      "source_hash": "c24325d4bacf",
+      "target_hash": "c745cd71caef"
+    },
+    "coding-agents.flow.caption": {
+      "part": "coding-agents",
+      "source_hash": "4c8a44e2f320",
+      "target_hash": "a82619fe0c53"
+    },
+    "coding-agents.p-2": {
+      "part": "coding-agents",
+      "source_hash": "75d2dc8f6796",
+      "target_hash": "a775b4a49a08"
+    },
+    "coding-agents.p-3": {
+      "part": "coding-agents",
+      "source_hash": "91f99cd9235e",
+      "target_hash": "1982cf2347ce"
+    },
+    "coding-agents.p-4": {
+      "part": "coding-agents",
+      "source_hash": "0ced1cfb6f5c",
+      "target_hash": "e9cdd6234add"
+    },
+    "clients.meta.title": {
+      "part": "clients",
+      "source_hash": "9a440e2e3c4a",
+      "target_hash": "1bb303c56f5b"
+    },
+    "clients.meta.description": {
+      "part": "clients",
+      "source_hash": "9d9c76c6bb07",
+      "target_hash": "5803dbf97b2e"
+    },
+    "clients.claude-code.h1": {
+      "part": "clients",
+      "source_hash": "9bb97352447d",
+      "target_hash": "87d9e5ea574c"
+    },
+    "clients.claude-code.summary": {
+      "part": "clients",
+      "source_hash": "b46e643eeaac",
+      "target_hash": "120674400a92"
+    },
+    "clients.claude-code.capability": {
+      "part": "clients",
+      "source_hash": "79cee967a1ad",
+      "target_hash": "2729e21da085"
+    },
+    "clients.claude-code.req.client_version": {
+      "part": "clients",
+      "source_hash": "baf574b32f46",
+      "target_hash": "e13b6afc146f"
+    },
+    "clients.claude-code.req.router_on": {
+      "part": "clients",
+      "source_hash": "f0fd90d78fe4",
+      "target_hash": "bd3ae85c1752"
+    },
+    "clients.claude-code.req.relay_key": {
+      "part": "clients",
+      "source_hash": "df8e31733077",
+      "target_hash": "f33247e82233"
+    },
+    "clients.claude-code.req.min_context": {
+      "part": "clients",
+      "source_hash": "5cc65b30acd7",
+      "target_hash": "0828b11bdd67"
+    },
+    "clients.claude-code.req.recommended_context": {
+      "part": "clients",
+      "source_hash": "82792a23c7a0",
+      "target_hash": "19530d664d6a"
+    },
+    "clients.claude-code.req.unknown_model_window": {
+      "part": "clients",
+      "source_hash": "c67abcb52ad3",
+      "target_hash": "fda1bc68fafa"
+    },
+    "clients.claude-code.mode.router.title": {
+      "part": "clients",
+      "source_hash": "872bcc0e520c",
+      "target_hash": "43c819895512"
+    },
+    "clients.claude-code.mode.router.desc": {
+      "part": "clients",
+      "source_hash": "9832c50a640e",
+      "target_hash": "50190cd2b9e1"
+    },
+    "clients.claude-code.mode.local.title": {
+      "part": "clients",
+      "source_hash": "2a51ef910e22",
+      "target_hash": "ee6246aeedf6"
+    },
+    "clients.claude-code.mode.local.desc": {
+      "part": "clients",
+      "source_hash": "1dea6fe58a27",
+      "target_hash": "040319bb59bb"
+    },
+    "clients.anthropic-sdk.h1": {
+      "part": "clients",
+      "source_hash": "4229892646ec",
+      "target_hash": "ec54b18f8e7f"
+    },
+    "clients.anthropic-sdk.summary": {
+      "part": "clients",
+      "source_hash": "910172f40b64",
+      "target_hash": "1cc2dc636b19"
+    },
+    "clients.anthropic-sdk.flow.title": {
+      "part": "clients",
+      "source_hash": "26e8b7e39b44",
+      "target_hash": "5efae3b4ee4c"
+    },
+    "clients.anthropic-sdk.flow.desc": {
+      "part": "clients",
+      "source_hash": "26917b07643f",
+      "target_hash": "181355fd2889"
+    },
+    "clients.anthropic-sdk.flow.caption": {
+      "part": "clients",
+      "source_hash": "a4ec23a63573",
+      "target_hash": "b4249af3747b"
+    },
+    "clients.anthropic-sdk.capability": {
+      "part": "clients",
+      "source_hash": "3d9a6a025316",
+      "target_hash": "b0aa0b739fe9"
+    },
+    "clients.anthropic-sdk.req.router_on": {
+      "part": "clients",
+      "source_hash": "f0fd90d78fe4",
+      "target_hash": "bd3ae85c1752"
+    },
+    "clients.anthropic-sdk.req.relay_key": {
+      "part": "clients",
+      "source_hash": "df8e31733077",
+      "target_hash": "f33247e82233"
+    },
+    "clients.anthropic-sdk.mode.router.title": {
+      "part": "clients",
+      "source_hash": "5e22bff885a6",
+      "target_hash": "52931212f039"
+    },
+    "clients.anthropic-sdk.mode.router.desc": {
+      "part": "clients",
+      "source_hash": "fe17e904c7dd",
+      "target_hash": "6c917fe8e3b2"
+    },
+    "clients.anthropic-sdk.mode.local.title": {
+      "part": "clients",
+      "source_hash": "c905013aab29",
+      "target_hash": "66ea436dcfd3"
+    },
+    "clients.anthropic-sdk.mode.local.desc": {
+      "part": "clients",
+      "source_hash": "e1b1c200ccb3",
+      "target_hash": "9e7aa515dfa7"
+    },
+    "clients.opencode.h1": {
+      "part": "clients",
+      "source_hash": "0f9f0d85229c",
+      "target_hash": "f24fa16bf9e6"
+    },
+    "clients.opencode.summary": {
+      "part": "clients",
+      "source_hash": "0dbe773d1ba9",
+      "target_hash": "ce88e9eaa9b6"
+    },
+    "clients.opencode.flow.title": {
+      "part": "clients",
+      "source_hash": "ae2c3d407d79",
+      "target_hash": "038e75d75ea4"
+    },
+    "clients.opencode.flow.desc": {
+      "part": "clients",
+      "source_hash": "5a53f0ea3bba",
+      "target_hash": "f7468789fe11"
+    },
+    "clients.opencode.flow.caption": {
+      "part": "clients",
+      "source_hash": "774655618391",
+      "target_hash": "f49bf1ca5b30"
+    },
+    "clients.opencode.capability": {
+      "part": "clients",
+      "source_hash": "8901779665ff",
+      "target_hash": "f229812ba338"
+    },
+    "clients.opencode.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "9dc1e6e61b3b"
+    },
+    "clients.opencode.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "7850964c52f5"
+    },
+    "clients.opencode.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "1c6b607cf9de"
+    },
+    "clients.opencode.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "e03771b96f12",
+      "target_hash": "bcca09771c77"
+    },
+    "clients.aider.h1": {
+      "part": "clients",
+      "source_hash": "b1e1b6bd30b4",
+      "target_hash": "5d87e8863512"
+    },
+    "clients.aider.summary": {
+      "part": "clients",
+      "source_hash": "2a2e36942a30",
+      "target_hash": "8baaceb51c56"
+    },
+    "clients.aider.flow.title": {
+      "part": "clients",
+      "source_hash": "32e01b3b0c97",
+      "target_hash": "4182eae4dead"
+    },
+    "clients.aider.flow.desc": {
+      "part": "clients",
+      "source_hash": "3b2c308c114e",
+      "target_hash": "fdaf13c2998a"
+    },
+    "clients.aider.flow.caption": {
+      "part": "clients",
+      "source_hash": "e58a54a34cdc",
+      "target_hash": "ad5bb0035e04"
+    },
+    "clients.aider.capability": {
+      "part": "clients",
+      "source_hash": "922681946310",
+      "target_hash": "58514f882042"
+    },
+    "clients.aider.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "7850964c52f5"
+    },
+    "clients.aider.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "1c6b607cf9de"
+    },
+    "clients.aider.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "df94297df209",
+      "target_hash": "37c78eb9102c"
+    },
+    "clients.aider.mode.default.file.session": {
+      "part": "clients",
+      "source_hash": "c1f31c2b83f0",
+      "target_hash": "422140ae3a57"
+    },
+    "clients.grok-cli.h1": {
+      "part": "clients",
+      "source_hash": "9e97001cf2f3",
+      "target_hash": "2549b4ab5d79"
+    },
+    "clients.grok-cli.summary": {
+      "part": "clients",
+      "source_hash": "be6e0d9a09ed",
+      "target_hash": "d5f02be7fb0c"
+    },
+    "clients.grok-cli.flow.title": {
+      "part": "clients",
+      "source_hash": "eeb620d01d38",
+      "target_hash": "582978b8dfba"
+    },
+    "clients.grok-cli.flow.desc": {
+      "part": "clients",
+      "source_hash": "ef648e107c77",
+      "target_hash": "e714f8c1901d"
+    },
+    "clients.grok-cli.flow.caption": {
+      "part": "clients",
+      "source_hash": "b77ddcf1b78a",
+      "target_hash": "733727cb5b04"
+    },
+    "clients.grok-cli.capability": {
+      "part": "clients",
+      "source_hash": "03938abace0a",
+      "target_hash": "49f2ab3c26e2"
+    },
+    "clients.grok-cli.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "9dc1e6e61b3b"
+    },
+    "clients.grok-cli.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "7850964c52f5"
+    },
+    "clients.grok-cli.mode.default.title": {
+      "part": "clients",
+      "source_hash": "1901a8b05d3b",
+      "target_hash": "0786b5f26fa7"
+    },
+    "clients.grok-cli.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "b5943bc2443d",
+      "target_hash": "df124e86a3bc"
+    },
+    "clients.grok-cli.mode.community.title": {
+      "part": "clients",
+      "source_hash": "28bbd28283a3",
+      "target_hash": "555389d54ddf"
+    },
+    "clients.grok-cli.mode.community.desc": {
+      "part": "clients",
+      "source_hash": "0b589963361a",
+      "target_hash": "2ee96806a5fd"
+    },
+    "clients.openai-sdk.h1": {
+      "part": "clients",
+      "source_hash": "db3661cee041",
+      "target_hash": "0c2393d3cc1d"
+    },
+    "clients.openai-sdk.summary": {
+      "part": "clients",
+      "source_hash": "16d05b661878",
+      "target_hash": "b997dec842cd"
+    },
+    "clients.openai-sdk.flow.title": {
+      "part": "clients",
+      "source_hash": "13c7ed2b6c10",
+      "target_hash": "b0df1d7ba253"
+    },
+    "clients.openai-sdk.flow.desc": {
+      "part": "clients",
+      "source_hash": "9b9a5c752e5f",
+      "target_hash": "779205c7df47"
+    },
+    "clients.openai-sdk.flow.caption": {
+      "part": "clients",
+      "source_hash": "0d8679dd39d0",
+      "target_hash": "de0160cfb5b9"
+    },
+    "clients.openai-sdk.capability": {
+      "part": "clients",
+      "source_hash": "81a1f26dda28",
+      "target_hash": "99d219d49b61"
+    },
+    "clients.openai-sdk.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "1c6b607cf9de"
+    },
+    "clients.openai-sdk.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "81e9b9ed3e66",
+      "target_hash": "d4965fe41592"
+    },
+    "clients.continue.h1": {
+      "part": "clients",
+      "source_hash": "f33c2b44b3be",
+      "target_hash": "d90de850845b"
+    },
+    "clients.continue.summary": {
+      "part": "clients",
+      "source_hash": "4377b7395411",
+      "target_hash": "11fc536bc5ce"
+    },
+    "clients.continue.flow.title": {
+      "part": "clients",
+      "source_hash": "a55ed462d54e",
+      "target_hash": "72da6abb62a7"
+    },
+    "clients.continue.flow.desc": {
+      "part": "clients",
+      "source_hash": "dfee5b6d070e",
+      "target_hash": "a85b3637f8b4"
+    },
+    "clients.continue.flow.caption": {
+      "part": "clients",
+      "source_hash": "c1f803ddf701",
+      "target_hash": "0217bc88455d"
+    },
+    "clients.continue.capability": {
+      "part": "clients",
+      "source_hash": "d76f0ccb6e86",
+      "target_hash": "8e93fc76ea66"
+    },
+    "clients.continue.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "7850964c52f5"
+    },
+    "clients.continue.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "1c6b607cf9de"
+    },
+    "clients.continue.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "8c8d339555ff",
+      "target_hash": "009432417832"
+    },
+    "clients.cline.h1": {
+      "part": "clients",
+      "source_hash": "d0efe15bdc4f",
+      "target_hash": "99c58ab11f3b"
+    },
+    "clients.cline.summary": {
+      "part": "clients",
+      "source_hash": "d80b0d66c45e",
+      "target_hash": "b72d26b8e7fa"
+    },
+    "clients.cline.flow.title": {
+      "part": "clients",
+      "source_hash": "79932fc0e85c",
+      "target_hash": "9180b726f80f"
+    },
+    "clients.cline.flow.desc": {
+      "part": "clients",
+      "source_hash": "300648093db4",
+      "target_hash": "26be06668ea6"
+    },
+    "clients.cline.flow.caption": {
+      "part": "clients",
+      "source_hash": "26566cb52d8d",
+      "target_hash": "44f05ac53977"
+    },
+    "clients.cline.capability": {
+      "part": "clients",
+      "source_hash": "21110940c4cb",
+      "target_hash": "44977735d57a"
+    },
+    "clients.cline.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "9dc1e6e61b3b"
+    },
+    "clients.cline.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "7850964c52f5"
+    },
+    "clients.cline.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "1c6b607cf9de"
+    },
+    "clients.cline.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "f65c6df5377b",
+      "target_hash": "f65c6df5377b"
+    },
+    "clients.cursor.h1": {
+      "part": "clients",
+      "source_hash": "314536df2e7a",
+      "target_hash": "83dc912dffb4"
+    },
+    "clients.cursor.summary": {
+      "part": "clients",
+      "source_hash": "1c8912c5ba32",
+      "target_hash": "2635e1424234"
+    },
+    "clients.cursor.flow.title": {
+      "part": "clients",
+      "source_hash": "43c8f2aed837",
+      "target_hash": "f42437e621b7"
+    },
+    "clients.cursor.flow.desc": {
+      "part": "clients",
+      "source_hash": "524789d9ea5d",
+      "target_hash": "76aac48034e9"
+    },
+    "clients.cursor.flow.caption": {
+      "part": "clients",
+      "source_hash": "79e33449f1a5",
+      "target_hash": "0aacda8dc911"
+    },
+    "clients.cursor.capability": {
+      "part": "clients",
+      "source_hash": "e3b007a84e77",
+      "target_hash": "f0d0966ecd94"
+    },
+    "clients.cursor.req.reachable": {
+      "part": "clients",
+      "source_hash": "0815103f2766",
+      "target_hash": "b9528cef133d"
+    },
+    "clients.cursor.mode.default.title": {
+      "part": "clients",
+      "source_hash": "5e7a9a7b90b9",
+      "target_hash": "622c9ef2a78c"
+    },
+    "clients.cursor.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "fce3909f9e49",
+      "target_hash": "f5e83e18c5e3"
+    },
+    "clients.codex-cli.h1": {
+      "part": "clients",
+      "source_hash": "ee03de1664ad",
+      "target_hash": "1c6a0b3a7e63"
+    },
+    "clients.codex-cli.summary": {
+      "part": "clients",
+      "source_hash": "4ffc9f534362",
+      "target_hash": "956db370857c"
+    },
+    "clients.codex-cli.flow.title": {
+      "part": "clients",
+      "source_hash": "4d9d5da5c30b",
+      "target_hash": "5bb0d3678e8f"
+    },
+    "clients.codex-cli.flow.desc": {
+      "part": "clients",
+      "source_hash": "ae1c2b1f74bf",
+      "target_hash": "612db590d04c"
+    },
+    "clients.codex-cli.flow.caption": {
+      "part": "clients",
+      "source_hash": "4596be3eb188",
+      "target_hash": "b917e79a9ce9"
+    },
+    "clients.codex-cli.capability": {
+      "part": "clients",
+      "source_hash": "b7c7ad7fa0c7",
+      "target_hash": "0691311b62ee"
+    },
+    "clients.codex-cli.req.tools": {
+      "part": "clients",
+      "source_hash": "b9d5cc99b8c8",
+      "target_hash": "9dc1e6e61b3b"
+    },
+    "clients.codex-cli.req.min_context": {
+      "part": "clients",
+      "source_hash": "46484b098fc4",
+      "target_hash": "7850964c52f5"
+    },
+    "clients.codex-cli.mode.default.title": {
+      "part": "clients",
+      "source_hash": "8e4bf4368b03",
+      "target_hash": "1c6b607cf9de"
+    },
+    "clients.codex-cli.mode.default.desc": {
+      "part": "clients",
+      "source_hash": "0e63a370854f",
+      "target_hash": "aba266c6af54"
+    },
+    "claude-code-router.router.h2-1": {
+      "part": "claude-code-router",
+      "source_hash": "88b4b60f90dc",
+      "target_hash": "5b5460ac4dae"
+    },
+    "claude-code-router.p-1": {
+      "part": "claude-code-router",
+      "source_hash": "47eae55f59c6",
+      "target_hash": "b471717f3752"
+    },
+    "claude-code-router.p-2": {
+      "part": "claude-code-router",
+      "source_hash": "23f00b590b6a",
+      "target_hash": "a12ee38c2918"
+    },
+    "claude-code-router.p-3": {
+      "part": "claude-code-router",
+      "source_hash": "b554407d17a9",
+      "target_hash": "783fc8e9f627"
+    },
+    "claude-code-router.p-4": {
+      "part": "claude-code-router",
+      "source_hash": "f87b272c3f76",
+      "target_hash": "2fb4e77d0b34"
+    },
+    "claude-code-router.figcaption-1": {
+      "part": "claude-code-router",
+      "source_hash": "462151461bb5",
+      "target_hash": "78542af42850"
+    },
+    "claude-code-router.p-5": {
+      "part": "claude-code-router",
+      "source_hash": "038dbec78e21",
+      "target_hash": "9e93f697b8f6"
+    },
+    "claude-code-router.p-6": {
+      "part": "claude-code-router",
+      "source_hash": "bd9385d02ca7",
+      "target_hash": "ccbd322e42c1"
+    },
+    "claude-code-router.img-1.alt": {
+      "part": "claude-code-router",
+      "source_hash": "3f1f5682c2a4",
+      "target_hash": "ce86cdf343ea"
+    },
+    "claude-code-router.span-1": {
+      "part": "claude-code-router",
+      "source_hash": "d0410896bcb4",
+      "target_hash": "08028990f763"
+    },
+    "claude-code-router.span-2": {
+      "part": "claude-code-router",
+      "source_hash": "6d3dcb885877",
+      "target_hash": "b3a87312ecb3"
+    },
+    "claude-code-router.figcaption-2": {
+      "part": "claude-code-router",
+      "source_hash": "b4aee34de008",
+      "target_hash": "12d14bf5d68f"
+    },
+    "claude-code-router.p-7": {
+      "part": "claude-code-router",
+      "source_hash": "174e92b8be51",
+      "target_hash": "90f374f44344"
+    },
+    "claude-code-router.img-2.alt": {
+      "part": "claude-code-router",
+      "source_hash": "1dcf45e042e8",
+      "target_hash": "a0d5f525a222"
+    },
+    "claude-code-router.span-3": {
+      "part": "claude-code-router",
+      "source_hash": "e7811be1957f",
+      "target_hash": "35031427b6a5"
+    },
+    "claude-code-router.span-4": {
+      "part": "claude-code-router",
+      "source_hash": "8c3c6830836a",
+      "target_hash": "1e479ea13898"
+    },
+    "claude-code-router.figcaption-3": {
+      "part": "claude-code-router",
+      "source_hash": "e6294c26fbc5",
+      "target_hash": "9744d7d20080"
+    },
+    "agent-tuning.meta.title": {
+      "part": "agent-tuning",
+      "source_hash": "c73577a9e93d",
+      "target_hash": "68ff00f3fa9e"
+    },
+    "agent-tuning.meta.description": {
+      "part": "agent-tuning",
+      "source_hash": "42f223176a20",
+      "target_hash": "89064d111024"
+    },
+    "agent-tuning.jsonld.name": {
+      "part": "agent-tuning",
+      "source_hash": "d38cc5b44b81",
+      "target_hash": "4211dc410f03"
+    },
+    "agent-tuning.jsonld.step-1": {
+      "part": "agent-tuning",
+      "source_hash": "ea9ef62b2144",
+      "target_hash": "3d2ee203c770"
+    },
+    "agent-tuning.jsonld.step-2": {
+      "part": "agent-tuning",
+      "source_hash": "02b6962c341f",
+      "target_hash": "1ea02f098931"
+    },
+    "agent-tuning.jsonld.step-3": {
+      "part": "agent-tuning",
+      "source_hash": "23149cd56616",
+      "target_hash": "57ad5aa04c28"
+    },
+    "agent-tuning.jsonld.step-4": {
+      "part": "agent-tuning",
+      "source_hash": "2580a4baddda",
+      "target_hash": "0a7c7b4a060b"
+    },
+    "agent-tuning.tuning.h1-1": {
+      "part": "agent-tuning",
+      "source_hash": "2df23e8f7918",
+      "target_hash": "21394d03e368"
+    },
+    "agent-tuning.p-1": {
+      "part": "agent-tuning",
+      "source_hash": "47320716621f",
+      "target_hash": "8fd398ec9ecc"
+    },
+    "agent-tuning.h2-1": {
+      "part": "agent-tuning",
+      "source_hash": "2a300da26a75",
+      "target_hash": "6651211415ee"
+    },
+    "agent-tuning.li-1": {
+      "part": "agent-tuning",
+      "source_hash": "45b78d2f8e02",
+      "target_hash": "82a88c96648e"
+    },
+    "agent-tuning.li-2": {
+      "part": "agent-tuning",
+      "source_hash": "a316c0dc85b5",
+      "target_hash": "2fb922effd55"
+    },
+    "agent-tuning.li-3": {
+      "part": "agent-tuning",
+      "source_hash": "45f30ab355a5",
+      "target_hash": "dd4e4617e764"
+    },
+    "agent-tuning.h2-2": {
+      "part": "agent-tuning",
+      "source_hash": "676f21721809",
+      "target_hash": "c734d722b365"
+    },
+    "agent-tuning.th-1": {
+      "part": "agent-tuning",
+      "source_hash": "8e6a6cca7aae",
+      "target_hash": "8a61ff314654"
+    },
+    "agent-tuning.th-2": {
+      "part": "agent-tuning",
+      "source_hash": "3df9726c68ba",
+      "target_hash": "0a809e75fa8f"
+    },
+    "agent-tuning.th-3": {
+      "part": "agent-tuning",
+      "source_hash": "982d52862acc",
+      "target_hash": "32169c9ad3b3"
+    },
+    "agent-tuning.th-4": {
+      "part": "agent-tuning",
+      "source_hash": "966e8813028c",
+      "target_hash": "0077e1a0b84a"
+    },
+    "agent-tuning.th-5": {
+      "part": "agent-tuning",
+      "source_hash": "6fb4184c2d5a",
+      "target_hash": "c391a594d171"
+    },
+    "agent-tuning.th-6": {
+      "part": "agent-tuning",
+      "source_hash": "a632bbe8e8aa",
+      "target_hash": "569782241cfb"
+    },
+    "agent-tuning.th-7": {
+      "part": "agent-tuning",
+      "source_hash": "4c3b52acd644",
+      "target_hash": "d36f32dcb52c"
+    },
+    "agent-tuning.td-1": {
+      "part": "agent-tuning",
+      "source_hash": "51491b72ded1",
+      "target_hash": "937ee01b52f0"
+    },
+    "agent-tuning.th-8": {
+      "part": "agent-tuning",
+      "source_hash": "ead961a24dc4",
+      "target_hash": "cb038c084130"
+    },
+    "agent-tuning.th-9": {
+      "part": "agent-tuning",
+      "source_hash": "70356d606d14",
+      "target_hash": "87ce8ec47263"
+    },
+    "agent-tuning.td-2": {
+      "part": "agent-tuning",
+      "source_hash": "9a72b9938ec6",
+      "target_hash": "31c96a27128d"
+    },
+    "agent-tuning.p-2": {
+      "part": "agent-tuning",
+      "source_hash": "c3bff7c1a9d1",
+      "target_hash": "13b90fab423a"
+    },
+    "agent-tuning.h2-3": {
+      "part": "agent-tuning",
+      "source_hash": "b273921d2e33",
+      "target_hash": "95f7980c8cc5"
+    },
+    "agent-tuning.p-3": {
+      "part": "agent-tuning",
+      "source_hash": "a74bbbec589e",
+      "target_hash": "fc48b5419bd5"
+    },
+    "agent-tuning.h3-1": {
+      "part": "agent-tuning",
+      "source_hash": "c1ebd00d0f72",
+      "target_hash": "df0ceb321984"
+    },
+    "agent-tuning.h3-2": {
+      "part": "agent-tuning",
+      "source_hash": "0cc405dce7f8",
+      "target_hash": "b46be3efc6de"
+    },
+    "agent-tuning.h3-3": {
+      "part": "agent-tuning",
+      "source_hash": "906f71857682",
+      "target_hash": "be30122cb7aa"
+    },
+    "agent-tuning.h3-4": {
+      "part": "agent-tuning",
+      "source_hash": "d6e1c2c66dff",
+      "target_hash": "0fc1df4f0b82"
+    },
+    "agent-tuning.h2-4": {
+      "part": "agent-tuning",
+      "source_hash": "74e492d5d0df",
+      "target_hash": "aa1ffae243d4"
+    },
+    "agent-tuning.li-4": {
+      "part": "agent-tuning",
+      "source_hash": "4a1f64b32132",
+      "target_hash": "4879f4cd4840"
+    },
+    "agent-tuning.li-5": {
+      "part": "agent-tuning",
+      "source_hash": "e127f19fe7da",
+      "target_hash": "b4a5a395f0bf"
+    },
+    "agent-tuning.li-6": {
+      "part": "agent-tuning",
+      "source_hash": "dabc7d95f036",
+      "target_hash": "dba917db89f5"
+    },
+    "agent-tuning.li-7": {
+      "part": "agent-tuning",
+      "source_hash": "cc61ece33dc3",
+      "target_hash": "a824ff3c8c27"
+    },
+    "agent-tuning.p-4": {
+      "part": "agent-tuning",
+      "source_hash": "cfe5bc772213",
+      "target_hash": "fd4a8e768ffa"
+    },
+    "gpu-monitoring.meta.title": {
+      "part": "gpu-monitoring",
+      "source_hash": "d27814ed8b63",
+      "target_hash": "640418261352"
+    },
+    "gpu-monitoring.meta.description": {
+      "part": "gpu-monitoring",
+      "source_hash": "507736e1bea9",
+      "target_hash": "12bbd401df5a"
+    },
+    "gpu-monitoring.box.h1-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "cc0f4c9bbf2b",
+      "target_hash": "9af981140043"
+    },
+    "gpu-monitoring.p-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "a9ca4640a6e7",
+      "target_hash": "ee1ef9eddb8c"
+    },
+    "gpu-monitoring.p-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "e6e25a4491ad",
+      "target_hash": "c537fd440257"
+    },
+    "gpu-monitoring.dt-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "8f0474fb0c5b",
+      "target_hash": "ea49523d744c"
+    },
+    "gpu-monitoring.dd-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "065609784858",
+      "target_hash": "9dcd13c1289e"
+    },
+    "gpu-monitoring.dt-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "60de0ad7eb70",
+      "target_hash": "36ce15e683cb"
+    },
+    "gpu-monitoring.dd-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "2a58556c9272",
+      "target_hash": "8139b5aecc17"
+    },
+    "gpu-monitoring.dd-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "a85ab5eb706a",
+      "target_hash": "3360b4a36934"
+    },
+    "gpu-monitoring.dt-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "9fe4c68ec20d",
+      "target_hash": "2276b74071e2"
+    },
+    "gpu-monitoring.dd-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "a041ea9e5251",
+      "target_hash": "a041ea9e5251"
+    },
+    "gpu-monitoring.caption-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "db678a93d309",
+      "target_hash": "62158e670c84"
+    },
+    "gpu-monitoring.th-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "463816d07097",
+      "target_hash": "192f5404a760"
+    },
+    "gpu-monitoring.th-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "5e1bc5df87b6",
+      "target_hash": "92a32ea58ac1"
+    },
+    "gpu-monitoring.th-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "af088ec66533",
+      "target_hash": "d8cf0003792e"
+    },
+    "gpu-monitoring.th-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "0cb077815ec8",
+      "target_hash": "fc538690fb8f"
+    },
+    "gpu-monitoring.th-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "9739b22b0dce",
+      "target_hash": "04376473c86f"
+    },
+    "gpu-monitoring.col-capture.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "5e1bc5df87b6",
+      "target_hash": "92a32ea58ac1"
+    },
+    "gpu-monitoring.col-median.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "e6245b901702",
+      "target_hash": "83b2ac0cd3da"
+    },
+    "gpu-monitoring.col-peak.data-h": {
+      "part": "gpu-monitoring",
+      "source_hash": "0cb077815ec8",
+      "target_hash": "fc538690fb8f"
+    },
+    "gpu-monitoring.th-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "6554b6cbd5f4",
+      "target_hash": "268f768f48a9"
+    },
+    "gpu-monitoring.th-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "eb7b7fd32e11",
+      "target_hash": "9e0b874a6157"
+    },
+    "gpu-monitoring.span-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "0bedd95628dd",
+      "target_hash": "c8b63a0d8897"
+    },
+    "gpu-monitoring.td-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "eaa6d59dc9be",
+      "target_hash": "7c736108edd6"
+    },
+    "gpu-monitoring.td-8": {
+      "part": "gpu-monitoring",
+      "source_hash": "8678af14d6a2",
+      "target_hash": "71370c7c7927"
+    },
+    "gpu-monitoring.p-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "fc86e0160504",
+      "target_hash": "73d3b7741066"
+    },
+    "gpu-monitoring.cards.h2-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "036e83c1af39",
+      "target_hash": "c1ecf6ee0c1c"
+    },
+    "gpu-monitoring.p-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "f87275635f5c",
+      "target_hash": "6da4ab96fe45"
+    },
+    "gpu-monitoring.img-1.alt": {
+      "part": "gpu-monitoring",
+      "source_hash": "55b551e38c61",
+      "target_hash": "b70921d53e8b"
+    },
+    "gpu-monitoring.span-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "b3bd726e07ac",
+      "target_hash": "65a68f43b1ce"
+    },
+    "gpu-monitoring.span-3": {
+      "part": "gpu-monitoring",
+      "source_hash": "7be6f5cf26b2",
+      "target_hash": "be92a30b8c41"
+    },
+    "gpu-monitoring.span-4": {
+      "part": "gpu-monitoring",
+      "source_hash": "ef8ca2bcafce",
+      "target_hash": "831f2a05c918"
+    },
+    "gpu-monitoring.span-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "c4d22dc73625",
+      "target_hash": "3d1c694baeed"
+    },
+    "gpu-monitoring.figcaption-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "7aa9957f224d",
+      "target_hash": "7e416fb3423b"
+    },
+    "gpu-monitoring.caption-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "fd76edd0a9d5",
+      "target_hash": "0be410c156da"
+    },
+    "gpu-monitoring.th-8": {
+      "part": "gpu-monitoring",
+      "source_hash": "b596b0114ded",
+      "target_hash": "78f43fb0b54f"
+    },
+    "gpu-monitoring.td-9": {
+      "part": "gpu-monitoring",
+      "source_hash": "1f5a45a29bdc",
+      "target_hash": "64ca1c1c6bed"
+    },
+    "gpu-monitoring.th-9": {
+      "part": "gpu-monitoring",
+      "source_hash": "fd8f8648eb41",
+      "target_hash": "e85cbe12c0d1"
+    },
+    "gpu-monitoring.td-10": {
+      "part": "gpu-monitoring",
+      "source_hash": "d8e9193ca58e",
+      "target_hash": "ef209595968e"
+    },
+    "gpu-monitoring.th-10": {
+      "part": "gpu-monitoring",
+      "source_hash": "c01f2094044d",
+      "target_hash": "4fef11b9f7c5"
+    },
+    "gpu-monitoring.td-11": {
+      "part": "gpu-monitoring",
+      "source_hash": "92c8d3b9a423",
+      "target_hash": "d51934c3332b"
+    },
+    "gpu-monitoring.inflight.h2-1": {
+      "part": "gpu-monitoring",
+      "source_hash": "87e975182d2c",
+      "target_hash": "9a77a6cc9e00"
+    },
+    "gpu-monitoring.p-5": {
+      "part": "gpu-monitoring",
+      "source_hash": "4d6984e02a57",
+      "target_hash": "e0fec7246526"
+    },
+    "gpu-monitoring.img-2.alt": {
+      "part": "gpu-monitoring",
+      "source_hash": "850b1ebebfcc",
+      "target_hash": "8d52621a6433"
+    },
+    "gpu-monitoring.span-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "807aafa43674",
+      "target_hash": "c439649b0032"
+    },
+    "gpu-monitoring.span-7": {
+      "part": "gpu-monitoring",
+      "source_hash": "c6220dc860be",
+      "target_hash": "e8005e0f0265"
+    },
+    "gpu-monitoring.figcaption-2": {
+      "part": "gpu-monitoring",
+      "source_hash": "cb4966892bbc",
+      "target_hash": "be5cabc6bb67"
+    },
+    "gpu-monitoring.p-6": {
+      "part": "gpu-monitoring",
+      "source_hash": "1669f0782d97",
+      "target_hash": "ad96a2e68e66"
+    },
+    "cache-aware-routing.meta.title": {
+      "part": "cache-aware-routing",
+      "source_hash": "74d5770bf736",
+      "target_hash": "86cc5f8ffdef"
+    },
+    "cache-aware-routing.meta.description": {
+      "part": "cache-aware-routing",
+      "source_hash": "055a37ed3302",
+      "target_hash": "ae8301ad98c2"
+    },
+    "cache-aware-routing.replica.h1-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "7b4386acadc3",
+      "target_hash": "88e9822f6b1c"
+    },
+    "cache-aware-routing.p-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "6a215639b7d8",
+      "target_hash": "351711eff0dc"
+    },
+    "cache-aware-routing.p-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "2022d3c80a9f",
+      "target_hash": "9e2327807d20"
+    },
+    "cache-aware-routing.figcaption-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "a3b037946eda",
+      "target_hash": "0189f4ce2862"
+    },
+    "cache-aware-routing.p-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "91272c526688",
+      "target_hash": "01b129080586"
+    },
+    "cache-aware-routing.p-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "22167404e1cf",
+      "target_hash": "ce6af8007279"
+    },
+    "cache-aware-routing.dt-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "8f0474fb0c5b",
+      "target_hash": "ea49523d744c"
+    },
+    "cache-aware-routing.dd-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "a2a87a6a413f",
+      "target_hash": "a324a93170bc"
+    },
+    "cache-aware-routing.dt-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "5e2c614c23f0",
+      "target_hash": "f3bdf7cce355"
+    },
+    "cache-aware-routing.dd-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "ca64e381cd89",
+      "target_hash": "ca64e381cd89"
+    },
+    "cache-aware-routing.dt-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "a511909161e1",
+      "target_hash": "f46c710ce2dc"
+    },
+    "cache-aware-routing.dd-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "2d27d2565f76",
+      "target_hash": "2d27d2565f76"
+    },
+    "cache-aware-routing.dd-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "056adfd1d823",
+      "target_hash": "de88fb355885"
+    },
+    "cache-aware-routing.dt-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "8a03fa9ad749",
+      "target_hash": "ba1d828942e1"
+    },
+    "cache-aware-routing.dd-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "616bab8cda85",
+      "target_hash": "e41cd5ce5b9c"
+    },
+    "cache-aware-routing.dt-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "8a6bdb6b18da",
+      "target_hash": "8e179be5bded"
+    },
+    "cache-aware-routing.dd-7": {
+      "part": "cache-aware-routing",
+      "source_hash": "bf79aedc37a9",
+      "target_hash": "e1a507ba01fe"
+    },
+    "cache-aware-routing.figcaption-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "4104b97ee062",
+      "target_hash": "2ade72b6ae1f"
+    },
+    "cache-aware-routing.p-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "4744b11be2ad",
+      "target_hash": "3990d8b4fb07"
+    },
+    "cache-aware-routing.p-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "8ab22b61f669",
+      "target_hash": "12a48e977ee7"
+    },
+    "cache-aware-routing.figcaption-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "d3b521cd1c61",
+      "target_hash": "88438a927b8f"
+    },
+    "cache-aware-routing.figcaption-4": {
+      "part": "cache-aware-routing",
+      "source_hash": "7721bb0a3fe0",
+      "target_hash": "b626899b478d"
+    },
+    "cache-aware-routing.img-1.alt": {
+      "part": "cache-aware-routing",
+      "source_hash": "f1bc7fbd6399",
+      "target_hash": "0801d380979f"
+    },
+    "cache-aware-routing.span-1": {
+      "part": "cache-aware-routing",
+      "source_hash": "afd07a294687",
+      "target_hash": "bc9a510430cb"
+    },
+    "cache-aware-routing.span-2": {
+      "part": "cache-aware-routing",
+      "source_hash": "aeb0dd495f94",
+      "target_hash": "304876a6bfa2"
+    },
+    "cache-aware-routing.figcaption-5": {
+      "part": "cache-aware-routing",
+      "source_hash": "c5c62f4909c8",
+      "target_hash": "44d153c310d0"
+    },
+    "cache-aware-routing.p-7": {
+      "part": "cache-aware-routing",
+      "source_hash": "36247db6bebb",
+      "target_hash": "010b91f6fca2"
+    },
+    "cache-aware-routing.img-2.alt": {
+      "part": "cache-aware-routing",
+      "source_hash": "a40bcea9f2f2",
+      "target_hash": "bc0a3cf240be"
+    },
+    "cache-aware-routing.span-3": {
+      "part": "cache-aware-routing",
+      "source_hash": "30f9cc329d1b",
+      "target_hash": "e8c814b17f22"
+    },
+    "cache-aware-routing.figcaption-6": {
+      "part": "cache-aware-routing",
+      "source_hash": "8b698966274e",
+      "target_hash": "922b49ce993c"
+    },
+    "cache-aware-routing.p-8": {
+      "part": "cache-aware-routing",
+      "source_hash": "f55143f36cbe",
+      "target_hash": "64e1a631e243"
+    },
+    "api-keys.meta.title": {
+      "part": "api-keys",
+      "source_hash": "36d31214a489",
+      "target_hash": "017b07384dfc"
+    },
+    "api-keys.meta.description": {
+      "part": "api-keys",
+      "source_hash": "dc32185af3f0",
+      "target_hash": "b65817dac1bd"
+    },
+    "api-keys.keys.h1-1": {
+      "part": "api-keys",
+      "source_hash": "478db02e5440",
+      "target_hash": "307da38c84f6"
+    },
+    "api-keys.p-1": {
+      "part": "api-keys",
+      "source_hash": "128af00fcd92",
+      "target_hash": "2fa544329eac"
+    },
+    "api-keys.p-2": {
+      "part": "api-keys",
+      "source_hash": "24b259f012c7",
+      "target_hash": "aa7601244172"
+    },
+    "api-keys.p-3": {
+      "part": "api-keys",
+      "source_hash": "992b035b09f7",
+      "target_hash": "a41d5e220148"
+    },
+    "api-keys.video-1.aria-label": {
+      "part": "api-keys",
+      "source_hash": "146ed912c7a6",
+      "target_hash": "a1095c150e6a"
+    },
+    "api-keys.figcaption-1": {
+      "part": "api-keys",
+      "source_hash": "389cdbc39b42",
+      "target_hash": "cc5d1ed7e5ea"
+    },
+    "api-keys.img-1.alt": {
+      "part": "api-keys",
+      "source_hash": "e3200603dcf6",
+      "target_hash": "337080c8e3d6"
+    },
+    "api-keys.figcaption-2": {
+      "part": "api-keys",
+      "source_hash": "1a43a2ba1520",
+      "target_hash": "806792f166be"
+    },
+    "api-keys.leave.h2-1": {
+      "part": "api-keys",
+      "source_hash": "8f28f88090a1",
+      "target_hash": "32b593c473a8"
+    },
+    "api-keys.p-4": {
+      "part": "api-keys",
+      "source_hash": "18372068885f",
+      "target_hash": "a90fc2f4775a"
+    },
+    "api-keys.p-5": {
+      "part": "api-keys",
+      "source_hash": "cfe5bc772213",
+      "target_hash": "fd4a8e768ffa"
+    },
+    "features.meta.title": {
+      "part": "features",
+      "source_hash": "ba96eee84458",
+      "target_hash": "56ab846ecdce"
+    },
+    "features.meta.description": {
+      "part": "features",
+      "source_hash": "6e9623164c58",
+      "target_hash": "47dfc78f7271"
+    },
+    "features.small.h1-1": {
+      "part": "features",
+      "source_hash": "32313b57288c",
+      "target_hash": "e1fd8740a2cf"
+    },
+    "features.dd-1": {
+      "part": "features",
+      "source_hash": "30b3b2877354",
+      "target_hash": "ed8c2015908c"
+    },
+    "features.dt-1": {
+      "part": "features",
+      "source_hash": "c0b53878c4d4",
+      "target_hash": "0b26f29736f8"
+    },
+    "features.dd-2": {
+      "part": "features",
+      "source_hash": "332151669674",
+      "target_hash": "6cc62c4bc845"
+    },
+    "features.dt-2": {
+      "part": "features",
+      "source_hash": "3b9fd142bcdf",
+      "target_hash": "c20c9d189cef"
+    },
+    "features.dd-3": {
+      "part": "features",
+      "source_hash": "9d11305af39b",
+      "target_hash": "884bb6a2a8a6"
+    },
+    "features.dt-3": {
+      "part": "features",
+      "source_hash": "db562f172ced",
+      "target_hash": "ce2447ae739d"
+    },
+    "features.dd-4": {
+      "part": "features",
+      "source_hash": "0e54e933002b",
+      "target_hash": "a21accd0c7e9"
+    },
+    "features.dt-4": {
+      "part": "features",
+      "source_hash": "afddbc532ecf",
+      "target_hash": "4cc30d0daf10"
+    },
+    "features.dd-5": {
+      "part": "features",
+      "source_hash": "b61634fa6450",
+      "target_hash": "c98efa9b0358"
+    },
+    "features.dt-5": {
+      "part": "features",
+      "source_hash": "bf3c9855201c",
+      "target_hash": "8a094de0d5a5"
+    },
+    "features.dd-6": {
+      "part": "features",
+      "source_hash": "8500a2b3792f",
+      "target_hash": "52ad3c7e885d"
+    },
+    "features.dt-6": {
+      "part": "features",
+      "source_hash": "2384f4730652",
+      "target_hash": "d9c58c1f3721"
+    },
+    "features.dd-7": {
+      "part": "features",
+      "source_hash": "2bc91137abf9",
+      "target_hash": "f84d7d77e390"
+    },
+    "features.dd-8": {
+      "part": "features",
+      "source_hash": "93a18b286b4e",
+      "target_hash": "499ba4618835"
+    },
+    "features.dt-7": {
+      "part": "features",
+      "source_hash": "989e5691fd83",
+      "target_hash": "76a06bfd2c15"
+    },
+    "features.dd-9": {
+      "part": "features",
+      "source_hash": "7c8ef7303dc3",
+      "target_hash": "b9b579864cdf"
+    },
+    "features.lessons.h2-1": {
+      "part": "features",
+      "source_hash": "b2e61284634a",
+      "target_hash": "1685f0c85e73"
+    },
+    "features.h3-1": {
+      "part": "features",
+      "source_hash": "a3c2a4abe3bf",
+      "target_hash": "d92cd70c8074"
+    },
+    "features.p-1": {
+      "part": "features",
+      "source_hash": "8d323d1c089b",
+      "target_hash": "a323dac84edc"
+    },
+    "features.img-1.alt": {
+      "part": "features",
+      "source_hash": "a4f74c626a7f",
+      "target_hash": "05a86791fd7c"
+    },
+    "features.span-1": {
+      "part": "features",
+      "source_hash": "e1d7e982a29c",
+      "target_hash": "91bd166cb5ce"
+    },
+    "features.figcaption-1": {
+      "part": "features",
+      "source_hash": "40a242621e22",
+      "target_hash": "681ac9f4742a"
+    },
+    "features.h3-2": {
+      "part": "features",
+      "source_hash": "69140856abf8",
+      "target_hash": "0be0d4cf7dfb"
+    },
+    "features.p-2": {
+      "part": "features",
+      "source_hash": "cceedae9466e",
+      "target_hash": "1d147aa461ea"
+    },
+    "features.img-2.alt": {
+      "part": "features",
+      "source_hash": "e3cc9ae4cf3b",
+      "target_hash": "a9c9537ba3a6"
+    },
+    "features.figcaption-2": {
+      "part": "features",
+      "source_hash": "981fef031d3d",
+      "target_hash": "a51ec5919c71"
+    },
+    "features.h3-3": {
+      "part": "features",
+      "source_hash": "2269d7489768",
+      "target_hash": "cdd40a3a52af"
+    },
+    "features.p-3": {
+      "part": "features",
+      "source_hash": "a34f00101361",
+      "target_hash": "6a93718c85df"
+    },
+    "features.th-1": {
+      "part": "features",
+      "source_hash": "5e2c614c23f0",
+      "target_hash": "f3bdf7cce355"
+    },
+    "features.th-2": {
+      "part": "features",
+      "source_hash": "ea5522c7c85e",
+      "target_hash": "fad03fcc946a"
+    },
+    "features.th-3": {
+      "part": "features",
+      "source_hash": "9bebcd3482a7",
+      "target_hash": "acc747844f44"
+    },
+    "features.col-works.data-h": {
+      "part": "features",
+      "source_hash": "2b4c8c6d38db",
+      "target_hash": "cb2643cc5624"
+    },
+    "features.td-1": {
+      "part": "features",
+      "source_hash": "4516d9c167db",
+      "target_hash": "836bd17ffcf8"
+    },
+    "features.col-does-not.data-h": {
+      "part": "features",
+      "source_hash": "73a6fc7836b8",
+      "target_hash": "f4f213b0bc87"
+    },
+    "features.td-2": {
+      "part": "features",
+      "source_hash": "6b644f502c34",
+      "target_hash": "141707e58fae"
+    },
+    "features.th-4": {
+      "part": "features",
+      "source_hash": "c2f2a5cd5d41",
+      "target_hash": "253506f71763"
+    },
+    "features.td-3": {
+      "part": "features",
+      "source_hash": "baa3aea88f30",
+      "target_hash": "f044d67addb9"
+    },
+    "features.td-4": {
+      "part": "features",
+      "source_hash": "1ce2fc0f7104",
+      "target_hash": "4ceaf1226ea6"
+    },
+    "features.th-5": {
+      "part": "features",
+      "source_hash": "3bc589f1752e",
+      "target_hash": "03541226c447"
+    },
+    "features.td-5": {
+      "part": "features",
+      "source_hash": "6fed9ca4f3d2",
+      "target_hash": "8f1ed221496e"
+    },
+    "features.td-6": {
+      "part": "features",
+      "source_hash": "296d7ad75ac3",
+      "target_hash": "53df8ee62a85"
+    },
+    "features.p-4": {
+      "part": "features",
+      "source_hash": "d5f7cb24d2cc",
+      "target_hash": "0a5eae8a2a87"
+    },
+    "features.p-5": {
+      "part": "features",
+      "source_hash": "4c5ddc0960f7",
+      "target_hash": "95fc6d973970"
+    },
+    "faq.meta.title": {
+      "part": "faq",
+      "source_hash": "fb9dd5739289",
+      "target_hash": "78ab397cea75"
+    },
+    "faq.meta.description": {
+      "part": "faq",
+      "source_hash": "4c424d1bb872",
+      "target_hash": "2a0520ceb20f"
+    },
+    "faq.faq.h1-1": {
+      "part": "faq",
+      "source_hash": "b14e49a87fdf",
+      "target_hash": "6f9d6ee49e25"
+    },
+    "faq.q-1": {
+      "part": "faq",
+      "source_hash": "37148ce83843",
+      "target_hash": "93f6ea3b8406"
+    },
+    "faq.a-1": {
+      "part": "faq",
+      "source_hash": "5098435c4cfe",
+      "target_hash": "b89f50fe2a32"
+    },
+    "faq.q-2": {
+      "part": "faq",
+      "source_hash": "fd575095e092",
+      "target_hash": "ced874f99959"
+    },
+    "faq.a-2": {
+      "part": "faq",
+      "source_hash": "af7c57748da9",
+      "target_hash": "a7a2f2e0e930"
+    },
+    "faq.q-3": {
+      "part": "faq",
+      "source_hash": "07d287af578c",
+      "target_hash": "f7f59a5b46ac"
+    },
+    "faq.a-3": {
+      "part": "faq",
+      "source_hash": "6aa388b69fbe",
+      "target_hash": "34a1811619a7"
+    },
+    "faq.q-4": {
+      "part": "faq",
+      "source_hash": "3cb57cff1faf",
+      "target_hash": "cae0a96a68d6"
+    },
+    "faq.a-4": {
+      "part": "faq",
+      "source_hash": "680fb986650c",
+      "target_hash": "f1f79e98c490"
+    },
+    "faq.q-5": {
+      "part": "faq",
+      "source_hash": "0e5c302159a3",
+      "target_hash": "369f1698d66b"
+    },
+    "faq.a-5": {
+      "part": "faq",
+      "source_hash": "36a441a68717",
+      "target_hash": "327bdf45960f"
+    },
+    "faq.q-6": {
+      "part": "faq",
+      "source_hash": "af507f756ef8",
+      "target_hash": "9b7d66c41a88"
+    },
+    "faq.a-6": {
+      "part": "faq",
+      "source_hash": "71d96023e2e8",
+      "target_hash": "67d5c65a44f5"
+    },
+    "faq.q-7": {
+      "part": "faq",
+      "source_hash": "2e943e3c5431",
+      "target_hash": "3f4a01aa8a7e"
+    },
+    "faq.a-7": {
+      "part": "faq",
+      "source_hash": "728ba07e9c96",
+      "target_hash": "107798ad396a"
+    },
+    "faq.q-8": {
+      "part": "faq",
+      "source_hash": "5cba7fae2cca",
+      "target_hash": "88ddda807fe0"
+    },
+    "faq.a-8": {
+      "part": "faq",
+      "source_hash": "f047e1060aa4",
+      "target_hash": "ace279cf2db7"
+    },
+    "faq.q-9": {
+      "part": "faq",
+      "source_hash": "138d847537f5",
+      "target_hash": "5b82e0a7ffdd"
+    },
+    "faq.a-9": {
+      "part": "faq",
+      "source_hash": "37fb94868ccc",
+      "target_hash": "4da8d5b7796f"
+    },
+    "faq.q-10": {
+      "part": "faq",
+      "source_hash": "300a4b4adf9a",
+      "target_hash": "aab74775edb2"
+    },
+    "faq.a-10": {
+      "part": "faq",
+      "source_hash": "c4ef5c9a9c54",
+      "target_hash": "0fde9c1d461f"
+    },
+    "faq.q-11": {
+      "part": "faq",
+      "source_hash": "889f53a02753",
+      "target_hash": "6942aceff13a"
+    },
+    "faq.a-11": {
+      "part": "faq",
+      "source_hash": "f7c42330b71d",
+      "target_hash": "157cc6064889"
+    },
+    "faq.q-12": {
+      "part": "faq",
+      "source_hash": "e8dc9deba44c",
+      "target_hash": "5aa25f91a137"
+    },
+    "faq.a-12": {
+      "part": "faq",
+      "source_hash": "97000d243331",
+      "target_hash": "54be8d538269"
+    },
+    "faq.p-1": {
+      "part": "faq",
+      "source_hash": "8e86209820fa",
+      "target_hash": "4f5a89a7b709"
+    },
+    "privacy.meta.title": {
+      "part": "privacy",
+      "source_hash": "ec9b140b1cc8",
+      "target_hash": "28e5052cf5bc"
+    },
+    "privacy.meta.description": {
+      "part": "privacy",
+      "source_hash": "de30b21dbdc3",
+      "target_hash": "a0e6db5ebd33"
+    },
+    "privacy.ads": {
+      "part": "privacy",
+      "source_hash": "9b2a078e8838",
+      "target_hash": "67728d45c61b"
+    },
+    "privacy.contact-official": {
+      "part": "privacy",
+      "source_hash": "eebc1d21c39b",
+      "target_hash": "6c0def3616fd"
+    },
+    "privacy.contact-operator": {
+      "part": "privacy",
+      "source_hash": "914390fc9adc",
+      "target_hash": "c60e84b36a04"
+    },
+    "privacy.privacy.h1-1": {
+      "part": "privacy",
+      "source_hash": "f940c0a0e353",
+      "target_hash": "b4be89d647e0"
+    },
+    "privacy.p-1": {
+      "part": "privacy",
+      "source_hash": "b3509e8a2750",
+      "target_hash": "62bb5b9d96ce"
+    },
+    "privacy.h2-1": {
+      "part": "privacy",
+      "source_hash": "dd9acabe8622",
+      "target_hash": "7579faff3713"
+    },
+    "privacy.p-2": {
+      "part": "privacy",
+      "source_hash": "8de08e36eb6d",
+      "target_hash": "c57b1427b914"
+    },
+    "privacy.h2-2": {
+      "part": "privacy",
+      "source_hash": "910b22425fed",
+      "target_hash": "74eacd2b607d"
+    },
+    "privacy.p-3": {
+      "part": "privacy",
+      "source_hash": "9405f2778a61",
+      "target_hash": "a535ce3d52de"
+    },
+    "privacy.h2-3": {
+      "part": "privacy",
+      "source_hash": "3aa95e4c746f",
+      "target_hash": "b0f6056349e7"
+    },
+    "privacy.p-4": {
+      "part": "privacy",
+      "source_hash": "319e165f9018",
+      "target_hash": "af7a999b38fa"
+    },
+    "privacy.h2-4": {
+      "part": "privacy",
+      "source_hash": "795028f063d5",
+      "target_hash": "367dc1b27ed3"
+    },
+    "privacy.p-5": {
+      "part": "privacy",
+      "source_hash": "112b969b0be0",
+      "target_hash": "17c93dcabde6"
+    },
+    "privacy.p-6": {
+      "part": "privacy",
+      "source_hash": "0d38cc82e109",
+      "target_hash": "db225210896f"
+    },
+    "not-found.meta.title": {
+      "part": "not-found",
+      "source_hash": "9997b967a0f9",
+      "target_hash": "9228a8a6863a"
+    },
+    "not-found.meta.description": {
+      "part": "not-found",
+      "source_hash": "f56b56b08c51",
+      "target_hash": "148b319f8002"
+    },
+    "not-found.nf.h1-1": {
+      "part": "not-found",
+      "source_hash": "0a4c2fc34b17",
+      "target_hash": "99460fa59bba"
+    },
+    "not-found.p-1": {
+      "part": "not-found",
+      "source_hash": "701d00dd6585",
+      "target_hash": "d452363c3ad5"
+    }
+  },
+  "back_notes": {
+    "jsonld.feature-4": "\"витіснення\" (displacement/eviction) is used for what is presumably preemptions; the term is ambiguous (could mean cache eviction).",
+    "chrome.nav.plat-win": "'Windows (наступна)' / 'наступна' uses feminine agreement for Windows; reads oddly, as if 'the next one' referred to a feminine noun. | QA r3: addressed by fix (see issues).",
+    "chrome.nav.plat-appliance": "\"Пристрій\" (device) as a platform name is vague; \"appliance\" sense not obvious.",
+    "chrome.docs.short": "\"Докум.\" is an abbreviation of \"Документація\" and looks odd as a nav label.",
+    "home.install.span-1": "\"основний випуск\" lit. \"main release\" for what is presumably \"stable\".",
+    "home.p-linux.a-1": "\"Посібник\" (manual/guide) as the label for installation is ambiguous.",
+    "home.p-appliance.li-4": "'об’єкта без виходу в інтернет' unusual wording for a site without outside network access. | QA r3: addressed by fix (see issues).",
+    "home.why-cache.figcaption-3": "\"щаблі\" (rungs) for load-test steps is unusual wording.",
+    "home.why-cache.p-4": "'Вихід' (exit/output) used for output tokens; ambiguous with 'exit'. | QA r3: addressed by fix (see issues).",
+    "home.why-agent.p-1": "\"коштує завантаження файлів і моделі\" is awkward: \"costs the downloading of files and of the model\".",
+    "home.why-keys.p-1": "\"ферма агентів\" is a literal calque of \"agent farm\".",
+    "home.why-keys.ol-1.aria-label": "\"драбина пріоритетів\" (priority ladder) is a literal rendering.",
+    "home.why-keys.img-1.alt": "Contains an untranslated English fragment ('a waiting P9 request always goes before a P8 one') in the middle of Ukrainian text. | QA r3: addressed by fix (see issues).",
+    "home.why-keys.figcaption-1": "'на зміну яким його створено' ('in whose place it was created') is awkward and unclear. | QA r3: addressed by fix (see issues).",
+    "clients.grok-cli.capability": "'session_summary залишає запити Grok на назву сеансу на цій моделі' is hard to parse. | QA r3: addressed by fix (see issues).",
+    "claude-code-router.p-1": "\"забирає свій промпт ... з вашої машини\" and \"коштують лише електрики\" are slightly awkward/colloquial.",
+    "claude-code-router.figcaption-1": "\"запобіжник\" (lit. fuse/safety catch) is used for circuit breaker; \"розмикається\" (opens) is fine but \"fuse\" reads odd.",
+    "claude-code-router.img-1.alt": "\"резервних переходів\" (lit. reserve/fallback transitions) is an unusual rendering of \"diverted\".",
+    "claude-code-router.p-7": "\"удвічі менше пам'яті\" renders as \"twice less memory\" (a calque); and \"ходи\" (moves/turns) for turns is unusual.",
+    "gpu-monitoring.p-3": "\"поквилинній панелі\" is an unusual coined adjective (\"per-minute\").",
+    "cache-aware-routing.p-6": "'вихід' (exit) used for output throughput; ambiguous. | QA r3: addressed by fix (see issues).",
+    "cache-aware-routing.figcaption-5": "'Це картка, а не результат' ('This is a card, not a result') is unnatural; 'картка' is used both for panel and card. | QA r3: addressed by fix (see issues).",
+    "cache-aware-routing.p-7": "\"ферми безінтерфейсних агентів\" (lit. \"farm of interface-less agents\") is a clumsy rendering of \"headless\".",
+    "api-keys.p-4": "Begins with 'Він' (He/It) with no antecedent; 'Claude Code спрямовує' is an indicative statement where an imperative is evidently meant; 'Прочитайте порівняння (diff) у зворотному напрямку' (read the diff in reverse) is odd. | QA r3: addressed by fix (see issues).",
+    "features.dd-2": "\"сховища файлів cookie\" (lit. \"storage of cookie files\") is an awkward calque of \"cookie jar\".",
+    "features.dd-9": "\"Чат для випробувань\" (lit. \"chat for trials/tests\") is an unusual name for a playground.",
+    "features.img-2.alt": "'Tune kernels на op 2, 21 з 22' is unclear ('op 2, 21 of 22'). | QA r3 verdict: no issue, \"Tune kernels at op 2, 21 of 22\" mirrors the on-screen UI text exactly as the English does; the reader sees it beside the image.",
+    "faq.a-2": "\"Системні параметри\" and \"Усе одно відкрити\" are quoted UI labels; fine, but \"Приватність і безпека\" differs from the earlier \"Конфіденційність і безпека\" used for the same macOS section.",
+    "faq.a-6": "\"основні версії vLLM ... і llama.cpp\" (lit. \"main versions\") is unclear; presumably \"official/upstream\", not \"main\".",
+    "privacy.p-1": "\"сам відвідувач своїм візитом\" - masculine generic \"the visitor himself\"."
+  },
+  "issues": [
+    {
+      "key": "meta.og-image-alt",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«точку тротлінгу, яку повідомляє драйвер» — повідомляти вимагає «про що»",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-4",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«витіснення» для preemptions двозначне (читається як витіснення з кешу); тепер «переривання запитів», а cache eviction — «витіснення з кешу»",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«частка кешу» → «частка влучань у кеш»",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-6",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«паралельно проводить бенчмарки» спотворює «as it goes» (попутно, не одночасно)",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-7",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "vision models — не «моделі комп’ютерного зору» (інша галузь), а мультимодальні моделі",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-8",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«типово» → «за замовчуванням», як на решті сайту",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-10",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«вузьких з’єднань PCIe» — калька narrow links; GB латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.nav.plat-mac",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«чип Apple» vs «Apple silicon» на решті сайту — уніфіковано",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.nav.plat-win",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«(далі)» — калька next; читається як «продовження»",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.nav.plat-appliance",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Пристрій» надто розмите для appliance; «сервер під ключ» — звична назва готового рішення",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.nav.plat-upgrade",
+      "category": "omission",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "пропущено «existing»",
+      "round": "r1"
+    },
+    {
+      "key": "home.hero.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«ставить перед ними один порт» (front door) і «жива панель» (live) — кальки",
+      "round": "r1"
+    },
+    {
+      "key": "home.hero.span-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«далі Windows» — калька next",
+      "round": "r1"
+    },
+    {
+      "key": "home.hero.span-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«чип Apple» → Apple silicon, як на решті сайту",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«кожен файл отримує вердикт» — калька verdict",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.span-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "уніфіковано з «агенти для програмування»",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-3",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "preemptions перекладено як «витіснення» — плутається з витісненням із кешу",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«частка кешу» неповний термін",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-3",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«h» латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.h3-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "turn = «раунд» на всьому сайті (було «крок»/«хід» упереміш; «крок» зарезервовано для кроку навантаження)",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.h3-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«просто тут» — калька right here, незрозуміло, де саме",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-6",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "vision models ≠ «моделі комп’ютерного зору»",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.h3-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Точно видно» — безособове, слабше за заклик оригіналу",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-7",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«типово» → «за замовчуванням»",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.h3-9",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«таким, яким воно є» — громіздко для honestly",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-9",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«називає вузький слот PCIe» — калька names the narrow slot; GB латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.h3-10",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "appliance = «сервер під ключ» на всьому сайті",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.span-10",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "appliance = «сервер під ключ»",
+      "round": "r1"
+    },
+    {
+      "key": "home.install.span-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«основний випуск» не передає main release (стабільний, на противагу бета-версії)",
+      "round": "r1"
+    },
+    {
+      "key": "home.install.b-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«чип Apple» → Apple silicon",
+      "round": "r1"
+    },
+    {
+      "key": "home.install.span-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«далі» як позначка статусу незрозуміле",
+      "round": "r1"
+    },
+    {
+      "key": "home.install.b-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "appliance = «сервер під ключ»",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-linux.a-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Посібник» без уточнення двозначний; посилання веде на інструкцію з установлення (пара до «Оновлення»)",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-linux.a-2",
+      "category": "omission",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Ізольована мережа» губила offline; «Без інтернету» охоплює обидва випадки й вміщається в довжину",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-linux.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«минулий і звичайний час» — незрозуміла калька elapsed/usual",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.li-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«зібраний із Metal» — неповно",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.li-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "розділ macOS українською — «Приватність і безпека» (так і в FAQ)",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.li-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "bindings → «прив’язки» конфліктує з «прив’язкою» (affinity) у маршрутизації",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-win.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«просто зараз» — калька; «два чесні варіанти» — калька honest options",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-appliance.h3-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "appliance = «сервер під ключ»",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-appliance.li-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«майданчика без виходу назовні» — калька site with no route out",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-appliance.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Поки його немає» — неточно передає until it ships",
+      "round": "r1"
+    },
+    {
+      "key": "home.upgrade.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«оновлення виконується на місці» та «база даних мігрує вперед» — кальки, незрозумілі читачеві",
+      "round": "r1"
+    },
+    {
+      "key": "home.why.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Ось як виглядає розв’язання кожної» — калька what … looks like",
+      "round": "r1"
+    },
+    {
+      "key": "home.why.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«Голий рушій» — калька bare engine, жаргонно й двозначно",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-fit.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«виводиться з вердиктом», «замало запасу» — кальки",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-stats.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«голий рушій» — калька",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-stats.p-1",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "preemptions → «витіснення» плутається з витісненням із кешу",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-stats.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«частка кешу» → «частка влучань у кеш»; «h» латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-chat.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "vision model ≠ «модель комп’ютерного зору»; «зі збереженням як типових значень» — громіздко",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-god.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Типово» → «за замовчуванням»",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-god.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«у міру її написання» — русизм (по мере)",
+      "round": "r1"
+    },
+    {
+      "key": "home.cache.h2-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "turn = «раунд»",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "turn = «раунд» (було «крок»)",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.figcaption-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "turn = «раунд»",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«щабель» (метафора драбини) → «крок навантаження»; «працюючих» — русизм; «s» латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.figcaption-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«щабель» → «крок»; spill = переповнення",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.figcaption-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«щаблі» → «кроки»; «s» латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.h3-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«щабель» → «крок»",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«щабель» → «крок»",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«лічильники йдуть із моменту» — калька",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«щаблі» → «кроки»; «Де він програє» — незрозуміло, хто «він»",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.a-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "harness: «тестова обв’язка» — калька; уніфіковано з «тестовий стенд»",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«в розрізі» — русизм",
+      "round": "r1"
+    },
+    {
+      "key": "home.flow-d.desc-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«вона відповідає від імені цієї моделі» — двозначно, яка саме модель",
+      "round": "r1"
+    },
+    {
+      "key": "home.flow-d2.desc-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«вона відповідає від імені цієї моделі» — двозначно",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«перевірить кожну вимогу щодо того, що» — калька against",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«коштує завантаження файлів і моделі» — незграбно",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«випускає» ключ — калька issue; «отримання й завантаження» неясно",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«минулий і звичайний час» — незрозуміла калька",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.li-2",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«переможець залишається завантаженим, другу вивантажено» — неузгодженість роду",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.li-3",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«2k», «30k» → «2 тис.», «30 тис.»",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.li-4",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«прожени» — розмовне",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.p-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "scopes → «вужчих областей» незрозуміло; «права доступу»",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«може бути тією, за яку ви вже платите» — звужує зміст whichever",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«ферма агентів» — калька agent farm",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.p-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Типове значення» → «за замовчуванням»; «безкінечно» → «як завгодно довго»",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.ol-1.aria-label",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«драбина пріоритетів» — калька метафори ladder (те саме власник відхилив у ru)",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.b-1",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Робочий агент» двозначне (справний/службовий)",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.span-2",
+      "category": "omission",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«наступні» без «in line» неясно",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.span-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«типово» → «за замовчуванням»",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.p-3",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«Це приклад драбини» — калька метафори, той самий випадок, що власник відхилив",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«19k», «440k» → «тис.»",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.figcaption-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«h», «19k» латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«замість яких його було випущено» — калька rotated/issued",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«жоден не має 95 % запитів» — калька accounts for",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«просто зараз» — калька right now",
+      "round": "r1"
+    },
+    {
+      "key": "home.hw.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«таким, яким воно є» — громіздко",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«з’єднання PCIe, що встановилося на x4 з x16», «називає вузьке місце» — кальки",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.img-2.alt",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "позначку інтерфейсу differs перекладено, хоча на знімку вона англійською; «до Gen 3» неясно",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.figcaption-2",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«встановилося на x4 з x16», «який слот вузький» — кальки; назву позначки з інтерфейсу <em>differs</em> перекладено",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«узгоджені просто зараз», «мертвий рушій під живою обгорткою» — кальки",
+      "round": "r1"
+    },
+    {
+      "key": "home.features.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«звітує сама за себе» — калька reports for itself",
+      "round": "r1"
+    },
+    {
+      "key": "home.features.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«середнє значення по серверу» — русизм (по + дав.)",
+      "round": "r1"
+    },
+    {
+      "key": "home.features.h3-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«просто зараз» — калька; безособове «Видно»",
+      "round": "r1"
+    },
+    {
+      "key": "home.features.p-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«перевіряє вимоги щодо того» — калька against",
+      "round": "r1"
+    },
+    {
+      "key": "home.oss.h2-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "тавтологія «відкритий … відкрито»",
+      "round": "r1"
+    },
+    {
+      "key": "home.open-source.p-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "bindings → «прив’язки» конфліктує з «прив’язкою» (affinity)",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.footer.install",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Посібник» без уточнення двозначний",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.footer.tag-note",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«віддає сторінку» — жаргон-русизм (отдаёт)",
+      "round": "r1"
+    },
+    {
+      "key": "common.in-words",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Словами:» — калька In words",
+      "round": "r1"
+    },
+    {
+      "key": "coding-agents.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«підтримує API» у переліку дій (speaks a protocol) — не дія; переформульовано",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.summary",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "login: «вхід» означає дію, а не облікові дані — «обліковий запис»/«облікові дані» за змістом",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.capability",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "login: «вхід» означає дію, а не облікові дані — «обліковий запис»/«облікові дані» за змістом",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«У лише локальному режимі» — незграбно",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.req.min_context",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "turn = «раунд»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.req.unknown_model_window",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«200k» → «200 тис. токенів»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.mode.router.title",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "login: «вхід» означає дію, а не облікові дані — «обліковий запис»/«облікові дані» за змістом",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.mode.router.desc",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "login: «вхід» означає дію, а не облікові дані — «обліковий запис»/«облікові дані» за змістом",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.mode.local.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«обслуговувана модель/назва» — штучний дієприкметник; «модель, що обслуговується»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.anthropic-sdk.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«підтримує Anthropic Messages» у переліку дій — калька speaks",
+      "round": "r1"
+    },
+    {
+      "key": "clients.anthropic-sdk.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«обслуговувана модель/назва» — штучний дієприкметник; «модель, що обслуговується»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.anthropic-sdk.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Для лише локального режиму» — незграбно",
+      "round": "r1"
+    },
+    {
+      "key": "clients.anthropic-sdk.mode.local.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«обслуговувана модель/назва» — штучний дієприкметник; «модель, що обслуговується»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.opencode.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«обслуговувана модель/назва» — штучний дієприкметник; «модель, що обслуговується»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.opencode.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«обслуговувана модель/назва» — штучний дієприкметник; «модель, що обслуговується»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.opencode.mode.default.desc",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«типовим» → «за замовчуванням»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.aider.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«обслуговувана модель/назва» — штучний дієприкметник; «модель, що обслуговується»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.grok-cli.capability",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "login: «вхід» означає дію, а не облікові дані — «обліковий запис»/«облікові дані» за змістом",
+      "round": "r1"
+    },
+    {
+      "key": "clients.continue.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«обслуговувана модель/назва» — штучний дієприкметник; «модель, що обслуговується»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.cursor.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«обслуговувана модель/назва» — штучний дієприкметник; «модель, що обслуговується»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.codex-cli.summary",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«обслуговувана модель/назва» — штучний дієприкметник; «модель, що обслуговується»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.codex-cli.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«обслуговувана модель/назва» — штучний дієприкметник; «модель, що обслуговується»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.codex-cli.capability",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "turn = «раунд»; «272k» → «272 тис. токенів»",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«забирає свій промпт … з вашої машини», «коштують лише електрики» — незграбно/розмовно",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«облікового запису ніхто не торкається» — калька touched",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "turn = «раунд»; «40k» → «40 тис.»",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«перший збіг перемагає» — калька first match wins; «запобіжник розмикається» незвично",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.figcaption-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«s» латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Словами:» — калька; «локальна ділянка» — калька local leg",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "login: «вхід» означає дію, а не облікові дані — «обліковий запис»/«облікові дані» за змістом",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-6",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "login: «вхід» означає дію, а не облікові дані — «обліковий запис»/«облікові дані» за змістом",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.img-1.alt",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«резервних переходів» — незрозуміла передача fell back (запит пішов до Anthropic після локального збою)",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.span-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Перший збіг перемагає» — калька",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.figcaption-2",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«0 резервних» для fell back — незрозуміло",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-7",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "turn = «раунд» (було «хід»)",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-7",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«удвічі менше пам’яті» без дієслова — калька",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-7",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "s, ms, GiB, 38k латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.img-2.alt",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«резервні» для fell back — незрозуміло",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.span-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«правило пішло до Anthropic» — калька",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.figcaption-3",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«0 резервних», «правило пішло до Anthropic» — неясно",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.meta.description",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "as it goes = попутно",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.jsonld.step-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Випустіть токен» — калька issue",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«коштує завантаження» — незграбно",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.li-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Випустіть токен» — калька issue",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.li-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "scopes → «областей дії» незрозуміло",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.li-5",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«обвалює рушій» — розмовне",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.meta.description",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«лінк PCIe» — жаргон; «з’єднання PCIe»",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.p-1",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«одна завантажена модель, зайнята … трафіком» — зайняті карти, а не модель",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«поквилинній панелі» — штучне слово",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.p-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«лінк PCIe в тому стані, в якому його узгоджено зараз» — жаргон і громіздко",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«при позначці», «при ліміті» — русизм «при»; «лінк PCIe» — жаргон",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.span-2",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "без тире фраза читається як «точка від драйвера»",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.th-6",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "W → Вт",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.p-5",
+      "category": "grammar",
+      "severity": "major",
+      "status": "fixed",
+      "note": "перелік причин після двокрапки граматично розвалений («за іншими промптами…, кеш … витіснено, або повільно без причини»)",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.img-2.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«tok/s» латиницею, відсотки без пробілу, непослідовно з рештою сайту",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.replica.h1-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "turn = «раунд»",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "spill threshold: «поріг переливу» vs «поріг переповнення» на головній — уніфіковано; turn = «раунд»",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "turn = «раунд»",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«при 4 сеансах» — русизм «при»; «s» латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«коли очікування» — часове значення замість місця",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.dd-7",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "turn = «раунд»",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«при 4–32 сеансах», «при 24 і 32» — русизм «при»; «s» латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "русизм «при»; «поріг переливу» непослідовний; «s» латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«при 32 сеансах» — русизм; «переливаються» непослідовно з «переповнення»",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.img-1.alt",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«перелив» → «переповнення»; десяткові коми в переліку через кому читаються двозначно",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.span-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«поріг переливу» → «поріг переповнення»",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«перелив» → «переповнення»; turn = «раунд»",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«ферми безінтерфейсних агентів» — калька farm of headless agents; «При 26» — русизм; «гешувало» vs «хеш» деінде",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.img-2.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«поділено на cached, виміряне, синім і computed фіолетовим» — незрозумілий порядок",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "rotate: «змінюйте з пільговим періодом» (фінансова лексика) → «замінюйте з перехідним періодом», як на головній",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.video-1.aria-label",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«в міру їх потокового надходження» — русизм (по мере)",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«в міру їх написання» — русизм; «що вмикається за бажанням» громіздко",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.leave.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Піти — означає змінити» — незграбно",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«так ви й підете», «віддає вам» — незграбно/русизм; diff і argv без пояснення",
+      "round": "r1"
+    },
+    {
+      "key": "features.dd-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«в міру їх появи» — русизм",
+      "round": "r1"
+    },
+    {
+      "key": "features.dd-2",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«сховища файлів cookie» — дослівна калька cookie jar; «керувати API керування» — тавтологія",
+      "round": "r1"
+    },
+    {
+      "key": "features.dd-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«стає перед ним» — калька goes in front",
+      "round": "r1"
+    },
+    {
+      "key": "features.dt-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Вихід назовні» — калька route out",
+      "round": "r1"
+    },
+    {
+      "key": "features.dd-6",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«резервний перехід» неясно; «без жодних заголовків чи тіл» — незрозуміло, що мається на увазі",
+      "round": "r1"
+    },
+    {
+      "key": "features.dt-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«Чат для випробувань» — незвична назва playground",
+      "round": "r1"
+    },
+    {
+      "key": "features.p-1",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«він зберігає свідчення» — незрозуміло, хто «він»; «свідчення» — юридичне",
+      "round": "r1"
+    },
+    {
+      "key": "features.img-1.alt",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«наживо» — розмовне; «у реальному часі»",
+      "round": "r1"
+    },
+    {
+      "key": "features.figcaption-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«наживо» → «у реальному часі»",
+      "round": "r1"
+    },
+    {
+      "key": "features.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«життєві показники» — калька vital signs; «s» латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "features.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«чат для випробувань» → «тестовий чат»; GiB латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "features.p-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«далі — Windows» — калька next; «Не NVIDIA?» уривчасто",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«у голому рушії» — калька bare engine",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«слухає лише loopback» — жаргонна калька; «MB» латиницею",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "login: «вхід» означає дію, а не облікові дані — «обліковий запис»/«облікові дані» за змістом",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«в лише локальному режимі» — незграбно",
+      "round": "r1"
+    },
+    {
+      "key": "faq.q-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "login: «вхід» означає дію, а не облікові дані — «обліковий запис»/«облікові дані» за змістом",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "login: «вхід» означає дію, а не облікові дані — «обліковий запис»/«облікові дані» за змістом",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-6",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«основні версії» не передає mainline (офіційні, без змін)",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-7",
+      "category": "mistranslation",
+      "severity": "major",
+      "status": "fixed",
+      "note": "«реєстру образів випуску, який … замінює docker load» — читається навпаки (реєстр замінює docker load)",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-7",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«В іншому разі» означає «інакше», а не «крім того»",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-9",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "rotate: «змініть з пільговим періодом» → «замініть з перехідним періодом»; «керують API керування» — тавтологія",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-12",
+      "category": "mistranslation",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«окупилося» ≠ «paid for» (оплачено); «коштує електрики» — розмовне",
+      "round": "r1"
+    },
+    {
+      "key": "privacy.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«віддає» — жаргон; «яких він може торкнутися» — калька touch; «сам відвідувач своїм візитом» — додано суб’єкта",
+      "round": "r1"
+    },
+    {
+      "key": "clients.opencode.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«підтримує <протокол>» у переліку дій (speaks a protocol) — не дія; «приймає запит у форматі …»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.aider.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«підтримує <протокол>» у переліку дій (speaks a protocol) — не дія; «приймає запит у форматі …»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.grok-cli.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«підтримує <протокол>» у переліку дій (speaks a protocol) — не дія; «приймає запит у форматі …»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.openai-sdk.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«підтримує <протокол>» у переліку дій (speaks a protocol) — не дія; «приймає запит у форматі …»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.continue.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«підтримує <протокол>» у переліку дій (speaks a protocol) — не дія; «приймає запит у форматі …»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.cline.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«підтримує <протокол>» у переліку дій (speaks a protocol) — не дія; «приймає запит у форматі …»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.cursor.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«підтримує <протокол>» у переліку дій (speaks a protocol) — не дія; «приймає запит у форматі …»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.codex-cli.flow.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "«підтримує <протокол>» у переліку дій (speaks a protocol) — не дія; «приймає запит у форматі …»",
+      "round": "r1"
+    },
+    {
+      "key": "home.hero.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.li-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.figcaption-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-fit.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.figcaption-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.img-3.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.figcaption-3",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.img-4.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.figcaption-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.dd-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.dd-2",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.th-3",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.th-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.col-median.data-h",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.col-peak.data-h",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.span-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.dd-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "features.img-2.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "features.h3-3",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "features.td-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-11",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "одиниці латиницею (s, h, W, GB, GiB, MB) → с, год, Вт, ГБ, ГіБ, МБ із нерозривним пробілом",
+      "round": "r1"
+    },
+    {
+      "key": "meta.og-image-alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «точку тротлінгу, яку повідомляє драйвер» — дієслово «повідомляти» вимагає «про що».",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «частка кешу» — неоднозначно й розходиться з «часткою влучань у кеш» на інших сторінках.",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «паралельно проводить бенчмарки» спотворює «along the way» (не одночасно, а попутно).",
+      "round": "r1"
+    },
+    {
+      "key": "jsonld.feature-10",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] «вузьких з’єднань PCIe» — калька з «narrow PCIe links»; українською кажуть про знижену ширину з’єднання. Також GB латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.nav.coding-agents",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "[native editor] «Агенти для коду» розходиться з «агенти для програмування», що вжито на решті сайту. — прийнято: довжина ≤16 символів: коротка форма «Агенти для коду» прийнята для навігації",
+      "round": "r1"
+    },
+    {
+      "key": "home.hero.span-9",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "[native editor] «Агенти для коду» розходиться з «агенти для програмування», що вжито на решті сайту. — прийнято: мітка ~13 символів: коротка форма «Агенти для коду»",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.span-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Агенти для коду» розходиться з «агенти для програмування», що вжито на решті сайту.",
+      "round": "r1"
+    },
+    {
+      "key": "common.crumb.coding-agents",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "[native editor] «Агенти для коду» розходиться з «агенти для програмування», що вжито на решті сайту. — прийнято: хлібні крихти ~13 символів: коротка форма «Агенти для коду»",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.nav.plat-win",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «(далі)» не передає «наступна платформа»; читається як «продовження».",
+      "round": "r1"
+    },
+    {
+      "key": "home.hero.span-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «далі Windows» — калька з «Windows next».",
+      "round": "r1"
+    },
+    {
+      "key": "home.install.span-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «далі» як позначка статусу незрозуміле.",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.docs.short",
+      "category": "style",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "[native editor] Скорочення «Докум.» з крапкою в меню виглядає недбало. — прийнято: ліміт 6 символів: «Докум.» — єдина зрозуміла форма в межах ліміту",
+      "round": "r1"
+    },
+    {
+      "key": "home.hero.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] «ставить перед ними один … порт» — англійська метафора «front door»; «жива панель» — калька з «live».",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «кожен файл отримує вердикт» — калька з «verdict».",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-fit.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Кожен файл виводиться з вердиктом» — калька; «замало запасу» незграбне.",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «частка кешу» замість «частка влучань у кеш»; «1 h» латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Одиниця «s» латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.h3-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «turn» перекладено як «крок» тут і як «хід» на інших сторінках; «крок» уже зайнятий кроками навантаження й завантаження.",
+      "round": "r1"
+    },
+    {
+      "key": "home.cache.h2-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «крок» замість «хід» (turn), непослідовно з іншими сторінками.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «на кожному кроці» замість «на кожному ході» (turn).",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.figcaption-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «кроки однієї розмови» замість «ходи» (turn).",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.h3-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «просто тут» — калька з «right here», незрозуміло, де саме.",
+      "round": "r1"
+    },
+    {
+      "key": "home.use-cases.p-9",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] «називає вузький слот PCIe» — калька з «names the narrow slot»; GB латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "home.install.span-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «основний випуск» не означає «stable».",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.li-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] У macOS українською розділ називається «Приватність і безпека» (так і в FAQ).",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-win.p-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «два чесні варіанти» — калька з «two honest options».",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-appliance.li-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «майданчика без виходу назовні» — калька з «site with no route out».",
+      "round": "r1"
+    },
+    {
+      "key": "home.upgrade.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] «оновлення виконується на місці» (in place) і «база даних мігрує вперед» (migrates forward) — кальки, незрозумілі українському читачеві.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why.h2-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Ось як виглядає розв’язання кожної» — калька з «what … looks like».",
+      "round": "r1"
+    },
+    {
+      "key": "home.why.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] «Голий рушій» — калька з «bare engine»; звучить жаргонно й двозначно.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-stats.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] «голий рушій» — калька; «частка кешу» непослідовна; «1 h» латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] «у голому рушії» — калька з «bare engine».",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-god.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «у міру її написання» — калька з рос. «по мере».",
+      "round": "r1"
+    },
+    {
+      "key": "features.dd-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «в міру їх появи» — калька з рос. «по мере появления».",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.video-1.aria-label",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «в міру їх потокового надходження» — калька з рос. «по мере».",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «в міру їх написання» — калька з рос. «по мере»; «що вмикається за бажанням» громіздко.",
+      "round": "r1"
+    },
+    {
+      "key": "home.agents.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «в розрізі ключа» — калька з рос. «в разрезе».",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-agent.p-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «вужчих областей» — незрозумілий переклад «scopes»; у тексті ще й «областей дії».",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.li-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Вужчих областей дії» — незрозумілий переклад «scopes».",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.li-5",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «обвалює рушій» — розмовне; на головній «аварійно зупиняє».",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.jsonld.step-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Випустіть токен» — калька з «issue»; для токенів кажуть «створіть».",
+      "round": "r1"
+    },
+    {
+      "key": "agent-tuning.li-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Випустіть токен» — калька з «issue».",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.ol-1.aria-label",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] «драбина пріоритетів» — запозичена англійська метафора «ladder», для українського читача беззмістовна.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.p-3",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] Точний аналог прикладу з калібрування: «Це приклад драбини, а не правило: числа вибираєте ви» — калька метафори й скута фраза.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.b-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Робочий агент» двозначне (робочий = справний / службовий); мається на увазі агент у продакшн-середовищі.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.figcaption-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Одиниця «h» латиницею поруч із «днів».",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-keys.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «жоден не має 95 % запитів» — калька з «accounts for».",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.p-1",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] «з’єднання PCIe, що встановилося на x4 з x16» — калька з «settled at x4 of x16»; «називає вузьке місце» — калька; «читає M1» — пропущено «дані».",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.figcaption-2",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] «встановилося на x4 з x16», «який слот вузький» — кальки; назву позначки з інтерфейсу <em>differs</em> перекладено, хоча на знімку вона англійською.",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.figcaption-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «9 min 17 s» у тексті підпису латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.p-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «узгоджені просто зараз», «мертвий рушій під живою обгорткою перезавантажується» — кальки, скута фраза.",
+      "round": "r1"
+    },
+    {
+      "key": "home.features.h3-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Кожна карта звітує сама за себе» — калька з «reports for itself».",
+      "round": "r1"
+    },
+    {
+      "key": "home.oss.h2-1",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «відкритий … відкрито» — тавтологія.",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.footer.tag-note",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Цю сторінку віддає» — жаргон (калька з рос. «отдаёт»).",
+      "round": "r1"
+    },
+    {
+      "key": "privacy.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «віддає» — жаргон; «яких він може торкнутися» — калька з «touch».",
+      "round": "r1"
+    },
+    {
+      "key": "common.in-words",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Словами:» — калька з «In words:» (текстовий опис схеми).",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-5",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Словами:» — калька з «In words:» (текстовий опис схеми).",
+      "round": "r1"
+    },
+    {
+      "key": "common.crumb.cache-aware-routing",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "accepted",
+      "note": "[native editor] «Маршрутизація за кешем» розходиться з «маршрутизація з урахуванням кешу» в решті тексту. — прийнято: хлібні крихти ~19 символів: коротка форма «Маршрутизація за кешем»",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.summary",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «вхід» означає дію входу, а не облікові дані; на інших сторінках — «обліковий запис».",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.capability",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «замінить ваш вхід» — «вхід» не означає облікові дані; «У лише локальному режимі» — незграбно.",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.mode.router.title",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «залиште свій вхід» — «вхід» не означає облікові дані.",
+      "round": "r1"
+    },
+    {
+      "key": "clients.claude-code.mode.router.desc",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Ваш вхід … йде до Anthropic» — «вхід» не означає облікові дані.",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-6",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Залиште звичайний вхід» — «вхід» не означає облікові дані.",
+      "round": "r1"
+    },
+    {
+      "key": "faq.q-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «мій вхід в Anthropic» — «вхід» не означає облікові дані.",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «ваш вхід в Anthropic» — «вхід» не означає облікові дані.",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «залиште звичайний вхід», «в лише локальному режимі» — незграбно.",
+      "round": "r1"
+    },
+    {
+      "key": "clients.anthropic-sdk.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Для лише локального режиму», «модель — обслуговувана назва» — незграбно й неточно.",
+      "round": "r1"
+    },
+    {
+      "key": "clients.anthropic-sdk.mode.local.desc",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «модель — обслуговувана назва» — назва не «обслуговується».",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «перший збіг перемагає» — калька з «first match wins»; «60 s» латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.span-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Перший збіг перемагає» — калька з «first match wins».",
+      "round": "r1"
+    },
+    {
+      "key": "claude-code-router.p-7",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Одиниці «s», «ms», «GiB» латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.meta.description",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «лінк PCIe» — жаргон, на інших сторінках «з’єднання PCIe».",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.p-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «лінк PCIe в тому стані, в якому його узгоджено зараз» — жаргон і громіздко.",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.img-1.alt",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «при позначці», «при ліміті» — русизм «при» в значенні умови; «лінк PCIe» — жаргон.",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «одна завантажена модель, зайнята нашим … трафіком» — зайняті карти, а не модель.",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.p-5",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] Перелік причин після двокрапки граматично розвалений («за іншими промптами…, кеш, імовірно, витіснено, або повільно без причини»).",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «поріг переливу» — на головній той самий параметр названо «поріг переповнення».",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.img-1.alt",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «перелив/поріг переливу» — непослідовно з «переповнення» на головній.",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-5",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «перелив/поріг переливу» — непослідовно з «переповнення» на головній.",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.span-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «поріг переливу» — непослідовно з «поріг переповнення».",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-3",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «при 4 одночасних сеансах» — русизм «при»; «s» латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «при 4–32 сеансах», «при 24 і 32» — русизм «при»; «s» латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-6",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «при 4 сеансах», «при 24 і 32» — русизм «при»; «поріг переливу» непослідовний; «s» латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.figcaption-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «при 32 сеансах» — русизм «при»; «переливаються» непослідовно з «переповнення».",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.p-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «При 26 сеансах» — русизм «при»; «гешувало» розходиться з «хеш SHA-256» в інших місцях.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «щабель» (rung — та сама метафора «драбини») для кроку навантаження; на сторінці про маршрутизацію — «крок»; «s» латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.figcaption-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «щаблі» для кроків навантаження; «s» латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-4",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Щаблі» для кроків навантаження; «s» латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.h3-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «щабель навантаження» — метафора драбини; уживайте «крок».",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.figcaption-2",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «щабель» для кроку навантаження непослідовно з «крок» на сторінці про маршрутизацію.",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-cache.p-3",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «щабель» для кроку навантаження непослідовно з «крок» на сторінці про маршрутизацію.",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.p-1",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «Змінюйте ключ із пільговим періодом» — «пільговий період» з фінансової лексики; на головній — «замінити з перехідним періодом».",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-9",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «змініть його з пільговим періодом» — непослідовно з «замінити з перехідним періодом»; «керують API керування» — тавтологія.",
+      "round": "r1"
+    },
+    {
+      "key": "features.dd-2",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "note": "[native editor] «сховища файлів cookie» — дослівна калька з «cookie jar»; «керувати API керування» — тавтологія.",
+      "round": "r1"
+    },
+    {
+      "key": "features.p-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «він зберігає свідчення» — незрозуміло, хто «він»; «свідчення» — юридичне слово.",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-2",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «слухає лише loopback» — жаргонна калька; одиниця «MB» латиницею.",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-6",
+      "category": "terminology",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «основні версії» не передає «офіційні, без змін (upstream)».",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-7",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] «В іншому разі» тут означає «крім того», а не «інакше» — спотворює логіку.",
+      "round": "r1"
+    },
+    {
+      "key": "home.hero.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.li-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "home.p-mac.figcaption-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.img-3.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.figcaption-3",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.img-4.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.th-3",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.th-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.col-median.data-h",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.col-peak.data-h",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.span-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.th-6",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.img-2.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.dd-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "gpu-monitoring.dd-2",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "api-keys.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "features.p-2",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "features.img-2.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "faq.a-11",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "home.why-fit.img-1.alt",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "features.h3-3",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "features.p-3",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "features.td-4",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "cache-aware-routing.dd-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "home.hardware.figcaption-1",
+      "category": "locale-convention",
+      "severity": "minor",
+      "status": "fixed",
+      "note": "[native editor] Латинські символи одиниць (s, h, W, MB, GB, GiB) замість українських за стилем Microsoft; непослідовно з «днів», «хвилини».",
+      "round": "r1"
+    },
+    {
+      "key": "chrome.nav.plat-win",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "«Windows (наступна)»: feminine agreement with no noun reads oddly in a bare label (r2 back note); now «на черзі» (no agreement). Change: minor wording; meaning unchanged, so the r2 back-translation still covers it."
+    },
+    {
+      "key": "home.hero.span-3",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "Same «Windows — наступна» agreement issue. Change: minor wording; meaning unchanged, so the r2 back-translation still covers it."
+    },
+    {
+      "key": "home.install.span-3",
+      "category": "grammar",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "Same bare «наступна» label beside Windows. Change: minor wording; meaning unchanged, so the r2 back-translation still covers it."
+    },
+    {
+      "key": "home.why-cache.p-4",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "round": "r3",
+      "note": "«Вихід усе одно вищий» — «вихід» reads as \"exit\", output-token throughput is lost (r2 back note); now «Вихідних токенів за хвилину все одно більше». Change: minor wording; meaning unchanged, so the r2 back-translation still covers it."
+    },
+    {
+      "key": "cache-aware-routing.p-6",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "round": "r3",
+      "note": "«вихід»/«Вихід» for output tokens in two places, ambiguous with \"exit\" (r2 back note). Change: minor wording; meaning unchanged, so the r2 back-translation still covers it."
+    },
+    {
+      "key": "home.p-appliance.li-4",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "«об’єкта без виходу в інтернет» unusual for \"a site with no route out\" (r2 back note). Change: minor wording; meaning unchanged, so the r2 back-translation still covers it."
+    },
+    {
+      "key": "home.why-keys.img-1.alt",
+      "category": "style",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "English UI text ran loose mid-sentence (r2 back note); now a quoted UI string «Strict: …». Change: minor wording; meaning unchanged, so the r2 back-translation still covers it."
+    },
+    {
+      "key": "home.why-keys.figcaption-1",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "«на зміну яким його створено» awkward/unclear (r2 back note); now «які він замінив під час ротації». Change: minor wording; meaning unchanged, so the r2 back-translation still covers it."
+    },
+    {
+      "key": "clients.grok-cli.capability",
+      "category": "fluency",
+      "severity": "minor",
+      "status": "fixed",
+      "round": "r3",
+      "note": "«session_summary залишає запити Grok на назву сеансу на цій моделі» hard to parse (r2 back note). Change: minor wording; meaning unchanged, so the r2 back-translation still covers it."
+    },
+    {
+      "key": "home.why-cache.figcaption-4",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "round": "r3",
+      "note": "«Це картка, а не результат»: «картка» collides with GPU card; the caption means a captured UI panel. Now «знімок панелі, а не результат тесту»; tap hint now refers to the image. Change: terminology change: \"card\" → \"panel capture\", tap hint \"card\" → \"image\"; clarifies, does not change the claim."
+    },
+    {
+      "key": "cache-aware-routing.figcaption-5",
+      "category": "terminology",
+      "severity": "major",
+      "status": "fixed",
+      "round": "r3",
+      "note": "Same «Це картка, а не результат» (r2 back note). Change: minor wording; meaning unchanged, so the r2 back-translation still covers it."
+    },
+    {
+      "key": "api-keys.p-4",
+      "category": "fluency",
+      "severity": "major",
+      "status": "fixed",
+      "round": "r3",
+      "note": "Opened with «Він» with no antecedent, «Claude Code спрямовує» indicative where an instruction is meant, and «прочитайте diff у зворотному напрямку» cryptic (r2 back note). Subject now LM Warden, instruction explicit, last sentence says leaving = undoing the changes in the diff. Change: meaning-preserving rewrite of the first clause, the Claude Code clause and the last sentence (not re-back-translated; rest covered by r2 back)."
+    }
+  ]
+}

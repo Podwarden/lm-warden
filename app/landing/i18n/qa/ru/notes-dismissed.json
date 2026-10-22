@@ -1,0 +1,49 @@
+{
+ "r3_back_notes_reviewed_no_issue": {
+  "home.agents.span-8": "Caption fragment that sits beside the number 1,981 on the page; «1 981 запрос обработан локально» is correct Russian agreement (number ends in 1).",
+  "home.why-keys.span-4": "Ladder label beside the P0 tier ('whatever is left'); its referent (capacity) is visible on the page.",
+  "home.install.span-1": "Badge 'main release' beside the install option; correct.",
+  "home.use-cases.p-7": "Subject of the last clause is God mode, clear in Russian.",
+  "home.p-appliance.li-4": "Noun phrase is acceptable marketing Russian.",
+  "home.why-stats.p-1": "Terse imperative mirrors the English quoted advice.",
+  "home.why-agent.p-1 / agent-tuning.p-1": "«ошибка» for a failed guess is understandable; minor style, accepted as is (not counted).",
+  "home.why-agent.li-1": "Label is a fair rendering of 'Survey and shortlist'.",
+  "chrome.footer.tag-note": "«если вы на это согласитесь» is natural Russian.",
+  "claude-code-router.figcaption-2": "Counter names follow the console labels used consistently on the page.",
+  "claude-code-router.p-7": "Natural Russian; 'step' is the site-wide term for an agent turn.",
+  "home.p-appliance.li-4, features.dd-4, features.dd-6, cache-aware-routing.p-7, cache-aware-routing.figcaption-6": "Word-order/ellipsis remarks on correct Russian; caption style."
+ },
+ "earlier_rounds_dismissed": [
+  {
+   "key": "claude-code-router.figcaption-1",
+   "category": "locale-convention",
+   "severity": "minor",
+   "source": "fluency-r2",
+   "note": "[native editor r2] После «<b>Рис.&nbsp;2</b>» нет пробела перед текстом подписи («Рис. 2Куда»), если стиль не выносит номер в отдельный блок; то же во всех figcaption с «Рис.».",
+   "status": "wontfix",
+   "reason": "Figure markup kept as in English (<b>Рис.&nbsp;N</b> directly followed by text); styles/content.css sets figcaption b {margin-right:0.4em}, so the page renders a gap; adding a space or period inside/after the tag would diverge from the source markup.",
+   "round": "r2",
+   "category_orig": "locale"
+  },
+  {
+   "key": "home.agents.span-8",
+   "category": "fluency",
+   "severity": "minor",
+   "source": "backtranslation-r2",
+   "note": "[back-translation note] Fragment begins lowercase with 'запрос обработан локально' (singular 'request processed locally') followed by a percentage - reads as a caption to a number not present in the string; grammatically a stand-alone fragment.",
+   "status": "wontfix",
+   "reason": "Checked against English: the span follows the big number 1 981 (home.agents.b-1), so lowercase singular «запрос обработан локально» agrees with it and is correct; only the date spacing was normalised.",
+   "round": "r2"
+  },
+  {
+   "key": "privacy.ads",
+   "category": "fluency",
+   "severity": "minor",
+   "source": "backtranslation-r2",
+   "note": "[back-translation note] Value begins with a leading space (intentional concatenation fragment).",
+   "status": "wontfix",
+   "reason": "Leading space is required by the template (privacy.ads is concatenated after a sentence); text is correct.",
+   "round": "r2"
+  }
+ ]
+}

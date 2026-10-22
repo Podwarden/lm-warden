@@ -16,7 +16,7 @@
     "source_hash": "b554407d17a9"
   },
   "claude-code-router.p-4": {
-    "text": "Legen Sie den Kontext für Claude Code aus, nicht für Chat: Seine erste Runde in unserer Sitzung hatte 38.167 Token, das lokale Modell braucht also deutlich mehr als 40&nbsp;Tsd. Token Kontext.",
+    "text": "Bemessen Sie den Kontext für Claude Code, nicht für den Chat: Seine erste Runde in unserer Sitzung hatte 38.167 Token, das lokale Modell braucht also deutlich mehr als 40&nbsp;Tsd. Token Kontext.",
     "source_hash": "f87b272c3f76"
   },
   "claude-code-router.figcaption-1": {
