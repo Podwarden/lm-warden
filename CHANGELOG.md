@@ -7,6 +7,8 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.21.5] — 2026-10-21
+
 ## [v2026.10.21.4] — 2026-10-21
 
 ### Added
