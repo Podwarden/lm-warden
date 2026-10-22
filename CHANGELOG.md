@@ -7,7 +7,16 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.21.6] — 2026-10-21
+
+### Changed
+
+- **The home page's install chooser loses its explanatory lede;** the question "Where will you run it?" and the four platform options speak for themselves.
+- **The home page's upgrade note no longer mentions the old name;** the rename note stays in OPERATING.md for upgraders.
+
 ## [v2026.10.21.5] — 2026-10-21
+
+- No user-facing changes: the release was cut before its two home-page fixes reached develop; they ship in the next release.
 
 ## [v2026.10.21.4] — 2026-10-21
 

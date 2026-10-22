@@ -419,10 +419,6 @@
     "text": "你要在哪里运行它？",
     "source_hash": "249678c8eba2"
   },
-  "home.install.p-1": {
-    "text": "请选择运行模型的机器，而不是你正在阅读本页的这台；用 Mac 浏览的访客常常会安装到 Linux GPU 服务器上。我们不会替你做选择，也不会根据你的浏览器猜测。",
-    "source_hash": "0c505d2d282e"
-  },
   "home.install.div-1.aria-label": {
     "text": "平台",
     "source_hash": "c78ffe195710"
@@ -614,10 +610,6 @@
   "home.upgrade.p-1": {
     "text": "<b>已经在用了？</b>Linux 可原地升级：拉取新镜像，重启，数据库会自动向前迁移。<a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">步骤</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">更新日志</a>。",
     "source_hash": "5566c16483a2"
-  },
-  "home.upgrade.p-2": {
-    "text": "<b>原名 vLLM Warden。</b>安装目录 <code>/opt/vllm-warden</code> 和密钥前缀 <code>vw_</code> 保留了旧名称，因此现有密钥可以继续使用。",
-    "source_hash": "4ac584d252da"
   },
   "home.why.h2-1": {
     "text": "自托管有八个问题。下面是每个问题解决后的样子。",

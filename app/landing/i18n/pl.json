@@ -419,10 +419,6 @@
     "text": "Gdzie go uruchomisz?",
     "source_hash": "249678c8eba2"
   },
-  "home.install.p-1": {
-    "text": "Wybierz maszynę, na której będą działać modele, a nie tę, na której to czytasz; osoby odwiedzające stronę z Maca często instalują go na serwerze z systemem Linux i kartami GPU. Nic nie jest wybierane za Ciebie i nic nie jest zgadywane na podstawie przeglądarki.",
-    "source_hash": "0c505d2d282e"
-  },
   "home.install.div-1.aria-label": {
     "text": "Platforma",
     "source_hash": "c78ffe195710"
@@ -614,10 +610,6 @@
   "home.upgrade.p-1": {
     "text": "<b>Już go używasz?</b> W systemie Linux aktualizacja odbywa się na miejscu: pobierz nowe obrazy, uruchom ponownie, a baza danych zostanie zmigrowana do przodu. <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">Kroki</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">Dziennik zmian</a>.",
     "source_hash": "5566c16483a2"
-  },
-  "home.upgrade.p-2": {
-    "text": "<b>Dawniej vLLM Warden.</b> Katalog instalacji <code>/opt/vllm-warden</code> i prefiks kluczy <code>vw_</code> zachowują starą nazwę, więc istniejące klucze nadal działają.",
-    "source_hash": "4ac584d252da"
   },
   "home.why.h2-1": {
     "text": "Samodzielny hosting ma osiem problemów. Oto jak wygląda rozwiązanie każdego z nich.",

@@ -419,10 +419,6 @@
     "text": "आप इसे कहाँ चलाएँगे?",
     "source_hash": "249678c8eba2"
   },
-  "home.install.p-1": {
-    "text": "वह मशीन चुनें जिस पर मॉडल चलेंगे, न कि वह जिस पर आप यह पढ़ रहे हैं; Mac से आने वाले लोग अक्सर Linux GPU सर्वर पर इंस्टॉल करते हैं। आपके लिए कुछ भी पहले से नहीं चुना जाता और आपके ब्राउज़र से कुछ भी अनुमान नहीं लगाया जाता।",
-    "source_hash": "0c505d2d282e"
-  },
   "home.install.div-1.aria-label": {
     "text": "प्लेटफ़ॉर्म",
     "source_hash": "c78ffe195710"
@@ -614,10 +610,6 @@
   "home.upgrade.p-1": {
     "text": "<b>पहले से चला रहे हैं?</b> Linux अपनी जगह पर अपग्रेड होता है: नई इमेज पुल करें, रीस्टार्ट करें, डेटाबेस आगे माइग्रेट हो जाता है। <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">चरण</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">चेंजलॉग</a>।",
     "source_hash": "5566c16483a2"
-  },
-  "home.upgrade.p-2": {
-    "text": "<b>पहले का नाम vLLM Warden।</b> इंस्टॉल डायरेक्टरी <code>/opt/vllm-warden</code> और कुंजी का प्रीफ़िक्स <code>vw_</code> पुराना नाम ही रखते हैं, इसलिए मौजूदा कुंजियाँ काम करती रहती हैं।",
-    "source_hash": "4ac584d252da"
   },
   "home.why.h2-1": {
     "text": "सेल्फ़-होस्टिंग की आठ समस्याएँ हैं। यहाँ देखें कि हर एक का हल कैसा दिखता है।",

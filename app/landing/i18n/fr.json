@@ -419,10 +419,6 @@
     "text": "Où allez-vous l’exécuter ?",
     "source_hash": "249678c8eba2"
   },
-  "home.install.p-1": {
-    "text": "Choisissez la machine sur laquelle les modèles tourneront, pas celle sur laquelle vous lisez cette page : un visiteur sur Mac installe souvent sur un serveur GPU Linux. Rien n’est choisi pour vous et rien n’est deviné à partir de votre navigateur.",
-    "source_hash": "0c505d2d282e"
-  },
   "home.install.div-1.aria-label": {
     "text": "Plateforme",
     "source_hash": "c78ffe195710"
@@ -614,10 +610,6 @@
   "home.upgrade.p-1": {
     "text": "<b>Vous l’utilisez déjà ?</b> Sous Linux, la mise à jour se fait sur place : récupérez les nouvelles images, redémarrez, la base de données migre vers l’avant. <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">Étapes</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">Journal des modifications</a>.",
     "source_hash": "5566c16483a2"
-  },
-  "home.upgrade.p-2": {
-    "text": "<b>Anciennement vLLM Warden.</b> Le répertoire d’installation <code>/opt/vllm-warden</code> et le préfixe de clé <code>vw_</code> gardent l’ancien nom, donc les clés existantes continuent de fonctionner.",
-    "source_hash": "4ac584d252da"
   },
   "home.why.h2-1": {
     "text": "L’auto-hébergement pose huit problèmes. Voici à quoi ressemble chacun, une fois résolu.",

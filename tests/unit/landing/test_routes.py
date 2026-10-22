@@ -160,14 +160,11 @@ def test_landing_html_contains_required_entry_points(client: TestClient) -> None
         assert 'class="btn go" href="/#install">Download &amp; Install</a>' in page, path
     body = client.get("/_landing").text
     assert "podwarden.com" in body
-    # The product is "LM Warden". The one older name on the page is the
-    # upgrader's note beside "Already running it?" in the install section
-    # (mockup B: the rename matters only to an upgrader, D15), not the hero.
+    # The product is "LM Warden"; neither older name appears on the page (the
+    # owner dropped the upgrader's rename note; OPERATING.md keeps it).
     assert "LM Warden" in body
     olds = re.findall(r"[^.>]*v?llm\s+warden[^.<]*", body, re.IGNORECASE)
-    assert olds == ["Formerly vLLM Warden"], olds
-    upgrade = body[body.index('id="upgrade"') :]
-    assert upgrade.index("Formerly vLLM Warden") < upgrade.index("</div>")
+    assert olds == [], olds
     assert "llmwarden" not in body.lower()
     # The former-name sentence is on Home only.
     others = "".join(b for p, b in all_pages(client).items() if p != "/")

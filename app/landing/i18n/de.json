@@ -419,10 +419,6 @@
     "text": "Wo werden Sie es betreiben?",
     "source_hash": "249678c8eba2"
   },
-  "home.install.p-1": {
-    "text": "Wählen Sie die Maschine, auf der die Modelle laufen werden, nicht die, auf der Sie dies lesen: Wer am Mac liest, installiert oft auf einem Linux-GPU-Server. Nichts ist vorausgewählt, und nichts wird aus Ihrem Browser erraten.",
-    "source_hash": "0c505d2d282e"
-  },
   "home.install.div-1.aria-label": {
     "text": "Plattform",
     "source_hash": "c78ffe195710"
@@ -614,10 +610,6 @@
   "home.upgrade.p-1": {
     "text": "<b>Schon im Einsatz?</b> Unter Linux wird direkt aktualisiert: neue Images ziehen, neu starten, die Datenbank migriert vorwärts. <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">Schritte</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">Änderungsprotokoll</a>.",
     "source_hash": "5566c16483a2"
-  },
-  "home.upgrade.p-2": {
-    "text": "<b>Früher vLLM Warden.</b> Das Installationsverzeichnis <code>/opt/vllm-warden</code> und das Schlüsselpräfix <code>vw_</code> behalten den alten Namen, damit bestehende Schlüssel weiter funktionieren.",
-    "source_hash": "4ac584d252da"
   },
   "home.why.h2-1": {
     "text": "Selbst hosten bringt acht Probleme mit sich. So sieht jedes davon gelöst aus.",

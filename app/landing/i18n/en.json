@@ -524,11 +524,6 @@
     "note": "section heading (#install-title)",
     "hash": "249678c8eba2"
   },
-  "home.install.p-1": {
-    "text": "Pick the machine the models will run on, not the one you are reading this on; a Mac visitor often installs on a Linux GPU server. Nothing is chosen for you and nothing is guessed from your browser.",
-    "note": "text (#install)",
-    "hash": "0c505d2d282e"
-  },
   "home.install.div-1.aria-label": {
     "text": "Platform",
     "note": "screen-reader label (#install)",
@@ -768,11 +763,6 @@
     "text": "<b>Already running it?</b> Linux upgrades in place: pull the new images, restart, the database migrates forward. <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">Steps</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">Changelog</a>.",
     "note": "text (#upgrade)",
     "hash": "5566c16483a2"
-  },
-  "home.upgrade.p-2": {
-    "text": "<b>Formerly vLLM Warden.</b> The install directory <code>/opt/vllm-warden</code> and the <code>vw_</code> key prefix keep the old name, so existing keys keep working.",
-    "note": "text (#upgrade)",
-    "hash": "4ac584d252da"
   },
   "home.why.h2-1": {
     "text": "Self-hosting has eight problems. Here is what each one looks like solved.",

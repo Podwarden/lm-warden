@@ -419,10 +419,6 @@
     "text": "Onde você vai executá-lo?",
     "source_hash": "249678c8eba2"
   },
-  "home.install.p-1": {
-    "text": "Escolha a máquina em que os modelos vão rodar, não aquela em que você está lendo isto; quem visita de um Mac muitas vezes instala em um servidor Linux com GPU. Nada é escolhido por você e nada é deduzido do seu navegador.",
-    "source_hash": "0c505d2d282e"
-  },
   "home.install.div-1.aria-label": {
     "text": "Plataforma",
     "source_hash": "c78ffe195710"
@@ -614,10 +610,6 @@
   "home.upgrade.p-1": {
     "text": "<b>Já usa?</b> No Linux, a atualização é feita no lugar: baixe as novas imagens, reinicie e o banco de dados migra para a frente. <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">Etapas</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">Registro de alterações</a>.",
     "source_hash": "5566c16483a2"
-  },
-  "home.upgrade.p-2": {
-    "text": "<b>Antigo vLLM Warden.</b> O diretório de instalação <code>/opt/vllm-warden</code> e o prefixo de chave <code>vw_</code> mantêm o nome antigo, então as chaves existentes continuam funcionando.",
-    "source_hash": "4ac584d252da"
   },
   "home.why.h2-1": {
     "text": "Auto-hospedar tem oito problemas. Veja como fica cada um resolvido.",

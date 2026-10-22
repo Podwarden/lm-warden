@@ -419,10 +419,6 @@
     "text": "どこで実行しますか？",
     "source_hash": "249678c8eba2"
   },
-  "home.install.p-1": {
-    "text": "今このページを読んでいるマシンではなく、モデルを実行するマシンを選んでください。Mac で閲覧している人が Linux の GPU サーバーにインストールすることはよくあります。こちらで勝手に選んだり、ブラウザーから推測したりはしません。",
-    "source_hash": "0c505d2d282e"
-  },
   "home.install.div-1.aria-label": {
     "text": "プラットフォーム",
     "source_hash": "c78ffe195710"
@@ -614,10 +610,6 @@
   "home.upgrade.p-1": {
     "text": "<b>すでにお使いですか？</b> Linux はその場でアップグレードできます。新しいイメージを pull して再起動すれば、データベースが前方に移行されます。<a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">手順</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">変更履歴</a>。",
     "source_hash": "5566c16483a2"
-  },
-  "home.upgrade.p-2": {
-    "text": "<b>旧称 vLLM Warden。</b>インストール ディレクトリ <code>/opt/vllm-warden</code> とキーのプレフィックス <code>vw_</code> は旧名のままなので、既存のキーはそのまま使えます。",
-    "source_hash": "4ac584d252da"
   },
   "home.why.h2-1": {
     "text": "セルフホスティングには八つの問題があります。それぞれを解決するとこうなります。",
