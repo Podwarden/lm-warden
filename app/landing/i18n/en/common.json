@@ -1,0 +1,127 @@
+{
+  "common.crumbs.aria-label": {
+    "text": "Breadcrumb",
+    "note": "screen-reader label (#main)",
+    "hash": "2bd873d6c734"
+  },
+  "common.crumb.home": {
+    "text": "Home",
+    "note": "link (#main); short label, keep near 12 characters",
+    "hash": "3a78695388b3"
+  },
+  "common.crumb.coding-agents": {
+    "text": "Coding agents",
+    "note": "link (#main); short label, keep near 13 characters",
+    "hash": "707c65c28bca"
+  },
+  "common.in-words": {
+    "text": "In words:",
+    "note": "text (#main); short label, keep near 12 characters",
+    "hash": "3cafefb13fa9"
+  },
+  "common.clients.client": {
+    "text": "Client",
+    "note": "text (#main)",
+    "hash": "0c77fe09ab33"
+  },
+  "common.client.protocol": {
+    "text": "Protocol",
+    "note": "text (#main)",
+    "hash": "cf0883343f4a"
+  },
+  "common.client.support": {
+    "text": "Support",
+    "note": "text (#main)",
+    "hash": "be91940b79f4"
+  },
+  "common.support.full": {
+    "text": "Full support",
+    "note": "text (#main); short label, keep near 12 characters",
+    "hash": "1f95d1324a14"
+  },
+  "common.support.local-only": {
+    "text": "Local models only",
+    "note": "text (#main); short label, keep near 17 characters",
+    "hash": "12d96c6fb40e"
+  },
+  "common.crumb.agent-tuning": {
+    "text": "Agent tuning",
+    "note": "link (#main); short label, keep near 12 characters",
+    "hash": "124c9615be9b"
+  },
+  "common.copy": {
+    "text": "Copy",
+    "note": "text (#main); at most 14 characters",
+    "hash": "e21f935f11d7"
+  },
+  "common.crumb.features": {
+    "text": "Features",
+    "note": "link (#main); short label, keep near 12 characters",
+    "hash": "5697d03daef4"
+  },
+  "common.crumb.gpu-monitoring": {
+    "text": "GPU monitoring",
+    "note": "link (#main); short label, keep near 14 characters",
+    "hash": "cbdfccb24fcc"
+  },
+  "common.crumb.cache-aware-routing": {
+    "text": "Cache-aware routing",
+    "note": "link (#main); short label, keep near 19 characters",
+    "hash": "d45c5045a852"
+  },
+  "common.crumb.api-keys": {
+    "text": "API keys",
+    "note": "link (#main); short label, keep near 12 characters",
+    "hash": "98aae8972102"
+  },
+  "common.crumb.faq": {
+    "text": "FAQ",
+    "note": "link (#main); short label, keep near 12 characters",
+    "hash": "dbc468a14b60"
+  },
+  "common.crumb.privacy": {
+    "text": "Privacy",
+    "note": "link (#main); short label, keep near 12 characters",
+    "hash": "54a57c3147c4"
+  },
+  "common.client.setup-section.aria-label": {
+    "text": "Setup",
+    "note": "screen-reader label (#main)",
+    "hash": "7013af4c42fe"
+  },
+  "common.client.requirements": {
+    "text": "Requirements",
+    "note": "section heading (#main)",
+    "hash": "e0cdd07f6a27"
+  },
+  "common.client.setup": {
+    "text": "Setup",
+    "note": "section heading (#main)",
+    "hash": "7013af4c42fe"
+  },
+  "common.client.setup-p": {
+    "text": "In the console, <strong>Connect</strong> writes these files with your warden’s address, your key and the model you picked. Here they are with placeholders.",
+    "note": "text (#main)",
+    "hash": "961b2c6bf48f"
+  },
+  "common.file.shell": {
+    "text": "Shell",
+    "note": "text (#main); short label, keep near 12 characters",
+    "hash": "a733285486d5"
+  },
+  "common.client.docs": {
+    "text": "Official documentation: {{docs_link}} (read {{docs_date}}).",
+    "note": "text (#main)",
+    "hash": "78599bc11885"
+  },
+  "common.client.related": {
+    "text": "Related: <a href=\"/coding-agents\">all coding agents</a> · <a href=\"/agent-tuning\">let your agent pick the model</a> · <a href=\"/api-keys\">API keys</a>",
+    "note": "text (#main)",
+    "hash": "5f736e0bdabc"
+  },
+  "common.file.settings": {
+    "text": "Settings",
+    "note": "text (#main); short label, keep near 12 characters",
+    "hash": "74a883a037bc"
+  }
+}

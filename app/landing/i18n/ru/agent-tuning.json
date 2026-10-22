@@ -1,0 +1,154 @@
+{
+  "agent-tuning.meta.title": {
+    "text": "Пусть агент для программирования выберет модель | LM Warden",
+    "source_hash": "c73577a9e93d"
+  },
+  "agent-tuning.meta.description": {
+    "text": "Дайте Claude Code или Codex административный токен — и агент подберет модель, движок и флаги для ваших GPU, попутно проводя бенчмарки. Промпты прилагаются.",
+    "source_hash": "42f223176a20"
+  },
+  "agent-tuning.jsonld.name": {
+    "text": "Пусть агент для программирования выберет и настроит модель",
+    "source_hash": "d38cc5b44b81"
+  },
+  "agent-tuning.jsonld.step-1": {
+    "text": "Установите LM Warden на сервер с GPU",
+    "source_hash": "ea9ef62b2144"
+  },
+  "agent-tuning.jsonld.step-2": {
+    "text": "Создайте административный токен",
+    "source_hash": "02b6962c341f"
+  },
+  "agent-tuning.jsonld.step-3": {
+    "text": "Подключите Claude Code или Codex",
+    "source_hash": "23149cd56616"
+  },
+  "agent-tuning.jsonld.step-4": {
+    "text": "Вставьте промпт для настройки",
+    "source_hash": "2580a4baddda"
+  },
+  "agent-tuning.tuning.h1-1": {
+    "text": "Пусть агент для программирования выберет модель.",
+    "source_hash": "2df23e8f7918"
+  },
+  "agent-tuning.p-1": {
+    "text": "Подобрать модель под ваши карты — значит выбрать квантование, движок (vLLM или llama.cpp), способ разделить модель между GPU, размер контекста, тип KV-кэша и понять, есть ли польза от спекулятивного декодирования. Каждая ошибка оборачивается лишним скачиванием и загрузкой. Агент для программирования может провести этот перебор за вас, пока вы заняты другим, потому что все, что делает консоль, доступно через API.",
+    "source_hash": "47320716621f"
+  },
+  "agent-tuning.h2-1": {
+    "text": "Настройка в три шага",
+    "source_hash": "2a300da26a75"
+  },
+  "agent-tuning.li-1": {
+    "text": "<strong>Установите LM Warden</strong> на сервер с GPU (команда — в разделе <a href=\"/#p-linux\">Скачать и установить</a>) и пройдите мастер настройки.",
+    "source_hash": "45b78d2f8e02"
+  },
+  "agent-tuning.li-2": {
+    "text": "<strong>Создайте административный токен</strong> в Settings → Access Tokens со сроком действия 30&nbsp;дней. В оболочке, которой пользуется агент, экспортируйте его в переменную <code>VW_ADMIN_TOKEN</code>, а адрес сервера LM Warden — в <code>W</code>.",
+    "source_hash": "a316c0dc85b5"
+  },
+  "agent-tuning.li-3": {
+    "text": "<strong>Запустите агента</strong>: <a href=\"/coding-agents/claude-code\">Claude Code</a>, <a href=\"/coding-agents/codex-cli\">Codex&nbsp;CLI</a> или любой другой, который умеет выполнять команды оболочки. Сам агент для этой работы может использовать облачную модель, а настраивает он ту модель, что работает на ваших картах.",
+    "source_hash": "45f30ab355a5"
+  },
+  "agent-tuning.h2-2": {
+    "text": "Чем пользуется агент",
+    "source_hash": "676f21721809"
+  },
+  "agent-tuning.th-1": {
+    "text": "Шаг",
+    "source_hash": "8e6a6cca7aae"
+  },
+  "agent-tuning.th-2": {
+    "text": "Эндпоинт",
+    "source_hash": "3df9726c68ba"
+  },
+  "agent-tuning.th-3": {
+    "text": "Посмотреть карты",
+    "source_hash": "982d52862acc"
+  },
+  "agent-tuning.th-4": {
+    "text": "Проверить до скачивания, поместится ли модель",
+    "source_hash": "966e8813028c"
+  },
+  "agent-tuning.th-5": {
+    "text": "Зарегистрировать, получить начальную конфигурацию",
+    "source_hash": "6fb4184c2d5a"
+  },
+  "agent-tuning.th-6": {
+    "text": "Скачать и загрузить модель",
+    "source_hash": "a632bbe8e8aa"
+  },
+  "agent-tuning.th-7": {
+    "text": "Измерить реальный предел контекста",
+    "source_hash": "4c3b52acd644"
+  },
+  "agent-tuning.td-1": {
+    "text": "<code>POST /api/models/{model_id}/stress</code>, затем <code>POST /api/models/{model_id}/stress/apply</code>",
+    "source_hash": "51491b72ded1"
+  },
+  "agent-tuning.th-8": {
+    "text": "Получить метрики LM Warden",
+    "source_hash": "ead961a24dc4"
+  },
+  "agent-tuning.th-9": {
+    "text": "Отправить тестовый трафик",
+    "source_hash": "70356d606d14"
+  },
+  "agent-tuning.td-2": {
+    "text": "ключ для инференса, полученный через <code>POST /api/tokens</code>, и запросы на <code>/v1/chat/completions</code>",
+    "source_hash": "9a72b9938ec6"
+  },
+  "agent-tuning.p-2": {
+    "text": "Сначала агент читает <a href=\"/agent-guide.md\">руководство для агента</a>: краткое описание этих вызовов, написанное для языковой модели, с ошибками, которых стоит избегать.",
+    "source_hash": "c3bff7c1a9d1"
+  },
+  "agent-tuning.h2-3": {
+    "text": "Готовые промпты",
+    "source_hash": "b273921d2e33"
+  },
+  "agent-tuning.p-3": {
+    "text": "Замените <code>https://your-warden</code> адресом своего сервера LM Warden, а имена, написанные заглавными буквами, — названиями нужных моделей.",
+    "source_hash": "a74bbbec589e"
+  },
+  "agent-tuning.h3-1": {
+    "text": "1. Изучить оборудование и отобрать модели",
+    "source_hash": "c1ebd00d0f72"
+  },
+  "agent-tuning.h3-2": {
+    "text": "2. Выбрать движок и схему размещения для одной модели",
+    "source_hash": "0cc405dce7f8"
+  },
+  "agent-tuning.h3-3": {
+    "text": "3. Найти реальные пределы и применить их",
+    "source_hash": "906f71857682"
+  },
+  "agent-tuning.h3-4": {
+    "text": "4. Сравнить двух кандидатов на моих задачах",
+    "source_hash": "d6e1c2c66dff"
+  },
+  "agent-tuning.h2-4": {
+    "text": "Прежде чем начать",
+    "source_hash": "74e492d5d0df"
+  },
+  "agent-tuning.li-4": {
+    "text": "Административный токен дает полные права администратора в LM Warden: модели, ключи и настройки. Более узких прав доступа пока нет. Задайте ему короткий срок действия.",
+    "source_hash": "4a1f64b32132"
+  },
+  "agent-tuning.li-5": {
+    "text": "Стресс-тест намеренно доводит движок до сбоя, чтобы найти его предел. Запускайте эти промпты на сервере LM Warden, от которого больше никто не зависит.",
+    "source_hash": "e127f19fe7da"
+  },
+  "agent-tuning.li-6": {
+    "text": "Скачивать придется много. Промпты просят агента проверить совместимость модели до скачивания, но следите за свободным местом на диске.",
+    "source_hash": "dabc7d95f036"
+  },
+  "agent-tuning.li-7": {
+    "text": "Когда работа будет закончена, отзовите административный токен в Settings → Access Tokens.",
+    "source_hash": "cc61ece33dc3"
+  },
+  "agent-tuning.p-4": {
+    "text": "См. также: <a href=\"/coding-agents\">агенты для программирования</a> · <a href=\"/gpu-monitoring\">мониторинг GPU</a> · <a href=\"/faq\">вопросы и ответы</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}

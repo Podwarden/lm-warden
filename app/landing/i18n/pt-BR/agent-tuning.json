@@ -1,0 +1,154 @@
+{
+  "agent-tuning.meta.title": {
+    "text": "Deixe o seu agente de programação escolher o modelo | LM Warden",
+    "source_hash": "c73577a9e93d"
+  },
+  "agent-tuning.meta.description": {
+    "text": "Dê ao Claude Code ou ao Codex um token de administrador: ele escolhe modelo, mecanismo e flags para as suas GPUs e faz benchmarks a cada passo. Com os prompts.",
+    "source_hash": "42f223176a20"
+  },
+  "agent-tuning.jsonld.name": {
+    "text": "Deixe o seu agente de programação escolher e ajustar o modelo",
+    "source_hash": "d38cc5b44b81"
+  },
+  "agent-tuning.jsonld.step-1": {
+    "text": "Instale o LM Warden no host com GPU",
+    "source_hash": "ea9ef62b2144"
+  },
+  "agent-tuning.jsonld.step-2": {
+    "text": "Emita um token de administrador",
+    "source_hash": "02b6962c341f"
+  },
+  "agent-tuning.jsonld.step-3": {
+    "text": "Conecte o Claude Code ou o Codex",
+    "source_hash": "23149cd56616"
+  },
+  "agent-tuning.jsonld.step-4": {
+    "text": "Cole um prompt de ajuste",
+    "source_hash": "2580a4baddda"
+  },
+  "agent-tuning.tuning.h1-1": {
+    "text": "Deixe o seu agente de programação escolher o modelo.",
+    "source_hash": "2df23e8f7918"
+  },
+  "agent-tuning.p-1": {
+    "text": "Escolher um modelo para as suas placas significa escolher uma quantização, um mecanismo (vLLM ou llama.cpp), como dividi-lo entre as GPUs, quanto contexto dar a ele, o tipo de cache KV e se a decodificação especulativa ajuda. Cada palpite custa um download e um carregamento. Um agente de programação pode fazer essa busca por você enquanto você faz outra coisa, porque tudo o que o console faz é uma chamada de API.",
+    "source_hash": "47320716621f"
+  },
+  "agent-tuning.h2-1": {
+    "text": "Configure em três passos",
+    "source_hash": "2a300da26a75"
+  },
+  "agent-tuning.li-1": {
+    "text": "<strong>Instale o LM Warden</strong> no host com GPU (o comando está em <a href=\"/#p-linux\">Baixar e instalar</a>) e conclua o assistente de configuração.",
+    "source_hash": "45b78d2f8e02"
+  },
+  "agent-tuning.li-2": {
+    "text": "<strong>Emita um token de administrador</strong> em Settings → Access Tokens, com validade de 30 dias. Exporte-o como <code>VW_ADMIN_TOKEN</code> e o endereço do warden como <code>W</code> no shell que o seu agente usa.",
+    "source_hash": "a316c0dc85b5"
+  },
+  "agent-tuning.li-3": {
+    "text": "<strong>Inicie o seu agente</strong>: <a href=\"/coding-agents/claude-code\">Claude Code</a>, <a href=\"/coding-agents/codex-cli\">Codex&nbsp;CLI</a> ou outro que consiga executar comandos de shell. Ele pode usar um modelo hospedado para essa tarefa; o modelo que ele está ajustando é o das suas placas.",
+    "source_hash": "45f30ab355a5"
+  },
+  "agent-tuning.h2-2": {
+    "text": "O que o agente usa",
+    "source_hash": "676f21721809"
+  },
+  "agent-tuning.th-1": {
+    "text": "Passo",
+    "source_hash": "8e6a6cca7aae"
+  },
+  "agent-tuning.th-2": {
+    "text": "Endpoint",
+    "source_hash": "3df9726c68ba"
+  },
+  "agent-tuning.th-3": {
+    "text": "Ver as placas",
+    "source_hash": "982d52862acc"
+  },
+  "agent-tuning.th-4": {
+    "text": "Verificar se um modelo cabe, antes do download",
+    "source_hash": "966e8813028c"
+  },
+  "agent-tuning.th-5": {
+    "text": "Registrar e obter uma configuração inicial",
+    "source_hash": "6fb4184c2d5a"
+  },
+  "agent-tuning.th-6": {
+    "text": "Baixar e carregar",
+    "source_hash": "a632bbe8e8aa"
+  },
+  "agent-tuning.th-7": {
+    "text": "Medir o limite real de contexto",
+    "source_hash": "4c3b52acd644"
+  },
+  "agent-tuning.td-1": {
+    "text": "<code>POST /api/models/{model_id}/stress</code>, depois <code>POST /api/models/{model_id}/stress/apply</code>",
+    "source_hash": "51491b72ded1"
+  },
+  "agent-tuning.th-8": {
+    "text": "Ler os números do warden",
+    "source_hash": "ead961a24dc4"
+  },
+  "agent-tuning.th-9": {
+    "text": "Enviar tráfego de teste",
+    "source_hash": "70356d606d14"
+  },
+  "agent-tuning.td-2": {
+    "text": "uma chave de inferência de <code>POST /api/tokens</code>, em <code>/v1/chat/completions</code>",
+    "source_hash": "9a72b9938ec6"
+  },
+  "agent-tuning.p-2": {
+    "text": "O agente lê primeiro <a href=\"/agent-guide.md\">o guia do agente</a>: uma descrição curta dessas chamadas escrita para um modelo de linguagem, com os erros a evitar.",
+    "source_hash": "c3bff7c1a9d1"
+  },
+  "agent-tuning.h2-3": {
+    "text": "Prompts para colar",
+    "source_hash": "b273921d2e33"
+  },
+  "agent-tuning.p-3": {
+    "text": "Substitua <code>https://your-warden</code> pelo endereço do seu warden, e os nomes em maiúsculas por modelos que você tem em mente.",
+    "source_hash": "a74bbbec589e"
+  },
+  "agent-tuning.h3-1": {
+    "text": "1. Examinar o hardware e pré-selecionar modelos",
+    "source_hash": "c1ebd00d0f72"
+  },
+  "agent-tuning.h3-2": {
+    "text": "2. Escolher o mecanismo e o layout para um modelo",
+    "source_hash": "0cc405dce7f8"
+  },
+  "agent-tuning.h3-3": {
+    "text": "3. Encontrar os limites reais e aplicá-los",
+    "source_hash": "906f71857682"
+  },
+  "agent-tuning.h3-4": {
+    "text": "4. Comparar dois candidatos na minha carga de trabalho",
+    "source_hash": "d6e1c2c66dff"
+  },
+  "agent-tuning.h2-4": {
+    "text": "Antes de começar",
+    "source_hash": "74e492d5d0df"
+  },
+  "agent-tuning.li-4": {
+    "text": "Um token de administrador tem direitos totais de administração sobre o warden: modelos, chaves e configurações. Ainda não há escopos mais restritos. Dê a ele uma validade curta.",
+    "source_hash": "4a1f64b32132"
+  },
+  "agent-tuning.li-5": {
+    "text": "Um teste de estresse derruba um mecanismo de propósito para encontrar o limite dele. Rode esses prompts em um warden do qual ninguém mais dependa.",
+    "source_hash": "e127f19fe7da"
+  },
+  "agent-tuning.li-6": {
+    "text": "Os downloads são grandes. Os prompts pedem que o agente verifique se o modelo cabe antes de baixar, mas fique de olho no disco.",
+    "source_hash": "dabc7d95f036"
+  },
+  "agent-tuning.li-7": {
+    "text": "Revogue o token de administrador em Settings → Access Tokens quando o trabalho terminar.",
+    "source_hash": "cc61ece33dc3"
+  },
+  "agent-tuning.p-4": {
+    "text": "Veja também: <a href=\"/coding-agents\">agentes de programação</a> · <a href=\"/gpu-monitoring\">monitoramento de GPU</a> · <a href=\"/faq\">FAQ</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}

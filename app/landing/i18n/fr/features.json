@@ -1,0 +1,186 @@
+{
+  "features.meta.title": {
+    "text": "Autres fonctionnalités et retours d’expérience | LM Warden",
+    "source_hash": "ba96eee84458"
+  },
+  "features.meta.description": {
+    "text": "God mode, jetons admin, chien de garde des moteurs, et les deux pannes qui ont façonné la manière dont LM Warden supervise vLLM.",
+    "source_hash": "6e9623164c58"
+  },
+  "features.small.h1-1": {
+    "text": "Les petits plus que vous découvrirez une fois LM Warden en service.",
+    "source_hash": "32313b57288c"
+  },
+  "features.dd-1": {
+    "text": "Suivez en temps réel les prompts et les réponses d’une clé, depuis un panneau sur sa page. Conservés uniquement en mémoire, diffusés seulement pendant que le panneau est ouvert, et désactivés tant que vous ne définissez pas <code>VW_GODMODE_ENABLED</code>.",
+    "source_hash": "30b3b2877354"
+  },
+  "features.dt-1": {
+    "text": "Jetons admin",
+    "source_hash": "c0b53878c4d4"
+  },
+  "features.dd-2": {
+    "text": "Les jetons <code>vwa_</code> permettent aux scripts, à la CI et aux agents de piloter l’API de contrôle sans mot de passe administrateur, sans gestion de cookies de session ni en-tête CSRF. Affichés une seule fois, stockés sous forme de hachage SHA-256.",
+    "source_hash": "332151669674"
+  },
+  "features.dt-2": {
+    "text": "Un gestionnaire de cache HuggingFace",
+    "source_hash": "3b9fd142bcdf"
+  },
+  "features.dd-3": {
+    "text": "Ce qui occupe le disque et à quel modèle cela appartient. Supprimez les fichiers orphelins, et exportez ou importez tout le cache sous forme d’archive tar.",
+    "source_hash": "9d11305af39b"
+  },
+  "features.dt-3": {
+    "text": "Un seul port",
+    "source_hash": "db562f172ced"
+  },
+  "features.dd-4": {
+    "text": "L’interface, l’API de contrôle et <code>/v1</code> partagent <code>:8080</code>. Votre propre terminaison TLS, ingress ou SSO se place devant sans modification.",
+    "source_hash": "0e54e933002b"
+  },
+  "features.dt-4": {
+    "text": "Aucune connexion sortante nécessaire",
+    "source_hash": "afddbc532ecf"
+  },
+  "features.dd-5": {
+    "text": "Trois archives d’images et, en option, une archive du cache de modèles : c’est tout ce qu’il faut transférer vers un hôte isolé du réseau. <code>HF_HUB_OFFLINE=1</code> bloque même le téléchargement des poids.",
+    "source_hash": "b61634fa6450"
+  },
+  "features.dt-5": {
+    "text": "Statistiques du Router",
+    "source_hash": "bf3c9855201c"
+  },
+  "features.dd-6": {
+    "text": "Chaque décision sur <code>/router/stats</code> : local, transmis, repli, refusé, avec le motif, par règle et par cible, et l’état du disjoncteur. Compteurs propres à chaque processus ; aucun en-tête ni corps de requête n’est enregistré.",
+    "source_hash": "8500a2b3792f"
+  },
+  "features.dt-6": {
+    "text": "Une page de configuration par client",
+    "source_hash": "2384f4730652"
+  },
+  "features.dd-7": {
+    "text": "<b>Connect</b> génère la configuration de Claude Code, Codex&nbsp;CLI, OpenCode, Aider, Grok&nbsp;CLI, des SDK Anthropic et OpenAI et de trois éditeurs, avec l’adresse de ce warden, une clé et un modèle chargé, et envoie une requête de test.",
+    "source_hash": "2bc91137abf9"
+  },
+  "features.dd-8": {
+    "text": "Testé le 5&nbsp;octobre 2026 sur un warden avec Codex&nbsp;0.160 : appels de l’outil shell, modification d’un fichier, session maintenue sur un seul réplica. La réflexion est activée par défaut ; <code>model_reasoning_effort = \"none\"</code> la désactive. Modèles locaux uniquement : les règles du routeur ne s’appliquent pas.",
+    "source_hash": "93a18b286b4e"
+  },
+  "features.dt-7": {
+    "text": "Un espace de chat pour tester",
+    "source_hash": "989e5691fd83"
+  },
+  "features.dd-9": {
+    "text": "Discutez avec un modèle chargé dans le navigateur, images comprises, avant de confier une clé à qui que ce soit.",
+    "source_hash": "7c8ef7303dc3"
+  },
+  "features.lessons.h2-1": {
+    "text": "Trois choses apprises à nos dépens.",
+    "source_hash": "b2e61284634a"
+  },
+  "features.h3-1": {
+    "text": "Le moteur a planté quatre fois en une journée, et le proxy continuait de lui transmettre des requêtes.",
+    "source_hash": "a3c2a4abe3bf"
+  },
+  "features.p-1": {
+    "text": "Le cœur du moteur vLLM plantait tandis que le processus parent <code>vllm serve</code> restait actif : le processus semblait vivant et les requêtes continuaient de lui être envoyées. Désormais, un chien de garde interroge le point de terminaison <code>/health</code> du moteur lui-même plutôt que la table des processus. Quand le moteur cesse de répondre, le chien de garde conserve les éléments de diagnostic, dont les dernières lignes du journal, et recharge le modèle.",
+    "source_hash": "8d323d1c089b"
+  },
+  "features.img-1.alt": {
+    "text": "Le panneau de journal en direct d’un modèle sous charge : des lignes du serveur d’API vLLM répondant à GET /metrics, des POST /v1/chat/completions d’un client, des lignes du moteur indiquant 10 requêtes en cours et 0 en attente, et une ligne GET /health, toutes renvoyant 200 OK",
+    "source_hash": "a4f74c626a7f"
+  },
+  "features.span-1": {
+    "text": "La sonde du chien de garde, à laquelle répond le moteur",
+    "source_hash": "e1d7e982a29c"
+  },
+  "features.figcaption-1": {
+    "text": "<b>Fig.&nbsp;15</b>Le journal en direct sur la page d’un modèle pendant la même charge : des collectes de <code>/metrics</code>, des complétions de chat qui arrivent, le décompte établi par le moteur (10 requêtes en cours, aucune en attente) et, entre les deux, une sonde <code>/health</code>.<span class=\"scroll-hint\"> Faites défiler l’image horizontalement pour lire les lignes entières.</span>",
+    "source_hash": "40a242621e22"
+  },
+  "features.h3-2": {
+    "text": "Un chargement de 12 minutes se terminait autrefois en erreur.",
+    "source_hash": "69140856abf8"
+  },
+  "features.p-2": {
+    "text": "Un gros modèle peut mettre douze minutes ou plus à charger. Jusqu’ici, le warden appliquait un délai fixe : à l’échéance, il inscrivait une erreur rouge « still loading » sur le modèle, alors que le moteur continuait de charger. La page du modèle affiche désormais chaque étape du chargement avec sa barre de progression, la durée habituelle de chacune d’après les chargements précédents, et les indicateurs CPU et mémoire GPU. Un chargement bloqué est arrêté et ses GPU libérés ; rien ne passe au rouge tant qu’un chargement progresse. GLM-5.2 NVFP4 en parallélisme de tenseurs&nbsp;8 sur huit NVIDIA B300 se charge en 11 à 12 minutes environ ; un chargement aussi long dépassait auparavant le délai de 600&#8239;s.",
+    "source_hash": "cceedae9466e"
+  },
+  "features.img-2.alt": {
+    "text": "La page du modèle pendant le chargement de GLM-5.2 NVFP4 sur huit NVIDIA B300 : 9 min 17 s écoulées pour une durée habituelle de 10 min 46 s ; Start engine, Load weights 47 sur 47, Compile kernels et Size KV cache terminées ; Tune kernels à l’op 2, 21 sur 22 ; graphiques CPU et mémoire GPU avec 1 948 sur 2 149&#8239;Gio utilisés ; Capture CUDA graphs et Warm-up request encore à venir, chacune avec sa durée habituelle",
+    "source_hash": "e3cc9ae4cf3b"
+  },
+  "features.figcaption-2": {
+    "text": "<b>Fig.&nbsp;16</b>GLM-5.2 NVFP4 en cours de chargement en parallélisme de tenseurs 8 sur huit B300, au bout de neuf minutes. Le réglage des noyaux est l’étape la plus longue ; les graphiques montrent que le moteur est bien actif alors que le journal ne fait que répéter la progression du réglage.",
+    "source_hash": "981fef031d3d"
+  },
+  "features.h3-3": {
+    "text": "Une carte de 16&#8239;Gio contient moins que ce que le calcul laisse prévoir.",
+    "source_hash": "2269d7489768"
+  },
+  "features.p-3": {
+    "text": "Les poids d’un modèle 8B en bf16 pèsent à eux seuls environ 15&#8239;Gio, et le chargement échoue faute de mémoire. Nous avons testé chaque ligne ci-dessous sur des cartes RTX&nbsp;A4000 et Quadro RTX&nbsp;5000 de 16&#8239;Gio, et nous les avons évaluées en lisant les réponses du modèle dans l’espace de chat, sans nous fier à un simple contrôle de santé.",
+    "source_hash": "a34f00101361"
+  },
+  "features.th-1": {
+    "text": "Modèle",
+    "source_hash": "5e2c614c23f0"
+  },
+  "features.th-2": {
+    "text": "Ce qui fonctionne",
+    "source_hash": "ea5522c7c85e"
+  },
+  "features.th-3": {
+    "text": "Ce qui ne fonctionne pas",
+    "source_hash": "9bebcd3482a7"
+  },
+  "features.col-works.data-h": {
+    "text": "Fonctionne",
+    "source_hash": "2b4c8c6d38db"
+  },
+  "features.td-1": {
+    "text": "Deux cartes, parallélisme de tenseurs 2, <code>max_model_len</code> 32000, <code>gpu_memory_utilization</code> de 0,7&nbsp;à&nbsp;0,9",
+    "source_hash": "4516d9c167db"
+  },
+  "features.col-does-not.data-h": {
+    "text": "Ne fonctionne pas",
+    "source_hash": "73a6fc7836b8"
+  },
+  "features.td-2": {
+    "text": "Une carte : le MoE 20B ne tient pas",
+    "source_hash": "6b644f502c34"
+  },
+  "features.th-4": {
+    "text": "Llama 3.1 8B, classe Mistral 7B",
+    "source_hash": "c2f2a5cd5d41"
+  },
+  "features.td-3": {
+    "text": "Une carte, avec un checkpoint AWQ-INT4, <code>--enforce-eager</code> et <code>gpu_memory_utilization</code> 0,9",
+    "source_hash": "baa3aea88f30"
+  },
+  "features.td-4": {
+    "text": "Le dépôt bf16 : environ 15&#8239;Gio de poids, mémoire insuffisante au chargement",
+    "source_hash": "1ce2fc0f7104"
+  },
+  "features.th-5": {
+    "text": "Deux modèles à la fois",
+    "source_hash": "3bc589f1752e"
+  },
+  "features.td-5": {
+    "text": "Un modèle par carte, chacun tenant sur sa propre carte",
+    "source_hash": "6fed9ca4f3d2"
+  },
+  "features.td-6": {
+    "text": "Deux modèles partageant une carte",
+    "source_hash": "296d7ad75ac3"
+  },
+  "features.p-4": {
+    "text": "Vérifié avec vLLM&nbsp;0.20.0. Les mesures de réplicas ci-dessus utilisaient la 0.26.0. Cette version embarque la 0.32.0 ; le premier chargement chronométré avec elle est celui de GLM-5.2 NVFP4 en parallélisme de tenseurs 8 sur huit B300, en 11 à 12 minutes environ. Les règles de capacité n’ont pas été remesurées sur la 0.32. Le tableau complet et ses justifications se trouvent dans <a href=\"{{repo}}/blob/main/documents/HAZARDS.md#what-fits-on-what\" rel=\"noopener\">HAZARDS.md</a>. Pas de GPU NVIDIA ? <a href=\"/#p-mac\">Une bêta existe pour les Mac à puce Apple</a>, Windows sera la prochaine plateforme, et <a href=\"/#p-linux\">d’autres GPU sont sur la feuille de route</a>.",
+    "source_hash": "d5f7cb24d2cc"
+  },
+  "features.p-5": {
+    "text": "Voir aussi : <a href=\"/gpu-monitoring\">surveillance des GPU</a> · <a href=\"/cache-aware-routing\">routage selon le cache</a> · <a href=\"/api-keys\">clés API</a>",
+    "source_hash": "4c5ddc0960f7"
+  }
+}

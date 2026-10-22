@@ -1,0 +1,114 @@
+{
+  "faq.meta.title": {
+    "text": "FAQ LM Warden : la passerelle LLM auto-hébergée",
+    "source_hash": "fb9dd5739289"
+  },
+  "faq.meta.description": {
+    "text": "Ce que l’on demande avant d’installer LM Warden : matériel, moteurs, modèles, clients, sécurité, et la comparaison avec l’utilisation directe de vLLM.",
+    "source_hash": "4c424d1bb872"
+  },
+  "faq.faq.h1-1": {
+    "text": "Ce que l’on demande avant de l’installer.",
+    "source_hash": "b14e49a87fdf"
+  },
+  "faq.q-1": {
+    "text": "Qu’est-ce que LM Warden ?",
+    "source_hash": "37148ce83843"
+  },
+  "faq.a-1": {
+    "text": "Un plan de contrôle autour de moteurs d’inférence, sur votre propre matériel : vLLM et llama.cpp sur un hôte Linux avec des GPU NVIDIA, ou MLX et llama.cpp dans une app bêta sur un Mac à puce Apple. Vous récupérez un modèle sur HuggingFace, le chargez sur votre propre GPU, créez une clé API et l’appelez via un point de terminaison <code>/v1</code> compatible OpenAI. Une interface web permet de charger et décharger les modèles, de suivre les journaux des moteurs en direct, de discuter dans un espace de chat, de consulter les statistiques GPU et de jetons, et offre une page par clé API. Il ne rend pas les modèles plus rapides et ne modifie pas les moteurs : il ajoute ce qu’un moteur seul ne fournit pas.",
+    "source_hash": "5098435c4cfe"
+  },
+  "faq.q-2": {
+    "text": "Sur quels GPU et systèmes d’exploitation fonctionne-t-il ?",
+    "source_hash": "fd575095e092"
+  },
+  "faq.a-2": {
+    "text": "Linux et macOS. Sous Linux : des GPU NVIDIA sur un hôte x86_64. Le minimum est Turing (sm_75, la génération des RTX série 20) : l’image de base embarque CUDA 13, qui a abandonné Maxwell, Pascal et Volta ; une GTX 1080 Ti, une Titan X ou une V100 ne fonctionnera donc pas. De Turing à Blackwell, tout est pris en charge, y compris Ada, Hopper et la série RTX 50. Sous macOS : les Mac à puce Apple (M1 ou plus récent), via une app Mac distincte, en bêta : une app native de la barre des menus pour macOS 14 ou version ultérieure, qui exécute les modèles avec MLX et une version Metal de llama.cpp, sert la même API compatible OpenAI et affiche le même tableau de bord dans sa propre fenêtre, à télécharger sur <a href=\"/download/mac\">lmwarden.com/download/mac</a> (environ 360&#8239;Mo, avec un <a href=\"/download/mac.sha256\">fichier SHA-256</a>). Elle est signée ad hoc et non notarisée : au premier lancement, autorisez-la dans Réglages Système › Confidentialité et sécurité › Ouvrir quand même (sur macOS 14, clic droit › Ouvrir fonctionne aussi) ; par défaut, elle n’écoute que sur l’interface de bouclage, et elle ne se met pas à jour toute seule. Windows sera la prochaine plateforme ; nous y travaillons, sans date pour l’instant. ROCm, les GPU Intel et le CPU ne sont pas pris en charge dans cette version ; les GPU AMD Radeon et Intel sont sur la feuille de route, et l’ordre dépendra des retours que nous recevrons dans les GitHub Discussions du projet. Plusieurs GPU dans une même machine Linux sont pris en charge ; un modèle réparti sur plusieurs machines ne l’est pas.",
+    "source_hash": "af7c57748da9"
+  },
+  "faq.q-3": {
+    "text": "Mon client OpenAI actuel fonctionnera-t-il avec ?",
+    "source_hash": "07d287af578c"
+  },
+  "faq.a-3": {
+    "text": "Oui. La passerelle sur <code>/v1/*</code> est compatible OpenAI : le SDK <code>openai</code>, LangChain, OpenWebUI et vos propres agents fonctionnent sans modification une fois <code>base_url</code> et la clé changés. <code>GET /v1/models</code> indique aussi le <code>max_model_len</code> de chaque modèle, pour qu’un client n’ait pas à deviner la fenêtre de contexte. Codex&nbsp;CLI, qui ne prend en charge que l’OpenAI Responses API, fonctionne aussi : <code>POST /v1/responses</code> est traduit en Chat Completions pour un modèle que vous avez chargé (sans état, et en local uniquement : les règles du routeur ne s’appliquent pas).",
+    "source_hash": "6aa388b69fbe"
+  },
+  "faq.q-4": {
+    "text": "Puis-je l’utiliser avec Claude Code et garder mon compte Anthropic ?",
+    "source_hash": "3cb57cff1faf"
+  },
+  "faq.a-4": {
+    "text": "Oui. Faites pointer <code>ANTHROPIC_BASE_URL</code> vers le warden, restez connecté à <code>claude</code> comme d’habitude, et placez la clé warden dans <code>ANTHROPIC_CUSTOM_HEADERS</code> sous la forme <code>X-LMWarden-Key</code>. Une règle associe un nom de modèle demandé par Claude Code, comme <code>claude-haiku*</code>, à un modèle chargé sur vos GPU ; tous les autres modèles, et tous les autres chemins <code>/v1</code>, sont transmis à Anthropic octet pour octet avec vos propres identifiants. Il faut Claude Code 2.1.227 ou version ultérieure ; la fonction est désactivée par défaut, et une clé doit avoir l’option « May relay to Anthropic » pour que quoi que ce soit soit transmis. Les clients plus anciens peuvent toujours utiliser le mode local uniquement.",
+    "source_hash": "680fb986650c"
+  },
+  "faq.q-5": {
+    "text": "Anthropic voit-il ma clé warden, ou le warden mes identifiants Anthropic ?",
+    "source_hash": "0e5c302159a3"
+  },
+  "faq.a-5": {
+    "text": "Anthropic ne voit jamais la clé warden : elle est transmise dans un en-tête distinct et retirée avant qu’une requête ne soit relayée. Le warden manipule bien vos identifiants Anthropic, car il doit les transférer, mais uniquement vers Anthropic. Ils ne sont jamais envoyés à un moteur ni journalisés, et rien d’une requête relayée n’est stocké ni affiché dans le God mode.",
+    "source_hash": "36a441a68717"
+  },
+  "faq.q-6": {
+    "text": "Quels moteurs d’inférence utilise-t-il ?",
+    "source_hash": "af507f756ef8"
+  },
+  "faq.a-6": {
+    "text": "Sous Linux, vLLM v0.32.0 et llama.cpp b11719 dans leurs versions officielles, choisis par modèle et exécutés sans modification : pas d’image patchée, pas de fork, pas de monkeypatching. Choisir un fichier <code>.gguf</code> sélectionne llama.cpp, qui fait tenir de plus gros modèles sur de plus petites cartes grâce à la quantification GGUF et permet de continuer à exploiter des GPU plus anciens. TensorRT-LLM, SGLang et le runtime d’Ollama ne sont pas fournis ; la bêta Mac exécute les modèles avec MLX, son moteur par défaut, ou avec une version Metal de llama.cpp pour les fichiers <code>.gguf</code>, et ne propose pas vLLM.",
+    "source_hash": "71d96023e2e8"
+  },
+  "faq.q-7": {
+    "text": "Quelque chose quitte-t-il ma machine ?",
+    "source_hash": "2e943e3c5431"
+  },
+  "faq.a-7": {
+    "text": "Rien ne quitte l’hôte, sauf si vous activez le routeur Claude Code et donnez à une clé l’option « May relay to Anthropic ». Dans ce cas, les requêtes de cette clé pour des modèles Claude qu’aucune règle n’envoie vers vos GPU partent chez Anthropic, avec les propres identifiants Anthropic de l’utilisateur, et rien d’autre ne sort. Il n’y a ni compte, ni vérification de licence, ni outil d’analyse d’audience. Pour le reste, la pile ne contacte l’extérieur que lorsque vous le lui demandez : huggingface.co pour télécharger les poids (<code>HF_HUB_OFFLINE=1</code> bloque même cela), Docker Hub quand vous ouvrez le sélecteur de version de moteur, et le registre des images de version, que <code>docker load</code> remplace dans une installation hors ligne ou isolée du réseau.",
+    "source_hash": "728ba07e9c96"
+  },
+  "faq.q-8": {
+    "text": "Les prompts et les réponses sont-ils stockés ?",
+    "source_hash": "5cba7fae2cca"
+  },
+  "faq.a-8": {
+    "text": "Pas par défaut. L’historique des requêtes qui alimente les graphiques et la consommation par clé ne contient que des métadonnées et n’a aucune colonne pour le texte des prompts ou des complétions. Deux fonctions de diagnostic peuvent capturer le contenu, et toutes deux restent désactivées tant que vous ne les activez pas : le God mode (<code>VW_GODMODE_ENABLED</code>), une vue bornée, en mémoire, du trafic d’une clé, et le journal de contenu (<code>VW_CONTENT_LOG_ENABLED</code>), qui n’écrit sur disque que pour les identifiants de clé que vous indiquez.",
+    "source_hash": "f047e1060aa4"
+  },
+  "faq.q-9": {
+    "text": "Comment fonctionnent les clés API pour une équipe ?",
+    "source_hash": "138d847537f5"
+  },
+  "faq.a-9": {
+    "text": "Chaque application ou personne reçoit sa propre clé <code>vw_</code> avec sa propre page. Fixez une priorité de P0&nbsp;à&nbsp;P9 (une requête P9 en attente passe toujours avant une requête P8), suspendez une clé pour que ses clients reçoivent <code>403 token paused</code> pendant que les requêtes en cours se terminent, ou renouvelez-la avec un délai de grâce pendant lequel l’ancien secret continue de fonctionner. Les requêtes, les jetons de prompt et les jetons de complétion sont comptés par clé et par IP de client, avec l’attente en file et la latence par clé. Les scripts, la CI et les agents qui pilotent l’API de contrôle utilisent des jetons admin <code>vwa_</code> distincts au lieu du mot de passe administrateur.",
+    "source_hash": "37fb94868ccc"
+  },
+  "faq.q-10": {
+    "text": "Puis-je exécuter plusieurs modèles sur un GPU ?",
+    "source_hash": "300a4b4adf9a"
+  },
+  "faq.a-10": {
+    "text": "Non. La règle « un modèle chargé par GPU » est vérifiée avant le démarrage de tout moteur. Vous pouvez charger des modèles différents sur différentes cartes du même hôte, et répartir un modèle sur plusieurs cartes avec le parallélisme de tenseurs de vLLM.",
+    "source_hash": "c4ef5c9a9c54"
+  },
+  "faq.q-11": {
+    "text": "Que faut-il pour l’installer ?",
+    "source_hash": "889f53a02753"
+  },
+  "faq.a-11": {
+    "text": "Sous Linux, un hôte avec Docker, Docker Compose&nbsp;v2.24 ou version ultérieure, un GPU NVIDIA, le NVIDIA Container Toolkit et environ 40&#8239;Go libres là où Docker stocke ses images. Le programme d’installation vérifie l’hôte, vous laisse choisir les GPU, génère les secrets, télécharge les images de version et propose de démarrer la pile. Un assistant de premier lancement, dans le navigateur, demande ensuite les GPU à utiliser, un jeton HuggingFace et votre compte administrateur. Sur un Mac à puce Apple, il suffit de télécharger l’app bêta ; voir <a href=\"/#p-mac\">la section Mac</a>.",
+    "source_hash": "f7c42330b71d"
+  },
+  "faq.q-12": {
+    "text": "Combien cela coûte-t-il ?",
+    "source_hash": "e8dc9deba44c"
+  },
+  "faq.a-12": {
+    "text": "Rien. LM Warden est distribué sous licence Apache-2.0. C’est un logiciel que vous exécutez, pas une API hébergée : vous fournissez le matériel, le pilote, le disque et l’électricité, et une fois le matériel payé, une requête ne coûte que de l’électricité, pas des frais par jeton.",
+    "source_hash": "97000d243331"
+  },
+  "faq.p-1": {
+    "text": "Voir aussi : <a href=\"/coding-agents\">agents de codage</a> · <a href=\"/agent-tuning\">réglage par agent</a> · <a href=\"/features\">fonctionnalités</a>",
+    "source_hash": "8e86209820fa"
+  }
+}

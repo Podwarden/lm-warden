@@ -1,0 +1,42 @@
+{
+  "coding-agents.meta.title": {
+    "text": "Coding-Agenten auf Ihren eigenen GPUs | LM Warden",
+    "source_hash": "cec26df70a65"
+  },
+  "coding-agents.meta.description": {
+    "text": "Claude Code, Codex CLI, OpenCode, Aider, Cline, Cursor und weitere mit einem Modell auf Ihren eigenen GPUs betreiben, unter Linux oder auf dem Mac – die Konfiguration wird für Sie erstellt.",
+    "source_hash": "d4374722fecc"
+  },
+  "coding-agents.agents.h1-1": {
+    "text": "Ihr Coding-Agent auf Ihren eigenen GPUs.",
+    "source_hash": "e01f3269f454"
+  },
+  "coding-agents.p-1": {
+    "text": "LM Warden unterstützt die drei Protokolle, die Coding-Agenten verwenden: OpenAI Chat Completions, die Anthropic Messages API und die OpenAI Responses API. Claude Code, die SDKs von Anthropic und OpenAI, OpenCode, Aider, Grok&nbsp;CLI, Continue, Cline, Cursor und Codex&nbsp;CLI verbinden sich deshalb mit einer Basis-URL und einem Schlüssel, und ihre Anfragen erscheinen pro Schlüssel und pro Sitzung, jeweils mit ihrer aktuellen Phase.",
+    "source_hash": "b8783c59365c"
+  },
+  "coding-agents.flow.title": {
+    "text": "Wohin eine Anfrage Ihres Coding-Agenten geht",
+    "source_hash": "b2c49ca0b033"
+  },
+  "coding-agents.flow.desc": {
+    "text": "Ihr Coding-Agent sendet seine Anfragen an LM Warden; die Basis-URL zeigt auf den Warden, als API-Schlüssel dient ein Warden-Schlüssel. LM Warden prüft den Schlüssel, unterstützt die APIs von OpenAI und Anthropic, reiht die Anfrage nach der Priorität des Schlüssels ein und übergibt sie an den Replikat-Router, der jede Sitzung auf dem Replikat hält, das ihren Cache bereits hat – eine Modellkopie pro GPU. Ein separater Weg führt zu api.anthropic.com, nur für Claude Code: Andere Claude-Modelle gehen dorthin, mit Ihrer eigenen Anmeldung.",
+    "source_hash": "c24325d4bacf"
+  },
+  "coding-agents.flow.caption": {
+    "text": "Wohin eine Anfrage eines Coding-Agenten geht. Jeder Agent braucht dieselben zwei Einstellungen, eine Basis-URL und einen Schlüssel; der Warden prüft den Schlüssel, reiht die Anfrage ein und schickt sie an das Replikat, das den Cache der Sitzung bereits hat. Die Seite jedes Agenten zeigt dessen eigene Einstellungen.",
+    "source_hash": "4c8a44e2f320"
+  },
+  "coding-agents.p-2": {
+    "text": "Sie schreiben die Konfiguration nicht von Hand. In der Konsole wählen Sie unter <strong>Connect</strong> Ihren Client, Ihr Modell und Ihren Schlüssel, und Connect erzeugt die Dateien zum Einfügen. Jede Seite unten zeigt dieselben Dateien mit Platzhaltern und was funktioniert.",
+    "source_hash": "75d2dc8f6796"
+  },
+  "coding-agents.p-3": {
+    "text": "Fehlt ein Client? Fragen Sie in den <a href=\"https://github.com/Podwarden/lm-warden/discussions/new?category=ideas\" rel=\"noopener\">GitHub Discussions</a>.",
+    "source_hash": "91f99cd9235e"
+  },
+  "coding-agents.p-4": {
+    "text": "Siehe auch: <a href=\"/agent-tuning\">Ihren Agenten das Modell wählen lassen</a> · <a href=\"/cache-aware-routing\">Cache-sensitives Routing</a> · <a href=\"/faq\">FAQ</a>",
+    "source_hash": "0ced1cfb6f5c"
+  }
+}

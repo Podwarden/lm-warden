@@ -1,0 +1,422 @@
+{
+  "clients.meta.title": {
+    "text": "{name} з локальною LLM на ваших GPU | LM Warden",
+    "source_hash": "9a440e2e3c4a"
+  },
+  "clients.meta.description": {
+    "text": "{name} з LM Warden: {summary}",
+    "source_hash": "9d9c76c6bb07"
+  },
+  "clients.claude-code.h1": {
+    "text": "Claude Code на ваших власних GPU.",
+    "source_hash": "9bb97352447d"
+  },
+  "clients.claude-code.summary": {
+    "text": "Користуйтеся далі своїм обліковим записом Claude і запускайте тут моделі, названі у ваших правилах, або працюйте повністю локально.",
+    "source_hash": "b46e643eeaac"
+  },
+  "clients.claude-code.capability": {
+    "text": "Моделі Claude, названі у ваших правилах, працюють тут; усі інші моделі й шляхи <code>/v1</code> ідуть до Anthropic під вашим власним обліковим записом. У режимі Router ніколи не вказуйте ключ LM Warden в <code>ANTHROPIC_API_KEY</code> чи <code>ANTHROPIC_AUTH_TOKEN</code>: він замінить ваші облікові дані. У режимі «лише локально» все, зокрема дрібні фонові завдання, виконується на одній моделі, що обслуговується, і до Anthropic нічого не надходить.",
+    "source_hash": "79cee967a1ad"
+  },
+  "clients.claude-code.req.client_version": {
+    "text": "Claude Code 2.1.227 або новіший (<code>ANTHROPIC_CUSTOM_HEADERS</code>).",
+    "source_hash": "baf574b32f46"
+  },
+  "clients.claude-code.req.router_on": {
+    "text": "Маршрутизацію має бути ввімкнено, і щонайменше одне правило має бути активним.",
+    "source_hash": "f0fd90d78fe4"
+  },
+  "clients.claude-code.req.relay_key": {
+    "text": "Ключ повинен мати дозвіл на пересилання до Anthropic (May relay).",
+    "source_hash": "df8e31733077"
+  },
+  "clients.claude-code.req.min_context": {
+    "text": "Потрібно щонайменше 49&nbsp;152 токени контексту: лише перший раунд займає близько 38&nbsp;000 токенів, ще до читання будь-якого файлу.",
+    "source_hash": "5cc65b30acd7"
+  },
+  "clients.claude-code.req.recommended_context": {
+    "text": "131&nbsp;072 токени або більше для реальних сеансів; для коротких вистачить і менше.",
+    "source_hash": "82792a23c7a0"
+  },
+  "clients.claude-code.req.unknown_model_window": {
+    "text": "Claude Code може попередити, що назви моделі немає в його каталозі. Це лише інформація: він вважає, що вікно має 200 тис. токенів, і відповідно автоматично стискає контекст. Задайте в <code>CLAUDE_CODE_MAX_CONTEXT_TOKENS</code> справжнє контекстне вікно моделі.",
+    "source_hash": "c67abcb52ad3"
+  },
+  "clients.claude-code.mode.router.title": {
+    "text": "Router: зі своїм обліковим записом Claude",
+    "source_hash": "872bcc0e520c"
+  },
+  "clients.claude-code.mode.router.desc": {
+    "text": "Ваші облікові дані Claude і далі йдуть до Anthropic; ключ LM Warden передається в окремому заголовку, а на запити до моделей, названих у ваших правилах, відповідають тут.",
+    "source_hash": "9832c50a640e"
+  },
+  "clients.claude-code.mode.local.title": {
+    "text": "Лише локально (без облікового запису Anthropic)",
+    "source_hash": "2a51ef910e22"
+  },
+  "clients.claude-code.mode.local.desc": {
+    "text": "Кожному слоту моделі призначено вибрану модель, що обслуговується, а ключ LM Warden — це токен автентифікації. До Anthropic нічого не надходить.",
+    "source_hash": "1dea6fe58a27"
+  },
+  "clients.anthropic-sdk.h1": {
+    "text": "Anthropic SDK на ваших власних GPU.",
+    "source_hash": "4229892646ec"
+  },
+  "clients.anthropic-sdk.summary": {
+    "text": "Ваш ключ API Anthropic лишається в <code>api_key</code>; ключ LM Warden передається в окремому заголовку.",
+    "source_hash": "910172f40b64"
+  },
+  "clients.anthropic-sdk.flow.title": {
+    "text": "Куди йде запит від Anthropic SDK",
+    "source_hash": "26e8b7e39b44"
+  },
+  "clients.anthropic-sdk.flow.desc": {
+    "text": "Anthropic SDK надсилає запити до LM Warden: base_url вказує на LM Warden, а X-LMWarden-Key містить ключ LM Warden. LM Warden перевіряє ключ, приймає запит у форматі Anthropic Messages, ставить його в чергу за пріоритетом ключа й передає маршрутизатору реплік, який тримає кожен сеанс на тій репліці, де вже є його кеш (по одній копії моделі на кожен GPU). Окремий шлях веде до api.anthropic.com: туди правила надсилають інші моделі Claude, з вашим власним ключем API.",
+    "source_hash": "26917b07643f"
+  },
+  "clients.anthropic-sdk.flow.caption": {
+    "text": "Куди йде запит від Anthropic SDK: два налаштування, які записує Connect, LM Warden посередині, а далі по одній копії моделі на GPU.",
+    "source_hash": "a4ec23a63573"
+  },
+  "clients.anthropic-sdk.capability": {
+    "text": "Моделі Claude, названі у ваших правилах, працюють тут; усі інші моделі й шляхи <code>/v1</code> ідуть до Anthropic під вашим власним обліковим записом. Для режиму «лише локально» обліковий запис Anthropic не потрібен: ключ LM Warden — це <code>api_key</code>, а модель — назва моделі, що обслуговується.",
+    "source_hash": "3d9a6a025316"
+  },
+  "clients.anthropic-sdk.req.router_on": {
+    "text": "Маршрутизацію має бути ввімкнено, і щонайменше одне правило має бути активним.",
+    "source_hash": "f0fd90d78fe4"
+  },
+  "clients.anthropic-sdk.req.relay_key": {
+    "text": "Ключ повинен мати дозвіл на пересилання до Anthropic (May relay).",
+    "source_hash": "df8e31733077"
+  },
+  "clients.anthropic-sdk.mode.router.title": {
+    "text": "Router: залиште свій ключ Anthropic",
+    "source_hash": "5e22bff885a6"
+  },
+  "clients.anthropic-sdk.mode.router.desc": {
+    "text": "<code>base_url</code> — це цей LM Warden; ваш ключ API Anthropic лишається в <code>api_key</code>, а ключ LM Warden іде в заголовках за замовчуванням.",
+    "source_hash": "fe17e904c7dd"
+  },
+  "clients.anthropic-sdk.mode.local.title": {
+    "text": "Лише локально",
+    "source_hash": "c905013aab29"
+  },
+  "clients.anthropic-sdk.mode.local.desc": {
+    "text": "Ключ LM Warden — це <code>api_key</code>, а модель — назва моделі, що обслуговується.",
+    "source_hash": "e1b1c200ccb3"
+  },
+  "clients.opencode.h1": {
+    "text": "OpenCode на ваших власних GPU.",
+    "source_hash": "0f9f0d85229c"
+  },
+  "clients.opencode.summary": {
+    "text": "LM Warden як OpenAI-сумісний постачальник для OpenCode, одна модель, що обслуговується.",
+    "source_hash": "0dbe773d1ba9"
+  },
+  "clients.opencode.flow.title": {
+    "text": "Куди йде запит від OpenCode",
+    "source_hash": "ae2c3d407d79"
+  },
+  "clients.opencode.flow.desc": {
+    "text": "OpenCode надсилає запити до LM Warden: baseURL вказує на LM Warden, а apiKey містить ключ LM Warden. LM Warden перевіряє ключ, приймає запит у форматі OpenAI Chat Completions, ставить його в чергу за пріоритетом ключа й передає маршрутизатору реплік, який тримає кожен сеанс на тій репліці, де вже є його кеш (по одній копії моделі на кожен GPU).",
+    "source_hash": "5a53f0ea3bba"
+  },
+  "clients.opencode.flow.caption": {
+    "text": "Куди йде запит від OpenCode: два налаштування, які записує Connect, LM Warden посередині, а далі по одній копії моделі на GPU.",
+    "source_hash": "774655618391"
+  },
+  "clients.opencode.capability": {
+    "text": "Лише локальні моделі, через Chat Completions (<code>@ai-sdk/openai-compatible</code>; <code>@ai-sdk/openai</code> використовував би Responses API, який цей LM Warden перекладає лише для Codex CLI). Ідентифікатор моделі має бути назвою моделі з <code>/v1/models</code>. Для файлу, який зберігається в репозиторії, використовуйте <code>{env:LMWARDEN_KEY}</code> замість ключа. Режим Router через постачальника Anthropic в OpenCode поки не підтримується.",
+    "source_hash": "8901779665ff"
+  },
+  "clients.opencode.req.tools": {
+    "text": "Потрібна модель із викликом інструментів (агентні правки).",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.opencode.req.min_context": {
+    "text": "Найкраще працює з контекстом щонайменше 32&nbsp;768 токенів.",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.opencode.mode.default.title": {
+    "text": "Локальні моделі",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.opencode.mode.default.desc": {
+    "text": "Додайте LM Warden як постачальника в <code>opencode.json</code> і зробіть його постачальником за замовчуванням.",
+    "source_hash": "e03771b96f12"
+  },
+  "clients.aider.h1": {
+    "text": "Aider на ваших власних GPU.",
+    "source_hash": "b1e1b6bd30b4"
+  },
+  "clients.aider.summary": {
+    "text": "Aider на моделі, що обслуговується, через його OpenAI-сумісного постачальника.",
+    "source_hash": "2a2e36942a30"
+  },
+  "clients.aider.flow.title": {
+    "text": "Куди йде запит від Aider",
+    "source_hash": "32e01b3b0c97"
+  },
+  "clients.aider.flow.desc": {
+    "text": "Aider надсилає запити до LM Warden: OPENAI_API_BASE вказує на LM Warden, а OPENAI_API_KEY містить ключ LM Warden. LM Warden перевіряє ключ, приймає запит у форматі OpenAI Chat Completions, ставить його в чергу за пріоритетом ключа й передає маршрутизатору реплік, який тримає кожен сеанс на тій репліці, де вже є його кеш (по одній копії моделі на кожен GPU).",
+    "source_hash": "3b2c308c114e"
+  },
+  "clients.aider.flow.caption": {
+    "text": "Куди йде запит від Aider: два налаштування, які записує Connect, LM Warden посередині, а далі по одній копії моделі на GPU.",
+    "source_hash": "e58a54a34cdc"
+  },
+  "clients.aider.capability": {
+    "text": "Лише локальні моделі, через Chat Completions. Aider редагує через текстові формати, тож модель не потребує виклику інструментів. Файл метаданих лише прибирає попередження Aider про невідому модель і задає розмір її контексту.",
+    "source_hash": "922681946310"
+  },
+  "clients.aider.req.min_context": {
+    "text": "Найкраще працює з контекстом щонайменше 32&nbsp;768 токенів.",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.aider.mode.default.title": {
+    "text": "Локальні моделі",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.aider.mode.default.desc": {
+    "text": "Спрямуйте постачальника OpenAI в Aider на цей LM Warden.",
+    "source_hash": "df94297df209"
+  },
+  "clients.aider.mode.default.file.session": {
+    "text": "Ідентифікатор сеансу для кожного запуску (необов’язково)",
+    "source_hash": "c1f31c2b83f0"
+  },
+  "clients.grok-cli.h1": {
+    "text": "Grok CLI на ваших власних GPU.",
+    "source_hash": "9e97001cf2f3"
+  },
+  "clients.grok-cli.summary": {
+    "text": "Grok Build CLI від xAI з LM Warden як моделлю з власним ключем (BYOK).",
+    "source_hash": "be6e0d9a09ed"
+  },
+  "clients.grok-cli.flow.title": {
+    "text": "Куди йде запит від Grok CLI",
+    "source_hash": "eeb620d01d38"
+  },
+  "clients.grok-cli.flow.desc": {
+    "text": "Grok CLI надсилає запити до LM Warden: base_url вказує на LM Warden, а env_key містить ключ LM Warden. LM Warden перевіряє ключ, приймає запит у форматі OpenAI Chat Completions, ставить його в чергу за пріоритетом ключа й передає маршрутизатору реплік, який тримає кожен сеанс на тій репліці, де вже є його кеш (по одній копії моделі на кожен GPU).",
+    "source_hash": "ef648e107c77"
+  },
+  "clients.grok-cli.flow.caption": {
+    "text": "Куди йде запит від Grok CLI: два налаштування, які записує Connect, LM Warden посередині, а далі по одній копії моделі на GPU.",
+    "source_hash": "b77ddcf1b78a"
+  },
+  "clients.grok-cli.capability": {
+    "text": "Лише локальні моделі, через Chat Completions (<code>api_backend = chat_completions</code>). Запити до xAI не пересилаються, і для моделі BYOK обліковий запис xAI не потрібен. <code>session_summary</code> залишає запити Grok на назву сеансу на цій моделі; без нього Grok запитує в цього LM Warden <code>grok-4.6</code> й отримує 404. Під час роботи Grok додає власні розділи до <code>config.toml</code>. Спільнотний grok-cli (npm <code>grok-dev</code>) — інший інструмент: чат працює, виклики інструментів — ні.",
+    "source_hash": "03938abace0a"
+  },
+  "clients.grok-cli.req.tools": {
+    "text": "Потрібна модель із викликом інструментів (агентні правки).",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.grok-cli.req.min_context": {
+    "text": "Найкраще працює з контекстом щонайменше 32&nbsp;768 токенів.",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.grok-cli.mode.default.title": {
+    "text": "Grok Build (офіційний)",
+    "source_hash": "1901a8b05d3b"
+  },
+  "clients.grok-cli.mode.default.desc": {
+    "text": "Запис моделі в <code>~/.grok/config.toml</code>; ключ береться з <code>LMWARDEN_KEY</code>. Установлення: <code>curl -fsSL https://x.ai/cli/install.sh | bash</code> або <code>npm i -g @xai-official/grok</code>",
+    "source_hash": "b5943bc2443d"
+  },
+  "clients.grok-cli.mode.community.title": {
+    "text": "Спільнотний grok-cli",
+    "source_hash": "28bbd28283a3"
+  },
+  "clients.grok-cli.mode.community.desc": {
+    "text": "Спільнотний grok-cli бере базову URL-адресу, ключ і модель зі змінних середовища й потребує встановленого Bun. Чат працює; виклики інструментів не вдаються, бо його SDK для xAI відхиляє фрагменти викликів інструментів, що надходять частинами, як їх передає vLLM.",
+    "source_hash": "0b589963361a"
+  },
+  "clients.openai-sdk.h1": {
+    "text": "OpenAI SDK на ваших власних GPU.",
+    "source_hash": "db3661cee041"
+  },
+  "clients.openai-sdk.summary": {
+    "text": "Будь-який OpenAI SDK або будь-що з налаштуванням OpenAI-сумісної базової URL-адреси.",
+    "source_hash": "16d05b661878"
+  },
+  "clients.openai-sdk.flow.title": {
+    "text": "Куди йде запит від OpenAI SDK",
+    "source_hash": "13c7ed2b6c10"
+  },
+  "clients.openai-sdk.flow.desc": {
+    "text": "OpenAI SDK надсилає запити до LM Warden: base_url вказує на LM Warden, а api_key містить ключ LM Warden. LM Warden перевіряє ключ, приймає запит у форматі OpenAI Chat Completions, ставить його в чергу за пріоритетом ключа й передає маршрутизатору реплік, який тримає кожен сеанс на тій репліці, де вже є його кеш (по одній копії моделі на кожен GPU).",
+    "source_hash": "9b9a5c752e5f"
+  },
+  "clients.openai-sdk.flow.caption": {
+    "text": "Куди йде запит від OpenAI SDK: два налаштування, які записує Connect, LM Warden посередині, а далі по одній копії моделі на GPU.",
+    "source_hash": "0d8679dd39d0"
+  },
+  "clients.openai-sdk.capability": {
+    "text": "Лише локальні моделі. Передачі до OpenAI немає: запит до <code>gpt-*</code> отримує 404. Обслуговуються Chat Completions і Completions; <code>/v1/responses</code> — це переклад у Chat Completions без збереження стану (див. Codex CLI).",
+    "source_hash": "81a1f26dda28"
+  },
+  "clients.openai-sdk.mode.default.title": {
+    "text": "Локальні моделі",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.openai-sdk.mode.default.desc": {
+    "text": "<code>base_url</code> — це <code>/v1</code> цього LM Warden, а ключ LM Warden — це ключ API.",
+    "source_hash": "81e9b9ed3e66"
+  },
+  "clients.continue.h1": {
+    "text": "Continue на ваших власних GPU.",
+    "source_hash": "f33c2b44b3be"
+  },
+  "clients.continue.summary": {
+    "text": "Постачальник OpenAI в Continue, спрямований на цей LM Warden, одна модель, що обслуговується.",
+    "source_hash": "4377b7395411"
+  },
+  "clients.continue.flow.title": {
+    "text": "Куди йде запит від Continue",
+    "source_hash": "a55ed462d54e"
+  },
+  "clients.continue.flow.desc": {
+    "text": "Continue надсилає запити до LM Warden: apiBase вказує на LM Warden, а apiKey містить ключ LM Warden. LM Warden перевіряє ключ, приймає запит у форматі OpenAI Chat Completions, ставить його в чергу за пріоритетом ключа й передає маршрутизатору реплік, який тримає кожен сеанс на тій репліці, де вже є його кеш (по одній копії моделі на кожен GPU).",
+    "source_hash": "dfee5b6d070e"
+  },
+  "clients.continue.flow.caption": {
+    "text": "Куди йде запит від Continue: два налаштування, які записує Connect, LM Warden посередині, а далі по одній копії моделі на GPU.",
+    "source_hash": "c1f803ddf701"
+  },
+  "clients.continue.capability": {
+    "text": "Лише локальні моделі, через Chat Completions. Для режиму Router потрібні власні заголовки, які Continue не документує.",
+    "source_hash": "d76f0ccb6e86"
+  },
+  "clients.continue.req.min_context": {
+    "text": "Найкраще працює з контекстом щонайменше 32&nbsp;768 токенів.",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.continue.mode.default.title": {
+    "text": "Локальні моделі",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.continue.mode.default.desc": {
+    "text": "Запис моделі в <code>~/.continue/config.yaml</code>.",
+    "source_hash": "8c8d339555ff"
+  },
+  "clients.cline.h1": {
+    "text": "Cline на ваших власних GPU.",
+    "source_hash": "d0efe15bdc4f"
+  },
+  "clients.cline.summary": {
+    "text": "Постачальник OpenAI Compatible в Cline, заповнений на екрані його налаштувань.",
+    "source_hash": "d80b0d66c45e"
+  },
+  "clients.cline.flow.title": {
+    "text": "Куди йде запит від Cline",
+    "source_hash": "79932fc0e85c"
+  },
+  "clients.cline.flow.desc": {
+    "text": "Cline надсилає запити до LM Warden: Base URL вказує на LM Warden, а API Key містить ключ LM Warden. LM Warden перевіряє ключ, приймає запит у форматі OpenAI Chat Completions, ставить його в чергу за пріоритетом ключа й передає маршрутизатору реплік, який тримає кожен сеанс на тій репліці, де вже є його кеш (по одній копії моделі на кожен GPU).",
+    "source_hash": "300648093db4"
+  },
+  "clients.cline.flow.caption": {
+    "text": "Куди йде запит від Cline: два налаштування, які записує Connect, LM Warden посередині, а далі по одній копії моделі на GPU.",
+    "source_hash": "26566cb52d8d"
+  },
+  "clients.cline.capability": {
+    "text": "Лише локальні моделі, через потокові Chat Completions. Cline не має файлу конфігурації: введіть ці значення в API Provider &gt; OpenAI Compatible. Його постачальник Anthropic має власну базову URL-адресу, але не власний заголовок, тож режим Router недоступний.",
+    "source_hash": "21110940c4cb"
+  },
+  "clients.cline.req.tools": {
+    "text": "Потрібна модель із викликом інструментів (агентні правки).",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.cline.req.min_context": {
+    "text": "Найкраще працює з контекстом щонайменше 32&nbsp;768 токенів.",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.cline.mode.default.title": {
+    "text": "Локальні моделі",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.cline.mode.default.desc": {
+    "text": "Settings &gt; API Provider &gt; OpenAI Compatible.",
+    "source_hash": "f65c6df5377b"
+  },
+  "clients.cursor.h1": {
+    "text": "Cursor на ваших власних GPU.",
+    "source_hash": "314536df2e7a"
+  },
+  "clients.cursor.summary": {
+    "text": "Перевизначення базової URL-адреси OpenAI в Cursor для чату з моделлю, що обслуговується.",
+    "source_hash": "1c8912c5ba32"
+  },
+  "clients.cursor.flow.title": {
+    "text": "Куди йде запит від Cursor",
+    "source_hash": "43c8f2aed837"
+  },
+  "clients.cursor.flow.desc": {
+    "text": "Cursor надсилає запити до LM Warden: Override OpenAI Base URL вказує на LM Warden, а OpenAI API Key містить ключ LM Warden. LM Warden перевіряє ключ, приймає запит у форматі OpenAI Chat Completions, ставить його в чергу за пріоритетом ключа й передає маршрутизатору реплік, який тримає кожен сеанс на тій репліці, де вже є його кеш (по одній копії моделі на кожен GPU).",
+    "source_hash": "524789d9ea5d"
+  },
+  "clients.cursor.flow.caption": {
+    "text": "Куди йде запит від Cursor: два налаштування, які записує Connect, LM Warden посередині, а далі по одній копії моделі на GPU.",
+    "source_hash": "79e33449f1a5"
+  },
+  "clients.cursor.capability": {
+    "text": "Запити надходять із серверів Cursor, тож URL-адреса цього LM Warden має бути доступна з інтернету; LM Warden у локальній мережі чи на localhost не працюватиме. Власні ключі працюють лише з моделями чату: доповнення за Tab і далі використовує власні моделі Cursor, а Agent з моделями Cursor відхиляє власні ключі. Поточна документація Cursor більше не описує налаштування Override OpenAI Base URL; про нього відомо з відповідей співробітників Cursor на форумі.",
+    "source_hash": "e3b007a84e77"
+  },
+  "clients.cursor.req.reachable": {
+    "text": "Сервери Cursor звертаються до цієї URL-адреси, тож вона має бути доступна з інтернету.",
+    "source_hash": "0815103f2766"
+  },
+  "clients.cursor.mode.default.title": {
+    "text": "Чат із локальною моделлю",
+    "source_hash": "5e7a9a7b90b9"
+  },
+  "clients.cursor.mode.default.desc": {
+    "text": "Cursor Settings &gt; Models, потім додайте назву моделі як власну модель.",
+    "source_hash": "fce3909f9e49"
+  },
+  "clients.codex-cli.h1": {
+    "text": "Codex CLI на ваших власних GPU.",
+    "source_hash": "ee03de1664ad"
+  },
+  "clients.codex-cli.summary": {
+    "text": "LM Warden як власний постачальник моделей для Codex CLI, одна модель, що обслуговується.",
+    "source_hash": "4ffc9f534362"
+  },
+  "clients.codex-cli.flow.title": {
+    "text": "Куди йде запит від Codex CLI",
+    "source_hash": "4d9d5da5c30b"
+  },
+  "clients.codex-cli.flow.desc": {
+    "text": "Codex CLI надсилає запити до LM Warden: base_url вказує на LM Warden, а env_key містить ключ LM Warden. LM Warden перевіряє ключ, приймає запит у форматі OpenAI Responses, ставить його в чергу за пріоритетом ключа й передає маршрутизатору реплік, який тримає кожен сеанс на тій репліці, де вже є його кеш (по одній копії моделі на кожен GPU).",
+    "source_hash": "ae1c2b1f74bf"
+  },
+  "clients.codex-cli.flow.caption": {
+    "text": "Куди йде запит від Codex CLI: два налаштування, які записує Connect, LM Warden посередині, а далі по одній копії моделі на GPU.",
+    "source_hash": "4596be3eb188"
+  },
+  "clients.codex-cli.capability": {
+    "text": "Лише локальні моделі. Codex підтримує лише Responses API; LM Warden перекладає <code>POST /v1/responses</code> у Chat Completions для моделі, що обслуговується, тож відповідь, виклики інструментів і дані про використання доходять до Codex як події Responses. Стан не зберігається: Codex у кожному раунді надсилає <code>store:false</code> і всю розмову, а <code>previous_response_id</code> відхиляється. Міркування ввімкнено за замовчуванням (Codex запитує підсумки міркувань, і міркування моделі показуються як підсумок; щоб вимкнути їх, задайте <code>model_reasoning_effort = \"none\"</code> в <code>config.toml</code>), хмарний вебпошук відкидається (задайте <code>web_search = \"disabled\"</code>), а правила маршрутизатора не застосовуються. Задайте в <code>model_context_window</code> справжнє вікно моделі: для невідомих назв Codex припускає 272 тис. токенів. Рушію потрібен увімкнений виклик інструментів (vLLM: <code>--enable-auto-tool-choice</code> і <code>--tool-call-parser</code>). Запит до незавантаженої моделі отримує 404, і Codex кілька секунд повторює спроби, перш ніж припинити.",
+    "source_hash": "b7c7ad7fa0c7"
+  },
+  "clients.codex-cli.req.tools": {
+    "text": "Потрібна модель із викликом інструментів (агентні правки).",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.codex-cli.req.min_context": {
+    "text": "Найкраще працює з контекстом щонайменше 32&nbsp;768 токенів.",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.codex-cli.mode.default.title": {
+    "text": "Локальні моделі",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.codex-cli.mode.default.desc": {
+    "text": "Додайте LM Warden як постачальника моделей у <code>~/.codex/config.toml</code>.",
+    "source_hash": "0e63a370854f"
+  }
+}

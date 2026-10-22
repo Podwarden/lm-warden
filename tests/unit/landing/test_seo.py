@@ -5,7 +5,7 @@ import re
 
 from fastapi.testclient import TestClient
 
-from app.landing.i18n import available, home_path
+from app.landing.i18n import available, home_path, page_locales, page_path
 from app.landing.render import all_site_pages
 from tests.unit.landing.conftest import fetch
 from tests.unit.landing.test_routes import CANON, _canonical
@@ -59,8 +59,11 @@ def test_sitemap_lists_every_page(client: TestClient) -> None:
     _canonical(client, CANON)
     body = client.get("/sitemap.xml").text
     locs = re.findall(r"<loc>(.*?)</loc>", body)
-    homes = [CANON + home_path(loc.tag) for loc in available() if loc.tag != "en"]
-    assert sorted(locs) == sorted([_url(p.path) for p in all_site_pages()] + homes)
+    # Every page in every language it ships in (every page is localized
+    # since 2026-10-21; this replaced "every page, plus Home's translations").
+    want = [CANON + page_path(p, loc.tag) for p in all_site_pages() for loc in page_locales(p)]
+    assert sorted(locs) == sorted(want)
+    assert {CANON + home_path(loc.tag) for loc in available()} <= set(locs)
     assert "/privacy" not in body  # tag-only page is not in the sitemap
     assert body.count("<lastmod>") == len(locs)
 

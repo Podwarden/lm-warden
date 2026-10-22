@@ -1,0 +1,232 @@
+{
+  "features.meta.title": {
+    "text": "More features and lessons learned | LM Warden",
+    "note": "The browser tab and the search-result title. Keep the part after | as it is; at most 65 characters.",
+    "hash": "ba96eee84458"
+  },
+  "features.meta.description": {
+    "text": "God mode, admin tokens, the engine watchdog, and the two failures that shaped how LM Warden supervises vLLM.",
+    "note": "The search-result snippet and link-preview text. At most 160 characters.",
+    "hash": "6e9623164c58"
+  },
+  "features.small.h1-1": {
+    "text": "Smaller things you’ll find once it’s running.",
+    "note": "page headline (#small-title)",
+    "hash": "32313b57288c"
+  },
+  "features.dd-1": {
+    "text": "Watch one key’s prompts and responses as they happen, from a dock on its page. Held in memory only, streamed only while the dock is open, and off unless you set <code>VW_GODMODE_ENABLED</code>.",
+    "note": "text (#main)",
+    "hash": "30b3b2877354"
+  },
+  "features.dt-1": {
+    "text": "Admin tokens",
+    "note": "text (#main)",
+    "hash": "c0b53878c4d4"
+  },
+  "features.dd-2": {
+    "text": "<code>vwa_</code> tokens let scripts, CI and agents drive the control API without the admin password, a cookie jar or a CSRF header. Shown once, stored as a SHA-256 hash.",
+    "note": "text (#main)",
+    "hash": "332151669674"
+  },
+  "features.dt-2": {
+    "text": "A HuggingFace cache manager",
+    "note": "text (#main)",
+    "hash": "3b9fd142bcdf"
+  },
+  "features.dd-3": {
+    "text": "What is on disk and which model owns it. Garbage-collect orphans, and export or import the whole cache as a tarball.",
+    "note": "text (#main)",
+    "hash": "9d11305af39b"
+  },
+  "features.dt-3": {
+    "text": "One port",
+    "note": "text (#main)",
+    "hash": "db562f172ced"
+  },
+  "features.dd-4": {
+    "text": "The UI, the control API and <code>/v1</code> share <code>:8080</code>. Your own TLS terminator, ingress or SSO goes in front of it unchanged.",
+    "note": "text (#main)",
+    "hash": "0e54e933002b"
+  },
+  "features.dt-4": {
+    "text": "No route out needed",
+    "note": "text (#main)",
+    "hash": "afddbc532ecf"
+  },
+  "features.dd-5": {
+    "text": "Three image tarballs and an optional model-cache tarball are the whole transport for an air-gapped host. <code>HF_HUB_OFFLINE=1</code> stops even the weight downloads.",
+    "note": "text (#main)",
+    "hash": "b61634fa6450"
+  },
+  "features.dt-5": {
+    "text": "Router stats",
+    "note": "text (#main)",
+    "hash": "bf3c9855201c"
+  },
+  "features.dd-6": {
+    "text": "Every decision on <code>/router/stats</code>: local, passed through, fell back, refused, with the reason, per rule and per target, and the breaker state. Per process, never a header or a body.",
+    "note": "text (#main)",
+    "hash": "8500a2b3792f"
+  },
+  "features.dt-6": {
+    "text": "A setup page per client",
+    "note": "text (#main)",
+    "hash": "2384f4730652"
+  },
+  "features.dd-7": {
+    "text": "<b>Connect</b> writes the setup for Claude Code, Codex&nbsp;CLI, OpenCode, Aider, Grok&nbsp;CLI, the Anthropic and OpenAI SDKs and three editors, with this warden’s address, a key and a loaded model, and sends a test request.",
+    "note": "text (#main)",
+    "hash": "2bc91137abf9"
+  },
+  "features.dd-8": {
+    "text": "Run against a warden on 5&nbsp;October 2026 with Codex&nbsp;0.160: shell tool calls, a file edit, the session kept on one replica. Thinking is on by default; <code>model_reasoning_effort = \"none\"</code> turns it off. Local models only: router rules do not apply.",
+    "note": "text (#main)",
+    "hash": "93a18b286b4e"
+  },
+  "features.dt-7": {
+    "text": "A chat playground",
+    "note": "text (#main)",
+    "hash": "989e5691fd83"
+  },
+  "features.dd-9": {
+    "text": "Talk to a loaded model in the browser, images included, before you hand anyone a key.",
+    "note": "text (#main)",
+    "hash": "7c8ef7303dc3"
+  },
+  "features.lessons.h2-1": {
+    "text": "Three things we learned the hard way.",
+    "note": "section heading (#lessons-title)",
+    "hash": "b2e61284634a"
+  },
+  "features.h3-1": {
+    "text": "The engine died four times in one day, and the proxy kept forwarding to it.",
+    "note": "heading (#main)",
+    "hash": "a3c2a4abe3bf"
+  },
+  "features.p-1": {
+    "text": "\n              The vLLM engine core crashed while the <code>vllm serve</code> wrapper around it\n              stayed up, so the process looked alive and requests went on being sent to it.\n              Now a watchdog asks the engine’s own <code>/health</code> endpoint instead of the\n              process table. When the engine stops answering, it keeps the evidence, including\n              a bounded tail of the log, and reloads the model.\n            ",
+    "note": "text (#main)",
+    "hash": "8d323d1c089b"
+  },
+  "features.img-1.alt": {
+    "text": "A model’s live log panel under load: vLLM API server lines answering GET /metrics, POST /v1/chat/completions from a client, engine lines reporting 10 requests running and 0 waiting, and one GET /health line, all returning 200 OK",
+    "note": "image alt text (#main)",
+    "hash": "a4f74c626a7f"
+  },
+  "features.span-1": {
+    "text": "The watchdog’s probe, answered by the engine",
+    "note": "text (#main)",
+    "hash": "e1d7e982a29c"
+  },
+  "features.figcaption-1": {
+    "text": "<b>Fig.&nbsp;15</b>The live log on a model’s page during the same load: scrapes of <code>/metrics</code>, chat completions coming in, the engine’s own count of 10 requests running and none waiting, and one <code>/health</code> probe between them.<span class=\"scroll-hint\"> Scroll the image sideways to read the full lines.</span>",
+    "note": "figure caption (#main)",
+    "hash": "40a242621e22"
+  },
+  "features.h3-2": {
+    "text": "A 12-minute load used to end in an error.",
+    "note": "heading (#main)",
+    "hash": "69140856abf8"
+  },
+  "features.p-2": {
+    "text": "\n              A large model can take twelve minutes or more to load. Until now the warden\n              watched a fixed clock: at the deadline it wrote a red “still loading” error\n              into the model, though the engine kept loading. The model page now shows every\n              load step with its progress bar, the usual time for each from earlier loads,\n              and the CPU and GPU-memory vital signs. A stalled load is stopped and its\n              GPUs freed; nothing turns red while a load is still moving. GLM-5.2 NVFP4\n              at tensor-parallel&nbsp;8 on eight NVIDIA B300s loads in about 11 to 12 minutes;\n              a load that long used to hit the 600&#8239;s timeout.\n            ",
+    "note": "text (#main)",
+    "hash": "cceedae9466e"
+  },
+  "features.img-2.alt": {
+    "text": "The model page while GLM-5.2 NVFP4 loads on eight NVIDIA B300s: 9 min 17 s into a usual 10 min 46 s; Start engine, Load weights 47 of 47, Compile kernels and Size KV cache done; Tune kernels at op 2, 21 of 22; CPU and GPU-memory charts with 1948 of 2149&#8239;GiB in use; Capture CUDA graphs and Warm-up request still to come, each with its usual time",
+    "note": "image alt text (#main)",
+    "hash": "e3cc9ae4cf3b"
+  },
+  "features.figcaption-2": {
+    "text": "<b>Fig.&nbsp;16</b>GLM-5.2 NVFP4 loading at tensor-parallel 8 on eight B300s, nine minutes in. Kernel tuning is the long step; the charts show the engine is alive while the log only repeats tuning progress.",
+    "note": "figure caption (#main)",
+    "hash": "981fef031d3d"
+  },
+  "features.h3-3": {
+    "text": "A 16&#8239;GiB card holds less than the arithmetic says.",
+    "note": "heading (#main)",
+    "hash": "2269d7489768"
+  },
+  "features.p-3": {
+    "text": "\n              The weights of a bf16 8B model are about 15&#8239;GiB on their own, and it runs out\n              of memory while loading. We tried each row below on 16&#8239;GiB RTX&nbsp;A4000 and\n              Quadro RTX&nbsp;5000 cards and judged it by reading the model’s answers in the chat\n              playground, not by trusting a health check.\n            ",
+    "note": "text (#main)",
+    "hash": "a34f00101361"
+  },
+  "features.th-1": {
+    "text": "Model",
+    "note": "text (#main)",
+    "hash": "5e2c614c23f0"
+  },
+  "features.th-2": {
+    "text": "What works",
+    "note": "text (#main)",
+    "hash": "ea5522c7c85e"
+  },
+  "features.th-3": {
+    "text": "What does not",
+    "note": "text (#main)",
+    "hash": "9bebcd3482a7"
+  },
+  "features.col-works.data-h": {
+    "text": "Works",
+    "note": "column label shown above a table cell on phones (#main)",
+    "hash": "2b4c8c6d38db"
+  },
+  "features.td-1": {
+    "text": "Two cards, tensor parallel 2, <code>max_model_len</code> 32000, <code>gpu_memory_utilization</code> 0.7&nbsp;to&nbsp;0.9",
+    "note": "text (#main)",
+    "hash": "4516d9c167db"
+  },
+  "features.col-does-not.data-h": {
+    "text": "Does not",
+    "note": "column label shown above a table cell on phones (#main)",
+    "hash": "73a6fc7836b8"
+  },
+  "features.td-2": {
+    "text": "One card: the 20B MoE doesn’t fit",
+    "note": "text (#main)",
+    "hash": "6b644f502c34"
+  },
+  "features.th-4": {
+    "text": "Llama 3.1 8B, Mistral 7B class",
+    "note": "text (#main)",
+    "hash": "c2f2a5cd5d41"
+  },
+  "features.td-3": {
+    "text": "One card, with an AWQ-INT4 checkpoint, <code>--enforce-eager</code> and <code>gpu_memory_utilization</code> 0.9",
+    "note": "text (#main)",
+    "hash": "baa3aea88f30"
+  },
+  "features.td-4": {
+    "text": "The bf16 repo: about 15&#8239;GiB of weights, out of memory during load",
+    "note": "text (#main)",
+    "hash": "1ce2fc0f7104"
+  },
+  "features.th-5": {
+    "text": "Two models at once",
+    "note": "text (#main)",
+    "hash": "3bc589f1752e"
+  },
+  "features.td-5": {
+    "text": "One model per card, each fitting its own card",
+    "note": "text (#main)",
+    "hash": "6fed9ca4f3d2"
+  },
+  "features.td-6": {
+    "text": "Two models sharing one card",
+    "note": "text (#main)",
+    "hash": "296d7ad75ac3"
+  },
+  "features.p-4": {
+    "text": "Checked against vLLM&nbsp;0.20.0. The replica measurements above used 0.26.0. This release ships 0.32.0; the first load timed on it is GLM-5.2 NVFP4 at tensor-parallel 8 on eight B300s, about 11 to 12 minutes. The fit rules have not been re-measured on 0.32. The full table and the reasons behind it are in <a href=\"{{repo}}/blob/main/documents/HAZARDS.md#what-fits-on-what\" rel=\"noopener\">HAZARDS.md</a>. Not on NVIDIA? <a href=\"/#p-mac\">Apple silicon has a Mac beta</a>, Windows is next, and <a href=\"/#p-linux\">other GPUs are on the roadmap</a>.",
+    "note": "text (#main)",
+    "hash": "d5f7cb24d2cc"
+  },
+  "features.p-5": {
+    "text": "Related: <a href=\"/gpu-monitoring\">GPU monitoring</a> · <a href=\"/cache-aware-routing\">cache-aware routing</a> · <a href=\"/api-keys\">API keys</a>",
+    "note": "text (#main)",
+    "hash": "4c5ddc0960f7"
+  }
+}

@@ -1,0 +1,186 @@
+{
+  "features.meta.title": {
+    "text": "और सुविधाएँ और सीखे गए सबक | LM Warden",
+    "source_hash": "ba96eee84458"
+  },
+  "features.meta.description": {
+    "text": "God mode, एडमिन टोकन, इंजन वॉचडॉग, और वे दो विफलताएँ जिन्होंने तय किया कि LM Warden vLLM की निगरानी कैसे करता है।",
+    "source_hash": "6e9623164c58"
+  },
+  "features.small.h1-1": {
+    "text": "छोटी-छोटी चीज़ें, जो इसे चलाने के बाद आपको दिखेंगी।",
+    "source_hash": "32313b57288c"
+  },
+  "features.dd-1": {
+    "text": "किसी कुंजी के पेज पर डॉक खोलकर उस कुंजी के प्रॉम्प्ट और जवाब लाइव देखें। सब कुछ सिर्फ़ मेमोरी में रहता है, स्ट्रीम सिर्फ़ तब होता है जब डॉक खुला हो, और यह तब तक बंद रहता है जब तक आप <code>VW_GODMODE_ENABLED</code> सेट न करें।",
+    "source_hash": "30b3b2877354"
+  },
+  "features.dt-1": {
+    "text": "एडमिन टोकन",
+    "source_hash": "c0b53878c4d4"
+  },
+  "features.dd-2": {
+    "text": "<code>vwa_</code> टोकन से स्क्रिप्ट, CI और एजेंट एडमिन पासवर्ड, कुकी सँभालने या CSRF हेडर के बिना कंट्रोल API इस्तेमाल कर सकते हैं। टोकन सिर्फ़ एक बार दिखाया जाता है और SHA-256 हैश के रूप में सेव होता है।",
+    "source_hash": "332151669674"
+  },
+  "features.dt-2": {
+    "text": "एक HuggingFace कैश मैनेजर",
+    "source_hash": "3b9fd142bcdf"
+  },
+  "features.dd-3": {
+    "text": "डिस्क पर क्या है और कौन-सी फ़ाइल किस मॉडल की है। किसी मॉडल से न जुड़ी फ़ाइलें साफ़ करें, और पूरे कैश को tarball के रूप में एक्सपोर्ट या इंपोर्ट करें।",
+    "source_hash": "9d11305af39b"
+  },
+  "features.dt-3": {
+    "text": "एक पोर्ट",
+    "source_hash": "db562f172ced"
+  },
+  "features.dd-4": {
+    "text": "UI, कंट्रोल API और <code>/v1</code> तीनों एक ही <code>:8080</code> पोर्ट पर हैं। आपका अपना TLS टर्मिनेटर, ingress या SSO बिना किसी बदलाव के इसके आगे लगाया जा सकता है।",
+    "source_hash": "0e54e933002b"
+  },
+  "features.dt-4": {
+    "text": "बाहरी इंटरनेट कनेक्शन ज़रूरी नहीं",
+    "source_hash": "afddbc532ecf"
+  },
+  "features.dd-5": {
+    "text": "एयर-गैप्ड होस्ट तक सब कुछ पहुँचाने के लिए बस तीन इमेज tarball और एक वैकल्पिक मॉडल-कैश tarball चाहिए। <code>HF_HUB_OFFLINE=1</code> मॉडल वेट के डाउनलोड भी रोक देता है।",
+    "source_hash": "b61634fa6450"
+  },
+  "features.dt-5": {
+    "text": "Router के आँकड़े",
+    "source_hash": "bf3c9855201c"
+  },
+  "features.dd-6": {
+    "text": "हर फ़ैसला <code>/router/stats</code> पर: लोकल, पास-थ्रू, फ़ॉलबैक, अस्वीकार, कारण के साथ, हर नियम और हर लक्ष्य के हिसाब से, और ब्रेकर की स्थिति। हर प्रोसेस के लिए, कभी कोई हेडर या बॉडी नहीं।",
+    "source_hash": "8500a2b3792f"
+  },
+  "features.dt-6": {
+    "text": "हर क्लाइंट के लिए एक सेटअप पेज",
+    "source_hash": "2384f4730652"
+  },
+  "features.dd-7": {
+    "text": "<b>Connect</b> Claude Code, Codex&nbsp;CLI, OpenCode, Aider, Grok&nbsp;CLI, Anthropic और OpenAI SDK और तीन एडिटर के लिए सेटअप लिखता है, इस warden के पते, एक कुंजी और एक लोड किए गए मॉडल के साथ, और एक टेस्ट अनुरोध भेजता है।",
+    "source_hash": "2bc91137abf9"
+  },
+  "features.dd-8": {
+    "text": "5&nbsp;अक्टूबर 2026 को Codex&nbsp;0.160 के साथ एक warden पर परखा गया: शेल टूल कॉल, एक फ़ाइल एडिट, और सेशन एक ही रेप्लिका पर रहा। थिंकिंग डिफ़ॉल्ट रूप से चालू है; <code>model_reasoning_effort = \"none\"</code> उसे बंद करता है। सिर्फ़ लोकल मॉडल: राउटर के नियम लागू नहीं होते।",
+    "source_hash": "93a18b286b4e"
+  },
+  "features.dt-7": {
+    "text": "एक चैट प्लेग्राउंड",
+    "source_hash": "989e5691fd83"
+  },
+  "features.dd-9": {
+    "text": "किसी को कुंजी देने से पहले ब्राउज़र में लोड किए गए मॉडल से बात करें, इमेज समेत।",
+    "source_hash": "7c8ef7303dc3"
+  },
+  "features.lessons.h2-1": {
+    "text": "तीन बातें जो हमने मुश्किल से सीखीं।",
+    "source_hash": "b2e61284634a"
+  },
+  "features.h3-1": {
+    "text": "इंजन एक दिन में चार बार बंद हुआ, और प्रॉक्सी उसे अनुरोध भेजती रही।",
+    "source_hash": "a3c2a4abe3bf"
+  },
+  "features.p-1": {
+    "text": "vLLM का इंजन कोर क्रैश हो गया, जबकि उसके ऊपर चलने वाला <code>vllm serve</code> रैपर चालू रहा, इसलिए प्रोसेस ज़िंदा दिखता रहा और अनुरोध उसे भेजे जाते रहे। अब एक वॉचडॉग प्रोसेस टेबल देखने के बजाय इंजन के अपने <code>/health</code> एंडपॉइंट से पूछता है। जब इंजन जवाब देना बंद कर देता है, तो वॉचडॉग सबूत सहेज लेता है, जिसमें लॉग का एक सीमित आख़िरी हिस्सा भी होता है, और मॉडल को दोबारा लोड करता है।",
+    "source_hash": "8d323d1c089b"
+  },
+  "features.img-1.alt": {
+    "text": "लोड के दौरान एक मॉडल का लाइव लॉग पैनल: vLLM API सर्वर की पंक्तियाँ जो GET /metrics और एक क्लाइंट के POST /v1/chat/completions का जवाब दे रही हैं, इंजन की पंक्तियाँ जो 10 अनुरोध चलते हुए और 0 प्रतीक्षा में बताती हैं, और एक GET /health पंक्ति, सभी 200 OK लौटा रही हैं",
+    "source_hash": "a4f74c626a7f"
+  },
+  "features.span-1": {
+    "text": "वॉचडॉग की जाँच, जिसका जवाब इंजन देता है",
+    "source_hash": "e1d7e982a29c"
+  },
+  "features.figcaption-1": {
+    "text": "<b>चित्र&nbsp;15</b>उसी लोड के दौरान मॉडल के पेज पर लाइव लॉग: <code>/metrics</code> की स्क्रैपिंग, आते हुए चैट कंप्लीशन, इंजन की अपनी गिनती कि 10 अनुरोध चल रहे हैं और कोई प्रतीक्षा में नहीं, और उनके बीच एक <code>/health</code> जाँच।<span class=\"scroll-hint\"> पूरी पंक्तियाँ पढ़ने के लिए इमेज को दाएँ-बाएँ स्क्रॉल करें।</span>",
+    "source_hash": "40a242621e22"
+  },
+  "features.h3-2": {
+    "text": "12 मिनट का लोड पहले एक त्रुटि पर ख़त्म होता था।",
+    "source_hash": "69140856abf8"
+  },
+  "features.p-2": {
+    "text": "एक बड़े मॉडल को लोड होने में बारह मिनट या उससे ज़्यादा लग सकते हैं। अब तक warden सिर्फ़ तय समय-सीमा देखता था: समय-सीमा पर वह मॉडल में लाल रंग की “still loading” त्रुटि लिख देता था, जबकि इंजन लोड होता रहता था। अब मॉडल पेज हर लोड चरण को उसकी प्रोग्रेस बार, पिछले लोड से निकाले गए हर चरण के सामान्य समय, और CPU व GPU-मेमोरी के लाइव संकेतकों के साथ दिखाता है। अटका हुआ लोड रोक दिया जाता है और उसके GPU ख़ाली कर दिए जाते हैं; जब तक लोड आगे बढ़ रहा है, कुछ भी लाल नहीं होता। आठ NVIDIA B300 पर टेंसर-पैरेलल&nbsp;8 के साथ GLM-5.2 NVFP4 लगभग 11 से 12 मिनट में लोड होता है; इतना लंबा लोड पहले 600&#8239;s के टाइमआउट से टकरा जाता था।",
+    "source_hash": "cceedae9466e"
+  },
+  "features.img-2.alt": {
+    "text": "आठ NVIDIA B300 पर GLM-5.2 NVFP4 लोड होते समय मॉडल पेज: सामान्य 10 min 46 s में से 9 min 17 s बीते; Start engine, Load weights 47 of 47, Compile kernels और Size KV cache पूरे; Tune kernels op 2 पर, 22 में से 21; CPU और GPU-मेमोरी चार्ट जिनमें 2149&#8239;GiB में से 1948 इस्तेमाल में; Capture CUDA graphs और Warm-up request अभी बाकी, हर एक के साथ उसका सामान्य समय",
+    "source_hash": "e3cc9ae4cf3b"
+  },
+  "features.figcaption-2": {
+    "text": "<b>चित्र&nbsp;16</b>आठ B300 पर टेंसर-पैरेलल 8 के साथ GLM-5.2 NVFP4 लोड हो रहा है, नौ मिनट बीते। कर्नेल ट्यूनिंग लंबा चरण है; चार्ट दिखाते हैं कि इंजन ज़िंदा है जबकि लॉग सिर्फ़ ट्यूनिंग की प्रगति दोहराता है।",
+    "source_hash": "981fef031d3d"
+  },
+  "features.h3-3": {
+    "text": "16&#8239;GiB कार्ड में उतना नहीं समाता, जितना हिसाब से लगता है।",
+    "source_hash": "2269d7489768"
+  },
+  "features.p-3": {
+    "text": "एक bf16 8B मॉडल के वेट ही लगभग 15&#8239;GiB के होते हैं, और लोड होते समय मेमोरी ख़त्म हो जाती है। हमने नीचे की हर पंक्ति 16&#8239;GiB वाले RTX&nbsp;A4000 और Quadro RTX&nbsp;5000 कार्ड पर आज़माई, और नतीजा हेल्थ चेक के भरोसे नहीं, बल्कि चैट प्लेग्राउंड में मॉडल के जवाब पढ़कर तय किया।",
+    "source_hash": "a34f00101361"
+  },
+  "features.th-1": {
+    "text": "मॉडल",
+    "source_hash": "5e2c614c23f0"
+  },
+  "features.th-2": {
+    "text": "क्या काम करता है",
+    "source_hash": "ea5522c7c85e"
+  },
+  "features.th-3": {
+    "text": "क्या नहीं करता",
+    "source_hash": "9bebcd3482a7"
+  },
+  "features.col-works.data-h": {
+    "text": "काम करता है",
+    "source_hash": "2b4c8c6d38db"
+  },
+  "features.td-1": {
+    "text": "दो कार्ड, टेंसर पैरेलल 2, <code>max_model_len</code> 32000, <code>gpu_memory_utilization</code> 0.7&nbsp;से&nbsp;0.9",
+    "source_hash": "4516d9c167db"
+  },
+  "features.col-does-not.data-h": {
+    "text": "नहीं करता",
+    "source_hash": "73a6fc7836b8"
+  },
+  "features.td-2": {
+    "text": "एक कार्ड: 20B MoE फ़िट नहीं होता",
+    "source_hash": "6b644f502c34"
+  },
+  "features.th-4": {
+    "text": "Llama 3.1 8B, Mistral 7B श्रेणी",
+    "source_hash": "c2f2a5cd5d41"
+  },
+  "features.td-3": {
+    "text": "एक कार्ड, AWQ-INT4 चेकपॉइंट, <code>--enforce-eager</code> और <code>gpu_memory_utilization</code> 0.9 के साथ",
+    "source_hash": "baa3aea88f30"
+  },
+  "features.td-4": {
+    "text": "bf16 रिपॉज़िटरी: लगभग 15&#8239;GiB वेट, लोड के दौरान मेमोरी ख़त्म",
+    "source_hash": "1ce2fc0f7104"
+  },
+  "features.th-5": {
+    "text": "एक साथ दो मॉडल",
+    "source_hash": "3bc589f1752e"
+  },
+  "features.td-5": {
+    "text": "हर कार्ड पर एक मॉडल, हर एक अपने कार्ड में फ़िट",
+    "source_hash": "6fed9ca4f3d2"
+  },
+  "features.td-6": {
+    "text": "एक कार्ड साझा करते दो मॉडल",
+    "source_hash": "296d7ad75ac3"
+  },
+  "features.p-4": {
+    "text": "vLLM&nbsp;0.20.0 पर जाँचा गया। ऊपर के रेप्लिका माप में 0.26.0 इस्तेमाल हुआ था। यह रिलीज़ 0.32.0 के साथ आती है; उस पर पहला मापा गया लोड आठ B300 पर टेंसर-पैरेलल 8 के साथ GLM-5.2 NVFP4 है, लगभग 11 से 12 मिनट। फ़िट के नियम 0.32 पर दोबारा नहीं मापे गए हैं। पूरी तालिका और उसके पीछे के कारण <a href=\"{{repo}}/blob/main/documents/HAZARDS.md#what-fits-on-what\" rel=\"noopener\">HAZARDS.md</a> में हैं। NVIDIA नहीं है? <a href=\"/#p-mac\">Apple silicon के लिए Mac बीटा है</a>, अब Windows की बारी है, और <a href=\"/#p-linux\">दूसरे GPU रोडमैप पर हैं</a>।",
+    "source_hash": "d5f7cb24d2cc"
+  },
+  "features.p-5": {
+    "text": "संबंधित: <a href=\"/gpu-monitoring\">GPU मॉनिटरिंग</a> · <a href=\"/cache-aware-routing\">कैश-अवेयर रूटिंग</a> · <a href=\"/api-keys\">API कुंजियाँ</a>",
+    "source_hash": "4c5ddc0960f7"
+  }
+}

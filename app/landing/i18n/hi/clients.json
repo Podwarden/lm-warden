@@ -1,0 +1,422 @@
+{
+  "clients.meta.title": {
+    "text": "आपके GPU पर लोकल LLM के साथ {name} | LM Warden",
+    "source_hash": "9a440e2e3c4a"
+  },
+  "clients.meta.description": {
+    "text": "LM Warden के साथ {name}: {summary}",
+    "source_hash": "9d9c76c6bb07"
+  },
+  "clients.claude-code.h1": {
+    "text": "Claude Code, आपके अपने GPU पर।",
+    "source_hash": "9bb97352447d"
+  },
+  "clients.claude-code.summary": {
+    "text": "अपना Claude लॉगिन रखें और जिन मॉडल के नाम आपके नियमों में हैं उन्हें यहाँ चलाएँ, या इसे पूरी तरह लोकल चलाएँ।",
+    "source_hash": "b46e643eeaac"
+  },
+  "clients.claude-code.capability": {
+    "text": "जिन Claude मॉडल के नाम आपके नियमों में हैं, वे यहीं चलते हैं; बाकी हर मॉडल और <code>/v1</code> पाथ आपके अपने लॉगिन से Anthropic को जाता है। राउटर मोड में warden कुंजी कभी <code>ANTHROPIC_API_KEY</code> या <code>ANTHROPIC_AUTH_TOKEN</code> में न डालें: इससे वह आपके लॉगिन की जगह ले लेगी। सिर्फ़-लोकल मोड छोटे बैकग्राउंड कामों समेत सब कुछ एक ही लोड किए गए मॉडल पर चलाता है, और Anthropic को कुछ नहीं जाता।",
+    "source_hash": "79cee967a1ad"
+  },
+  "clients.claude-code.req.client_version": {
+    "text": "Claude Code 2.1.227 या नया (<code>ANTHROPIC_CUSTOM_HEADERS</code>)।",
+    "source_hash": "baf574b32f46"
+  },
+  "clients.claude-code.req.router_on": {
+    "text": "रूटिंग चालू होनी चाहिए, और कम से कम एक नियम सक्षम होना चाहिए।",
+    "source_hash": "f0fd90d78fe4"
+  },
+  "clients.claude-code.req.relay_key": {
+    "text": "कुंजी को Anthropic तक रिले करने की अनुमति होनी चाहिए (May relay)।",
+    "source_hash": "df8e31733077"
+  },
+  "clients.claude-code.req.min_context": {
+    "text": "कम से कम 49,152 टोकन का कॉन्टेक्स्ट चाहिए: अकेला पहला टर्न ही, कोई फ़ाइल पढ़ने से पहले, लगभग 38,000 टोकन का होता है।",
+    "source_hash": "5cc65b30acd7"
+  },
+  "clients.claude-code.req.recommended_context": {
+    "text": "असली सेशन के लिए 131,072 टोकन या ज़्यादा; छोटे सेशन के लिए कम भी चलता है।",
+    "source_hash": "82792a23c7a0"
+  },
+  "clients.claude-code.req.unknown_model_window": {
+    "text": "Claude Code चेतावनी दे सकता है कि मॉडल का नाम उसके कैटलॉग में नहीं है। यह सिर्फ़ जानकारी है: वह 200k की विंडो मान लेता है और उसी हिसाब से बातचीत को अपने-आप छोटा (कॉम्पैक्ट) करता है। <code>CLAUDE_CODE_MAX_CONTEXT_TOKENS</code> को मॉडल की असली कॉन्टेक्स्ट विंडो पर सेट करें।",
+    "source_hash": "c67abcb52ad3"
+  },
+  "clients.claude-code.mode.router.title": {
+    "text": "Router: अपना Claude लॉगिन रखें",
+    "source_hash": "872bcc0e520c"
+  },
+  "clients.claude-code.mode.router.desc": {
+    "text": "आपका Claude लॉगिन Anthropic को जाता रहता है; warden कुंजी अपने अलग हेडर में जाती है, और जिन मॉडल के नाम आपके नियमों में हैं उनका जवाब यहाँ दिया जाता है।",
+    "source_hash": "9832c50a640e"
+  },
+  "clients.claude-code.mode.local.title": {
+    "text": "सिर्फ़ लोकल (Anthropic अकाउंट के बिना)",
+    "source_hash": "2a51ef910e22"
+  },
+  "clients.claude-code.mode.local.desc": {
+    "text": "हर मॉडल स्लॉट में आपका चुना हुआ लोड किया गया मॉडल होता है, और warden कुंजी ही ऑथेंटिकेशन टोकन है। Anthropic को कुछ नहीं जाता।",
+    "source_hash": "1dea6fe58a27"
+  },
+  "clients.anthropic-sdk.h1": {
+    "text": "Anthropic SDK, आपके अपने GPU पर।",
+    "source_hash": "4229892646ec"
+  },
+  "clients.anthropic-sdk.summary": {
+    "text": "आपकी Anthropic API कुंजी <code>api_key</code> में रहती है; warden कुंजी अपने अलग हेडर में जाती है।",
+    "source_hash": "910172f40b64"
+  },
+  "clients.anthropic-sdk.flow.title": {
+    "text": "Anthropic SDK का अनुरोध कहाँ जाता है",
+    "source_hash": "26e8b7e39b44"
+  },
+  "clients.anthropic-sdk.flow.desc": {
+    "text": "Anthropic SDK अपने अनुरोध LM Warden को भेजता है, जिसमें base_url warden पर सेट है और X-LMWarden-Key में warden की कुंजी है। LM Warden कुंजी जाँचता है, Anthropic Messages समझता है, कुंजी की प्राथमिकता के हिसाब से अनुरोध को क़तार में रखता है और उसे रेप्लिका राउटर को सौंपता है। राउटर हर सेशन को उसी रेप्लिका पर भेजता है जिसके पास उसका कैश पहले से है; हर GPU पर मॉडल की एक अलग कॉपी चलती है। एक अलग रास्ता सीधे api.anthropic.com तक जाता है: नियम बाकी Claude मॉडल के अनुरोध आपकी अपनी API कुंजी से वहाँ भेजते हैं।",
+    "source_hash": "26917b07643f"
+  },
+  "clients.anthropic-sdk.flow.caption": {
+    "text": "Anthropic SDK का अनुरोध कहाँ जाता है: Connect की लिखी दो सेटिंग, बीच में warden, फिर हर GPU पर मॉडल की एक कॉपी।",
+    "source_hash": "a4ec23a63573"
+  },
+  "clients.anthropic-sdk.capability": {
+    "text": "जिन Claude मॉडल के नाम आपके नियमों में हैं, वे यहीं चलते हैं; बाकी हर मॉडल और <code>/v1</code> पाथ आपके अपने लॉगिन से Anthropic को जाता है। सिर्फ़-लोकल मोड के लिए Anthropic अकाउंट नहीं चाहिए: warden कुंजी ही <code>api_key</code> है, और मॉडल के लिए वही नाम दें जिससे warden उसे उपलब्ध कराता है।",
+    "source_hash": "3d9a6a025316"
+  },
+  "clients.anthropic-sdk.req.router_on": {
+    "text": "रूटिंग चालू होनी चाहिए, और कम से कम एक नियम सक्षम होना चाहिए।",
+    "source_hash": "f0fd90d78fe4"
+  },
+  "clients.anthropic-sdk.req.relay_key": {
+    "text": "कुंजी को Anthropic तक रिले करने की अनुमति होनी चाहिए (May relay)।",
+    "source_hash": "df8e31733077"
+  },
+  "clients.anthropic-sdk.mode.router.title": {
+    "text": "Router: अपनी Anthropic कुंजी रखें",
+    "source_hash": "5e22bff885a6"
+  },
+  "clients.anthropic-sdk.mode.router.desc": {
+    "text": "<code>base_url</code> यह warden है; आपकी Anthropic API कुंजी <code>api_key</code> में रहती है और warden कुंजी डिफ़ॉल्ट हेडर में जाती है।",
+    "source_hash": "fe17e904c7dd"
+  },
+  "clients.anthropic-sdk.mode.local.title": {
+    "text": "सिर्फ़ लोकल",
+    "source_hash": "c905013aab29"
+  },
+  "clients.anthropic-sdk.mode.local.desc": {
+    "text": "warden कुंजी ही <code>api_key</code> है, और मॉडल के लिए वही नाम दें जिससे warden उसे उपलब्ध कराता है।",
+    "source_hash": "e1b1c200ccb3"
+  },
+  "clients.opencode.h1": {
+    "text": "OpenCode, आपके अपने GPU पर।",
+    "source_hash": "0f9f0d85229c"
+  },
+  "clients.opencode.summary": {
+    "text": "OpenCode में LM Warden को OpenAI-संगत प्रोवाइडर के रूप में जोड़ें और एक लोड किया गया मॉडल इस्तेमाल करें।",
+    "source_hash": "0dbe773d1ba9"
+  },
+  "clients.opencode.flow.title": {
+    "text": "OpenCode का अनुरोध कहाँ जाता है",
+    "source_hash": "ae2c3d407d79"
+  },
+  "clients.opencode.flow.desc": {
+    "text": "OpenCode अपने अनुरोध LM Warden को भेजता है, जिसमें baseURL warden पर सेट है और apiKey में warden की कुंजी है। LM Warden कुंजी जाँचता है, OpenAI Chat Completions समझता है, कुंजी की प्राथमिकता के हिसाब से अनुरोध को क़तार में रखता है और उसे रेप्लिका राउटर को सौंपता है। राउटर हर सेशन को उसी रेप्लिका पर भेजता है जिसके पास उसका कैश पहले से है; हर GPU पर मॉडल की एक अलग कॉपी चलती है।",
+    "source_hash": "5a53f0ea3bba"
+  },
+  "clients.opencode.flow.caption": {
+    "text": "OpenCode का अनुरोध कहाँ जाता है: Connect की लिखी दो सेटिंग, बीच में warden, फिर हर GPU पर मॉडल की एक कॉपी।",
+    "source_hash": "774655618391"
+  },
+  "clients.opencode.capability": {
+    "text": "सिर्फ़ लोकल मॉडल, Chat Completions के ज़रिए (<code>@ai-sdk/openai-compatible</code>; <code>@ai-sdk/openai</code> Responses API इस्तेमाल करेगा, जिसे यह warden सिर्फ़ Codex CLI के लिए Chat Completions में बदलता है)। मॉडल ID वही नाम होना चाहिए जो <code>/v1/models</code> में दिखता है। अगर फ़ाइल कमिट होनी है, तो उसमें कुंजी की जगह <code>{env:LMWARDEN_KEY}</code> लिखें। OpenCode के Anthropic प्रोवाइडर के ज़रिए Router मोड अभी शामिल नहीं है।",
+    "source_hash": "8901779665ff"
+  },
+  "clients.opencode.req.tools": {
+    "text": "टूल कॉलिंग वाला मॉडल चाहिए (एजेंटिक एडिट के लिए)।",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.opencode.req.min_context": {
+    "text": "कम से कम 32,768 टोकन के कॉन्टेक्स्ट के साथ सबसे अच्छा काम करता है।",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.opencode.mode.default.title": {
+    "text": "लोकल मॉडल",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.opencode.mode.default.desc": {
+    "text": "<code>opencode.json</code> में LM Warden को प्रोवाइडर के रूप में जोड़ें और उसे डिफ़ॉल्ट बनाएँ।",
+    "source_hash": "e03771b96f12"
+  },
+  "clients.aider.h1": {
+    "text": "Aider, आपके अपने GPU पर।",
+    "source_hash": "b1e1b6bd30b4"
+  },
+  "clients.aider.summary": {
+    "text": "Aider अपने OpenAI-संगत प्रोवाइडर के ज़रिए एक लोड किए गए मॉडल पर चलता है।",
+    "source_hash": "2a2e36942a30"
+  },
+  "clients.aider.flow.title": {
+    "text": "Aider का अनुरोध कहाँ जाता है",
+    "source_hash": "32e01b3b0c97"
+  },
+  "clients.aider.flow.desc": {
+    "text": "Aider अपने अनुरोध LM Warden को भेजता है, जिसमें OPENAI_API_BASE warden पर सेट है और OPENAI_API_KEY में warden की कुंजी है। LM Warden कुंजी जाँचता है, OpenAI Chat Completions समझता है, कुंजी की प्राथमिकता के हिसाब से अनुरोध को क़तार में रखता है और उसे रेप्लिका राउटर को सौंपता है। राउटर हर सेशन को उसी रेप्लिका पर भेजता है जिसके पास उसका कैश पहले से है; हर GPU पर मॉडल की एक अलग कॉपी चलती है।",
+    "source_hash": "3b2c308c114e"
+  },
+  "clients.aider.flow.caption": {
+    "text": "Aider का अनुरोध कहाँ जाता है: Connect की लिखी दो सेटिंग, बीच में warden, फिर हर GPU पर मॉडल की एक कॉपी।",
+    "source_hash": "e58a54a34cdc"
+  },
+  "clients.aider.capability": {
+    "text": "सिर्फ़ लोकल मॉडल, Chat Completions पर। Aider टेक्स्ट फ़ॉर्मैट के ज़रिए एडिट करता है, इसलिए मॉडल को टूल कॉलिंग की ज़रूरत नहीं। मेटाडेटा फ़ाइल सिर्फ़ Aider की अनजान मॉडल वाली चेतावनी रोकती है और उसके कॉन्टेक्स्ट का आकार सेट करती है।",
+    "source_hash": "922681946310"
+  },
+  "clients.aider.req.min_context": {
+    "text": "कम से कम 32,768 टोकन के कॉन्टेक्स्ट के साथ सबसे अच्छा काम करता है।",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.aider.mode.default.title": {
+    "text": "लोकल मॉडल",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.aider.mode.default.desc": {
+    "text": "Aider के OpenAI प्रोवाइडर को इस warden पर सेट करें।",
+    "source_hash": "df94297df209"
+  },
+  "clients.aider.mode.default.file.session": {
+    "text": "हर लॉन्च के लिए सेशन ID (वैकल्पिक)",
+    "source_hash": "c1f31c2b83f0"
+  },
+  "clients.grok-cli.h1": {
+    "text": "Grok CLI, आपके अपने GPU पर।",
+    "source_hash": "9e97001cf2f3"
+  },
+  "clients.grok-cli.summary": {
+    "text": "xAI का Grok Build CLI, जिसमें LM Warden को अपनी कुंजी वाले (BYOK) मॉडल के रूप में जोड़ा जाता है।",
+    "source_hash": "be6e0d9a09ed"
+  },
+  "clients.grok-cli.flow.title": {
+    "text": "Grok CLI का अनुरोध कहाँ जाता है",
+    "source_hash": "eeb620d01d38"
+  },
+  "clients.grok-cli.flow.desc": {
+    "text": "Grok CLI अपने अनुरोध LM Warden को भेजता है, जिसमें base_url warden पर सेट है और env_key में warden की कुंजी है। LM Warden कुंजी जाँचता है, OpenAI Chat Completions समझता है, कुंजी की प्राथमिकता के हिसाब से अनुरोध को क़तार में रखता है और उसे रेप्लिका राउटर को सौंपता है। राउटर हर सेशन को उसी रेप्लिका पर भेजता है जिसके पास उसका कैश पहले से है; हर GPU पर मॉडल की एक अलग कॉपी चलती है।",
+    "source_hash": "ef648e107c77"
+  },
+  "clients.grok-cli.flow.caption": {
+    "text": "Grok CLI का अनुरोध कहाँ जाता है: Connect की लिखी दो सेटिंग, बीच में warden, फिर हर GPU पर मॉडल की एक कॉपी।",
+    "source_hash": "b77ddcf1b78a"
+  },
+  "clients.grok-cli.capability": {
+    "text": "सिर्फ़ लोकल मॉडल, Chat Completions पर (<code>api_backend = chat_completions</code>)। अनुरोध xAI तक आगे नहीं भेजे जाते, और BYOK मॉडल के लिए xAI लॉगिन नहीं चाहिए। <code>session_summary</code> Grok के सेशन-टाइटल अनुरोधों को इसी मॉडल पर रखता है; इसके बिना Grok इस warden से <code>grok-4.6</code> माँगता है और उसे 404 मिलता है। Grok चलते समय <code>config.toml</code> में अपने सेक्शन जोड़ता है। कम्युनिटी grok-cli (npm <code>grok-dev</code>) एक अलग टूल है: चैट काम करती है, टूल कॉल नहीं।",
+    "source_hash": "03938abace0a"
+  },
+  "clients.grok-cli.req.tools": {
+    "text": "टूल कॉलिंग वाला मॉडल चाहिए (एजेंटिक एडिट के लिए)।",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.grok-cli.req.min_context": {
+    "text": "कम से कम 32,768 टोकन के कॉन्टेक्स्ट के साथ सबसे अच्छा काम करता है।",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.grok-cli.mode.default.title": {
+    "text": "Grok Build (आधिकारिक)",
+    "source_hash": "1901a8b05d3b"
+  },
+  "clients.grok-cli.mode.default.desc": {
+    "text": "<code>~/.grok/config.toml</code> में एक मॉडल एंट्री; कुंजी <code>LMWARDEN_KEY</code> से आती है। इंस्टॉल: <code>curl -fsSL https://x.ai/cli/install.sh | bash</code>, या <code>npm i -g @xai-official/grok</code>",
+    "source_hash": "b5943bc2443d"
+  },
+  "clients.grok-cli.mode.community.title": {
+    "text": "कम्युनिटी grok-cli",
+    "source_hash": "28bbd28283a3"
+  },
+  "clients.grok-cli.mode.community.desc": {
+    "text": "कम्युनिटी grok-cli अपना Base URL, कुंजी और मॉडल एनवायरनमेंट से पढ़ता है और इसके लिए Bun इंस्टॉल होना चाहिए। चैट काम करती है; टूल कॉल विफल होते हैं, क्योंकि उसका xAI SDK हिस्सों में आने वाले टूल-कॉल चंक अस्वीकार करता है, जैसे vLLM उन्हें स्ट्रीम करता है।",
+    "source_hash": "0b589963361a"
+  },
+  "clients.openai-sdk.h1": {
+    "text": "OpenAI SDK, आपके अपने GPU पर।",
+    "source_hash": "db3661cee041"
+  },
+  "clients.openai-sdk.summary": {
+    "text": "कोई भी OpenAI SDK, या कुछ भी जिसमें OpenAI-संगत Base URL सेटिंग हो।",
+    "source_hash": "16d05b661878"
+  },
+  "clients.openai-sdk.flow.title": {
+    "text": "OpenAI SDK का अनुरोध कहाँ जाता है",
+    "source_hash": "13c7ed2b6c10"
+  },
+  "clients.openai-sdk.flow.desc": {
+    "text": "OpenAI SDK अपने अनुरोध LM Warden को भेजता है, जिसमें base_url warden पर सेट है और api_key में warden की कुंजी है। LM Warden कुंजी जाँचता है, OpenAI Chat Completions समझता है, कुंजी की प्राथमिकता के हिसाब से अनुरोध को क़तार में रखता है और उसे रेप्लिका राउटर को सौंपता है। राउटर हर सेशन को उसी रेप्लिका पर भेजता है जिसके पास उसका कैश पहले से है; हर GPU पर मॉडल की एक अलग कॉपी चलती है।",
+    "source_hash": "9b9a5c752e5f"
+  },
+  "clients.openai-sdk.flow.caption": {
+    "text": "OpenAI SDK का अनुरोध कहाँ जाता है: Connect की लिखी दो सेटिंग, बीच में warden, फिर हर GPU पर मॉडल की एक कॉपी।",
+    "source_hash": "0d8679dd39d0"
+  },
+  "clients.openai-sdk.capability": {
+    "text": "सिर्फ़ लोकल मॉडल। OpenAI तक कोई पास-थ्रू नहीं है: <code>gpt-*</code> के अनुरोध पर 404 मिलता है। Chat Completions और Completions उपलब्ध हैं; <code>/v1/responses</code> को बिना स्टेट के Chat Completions में बदला जाता है (Codex CLI देखें)।",
+    "source_hash": "81a1f26dda28"
+  },
+  "clients.openai-sdk.mode.default.title": {
+    "text": "लोकल मॉडल",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.openai-sdk.mode.default.desc": {
+    "text": "<code>base_url</code> इस warden का <code>/v1</code> है और warden कुंजी ही API कुंजी है।",
+    "source_hash": "81e9b9ed3e66"
+  },
+  "clients.continue.h1": {
+    "text": "Continue, आपके अपने GPU पर।",
+    "source_hash": "f33c2b44b3be"
+  },
+  "clients.continue.summary": {
+    "text": "Continue का OpenAI प्रोवाइडर इस warden पर सेट करें और एक लोड किया गया मॉडल इस्तेमाल करें।",
+    "source_hash": "4377b7395411"
+  },
+  "clients.continue.flow.title": {
+    "text": "Continue का अनुरोध कहाँ जाता है",
+    "source_hash": "a55ed462d54e"
+  },
+  "clients.continue.flow.desc": {
+    "text": "Continue अपने अनुरोध LM Warden को भेजता है, जिसमें apiBase warden पर सेट है और apiKey में warden की कुंजी है। LM Warden कुंजी जाँचता है, OpenAI Chat Completions समझता है, कुंजी की प्राथमिकता के हिसाब से अनुरोध को क़तार में रखता है और उसे रेप्लिका राउटर को सौंपता है। राउटर हर सेशन को उसी रेप्लिका पर भेजता है जिसके पास उसका कैश पहले से है; हर GPU पर मॉडल की एक अलग कॉपी चलती है।",
+    "source_hash": "dfee5b6d070e"
+  },
+  "clients.continue.flow.caption": {
+    "text": "Continue का अनुरोध कहाँ जाता है: Connect की लिखी दो सेटिंग, बीच में warden, फिर हर GPU पर मॉडल की एक कॉपी।",
+    "source_hash": "c1f803ddf701"
+  },
+  "clients.continue.capability": {
+    "text": "सिर्फ़ लोकल मॉडल, Chat Completions पर। Router मोड के लिए ऐसे कस्टम हेडर चाहिए होंगे जिनका Continue दस्तावेज़ों में ज़िक्र नहीं करता।",
+    "source_hash": "d76f0ccb6e86"
+  },
+  "clients.continue.req.min_context": {
+    "text": "कम से कम 32,768 टोकन के कॉन्टेक्स्ट के साथ सबसे अच्छा काम करता है।",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.continue.mode.default.title": {
+    "text": "लोकल मॉडल",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.continue.mode.default.desc": {
+    "text": "<code>~/.continue/config.yaml</code> में एक मॉडल एंट्री।",
+    "source_hash": "8c8d339555ff"
+  },
+  "clients.cline.h1": {
+    "text": "Cline, आपके अपने GPU पर।",
+    "source_hash": "d0efe15bdc4f"
+  },
+  "clients.cline.summary": {
+    "text": "Cline का OpenAI Compatible प्रोवाइडर, जिसे उसकी सेटिंग्स स्क्रीन में भरा जाता है।",
+    "source_hash": "d80b0d66c45e"
+  },
+  "clients.cline.flow.title": {
+    "text": "Cline का अनुरोध कहाँ जाता है",
+    "source_hash": "79932fc0e85c"
+  },
+  "clients.cline.flow.desc": {
+    "text": "Cline अपने अनुरोध LM Warden को भेजता है, जिसमें Base URL warden पर सेट है और API Key में warden की कुंजी है। LM Warden कुंजी जाँचता है, OpenAI Chat Completions समझता है, कुंजी की प्राथमिकता के हिसाब से अनुरोध को क़तार में रखता है और उसे रेप्लिका राउटर को सौंपता है। राउटर हर सेशन को उसी रेप्लिका पर भेजता है जिसके पास उसका कैश पहले से है; हर GPU पर मॉडल की एक अलग कॉपी चलती है।",
+    "source_hash": "300648093db4"
+  },
+  "clients.cline.flow.caption": {
+    "text": "Cline का अनुरोध कहाँ जाता है: Connect की लिखी दो सेटिंग, बीच में warden, फिर हर GPU पर मॉडल की एक कॉपी।",
+    "source_hash": "26566cb52d8d"
+  },
+  "clients.cline.capability": {
+    "text": "सिर्फ़ लोकल मॉडल, स्ट्रीमिंग Chat Completions पर। Cline में कोई कॉन्फ़िग फ़ाइल नहीं है: ये मान API Provider &gt; OpenAI Compatible के तहत डालें। उसके Anthropic प्रोवाइडर में कस्टम Base URL है लेकिन कस्टम हेडर नहीं, इसलिए राउटर मोड उपलब्ध नहीं है।",
+    "source_hash": "21110940c4cb"
+  },
+  "clients.cline.req.tools": {
+    "text": "टूल कॉलिंग वाला मॉडल चाहिए (एजेंटिक एडिट के लिए)।",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.cline.req.min_context": {
+    "text": "कम से कम 32,768 टोकन के कॉन्टेक्स्ट के साथ सबसे अच्छा काम करता है।",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.cline.mode.default.title": {
+    "text": "लोकल मॉडल",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.cline.mode.default.desc": {
+    "text": "Settings &gt; API Provider &gt; OpenAI Compatible.",
+    "source_hash": "f65c6df5377b"
+  },
+  "clients.cursor.h1": {
+    "text": "Cursor, आपके अपने GPU पर।",
+    "source_hash": "314536df2e7a"
+  },
+  "clients.cursor.summary": {
+    "text": "Cursor में OpenAI Base URL ओवरराइड करके, लोड किए गए मॉडल से चैट करें।",
+    "source_hash": "1c8912c5ba32"
+  },
+  "clients.cursor.flow.title": {
+    "text": "Cursor का अनुरोध कहाँ जाता है",
+    "source_hash": "43c8f2aed837"
+  },
+  "clients.cursor.flow.desc": {
+    "text": "Cursor अपने अनुरोध LM Warden को भेजता है, जिसमें Override OpenAI Base URL warden पर सेट है और OpenAI API Key में warden की कुंजी है। LM Warden कुंजी जाँचता है, OpenAI Chat Completions समझता है, कुंजी की प्राथमिकता के हिसाब से अनुरोध को क़तार में रखता है और उसे रेप्लिका राउटर को सौंपता है। राउटर हर सेशन को उसी रेप्लिका पर भेजता है जिसके पास उसका कैश पहले से है; हर GPU पर मॉडल की एक अलग कॉपी चलती है।",
+    "source_hash": "524789d9ea5d"
+  },
+  "clients.cursor.flow.caption": {
+    "text": "Cursor का अनुरोध कहाँ जाता है: Connect की लिखी दो सेटिंग, बीच में warden, फिर हर GPU पर मॉडल की एक कॉपी।",
+    "source_hash": "79e33449f1a5"
+  },
+  "clients.cursor.capability": {
+    "text": "अनुरोध Cursor के सर्वर से भेजे जाते हैं, इसलिए इस warden का URL इंटरनेट से पहुँचने योग्य होना चाहिए; LAN या localhost वाला warden काम नहीं करेगा। कस्टम कुंजियाँ सिर्फ़ चैट मॉडल के साथ काम करती हैं: Tab कंप्लीशन Cursor के अपने मॉडल ही इस्तेमाल करता रहता है, और Cursor के मॉडल वाला Agent कस्टम कुंजियाँ स्वीकार नहीं करता। Cursor के मौजूदा दस्तावेज़ों में Override OpenAI Base URL सेटिंग का अब ज़िक्र नहीं है; इसकी जानकारी Cursor स्टाफ़ के फ़ोरम जवाबों से मिलती है।",
+    "source_hash": "e3b007a84e77"
+  },
+  "clients.cursor.req.reachable": {
+    "text": "Cursor के सर्वर इस URL को कॉल करते हैं, इसलिए यह इंटरनेट से पहुँचने योग्य होना चाहिए।",
+    "source_hash": "0815103f2766"
+  },
+  "clients.cursor.mode.default.title": {
+    "text": "लोकल मॉडल के साथ चैट",
+    "source_hash": "5e7a9a7b90b9"
+  },
+  "clients.cursor.mode.default.desc": {
+    "text": "Cursor Settings &gt; Models, फिर मॉडल का नाम कस्टम मॉडल के रूप में जोड़ें।",
+    "source_hash": "fce3909f9e49"
+  },
+  "clients.codex-cli.h1": {
+    "text": "Codex CLI, आपके अपने GPU पर।",
+    "source_hash": "ee03de1664ad"
+  },
+  "clients.codex-cli.summary": {
+    "text": "Codex CLI में LM Warden को कस्टम मॉडल प्रोवाइडर के रूप में जोड़ें और एक लोड किया गया मॉडल इस्तेमाल करें।",
+    "source_hash": "4ffc9f534362"
+  },
+  "clients.codex-cli.flow.title": {
+    "text": "Codex CLI का अनुरोध कहाँ जाता है",
+    "source_hash": "4d9d5da5c30b"
+  },
+  "clients.codex-cli.flow.desc": {
+    "text": "Codex CLI अपने अनुरोध LM Warden को भेजता है, जिसमें base_url warden पर सेट है और env_key में warden की कुंजी है। LM Warden कुंजी जाँचता है, OpenAI Responses समझता है, कुंजी की प्राथमिकता के हिसाब से अनुरोध को क़तार में रखता है और उसे रेप्लिका राउटर को सौंपता है। राउटर हर सेशन को उसी रेप्लिका पर भेजता है जिसके पास उसका कैश पहले से है; हर GPU पर मॉडल की एक अलग कॉपी चलती है।",
+    "source_hash": "ae1c2b1f74bf"
+  },
+  "clients.codex-cli.flow.caption": {
+    "text": "Codex CLI का अनुरोध कहाँ जाता है: Connect की लिखी दो सेटिंग, बीच में warden, फिर हर GPU पर मॉडल की एक कॉपी।",
+    "source_hash": "4596be3eb188"
+  },
+  "clients.codex-cli.capability": {
+    "text": "सिर्फ़ लोकल मॉडल। Codex सिर्फ़ Responses API इस्तेमाल करता है; warden लोड किए गए मॉडल के लिए <code>POST /v1/responses</code> को Chat Completions में बदल देता है, इसलिए जवाब, टूल कॉल और उपयोग Codex तक Responses इवेंट के रूप में पहुँचते हैं। यह स्टेटलेस है: Codex हर टर्न में <code>store:false</code> और पूरी बातचीत भेजता है, और <code>previous_response_id</code> स्वीकार नहीं किया जाता। थिंकिंग डिफ़ॉल्ट रूप से चालू है (Codex रीज़निंग सारांश माँगता है और मॉडल की रीज़निंग सारांश के रूप में दिखती है; इसे बंद करने के लिए <code>config.toml</code> में <code>model_reasoning_effort = \"none\"</code> सेट करें), होस्टेड वेब सर्च हटा दिया जाता है (<code>web_search = \"disabled\"</code> सेट करें), और राउटर के नियम लागू नहीं होते। <code>model_context_window</code> को मॉडल की असली विंडो पर सेट करें: जिन नामों को Codex नहीं जानता उनके लिए वह 272k मान लेता है। इंजन में टूल कॉलिंग चालू होनी चाहिए (vLLM: <code>--enable-auto-tool-choice</code> और एक <code>--tool-call-parser</code>)। जो मॉडल लोड नहीं है उसके अनुरोध पर 404 मिलता है और Codex हार मानने से पहले कई सेकंड तक दोबारा कोशिश करता है।",
+    "source_hash": "b7c7ad7fa0c7"
+  },
+  "clients.codex-cli.req.tools": {
+    "text": "टूल कॉलिंग वाला मॉडल चाहिए (एजेंटिक एडिट के लिए)।",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.codex-cli.req.min_context": {
+    "text": "कम से कम 32,768 टोकन के कॉन्टेक्स्ट के साथ सबसे अच्छा काम करता है।",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.codex-cli.mode.default.title": {
+    "text": "लोकल मॉडल",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.codex-cli.mode.default.desc": {
+    "text": "<code>~/.codex/config.toml</code> में LM Warden को मॉडल प्रोवाइडर के रूप में जोड़ें।",
+    "source_hash": "0e63a370854f"
+  }
+}

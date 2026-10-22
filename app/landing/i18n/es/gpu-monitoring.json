@@ -1,0 +1,198 @@
+{
+  "gpu-monitoring.meta.title": {
+    "text": "Supervisión de GPU por tarjeta para vLLM | LM Warden",
+    "source_hash": "d27814ed8b63"
+  },
+  "gpu-monitoring.meta.description": {
+    "text": "En Linux, cada tarjeta NVIDIA tiene su propio panel: temperatura frente a su umbral de limitación térmica, potencia frente a su límite, enlace PCIe y cada solicitud en curso.",
+    "source_hash": "507736e1bea9"
+  },
+  "gpu-monitoring.box.h1-1": {
+    "text": "Supervisión de GPU: la máquina detrás de estas cifras.",
+    "source_hash": "cc0f4c9bbf2b"
+  },
+  "gpu-monitoring.p-1": {
+    "text": "Salvo que un pie de figura indique lo contrario, las lecturas de esta página proceden de una sola estación de trabajo: cuatro RTX&nbsp;A4000 con un único modelo cargado entre todas ellas y ocupadas con nuestro propio tráfico de prueba. Son las cifras que mostraba la consola cuando hicimos las capturas de las fig.&nbsp;1 y&nbsp;5. Las pruebas de capacidad (qué cabe en cada tarjeta) que aparecen más abajo también usaron una Quadro&nbsp;RTX&nbsp;5000, y así se indica.",
+    "source_hash": "a9ca4640a6e7"
+  },
+  "gpu-monitoring.p-2": {
+    "text": "Los paneles por tarjeta leen el controlador de NVIDIA, así que forman parte de la instalación de Linux. En un Mac con chip de Apple, la <a href=\"/#p-mac\">app para Mac (beta)</a> muestra el uso de la GPU y el presupuesto de memoria que indica Metal, sin lectura de potencia.",
+    "source_hash": "e6e25a4491ad"
+  },
+  "gpu-monitoring.dt-1": {
+    "text": "GPU",
+    "source_hash": "8f0474fb0c5b"
+  },
+  "gpu-monitoring.dd-1": {
+    "text": "4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000, 16&#8239;GiB cada una (Ampere, compute&nbsp;8.6)",
+    "source_hash": "065609784858"
+  },
+  "gpu-monitoring.dt-2": {
+    "text": "VRAM en uso",
+    "source_hash": "60de0ad7eb70"
+  },
+  "gpu-monitoring.dd-2": {
+    "text": "59,4 de 64,0&#8239;GiB, un modelo repartido entre las cuatro tarjetas",
+    "source_hash": "2a58556c9272"
+  },
+  "gpu-monitoring.dd-3": {
+    "text": "Gen&nbsp;4 x16 por tarjeta",
+    "source_hash": "a85ab5eb706a"
+  },
+  "gpu-monitoring.dt-3": {
+    "text": "Controlador",
+    "source_hash": "9fe4c68ec20d"
+  },
+  "gpu-monitoring.dd-4": {
+    "text": "<code>610.57.04</code>, CUDA&nbsp;13.3",
+    "source_hash": "a041ea9e5251"
+  },
+  "gpu-monitoring.caption-1": {
+    "text": "Carga de GPU, potencia y tokens, tomados de la fig.&nbsp;1",
+    "source_hash": "db678a93d309"
+  },
+  "gpu-monitoring.th-1": {
+    "text": "Lectura",
+    "source_hash": "463816d07097"
+  },
+  "gpu-monitoring.th-2": {
+    "text": "En la captura",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.th-3": {
+    "text": "Mediana en carga (24&#8239;h)",
+    "source_hash": "af088ec66533"
+  },
+  "gpu-monitoring.th-4": {
+    "text": "Pico de 24&#8239;h",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-5": {
+    "text": "Uso de GPU, tarjeta más ocupada&nbsp;(%)",
+    "source_hash": "9739b22b0dce"
+  },
+  "gpu-monitoring.col-capture.data-h": {
+    "text": "En la captura",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.col-median.data-h": {
+    "text": "Mediana 24&#8239;h",
+    "source_hash": "e6245b901702"
+  },
+  "gpu-monitoring.col-peak.data-h": {
+    "text": "Pico 24&#8239;h",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-6": {
+    "text": "Potencia de GPU, suma de las cuatro tarjetas&nbsp;(W)",
+    "source_hash": "6554b6cbd5f4"
+  },
+  "gpu-monitoring.th-7": {
+    "text": "Tokens por minuto (panel del 23 de septiembre)",
+    "source_hash": "eb7b7fd32e11"
+  },
+  "gpu-monitoring.span-1": {
+    "text": "no se muestra",
+    "source_hash": "0bedd95628dd"
+  },
+  "gpu-monitoring.td-7": {
+    "text": "190&nbsp;mil",
+    "source_hash": "eaa6d59dc9be"
+  },
+  "gpu-monitoring.td-8": {
+    "text": "880&nbsp;mil",
+    "source_hash": "8678af14d6a2"
+  },
+  "gpu-monitoring.p-3": {
+    "text": "Tus cifras serán distintas; para eso se miden. La fila de tokens es anterior al cambio a tokens por segundo: el panel de estadísticas ahora representa tokens por segundo, y estas cifras son de la captura del 23&nbsp;de septiembre en el antiguo panel por minuto.",
+    "source_hash": "fc86e0160504"
+  },
+  "gpu-monitoring.cards.h2-1": {
+    "text": "Lo que no se puede medir aparece como «no disponible».",
+    "source_hash": "036e83c1af39"
+  },
+  "gpu-monitoring.p-4": {
+    "text": "La mayoría de los paneles de GPU promedian cuatro tarjetas en una sola línea y representan un valor que falta como&nbsp;0. Este da a cada tarjeta su propio panel: temperatura frente al umbral de limitación térmica que indica su controlador, potencia frente al límite de la propia tarjeta, frecuencias, ventilador, el enlace PCIe tal como está negociado en ese momento, y ECC y NVLink si la tarjeta los tiene. Dos tarjetas compradas con dieciocho meses de diferencia siguen siendo dos tarjetas, y un valor que el controlador no proporciona se marca como ausente en lugar de representarse como cero.",
+    "source_hash": "f87275635f5c"
+  },
+  "gpu-monitoring.img-1.alt": {
+    "text": "Cuatro paneles de GPU de la página Stats con carga, uno por RTX A4000: uso del 99 al 100 por ciento en el estado de energía P2, temperaturas de 79 a 94 grados frente a un umbral de limitación de 100 grados, un aviso de ralentización térmica en tres tarjetas, potencia de 134 a 138 de un límite de 140 vatios, frecuencias, versión del controlador y de CUDA, enlace PCIe, NVLink y ECC",
+    "source_hash": "55b551e38c61"
+  },
+  "gpu-monitoring.span-2": {
+    "text": "Umbral de limitación del controlador, no una estimación",
+    "source_hash": "b3bd726e07ac"
+  },
+  "gpu-monitoring.span-3": {
+    "text": "Por qué baja la frecuencia, según el controlador",
+    "source_hash": "7be6f5cf26b2"
+  },
+  "gpu-monitoring.span-4": {
+    "text": "Potencia frente a su propio límite de 140&#8239;W",
+    "source_hash": "ef8ca2bcafce"
+  },
+  "gpu-monitoring.span-5": {
+    "text": "NVLink y ECC, tal como los indica la tarjeta",
+    "source_hash": "c4d22dc73625"
+  },
+  "gpu-monitoring.figcaption-1": {
+    "text": "<b>Fig.&nbsp;5</b>Los cuatro paneles de GPU de la misma página Stats, a tamaño completo, capturados durante la misma carga. Todas las tarjetas están al 99 o al 100 % en el estado de energía P2, y en tres de ellas, a entre 90 y 94&#8239;°C, el controlador limita la frecuencia a entre el 76 y el 84 % de la máxima.<span class=\"scroll-hint\"> Desplaza la imagen lateralmente para ver las cuatro.</span>",
+    "source_hash": "7aa9957f224d"
+  },
+  "gpu-monitoring.caption-2": {
+    "text": "Qué se lee y dónde",
+    "source_hash": "fd76edd0a9d5"
+  },
+  "gpu-monitoring.th-8": {
+    "text": "Por tarjeta",
+    "source_hash": "b596b0114ded"
+  },
+  "gpu-monitoring.td-9": {
+    "text": "Temperatura y umbral de limitación térmica, potencia y su límite, frecuencias del núcleo y de la memoria, ventilador, generación y ancho de PCIe, ECC, NVLink y el proceso del motor que usa la tarjeta",
+    "source_hash": "1f5a45a29bdc"
+  },
+  "gpu-monitoring.th-9": {
+    "text": "Por host",
+    "source_hash": "fd8f8648eb41"
+  },
+  "gpu-monitoring.td-10": {
+    "text": "VRAM en uso, uso de GPU (la tarjeta más ocupada), potencia (la suma de las tarjetas) y tokens por segundo",
+    "source_hash": "d8e9193ca58e"
+  },
+  "gpu-monitoring.th-10": {
+    "text": "Por solicitud",
+    "source_hash": "c01f2094044d"
+  },
+  "gpu-monitoring.td-11": {
+    "text": "Tiempo hasta el primer token, latencia entre tokens y duración, medidos en el proxy de la misma forma para ambos motores",
+    "source_hash": "92c8d3b9a423"
+  },
+  "gpu-monitoring.inflight.h2-1": {
+    "text": "Qué está esperando cada solicitud.",
+    "source_hash": "87e975182d2c"
+  },
+  "gpu-monitoring.p-5": {
+    "text": "La página Stats enumera cada solicitud en curso con la sesión del cliente y la fase en la que se encuentra: en cola en el warden, prefill (el motor leyendo el prompt), razonando, escribiendo una llamada a herramienta o respondiendo. Una insignia indica qué parte del prompt probablemente está en la caché de la réplica. Si un prefill dura más de lo que predice la velocidad de prefill que ha aprendido esta máquina, se indica el motivo probable de la espera: hay otros prompts por delante en la misma réplica, la caché probablemente se ha desalojado, o es lento sin un motivo que el warden pueda ver. La sesión se obtiene del ID que cada herramienta ya envía: Claude Code, Codex, OpenCode y pi sin configurar nada; Hermes y Aider, con una línea de configuración.",
+    "source_hash": "4d6984e02a57"
+  },
+  "gpu-monitoring.img-2.alt": {
+    "text": "La tabla In flight con 14 solicitudes activas, todas de la clave agent-farm desde una sola dirección de cliente. Columnas: token, IP del cliente, sesión, modelo, fase, ventana de contexto y tiempo transcurrido. Seis filas están en llamada a herramienta o respondiendo y ocho en prefill, la mayoría con una insignia que estima entre el 94 y el 100 % del prompt en caché; tres prefills llevan una insignia evict? y dos una insignia de reloj de arena, 1·r0 y 1·r4. Debajo de la tabla: modelo de prefill de 439 tok/s aprendido de 1132 solicitudes, estimación de caché acertada el 57 % de las veces, y la tasa de aciertos según el tiempo de inactividad: 68 % con hasta 30 segundos, que cae al 18 % con 5 a 15 minutos.",
+    "source_hash": "850b1ebebfcc"
+  },
+  "gpu-monitoring.span-6": {
+    "text": "Aún sin token: caché probablemente desalojada",
+    "source_hash": "807aafa43674"
+  },
+  "gpu-monitoring.span-7": {
+    "text": "Tiene un prompt por delante en la réplica 4",
+    "source_hash": "c6220dc860be"
+  },
+  "gpu-monitoring.figcaption-2": {
+    "text": "<b>Fig.&nbsp;12</b>Catorce solicitudes en curso en la máquina de siete GPU. Bajo la tabla aparece lo que el warden ha aprendido de las solicitudes terminadas: esta máquina hace el prefill a unos 439 tokens por segundo por solicitud, su estimación de caché acertó el 57 % de las veces, y una conversación inactiva durante más de dos minutos suele encontrarse la caché vacía (20 % de aciertos tras 2 a 5 minutos). El nombre de la clave es ficticio y la dirección es una dirección reservada para documentación. Con menos de 768 píxeles de ancho, la tabla se convierte en una lista de fichas. Captura del 5&nbsp;de octubre de 2026.<span class=\"scroll-hint\"> Desplaza la imagen lateralmente para ver todas las columnas.</span>",
+    "source_hash": "cb4966892bbc"
+  },
+  "gpu-monitoring.p-6": {
+    "text": "Relacionado: <a href=\"/cache-aware-routing\">enrutamiento según la caché</a> · <a href=\"/api-keys\">claves de API</a> · <a href=\"/coding-agents\">agentes de programación</a>",
+    "source_hash": "1669f0782d97"
+  }
+}

@@ -100,7 +100,31 @@
     "P7",
     "P5",
     "P3",
-    "P1"
+    "P1",
+    "Chat Completions",
+    "Completions",
+    "OpenAI Compatible",
+    "API Provider",
+    "Cursor Settings",
+    "Override OpenAI Base URL",
+    "May relay",
+    "grok-cli",
+    "xAI",
+    "Grok",
+    "Bun",
+    "baseURL",
+    "apiKey",
+    "apiBase",
+    "base_url",
+    "api_key",
+    "env_key",
+    "OPENAI_API_BASE",
+    "OPENAI_API_KEY",
+    "X-LMWarden-Key",
+    "Base URL",
+    "API Key",
+    "OpenAI API Key",
+    "api.anthropic.com"
   ],
   "do_not_translate_also": "key names follow the locale (Strg+C in German, per the Microsoft guides); every <code> span, every URL and {{token}}, model ids, numbers' values (their separators follow the locale), units' symbols (GB, GiB, W, s, h, d).",
   "preferred": {
@@ -323,39 +347,154 @@
   },
   "identical_ok": {
     "de": [
+      "cache-aware-routing.dd-2",
+      "cache-aware-routing.dd-3",
+      "cache-aware-routing.dt-1",
       "chrome.nav.faq",
+      "clients.cline.mode.default.desc",
+      "common.clients.client",
+      "common.crumb.faq",
+      "common.file.shell",
+      "gpu-monitoring.dd-4",
+      "gpu-monitoring.dt-1",
       "home.hero.span-7",
       "home.install.b-3"
     ],
     "fr": [
+      "cache-aware-routing.dd-2",
+      "cache-aware-routing.dd-3",
       "chrome.docs.full",
       "chrome.docs.short",
       "chrome.footer.licence",
       "chrome.nav.faq",
-      "chrome.nav.menu"
+      "chrome.nav.menu",
+      "clients.cline.mode.default.desc",
+      "common.clients.client",
+      "common.crumb.faq",
+      "common.file.shell",
+      "gpu-monitoring.dd-4"
     ],
     "es": [
+      "cache-aware-routing.dd-2",
+      "cache-aware-routing.dd-3",
       "chrome.docs.short",
       "chrome.nav.faq",
+      "clients.cline.mode.default.desc",
+      "common.crumb.faq",
+      "common.file.shell",
+      "gpu-monitoring.dd-4",
       "home.install.span-2"
     ],
     "pt-BR": [
+      "agent-tuning.th-2",
+      "cache-aware-routing.dd-2",
+      "cache-aware-routing.dd-3",
+      "cache-aware-routing.dt-1",
+      "cache-aware-routing.dt-3",
       "chrome.docs.short",
       "chrome.nav.faq",
       "chrome.nav.menu",
+      "clients.cline.mode.default.desc",
+      "common.crumb.faq",
+      "common.file.shell",
+      "gpu-monitoring.dd-4",
+      "gpu-monitoring.dt-1",
+      "gpu-monitoring.dt-3",
       "home.install.span-2"
     ],
     "pl": [
+      "cache-aware-routing.dd-2",
+      "cache-aware-routing.dd-3",
+      "cache-aware-routing.dt-2",
       "chrome.nav.faq",
-      "chrome.nav.menu"
+      "chrome.nav.menu",
+      "clients.cline.mode.default.desc",
+      "common.crumb.faq",
+      "features.th-1",
+      "gpu-monitoring.dd-4"
+    ],
+    "ru": [
+      "clients.cline.mode.default.desc",
+      "gpu-monitoring.dd-4",
+      "cache-aware-routing.dd-2",
+      "cache-aware-routing.dd-3"
+    ],
+    "uk": [
+      "cache-aware-routing.dd-2",
+      "cache-aware-routing.dd-3",
+      "clients.cline.mode.default.desc",
+      "gpu-monitoring.dd-4"
+    ],
+    "zh-CN": [
+      "common.file.shell",
+      "gpu-monitoring.td-7",
+      "gpu-monitoring.td-8"
+    ],
+    "ja": [
+      "gpu-monitoring.td-7",
+      "gpu-monitoring.td-8"
+    ],
+    "hi": [
+      "cache-aware-routing.dd-2",
+      "cache-aware-routing.dd-3",
+      "clients.cline.mode.default.desc",
+      "gpu-monitoring.dd-4",
+      "gpu-monitoring.td-7",
+      "gpu-monitoring.td-8"
     ]
   },
   "glossary_ok": {
     "home.why-keys.figcaption-1": [
       "Windows"
+    ],
+    "agent-tuning.jsonld.step-3": [
+      "Connect"
     ]
   },
   "numbers_ok": {
-    "de": []
+    "de": [
+      "features.p-3"
+    ],
+    "ru": [
+      "features.p-3"
+    ],
+    "zh-CN": [
+      "api-keys.figcaption-2",
+      "api-keys.img-1.alt",
+      "api-keys.p-3",
+      "cache-aware-routing.dd-6",
+      "cache-aware-routing.figcaption-5",
+      "cache-aware-routing.figcaption-6",
+      "cache-aware-routing.p-6",
+      "claude-code-router.figcaption-3",
+      "features.dd-8",
+      "gpu-monitoring.figcaption-2",
+      "gpu-monitoring.p-3",
+      "gpu-monitoring.th-7",
+      "home.agents.span-8",
+      "home.why-cache.figcaption-4"
+    ],
+    "ja": [
+      "api-keys.figcaption-2",
+      "api-keys.img-1.alt",
+      "api-keys.p-3",
+      "cache-aware-routing.dd-6",
+      "cache-aware-routing.figcaption-5",
+      "cache-aware-routing.figcaption-6",
+      "cache-aware-routing.p-6",
+      "claude-code-router.figcaption-3",
+      "features.dd-8",
+      "gpu-monitoring.figcaption-2",
+      "gpu-monitoring.p-3",
+      "gpu-monitoring.th-7",
+      "home.agents.span-8",
+      "home.why-cache.figcaption-4"
+    ],
+    "fr": [
+      "features.p-3"
+    ],
+    "es": [
+      "features.p-3"
+    ]
   }
 }

@@ -1,0 +1,527 @@
+{
+  "clients.meta.title": {
+    "text": "{name} with a local LLM on your GPUs | LM Warden",
+    "note": "Title of each coding-agent page; {name} is the client (Claude Code, Aider, ...). Keep the part after | as it is; at most 60 characters with a 12-character name.",
+    "hash": "9a440e2e3c4a"
+  },
+  "clients.meta.description": {
+    "text": "{name} with LM Warden: {summary}",
+    "note": "Meta description of each coding-agent page: {summary} is that page's lede (clients.<id>.summary, tags removed). Cut at 155 characters.",
+    "hash": "9d9c76c6bb07"
+  },
+  "clients.claude-code.h1": {
+    "text": "Claude Code on your own GPUs.",
+    "note": "page headline (#client-title)",
+    "hash": "9bb97352447d"
+  },
+  "clients.claude-code.summary": {
+    "text": "Keep your Claude login and run the models your rules name here, or run it fully local.",
+    "note": "text (#main)",
+    "hash": "b46e643eeaac"
+  },
+  "clients.claude-code.capability": {
+    "text": "The Claude models your rules name run here; every other model and <code>/v1</code> path goes to Anthropic on your own login. Never put the warden key in <code>ANTHROPIC_API_KEY</code> or <code>ANTHROPIC_AUTH_TOKEN</code> in router mode: that would replace your login. Local only runs everything on one served model, including the small background tasks, and nothing goes to Anthropic.",
+    "note": "text (#main)",
+    "hash": "79cee967a1ad"
+  },
+  "clients.claude-code.req.client_version": {
+    "text": "Claude Code 2.1.227 or newer (<code>ANTHROPIC_CUSTOM_HEADERS</code>).",
+    "note": "text (#main)",
+    "hash": "baf574b32f46"
+  },
+  "clients.claude-code.req.router_on": {
+    "text": "Routing must be on, with at least one enabled rule.",
+    "note": "text (#main)",
+    "hash": "f0fd90d78fe4"
+  },
+  "clients.claude-code.req.relay_key": {
+    "text": "The key must be allowed to relay to Anthropic (May relay).",
+    "note": "text (#main)",
+    "hash": "df8e31733077"
+  },
+  "clients.claude-code.req.min_context": {
+    "text": "Needs at least 49,152 tokens of context: the first turn alone is about 38,000 tokens before any file is read.",
+    "note": "text (#main)",
+    "hash": "5cc65b30acd7"
+  },
+  "clients.claude-code.req.recommended_context": {
+    "text": "131,072 tokens or more for real sessions; less works for short ones.",
+    "note": "text (#main)",
+    "hash": "82792a23c7a0"
+  },
+  "clients.claude-code.req.unknown_model_window": {
+    "text": "Claude Code may warn that the model name is not in its catalogue. That is informational: it assumes a 200k window and auto-compacts accordingly. Set <code>CLAUDE_CODE_MAX_CONTEXT_TOKENS</code> to the model’s real context window.",
+    "note": "text (#main)",
+    "hash": "c67abcb52ad3"
+  },
+  "clients.claude-code.mode.router.title": {
+    "text": "Router: keep your Claude login",
+    "note": "heading (#main)",
+    "hash": "872bcc0e520c"
+  },
+  "clients.claude-code.mode.router.desc": {
+    "text": "Your Claude login keeps flowing to Anthropic; the warden key travels in its own header, and the models your rules name are answered here.",
+    "note": "text (#main)",
+    "hash": "9832c50a640e"
+  },
+  "clients.claude-code.mode.local.title": {
+    "text": "Local only (no Anthropic account)",
+    "note": "heading (#main)",
+    "hash": "2a51ef910e22"
+  },
+  "clients.claude-code.mode.local.desc": {
+    "text": "Every model slot is the picked served model and the warden key is the auth token. Nothing goes to Anthropic.",
+    "note": "text (#main)",
+    "hash": "1dea6fe58a27"
+  },
+  "clients.anthropic-sdk.h1": {
+    "text": "Anthropic SDK on your own GPUs.",
+    "note": "page headline (#client-title)",
+    "hash": "4229892646ec"
+  },
+  "clients.anthropic-sdk.summary": {
+    "text": "Your Anthropic API key stays in <code>api_key</code>; the warden key rides in its own header.",
+    "note": "text (#main)",
+    "hash": "910172f40b64"
+  },
+  "clients.anthropic-sdk.flow.title": {
+    "text": "Where a request from Anthropic SDK goes",
+    "note": "drawing title for screen readers (#flow-anthropic-sdk-title)",
+    "hash": "26e8b7e39b44"
+  },
+  "clients.anthropic-sdk.flow.desc": {
+    "text": "Anthropic SDK sends its requests to LM Warden with base_url set to the warden and X-LMWarden-Key holding a warden key. LM Warden checks the key, speaks Anthropic Messages, queues the request by key priority and hands it to the replica router, which keeps each session on the replica that already holds its cache, one model copy per GPU. A separate path goes to api.anthropic.com: rules send other Claude models here, on your own API key.",
+    "note": "drawing description for screen readers (#flow-anthropic-sdk-desc)",
+    "hash": "26917b07643f"
+  },
+  "clients.anthropic-sdk.flow.caption": {
+    "text": "Where a request from Anthropic SDK goes: the two settings Connect writes, the warden in the middle, then one copy of the model per GPU.",
+    "note": "figure caption (#main)",
+    "hash": "a4ec23a63573"
+  },
+  "clients.anthropic-sdk.capability": {
+    "text": "The Claude models your rules name run here; every other model and <code>/v1</code> path goes to Anthropic on your own login. Local only needs no Anthropic account: the warden key is the <code>api_key</code> and the model is a served name.",
+    "note": "text (#main)",
+    "hash": "3d9a6a025316"
+  },
+  "clients.anthropic-sdk.req.router_on": {
+    "text": "Routing must be on, with at least one enabled rule.",
+    "note": "text (#main)",
+    "hash": "f0fd90d78fe4"
+  },
+  "clients.anthropic-sdk.req.relay_key": {
+    "text": "The key must be allowed to relay to Anthropic (May relay).",
+    "note": "text (#main)",
+    "hash": "df8e31733077"
+  },
+  "clients.anthropic-sdk.mode.router.title": {
+    "text": "Router: keep your Anthropic key",
+    "note": "heading (#main)",
+    "hash": "5e22bff885a6"
+  },
+  "clients.anthropic-sdk.mode.router.desc": {
+    "text": "<code>base_url</code> is this warden; your Anthropic API key stays in <code>api_key</code> and the warden key goes in default headers.",
+    "note": "text (#main)",
+    "hash": "fe17e904c7dd"
+  },
+  "clients.anthropic-sdk.mode.local.title": {
+    "text": "Local only",
+    "note": "heading (#main)",
+    "hash": "c905013aab29"
+  },
+  "clients.anthropic-sdk.mode.local.desc": {
+    "text": "The warden key is the <code>api_key</code> and the model is a served name.",
+    "note": "text (#main)",
+    "hash": "e1b1c200ccb3"
+  },
+  "clients.opencode.h1": {
+    "text": "OpenCode on your own GPUs.",
+    "note": "page headline (#client-title)",
+    "hash": "0f9f0d85229c"
+  },
+  "clients.opencode.summary": {
+    "text": "LM Warden as an OpenAI-compatible provider for OpenCode, one served model.",
+    "note": "text (#main)",
+    "hash": "0dbe773d1ba9"
+  },
+  "clients.opencode.flow.title": {
+    "text": "Where a request from OpenCode goes",
+    "note": "drawing title for screen readers (#flow-opencode-title)",
+    "hash": "ae2c3d407d79"
+  },
+  "clients.opencode.flow.desc": {
+    "text": "OpenCode sends its requests to LM Warden with baseURL set to the warden and apiKey holding a warden key. LM Warden checks the key, speaks OpenAI Chat Completions, queues the request by key priority and hands it to the replica router, which keeps each session on the replica that already holds its cache, one model copy per GPU.",
+    "note": "drawing description for screen readers (#flow-opencode-desc)",
+    "hash": "5a53f0ea3bba"
+  },
+  "clients.opencode.flow.caption": {
+    "text": "Where a request from OpenCode goes: the two settings Connect writes, the warden in the middle, then one copy of the model per GPU.",
+    "note": "figure caption (#main)",
+    "hash": "774655618391"
+  },
+  "clients.opencode.capability": {
+    "text": "Local models only, over Chat Completions (<code>@ai-sdk/openai-compatible</code>; <code>@ai-sdk/openai</code> would use the Responses API, which this warden translates for Codex CLI only). The model id must be a served name from <code>/v1/models</code>. For a committed file, use <code>{env:LMWARDEN_KEY}</code> instead of the key. Router mode through OpenCode’s Anthropic provider is not covered yet.",
+    "note": "text (#main)",
+    "hash": "8901779665ff"
+  },
+  "clients.opencode.req.tools": {
+    "text": "Needs a model with tool calling (agentic edits).",
+    "note": "text (#main)",
+    "hash": "b9d5cc99b8c8"
+  },
+  "clients.opencode.req.min_context": {
+    "text": "Works best with at least 32,768 tokens of context.",
+    "note": "text (#main)",
+    "hash": "46484b098fc4"
+  },
+  "clients.opencode.mode.default.title": {
+    "text": "Local models",
+    "note": "heading (#main)",
+    "hash": "8e4bf4368b03"
+  },
+  "clients.opencode.mode.default.desc": {
+    "text": "Add LM Warden as a provider in <code>opencode.json</code> and make it the default.",
+    "note": "text (#main)",
+    "hash": "e03771b96f12"
+  },
+  "clients.aider.h1": {
+    "text": "Aider on your own GPUs.",
+    "note": "page headline (#client-title)",
+    "hash": "b1e1b6bd30b4"
+  },
+  "clients.aider.summary": {
+    "text": "Aider on a served model through its OpenAI-compatible provider.",
+    "note": "text (#main)",
+    "hash": "2a2e36942a30"
+  },
+  "clients.aider.flow.title": {
+    "text": "Where a request from Aider goes",
+    "note": "drawing title for screen readers (#flow-aider-title)",
+    "hash": "32e01b3b0c97"
+  },
+  "clients.aider.flow.desc": {
+    "text": "Aider sends its requests to LM Warden with OPENAI_API_BASE set to the warden and OPENAI_API_KEY holding a warden key. LM Warden checks the key, speaks OpenAI Chat Completions, queues the request by key priority and hands it to the replica router, which keeps each session on the replica that already holds its cache, one model copy per GPU.",
+    "note": "drawing description for screen readers (#flow-aider-desc)",
+    "hash": "3b2c308c114e"
+  },
+  "clients.aider.flow.caption": {
+    "text": "Where a request from Aider goes: the two settings Connect writes, the warden in the middle, then one copy of the model per GPU.",
+    "note": "figure caption (#main)",
+    "hash": "e58a54a34cdc"
+  },
+  "clients.aider.capability": {
+    "text": "Local models only, over Chat Completions. Aider edits through text formats, so the model needs no tool calling. The metadata file only stops Aider warning about an unknown model and sets its context size.",
+    "note": "text (#main)",
+    "hash": "922681946310"
+  },
+  "clients.aider.req.min_context": {
+    "text": "Works best with at least 32,768 tokens of context.",
+    "note": "text (#main)",
+    "hash": "46484b098fc4"
+  },
+  "clients.aider.mode.default.title": {
+    "text": "Local models",
+    "note": "heading (#main)",
+    "hash": "8e4bf4368b03"
+  },
+  "clients.aider.mode.default.desc": {
+    "text": "Point Aider’s OpenAI provider at this warden.",
+    "note": "text (#main)",
+    "hash": "df94297df209"
+  },
+  "clients.aider.mode.default.file.session": {
+    "text": "Session id per launch (optional)",
+    "note": "text (#main)",
+    "hash": "c1f31c2b83f0"
+  },
+  "clients.grok-cli.h1": {
+    "text": "Grok CLI on your own GPUs.",
+    "note": "page headline (#client-title)",
+    "hash": "9e97001cf2f3"
+  },
+  "clients.grok-cli.summary": {
+    "text": "xAI’s Grok Build CLI with LM Warden as a bring-your-own-key model.",
+    "note": "text (#main)",
+    "hash": "be6e0d9a09ed"
+  },
+  "clients.grok-cli.flow.title": {
+    "text": "Where a request from Grok CLI goes",
+    "note": "drawing title for screen readers (#flow-grok-cli-title)",
+    "hash": "eeb620d01d38"
+  },
+  "clients.grok-cli.flow.desc": {
+    "text": "Grok CLI sends its requests to LM Warden with base_url set to the warden and env_key holding a warden key. LM Warden checks the key, speaks OpenAI Chat Completions, queues the request by key priority and hands it to the replica router, which keeps each session on the replica that already holds its cache, one model copy per GPU.",
+    "note": "drawing description for screen readers (#flow-grok-cli-desc)",
+    "hash": "ef648e107c77"
+  },
+  "clients.grok-cli.flow.caption": {
+    "text": "Where a request from Grok CLI goes: the two settings Connect writes, the warden in the middle, then one copy of the model per GPU.",
+    "note": "figure caption (#main)",
+    "hash": "b77ddcf1b78a"
+  },
+  "clients.grok-cli.capability": {
+    "text": "Local models only, over Chat Completions (<code>api_backend = chat_completions</code>). There is no pass-through to xAI, and a BYOK model needs no xAI login. <code>session_summary</code> keeps Grok’s session-title requests on this model; without it Grok asks this warden for <code>grok-4.6</code> and gets a 404. Grok adds its own sections to <code>config.toml</code> when it runs. The community grok-cli (npm <code>grok-dev</code>) is a different tool: chat works, tool calls do not.",
+    "note": "text (#main)",
+    "hash": "03938abace0a"
+  },
+  "clients.grok-cli.req.tools": {
+    "text": "Needs a model with tool calling (agentic edits).",
+    "note": "text (#main)",
+    "hash": "b9d5cc99b8c8"
+  },
+  "clients.grok-cli.req.min_context": {
+    "text": "Works best with at least 32,768 tokens of context.",
+    "note": "text (#main)",
+    "hash": "46484b098fc4"
+  },
+  "clients.grok-cli.mode.default.title": {
+    "text": "Grok Build (official)",
+    "note": "heading (#main)",
+    "hash": "1901a8b05d3b"
+  },
+  "clients.grok-cli.mode.default.desc": {
+    "text": "A model entry in <code>~/.grok/config.toml</code>; the key comes from <code>LMWARDEN_KEY</code>. Install: <code>curl -fsSL https://x.ai/cli/install.sh | bash</code>, or <code>npm i -g @xai-official/grok</code>",
+    "note": "text (#main)",
+    "hash": "b5943bc2443d"
+  },
+  "clients.grok-cli.mode.community.title": {
+    "text": "Community grok-cli",
+    "note": "heading (#main)",
+    "hash": "28bbd28283a3"
+  },
+  "clients.grok-cli.mode.community.desc": {
+    "text": "The community grok-cli reads its base URL, key and model from the env and needs Bun installed. Chat works; tool calls fail, because its xAI SDK rejects tool-call chunks that arrive in parts, as vLLM streams them.",
+    "note": "text (#main)",
+    "hash": "0b589963361a"
+  },
+  "clients.openai-sdk.h1": {
+    "text": "OpenAI SDK on your own GPUs.",
+    "note": "page headline (#client-title)",
+    "hash": "db3661cee041"
+  },
+  "clients.openai-sdk.summary": {
+    "text": "Any OpenAI SDK, or anything with an OpenAI-compatible base URL setting.",
+    "note": "text (#main)",
+    "hash": "16d05b661878"
+  },
+  "clients.openai-sdk.flow.title": {
+    "text": "Where a request from OpenAI SDK goes",
+    "note": "drawing title for screen readers (#flow-openai-sdk-title)",
+    "hash": "13c7ed2b6c10"
+  },
+  "clients.openai-sdk.flow.desc": {
+    "text": "OpenAI SDK sends its requests to LM Warden with base_url set to the warden and api_key holding a warden key. LM Warden checks the key, speaks OpenAI Chat Completions, queues the request by key priority and hands it to the replica router, which keeps each session on the replica that already holds its cache, one model copy per GPU.",
+    "note": "drawing description for screen readers (#flow-openai-sdk-desc)",
+    "hash": "9b9a5c752e5f"
+  },
+  "clients.openai-sdk.flow.caption": {
+    "text": "Where a request from OpenAI SDK goes: the two settings Connect writes, the warden in the middle, then one copy of the model per GPU.",
+    "note": "figure caption (#main)",
+    "hash": "0d8679dd39d0"
+  },
+  "clients.openai-sdk.capability": {
+    "text": "Local models only. There is no pass-through to OpenAI: a request for <code>gpt-*</code> gets 404. Chat Completions and Completions are served; <code>/v1/responses</code> is a stateless translation to Chat Completions (see Codex CLI).",
+    "note": "text (#main)",
+    "hash": "81a1f26dda28"
+  },
+  "clients.openai-sdk.mode.default.title": {
+    "text": "Local models",
+    "note": "heading (#main)",
+    "hash": "8e4bf4368b03"
+  },
+  "clients.openai-sdk.mode.default.desc": {
+    "text": "<code>base_url</code> is this warden’s <code>/v1</code> and the warden key is the API key.",
+    "note": "text (#main)",
+    "hash": "81e9b9ed3e66"
+  },
+  "clients.continue.h1": {
+    "text": "Continue on your own GPUs.",
+    "note": "page headline (#client-title)",
+    "hash": "f33c2b44b3be"
+  },
+  "clients.continue.summary": {
+    "text": "Continue’s OpenAI provider pointed at this warden, one served model.",
+    "note": "text (#main)",
+    "hash": "4377b7395411"
+  },
+  "clients.continue.flow.title": {
+    "text": "Where a request from Continue goes",
+    "note": "drawing title for screen readers (#flow-continue-title)",
+    "hash": "a55ed462d54e"
+  },
+  "clients.continue.flow.desc": {
+    "text": "Continue sends its requests to LM Warden with apiBase set to the warden and apiKey holding a warden key. LM Warden checks the key, speaks OpenAI Chat Completions, queues the request by key priority and hands it to the replica router, which keeps each session on the replica that already holds its cache, one model copy per GPU.",
+    "note": "drawing description for screen readers (#flow-continue-desc)",
+    "hash": "dfee5b6d070e"
+  },
+  "clients.continue.flow.caption": {
+    "text": "Where a request from Continue goes: the two settings Connect writes, the warden in the middle, then one copy of the model per GPU.",
+    "note": "figure caption (#main)",
+    "hash": "c1f803ddf701"
+  },
+  "clients.continue.capability": {
+    "text": "Local models only, over Chat Completions. Router mode would need custom headers Continue does not document.",
+    "note": "text (#main)",
+    "hash": "d76f0ccb6e86"
+  },
+  "clients.continue.req.min_context": {
+    "text": "Works best with at least 32,768 tokens of context.",
+    "note": "text (#main)",
+    "hash": "46484b098fc4"
+  },
+  "clients.continue.mode.default.title": {
+    "text": "Local models",
+    "note": "heading (#main)",
+    "hash": "8e4bf4368b03"
+  },
+  "clients.continue.mode.default.desc": {
+    "text": "A model entry in <code>~/.continue/config.yaml</code>.",
+    "note": "text (#main)",
+    "hash": "8c8d339555ff"
+  },
+  "clients.cline.h1": {
+    "text": "Cline on your own GPUs.",
+    "note": "page headline (#client-title)",
+    "hash": "d0efe15bdc4f"
+  },
+  "clients.cline.summary": {
+    "text": "Cline’s OpenAI Compatible provider, filled in from its settings screen.",
+    "note": "text (#main)",
+    "hash": "d80b0d66c45e"
+  },
+  "clients.cline.flow.title": {
+    "text": "Where a request from Cline goes",
+    "note": "drawing title for screen readers (#flow-cline-title)",
+    "hash": "79932fc0e85c"
+  },
+  "clients.cline.flow.desc": {
+    "text": "Cline sends its requests to LM Warden with Base URL set to the warden and API Key holding a warden key. LM Warden checks the key, speaks OpenAI Chat Completions, queues the request by key priority and hands it to the replica router, which keeps each session on the replica that already holds its cache, one model copy per GPU.",
+    "note": "drawing description for screen readers (#flow-cline-desc)",
+    "hash": "300648093db4"
+  },
+  "clients.cline.flow.caption": {
+    "text": "Where a request from Cline goes: the two settings Connect writes, the warden in the middle, then one copy of the model per GPU.",
+    "note": "figure caption (#main)",
+    "hash": "26566cb52d8d"
+  },
+  "clients.cline.capability": {
+    "text": "Local models only, over streaming Chat Completions. Cline has no config file: enter these values under API Provider &gt; OpenAI Compatible. Its Anthropic provider has a custom base URL but no custom header, so router mode is not available.",
+    "note": "text (#main)",
+    "hash": "21110940c4cb"
+  },
+  "clients.cline.req.tools": {
+    "text": "Needs a model with tool calling (agentic edits).",
+    "note": "text (#main)",
+    "hash": "b9d5cc99b8c8"
+  },
+  "clients.cline.req.min_context": {
+    "text": "Works best with at least 32,768 tokens of context.",
+    "note": "text (#main)",
+    "hash": "46484b098fc4"
+  },
+  "clients.cline.mode.default.title": {
+    "text": "Local models",
+    "note": "heading (#main)",
+    "hash": "8e4bf4368b03"
+  },
+  "clients.cline.mode.default.desc": {
+    "text": "Settings &gt; API Provider &gt; OpenAI Compatible.",
+    "note": "text (#main)",
+    "hash": "f65c6df5377b"
+  },
+  "clients.cursor.h1": {
+    "text": "Cursor on your own GPUs.",
+    "note": "page headline (#client-title)",
+    "hash": "314536df2e7a"
+  },
+  "clients.cursor.summary": {
+    "text": "Cursor’s OpenAI base URL override, for chat with a served model.",
+    "note": "text (#main)",
+    "hash": "1c8912c5ba32"
+  },
+  "clients.cursor.flow.title": {
+    "text": "Where a request from Cursor goes",
+    "note": "drawing title for screen readers (#flow-cursor-title)",
+    "hash": "43c8f2aed837"
+  },
+  "clients.cursor.flow.desc": {
+    "text": "Cursor sends its requests to LM Warden with Override OpenAI Base URL set to the warden and OpenAI API Key holding a warden key. LM Warden checks the key, speaks OpenAI Chat Completions, queues the request by key priority and hands it to the replica router, which keeps each session on the replica that already holds its cache, one model copy per GPU.",
+    "note": "drawing description for screen readers (#flow-cursor-desc)",
+    "hash": "524789d9ea5d"
+  },
+  "clients.cursor.flow.caption": {
+    "text": "Where a request from Cursor goes: the two settings Connect writes, the warden in the middle, then one copy of the model per GPU.",
+    "note": "figure caption (#main)",
+    "hash": "79e33449f1a5"
+  },
+  "clients.cursor.capability": {
+    "text": "Requests are issued from Cursor’s servers, so this warden’s URL must be reachable from the internet; a LAN or localhost warden will not work. Custom keys only work with chat models: Tab completion keeps using Cursor’s own models, and Agent with Cursor’s models rejects custom keys. Cursor’s current docs no longer describe the Override OpenAI Base URL setting; it is known from Cursor staff forum replies.",
+    "note": "text (#main)",
+    "hash": "e3b007a84e77"
+  },
+  "clients.cursor.req.reachable": {
+    "text": "Cursor’s servers call this URL, so it must be reachable from the internet.",
+    "note": "text (#main)",
+    "hash": "0815103f2766"
+  },
+  "clients.cursor.mode.default.title": {
+    "text": "Chat with a local model",
+    "note": "heading (#main)",
+    "hash": "5e7a9a7b90b9"
+  },
+  "clients.cursor.mode.default.desc": {
+    "text": "Cursor Settings &gt; Models, then add the model name as a custom model.",
+    "note": "text (#main)",
+    "hash": "fce3909f9e49"
+  },
+  "clients.codex-cli.h1": {
+    "text": "Codex CLI on your own GPUs.",
+    "note": "page headline (#client-title)",
+    "hash": "ee03de1664ad"
+  },
+  "clients.codex-cli.summary": {
+    "text": "LM Warden as a custom model provider for Codex CLI, one served model.",
+    "note": "text (#main)",
+    "hash": "4ffc9f534362"
+  },
+  "clients.codex-cli.flow.title": {
+    "text": "Where a request from Codex CLI goes",
+    "note": "drawing title for screen readers (#flow-codex-cli-title)",
+    "hash": "4d9d5da5c30b"
+  },
+  "clients.codex-cli.flow.desc": {
+    "text": "Codex CLI sends its requests to LM Warden with base_url set to the warden and env_key holding a warden key. LM Warden checks the key, speaks OpenAI Responses, queues the request by key priority and hands it to the replica router, which keeps each session on the replica that already holds its cache, one model copy per GPU.",
+    "note": "drawing description for screen readers (#flow-codex-cli-desc)",
+    "hash": "ae1c2b1f74bf"
+  },
+  "clients.codex-cli.flow.caption": {
+    "text": "Where a request from Codex CLI goes: the two settings Connect writes, the warden in the middle, then one copy of the model per GPU.",
+    "note": "figure caption (#main)",
+    "hash": "4596be3eb188"
+  },
+  "clients.codex-cli.capability": {
+    "text": "Local models only. Codex speaks only the Responses API; the warden translates <code>POST /v1/responses</code> to Chat Completions for the served model, so the reply, tool calls and usage reach Codex as Responses events. It is stateless: Codex sends <code>store:false</code> and the whole conversation each turn, and <code>previous_response_id</code> is refused. The thinking is on by default (Codex asks for reasoning summaries and the model’s reasoning is shown as a summary; to turn it off, set <code>model_reasoning_effort = \"none\"</code> in <code>config.toml</code>), hosted web search is dropped (set <code>web_search = \"disabled\"</code>), and router rules do not apply. Set <code>model_context_window</code> to the model’s real window: Codex assumes 272k for names it does not know. The engine needs tool calling enabled (vLLM: <code>--enable-auto-tool-choice</code> and a <code>--tool-call-parser</code>). A request for a model that is not loaded gets 404 and Codex retries for several seconds before it gives up.",
+    "note": "text (#main)",
+    "hash": "b7c7ad7fa0c7"
+  },
+  "clients.codex-cli.req.tools": {
+    "text": "Needs a model with tool calling (agentic edits).",
+    "note": "text (#main)",
+    "hash": "b9d5cc99b8c8"
+  },
+  "clients.codex-cli.req.min_context": {
+    "text": "Works best with at least 32,768 tokens of context.",
+    "note": "text (#main)",
+    "hash": "46484b098fc4"
+  },
+  "clients.codex-cli.mode.default.title": {
+    "text": "Local models",
+    "note": "heading (#main)",
+    "hash": "8e4bf4368b03"
+  },
+  "clients.codex-cli.mode.default.desc": {
+    "text": "Add LM Warden as a model provider in <code>~/.codex/config.toml</code>.",
+    "note": "text (#main)",
+    "hash": "0e63a370854f"
+  }
+}

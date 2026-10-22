@@ -1,0 +1,247 @@
+{
+  "gpu-monitoring.meta.title": {
+    "text": "Per-card GPU monitoring for vLLM | LM Warden",
+    "note": "The browser tab and the search-result title. Keep the part after | as it is; at most 65 characters.",
+    "hash": "d27814ed8b63"
+  },
+  "gpu-monitoring.meta.description": {
+    "text": "On Linux, each NVIDIA card gets its own panel: temperature against its throttle point, power against its cap, the PCIe link, and every request in flight.",
+    "note": "The search-result snippet and link-preview text. At most 160 characters.",
+    "hash": "507736e1bea9"
+  },
+  "gpu-monitoring.box.h1-1": {
+    "text": "GPU monitoring: the box behind these numbers.",
+    "note": "page headline (#box-title)",
+    "hash": "cc0f4c9bbf2b"
+  },
+  "gpu-monitoring.p-1": {
+    "text": "\n            Unless a caption says otherwise, the readings on this page come from one workstation:\n            four RTX&nbsp;A4000s, with a single model loaded across all of them, busy with our own test\n            traffic. These are the numbers the console showed while we recorded figs.&nbsp;1 and&nbsp;5.\n            The fit tests further down also used a Quadro&nbsp;RTX&nbsp;5000, and say so.\n          ",
+    "note": "text (#main)",
+    "hash": "a9ca4640a6e7"
+  },
+  "gpu-monitoring.p-2": {
+    "text": "\n            The per-card panels read NVIDIA’s driver, so they are part of the Linux install.\n            On an Apple silicon Mac the <a href=\"/#p-mac\">Mac app (beta)</a> shows GPU use and the\n            memory budget Metal reports, with no power reading.\n          ",
+    "note": "text (#main)",
+    "hash": "e6e25a4491ad"
+  },
+  "gpu-monitoring.dt-1": {
+    "text": "GPUs",
+    "note": "text (#main)",
+    "hash": "8f0474fb0c5b"
+  },
+  "gpu-monitoring.dd-1": {
+    "text": "4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000, 16&#8239;GiB each (Ampere, compute&nbsp;8.6)",
+    "note": "text (#main)",
+    "hash": "065609784858"
+  },
+  "gpu-monitoring.dt-2": {
+    "text": "VRAM in use",
+    "note": "text (#main)",
+    "hash": "60de0ad7eb70"
+  },
+  "gpu-monitoring.dd-2": {
+    "text": "59.4 of 64.0&#8239;GiB, one model across all four cards",
+    "note": "text (#main)",
+    "hash": "2a58556c9272"
+  },
+  "gpu-monitoring.dd-3": {
+    "text": "Gen&nbsp;4 x16 per card",
+    "note": "text (#main)",
+    "hash": "a85ab5eb706a"
+  },
+  "gpu-monitoring.dt-3": {
+    "text": "Driver",
+    "note": "text (#main)",
+    "hash": "9fe4c68ec20d"
+  },
+  "gpu-monitoring.dd-4": {
+    "text": "<code>610.57.04</code>, CUDA&nbsp;13.3",
+    "note": "text (#main)",
+    "hash": "a041ea9e5251"
+  },
+  "gpu-monitoring.caption-1": {
+    "text": "GPU load, power and tokens, read off fig.&nbsp;1",
+    "note": "text (#main)",
+    "hash": "db678a93d309"
+  },
+  "gpu-monitoring.th-1": {
+    "text": "Reading",
+    "note": "text (#main)",
+    "hash": "463816d07097"
+  },
+  "gpu-monitoring.th-2": {
+    "text": "At capture",
+    "note": "text (#main)",
+    "hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.th-3": {
+    "text": "24&#8239;h busy median",
+    "note": "text (#main)",
+    "hash": "af088ec66533"
+  },
+  "gpu-monitoring.th-4": {
+    "text": "24&#8239;h peak",
+    "note": "text (#main)",
+    "hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-5": {
+    "text": "GPU utilisation, busiest card&nbsp;(%)",
+    "note": "text (#main)",
+    "hash": "9739b22b0dce"
+  },
+  "gpu-monitoring.col-capture.data-h": {
+    "text": "At capture",
+    "note": "column label shown above a table cell on phones (#main)",
+    "hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.col-median.data-h": {
+    "text": "24&#8239;h median",
+    "note": "column label shown above a table cell on phones (#main)",
+    "hash": "e6245b901702"
+  },
+  "gpu-monitoring.col-peak.data-h": {
+    "text": "24&#8239;h peak",
+    "note": "column label shown above a table cell on phones (#main)",
+    "hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-6": {
+    "text": "GPU power, four cards summed&nbsp;(W)",
+    "note": "text (#main)",
+    "hash": "6554b6cbd5f4"
+  },
+  "gpu-monitoring.th-7": {
+    "text": "Tokens per minute (Sep 23 panel)",
+    "note": "text (#main)",
+    "hash": "eb7b7fd32e11"
+  },
+  "gpu-monitoring.span-1": {
+    "text": "not shown",
+    "note": "text (#main); short label, keep near 12 characters",
+    "hash": "0bedd95628dd"
+  },
+  "gpu-monitoring.td-7": {
+    "text": "190k",
+    "note": "text (#main)",
+    "hash": "eaa6d59dc9be"
+  },
+  "gpu-monitoring.td-8": {
+    "text": "880k",
+    "note": "text (#main)",
+    "hash": "8678af14d6a2"
+  },
+  "gpu-monitoring.p-3": {
+    "text": "Your numbers will be different. That is the point of measuring them. The tokens row predates the switch to tokens per second; the stats panel now plots tokens per second, and these figures are from the 23&nbsp;September capture on the older per-minute panel.",
+    "note": "text (#main)",
+    "hash": "fc86e0160504"
+  },
+  "gpu-monitoring.cards.h2-1": {
+    "text": "A number it can’t measure reads “not reported”.",
+    "note": "section heading (#cards-title)",
+    "hash": "036e83c1af39"
+  },
+  "gpu-monitoring.p-4": {
+    "text": "\n          Most GPU dashboards average four cards into one line and draw a missing value\n          as&nbsp;0. This one gives each card its own panel: temperature against the throttle\n          point its driver reports, power against the card’s own cap, clocks, fan, the PCIe\n          link as it is negotiated right now, and ECC and NVLink when the card has them.\n          Two cards bought eighteen months apart stay two cards, and a value the driver\n          doesn’t give is labelled as missing instead of drawn as zero.\n        ",
+    "note": "text (#main)",
+    "hash": "f87275635f5c"
+  },
+  "gpu-monitoring.img-1.alt": {
+    "text": "Four GPU panels from the Stats page under load, one per RTX A4000: 99 to 100 percent utilisation in power state P2, temperatures from 79 to 94 degrees against a 100 degree throttle mark, a thermal slowdown warning on three cards, power at 134 to 138 of a 140 watt cap, clocks, driver and CUDA version, PCIe link, NVLink and ECC",
+    "note": "image alt text (#main)",
+    "hash": "55b551e38c61"
+  },
+  "gpu-monitoring.span-2": {
+    "text": "Throttle point from the driver, not a guess",
+    "note": "text (#main)",
+    "hash": "b3bd726e07ac"
+  },
+  "gpu-monitoring.span-3": {
+    "text": "Why the clock is down, as the driver reports it",
+    "note": "text (#main)",
+    "hash": "7be6f5cf26b2"
+  },
+  "gpu-monitoring.span-4": {
+    "text": "Power against its own 140&#8239;W cap",
+    "note": "text (#main)",
+    "hash": "ef8ca2bcafce"
+  },
+  "gpu-monitoring.span-5": {
+    "text": "NVLink and ECC, as the card reports them",
+    "note": "text (#main)",
+    "hash": "c4d22dc73625"
+  },
+  "gpu-monitoring.figcaption-1": {
+    "text": "<b>Fig.&nbsp;5</b>The four GPU panels from the same Stats page, at full size, taken during the same load. Every card is at 99 or 100% in power state P2, and three of them, at 90 to 94&#8239;°C, are held by the driver to between 76 and 84% of their top clock.<span class=\"scroll-hint\"> Scroll the image sideways to see all four.</span>",
+    "note": "figure caption (#main)",
+    "hash": "7aa9957f224d"
+  },
+  "gpu-monitoring.caption-2": {
+    "text": "What is read where",
+    "note": "text (#main)",
+    "hash": "fd76edd0a9d5"
+  },
+  "gpu-monitoring.th-8": {
+    "text": "Per card",
+    "note": "text (#main)",
+    "hash": "b596b0114ded"
+  },
+  "gpu-monitoring.td-9": {
+    "text": "Temperature and throttle point, power and its cap, core and memory clocks, fan, PCIe generation and width, ECC, NVLink, and the engine process using the card",
+    "note": "text (#main)",
+    "hash": "1f5a45a29bdc"
+  },
+  "gpu-monitoring.th-9": {
+    "text": "Per host",
+    "note": "text (#main)",
+    "hash": "fd8f8648eb41"
+  },
+  "gpu-monitoring.td-10": {
+    "text": "VRAM in use, GPU utilisation (the busiest card), power (the sum of the cards) and tokens per second",
+    "note": "text (#main)",
+    "hash": "d8e9193ca58e"
+  },
+  "gpu-monitoring.th-10": {
+    "text": "Per request",
+    "note": "text (#main)",
+    "hash": "c01f2094044d"
+  },
+  "gpu-monitoring.td-11": {
+    "text": "Time to first token, inter-token latency and duration, measured at the proxy the same way for both engines",
+    "note": "text (#main)",
+    "hash": "92c8d3b9a423"
+  },
+  "gpu-monitoring.inflight.h2-1": {
+    "text": "What each request is waiting for.",
+    "note": "section heading (#inflight-title)",
+    "hash": "87e975182d2c"
+  },
+  "gpu-monitoring.p-5": {
+    "text": "\n            The Stats page lists every request in flight with the client’s session and where the\n            request is in its life: queued at the warden, prefill (the engine reading the prompt),\n            thinking, writing a tool call, or answering. A badge gives the share of the prompt\n            likely to be in the replica’s cache. A prefill that runs longer than this box’s\n            learned prefill rate predicts says why it probably waits: behind other prompts on the same\n            replica, a cache that was probably evicted, or slow for no reason the warden can see.\n            The session comes from the id each tool already sends: Claude Code, Codex, OpenCode and\n            pi out of the box, Hermes and Aider with one line of setup.\n          ",
+    "note": "text (#main)",
+    "hash": "4d6984e02a57"
+  },
+  "gpu-monitoring.img-2.alt": {
+    "text": "The In flight table with 14 active requests, all from the key agent-farm at one client address. Columns: token, client IP, session, model, phase, context window and elapsed. Six rows are in tool call or answering and eight in prefill, most with a badge estimating 94 to 100% of the prompt cached; three prefills carry an evict? badge and two an hourglass badge, 1·r0 and 1·r4. Below the table: prefill model 439 tok/s learned from 1132 requests, cache estimate right 57% of the time, and the hit rate by idle gap, 68% after up to 30 seconds falling to 18% after 5 to 15 minutes.",
+    "note": "image alt text (#main)",
+    "hash": "850b1ebebfcc"
+  },
+  "gpu-monitoring.span-6": {
+    "text": "No token yet, cache probably evicted",
+    "note": "text (#main)",
+    "hash": "807aafa43674"
+  },
+  "gpu-monitoring.span-7": {
+    "text": "One prompt ahead of it on replica 4",
+    "note": "text (#main)",
+    "hash": "c6220dc860be"
+  },
+  "gpu-monitoring.figcaption-2": {
+    "text": "<b>Fig.&nbsp;12</b>Fourteen requests in flight on the seven-GPU box. Under the table is what the warden has learned from finished requests: this box prefills about 439 tokens a second per request, its cache estimate was right 57% of the time, and a conversation idle for more than two minutes usually finds its cache gone (20% hit after 2 to 5 minutes). The key name is a stand-in and the address a documentation address. Below 768 pixels wide the table becomes a list of cards. Recorded on 5&nbsp;October 2026.<span class=\"scroll-hint\"> Scroll the image sideways to see every column.</span>",
+    "note": "figure caption (#main)",
+    "hash": "cb4966892bbc"
+  },
+  "gpu-monitoring.p-6": {
+    "text": "Related: <a href=\"/cache-aware-routing\">cache-aware routing</a> · <a href=\"/api-keys\">API keys</a> · <a href=\"/coding-agents\">coding agents</a>",
+    "note": "text (#main)",
+    "hash": "1669f0782d97"
+  }
+}

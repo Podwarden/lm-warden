@@ -1,0 +1,66 @@
+{
+  "privacy.meta.title": {
+    "text": "プライバシーと Cookie | LM Warden",
+    "source_hash": "ec9b140b1cc8"
+  },
+  "privacy.meta.description": {
+    "text": "このサイトが Google Analytics で何を測定するか、いつ事前に確認するか、選択を変更する方法。",
+    "source_hash": "de30b21dbdc3"
+  },
+  "privacy.ads": {
+    "text": " Google Ads は広告によって人がここへ来ているかを測定し、その広告 Cookie も同じ同意の選択に従います。",
+    "source_hash": "9b2a078e8838"
+  },
+  "privacy.contact-official": {
+    "text": " このサイトに関するご質問は <a href=\"mailto:info@podwarden.com\">info@podwarden.com</a> までお寄せください。",
+    "source_hash": "eebc1d21c39b"
+  },
+  "privacy.contact-operator": {
+    "text": " このサイトに関するご質問は、このサイトの運営者にお問い合わせください。",
+    "source_hash": "914390fc9adc"
+  },
+  "privacy.privacy.h1-1": {
+    "text": "プライバシーと Cookie。",
+    "source_hash": "f940c0a0e353"
+  },
+  "privacy.p-1": {
+    "text": "この Web サイトは LM Warden によって配信され、このサイトの運営者がセルフホストしています。アカウントもフォームもコメントもないため、扱いうる個人データは訪問そのものから分かる情報だけです。",
+    "source_hash": "b3509e8a2750"
+  },
+  "privacy.h2-1": {
+    "text": "測定する内容",
+    "source_hash": "dd9acabe8622"
+  },
+  "privacy.p-2": {
+    "text": "このサイトの運営者は Google Analytics 4 を使って、訪問数を数え、どのページが読まれているかを確認します。{{privacy_ads}}記録する操作は、インストール コマンドのコピー、GitHub へのリンクのクリック、PodWarden へのリンクのクリックの三つです。",
+    "source_hash": "8de08e36eb6d"
+  },
+  "privacy.h2-2": {
+    "text": "事前に同意を求める場合",
+    "source_hash": "910b22425fed"
+  },
+  "privacy.p-3": {
+    "text": "初めての訪問時に、分析用 Cookie を許可するかどうかを尋ねるバナーが表示されます。選択するまでの間、および拒否した場合、Google のタグは同意モードで動作します。Cookie は設定せず、訪問をまたいであなたを識別できない匿名の Cookie なしのシグナルだけを Google に送ります。同意すると、Google は分析用 Cookie (<code>_ga</code> などの名前) を設定し、最長で二年間保持されます。",
+    "source_hash": "9405f2778a61"
+  },
+  "privacy.h2-3": {
+    "text": "選択の変更",
+    "source_hash": "3aa95e4c746f"
+  },
+  "privacy.p-4": {
+    "text": "<a href=\"/privacy\" data-consent-open>Cookie の設定</a>でバナーを再表示するか、ブラウザーでこのサイトのデータを消去してください。選択はブラウザーのローカル ストレージに <code>lmw-consent</code> として保存されます。",
+    "source_hash": "319e165f9018"
+  },
+  "privacy.h2-4": {
+    "text": "データの処理者",
+    "source_hash": "795028f063d5"
+  },
+  "privacy.p-5": {
+    "text": "Google LLC は自社の規約に基づいて測定データを処理します。<a href=\"https://policies.google.com/technologies/partner-sites\" rel=\"noopener\">Google のサービスを使用するサイトから収集した情報の Google による使用</a>をご覧ください。{{privacy_contact}}",
+    "source_hash": "112b969b0be0"
+  },
+  "privacy.p-6": {
+    "text": "LM Warden ソフトウェア自体は、作者にも Google にも何も送信しません。運営者がトラッキング ID を入力したこの公開 Web サイトだけが Google のタグを読み込みます。",
+    "source_hash": "0d38cc82e109"
+  }
+}

@@ -13,7 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.landing import i18n
-from app.landing.pages import HOME, LOCALES
+from app.landing.pages import FAQ, HOME, LOCALES
 from app.landing.render import inline_scripts, page_source, source_catalog
 from app.landing.site import Analytics
 from tests.unit.landing.test_routes import CANON, _canonical
@@ -77,11 +77,16 @@ def test_catalog_files_are_only_known_locales() -> None:
 def test_limits_are_kept() -> None:
     from app.landing.render import _LIMITS
 
-    for tag in SHIPPED:
-        catalog = json.loads((i18n.DIR / f"{tag}.json").read_text(encoding="utf-8"))
+    for loc in LOCALES[1:]:
         for key, limit in _LIMITS.items():
+            path = i18n.catalog_path(i18n.part_of(key), loc.tag)
+            if not path.is_file():
+                continue  # that part is not translated into this locale yet
+            catalog = json.loads(path.read_text(encoding="utf-8"))
+            if key not in catalog:
+                continue  # an incomplete part: test_part_catalogs reports it
             text = re.sub(r"<[^>]+>", "", catalog[key]["text"])
-            assert len(text) <= limit, (tag, key, text)
+            assert len(text) <= limit, (loc.tag, key, text)
 
 
 def test_checks_catch_broken_translations() -> None:
@@ -138,21 +143,31 @@ def test_english_home_announces_its_translations(client: TestClient) -> None:
     assert '<meta property="og:locale" content="en_US">' in body
 
 
-def test_other_pages_stay_english_and_name_no_alternates(client: TestClient) -> None:
+def test_other_pages_announce_their_own_translations(client: TestClient) -> None:
+    """Replaced "other pages stay English and name no alternates" when every
+    page was localized (2026-10-21): /faq names its own languages."""
     _canonical(client, CANON)
     body = client.get("/faq").text
-    assert '<html lang="en">' in body and 'hreflang="x-default"' not in body
+    assert '<html lang="en">' in body
+    alternates = dict(re.findall(r'<link rel="alternate" hreflang="([^"]+)" href="([^"]+)">', body))
+    want = {loc.tag: CANON + i18n.page_path(FAQ, loc.tag) for loc in i18n.page_locales(FAQ)}
+    if len(want) > 1:
+        assert alternates == {**want, "x-default": f"{CANON}/faq"}
+    else:
+        assert not alternates
 
 
 def test_german_home_is_german(client: TestClient) -> None:
     body = client.get("/de/").text
-    assert '<h1 id="hero-title">Ihre GPUs, bereitgestellt wie eine gehostete API.</h1>' in body
+    # de QA 2026-10-21: "bereitgestellt" (GPUs deployed) was a calque; H1 now says usable like a hosted API.
+    assert '<h1 id="hero-title">Ihre GPUs, nutzbar wie eine gehostete API.</h1>' in body
     assert "<title>LM Warden: selbst gehostetes LLM-Gateway für Ihre eigenen GPUs</title>" in body
-    # Links to Home's sections stay on the German Home; other pages are English.
+    # Links to Home's sections stay on the German Home, and links to the other
+    # pages go to their German versions (every page is published in German).
     assert '<a class="btn go" href="/de/#install">Installieren</a>' in body
     assert '<a class="brand" href="/de/"' in body
     assert '<a href="/de/#why">Anwendungsfälle</a>' in body
-    assert '<a href="/faq">FAQ</a>' in body
+    assert '<a href="/de/faq">FAQ</a>' in body
     # Script labels travel as attributes the shared scripts read.
     assert 'data-l-copied="Kopiert"' in body and 'data-l-dot="Anwendungsfall {n} von {m}"' in body
 

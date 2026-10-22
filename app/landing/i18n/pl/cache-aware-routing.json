@@ -1,0 +1,134 @@
+{
+  "cache-aware-routing.meta.title": {
+    "text": "Routing replik vLLM z uwzględnieniem cache | LM Warden",
+    "source_hash": "74d5770bf736"
+  },
+  "cache-aware-routing.meta.description": {
+    "text": "Sesje agentów wracają do repliki, która ma już ich prompt w cache prefiksów, więc długie rozmowy pomijają większość fazy prefill.",
+    "source_hash": "055a37ed3302"
+  },
+  "cache-aware-routing.replica.h1-1": {
+    "text": "Następna tura trafia tam, gdzie poprzednia zostawiła swój cache.",
+    "source_hash": "7b4386acadc3"
+  },
+  "cache-aware-routing.p-1": {
+    "text": "Agent w każdej turze wysyła ponownie całą historię, więc długa rozmowa to głównie prefiks, który silnik już przeczytał. vLLM przechowuje tę pracę w cache prefiksów (stan uwagi promptów, które już widział) i pomija ją, gdy ten sam prefiks przyjdzie następnym razem, ale tylko na replice, która tę pracę wykonała: każda pełna kopia modelu ma własny cache. Własny mechanizm równoważenia obciążenia vLLM wysyła każdą turę do repliki z najkrótszą kolejką, która zwykle nigdy nie widziała tej rozmowy, więc czyta całą historię od nowa. LM Warden umieszcza każdą nową rozmowę na najmniej obciążonej replice (żądania w toku, zapełnienie cache i liczba aktywnych rozmów) i trzyma ją tam, używając identyfikatora sesji, który Claude Code już wysyła. Przenosi żądanie tylko wtedy, gdy replika przekroczy próg przepełnienia: domyślnie gdy żądań w toku jest więcej niż ćwierć limitu równoczesnych sekwencji modelu, 8 na naszym serwerze z czterema kartami.",
+    "source_hash": "6a215639b7d8"
+  },
+  "cache-aware-routing.p-2": {
+    "text": "Repliki, a więc i ten routing, są częścią instalacji dla systemu Linux z kartami NVIDIA; <a href=\"/#p-mac\">aplikacja na Maca (beta)</a> nie ma równoległości tensorowej ani równoległości danych.",
+    "source_hash": "2022d3c80a9f"
+  },
+  "cache-aware-routing.figcaption-1": {
+    "text": "<b>Rys.&nbsp;6</b>Cztery tury jednej rozmowy na modelu z czterema replikami. Z mechanizmem równoważenia obciążenia vLLM każda tura przechodzi prefill (wczytanie promptu do cache) niemal od zera na tej replice, która ją dostała. Z LM Warden rozmowa zostaje na replice&nbsp;2 i prefill przechodzi tylko nowa tura. Rysunek mechanizmu, a nie pomiar.",
+    "source_hash": "a3b037946eda"
+  },
+  "cache-aware-routing.p-3": {
+    "text": "Zmierzone na serwerze z czterema kartami: przy przypiętych rozmowach udział tokenów promptu obsłużonych z cache wzrósł z 56 do 86% przy 4 równoczesnych sesjach, a mediana czasu do pierwszego bajtu spadła z 2,05 do 0,38&#8239;s. Liczba tokenów wyjściowych na minutę była wyższa na każdym przeprowadzonym przez nas etapie, a p95 czasu do pierwszego bajtu (najwolniejsze 5%) niższe na każdym etapie. Liczba pracujących replik prawie się nie zmieniła (2,71 wobec 2,83 z czterech przy 4 sesjach): zysk to ponowne użycie cache, a nie więcej pracujących kart.",
+    "source_hash": "91272c526688"
+  },
+  "cache-aware-routing.p-4": {
+    "text": "Etapy z 24 i 32 sesjami to celowe przeciążenie czterech małych kart, przy którym czekanie sięga dziesiątek sekund z koligacją lub bez. Tam widać kompromis: ogon jest nadal krótszy z koligacją, ale mediana jest dłuższa. Liczby poniżej.",
+    "source_hash": "22167404e1cf"
+  },
+  "cache-aware-routing.dt-1": {
+    "text": "Karty GPU",
+    "source_hash": "8f0474fb0c5b"
+  },
+  "cache-aware-routing.dd-1": {
+    "text": "4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000, każda 16&#8239;GiB",
+    "source_hash": "a2a87a6a413f"
+  },
+  "cache-aware-routing.dt-2": {
+    "text": "Model",
+    "source_hash": "5e2c614c23f0"
+  },
+  "cache-aware-routing.dd-2": {
+    "text": "qwen3-4b-dp4 (Qwen/Qwen3-4B-Instruct-2507), bf16",
+    "source_hash": "ca64e381cd89"
+  },
+  "cache-aware-routing.dt-3": {
+    "text": "Układ",
+    "source_hash": "a511909161e1"
+  },
+  "cache-aware-routing.dd-3": {
+    "text": "data_parallel_size 4, tensor_parallel_size 1",
+    "source_hash": "2d27d2565f76"
+  },
+  "cache-aware-routing.dd-5": {
+    "text": "To wydanie",
+    "source_hash": "056adfd1d823"
+  },
+  "cache-aware-routing.dt-4": {
+    "text": "Zarejestrowano",
+    "source_hash": "8a03fa9ad749"
+  },
+  "cache-aware-routing.dd-6": {
+    "text": "4&nbsp;października 2026&nbsp;r., oba warianty jeden po drugim",
+    "source_hash": "616bab8cda85"
+  },
+  "cache-aware-routing.dt-5": {
+    "text": "Obciążenie",
+    "source_hash": "8a6bdb6b18da"
+  },
+  "cache-aware-routing.dd-7": {
+    "text": "Syntetyczne sesje w stylu Claude Code z naszego własnego narzędzia testowego, a nie sam Claude Code: wspólny prompt systemowy o długości około 3,5 tys. tokenów, pierwsza wiadomość unikalna dla sesji (nominalnie 6 tys., zmierzone około 7,2–7,5 tys.), potem jeszcze pięć tur po około 400 nowych tokenów każda, maksymalnie 256 tokenów wyjściowych na turę. Pętla zamknięta: sesja zaczyna następną turę, gdy poprzednia się kończy. 3&nbsp;minuty na etap.",
+    "source_hash": "bf79aedc37a9"
+  },
+  "cache-aware-routing.figcaption-2": {
+    "text": "<b>Rys.&nbsp;7</b>Czas do pierwszego bajtu przy 4–32 równoczesnych sesjach, mediana i p95, w skali logarytmicznej, aby etapy poniżej sekundy dało się odczytać obok tych trwających minutę. Z koligacją mediana jest znacznie niższa do 16 sesji (0,38 wobec 2,05&#8239;s przy 4) i wyższa przy 24 i 32; p95 jest niższy na każdym etapie, choć przy 16 różnica (24,9 wobec 26,2&#8239;s) mieści się w szumie jednego przebiegu na wariant. Zmierzone po stronie klienta, przez internet, do pierwszego strumieniowanego tokenu.",
+    "source_hash": "4104b97ee062"
+  },
+  "cache-aware-routing.p-5": {
+    "text": "Zmierzone na naszym serwerze z czterema kartami na małym modelu, najpierw z wyłączoną koligacją, potem z włączoną, bez ponownego uruchamiania vLLM pomiędzy: drugi wariant zaczynał z rozgrzanym cache prefiksów, a w obu wariantach prompty losowano z tym samym ziarnem generatora. Każdy etap trwa 3&nbsp;minuty, więc kończy się w nim tylko od 9 do 31 sesji, a jedna sesja więcej lub mniej zmienia liczbę sesji na godzinę o 20; stabilniejszą kolumną są tokeny wyjściowe na minutę. Twój model, karty i obciążenie będą inne; karta replik na stronie modelu pokazuje te same liczniki dla twojego systemu.",
+    "source_hash": "4744b11be2ad"
+  },
+  "cache-aware-routing.p-6": {
+    "text": "Do 16 sesji koligacja prowadzi na każdym etapie pod względem przepustowości, trafień w cache prefiksów i obu kolumn czasu do pierwszego bajtu: trafienia rosną z 56 do 86% przy 4 sesjach, mediana czasu do pierwszego bajtu spada z 2,05 do 0,38&#8239;s, a liczba tokenów wyjściowych rośnie z 5&nbsp;886 do 6&nbsp;744 na minutę (sesji na godzinę ze 180 do 240). Przy 24 i 32 sesjach, czyli na etapach przeciążenia, każda replika jest nasycona. Liczba tokenów wyjściowych jest nadal wyższa (11&nbsp;178 wobec 9&nbsp;048 i 16&nbsp;638 wobec 14&nbsp;760 na minutę), a wolny ogon znacznie krótszy (p95 38 wobec 59&#8239;s oraz 39 wobec 83&#8239;s), ale mediana czasu do pierwszego bajtu jest z koligacją gorsza: 13,1 wobec 5,1&#8239;s przy 24 sesjach, 27,7 wobec 12,3&#8239;s przy 32. Nie ustaliliśmy przyczyny, a obniżenie progu przepełnienia z 8 do 4 tego nie zmieniło. Przewaga jest największa, dopóki jest zapas; serwer pracujący na granicy możliwości powinien zmierzyć oba ustawienia, a koligację można wyłączyć dla każdego modelu osobno.",
+    "source_hash": "8ab22b61f669"
+  },
+  "cache-aware-routing.figcaption-3": {
+    "text": "<b>Rys.&nbsp;8</b>Zajęte repliki z czterech: repliki z wykonywanymi żądaniami przy każdym odpytaniu, uśrednione w ramach etapu. To nie jest wykorzystanie GPU. Koligacja prawie tego nie zmienia; zysk widać na rys.&nbsp;9.",
+    "source_hash": "d3b521cd1c61"
+  },
+  "cache-aware-routing.figcaption-4": {
+    "text": "<b>Rys.&nbsp;9</b>Współczynnik trafień w cache prefiksów na każdym etapie: stosunek tokenów promptu obsłużonych z cache do wszystkich żądanych tokenów promptu, łącznie dla czterech replik, na podstawie zmiany własnych liczników vLLM w ramach etapu. Zysk utrzymuje się, dopóki jest zapas, i znika przy 32 sesjach, gdy rozmowy przechodzą na inne repliki.",
+    "source_hash": "7721bb0a3fe0"
+  },
+  "cache-aware-routing.img-1.alt": {
+    "text": "Karta Data-parallel routing na stronie modelu z plakietkami Affinity on, Spill threshold 8 (auto), Sticky 100,0% i In flight 0. Tabela wymienia repliki od 0 do 3 z kolumnami: w toku, sticky (38, 21, 19 i 29), przyjęte po przepełnieniu innej repliki, przypięte przez klienta, wykonywane i oczekujące, użycie KV oraz współczynnik trafień w cache prefiksów (82,2; 86,0; 69,0 i 80,0 procent), a także wiersz informujący, że liczniki działają od uruchomienia LM Warden.",
+    "source_hash": "f1bc7fbd6399"
+  },
+  "cache-aware-routing.span-1": {
+    "text": "Koligacja włączona, próg przepełnienia 8 (auto)",
+    "source_hash": "afd07a294687"
+  },
+  "cache-aware-routing.span-2": {
+    "text": "Współczynnik trafień dla każdej repliki, z własnych liczników vLLM",
+    "source_hash": "aeb0dd495f94"
+  },
+  "cache-aware-routing.figcaption-5": {
+    "text": "<b>Rys.&nbsp;10</b>Te same liczniki na stronie modelu: jeden wiersz na replikę z żądaniami, które obsługuje, liczbą rozmów, które zostały (<code>sticky</code>) lub trafiły tu po przepełnieniu innej repliki, tym, co jest wykonywane i oczekuje, użyciem cache KV i współczynnikiem trafień w cache prefiksów. Zarejestrowano 4&nbsp;października&nbsp;2026&nbsp;r. z włączoną koligacją i progiem przepełnienia 8 (auto): sticky 100%, 38, 21, 19 i 29 żądań sticky na replikach od 0 do 3 oraz współczynnik trafień w cache prefiksów 82,2; 86,0; 69,0 i 80,0%. Liczniki działają od restartu LM Warden, a cały ruch w tym oknie odbywał się z włączoną koligacją: syntetyczne sesje agentów plus prawdziwe tury Claude Code. To jest karta, a nie wynik.<span class=\"scroll-hint\"> Przewiń obraz w bok, aby zobaczyć wszystkie kolumny.</span>",
+    "source_hash": "c5c62f4909c8"
+  },
+  "cache-aware-routing.p-7": {
+    "text": "Serwer, przez który w ogóle zajęliśmy się routingiem replik, działa z nim od tamtej pory. Ma siedem kart RTX&nbsp;5090 obsługujących model 27B jako siedem jednokartowych replik dla dużej grupy agentów Claude Code działających w trybie headless. Nasza pierwsza reguła rozmieszczania haszowała identyfikator sesji, co dawało stabilność, ale nie uwzględniało obciążenia. Przy 26 sesjach agentów po około 58 tys. tokenów każda trzy repliki stały bezczynnie, podczas gdy inne zapełniały cache do 93%, a udział tokenów promptu obsłużonych z cache spadł z 81% po restarcie do 28% w ciągu około 35 minut. Wtedy zmniejszyliśmy liczbę sesji do 16, około dwóch na replikę, tak aby zbiory robocze mieściły się w cache, i zaczęliśmy umieszczać nowe rozmowy na najmniej obciążonej replice. Przez następną godzinę udział wynosił 78–79%. To obserwacja, a nie test A/B: jedno obciążenie i dwie zmiany wprowadzone razem, więc zysk nie jest wyłącznie zasługą rozmieszczania. Praktyczna reguła, jaka z tego wynika: liczba równoczesnych sesji pomnożona przez ich typowy kontekst powinna być mniejsza niż łączny cache serwera.",
+    "source_hash": "36247db6bebb"
+  },
+  "cache-aware-routing.img-2.alt": {
+    "text": "Wykres Tokens per second ze strony Stats z jednej godziny. Słupki promptu są podzielone na cached, zmierzone, na niebiesko i computed na fioletowo, od około 15 tys. do 45 tys. tokenów na sekundę, przy czym większość każdego słupka jest niebieska, z podsumowaniem cache hit 78% z ostatniej godziny. Tokeny odpowiedzi na sekundę, od około 70 do 420, są narysowane na zielono poniżej.",
+    "source_hash": "a40bcea9f2f2"
+  },
+  "cache-aware-routing.span-3": {
+    "text": "Zmierzone przez silnik dla każdego żądania",
+    "source_hash": "30f9cc329d1b"
+  },
+  "cache-aware-routing.figcaption-6": {
+    "text": "<b>Rys.&nbsp;11</b>Tokeny promptu na sekundę na serwerze z siedmioma kartami GPU, podzielone na to, co każda replika odczytała z cache prefiksów, i to, co musiała obliczyć, z udziałem z ostatniej godziny: 78%. Część z cache to własny licznik silnika dla każdego zakończonego żądania, a nie szacunek; żądanie, którego silnik nie zmierzył, liczy się jako obliczone. Zarejestrowano 5&nbsp;października 2026&nbsp;r.<span class=\"scroll-hint\"> Przewiń obraz w bok, aby zobaczyć całą godzinę.</span>",
+    "source_hash": "8b698966274e"
+  },
+  "cache-aware-routing.p-8": {
+    "text": "Zobacz też: <a href=\"/gpu-monitoring\">monitorowanie GPU</a> · <a href=\"/coding-agents/claude-code\">Claude Code</a> · <a href=\"/coding-agents\">agenci do kodowania</a>",
+    "source_hash": "f55143f36cbe"
+  }
+}

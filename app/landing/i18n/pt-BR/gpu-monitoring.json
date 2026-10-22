@@ -1,0 +1,198 @@
+{
+  "gpu-monitoring.meta.title": {
+    "text": "Monitoramento de GPU por placa para vLLM | LM Warden",
+    "source_hash": "d27814ed8b63"
+  },
+  "gpu-monitoring.meta.description": {
+    "text": "No Linux, cada placa NVIDIA tem um painel: temperatura em relação ao ponto de throttling, potência em relação ao limite, link PCIe e solicitações em andamento.",
+    "source_hash": "507736e1bea9"
+  },
+  "gpu-monitoring.box.h1-1": {
+    "text": "Monitoramento de GPU: a máquina por trás destes números.",
+    "source_hash": "cc0f4c9bbf2b"
+  },
+  "gpu-monitoring.p-1": {
+    "text": "Salvo indicação em contrário na legenda, as leituras desta página vêm de uma única workstation: quatro RTX&nbsp;A4000, com um único modelo carregado em todas elas, ocupadas com o nosso próprio tráfego de teste. Estes são os números que o console mostrava enquanto gravávamos as figs.&nbsp;1 e&nbsp;5. Os testes de compatibilidade mais abaixo também usaram uma Quadro&nbsp;RTX&nbsp;5000, o que está indicado neles.",
+    "source_hash": "a9ca4640a6e7"
+  },
+  "gpu-monitoring.p-2": {
+    "text": "Os painéis por placa leem o driver da NVIDIA, então fazem parte da instalação Linux. Em um Mac com chip Apple, o <a href=\"/#p-mac\">app para Mac (beta)</a> mostra o uso da GPU e a memória disponível que o Metal informa, sem leitura de potência.",
+    "source_hash": "e6e25a4491ad"
+  },
+  "gpu-monitoring.dt-1": {
+    "text": "GPUs",
+    "source_hash": "8f0474fb0c5b"
+  },
+  "gpu-monitoring.dd-1": {
+    "text": "4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000, 16&#8239;GiB cada (Ampere, compute&nbsp;8.6)",
+    "source_hash": "065609784858"
+  },
+  "gpu-monitoring.dt-2": {
+    "text": "VRAM em uso",
+    "source_hash": "60de0ad7eb70"
+  },
+  "gpu-monitoring.dd-2": {
+    "text": "59,4 de 64,0&#8239;GiB, um modelo nas quatro placas",
+    "source_hash": "2a58556c9272"
+  },
+  "gpu-monitoring.dd-3": {
+    "text": "Gen&nbsp;4 x16 por placa",
+    "source_hash": "a85ab5eb706a"
+  },
+  "gpu-monitoring.dt-3": {
+    "text": "Driver",
+    "source_hash": "9fe4c68ec20d"
+  },
+  "gpu-monitoring.dd-4": {
+    "text": "<code>610.57.04</code>, CUDA&nbsp;13.3",
+    "source_hash": "a041ea9e5251"
+  },
+  "gpu-monitoring.caption-1": {
+    "text": "Carga da GPU, potência e tokens, lidos da fig.&nbsp;1",
+    "source_hash": "db678a93d309"
+  },
+  "gpu-monitoring.th-1": {
+    "text": "Leitura",
+    "source_hash": "463816d07097"
+  },
+  "gpu-monitoring.th-2": {
+    "text": "Na captura",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.th-3": {
+    "text": "Mediana em carga, 24&#8239;h",
+    "source_hash": "af088ec66533"
+  },
+  "gpu-monitoring.th-4": {
+    "text": "Pico em 24&#8239;h",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-5": {
+    "text": "Utilização da GPU, placa mais ocupada&nbsp;(%)",
+    "source_hash": "9739b22b0dce"
+  },
+  "gpu-monitoring.col-capture.data-h": {
+    "text": "Na captura",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.col-median.data-h": {
+    "text": "Mediana em 24&#8239;h",
+    "source_hash": "e6245b901702"
+  },
+  "gpu-monitoring.col-peak.data-h": {
+    "text": "Pico em 24&#8239;h",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-6": {
+    "text": "Potência da GPU, soma das quatro placas&nbsp;(W)",
+    "source_hash": "6554b6cbd5f4"
+  },
+  "gpu-monitoring.th-7": {
+    "text": "Tokens por minuto (painel de 23 de set.)",
+    "source_hash": "eb7b7fd32e11"
+  },
+  "gpu-monitoring.span-1": {
+    "text": "não exibido",
+    "source_hash": "0bedd95628dd"
+  },
+  "gpu-monitoring.td-7": {
+    "text": "190 mil",
+    "source_hash": "eaa6d59dc9be"
+  },
+  "gpu-monitoring.td-8": {
+    "text": "880 mil",
+    "source_hash": "8678af14d6a2"
+  },
+  "gpu-monitoring.p-3": {
+    "text": "Os seus números vão ser diferentes. É para isso que serve medi-los. A linha de tokens é anterior à mudança para tokens por segundo; o painel de estatísticas agora mostra tokens por segundo, e estes números são da captura de 23&nbsp;de setembro no painel antigo, por minuto.",
+    "source_hash": "fc86e0160504"
+  },
+  "gpu-monitoring.cards.h2-1": {
+    "text": "Um número que ele não consegue medir aparece como “not reported”.",
+    "source_hash": "036e83c1af39"
+  },
+  "gpu-monitoring.p-4": {
+    "text": "A maioria dos painéis de GPU faz a média de quatro placas em uma linha só e desenha um valor ausente como&nbsp;0. Este dá a cada placa o seu próprio painel: a temperatura em relação ao ponto de throttling que o driver informa, a potência em relação ao limite da própria placa, clocks, ventoinha, o link PCIe como está negociado agora, e ECC e NVLink quando a placa os tem. Duas placas compradas com dezoito meses de diferença continuam sendo duas placas, e um valor que o driver não fornece é marcado como ausente em vez de desenhado como zero.",
+    "source_hash": "f87275635f5c"
+  },
+  "gpu-monitoring.img-1.alt": {
+    "text": "Quatro painéis de GPU da página Stats sob carga, um por RTX A4000: utilização de 99 a 100 por cento no estado de energia P2, temperaturas de 79 a 94 graus com o limite de throttling marcado em 100 graus, um aviso de redução térmica em três placas, potência de 134 a 138 de um limite de 140 watts, clocks, versão do driver e do CUDA, link PCIe, NVLink e ECC",
+    "source_hash": "55b551e38c61"
+  },
+  "gpu-monitoring.span-2": {
+    "text": "Ponto de throttling vindo do driver, não um palpite",
+    "source_hash": "b3bd726e07ac"
+  },
+  "gpu-monitoring.span-3": {
+    "text": "Por que o clock caiu, como o driver informa",
+    "source_hash": "7be6f5cf26b2"
+  },
+  "gpu-monitoring.span-4": {
+    "text": "Potência em relação ao próprio limite de 140&#8239;W",
+    "source_hash": "ef8ca2bcafce"
+  },
+  "gpu-monitoring.span-5": {
+    "text": "NVLink e ECC, como a placa os informa",
+    "source_hash": "c4d22dc73625"
+  },
+  "gpu-monitoring.figcaption-1": {
+    "text": "<b>Fig.&nbsp;5</b>Os quatro painéis de GPU da mesma página Stats, em tamanho real, capturados durante a mesma carga. Todas as placas estão a 99 ou 100% no estado de energia P2, e três delas, entre 90 e 94&#8239;°C, são mantidas pelo driver entre 76 e 84% do clock máximo.<span class=\"scroll-hint\"> Role a imagem para o lado para ver as quatro.</span>",
+    "source_hash": "7aa9957f224d"
+  },
+  "gpu-monitoring.caption-2": {
+    "text": "O que é lido onde",
+    "source_hash": "fd76edd0a9d5"
+  },
+  "gpu-monitoring.th-8": {
+    "text": "Por placa",
+    "source_hash": "b596b0114ded"
+  },
+  "gpu-monitoring.td-9": {
+    "text": "Temperatura e ponto de throttling, potência e o seu limite, clocks do núcleo e da memória, ventoinha, geração e largura PCIe, ECC, NVLink e o processo do mecanismo que usa a placa",
+    "source_hash": "1f5a45a29bdc"
+  },
+  "gpu-monitoring.th-9": {
+    "text": "Por host",
+    "source_hash": "fd8f8648eb41"
+  },
+  "gpu-monitoring.td-10": {
+    "text": "VRAM em uso, utilização da GPU (a placa mais ocupada), potência (a soma das placas) e tokens por segundo",
+    "source_hash": "d8e9193ca58e"
+  },
+  "gpu-monitoring.th-10": {
+    "text": "Por solicitação",
+    "source_hash": "c01f2094044d"
+  },
+  "gpu-monitoring.td-11": {
+    "text": "Tempo até o primeiro token, latência entre tokens e duração, medidos no proxy da mesma forma para os dois mecanismos",
+    "source_hash": "92c8d3b9a423"
+  },
+  "gpu-monitoring.inflight.h2-1": {
+    "text": "O que cada solicitação está esperando.",
+    "source_hash": "87e975182d2c"
+  },
+  "gpu-monitoring.p-5": {
+    "text": "A página Stats lista cada solicitação em andamento com a sessão do cliente e a etapa em que ela está: na fila do warden, em prefill (o mecanismo lendo o prompt), pensando, escrevendo uma chamada de ferramenta ou respondendo. Um selo mostra a parcela do prompt que provavelmente está no cache da réplica. Quando um prefill demora mais do que o previsto pela taxa de prefill que o warden aprendeu nesta máquina, a página indica o motivo provável da espera: outros prompts na frente, na mesma réplica; um cache que provavelmente foi descartado; ou lentidão sem causa que o warden consiga identificar. A sessão vem do id que cada ferramenta já envia: Claude Code, Codex, OpenCode e pi sem configuração extra; Hermes e Aider com uma linha de configuração.",
+    "source_hash": "4d6984e02a57"
+  },
+  "gpu-monitoring.img-2.alt": {
+    "text": "A tabela In flight com 14 solicitações ativas, todas da chave agent-farm em um único endereço de cliente. Colunas: token, IP do cliente, sessão, modelo, fase, janela de contexto e tempo decorrido. Seis linhas estão em tool call ou answering e oito em prefill, a maioria com um selo estimando de 94 a 100% do prompt em cache; três prefills têm um selo evict? e dois um selo de ampulheta, 1·r0 e 1·r4. Abaixo da tabela: modelo de prefill de 439 tok/s aprendido de 1132 solicitações, estimativa de cache certa em 57% das vezes, e a taxa de acerto por intervalo ocioso, 68% depois de até 30 segundos caindo para 18% depois de 5 a 15 minutos.",
+    "source_hash": "850b1ebebfcc"
+  },
+  "gpu-monitoring.span-6": {
+    "text": "Nenhum token ainda, cache provavelmente descartado",
+    "source_hash": "807aafa43674"
+  },
+  "gpu-monitoring.span-7": {
+    "text": "Um prompt à frente dele na réplica 4",
+    "source_hash": "c6220dc860be"
+  },
+  "gpu-monitoring.figcaption-2": {
+    "text": "<b>Fig.&nbsp;12</b>Catorze solicitações em andamento na máquina de sete GPUs. Abaixo da tabela está o que o warden aprendeu com as solicitações concluídas: esta máquina faz prefill de cerca de 439 tokens por segundo por solicitação, a estimativa de cache dela acertou 57% das vezes, e uma conversa ociosa por mais de dois minutos geralmente encontra o cache já descartado (20% de acerto depois de 2 a 5 minutos). O nome da chave é fictício e o endereço é um endereço de documentação. Abaixo de 768 pixels de largura, a tabela vira uma lista de blocos. Registrado em 5&nbsp;de outubro de 2026.<span class=\"scroll-hint\"> Role a imagem para o lado para ver todas as colunas.</span>",
+    "source_hash": "cb4966892bbc"
+  },
+  "gpu-monitoring.p-6": {
+    "text": "Veja também: <a href=\"/cache-aware-routing\">roteamento orientado a cache</a> · <a href=\"/api-keys\">chaves de API</a> · <a href=\"/coding-agents\">agentes de programação</a>",
+    "source_hash": "1669f0782d97"
+  }
+}

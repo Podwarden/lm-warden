@@ -8,8 +8,9 @@ from fastapi.testclient import TestClient
 
 from app.auth.csrf import _mints_cookie
 from app.auth.policy import PUBLIC_ROUTES
-from app.landing.i18n import available, home_path
+from app.landing.i18n import available, home_path, page_locales, page_path
 from app.landing.pages import PAGES
+from app.landing.render import all_site_pages
 from tests.unit.landing.conftest import all_pages, fetch
 
 GOLDEN = Path(__file__).parents[2] / "fixtures/landing/landing-a4f06434.html"
@@ -63,7 +64,10 @@ def test_every_internal_link_resolves(client: TestClient) -> None:
             "/download/mac.sha256",
         }
         | {home_path(loc.tag) for loc in available()}
-    )  # the switcher's links
+    )
+    # The switcher links each page to itself in every language it ships in
+    # (since every page is localized, 2026-10-21).
+    known |= {page_path(p, loc.tag) for p in all_site_pages() for loc in page_locales(p)}
     for path, body in all_pages(client).items():
         for href in re.findall(r'href="(/[^"#?]*)', body):
             if href.startswith("/_landing/assets/") or href.startswith("/ui/icon"):

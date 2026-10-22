@@ -1,0 +1,54 @@
+{
+  "api-keys.meta.title": {
+    "text": "Clés API, priorités et consommation par application | LM Warden",
+    "source_hash": "36d31214a489"
+  },
+  "api-keys.meta.description": {
+    "text": "Une clé par app avec sa priorité, sa consommation et ses temps d’attente, derrière des points de terminaison compatibles OpenAI, Anthropic Messages et Responses.",
+    "source_hash": "dc32185af3f0"
+  },
+  "api-keys.keys.h1-1": {
+    "text": "Une clé par application, et une page pour chaque clé.",
+    "source_hash": "478db02e5440"
+  },
+  "api-keys.p-1": {
+    "text": "Donnez à chaque collègue, ordinateur portable, tâche de CI et agent sa propre clé. La page d’une clé montre ce qu’elle a consommé et combien de temps ses requêtes ont attendu dans la file, en médiane et en p95, sur n’importe quelle période que vous sélectionnez ou saisissez. Renouvelez une clé avec un délai de grâce, et fixez sa priorité de P0&nbsp;à&nbsp;P9 : une requête P9 en attente passe toujours avant une requête P8.",
+    "source_hash": "128af00fcd92"
+  },
+  "api-keys.p-2": {
+    "text": "Suspendez-la, et les nouvelles requêtes sont refusées pendant que celles déjà en cours se terminent :",
+    "source_hash": "24b259f012c7"
+  },
+  "api-keys.p-3": {
+    "text": "Relevé sur une instance locale le 23&nbsp;septembre 2026. Hôte et clé remplacés, autres en-têtes supprimés.",
+    "source_hash": "992b035b09f7"
+  },
+  "api-keys.video-1.aria-label": {
+    "text": "La page d’une clé API pendant un test de charge : sa priorité de P0 à P9, une bande résumant tout son historique, les jetons et requêtes par minute sur la dernière heure, puis le panneau God mode qui s’ouvre sur ses prompts et réponses au fil de leur génération",
+    "source_hash": "146ed912c7a6"
+  },
+  "api-keys.figcaption-1": {
+    "text": "<b>Fig.&nbsp;13</b>La page de <code>demo-agent</code>, la clé qui a généré la charge de la fig.&nbsp;1 : 37 requêtes et 43 k jetons générés dans l’heure affichée. Puis son panneau God mode s’ouvre (une vue en direct, facultative et désactivée par défaut, des prompts et réponses d’une clé) et ses réponses s’affichent au fur et à mesure de leur génération. Les prompts sont les nôtres.",
+    "source_hash": "389cdbc39b42"
+  },
+  "api-keys.img-1.alt": {
+    "text": "Le graphique Requests de la page Stats sur les 7 derniers jours, du 16 au 23 septembre : un repère par requête, coloré selon la clé API, dimensionné selon les jetons générés et dont la forme dépend du motif de fin, en fonction de la durée sur une échelle logarithmique de 100&#8239;ms à 10 000&#8239;s. La plupart des repères se situent entre 3 et 100 secondes ; une clé présente deux colonnes denses allant de moins d’une seconde à plusieurs centaines de secondes.",
+    "source_hash": "e3200603dcf6"
+  },
+  "api-keys.figcaption-2": {
+    "text": "<b>Fig.&nbsp;14</b>Les requêtes de toutes les clés sur un seul graphique, issu de la même page Stats : les 7 derniers jours, 28 906 requêtes, une sur quinze affichée. Chaque repère représente une requête, coloré selon sa clé, dimensionné selon les jetons qu’elle a générés, avec une forme qui dépend de la façon dont elle s’est terminée, et placé en hauteur selon sa durée sur une échelle logarithmique. L’ambre régulier correspond à <code>opencode-laptop</code>, les deux colonnes roses denses à <code>research-notebook</code>. Relevé le 23&nbsp;septembre 2026 ; les noms des clés ont été remplacés.<span class=\"scroll-hint\"> Faites défiler l’image horizontalement pour voir toute la semaine.</span>",
+    "source_hash": "1a43a2ba1520"
+  },
+  "api-keys.leave.h2-1": {
+    "text": "Pour partir, il suffit de changer <code>base_url</code>.",
+    "source_hash": "8f28f88090a1"
+  },
+  "api-keys.p-4": {
+    "text": "Il expose <code>/v1/chat/completions</code> et <code>/v1/models</code>, et <code>/v1/models</code> indique le <code>max_model_len</code> de chaque modèle. Il prend aussi en charge l’API Anthropic Messages sur <code>/v1/messages</code>, si bien que Claude Code peut faire pointer <code>ANTHROPIC_BASE_URL</code> vers l’URL racine d’un warden (Claude Code ajoute lui-même le chemin <code>/v1/messages</code>), ainsi que l’OpenAI Responses API sur <code>/v1/responses</code>, pour que Codex&nbsp;CLI puisse utiliser un modèle que vous avez chargé. Les poids sont stockés dans un cache HuggingFace ordinaire, que <code>make export-hf-cache</code> vous remet sous forme d’archive tar, et l’argv exact de lancement de chaque moteur s’obtient par une simple requête GET : une installation fonctionnelle peut donc être reconstruite sans nous. Pour partir, il suffit d’appliquer à rebours le diff ci-dessous.",
+    "source_hash": "18372068885f"
+  },
+  "api-keys.p-5": {
+    "text": "Voir aussi : <a href=\"/coding-agents\">agents de codage</a> · <a href=\"/gpu-monitoring\">surveillance des GPU</a> · <a href=\"/faq\">FAQ</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}

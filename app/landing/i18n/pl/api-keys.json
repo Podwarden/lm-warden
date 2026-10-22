@@ -1,0 +1,54 @@
+{
+  "api-keys.meta.title": {
+    "text": "Klucze API, priorytety i użycie według aplikacji | LM Warden",
+    "source_hash": "36d31214a489"
+  },
+  "api-keys.meta.description": {
+    "text": "Jeden klucz na aplikację z własnym priorytetem, użyciem i czasem w kolejce, za endpointami zgodnymi z OpenAI, Anthropic Messages i Responses.",
+    "source_hash": "dc32185af3f0"
+  },
+  "api-keys.keys.h1-1": {
+    "text": "Jeden klucz na aplikację i strona dla każdego klucza.",
+    "source_hash": "478db02e5440"
+  },
+  "api-keys.p-1": {
+    "text": "Daj każdemu współpracownikowi, laptopowi, zadaniu CI i agentowi własny klucz. Strona klucza pokazuje, ile zużył i jak długo jego żądania czekały w kolejce, medianę i p95, w dowolnym oknie, które zaznaczysz myszą lub wpiszesz. Wymieniaj klucz (rotacja) z okresem przejściowym i ustawiaj jego priorytet od P0&nbsp;do&nbsp;P9: oczekujące żądanie P9 zawsze idzie przed P8.",
+    "source_hash": "128af00fcd92"
+  },
+  "api-keys.p-2": {
+    "text": "Wstrzymaj go, a nowe żądania będą odrzucane, podczas gdy te już wykonywane się zakończą:",
+    "source_hash": "24b259f012c7"
+  },
+  "api-keys.p-3": {
+    "text": "Z lokalnej instancji, 23&nbsp;września 2026&nbsp;r. Host i klucz zastąpione, pozostałe nagłówki obcięte.",
+    "source_hash": "992b035b09f7"
+  },
+  "api-keys.video-1.aria-label": {
+    "text": "Strona klucza API podczas testu obciążeniowego: jego priorytet od P0 do P9, pasek z całą historią, tokeny i żądania na minutę z ostatniej godziny, a potem otwiera się panel God mode z promptami i odpowiedziami w miarę ich strumieniowania",
+    "source_hash": "146ed912c7a6"
+  },
+  "api-keys.figcaption-1": {
+    "text": "<b>Rys.&nbsp;13</b>Strona klucza <code>demo-agent</code>, który wygenerował obciążenie z rys.&nbsp;1: 37 żądań i 43 tys. wygenerowanych tokenów w godzinie widocznej na ekranie. Potem otwiera się jego panel God mode (opcjonalny podgląd na żywo promptów i odpowiedzi jednego klucza, domyślnie wyłączony), a odpowiedzi pojawiają się w miarę pisania. Prompty są nasze.",
+    "source_hash": "389cdbc39b42"
+  },
+  "api-keys.img-1.alt": {
+    "text": "Wykres Requests ze strony Stats z ostatnich 7 dni, od 16 do 23 września: jeden znacznik na żądanie, kolor według klucza API, rozmiar według wygenerowanych tokenów, kształt według powodu zakończenia, na tle czasu trwania w skali logarytmicznej od 100&#8239;ms do 10&nbsp;000&#8239;s. Większość znaczników leży między 3 a 100 sekundami; jeden klucz ma dwie gęste kolumny sięgające od ułamka sekundy do kilkuset sekund.",
+    "source_hash": "e3200603dcf6"
+  },
+  "api-keys.figcaption-2": {
+    "text": "<b>Rys.&nbsp;14</b>Żądania wszystkich kluczy na jednym wykresie z tej samej strony Stats: ostatnie 7 dni, 28&nbsp;906 żądań, narysowane co piętnaste. Znacznik to jedno żądanie: kolor według klucza, rozmiar według wygenerowanych tokenów, kształt według sposobu zakończenia, wysokość według czasu trwania w skali logarytmicznej. Równomierny bursztynowy pas to <code>opencode-laptop</code>, dwie gęste różowe kolumny to <code>research-notebook</code>. Zarejestrowano 23&nbsp;września 2026&nbsp;r.; nazwy kluczy zastąpiono.<span class=\"scroll-hint\"> Przewiń obraz w bok, aby zobaczyć cały tydzień.</span>",
+    "source_hash": "1a43a2ba1520"
+  },
+  "api-keys.leave.h2-1": {
+    "text": "Aby odejść, wystarczy zmienić <code>base_url</code>.",
+    "source_hash": "8f28f88090a1"
+  },
+  "api-keys.p-4": {
+    "text": "Obsługuje <code>/v1/chat/completions</code> i <code>/v1/models</code>, a <code>/v1/models</code> podaje <code>max_model_len</code> każdego modelu. Obsługuje też Anthropic Messages API pod <code>/v1/messages</code>, więc Claude Code kieruje <code>ANTHROPIC_BASE_URL</code> na główny adres URL instancji LM Warden (ścieżkę <code>/v1/messages</code> Claude Code dodaje sam), oraz OpenAI Responses API pod <code>/v1/responses</code>, więc Codex&nbsp;CLI może używać załadowanego przez ciebie modelu. Wagi leżą w zwykłym cache HuggingFace, który <code>make export-hf-cache</code> przekazuje ci jako archiwum tar, a dokładne argumenty wiersza poleceń (argv), z jakimi uruchomiono każdy silnik, są dostępne jednym żądaniem GET, więc działającą konfigurację można odtworzyć bez nas. Odwróć poniższy diff, a otrzymasz instrukcję odejścia.",
+    "source_hash": "18372068885f"
+  },
+  "api-keys.p-5": {
+    "text": "Zobacz też: <a href=\"/coding-agents\">agenci do kodowania</a> · <a href=\"/gpu-monitoring\">monitorowanie GPU</a> · <a href=\"/faq\">FAQ</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}

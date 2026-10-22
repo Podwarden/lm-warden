@@ -1,0 +1,198 @@
+{
+  "gpu-monitoring.meta.title": {
+    "text": "vLLM のためのカードごとの GPU 監視 | LM Warden",
+    "source_hash": "d27814ed8b63"
+  },
+  "gpu-monitoring.meta.description": {
+    "text": "Linux では NVIDIA カードごとに専用のパネル：スロットリング ポイントに対する温度、上限に対する電力、PCIe リンク、実行中のすべてのリクエスト。",
+    "source_hash": "507736e1bea9"
+  },
+  "gpu-monitoring.box.h1-1": {
+    "text": "GPU 監視：これらの数値を測定したマシン。",
+    "source_hash": "cc0f4c9bbf2b"
+  },
+  "gpu-monitoring.p-1": {
+    "text": "キャプションに特記がない限り、このページの読み取り値は一台のワークステーションのものです。RTX&nbsp;A4000 四枚に一つのモデルを全体で読み込み、自社のテスト トラフィックで負荷をかけています。図&nbsp;1 と図&nbsp;5 を記録している間にコンソールに表示されていた数値です。後半の適合テストでは Quadro&nbsp;RTX&nbsp;5000 も使っており、その旨を記しています。",
+    "source_hash": "a9ca4640a6e7"
+  },
+  "gpu-monitoring.p-2": {
+    "text": "カードごとのパネルは NVIDIA のドライバーから読み取るので、Linux インストールの機能です。Apple シリコン搭載 Mac では、<a href=\"/#p-mac\">Mac アプリ (ベータ版)</a> が GPU 使用率と Metal が報告するメモリ上限を表示します。電力は表示されません。",
+    "source_hash": "e6e25a4491ad"
+  },
+  "gpu-monitoring.dt-1": {
+    "text": "GPU",
+    "source_hash": "8f0474fb0c5b"
+  },
+  "gpu-monitoring.dd-1": {
+    "text": "4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000、各 16&#8239;GiB (Ampere、compute&nbsp;8.6)",
+    "source_hash": "065609784858"
+  },
+  "gpu-monitoring.dt-2": {
+    "text": "使用中の VRAM",
+    "source_hash": "60de0ad7eb70"
+  },
+  "gpu-monitoring.dd-2": {
+    "text": "64.0&#8239;GiB 中 59.4、四枚すべてにまたがって一つのモデルを読み込み",
+    "source_hash": "2a58556c9272"
+  },
+  "gpu-monitoring.dd-3": {
+    "text": "カードごとに Gen&nbsp;4 x16",
+    "source_hash": "a85ab5eb706a"
+  },
+  "gpu-monitoring.dt-3": {
+    "text": "ドライバー",
+    "source_hash": "9fe4c68ec20d"
+  },
+  "gpu-monitoring.dd-4": {
+    "text": "<code>610.57.04</code>、CUDA&nbsp;13.3",
+    "source_hash": "a041ea9e5251"
+  },
+  "gpu-monitoring.caption-1": {
+    "text": "GPU 負荷、電力、トークン (図&nbsp;1 から読み取り)",
+    "source_hash": "db678a93d309"
+  },
+  "gpu-monitoring.th-1": {
+    "text": "項目",
+    "source_hash": "463816d07097"
+  },
+  "gpu-monitoring.th-2": {
+    "text": "キャプチャ時",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.th-3": {
+    "text": "24&#8239;h の稼働時の中央値",
+    "source_hash": "af088ec66533"
+  },
+  "gpu-monitoring.th-4": {
+    "text": "24&#8239;h のピーク",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-5": {
+    "text": "GPU 使用率、最も忙しいカード&nbsp;(%)",
+    "source_hash": "9739b22b0dce"
+  },
+  "gpu-monitoring.col-capture.data-h": {
+    "text": "キャプチャ時",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.col-median.data-h": {
+    "text": "24&#8239;h の中央値",
+    "source_hash": "e6245b901702"
+  },
+  "gpu-monitoring.col-peak.data-h": {
+    "text": "24&#8239;h のピーク",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-6": {
+    "text": "GPU 電力、四枚の合計&nbsp;(W)",
+    "source_hash": "6554b6cbd5f4"
+  },
+  "gpu-monitoring.th-7": {
+    "text": "毎分のトークン数 (9 月 23 日のパネル)",
+    "source_hash": "eb7b7fd32e11"
+  },
+  "gpu-monitoring.span-1": {
+    "text": "表示なし",
+    "source_hash": "0bedd95628dd"
+  },
+  "gpu-monitoring.td-7": {
+    "text": "190k",
+    "source_hash": "eaa6d59dc9be"
+  },
+  "gpu-monitoring.td-8": {
+    "text": "880k",
+    "source_hash": "8678af14d6a2"
+  },
+  "gpu-monitoring.p-3": {
+    "text": "数値は環境によって異なります。だからこそ、自分の環境で測定することに意味があります。トークンの行は毎秒トークン数への切り替え前のものです。Stats パネルは現在、毎秒トークン数を表示しており、これらの数値は 9 月 23 日に旧来の毎分パネルでキャプチャしたものです。",
+    "source_hash": "fc86e0160504"
+  },
+  "gpu-monitoring.cards.h2-1": {
+    "text": "測定できない数値は 「not reported」 と表示されます。",
+    "source_hash": "036e83c1af39"
+  },
+  "gpu-monitoring.p-4": {
+    "text": "ほとんどの GPU ダッシュボードは四枚のカードを平均して一本の線にし、欠けた値を&nbsp;0 として描きます。このダッシュボードはカードごとに専用のパネルを用意します。ドライバーが報告するスロットリング ポイントに対する温度、そのカード自身の上限に対する電力、クロック、ファン、現在ネゴシエートされている PCIe リンク、カードが備えていれば ECC と NVLink。購入時期が十八か月違う二枚のカードは別々の二枚として扱われ、ドライバーが提供しない値はゼロとして描かれず、欠けていると表示されます。",
+    "source_hash": "f87275635f5c"
+  },
+  "gpu-monitoring.img-1.alt": {
+    "text": "負荷時の Stats ページにある四つの GPU パネル (RTX A4000 一枚ごとに一つ)：電力状態 P2 で使用率 99～100%、温度は 79～94 度で、スロットリング ポイントは 100 度。三枚にサーマル スローダウンの警告、電力は上限 140 W に対して 134～138 W。クロック、ドライバーと CUDA のバージョン、PCIe リンク、NVLink、ECC",
+    "source_hash": "55b551e38c61"
+  },
+  "gpu-monitoring.span-2": {
+    "text": "スロットリング ポイントは推測ではなくドライバーの値",
+    "source_hash": "b3bd726e07ac"
+  },
+  "gpu-monitoring.span-3": {
+    "text": "クロックが下がっている理由 (ドライバーの報告どおり)",
+    "source_hash": "7be6f5cf26b2"
+  },
+  "gpu-monitoring.span-4": {
+    "text": "カード自身の上限 140&#8239;W に対する電力",
+    "source_hash": "ef8ca2bcafce"
+  },
+  "gpu-monitoring.span-5": {
+    "text": "NVLink と ECC (カードの報告どおり)",
+    "source_hash": "c4d22dc73625"
+  },
+  "gpu-monitoring.figcaption-1": {
+    "text": "<b>図&nbsp;5</b>同じ Stats ページの四つの GPU パネルを、同じ負荷の間に原寸でキャプチャしたもの。どのカードも電力状態 P2 で 99% か 100% に達しており、そのうち 90～94&#8239;°C の三枚は、ドライバーによって最大クロックの 76～84% に抑えられています。<span class=\"scroll-hint\">画像を横にスクロールすると四つすべてが見られます。</span>",
+    "source_hash": "7aa9957f224d"
+  },
+  "gpu-monitoring.caption-2": {
+    "text": "何をどこで読み取るか",
+    "source_hash": "fd76edd0a9d5"
+  },
+  "gpu-monitoring.th-8": {
+    "text": "カードごと",
+    "source_hash": "b596b0114ded"
+  },
+  "gpu-monitoring.td-9": {
+    "text": "温度とスロットリング ポイント、電力とその上限、コアとメモリのクロック、ファン、PCIe の世代と幅、ECC、NVLink、そのカードを使っているエンジン プロセス",
+    "source_hash": "1f5a45a29bdc"
+  },
+  "gpu-monitoring.th-9": {
+    "text": "ホストごと",
+    "source_hash": "fd8f8648eb41"
+  },
+  "gpu-monitoring.td-10": {
+    "text": "使用中の VRAM、GPU 使用率 (最も忙しいカード)、電力 (カードの合計)、毎秒トークン数",
+    "source_hash": "d8e9193ca58e"
+  },
+  "gpu-monitoring.th-10": {
+    "text": "リクエストごと",
+    "source_hash": "c01f2094044d"
+  },
+  "gpu-monitoring.td-11": {
+    "text": "最初のトークンまでの時間、トークン間レイテンシ、所要時間。両エンジンともプロキシで同じ方法で測定",
+    "source_hash": "92c8d3b9a423"
+  },
+  "gpu-monitoring.inflight.h2-1": {
+    "text": "各リクエストが何を待っているか。",
+    "source_hash": "87e975182d2c"
+  },
+  "gpu-monitoring.p-5": {
+    "text": "Stats ページは、実行中のすべてのリクエストを、クライアントのセッションと、そのリクエストがライフサイクルのどこにいるか (warden でキュー待ち、プリフィル (エンジンがプロンプトを読み込む段階)、思考中、ツール呼び出しの作成中、応答中) とともに一覧表示します。バッジは、プロンプトのうちレプリカのキャッシュにありそうな割合を示します。このマシンが学習したプリフィル速度の予測より長くかかっているプリフィルには、待っていそうな理由が表示されます。同じレプリカ上のほかのプロンプトの後ろにいる、キャッシュがおそらく追い出された、または warden からは原因が見えないまま遅れている、のいずれかです。セッションは各ツールがすでに送っている ID から得ます。Claude Code、Codex、OpenCode、pi はそのままで、Hermes と Aider は一行の設定で対応します。",
+    "source_hash": "4d6984e02a57"
+  },
+  "gpu-monitoring.img-2.alt": {
+    "text": "In flight 表に 14 件のアクティブなリクエスト。すべて一つのクライアント アドレスのキー agent-farm から。列：トークン、クライアント IP、セッション、モデル、フェーズ、コンテキスト ウィンドウ、経過時間。六行がツール呼び出しまたは応答中、八行がプリフィル中で、ほとんどにプロンプトの 94～100% がキャッシュ済みと推定するバッジが付いている。三つのプリフィルに evict? バッジ、二つに砂時計のバッジ 1·r0 と 1·r4。表の下：1132 リクエストから学習したプリフィル モデル 439 tok/s、キャッシュ推定の的中率 57%、アイドル間隔ごとのヒット率は最大 30 秒後で 68%、5～15 分後には 18% に低下。",
+    "source_hash": "850b1ebebfcc"
+  },
+  "gpu-monitoring.span-6": {
+    "text": "まだトークンがなく、キャッシュはおそらく追い出し済み",
+    "source_hash": "807aafa43674"
+  },
+  "gpu-monitoring.span-7": {
+    "text": "レプリカ 4 で一つのプロンプトが先行",
+    "source_hash": "c6220dc860be"
+  },
+  "gpu-monitoring.figcaption-2": {
+    "text": "<b>図&nbsp;12</b>GPU 七枚のマシンで実行中の十四件のリクエスト。表の下には、warden が完了したリクエストから学習した内容があります。このマシンはリクエストあたり毎秒約 439 トークンをプリフィルし、キャッシュ推定は 57% の割合で当たり、二分以上アイドルだった会話は通常キャッシュが消えています (2～5 分後のヒット率は 20%)。キー名は代替名で、アドレスはドキュメント用のアドレスです。幅 768 ピクセル未満では表がカードの一覧になります。2026 年 10 月 5 日に記録。<span class=\"scroll-hint\">画像を横にスクロールするとすべての列が見られます。</span>",
+    "source_hash": "cb4966892bbc"
+  },
+  "gpu-monitoring.p-6": {
+    "text": "関連：<a href=\"/cache-aware-routing\">キャッシュを考慮したルーティング</a> · <a href=\"/api-keys\">API キー</a> · <a href=\"/coding-agents\">コーディング エージェント</a>",
+    "source_hash": "1669f0782d97"
+  }
+}

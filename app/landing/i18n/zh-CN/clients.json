@@ -1,0 +1,422 @@
+{
+  "clients.meta.title": {
+    "text": "{name} 搭配你 GPU 上的本地 LLM | LM Warden",
+    "source_hash": "9a440e2e3c4a"
+  },
+  "clients.meta.description": {
+    "text": "{name} 搭配 LM Warden：{summary}",
+    "source_hash": "9d9c76c6bb07"
+  },
+  "clients.claude-code.h1": {
+    "text": "Claude Code，运行在你自己的 GPU 上。",
+    "source_hash": "9bb97352447d"
+  },
+  "clients.claude-code.summary": {
+    "text": "保留你的 Claude 登录，让规则指定的模型在这里运行；或者完全在本地运行。",
+    "source_hash": "b46e643eeaac"
+  },
+  "clients.claude-code.capability": {
+    "text": "你的规则指定的 Claude 模型在这里运行；其他所有模型和 <code>/v1</code> 路径都以你自己的登录发往 Anthropic。在路由器模式下，切勿把 warden 密钥放进 <code>ANTHROPIC_API_KEY</code> 或 <code>ANTHROPIC_AUTH_TOKEN</code>：那会替换掉你的登录。仅本地模式把所有内容（包括小型后台任务）都放在一个已部署的模型上运行，不会向 Anthropic 发送任何内容。",
+    "source_hash": "79cee967a1ad"
+  },
+  "clients.claude-code.req.client_version": {
+    "text": "Claude Code 2.1.227 或更高版本（<code>ANTHROPIC_CUSTOM_HEADERS</code>）。",
+    "source_hash": "baf574b32f46"
+  },
+  "clients.claude-code.req.router_on": {
+    "text": "必须开启路由，并且至少有一条已启用的规则。",
+    "source_hash": "f0fd90d78fe4"
+  },
+  "clients.claude-code.req.relay_key": {
+    "text": "该密钥必须被允许转发到 Anthropic（即带有“May relay”标记）。",
+    "source_hash": "df8e31733077"
+  },
+  "clients.claude-code.req.min_context": {
+    "text": "需要至少 49,152 个 token 的上下文：仅第一轮在读取任何文件之前就约有 38,000 个 token。",
+    "source_hash": "5cc65b30acd7"
+  },
+  "clients.claude-code.req.recommended_context": {
+    "text": "实际会话建议 131,072 个 token 或更多；短会话用更少也可以。",
+    "source_hash": "82792a23c7a0"
+  },
+  "clients.claude-code.req.unknown_model_window": {
+    "text": "Claude Code 可能会警告该模型名称不在它的目录中。这只是提示信息：它会假定窗口为 200k，并据此自动压缩。请把 <code>CLAUDE_CODE_MAX_CONTEXT_TOKENS</code> 设为模型的真实上下文窗口。",
+    "source_hash": "c67abcb52ad3"
+  },
+  "clients.claude-code.mode.router.title": {
+    "text": "Router：保留你的 Claude 登录",
+    "source_hash": "872bcc0e520c"
+  },
+  "clients.claude-code.mode.router.desc": {
+    "text": "你的 Claude 登录继续发往 Anthropic；warden 密钥放在单独的标头中传输，你的规则指定的模型由这里应答。",
+    "source_hash": "9832c50a640e"
+  },
+  "clients.claude-code.mode.local.title": {
+    "text": "仅本地（无需 Anthropic 账户）",
+    "source_hash": "2a51ef910e22"
+  },
+  "clients.claude-code.mode.local.desc": {
+    "text": "每个模型槽位都指向所选的已部署模型，warden 密钥即认证令牌。不会向 Anthropic 发送任何内容。",
+    "source_hash": "1dea6fe58a27"
+  },
+  "clients.anthropic-sdk.h1": {
+    "text": "Anthropic SDK，运行在你自己的 GPU 上。",
+    "source_hash": "4229892646ec"
+  },
+  "clients.anthropic-sdk.summary": {
+    "text": "你的 Anthropic API 密钥留在 <code>api_key</code> 中；warden 密钥放在单独的标头中。",
+    "source_hash": "910172f40b64"
+  },
+  "clients.anthropic-sdk.flow.title": {
+    "text": "来自 Anthropic SDK 的请求去往何处",
+    "source_hash": "26e8b7e39b44"
+  },
+  "clients.anthropic-sdk.flow.desc": {
+    "text": "Anthropic SDK 把请求发送给 LM Warden，base_url 设为 warden，X-LMWarden-Key 填写 warden 密钥。LM Warden 检查密钥，支持 Anthropic Messages，按密钥优先级为请求排队，并交给副本路由器。路由器让每个会话留在已持有其缓存的副本上（每块 GPU 一个模型副本）。另有一条单独的路径通往 api.anthropic.com：规则把其他 Claude 模型发往这里，使用你自己的 API 密钥。",
+    "source_hash": "26917b07643f"
+  },
+  "clients.anthropic-sdk.flow.caption": {
+    "text": "来自 Anthropic SDK 的请求去往何处：Connect 写入的两项设置，中间是 warden，然后每块 GPU 上一份模型副本。",
+    "source_hash": "a4ec23a63573"
+  },
+  "clients.anthropic-sdk.capability": {
+    "text": "你的规则指定的 Claude 模型在这里运行；其他所有模型和 <code>/v1</code> 路径都以你自己的登录发往 Anthropic。仅本地模式不需要 Anthropic 账户：warden 密钥就是 <code>api_key</code>，模型填写已部署模型的名称。",
+    "source_hash": "3d9a6a025316"
+  },
+  "clients.anthropic-sdk.req.router_on": {
+    "text": "必须开启路由，并且至少有一条已启用的规则。",
+    "source_hash": "f0fd90d78fe4"
+  },
+  "clients.anthropic-sdk.req.relay_key": {
+    "text": "该密钥必须被允许转发到 Anthropic（即带有“May relay”标记）。",
+    "source_hash": "df8e31733077"
+  },
+  "clients.anthropic-sdk.mode.router.title": {
+    "text": "Router：保留你的 Anthropic 密钥",
+    "source_hash": "5e22bff885a6"
+  },
+  "clients.anthropic-sdk.mode.router.desc": {
+    "text": "<code>base_url</code> 是这个 warden；你的 Anthropic API 密钥留在 <code>api_key</code> 中，warden 密钥放在默认标头中。",
+    "source_hash": "fe17e904c7dd"
+  },
+  "clients.anthropic-sdk.mode.local.title": {
+    "text": "仅本地",
+    "source_hash": "c905013aab29"
+  },
+  "clients.anthropic-sdk.mode.local.desc": {
+    "text": "warden 密钥就是 <code>api_key</code>，模型填写已部署模型的名称。",
+    "source_hash": "e1b1c200ccb3"
+  },
+  "clients.opencode.h1": {
+    "text": "OpenCode，运行在你自己的 GPU 上。",
+    "source_hash": "0f9f0d85229c"
+  },
+  "clients.opencode.summary": {
+    "text": "将 LM Warden 设为 OpenCode 的提供方（兼容 OpenAI），使用一个已部署的模型。",
+    "source_hash": "0dbe773d1ba9"
+  },
+  "clients.opencode.flow.title": {
+    "text": "来自 OpenCode 的请求去往何处",
+    "source_hash": "ae2c3d407d79"
+  },
+  "clients.opencode.flow.desc": {
+    "text": "OpenCode 把请求发送给 LM Warden，baseURL 设为 warden，apiKey 填写 warden 密钥。LM Warden 检查密钥，支持 OpenAI Chat Completions，按密钥优先级为请求排队，并交给副本路由器。路由器让每个会话留在已持有其缓存的副本上（每块 GPU 一个模型副本）。",
+    "source_hash": "5a53f0ea3bba"
+  },
+  "clients.opencode.flow.caption": {
+    "text": "来自 OpenCode 的请求去往何处：Connect 写入的两项设置，中间是 warden，然后每块 GPU 上一份模型副本。",
+    "source_hash": "774655618391"
+  },
+  "clients.opencode.capability": {
+    "text": "仅限本地模型，走 Chat Completions（<code>@ai-sdk/openai-compatible</code>；<code>@ai-sdk/openai</code> 会改用 Responses API，而这个 warden 仅为 Codex CLI 转换该 API）。模型 ID 必须是 <code>/v1/models</code> 中列出的已部署模型名称。如果配置文件要提交到仓库，请用 <code>{env:LMWARDEN_KEY}</code> 代替密钥。通过 OpenCode 的 Anthropic 提供方使用 Router 模式的做法，本页暂未涵盖。",
+    "source_hash": "8901779665ff"
+  },
+  "clients.opencode.req.tools": {
+    "text": "需要支持工具调用的模型（用于智能体式编辑）。",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.opencode.req.min_context": {
+    "text": "至少有 32,768 个 token 的上下文时效果最好。",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.opencode.mode.default.title": {
+    "text": "本地模型",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.opencode.mode.default.desc": {
+    "text": "在 <code>opencode.json</code> 中把 LM Warden 添加为提供方，并设为默认。",
+    "source_hash": "e03771b96f12"
+  },
+  "clients.aider.h1": {
+    "text": "Aider，运行在你自己的 GPU 上。",
+    "source_hash": "b1e1b6bd30b4"
+  },
+  "clients.aider.summary": {
+    "text": "Aider 通过其兼容 OpenAI 的提供方，使用一个已部署的模型。",
+    "source_hash": "2a2e36942a30"
+  },
+  "clients.aider.flow.title": {
+    "text": "来自 Aider 的请求去往何处",
+    "source_hash": "32e01b3b0c97"
+  },
+  "clients.aider.flow.desc": {
+    "text": "Aider 把请求发送给 LM Warden，OPENAI_API_BASE 设为 warden，OPENAI_API_KEY 填写 warden 密钥。LM Warden 检查密钥，支持 OpenAI Chat Completions，按密钥优先级为请求排队，并交给副本路由器。路由器让每个会话留在已持有其缓存的副本上（每块 GPU 一个模型副本）。",
+    "source_hash": "3b2c308c114e"
+  },
+  "clients.aider.flow.caption": {
+    "text": "来自 Aider 的请求去往何处：Connect 写入的两项设置，中间是 warden，然后每块 GPU 上一份模型副本。",
+    "source_hash": "e58a54a34cdc"
+  },
+  "clients.aider.capability": {
+    "text": "仅限本地模型，通过 Chat Completions。Aider 通过文本格式进行编辑，因此模型不需要工具调用。元数据文件只用于让 Aider 不再警告未知模型，并设置它的上下文大小。",
+    "source_hash": "922681946310"
+  },
+  "clients.aider.req.min_context": {
+    "text": "至少有 32,768 个 token 的上下文时效果最好。",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.aider.mode.default.title": {
+    "text": "本地模型",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.aider.mode.default.desc": {
+    "text": "把 Aider 的 OpenAI 提供方指向这个 warden。",
+    "source_hash": "df94297df209"
+  },
+  "clients.aider.mode.default.file.session": {
+    "text": "每次启动的会话 ID（可选）",
+    "source_hash": "c1f31c2b83f0"
+  },
+  "clients.grok-cli.h1": {
+    "text": "Grok CLI，运行在你自己的 GPU 上。",
+    "source_hash": "9e97001cf2f3"
+  },
+  "clients.grok-cli.summary": {
+    "text": "xAI 的 Grok Build CLI，以自带密钥（BYOK）模型的方式接入 LM Warden。",
+    "source_hash": "be6e0d9a09ed"
+  },
+  "clients.grok-cli.flow.title": {
+    "text": "来自 Grok CLI 的请求去往何处",
+    "source_hash": "eeb620d01d38"
+  },
+  "clients.grok-cli.flow.desc": {
+    "text": "Grok CLI 把请求发送给 LM Warden，base_url 设为 warden，env_key 填写 warden 密钥。LM Warden 检查密钥，支持 OpenAI Chat Completions，按密钥优先级为请求排队，并交给副本路由器。路由器让每个会话留在已持有其缓存的副本上（每块 GPU 一个模型副本）。",
+    "source_hash": "ef648e107c77"
+  },
+  "clients.grok-cli.flow.caption": {
+    "text": "来自 Grok CLI 的请求去往何处：Connect 写入的两项设置，中间是 warden，然后每块 GPU 上一份模型副本。",
+    "source_hash": "b77ddcf1b78a"
+  },
+  "clients.grok-cli.capability": {
+    "text": "仅限本地模型，走 Chat Completions（<code>api_backend = chat_completions</code>）。不会直通到 xAI，BYOK 模型也不需要 xAI 登录。<code>session_summary</code> 让 Grok 生成会话标题的请求也使用这个模型；没有它，Grok 会向这个 warden 请求 <code>grok-4.6</code>，并得到 404。Grok 运行时会向 <code>config.toml</code> 写入它自己的配置段。社区版 grok-cli（npm <code>grok-dev</code>）是另一个工具：聊天可用，工具调用不可用。",
+    "source_hash": "03938abace0a"
+  },
+  "clients.grok-cli.req.tools": {
+    "text": "需要支持工具调用的模型（用于智能体式编辑）。",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.grok-cli.req.min_context": {
+    "text": "至少有 32,768 个 token 的上下文时效果最好。",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.grok-cli.mode.default.title": {
+    "text": "Grok Build（官方）",
+    "source_hash": "1901a8b05d3b"
+  },
+  "clients.grok-cli.mode.default.desc": {
+    "text": "在 <code>~/.grok/config.toml</code> 中添加一个模型条目；密钥来自 <code>LMWARDEN_KEY</code>。安装：<code>curl -fsSL https://x.ai/cli/install.sh | bash</code>，或 <code>npm i -g @xai-official/grok</code>",
+    "source_hash": "b5943bc2443d"
+  },
+  "clients.grok-cli.mode.community.title": {
+    "text": "社区版 grok-cli",
+    "source_hash": "28bbd28283a3"
+  },
+  "clients.grok-cli.mode.community.desc": {
+    "text": "社区版 grok-cli 从环境变量中读取 Base URL、密钥和模型，并且需要安装 Bun。聊天可用；工具调用会失败，因为它的 xAI SDK 拒绝分段到达的工具调用数据块，而 vLLM 正是这样流式输出的。",
+    "source_hash": "0b589963361a"
+  },
+  "clients.openai-sdk.h1": {
+    "text": "OpenAI SDK，运行在你自己的 GPU 上。",
+    "source_hash": "db3661cee041"
+  },
+  "clients.openai-sdk.summary": {
+    "text": "任何 OpenAI SDK，或任何带有兼容 OpenAI 的 Base URL 设置的工具。",
+    "source_hash": "16d05b661878"
+  },
+  "clients.openai-sdk.flow.title": {
+    "text": "来自 OpenAI SDK 的请求去往何处",
+    "source_hash": "13c7ed2b6c10"
+  },
+  "clients.openai-sdk.flow.desc": {
+    "text": "OpenAI SDK 把请求发送给 LM Warden，base_url 设为 warden，api_key 填写 warden 密钥。LM Warden 检查密钥，支持 OpenAI Chat Completions，按密钥优先级为请求排队，并交给副本路由器。路由器让每个会话留在已持有其缓存的副本上（每块 GPU 一个模型副本）。",
+    "source_hash": "9b9a5c752e5f"
+  },
+  "clients.openai-sdk.flow.caption": {
+    "text": "来自 OpenAI SDK 的请求去往何处：Connect 写入的两项设置，中间是 warden，然后每块 GPU 上一份模型副本。",
+    "source_hash": "0d8679dd39d0"
+  },
+  "clients.openai-sdk.capability": {
+    "text": "仅限本地模型。不会直通到 OpenAI：对 <code>gpt-*</code> 的请求会得到 404。提供 Chat Completions 和 Completions；<code>/v1/responses</code> 是到 Chat Completions 的无状态转换（参见 Codex CLI）。",
+    "source_hash": "81a1f26dda28"
+  },
+  "clients.openai-sdk.mode.default.title": {
+    "text": "本地模型",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.openai-sdk.mode.default.desc": {
+    "text": "<code>base_url</code> 是这个 warden 的 <code>/v1</code>，warden 密钥就是 API 密钥。",
+    "source_hash": "81e9b9ed3e66"
+  },
+  "clients.continue.h1": {
+    "text": "Continue，运行在你自己的 GPU 上。",
+    "source_hash": "f33c2b44b3be"
+  },
+  "clients.continue.summary": {
+    "text": "Continue 的 OpenAI 提供方指向这个 warden，使用一个已部署的模型。",
+    "source_hash": "4377b7395411"
+  },
+  "clients.continue.flow.title": {
+    "text": "来自 Continue 的请求去往何处",
+    "source_hash": "a55ed462d54e"
+  },
+  "clients.continue.flow.desc": {
+    "text": "Continue 把请求发送给 LM Warden，apiBase 设为 warden，apiKey 填写 warden 密钥。LM Warden 检查密钥，支持 OpenAI Chat Completions，按密钥优先级为请求排队，并交给副本路由器。路由器让每个会话留在已持有其缓存的副本上（每块 GPU 一个模型副本）。",
+    "source_hash": "dfee5b6d070e"
+  },
+  "clients.continue.flow.caption": {
+    "text": "来自 Continue 的请求去往何处：Connect 写入的两项设置，中间是 warden，然后每块 GPU 上一份模型副本。",
+    "source_hash": "c1f803ddf701"
+  },
+  "clients.continue.capability": {
+    "text": "仅限本地模型，通过 Chat Completions。Router 模式需要 Continue 没有记录在文档中的自定义标头。",
+    "source_hash": "d76f0ccb6e86"
+  },
+  "clients.continue.req.min_context": {
+    "text": "至少有 32,768 个 token 的上下文时效果最好。",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.continue.mode.default.title": {
+    "text": "本地模型",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.continue.mode.default.desc": {
+    "text": "在 <code>~/.continue/config.yaml</code> 中添加一个模型条目。",
+    "source_hash": "8c8d339555ff"
+  },
+  "clients.cline.h1": {
+    "text": "Cline，运行在你自己的 GPU 上。",
+    "source_hash": "d0efe15bdc4f"
+  },
+  "clients.cline.summary": {
+    "text": "Cline 的 OpenAI Compatible 提供方，在其设置界面中填写。",
+    "source_hash": "d80b0d66c45e"
+  },
+  "clients.cline.flow.title": {
+    "text": "来自 Cline 的请求去往何处",
+    "source_hash": "79932fc0e85c"
+  },
+  "clients.cline.flow.desc": {
+    "text": "Cline 把请求发送给 LM Warden，Base URL 设为 warden，API Key 填写 warden 密钥。LM Warden 检查密钥，支持 OpenAI Chat Completions，按密钥优先级为请求排队，并交给副本路由器。路由器让每个会话留在已持有其缓存的副本上（每块 GPU 一个模型副本）。",
+    "source_hash": "300648093db4"
+  },
+  "clients.cline.flow.caption": {
+    "text": "来自 Cline 的请求去往何处：Connect 写入的两项设置，中间是 warden，然后每块 GPU 上一份模型副本。",
+    "source_hash": "26566cb52d8d"
+  },
+  "clients.cline.capability": {
+    "text": "仅限本地模型，通过流式 Chat Completions。Cline 没有配置文件：请在 API Provider &gt; OpenAI Compatible 下输入这些值。它的 Anthropic 提供方支持自定义 Base URL，但不支持自定义标头，因此无法使用路由器模式。",
+    "source_hash": "21110940c4cb"
+  },
+  "clients.cline.req.tools": {
+    "text": "需要支持工具调用的模型（用于智能体式编辑）。",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.cline.req.min_context": {
+    "text": "至少有 32,768 个 token 的上下文时效果最好。",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.cline.mode.default.title": {
+    "text": "本地模型",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.cline.mode.default.desc": {
+    "text": "Settings &gt; API Provider &gt; OpenAI Compatible。",
+    "source_hash": "f65c6df5377b"
+  },
+  "clients.cursor.h1": {
+    "text": "Cursor，运行在你自己的 GPU 上。",
+    "source_hash": "314536df2e7a"
+  },
+  "clients.cursor.summary": {
+    "text": "Cursor 的 OpenAI Base URL 覆盖设置，用于与已部署的模型聊天。",
+    "source_hash": "1c8912c5ba32"
+  },
+  "clients.cursor.flow.title": {
+    "text": "来自 Cursor 的请求去往何处",
+    "source_hash": "43c8f2aed837"
+  },
+  "clients.cursor.flow.desc": {
+    "text": "Cursor 把请求发送给 LM Warden，Override OpenAI Base URL 设为 warden，OpenAI API Key 填写 warden 密钥。LM Warden 检查密钥，支持 OpenAI Chat Completions，按密钥优先级为请求排队，并交给副本路由器。路由器让每个会话留在已持有其缓存的副本上（每块 GPU 一个模型副本）。",
+    "source_hash": "524789d9ea5d"
+  },
+  "clients.cursor.flow.caption": {
+    "text": "来自 Cursor 的请求去往何处：Connect 写入的两项设置，中间是 warden，然后每块 GPU 上一份模型副本。",
+    "source_hash": "79e33449f1a5"
+  },
+  "clients.cursor.capability": {
+    "text": "请求由 Cursor 的服务器发出，因此这个 warden 的 URL 必须能从互联网访问；局域网或 localhost 上的 warden 无法使用。自定义密钥只适用于聊天模型：Tab 补全仍使用 Cursor 自己的模型，而使用 Cursor 模型的 Agent 会拒绝自定义密钥。Cursor 当前的文档已不再介绍 Override OpenAI Base URL 设置；这一设置是从 Cursor 员工在论坛上的回复中得知的。",
+    "source_hash": "e3b007a84e77"
+  },
+  "clients.cursor.req.reachable": {
+    "text": "Cursor 的服务器会调用这个 URL，因此它必须能从互联网访问。",
+    "source_hash": "0815103f2766"
+  },
+  "clients.cursor.mode.default.title": {
+    "text": "与本地模型聊天",
+    "source_hash": "5e7a9a7b90b9"
+  },
+  "clients.cursor.mode.default.desc": {
+    "text": "Cursor Settings &gt; Models，然后把模型名称添加为自定义模型。",
+    "source_hash": "fce3909f9e49"
+  },
+  "clients.codex-cli.h1": {
+    "text": "Codex CLI，运行在你自己的 GPU 上。",
+    "source_hash": "ee03de1664ad"
+  },
+  "clients.codex-cli.summary": {
+    "text": "将 LM Warden 设为 Codex CLI 的自定义模型提供方，使用一个已部署的模型。",
+    "source_hash": "4ffc9f534362"
+  },
+  "clients.codex-cli.flow.title": {
+    "text": "来自 Codex CLI 的请求去往何处",
+    "source_hash": "4d9d5da5c30b"
+  },
+  "clients.codex-cli.flow.desc": {
+    "text": "Codex CLI 把请求发送给 LM Warden，base_url 设为 warden，env_key 填写 warden 密钥。LM Warden 检查密钥，支持 OpenAI Responses，按密钥优先级为请求排队，并交给副本路由器。路由器让每个会话留在已持有其缓存的副本上（每块 GPU 一个模型副本）。",
+    "source_hash": "ae1c2b1f74bf"
+  },
+  "clients.codex-cli.flow.caption": {
+    "text": "来自 Codex CLI 的请求去往何处：Connect 写入的两项设置，中间是 warden，然后每块 GPU 上一份模型副本。",
+    "source_hash": "4596be3eb188"
+  },
+  "clients.codex-cli.capability": {
+    "text": "仅限本地模型。Codex 只支持 Responses API；warden 会为已部署的模型把 <code>POST /v1/responses</code> 转换为 Chat Completions，因此回复、工具调用和用量都以 Responses 事件的形式到达 Codex。它是无状态的：Codex 每一轮都发送 <code>store:false</code> 和整个对话，<code>previous_response_id</code> 会被拒绝。思考默认开启（Codex 会请求推理摘要，模型的推理以摘要形式显示；要关闭它，请在 <code>config.toml</code> 中设置 <code>model_reasoning_effort = \"none\"</code>），托管的网络搜索会被丢弃（设置 <code>web_search = \"disabled\"</code>），路由器规则不适用。请把 <code>model_context_window</code> 设为模型的真实窗口：对于不认识的名称，Codex 会假定为 272k。引擎需要启用工具调用（vLLM：<code>--enable-auto-tool-choice</code> 和一个 <code>--tool-call-parser</code>）。对未加载模型的请求会得到 404，Codex 会重试几秒钟后才放弃。",
+    "source_hash": "b7c7ad7fa0c7"
+  },
+  "clients.codex-cli.req.tools": {
+    "text": "需要支持工具调用的模型（用于智能体式编辑）。",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.codex-cli.req.min_context": {
+    "text": "至少有 32,768 个 token 的上下文时效果最好。",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.codex-cli.mode.default.title": {
+    "text": "本地模型",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.codex-cli.mode.default.desc": {
+    "text": "在 <code>~/.codex/config.toml</code> 中把 LM Warden 添加为模型提供方。",
+    "source_hash": "0e63a370854f"
+  }
+}

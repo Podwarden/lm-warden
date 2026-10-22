@@ -1,0 +1,422 @@
+{
+  "clients.meta.title": {
+    "text": "{name} com um LLM local nas suas GPUs | LM Warden",
+    "source_hash": "9a440e2e3c4a"
+  },
+  "clients.meta.description": {
+    "text": "{name} com o LM Warden: {summary}",
+    "source_hash": "9d9c76c6bb07"
+  },
+  "clients.claude-code.h1": {
+    "text": "Claude Code nas suas próprias GPUs.",
+    "source_hash": "9bb97352447d"
+  },
+  "clients.claude-code.summary": {
+    "text": "Mantenha o seu login do Claude e rode aqui os modelos que as suas regras definem, ou rode tudo localmente.",
+    "source_hash": "b46e643eeaac"
+  },
+  "clients.claude-code.capability": {
+    "text": "Os modelos Claude que as suas regras definem rodam aqui; todos os outros modelos e caminhos <code>/v1</code> vão para a Anthropic com o seu próprio login. Nunca coloque a chave do warden em <code>ANTHROPIC_API_KEY</code> nem em <code>ANTHROPIC_AUTH_TOKEN</code> no modo Router: isso substituiria o seu login. No modo apenas local, tudo roda em um único modelo servido, inclusive as pequenas tarefas em segundo plano, e nada vai para a Anthropic.",
+    "source_hash": "79cee967a1ad"
+  },
+  "clients.claude-code.req.client_version": {
+    "text": "Claude Code 2.1.227 ou mais recente (<code>ANTHROPIC_CUSTOM_HEADERS</code>).",
+    "source_hash": "baf574b32f46"
+  },
+  "clients.claude-code.req.router_on": {
+    "text": "O roteamento precisa estar ligado, com pelo menos uma regra ativada.",
+    "source_hash": "f0fd90d78fe4"
+  },
+  "clients.claude-code.req.relay_key": {
+    "text": "A chave precisa ter permissão para repassar à Anthropic (May relay).",
+    "source_hash": "df8e31733077"
+  },
+  "clients.claude-code.req.min_context": {
+    "text": "Precisa de pelo menos 49.152 tokens de contexto: só o primeiro turno tem cerca de 38.000 tokens antes de qualquer arquivo ser lido.",
+    "source_hash": "5cc65b30acd7"
+  },
+  "clients.claude-code.req.recommended_context": {
+    "text": "131.072 tokens ou mais para sessões reais; menos funciona para sessões curtas.",
+    "source_hash": "82792a23c7a0"
+  },
+  "clients.claude-code.req.unknown_model_window": {
+    "text": "O Claude Code pode avisar que o nome do modelo não está no catálogo dele. É só informativo: ele presume uma janela de 200k e compacta o contexto automaticamente com base nela. Defina <code>CLAUDE_CODE_MAX_CONTEXT_TOKENS</code> com a janela de contexto real do modelo.",
+    "source_hash": "c67abcb52ad3"
+  },
+  "clients.claude-code.mode.router.title": {
+    "text": "Router: mantenha o seu login do Claude",
+    "source_hash": "872bcc0e520c"
+  },
+  "clients.claude-code.mode.router.desc": {
+    "text": "O seu login do Claude continua indo para a Anthropic; a chave do warden viaja em um cabeçalho próprio, e os modelos que as suas regras definem são respondidos aqui.",
+    "source_hash": "9832c50a640e"
+  },
+  "clients.claude-code.mode.local.title": {
+    "text": "Só local (sem conta da Anthropic)",
+    "source_hash": "2a51ef910e22"
+  },
+  "clients.claude-code.mode.local.desc": {
+    "text": "Todos os slots de modelo usam o modelo servido escolhido, e a chave do warden é o token de autenticação. Nada vai para a Anthropic.",
+    "source_hash": "1dea6fe58a27"
+  },
+  "clients.anthropic-sdk.h1": {
+    "text": "Anthropic SDK nas suas próprias GPUs.",
+    "source_hash": "4229892646ec"
+  },
+  "clients.anthropic-sdk.summary": {
+    "text": "A sua chave de API da Anthropic fica em <code>api_key</code>; a chave do warden vai em um cabeçalho próprio.",
+    "source_hash": "910172f40b64"
+  },
+  "clients.anthropic-sdk.flow.title": {
+    "text": "Para onde vai uma solicitação do Anthropic SDK",
+    "source_hash": "26e8b7e39b44"
+  },
+  "clients.anthropic-sdk.flow.desc": {
+    "text": "O Anthropic SDK envia as solicitações ao LM Warden com base_url apontando para o warden e X-LMWarden-Key contendo uma chave do warden. O LM Warden verifica a chave, implementa o protocolo Anthropic Messages, coloca a solicitação na fila pela prioridade da chave e a entrega ao roteador de réplicas, que mantém cada sessão na réplica que já tem o cache dela, uma cópia do modelo por GPU. Um caminho separado vai para api.anthropic.com: as regras enviam outros modelos Claude para lá, com a sua própria chave de API.",
+    "source_hash": "26917b07643f"
+  },
+  "clients.anthropic-sdk.flow.caption": {
+    "text": "Para onde vai uma solicitação do Anthropic SDK: as duas configurações que o Connect grava, o warden no meio e depois uma cópia do modelo por GPU.",
+    "source_hash": "a4ec23a63573"
+  },
+  "clients.anthropic-sdk.capability": {
+    "text": "Os modelos Claude que as suas regras definem rodam aqui; todos os outros modelos e caminhos <code>/v1</code> vão para a Anthropic com o seu próprio login. No modo apenas local, não é preciso ter conta da Anthropic: a chave do warden é o <code>api_key</code> e o modelo é o nome de um modelo servido.",
+    "source_hash": "3d9a6a025316"
+  },
+  "clients.anthropic-sdk.req.router_on": {
+    "text": "O roteamento precisa estar ligado, com pelo menos uma regra ativada.",
+    "source_hash": "f0fd90d78fe4"
+  },
+  "clients.anthropic-sdk.req.relay_key": {
+    "text": "A chave precisa ter permissão para repassar à Anthropic (May relay).",
+    "source_hash": "df8e31733077"
+  },
+  "clients.anthropic-sdk.mode.router.title": {
+    "text": "Router: mantenha a sua chave da Anthropic",
+    "source_hash": "5e22bff885a6"
+  },
+  "clients.anthropic-sdk.mode.router.desc": {
+    "text": "<code>base_url</code> é este warden; a sua chave de API da Anthropic fica em <code>api_key</code> e a chave do warden vai nos cabeçalhos padrão.",
+    "source_hash": "fe17e904c7dd"
+  },
+  "clients.anthropic-sdk.mode.local.title": {
+    "text": "Só local",
+    "source_hash": "c905013aab29"
+  },
+  "clients.anthropic-sdk.mode.local.desc": {
+    "text": "A chave do warden é o <code>api_key</code> e o modelo é o nome de um modelo servido.",
+    "source_hash": "e1b1c200ccb3"
+  },
+  "clients.opencode.h1": {
+    "text": "OpenCode nas suas próprias GPUs.",
+    "source_hash": "0f9f0d85229c"
+  },
+  "clients.opencode.summary": {
+    "text": "O LM Warden como provedor compatível com OpenAI para o OpenCode, um modelo servido.",
+    "source_hash": "0dbe773d1ba9"
+  },
+  "clients.opencode.flow.title": {
+    "text": "Para onde vai uma solicitação do OpenCode",
+    "source_hash": "ae2c3d407d79"
+  },
+  "clients.opencode.flow.desc": {
+    "text": "O OpenCode envia as solicitações ao LM Warden com baseURL apontando para o warden e apiKey contendo uma chave do warden. O LM Warden verifica a chave, implementa o protocolo OpenAI Chat Completions, coloca a solicitação na fila pela prioridade da chave e a entrega ao roteador de réplicas, que mantém cada sessão na réplica que já tem o cache dela, uma cópia do modelo por GPU.",
+    "source_hash": "5a53f0ea3bba"
+  },
+  "clients.opencode.flow.caption": {
+    "text": "Para onde vai uma solicitação do OpenCode: as duas configurações que o Connect grava, o warden no meio e depois uma cópia do modelo por GPU.",
+    "source_hash": "774655618391"
+  },
+  "clients.opencode.capability": {
+    "text": "Só modelos locais, via Chat Completions (<code>@ai-sdk/openai-compatible</code>; <code>@ai-sdk/openai</code> usaria a Responses API, que este warden só traduz para o Codex CLI). O id do modelo precisa ser o nome de um modelo servido, conforme <code>/v1/models</code>. Para um arquivo versionado, use <code>{env:LMWARDEN_KEY}</code> em vez da chave. O modo Router pelo provedor Anthropic do OpenCode ainda não é suportado.",
+    "source_hash": "8901779665ff"
+  },
+  "clients.opencode.req.tools": {
+    "text": "Precisa de um modelo com chamada de ferramentas (edições agênticas).",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.opencode.req.min_context": {
+    "text": "Funciona melhor com pelo menos 32.768 tokens de contexto.",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.opencode.mode.default.title": {
+    "text": "Modelos locais",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.opencode.mode.default.desc": {
+    "text": "Adicione o LM Warden como provedor em <code>opencode.json</code> e torne-o o padrão.",
+    "source_hash": "e03771b96f12"
+  },
+  "clients.aider.h1": {
+    "text": "Aider nas suas próprias GPUs.",
+    "source_hash": "b1e1b6bd30b4"
+  },
+  "clients.aider.summary": {
+    "text": "O Aider com um modelo servido, por meio do provedor compatível com OpenAI do próprio Aider.",
+    "source_hash": "2a2e36942a30"
+  },
+  "clients.aider.flow.title": {
+    "text": "Para onde vai uma solicitação do Aider",
+    "source_hash": "32e01b3b0c97"
+  },
+  "clients.aider.flow.desc": {
+    "text": "O Aider envia as solicitações ao LM Warden com OPENAI_API_BASE apontando para o warden e OPENAI_API_KEY contendo uma chave do warden. O LM Warden verifica a chave, implementa o protocolo OpenAI Chat Completions, coloca a solicitação na fila pela prioridade da chave e a entrega ao roteador de réplicas, que mantém cada sessão na réplica que já tem o cache dela, uma cópia do modelo por GPU.",
+    "source_hash": "3b2c308c114e"
+  },
+  "clients.aider.flow.caption": {
+    "text": "Para onde vai uma solicitação do Aider: as duas configurações que o Connect grava, o warden no meio e depois uma cópia do modelo por GPU.",
+    "source_hash": "e58a54a34cdc"
+  },
+  "clients.aider.capability": {
+    "text": "Só modelos locais, via Chat Completions. O Aider edita por formatos de texto, então o modelo não precisa de chamada de ferramentas. O arquivo de metadados só impede que o Aider avise sobre um modelo desconhecido e define o tamanho do contexto.",
+    "source_hash": "922681946310"
+  },
+  "clients.aider.req.min_context": {
+    "text": "Funciona melhor com pelo menos 32.768 tokens de contexto.",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.aider.mode.default.title": {
+    "text": "Modelos locais",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.aider.mode.default.desc": {
+    "text": "Configure o provedor OpenAI do Aider para usar este warden.",
+    "source_hash": "df94297df209"
+  },
+  "clients.aider.mode.default.file.session": {
+    "text": "Id de sessão por execução (opcional)",
+    "source_hash": "c1f31c2b83f0"
+  },
+  "clients.grok-cli.h1": {
+    "text": "Grok CLI nas suas próprias GPUs.",
+    "source_hash": "9e97001cf2f3"
+  },
+  "clients.grok-cli.summary": {
+    "text": "O Grok Build CLI da xAI com o LM Warden como modelo com chave própria (BYOK).",
+    "source_hash": "be6e0d9a09ed"
+  },
+  "clients.grok-cli.flow.title": {
+    "text": "Para onde vai uma solicitação do Grok CLI",
+    "source_hash": "eeb620d01d38"
+  },
+  "clients.grok-cli.flow.desc": {
+    "text": "O Grok CLI envia as solicitações ao LM Warden com base_url apontando para o warden e env_key contendo uma chave do warden. O LM Warden verifica a chave, implementa o protocolo OpenAI Chat Completions, coloca a solicitação na fila pela prioridade da chave e a entrega ao roteador de réplicas, que mantém cada sessão na réplica que já tem o cache dela, uma cópia do modelo por GPU.",
+    "source_hash": "ef648e107c77"
+  },
+  "clients.grok-cli.flow.caption": {
+    "text": "Para onde vai uma solicitação do Grok CLI: as duas configurações que o Connect grava, o warden no meio e depois uma cópia do modelo por GPU.",
+    "source_hash": "b77ddcf1b78a"
+  },
+  "clients.grok-cli.capability": {
+    "text": "Só modelos locais, via Chat Completions (<code>api_backend = chat_completions</code>). Não há repasse para a xAI, e um modelo BYOK não precisa de login na xAI. <code>session_summary</code> mantém neste modelo as solicitações de título de sessão do Grok; sem isso, o Grok pede <code>grok-4.6</code> a este warden e recebe um 404. O Grok acrescenta as próprias seções ao <code>config.toml</code> quando roda. O grok-cli da comunidade (npm <code>grok-dev</code>) é outra ferramenta: o chat funciona, as chamadas de ferramenta não.",
+    "source_hash": "03938abace0a"
+  },
+  "clients.grok-cli.req.tools": {
+    "text": "Precisa de um modelo com chamada de ferramentas (edições agênticas).",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.grok-cli.req.min_context": {
+    "text": "Funciona melhor com pelo menos 32.768 tokens de contexto.",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.grok-cli.mode.default.title": {
+    "text": "Grok Build (oficial)",
+    "source_hash": "1901a8b05d3b"
+  },
+  "clients.grok-cli.mode.default.desc": {
+    "text": "Uma entrada de modelo em <code>~/.grok/config.toml</code>; a chave vem de <code>LMWARDEN_KEY</code>. Instalação: <code>curl -fsSL https://x.ai/cli/install.sh | bash</code> ou <code>npm i -g @xai-official/grok</code>",
+    "source_hash": "b5943bc2443d"
+  },
+  "clients.grok-cli.mode.community.title": {
+    "text": "grok-cli da comunidade",
+    "source_hash": "28bbd28283a3"
+  },
+  "clients.grok-cli.mode.community.desc": {
+    "text": "O grok-cli da comunidade lê a URL base, a chave e o modelo das variáveis de ambiente e precisa do Bun instalado. O chat funciona; as chamadas de ferramenta falham, porque o SDK da xAI dele rejeita trechos de chamada de ferramenta que chegam em partes, como o vLLM os transmite.",
+    "source_hash": "0b589963361a"
+  },
+  "clients.openai-sdk.h1": {
+    "text": "OpenAI SDK nas suas próprias GPUs.",
+    "source_hash": "db3661cee041"
+  },
+  "clients.openai-sdk.summary": {
+    "text": "Qualquer OpenAI SDK, ou qualquer coisa com uma configuração de URL base compatível com OpenAI.",
+    "source_hash": "16d05b661878"
+  },
+  "clients.openai-sdk.flow.title": {
+    "text": "Para onde vai uma solicitação do OpenAI SDK",
+    "source_hash": "13c7ed2b6c10"
+  },
+  "clients.openai-sdk.flow.desc": {
+    "text": "O OpenAI SDK envia as solicitações ao LM Warden com base_url apontando para o warden e api_key contendo uma chave do warden. O LM Warden verifica a chave, implementa o protocolo OpenAI Chat Completions, coloca a solicitação na fila pela prioridade da chave e a entrega ao roteador de réplicas, que mantém cada sessão na réplica que já tem o cache dela, uma cópia do modelo por GPU.",
+    "source_hash": "9b9a5c752e5f"
+  },
+  "clients.openai-sdk.flow.caption": {
+    "text": "Para onde vai uma solicitação do OpenAI SDK: as duas configurações que o Connect grava, o warden no meio e depois uma cópia do modelo por GPU.",
+    "source_hash": "0d8679dd39d0"
+  },
+  "clients.openai-sdk.capability": {
+    "text": "Só modelos locais. Não há repasse para a OpenAI: uma solicitação para <code>gpt-*</code> recebe 404. Chat Completions e Completions são servidos; <code>/v1/responses</code> é uma tradução sem estado para Chat Completions (veja Codex CLI).",
+    "source_hash": "81a1f26dda28"
+  },
+  "clients.openai-sdk.mode.default.title": {
+    "text": "Modelos locais",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.openai-sdk.mode.default.desc": {
+    "text": "<code>base_url</code> é o <code>/v1</code> deste warden e a chave do warden é a chave de API.",
+    "source_hash": "81e9b9ed3e66"
+  },
+  "clients.continue.h1": {
+    "text": "Continue nas suas próprias GPUs.",
+    "source_hash": "f33c2b44b3be"
+  },
+  "clients.continue.summary": {
+    "text": "O provedor OpenAI do Continue configurado para usar este warden, um modelo servido.",
+    "source_hash": "4377b7395411"
+  },
+  "clients.continue.flow.title": {
+    "text": "Para onde vai uma solicitação do Continue",
+    "source_hash": "a55ed462d54e"
+  },
+  "clients.continue.flow.desc": {
+    "text": "O Continue envia as solicitações ao LM Warden com apiBase apontando para o warden e apiKey contendo uma chave do warden. O LM Warden verifica a chave, implementa o protocolo OpenAI Chat Completions, coloca a solicitação na fila pela prioridade da chave e a entrega ao roteador de réplicas, que mantém cada sessão na réplica que já tem o cache dela, uma cópia do modelo por GPU.",
+    "source_hash": "dfee5b6d070e"
+  },
+  "clients.continue.flow.caption": {
+    "text": "Para onde vai uma solicitação do Continue: as duas configurações que o Connect grava, o warden no meio e depois uma cópia do modelo por GPU.",
+    "source_hash": "c1f803ddf701"
+  },
+  "clients.continue.capability": {
+    "text": "Só modelos locais, via Chat Completions. O modo Router precisaria de cabeçalhos personalizados que o Continue não documenta.",
+    "source_hash": "d76f0ccb6e86"
+  },
+  "clients.continue.req.min_context": {
+    "text": "Funciona melhor com pelo menos 32.768 tokens de contexto.",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.continue.mode.default.title": {
+    "text": "Modelos locais",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.continue.mode.default.desc": {
+    "text": "Uma entrada de modelo em <code>~/.continue/config.yaml</code>.",
+    "source_hash": "8c8d339555ff"
+  },
+  "clients.cline.h1": {
+    "text": "Cline nas suas próprias GPUs.",
+    "source_hash": "d0efe15bdc4f"
+  },
+  "clients.cline.summary": {
+    "text": "O provedor OpenAI Compatible do Cline, preenchido na tela de configurações dele.",
+    "source_hash": "d80b0d66c45e"
+  },
+  "clients.cline.flow.title": {
+    "text": "Para onde vai uma solicitação do Cline",
+    "source_hash": "79932fc0e85c"
+  },
+  "clients.cline.flow.desc": {
+    "text": "O Cline envia as solicitações ao LM Warden com Base URL apontando para o warden e API Key contendo uma chave do warden. O LM Warden verifica a chave, implementa o protocolo OpenAI Chat Completions, coloca a solicitação na fila pela prioridade da chave e a entrega ao roteador de réplicas, que mantém cada sessão na réplica que já tem o cache dela, uma cópia do modelo por GPU.",
+    "source_hash": "300648093db4"
+  },
+  "clients.cline.flow.caption": {
+    "text": "Para onde vai uma solicitação do Cline: as duas configurações que o Connect grava, o warden no meio e depois uma cópia do modelo por GPU.",
+    "source_hash": "26566cb52d8d"
+  },
+  "clients.cline.capability": {
+    "text": "Só modelos locais, via Chat Completions em streaming. O Cline não tem arquivo de configuração: insira estes valores em API Provider &gt; OpenAI Compatible. O provedor Anthropic dele tem URL base personalizada, mas não cabeçalho personalizado, então o modo Router não está disponível.",
+    "source_hash": "21110940c4cb"
+  },
+  "clients.cline.req.tools": {
+    "text": "Precisa de um modelo com chamada de ferramentas (edições agênticas).",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.cline.req.min_context": {
+    "text": "Funciona melhor com pelo menos 32.768 tokens de contexto.",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.cline.mode.default.title": {
+    "text": "Modelos locais",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.cline.mode.default.desc": {
+    "text": "Settings &gt; API Provider &gt; OpenAI Compatible.",
+    "source_hash": "f65c6df5377b"
+  },
+  "clients.cursor.h1": {
+    "text": "Cursor nas suas próprias GPUs.",
+    "source_hash": "314536df2e7a"
+  },
+  "clients.cursor.summary": {
+    "text": "A substituição da URL base da OpenAI no Cursor, para chat com um modelo servido.",
+    "source_hash": "1c8912c5ba32"
+  },
+  "clients.cursor.flow.title": {
+    "text": "Para onde vai uma solicitação do Cursor",
+    "source_hash": "43c8f2aed837"
+  },
+  "clients.cursor.flow.desc": {
+    "text": "O Cursor envia as solicitações ao LM Warden com Override OpenAI Base URL apontando para o warden e OpenAI API Key contendo uma chave do warden. O LM Warden verifica a chave, implementa o protocolo OpenAI Chat Completions, coloca a solicitação na fila pela prioridade da chave e a entrega ao roteador de réplicas, que mantém cada sessão na réplica que já tem o cache dela, uma cópia do modelo por GPU.",
+    "source_hash": "524789d9ea5d"
+  },
+  "clients.cursor.flow.caption": {
+    "text": "Para onde vai uma solicitação do Cursor: as duas configurações que o Connect grava, o warden no meio e depois uma cópia do modelo por GPU.",
+    "source_hash": "79e33449f1a5"
+  },
+  "clients.cursor.capability": {
+    "text": "As solicitações partem dos servidores do Cursor, então a URL deste warden precisa estar acessível pela internet; um warden na LAN ou em localhost não vai funcionar. Chaves personalizadas só funcionam com modelos de chat: o preenchimento com Tab continua usando os modelos do próprio Cursor, e o Agent com os modelos do Cursor rejeita chaves personalizadas. A documentação atual do Cursor não descreve mais a configuração Override OpenAI Base URL; ela é conhecida por respostas da equipe do Cursor no fórum.",
+    "source_hash": "e3b007a84e77"
+  },
+  "clients.cursor.req.reachable": {
+    "text": "Os servidores do Cursor chamam esta URL, então ela precisa estar acessível pela internet.",
+    "source_hash": "0815103f2766"
+  },
+  "clients.cursor.mode.default.title": {
+    "text": "Chat com um modelo local",
+    "source_hash": "5e7a9a7b90b9"
+  },
+  "clients.cursor.mode.default.desc": {
+    "text": "Cursor Settings &gt; Models, depois adicione o nome do modelo como modelo personalizado.",
+    "source_hash": "fce3909f9e49"
+  },
+  "clients.codex-cli.h1": {
+    "text": "Codex CLI nas suas próprias GPUs.",
+    "source_hash": "ee03de1664ad"
+  },
+  "clients.codex-cli.summary": {
+    "text": "O LM Warden como provedor de modelo personalizado para o Codex CLI, um modelo servido.",
+    "source_hash": "4ffc9f534362"
+  },
+  "clients.codex-cli.flow.title": {
+    "text": "Para onde vai uma solicitação do Codex CLI",
+    "source_hash": "4d9d5da5c30b"
+  },
+  "clients.codex-cli.flow.desc": {
+    "text": "O Codex CLI envia as solicitações ao LM Warden com base_url apontando para o warden e env_key contendo uma chave do warden. O LM Warden verifica a chave, implementa o protocolo OpenAI Responses, coloca a solicitação na fila pela prioridade da chave e a entrega ao roteador de réplicas, que mantém cada sessão na réplica que já tem o cache dela, uma cópia do modelo por GPU.",
+    "source_hash": "ae1c2b1f74bf"
+  },
+  "clients.codex-cli.flow.caption": {
+    "text": "Para onde vai uma solicitação do Codex CLI: as duas configurações que o Connect grava, o warden no meio e depois uma cópia do modelo por GPU.",
+    "source_hash": "4596be3eb188"
+  },
+  "clients.codex-cli.capability": {
+    "text": "Só modelos locais. O Codex só usa a Responses API; o warden traduz <code>POST /v1/responses</code> para Chat Completions para o modelo servido, então a resposta, as chamadas de ferramenta e o uso chegam ao Codex como eventos Responses. É sem estado: o Codex envia <code>store:false</code> e a conversa inteira a cada turno, e <code>previous_response_id</code> é recusado. O raciocínio vem ligado por padrão (o Codex pede resumos de raciocínio e o raciocínio do modelo aparece como resumo; para desligá-lo, defina <code>model_reasoning_effort = \"none\"</code> em <code>config.toml</code>), a pesquisa na web hospedada é descartada (defina <code>web_search = \"disabled\"</code>) e as regras do roteador não se aplicam. Defina <code>model_context_window</code> com a janela real do modelo: o Codex presume 272k para nomes que não conhece. O mecanismo precisa de chamada de ferramentas ativada (vLLM: <code>--enable-auto-tool-choice</code> e um <code>--tool-call-parser</code>). Uma solicitação para um modelo que não está carregado recebe 404, e o Codex tenta de novo por vários segundos antes de desistir.",
+    "source_hash": "b7c7ad7fa0c7"
+  },
+  "clients.codex-cli.req.tools": {
+    "text": "Precisa de um modelo com chamada de ferramentas (edições agênticas).",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.codex-cli.req.min_context": {
+    "text": "Funciona melhor com pelo menos 32.768 tokens de contexto.",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.codex-cli.mode.default.title": {
+    "text": "Modelos locais",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.codex-cli.mode.default.desc": {
+    "text": "Adicione o LM Warden como provedor de modelo em <code>~/.codex/config.toml</code>.",
+    "source_hash": "0e63a370854f"
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "faq.meta.title": {
+    "text": "LM Warden FAQ: self-hosted LLM gateway questions",
+    "note": "The browser tab and the search-result title. Keep the part after | as it is; at most 65 characters.",
+    "hash": "fb9dd5739289"
+  },
+  "faq.meta.description": {
+    "text": "What people ask before installing LM Warden: hardware, engines, models, clients, security and how it compares to running vLLM directly.",
+    "note": "The search-result snippet and link-preview text. At most 160 characters.",
+    "hash": "4c424d1bb872"
+  },
+  "faq.faq.h1-1": {
+    "text": "What people ask before they install it.",
+    "note": "page headline (#faq-title)",
+    "hash": "b14e49a87fdf"
+  },
+  "faq.q-1": {
+    "text": "What is LM Warden?",
+    "note": "heading (#faq-1)",
+    "hash": "37148ce83843"
+  },
+  "faq.a-1": {
+    "text": "A control plane around inference engines on your own hardware: vLLM and llama.cpp on a Linux host with NVIDIA GPUs, or MLX and llama.cpp in a beta app on an Apple silicon Mac. You pull a model from HuggingFace, load it onto your own GPU, mint an API key and call it through an OpenAI-compatible <code>/v1</code> endpoint. A browser UI covers loading and unloading models, live engine logs, a chat playground, GPU and token statistics, and a page per API key. It does not make models faster and does not modify the engines. It adds the parts a bare engine does not ship.",
+    "note": "text (#faq-1)",
+    "hash": "5098435c4cfe"
+  },
+  "faq.q-2": {
+    "text": "Which GPUs and operating systems does it run on?",
+    "note": "heading (#faq-2)",
+    "hash": "fd575095e092"
+  },
+  "faq.a-2": {
+    "text": "Linux and macOS. On Linux: NVIDIA GPUs on an x86_64 host. The floor is Turing (sm_75, the RTX 20-series generation): the base image ships CUDA 13, which dropped Maxwell, Pascal and Volta, so a GTX 1080 Ti, a Titan X or a V100 will not work. Turing through Blackwell is covered, including Ada, Hopper and the RTX 50-series. On macOS: Apple silicon (M1 or later), through a separate Mac app, in beta: a native menu-bar app for macOS 14 or later that runs models with MLX and a Metal build of llama.cpp, serves the same OpenAI-compatible API and shows the same dashboard in its own window, from <a href=\"/download/mac\">lmwarden.com/download/mac</a> (about 360&#8239;MB, with a <a href=\"/download/mac.sha256\">SHA-256 file</a>). It is ad-hoc signed and not notarized, so on first launch allow it under System Settings › Privacy & Security › Open Anyway (on macOS 14, right-click › Open also works); it listens on loopback by default, and it does not update itself. Windows is next; we are working on it, with no date yet. There is no ROCm, Intel GPU or CPU path in this release; AMD Radeon and Intel GPUs are on the roadmap, and which comes first depends on the feedback we get in the project’s GitHub Discussions. Several GPUs in one Linux box are supported; one model split across several machines is not.",
+    "note": "text (#faq-2)",
+    "hash": "af7c57748da9"
+  },
+  "faq.q-3": {
+    "text": "Will my existing OpenAI client work with it?",
+    "note": "heading (#faq-3)",
+    "hash": "07d287af578c"
+  },
+  "faq.a-3": {
+    "text": "Yes. The gateway at <code>/v1/*</code> is OpenAI-compatible, so the <code>openai</code> SDK, LangChain, OpenWebUI and your own agents work unchanged once you change the <code>base_url</code> and the key. <code>GET /v1/models</code> also reports each model’s <code>max_model_len</code>, so a client does not have to guess the context window. Codex&nbsp;CLI, which speaks only the OpenAI Responses API, works too: <code>POST /v1/responses</code> is translated to Chat Completions for a model you loaded (stateless, and local only: router rules do not apply).",
+    "note": "text (#faq-3)",
+    "hash": "6aa388b69fbe"
+  },
+  "faq.q-4": {
+    "text": "Can I use it with Claude Code and keep my Anthropic account?",
+    "note": "heading (#faq-4)",
+    "hash": "3cb57cff1faf"
+  },
+  "faq.a-4": {
+    "text": "Yes. Point <code>ANTHROPIC_BASE_URL</code> at the warden, keep your normal <code>claude</code> login, and put the warden key in <code>ANTHROPIC_CUSTOM_HEADERS</code> as <code>X-LMWarden-Key</code>. A rule maps a model name Claude Code asks for, such as <code>claude-haiku*</code>, to a model loaded on your GPUs; every other model, and every other <code>/v1</code> path, is passed to Anthropic byte for byte on your own login. It needs Claude Code 2.1.227 or newer, it is off by default, and a key must be flagged “May relay to Anthropic” before anything is forwarded. Older clients can still use local-only mode.",
+    "note": "text (#faq-4)",
+    "hash": "680fb986650c"
+  },
+  "faq.q-5": {
+    "text": "Does Anthropic see my warden key, or the warden my Anthropic login?",
+    "note": "heading (#faq-5)",
+    "hash": "0e5c302159a3"
+  },
+  "faq.a-5": {
+    "text": "Anthropic never sees the warden key: it travels in its own header and is removed before a request is passed on. The warden does handle your Anthropic login, because it has to forward it, but only to Anthropic. It is never sent to an engine and never logged, and nothing from a passed-through request is stored or shown in god mode.",
+    "note": "text (#faq-5)",
+    "hash": "36a441a68717"
+  },
+  "faq.q-6": {
+    "text": "Which inference engines does it use?",
+    "note": "heading (#faq-6)",
+    "hash": "af507f756ef8"
+  },
+  "faq.a-6": {
+    "text": "On Linux, mainline vLLM v0.32.0 and llama.cpp b11719, chosen per model and run unmodified: no patched image, no fork, no monkeypatching. Picking a <code>.gguf</code> file selects llama.cpp, which fits larger models onto smaller cards with GGUF quantisation and keeps older GPUs useful. TensorRT-LLM, SGLang and Ollama’s runtime are not shipped; the Mac beta runs models with MLX, its default engine, or with a Metal build of llama.cpp for <code>.gguf</code> files, and has no vLLM.",
+    "note": "text (#faq-6)",
+    "hash": "71d96023e2e8"
+  },
+  "faq.q-7": {
+    "text": "Does anything leave my machine?",
+    "note": "heading (#faq-7)",
+    "hash": "2e943e3c5431"
+  },
+  "faq.a-7": {
+    "text": "Nothing leaves the host unless you turn on the Claude Code router and flag a key “May relay to Anthropic”. Then the requests from that key for Claude models no rule sends to your GPUs go to Anthropic, on the user’s own Anthropic login, and nothing else does. There is no account, licence check or analytics. Otherwise the stack only calls out when you ask it to: huggingface.co to pull weights (<code>HF_HUB_OFFLINE=1</code> stops even that), Docker Hub when you open the engine-version picker, and the registry for the release images, which <code>docker load</code> replaces in an offline or air-gapped install.",
+    "note": "text (#faq-7)",
+    "hash": "728ba07e9c96"
+  },
+  "faq.q-8": {
+    "text": "Are prompts and responses stored?",
+    "note": "heading (#faq-8)",
+    "hash": "5cba7fae2cca"
+  },
+  "faq.a-8": {
+    "text": "Not by default. The request history behind the charts and per-key usage holds metadata only and has no column for prompt or completion text. Two diagnostic features can capture content, and both are off unless you turn them on: god mode (<code>VW_GODMODE_ENABLED</code>), a bounded in-memory view of one key’s traffic, and the content log (<code>VW_CONTENT_LOG_ENABLED</code>), which writes to disk only for the token ids you list.",
+    "note": "text (#faq-8)",
+    "hash": "f047e1060aa4"
+  },
+  "faq.q-9": {
+    "text": "How do API keys work for a team?",
+    "note": "heading (#faq-9)",
+    "hash": "138d847537f5"
+  },
+  "faq.a-9": {
+    "text": "Every app or person gets its own <code>vw_</code> key with its own page. Set a priority from P0&nbsp;to&nbsp;P9 (a waiting P9 request always goes before a P8 one), pause a key so its clients get <code>403 token paused</code> while running requests finish, or rotate it with a grace window in which the old secret keeps working. Requests, prompt tokens and completion tokens are counted against the key and the client IP, with queue wait and latency per key. Scripts, CI and agents that drive the control API use separate <code>vwa_</code> admin tokens instead of the admin password.",
+    "note": "text (#faq-9)",
+    "hash": "37fb94868ccc"
+  },
+  "faq.q-10": {
+    "text": "Can I run several models on one GPU?",
+    "note": "heading (#faq-10)",
+    "hash": "300a4b4adf9a"
+  },
+  "faq.a-10": {
+    "text": "No. One loaded model per GPU is a rule enforced before an engine starts. You can load different models on different cards of the same host, and split one model across several cards with vLLM’s tensor parallelism.",
+    "note": "text (#faq-10)",
+    "hash": "c4ef5c9a9c54"
+  },
+  "faq.q-11": {
+    "text": "What does installing it take?",
+    "note": "heading (#faq-11)",
+    "hash": "889f53a02753"
+  },
+  "faq.a-11": {
+    "text": "On Linux, a host with Docker, Docker Compose&nbsp;v2.24 or newer, an NVIDIA GPU, the NVIDIA Container Toolkit and about 40&#8239;GB free where Docker keeps its images. The installer checks the host, lets you pick GPUs, generates the secrets, pulls the release images and offers to start the stack. A first-run wizard in the browser then asks for the GPUs to use, a HuggingFace token and your admin account. On an Apple silicon Mac it is a download of the beta app instead; see <a href=\"/#p-mac\">the Mac section</a>.",
+    "note": "text (#faq-11)",
+    "hash": "f7c42330b71d"
+  },
+  "faq.q-12": {
+    "text": "What does it cost?",
+    "note": "heading (#faq-12)",
+    "hash": "e8dc9deba44c"
+  },
+  "faq.a-12": {
+    "text": "Nothing. LM Warden is licensed under Apache-2.0. It is software you run, not a hosted API: you supply the hardware, the driver, the disk and the electricity, and once the hardware is paid for a request costs electricity, not a per-token fee.",
+    "note": "text (#faq-12)",
+    "hash": "97000d243331"
+  },
+  "faq.p-1": {
+    "text": "Related: <a href=\"/coding-agents\">coding agents</a> · <a href=\"/agent-tuning\">agent tuning</a> · <a href=\"/features\">features</a>",
+    "note": "text (#main)",
+    "hash": "8e86209820fa"
+  }
+}

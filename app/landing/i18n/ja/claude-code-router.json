@@ -1,0 +1,70 @@
+{
+  "claude-code-router.router.h2-1": {
+    "text": "<code>ANTHROPIC_BASE_URL</code> は一つ、応答の出どころは二つ。",
+    "source_hash": "88b4b60f90dc"
+  },
+  "claude-code-router.p-1": {
+    "text": "Claude Code が Anthropic に送るリクエストはすべて、プランの使用量上限にカウントされるか、API キーでトークンごとに課金され、さらにコードを含むプロンプトがマシンの外に出ていきます。そうしたリクエストの多くは小さなものです。すでに持っているカードで応答すれば、かかるのは電気代だけで、上限にはカウントされず、プロンプトもホストに留まります。",
+    "source_hash": "47eae55f59c6"
+  },
+  "claude-code-router.p-2": {
+    "text": "Claude そのものがここで動くことはありません。このマシンが代わりに応答する Claude モデル (たとえば <code>claude-haiku*</code>) をルールで指定すると、読み込んだモデルが、Claude Code が要求した名前のまま代わりに応答します。Opus を含むそれ以外のリクエストは、ストリーミングも含め、自分のログインで Anthropic にバイト単位でそのまま渡されます。warden のキーは専用のヘッダーで送られるのでログインには一切触れず、「May relay to Anthropic」 フラグのないキーについては何も中継しません。",
+    "source_hash": "23f00b590b6a"
+  },
+  "claude-code-router.p-3": {
+    "text": "小さなモデルで十分でしょうか？ 回答の品質は測定していないので、これはベンチマークではなく判断です。Claude Code は軽めのバックグラウンド作業に Haiku クラスのモデルを使っており、小さなローカル モデルはそこや、単純で明確に指定された編集の代わりとして妥当です。多数のファイルにまたがる変更、デバッグ、長い計画には、Sonnet と Opus を Anthropic のまま使ってください。ルールを追加しなければ、キャッチオール ルールによってそのように処理されます。より大きなカードでより大きなモデルを使えば、この境界は変わります。以下の Claude Code とレプリカの測定には 4B を使いました。",
+    "source_hash": "b554407d17a9"
+  },
+  "claude-code-router.p-4": {
+    "text": "コンテキストはチャットではなく Claude Code に合わせて設定してください。自社のセッションでは最初のターンが 38,167 トークンだったので、ローカル モデルには 40k トークンを大きく超えるコンテキストが必要です。",
+    "source_hash": "f87b272c3f76"
+  },
+  "claude-code-router.figcaption-1": {
+    "text": "<b>図&nbsp;2</b>リクエストの行き先。ルールは順に試され、最初に一致したものが適用されます。ローカルの応答も、ほかのリクエストと同じスケジューラーとレプリカ ルーターを通ります。レプリカはモデルの完全なコピー一つで、ここでは GPU ごとに一つです。最初のバイトより前にローカルで失敗すると、Anthropic に送られるか、Claude Code が再試行する 529 として返されます。3 回連続で失敗するとそのモデルのブレーカーが開き、60&#8239;s の間は何も送られません。",
+    "source_hash": "462151461bb5"
+  },
+  "claude-code-router.p-5": {
+    "text": "テキストによる説明：Claude Code は、Authorization に自分の Anthropic ログインを、X-LMWarden-Key に warden のキーを入れてリクエストを warden に送ります。warden はルールを順に試します。ルールが指定するモデル宛てのリクエストは変換され、スケジューラーでキューに入り、レプリカ ルーターによって vLLM レプリカの一つに送られます。Opus などそれ以外のリクエストは、ログインを転送し warden のキーを取り除いたうえで api.anthropic.com に渡されます。ローカル側が最初のバイトより前に失敗した場合、リクエストは Anthropic に送られるか、ルールが 529 を返して拒否し、Claude Code が再試行します。",
+    "source_hash": "038dbec78e21"
+  },
+  "claude-code-router.p-6": {
+    "text": "Claude Code 2.1.227 以降が必要です。通常の <code>claude</code> のログインはそのまま使います。キーは <code>ANTHROPIC_API_KEY</code> ではなく専用のヘッダーに入ります。",
+    "source_hash": "bd9385d02ca7"
+  },
+  "claude-code-router.img-1.alt": {
+    "text": "コンソールの Router ページ。緑のバナーに 「Routing normally」 と 「96% answered locally since 13:38」 とある。「Where each Claude model goes. First match wins」 の下で、ルール 1 は claude-haiku* を読み込み済みモデル qwen3-4b-dp4 に送り、「If it fails: Anthropic」 と 「Thinking off」 が付いている。最後の行はキャッチオールで、ほかのすべての Claude モデルと /v1 パスはユーザー自身のログインで Anthropic に送られ、「May relay to Anthropic」 の付いたキーが必要。Traffic パネルはローカル 107、Anthropic パススルー 2、Anthropic へのフォールバック 0、拒否またはエラー 2 を数え、理由として no_upstream_credential と relay_not_allowed を一件ずつ挙げている。",
+    "source_hash": "3f1f5682c2a4"
+  },
+  "claude-code-router.span-1": {
+    "text": "最初の一致が適用され、ほかのモデルはすべて Anthropic へ",
+    "source_hash": "d0410896bcb4"
+  },
+  "claude-code-router.span-2": {
+    "text": "Anthropic にはユーザー自身のログインで接続",
+    "source_hash": "6d3dcb885877"
+  },
+  "claude-code-router.figcaption-2": {
+    "text": "<b>図&nbsp;3</b>warden の Router ページ (13:38 から稼働)：「Routing normally」 で、再起動以降のリクエストの 96% にローカルで応答しています。一つのルールが <code>claude-haiku*</code> をローカル モデルに送り、キャッチオールがそれ以外をすべて Anthropic に渡します。ルールには試される順に番号が付いています。Traffic パネルはローカル 107、パススルー 2、フォールバック 0、拒否 2 を数えています。<span class=\"scroll-hint\">画像を横にスクロールするとページ全体が見られます。</span>",
+    "source_hash": "b4aee34de008"
+  },
+  "claude-code-router.p-7": {
+    "text": "最初のターンは遅いものと考えてください。以前のセッションでは Claude Code の最初のターンが 38,167 トークンで、ローカル モデルは 32,768 トークンのコンテキストで読み込まれていたため、エンジンがそれを拒否し (<code>status_400</code>)、リクエストは代わりに Anthropic に送られました。コンテキストを 65,536 トークンに上げ、fp8 の KV キャッシュ (アテンション キャッシュを 8 ビットで保持し、メモリは半分) を使うと、16&#8239;GiB のカード上の 4B モデルは同じターンに 28&#8239;s でローカルに応答しました。38k トークンのプロンプト全体をキャッシュなしで最初から読み込んだ結果です。会話の後のターンでは、プロンプトの大部分がすでにエンジンのキャッシュにあります。図&nbsp;4 の <code>claude-haiku*</code> ルールの最初のバイトまでの時間の中央値は 290&#8239;ms です。",
+    "source_hash": "174e92b8be51"
+  },
+  "claude-code-router.img-2.alt": {
+    "text": "Router のアクティビティ ページ。四つのカウンター：ローカル 107、Anthropic パススルー 2、フォールバック 0、拒否 · エラー 2 · 0。「By rule」 表には、claude-haiku* を qwen3-4b-dp4 に送るルールのローカル、フォールバック、拒否の件数、p50 と p95 のレイテンシと最初のバイトまでの時間、ブレーカーの状態 closed が示され、パススルーの行には Anthropic に渡されたリクエストの同じ計時が示されている。ローカル モデルの表には qwen3-4b-dp4 がブレーカー closed で表示され、「Fallback reasons」 パネルには no_upstream_credential と relay_not_allowed が一件ずつ挙がっている。",
+    "source_hash": "1dcf45e042e8"
+  },
+  "claude-code-router.span-3": {
+    "text": "このモデルのブレーカー：closed",
+    "source_hash": "e7811be1957f"
+  },
+  "claude-code-router.span-4": {
+    "text": "ルールによって Anthropic に送られた、または拒否されたリクエストの理由別内訳",
+    "source_hash": "8c3c6830836a"
+  },
+  "claude-code-router.figcaption-3": {
+    "text": "<b>図&nbsp;4</b>同じ期間の Router アクティビティ：ローカルで応答したリクエスト 107、Anthropic へのパススルー 2、フォールバック 0、拒否 2、エラー 0。その下に、ルールごとの p50 と p95 のレイテンシと最初のバイトまでの時間、ローカル モデルごとのブレーカー、ルールによってリクエストが Anthropic に送られた理由や拒否された理由。カウンターはプロセスごとで、再起動でゼロに戻ります。2026 年 10 月 4 日に記録。<span class=\"scroll-hint\">画像を横にスクロールするとページ全体が見られます。</span>",
+    "source_hash": "e6294c26fbc5"
+  }
+}

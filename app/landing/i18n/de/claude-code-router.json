@@ -1,0 +1,70 @@
+{
+  "claude-code-router.router.h2-1": {
+    "text": "Eine <code>ANTHROPIC_BASE_URL</code>, zwei mögliche Quellen für eine Antwort.",
+    "source_hash": "88b4b60f90dc"
+  },
+  "claude-code-router.p-1": {
+    "text": "Jede Anfrage, die Claude Code an Anthropic sendet, wird auf die Nutzungslimits Ihres Abos angerechnet oder über einen API-Schlüssel pro Token abgerechnet, und ihr Prompt, Ihr Code eingeschlossen, verlässt Ihren Rechner. Viele dieser Anfragen sind klein. Beantworten Karten, die Sie bereits besitzen, diese Anfragen, kosten sie Strom, werden nicht auf Ihre Limits angerechnet, und ihre Prompts bleiben auf Ihrem Host.",
+    "source_hash": "47eae55f59c6"
+  },
+  "claude-code-router.p-2": {
+    "text": "Claude selbst läuft hier nie. Eine Regel legt fest, anstelle welcher Claude-Modelle dieser Rechner antwortet, zum Beispiel <code>claude-haiku*</code>, und ein von Ihnen geladenes Modell antwortet an ihrer Stelle, unter dem Namen, den Claude Code angefragt hat. Alles andere, Opus eingeschlossen, wird Byte für Byte mit Ihrer eigenen Anmeldung an Anthropic weitergereicht, Streaming inklusive. Ihr Warden-Schlüssel wird in einem eigenen Header übertragen, sodass Ihre Anmeldung unverändert bleibt, und für einen Schlüssel ohne das Flag „May relay to Anthropic“ wird nichts weitergeleitet.",
+    "source_hash": "23f00b590b6a"
+  },
+  "claude-code-router.p-3": {
+    "text": "Reicht ein kleines Modell? Die Antwortqualität haben wir nicht gemessen; dies ist eine Einschätzung, kein Benchmark. Claude Code nutzt sein Modell der Haiku-Klasse für leichtere Hintergrundarbeit, und dort sowie für einfache, klar beschriebene Änderungen ist ein kleines lokales Modell ein vernünftiger Ersatz. Für Änderungen über viele Dateien, Debugging und lange Pläne lassen Sie Sonnet und Opus bei Anthropic – genau das tut die Auffangregel für alle übrigen Modelle, solange Sie keine Regel hinzufügen. Ein größeres Modell auf größeren Karten verschiebt diese Grenze; unsere Messungen weiter unten (Claude Code und Replikate) liefen mit einem 4B-Modell.",
+    "source_hash": "b554407d17a9"
+  },
+  "claude-code-router.p-4": {
+    "text": "Legen Sie den Kontext für Claude Code aus, nicht für Chat: Seine erste Runde in unserer Sitzung hatte 38.167 Token, das lokale Modell braucht also deutlich mehr als 40&nbsp;Tsd. Token Kontext.",
+    "source_hash": "f87b272c3f76"
+  },
+  "claude-code-router.figcaption-1": {
+    "text": "<b>Abb.&nbsp;2</b>Wohin eine Anfrage geht. Die Regeln werden der Reihe nach geprüft, und der erste Treffer gilt. Eine lokale Antwort durchläuft denselben Scheduler und denselben Replikat-Router wie jede andere Anfrage; ein Replikat ist eine vollständige Kopie des Modells, hier eine pro GPU. Schlägt die lokale Verarbeitung vor dem ersten Byte fehl, geht die Anfrage an Anthropic oder kommt mit Statuscode 529 zurück, worauf Claude Code es erneut versucht; nach 3 Fehlern in Folge öffnet der Circuit Breaker des Modells: 60&#8239;s lang wird nichts an dieses Modell gesendet.",
+    "source_hash": "462151461bb5"
+  },
+  "claude-code-router.p-5": {
+    "text": "Kurz gesagt: Claude Code sendet die Anfrage an den Warden, mit seiner eigenen Anthropic-Anmeldung in Authorization und dem Warden-Schlüssel in X-LMWarden-Key. Der Warden prüft seine Regeln der Reihe nach. Eine Anfrage für ein Modell, das in einer Regel festgelegt ist, wird übersetzt, vom Scheduler eingereiht und vom Replikat-Router an ein vLLM-Replikat gesendet. Jede andere Anfrage, etwa an Opus, wird an api.anthropic.com weitergereicht, mit weitergeleiteter Anmeldung und entferntem Warden-Schlüssel. Scheitert der lokale Teil vor seinem ersten Byte, geht die Anfrage an Anthropic, oder die Regel lehnt sie mit Statuscode 529 ab, worauf Claude Code es erneut versucht.",
+    "source_hash": "038dbec78e21"
+  },
+  "claude-code-router.p-6": {
+    "text": "Claude Code 2.1.227 oder neuer. Behalten Sie Ihre normale <code>claude</code>-Anmeldung; der Schlüssel kommt in einen eigenen Header, nicht in <code>ANTHROPIC_API_KEY</code>.",
+    "source_hash": "bd9385d02ca7"
+  },
+  "claude-code-router.img-1.alt": {
+    "text": "Die Seite Router der Konsole. Ein grünes Banner zeigt „Routing normally“ und „96% answered locally since 13:38“. Unter „Where each Claude model goes. First match wins“ schickt Regel 1 claude-haiku* an das geladene Modell qwen3-4b-dp4, mit „If it fails: Anthropic“ und „Thinking off“. Die letzte Zeile ist die Auffangregel: Jedes andere Claude-Modell und jeder andere /v1-Pfad geht mit der eigenen Anmeldung des Benutzers an Anthropic und braucht einen Schlüssel mit „May relay to Anthropic“. Das Panel Traffic zählt 107 lokal, 2 an Anthropic durchgereicht, 0 auf Anthropic zurückgefallen und 2 abgelehnt oder fehlerhaft und nennt zwei Gründe, no_upstream_credential und relay_not_allowed, je einmal.",
+    "source_hash": "3f1f5682c2a4"
+  },
+  "claude-code-router.span-1": {
+    "text": "Der erste Treffer gewinnt; jedes andere Modell geht an Anthropic",
+    "source_hash": "d0410896bcb4"
+  },
+  "claude-code-router.span-2": {
+    "text": "Anthropic wird mit der eigenen Anmeldung des Benutzers erreicht",
+    "source_hash": "6d3dcb885877"
+  },
+  "claude-code-router.figcaption-2": {
+    "text": "<b>Abb.&nbsp;3</b>Die Seite Router, der Warden läuft seit 13:38: „Routing normally“, 96&#8239;% der Anfragen seit dem Neustart lokal beantwortet. Eine Regel schickt <code>claude-haiku*</code> an ein lokales Modell, und die Auffangregel reicht alles andere an Anthropic durch; die Regeln sind in der Reihenfolge nummeriert, in der sie geprüft werden. Das Panel Traffic zählt 107 lokal, 2 durchgereicht, 0 zurückgefallen und 2 abgelehnt.<span class=\"scroll-hint\"> Scrollen Sie das Bild seitlich, um die ganze Seite zu sehen.</span>",
+    "source_hash": "b4aee34de008"
+  },
+  "claude-code-router.p-7": {
+    "text": "Rechnen Sie damit, dass die erste Runde am längsten dauert. In einer früheren Sitzung hatte die erste Runde von Claude Code 38.167 Token, und das lokale Modell war mit einem Kontext von 32.768 Token geladen, also lehnte die Engine sie ab (<code>status_400</code>), und die Anfrage ging stattdessen an Anthropic. Mit auf 65.536 Token erhöhtem Kontext und einem fp8-KV-Cache (der Attention-Cache mit 8 Bit gespeichert, halber Speicherbedarf) beantwortete das 4B-Modell auf Karten mit 16&#8239;GiB dieselbe Runde lokal in 28&#8239;s, wobei der gesamte Prompt von 38&nbsp;Tsd. Token komplett neu eingelesen werden musste, weil noch nichts im Cache lag. Spätere Runden einer Unterhaltung finden den Großteil ihres Prompts schon im Cache der Engine: Die mediane Zeit bis zum ersten Byte für die Regel <code>claude-haiku*</code> in Abb.&nbsp;4 beträgt 290&#8239;ms.",
+    "source_hash": "174e92b8be51"
+  },
+  "claude-code-router.img-2.alt": {
+    "text": "Die Aktivitätsseite des Routers. Vier Zähler: lokal 107, an Anthropic durchgereicht 2, zurückgefallen 0 und abgelehnt · Fehler 2 · 0. Eine Tabelle „By rule“ zeigt die Regel claude-haiku* zu qwen3-4b-dp4 mit ihren Zählern für lokal, zurückgefallen und abgelehnt, Latenz und Zeit bis zum ersten Byte bei p50 und p95 und dem Zustand ihres Circuit Breakers, geschlossen; die Zeile für durchgereichte Anfragen zeigt dieselben Zeiten für die an Anthropic weitergereichten Anfragen. Eine Tabelle der lokalen Modelle zeigt qwen3-4b-dp4 mit geschlossenem Circuit Breaker, und ein Panel „Fallback reasons“ nennt no_upstream_credential und relay_not_allowed, je einmal.",
+    "source_hash": "1dcf45e042e8"
+  },
+  "claude-code-router.span-3": {
+    "text": "Der Circuit Breaker für dieses Modell: geschlossen",
+    "source_hash": "e7811be1957f"
+  },
+  "claude-code-router.span-4": {
+    "text": "Warum eine Regel an Anthropic ging oder abgelehnt wurde, nach Grund",
+    "source_hash": "8c3c6830836a"
+  },
+  "claude-code-router.figcaption-3": {
+    "text": "<b>Abb.&nbsp;4</b>Aktivität des Routers im selben Zeitraum: 107 Anfragen lokal beantwortet, 2 an Anthropic durchgereicht, 0 zurückgefallen und 2 abgelehnt bei 0 Fehlern. Darunter Latenz und Zeit bis zum ersten Byte pro Regel bei p50 und p95, der Circuit Breaker pro lokalem Modell und die Gründe, aus denen eine Regel an Anthropic weiterleitete oder ablehnte. Die Zähler gelten pro Prozess; ein Neustart setzt sie auf null. Aufgezeichnet am 4.&nbsp;Oktober&nbsp;2026.<span class=\"scroll-hint\"> Scrollen Sie das Bild seitlich, um die ganze Seite zu sehen.</span>",
+    "source_hash": "e6294c26fbc5"
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "cache-aware-routing.meta.title": {
+    "text": "Routage selon le cache pour les réplicas vLLM | LM Warden",
+    "source_hash": "74d5770bf736"
+  },
+  "cache-aware-routing.meta.description": {
+    "text": "Les sessions d’agent retournent au réplica qui détient déjà leur prompt dans le cache de préfixes : les longues conversations évitent l’essentiel du prefill.",
+    "source_hash": "055a37ed3302"
+  },
+  "cache-aware-routing.replica.h1-1": {
+    "text": "Chaque tour est envoyé là où le précédent a laissé son cache.",
+    "source_hash": "7b4386acadc3"
+  },
+  "cache-aware-routing.p-1": {
+    "text": "Un agent renvoie tout son historique à chaque tour, si bien qu’une longue conversation se compose surtout d’un préfixe que le moteur a déjà lu. vLLM conserve ce travail dans son cache de préfixes (l’état d’attention des prompts déjà vus) et s’en dispense la fois suivante, quand le même préfixe revient, mais seulement sur le réplica qui a effectué le travail : chaque copie complète du modèle a son propre cache. Le répartiteur intégré à vLLM envoie chaque tour au réplica dont la file d’attente est la plus courte ; celui-ci n’a généralement jamais vu la conversation et relit donc tout l’historique. LM Warden place chaque nouvelle conversation sur le réplica le moins chargé (requêtes en cours, taux de remplissage de son cache et nombre de conversations actives qu’il détient) et l’y maintient, grâce à l’ID de session que Claude Code envoie déjà. Il ne déplace une requête que lorsque ce réplica dépasse son seuil de débordement : par défaut, quand les requêtes en cours dépassent le quart de la limite de séquences simultanées du modèle, soit 8 sur notre machine à quatre cartes.",
+    "source_hash": "6a215639b7d8"
+  },
+  "cache-aware-routing.p-2": {
+    "text": "Les réplicas, et donc ce routage, font partie de l’installation Linux avec GPU NVIDIA ; l’<a href=\"/#p-mac\">app Mac (bêta)</a> n’offre ni parallélisme de tenseurs ni parallélisme de données.",
+    "source_hash": "2022d3c80a9f"
+  },
+  "cache-aware-routing.figcaption-1": {
+    "text": "<b>Fig.&nbsp;6</b>Quatre tours d’une conversation sur un modèle à quatre réplicas. Avec le répartiteur de vLLM, chaque tour repasse par le prefill (le moteur lit le prompt et remplit son cache) presque depuis zéro, sur le réplica qui l’a reçu. Avec LM Warden, la conversation reste sur le réplica&nbsp;2 et seul le nouveau tour passe par le prefill. Un schéma du mécanisme, pas une mesure.",
+    "source_hash": "a3b037946eda"
+  },
+  "cache-aware-routing.p-3": {
+    "text": "Mesuré sur la machine à quatre cartes : avec les conversations fixées sur leur réplica, la part des jetons de prompt servis par le cache est passée de 56 à 86 % à 4 sessions simultanées, et le délai médian avant le premier octet est tombé de 2,05 à 0,38&#8239;s. Le nombre de jetons de sortie par minute était plus élevé à chaque palier testé, et le délai p95 avant le premier octet (les 5 % les plus lents) plus bas à chaque palier. Le nombre de réplicas réellement actifs a à peine bougé (2,71 contre 2,83 sur quatre à 4 sessions) : le gain vient de la réutilisation du cache, non d’un plus grand nombre de cartes sollicitées.",
+    "source_hash": "91272c526688"
+  },
+  "cache-aware-routing.p-4": {
+    "text": "Les paliers à 24 et 32 sessions sont une surcharge délibérée de quatre petites cartes, où les attentes atteignent des dizaines de secondes, avec ou sans affinité. Le compromis y apparaît : les requêtes les plus lentes attendent toujours moins avec l’affinité, mais la médiane est plus longue. Les chiffres suivent.",
+    "source_hash": "22167404e1cf"
+  },
+  "cache-aware-routing.dt-1": {
+    "text": "GPU",
+    "source_hash": "8f0474fb0c5b"
+  },
+  "cache-aware-routing.dd-1": {
+    "text": "4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000, 16&#8239;Gio chacune",
+    "source_hash": "a2a87a6a413f"
+  },
+  "cache-aware-routing.dt-2": {
+    "text": "Modèle",
+    "source_hash": "5e2c614c23f0"
+  },
+  "cache-aware-routing.dd-2": {
+    "text": "qwen3-4b-dp4 (Qwen/Qwen3-4B-Instruct-2507), bf16",
+    "source_hash": "ca64e381cd89"
+  },
+  "cache-aware-routing.dt-3": {
+    "text": "Répartition",
+    "source_hash": "a511909161e1"
+  },
+  "cache-aware-routing.dd-3": {
+    "text": "data_parallel_size 4, tensor_parallel_size 1",
+    "source_hash": "2d27d2565f76"
+  },
+  "cache-aware-routing.dd-5": {
+    "text": "Cette version",
+    "source_hash": "056adfd1d823"
+  },
+  "cache-aware-routing.dt-4": {
+    "text": "Relevé",
+    "source_hash": "8a03fa9ad749"
+  },
+  "cache-aware-routing.dd-6": {
+    "text": "4&nbsp;octobre 2026, les deux séries l’une après l’autre",
+    "source_hash": "616bab8cda85"
+  },
+  "cache-aware-routing.dt-5": {
+    "text": "Charge",
+    "source_hash": "8a6bdb6b18da"
+  },
+  "cache-aware-routing.dd-7": {
+    "text": "Des sessions synthétiques du type Claude Code générées par notre propre banc de test, et non Claude Code lui-même : un prompt système partagé d’environ 3,5 k jetons, un premier message propre à chaque session (6 k en nominal, environ 7,2 k à 7,5 k mesurés), puis cinq tours supplémentaires d’environ 400 nouveaux jetons chacun, avec au plus 256 jetons générés par tour. Boucle fermée : une session lance son tour suivant dès que le précédent se termine. 3&nbsp;minutes par palier.",
+    "source_hash": "bf79aedc37a9"
+  },
+  "cache-aware-routing.figcaption-2": {
+    "text": "<b>Fig.&nbsp;7</b>Délai avant le premier octet de 4 à 32 sessions simultanées, médiane et p95, sur une échelle logarithmique pour que les paliers inférieurs à la seconde restent lisibles à côté de ceux qui atteignent la minute. Avec l’affinité, la médiane est bien plus basse jusqu’à 16 sessions (0,38 contre 2,05&#8239;s à 4) et plus haute à 24 et 32 ; le p95 est plus bas à chaque palier, même si à 16 l’écart (24,9 contre 26,2&#8239;s) reste dans le bruit d’une seule exécution par série. Mesuré côté client, via Internet, jusqu’au premier jeton reçu en streaming.",
+    "source_hash": "4104b97ee062"
+  },
+  "cache-aware-routing.p-5": {
+    "text": "Mesuré sur notre machine à quatre cartes avec un petit modèle, affinité d’abord désactivée puis activée, sans redémarrer vLLM entre les deux : la seconde série a démarré avec un cache de préfixes déjà chaud, et les deux ont tiré leurs prompts de la même graine. Chaque palier ne dure que 3&nbsp;minutes, si bien qu’il ne termine que 9 à 31 sessions et qu’une session de plus ou de moins fait varier de 20 le nombre de sessions par heure ; la colonne la plus stable est celle des jetons de sortie par minute. Votre modèle, vos cartes et votre charge de travail seront différents ; le panneau des réplicas, sur la page d’un modèle, affiche les mêmes compteurs pour les vôtres.",
+    "source_hash": "4744b11be2ad"
+  },
+  "cache-aware-routing.p-6": {
+    "text": "Jusqu’à 16 sessions, l’affinité l’emporte à chaque palier sur le débit, les succès de cache de préfixes et les deux colonnes de délai avant le premier octet : les succès passent de 56 à 86 % à 4 sessions, le délai médian avant le premier octet de 2,05 à 0,38&#8239;s, et la sortie de 5 886 à 6 744 jetons par minute (de 180 à 240 sessions par heure). À 24 et 32 sessions, les paliers de surcharge, chaque réplica est saturé. La sortie reste plus élevée (11 178 contre 9 048 et 16 638 contre 14 760 jetons par minute) et les requêtes les plus lentes attendent bien moins (p95 38 contre 59&#8239;s, et 39 contre 83&#8239;s), mais le délai médian avant le premier octet est moins bon avec l’affinité : 13,1 contre 5,1&#8239;s à 24 sessions, 27,7 contre 12,3&#8239;s à 32. Nous n’en avons pas isolé la cause, et abaisser le seuil de débordement de 8 à 4 n’y a rien changé. L’avantage est maximal tant qu’il reste de la marge ; sur une machine qui tourne à sa limite, mesurez les deux réglages, sachant que l’affinité peut être désactivée modèle par modèle.",
+    "source_hash": "8ab22b61f669"
+  },
+  "cache-aware-routing.figcaption-3": {
+    "text": "<b>Fig.&nbsp;8</b>Réplicas actifs, sur quatre : nombre de réplicas ayant des requêtes en cours à chaque relevé, en moyenne sur un palier. Ce n’est pas l’utilisation des GPU. L’affinité ne le modifie presque pas ; le gain apparaît dans la fig.&nbsp;9.",
+    "source_hash": "d3b521cd1c61"
+  },
+  "cache-aware-routing.figcaption-4": {
+    "text": "<b>Fig.&nbsp;9</b>Taux de succès du cache de préfixes à chaque palier : jetons de prompt servis par le cache rapportés aux jetons de prompt demandés, les quatre réplicas cumulés, d’après la variation des propres compteurs de vLLM sur le palier. Le gain se maintient tant qu’il reste de la marge et disparaît à 32 sessions, quand les conversations débordent vers d’autres réplicas.",
+    "source_hash": "7721bb0a3fe0"
+  },
+  "cache-aware-routing.img-1.alt": {
+    "text": "Le panneau Data-parallel routing sur la page d’un modèle, avec les badges Affinity on, Spill threshold 8 (auto), Sticky 100.0% et In flight 0. Un tableau liste les réplicas 0 à 3 avec in flight, sticky (38, 21, 19 et 29), spilled in, client-pinned, running et waiting, le KV utilisé et le taux de succès du cache de préfixes (82,2 ; 86,0 ; 69,0 et 80,0 %), et une ligne indiquant que les compteurs comptent depuis le démarrage du warden.",
+    "source_hash": "f1bc7fbd6399"
+  },
+  "cache-aware-routing.span-1": {
+    "text": "Affinité activée, seuil de débordement 8 (auto)",
+    "source_hash": "afd07a294687"
+  },
+  "cache-aware-routing.span-2": {
+    "text": "Taux de succès par réplica, d’après les propres compteurs de vLLM",
+    "source_hash": "aeb0dd495f94"
+  },
+  "cache-aware-routing.figcaption-5": {
+    "text": "<b>Fig.&nbsp;10</b>Les mêmes compteurs sur la page d’un modèle : une ligne par réplica avec les requêtes qu’il détient, le nombre de conversations restées sur place (<code>sticky</code>) ou arrivées par débordement, ce qui s’exécute et ce qui attend, le cache KV utilisé et le taux de succès du cache de préfixes. Relevé le 4&nbsp;octobre&nbsp;2026 avec l’affinité activée et le seuil de débordement à 8 (auto) : sticky 100 %, 38, 21, 19 et 29 requêtes sticky sur les réplicas 0 à 3, et un taux de succès du cache de préfixes de 82,2 ; 86,0 ; 69,0 et 80,0 %. Les compteurs partent du redémarrage du warden, et tout le trafic de cette période s’est déroulé avec l’affinité activée : des sessions d’agent synthétiques et de vrais tours de Claude Code. C’est une capture du panneau, pas un résultat de mesure.<span class=\"scroll-hint\"> Faites défiler l’image horizontalement pour voir toutes les colonnes.</span>",
+    "source_hash": "c5c62f4909c8"
+  },
+  "cache-aware-routing.p-7": {
+    "text": "La machine qui est à l’origine du routage par réplica l’utilise depuis. Elle compte sept RTX&nbsp;5090 qui servent un modèle 27B, sous forme de sept réplicas d’une carte chacun, à une ferme d’agents Claude Code sans interface. Notre première règle de placement hachait l’ID de session : chaque session restait bien sur son réplica, mais sans tenir compte de la charge. Avec 26 sessions d’agent d’environ 58 k jetons chacune, trois réplicas restaient inactifs pendant que d’autres remplissaient leur cache jusqu’à 93 %, et la part des jetons de prompt servis par le cache est tombée de 81 % après un redémarrage à 28 % en 35 minutes environ. Nous avons alors réduit la ferme à 16 sessions, environ deux par réplica, pour que les ensembles de travail tiennent dans le cache, et placé les nouvelles conversations sur le réplica le moins chargé. Sur l’heure suivante, cette part s’est établie entre 78 et 79 %. C’est une observation, pas un test A/B : une seule charge de travail et deux changements simultanés, donc le gain n’est pas dû au seul placement. La règle empirique qui s’en dégage : le nombre de sessions simultanées multiplié par leur contexte typique doit rester inférieur au cache total de la machine.",
+    "source_hash": "36247db6bebb"
+  },
+  "cache-aware-routing.img-2.alt": {
+    "text": "Le graphique Tokens per second de la page Stats sur une heure. Les barres de prompt sont divisées entre jetons en cache (mesurés), en bleu, et jetons calculés, en violet, entre environ 15 k et 45 k jetons par seconde, la majeure partie de chaque barre étant bleue, avec le résumé cache hit 78% sur la dernière heure. Les jetons de complétion par seconde, entre environ 70 et 420, sont tracés en vert en dessous.",
+    "source_hash": "a40bcea9f2f2"
+  },
+  "cache-aware-routing.span-3": {
+    "text": "Mesuré par le moteur, par requête",
+    "source_hash": "30f9cc329d1b"
+  },
+  "cache-aware-routing.figcaption-6": {
+    "text": "<b>Fig.&nbsp;11</b>Jetons de prompt par seconde sur la machine à sept GPU, répartis entre ce que chaque réplica a lu dans son cache de préfixes et ce qu’il a dû calculer, avec la part sur la dernière heure : 78 %. La partie en cache est le décompte établi par le moteur lui-même pour chaque requête terminée, pas une estimation ; une requête qu’il n’a pas mesurée est comptée comme calculée. Relevé le 5&nbsp;octobre 2026.<span class=\"scroll-hint\"> Faites défiler l’image horizontalement pour voir toute l’heure.</span>",
+    "source_hash": "8b698966274e"
+  },
+  "cache-aware-routing.p-8": {
+    "text": "Voir aussi : <a href=\"/gpu-monitoring\">surveillance des GPU</a> · <a href=\"/coding-agents/claude-code\">Claude Code</a> · <a href=\"/coding-agents\">agents de codage</a>",
+    "source_hash": "f55143f36cbe"
+  }
+}

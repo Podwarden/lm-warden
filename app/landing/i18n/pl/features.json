@@ -1,0 +1,186 @@
+{
+  "features.meta.title": {
+    "text": "Więcej funkcji i wyciągnięte wnioski | LM Warden",
+    "source_hash": "ba96eee84458"
+  },
+  "features.meta.description": {
+    "text": "God mode, tokeny administratora, watchdog silnika i dwie awarie, które ukształtowały sposób, w jaki LM Warden nadzoruje vLLM.",
+    "source_hash": "6e9623164c58"
+  },
+  "features.small.h1-1": {
+    "text": "Drobniejsze rzeczy, które odkryjesz, gdy już go uruchomisz.",
+    "source_hash": "32313b57288c"
+  },
+  "features.dd-1": {
+    "text": "Obserwuj prompty i odpowiedzi jednego klucza na bieżąco w panelu na jego stronie. Przechowywane tylko w pamięci, strumieniowane tylko, gdy panel jest otwarty, i wyłączone, dopóki nie ustawisz <code>VW_GODMODE_ENABLED</code>.",
+    "source_hash": "30b3b2877354"
+  },
+  "features.dt-1": {
+    "text": "Tokeny administratora",
+    "source_hash": "c0b53878c4d4"
+  },
+  "features.dd-2": {
+    "text": "Tokeny <code>vwa_</code> pozwalają skryptom, CI i agentom korzystać z API sterowania bez hasła administratora, plików cookie sesji ani nagłówka CSRF. Pokazywane raz, przechowywane jako skrót SHA-256.",
+    "source_hash": "332151669674"
+  },
+  "features.dt-2": {
+    "text": "Menedżer cache HuggingFace",
+    "source_hash": "3b9fd142bcdf"
+  },
+  "features.dd-3": {
+    "text": "Co jest na dysku i do którego modelu należy. Usuwaj osierocone pliki oraz eksportuj lub importuj cały cache jako archiwum tar.",
+    "source_hash": "9d11305af39b"
+  },
+  "features.dt-3": {
+    "text": "Jeden port",
+    "source_hash": "db562f172ced"
+  },
+  "features.dd-4": {
+    "text": "Interfejs, API sterowania i <code>/v1</code> dzielą <code>:8080</code>. Twój własny terminator TLS, ingress lub SSO działa przed nim bez zmian.",
+    "source_hash": "0e54e933002b"
+  },
+  "features.dt-4": {
+    "text": "Nie wymaga dostępu do internetu",
+    "source_hash": "afddbc532ecf"
+  },
+  "features.dd-5": {
+    "text": "Trzy archiwa tar z obrazami i opcjonalne archiwum tar z cache modeli to wszystko, co trzeba przenieść na host w sieci odizolowanej (air-gapped). <code>HF_HUB_OFFLINE=1</code> blokuje nawet pobieranie wag.",
+    "source_hash": "b61634fa6450"
+  },
+  "features.dt-5": {
+    "text": "Statystyki Router",
+    "source_hash": "bf3c9855201c"
+  },
+  "features.dd-6": {
+    "text": "Każda decyzja w <code>/router/stats</code>: lokalnie, przekazane, przekierowane awaryjnie, odrzucone, z powodem, dla każdej reguły i każdego celu, oraz stan bezpiecznika. Liczniki działają w obrębie procesu; nagłówki ani treść żądań nigdy nie są zapisywane.",
+    "source_hash": "8500a2b3792f"
+  },
+  "features.dt-6": {
+    "text": "Strona konfiguracji dla każdego klienta",
+    "source_hash": "2384f4730652"
+  },
+  "features.dd-7": {
+    "text": "<b>Connect</b> zapisuje konfigurację dla Claude Code, Codex&nbsp;CLI, OpenCode, Aider, Grok&nbsp;CLI, zestawów SDK Anthropic i OpenAI oraz trzech edytorów, z adresem tej instancji LM Warden, kluczem i załadowanym modelem, i wysyła żądanie testowe.",
+    "source_hash": "2bc91137abf9"
+  },
+  "features.dd-8": {
+    "text": "Uruchomione na instancji LM Warden 5&nbsp;października 2026&nbsp;r. z Codex&nbsp;0.160: wywołania narzędzia powłoki, edycja pliku, sesja utrzymana na jednej replice. Rozumowanie jest domyślnie włączone; <code>model_reasoning_effort = \"none\"</code> je wyłącza. Tylko modele lokalne: reguły routera nie mają zastosowania.",
+    "source_hash": "93a18b286b4e"
+  },
+  "features.dt-7": {
+    "text": "Czat testowy (playground)",
+    "source_hash": "989e5691fd83"
+  },
+  "features.dd-9": {
+    "text": "Porozmawiaj z załadowanym modelem w przeglądarce, także z obrazami, zanim komukolwiek dasz klucz.",
+    "source_hash": "7c8ef7303dc3"
+  },
+  "features.lessons.h2-1": {
+    "text": "Trzy rzeczy, których nauczyliśmy się na własnej skórze.",
+    "source_hash": "b2e61284634a"
+  },
+  "features.h3-1": {
+    "text": "Silnik przestał działać cztery razy w ciągu jednego dnia, a proxy nadal przekazywało do niego żądania.",
+    "source_hash": "a3c2a4abe3bf"
+  },
+  "features.p-1": {
+    "text": "Rdzeń silnika vLLM ulegał awarii, podczas gdy otaczający go wrapper <code>vllm serve</code> nadal działał, więc proces wyglądał na żywy, a żądania wciąż do niego trafiały. Teraz watchdog odpytuje endpoint <code>/health</code> samego silnika zamiast tablicy procesów. Gdy silnik przestaje odpowiadać, watchdog zachowuje dane diagnostyczne, w tym ograniczony koniec logu, i ponownie ładuje model.",
+    "source_hash": "8d323d1c089b"
+  },
+  "features.img-1.alt": {
+    "text": "Panel logu modelu na żywo pod obciążeniem: wiersze serwera API vLLM odpowiadające na GET /metrics, POST /v1/chat/completions od klienta, wiersze silnika zgłaszające 10 wykonywanych żądań i 0 oczekujących oraz jeden wiersz GET /health, wszystkie zwracające 200 OK",
+    "source_hash": "a4f74c626a7f"
+  },
+  "features.span-1": {
+    "text": "Sonda watchdoga, na którą odpowiada silnik",
+    "source_hash": "e1d7e982a29c"
+  },
+  "features.figcaption-1": {
+    "text": "<b>Rys.&nbsp;15</b>Log na żywo na stronie modelu podczas tego samego obciążenia: odczyty <code>/metrics</code>, napływające chat completions, licznik samego silnika – 10 wykonywanych żądań i żadne oczekujące – oraz jedna sonda <code>/health</code> pomiędzy nimi.<span class=\"scroll-hint\"> Przewiń obraz w bok, aby przeczytać całe wiersze.</span>",
+    "source_hash": "40a242621e22"
+  },
+  "features.h3-2": {
+    "text": "12-minutowe ładowanie kończyło się kiedyś błędem.",
+    "source_hash": "69140856abf8"
+  },
+  "features.p-2": {
+    "text": "Duży model może się ładować dwanaście minut lub dłużej. Dotąd LM Warden stosował stały limit czasu: po jego upływie wpisywał do modelu czerwony błąd „still loading”, choć silnik dalej się ładował. Strona modelu pokazuje teraz każdy krok ładowania z paskiem postępu, zwykły czas każdego kroku z wcześniejszych ładowań oraz parametry życiowe CPU i pamięci GPU. Zawieszone ładowanie jest zatrzymywane, a jego karty GPU zwalniane; nic nie robi się czerwone, dopóki ładowanie postępuje. GLM-5.2 NVFP4 z równoległością tensorową&nbsp;8 na ośmiu kartach NVIDIA B300 ładuje się w około 11–12 minut; tak długie ładowanie kiedyś trafiało na limit czasu 600&#8239;s.",
+    "source_hash": "cceedae9466e"
+  },
+  "features.img-2.alt": {
+    "text": "Strona modelu podczas ładowania GLM-5.2 NVFP4 na ośmiu kartach NVIDIA B300: 9 min 17 s ze zwykłych 10 min 46 s; Start engine, Load weights 47 z 47, Compile kernels i Size KV cache ukończone; Tune kernels na op 2, 21 z 22; wykresy CPU i pamięci GPU z 1948 z 2149&#8239;GiB w użyciu; Capture CUDA graphs i Warm-up request jeszcze przed nami, każdy ze swoim zwykłym czasem",
+    "source_hash": "e3cc9ae4cf3b"
+  },
+  "features.figcaption-2": {
+    "text": "<b>Rys.&nbsp;16</b>GLM-5.2 NVFP4 ładowany z równoległością tensorową 8 na ośmiu kartach B300, po dziewięciu minutach. Strojenie jąder to długi krok; wykresy pokazują, że silnik żyje, choć log tylko powtarza postęp strojenia.",
+    "source_hash": "981fef031d3d"
+  },
+  "features.h3-3": {
+    "text": "Karta 16&#8239;GiB mieści mniej, niż wynika z arytmetyki.",
+    "source_hash": "2269d7489768"
+  },
+  "features.p-3": {
+    "text": "Same wagi modelu bf16 8B to około 15&#8239;GiB, a podczas ładowania brakuje mu pamięci. Każdy wiersz poniżej sprawdziliśmy na kartach RTX&nbsp;A4000 i Quadro RTX&nbsp;5000 z 16&#8239;GiB i ocenialiśmy, czytając odpowiedzi modelu w czacie testowym, a nie ufając kontroli stanu.",
+    "source_hash": "a34f00101361"
+  },
+  "features.th-1": {
+    "text": "Model",
+    "source_hash": "5e2c614c23f0"
+  },
+  "features.th-2": {
+    "text": "Co działa",
+    "source_hash": "ea5522c7c85e"
+  },
+  "features.th-3": {
+    "text": "Co nie działa",
+    "source_hash": "9bebcd3482a7"
+  },
+  "features.col-works.data-h": {
+    "text": "Działa",
+    "source_hash": "2b4c8c6d38db"
+  },
+  "features.td-1": {
+    "text": "Dwie karty, równoległość tensorowa 2, <code>max_model_len</code> 32000, <code>gpu_memory_utilization</code> od 0,7&nbsp;do&nbsp;0,9",
+    "source_hash": "4516d9c167db"
+  },
+  "features.col-does-not.data-h": {
+    "text": "Nie działa",
+    "source_hash": "73a6fc7836b8"
+  },
+  "features.td-2": {
+    "text": "Jedna karta: MoE 20B się nie mieści",
+    "source_hash": "6b644f502c34"
+  },
+  "features.th-4": {
+    "text": "Llama 3.1 8B, klasa Mistral 7B",
+    "source_hash": "c2f2a5cd5d41"
+  },
+  "features.td-3": {
+    "text": "Jedna karta, z punktem kontrolnym AWQ-INT4, <code>--enforce-eager</code> i <code>gpu_memory_utilization</code> 0,9",
+    "source_hash": "baa3aea88f30"
+  },
+  "features.td-4": {
+    "text": "Repozytorium bf16: około 15&#8239;GiB wag, brak pamięci podczas ładowania",
+    "source_hash": "1ce2fc0f7104"
+  },
+  "features.th-5": {
+    "text": "Dwa modele naraz",
+    "source_hash": "3bc589f1752e"
+  },
+  "features.td-5": {
+    "text": "Jeden model na kartę, każdy mieszczący się na własnej karcie",
+    "source_hash": "6fed9ca4f3d2"
+  },
+  "features.td-6": {
+    "text": "Dwa modele dzielące jedną kartę",
+    "source_hash": "296d7ad75ac3"
+  },
+  "features.p-4": {
+    "text": "Sprawdzone na vLLM&nbsp;0.20.0. Powyższe pomiary replik wykonano na 0.26.0. To wydanie zawiera 0.32.0; pierwsze zmierzone na nim ładowanie to GLM-5.2 NVFP4 z równoległością tensorową 8 na ośmiu kartach B300, około 11–12 minut. Reguł dopasowania nie zmierzono ponownie na 0.32. Pełna tabela i jej uzasadnienie są w <a href=\"{{repo}}/blob/main/documents/HAZARDS.md#what-fits-on-what\" rel=\"noopener\">HAZARDS.md</a>. Nie masz NVIDIA? <a href=\"/#p-mac\">Dla procesorów Apple jest wersja beta na Maca</a>, następny jest Windows, a <a href=\"/#p-linux\">inne karty GPU są w planach</a>.",
+    "source_hash": "d5f7cb24d2cc"
+  },
+  "features.p-5": {
+    "text": "Zobacz też: <a href=\"/gpu-monitoring\">monitorowanie GPU</a> · <a href=\"/cache-aware-routing\">routing z uwzględnieniem cache</a> · <a href=\"/api-keys\">klucze API</a>",
+    "source_hash": "4c5ddc0960f7"
+  }
+}

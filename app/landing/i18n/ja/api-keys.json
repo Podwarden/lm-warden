@@ -1,0 +1,54 @@
+{
+  "api-keys.meta.title": {
+    "text": "API キー、優先度、アプリごとの使用量 | LM Warden",
+    "source_hash": "36d31214a489"
+  },
+  "api-keys.meta.description": {
+    "text": "アプリごとに一つのキー。それぞれに優先度、使用量、キュー時間があり、OpenAI 互換、Anthropic Messages、Responses のエンドポイントの背後で動きます。",
+    "source_hash": "dc32185af3f0"
+  },
+  "api-keys.keys.h1-1": {
+    "text": "アプリごとに一つのキー、キーごとに一つのページ。",
+    "source_hash": "478db02e5440"
+  },
+  "api-keys.p-1": {
+    "text": "同僚、ノート PC、CI ジョブ、エージェントのそれぞれに専用のキーを渡しましょう。キーのページには、使用量と、リクエストがキューで待った時間 (中央値と p95) が、ドラッグや入力で指定した任意の期間について表示されます。キーは猶予期間付きでローテーションでき、優先度を P0&nbsp;～&nbsp;P9 で設定できます。待機中の P9 リクエストは常に P8 リクエストより先に処理されます。",
+    "source_hash": "128af00fcd92"
+  },
+  "api-keys.p-2": {
+    "text": "一時停止すると、新しいリクエストは拒否され、すでに実行中のリクエストは最後まで処理されます。",
+    "source_hash": "24b259f012c7"
+  },
+  "api-keys.p-3": {
+    "text": "2026 年 9 月 23 日のローカル インスタンスより。ホストとキーは置き換え、その他のヘッダーは省略しています。",
+    "source_hash": "992b035b09f7"
+  },
+  "api-keys.video-1.aria-label": {
+    "text": "負荷テスト中の API キーのページ：P0～P9 の優先度、全履歴を示す帯、直近一時間の毎分トークン数とリクエスト数。続いて God mode のドックが開き、ストリーミング中のプロンプトと応答が表示される",
+    "source_hash": "146ed912c7a6"
+  },
+  "api-keys.figcaption-1": {
+    "text": "<b>図&nbsp;13</b><code>demo-agent</code> のページ。図&nbsp;1 の負荷を発生させたキーです。画面上の一時間で 37 リクエスト、生成トークン 43k。続いて God mode のドック (一つのキーのプロンプトと応答を表示するオプトインのライブ ビュー。既定ではオフ) が開き、応答が書き出されるそばからストリーミングされます。プロンプトは自社で用意したものです。",
+    "source_hash": "389cdbc39b42"
+  },
+  "api-keys.img-1.alt": {
+    "text": "Stats ページの直近 7 日間 (9 月 16 日～23 日) の Requests グラフ：リクエストごとに一つのマーク。色は API キー、大きさは生成トークン数、形は終了理由を表し、縦軸は 100&#8239;ms から 10,000&#8239;s までの対数目盛の所要時間。ほとんどのマークは 3～100 秒の間にあり、あるキーは一秒未満から数百秒まで伸びる密な列を二本示している。",
+    "source_hash": "e3200603dcf6"
+  },
+  "api-keys.figcaption-2": {
+    "text": "<b>図&nbsp;14</b>すべてのキーのリクエストを一つのグラフに。同じ Stats ページより：直近 7 日間、28,906 リクエスト、十五件に一件の割合で描画。マーク一つがリクエスト一件で、色はキー、大きさは生成したトークン数、形は終わり方を表し、高さは対数目盛での所要時間です。安定した琥珀色が <code>opencode-laptop</code>、二本の密なピンクの列が <code>research-notebook</code> です。2026 年 9 月 23 日に記録。キー名は置き換えています。<span class=\"scroll-hint\">画像を横にスクロールすると一週間全体が見られます。</span>",
+    "source_hash": "1a43a2ba1520"
+  },
+  "api-keys.leave.h2-1": {
+    "text": "乗り換えは <code>base_url</code> の変更だけ。",
+    "source_hash": "8f28f88090a1"
+  },
+  "api-keys.p-4": {
+    "text": "<code>/v1/chat/completions</code> と <code>/v1/models</code> に対応し、<code>/v1/models</code> は各モデルの <code>max_model_len</code> を報告します。また <code>/v1/messages</code> で Anthropic Messages API にも対応しているので、Claude Code は <code>ANTHROPIC_BASE_URL</code> を warden のルート URL に向けるだけです (<code>/v1/messages</code> パスは Claude Code が自分で付けます)。さらに <code>/v1/responses</code> で OpenAI Responses API にも対応しているので、Codex&nbsp;CLI も読み込んだモデルを使えます。重みは通常の HuggingFace キャッシュにあり、<code>make export-hf-cache</code> で tarball として受け取れます。各エンジンを起動したときの正確な argv も GET 一回で取得できるので、動いている構成を私たちに頼らずに再構築できます。下の diff を逆にたどれば、それがそのまま乗り換えの手順になります。",
+    "source_hash": "18372068885f"
+  },
+  "api-keys.p-5": {
+    "text": "関連：<a href=\"/coding-agents\">コーディング エージェント</a> · <a href=\"/gpu-monitoring\">GPU 監視</a> · <a href=\"/faq\">よくある質問</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}

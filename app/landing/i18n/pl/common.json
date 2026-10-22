@@ -1,0 +1,102 @@
+{
+  "common.crumbs.aria-label": {
+    "text": "Ścieżka nawigacji",
+    "source_hash": "2bd873d6c734"
+  },
+  "common.crumb.home": {
+    "text": "Strona główna",
+    "source_hash": "3a78695388b3"
+  },
+  "common.crumb.coding-agents": {
+    "text": "Agenci do kodowania",
+    "source_hash": "707c65c28bca"
+  },
+  "common.in-words": {
+    "text": "Opis słowny:",
+    "source_hash": "3cafefb13fa9"
+  },
+  "common.clients.client": {
+    "text": "Klient",
+    "source_hash": "0c77fe09ab33"
+  },
+  "common.client.protocol": {
+    "text": "Protokół",
+    "source_hash": "cf0883343f4a"
+  },
+  "common.client.support": {
+    "text": "Obsługa",
+    "source_hash": "be91940b79f4"
+  },
+  "common.support.full": {
+    "text": "Pełna obsługa",
+    "source_hash": "1f95d1324a14"
+  },
+  "common.support.local-only": {
+    "text": "Tylko modele lokalne",
+    "source_hash": "12d96c6fb40e"
+  },
+  "common.crumb.agent-tuning": {
+    "text": "Strojenie przez agenta",
+    "source_hash": "124c9615be9b"
+  },
+  "common.copy": {
+    "text": "Kopiuj",
+    "source_hash": "e21f935f11d7"
+  },
+  "common.crumb.features": {
+    "text": "Funkcje",
+    "source_hash": "5697d03daef4"
+  },
+  "common.crumb.gpu-monitoring": {
+    "text": "Monitorowanie GPU",
+    "source_hash": "cbdfccb24fcc"
+  },
+  "common.crumb.cache-aware-routing": {
+    "text": "Routing z uwzględnieniem cache",
+    "source_hash": "d45c5045a852"
+  },
+  "common.crumb.api-keys": {
+    "text": "Klucze API",
+    "source_hash": "98aae8972102"
+  },
+  "common.crumb.faq": {
+    "text": "FAQ",
+    "source_hash": "dbc468a14b60"
+  },
+  "common.crumb.privacy": {
+    "text": "Prywatność",
+    "source_hash": "54a57c3147c4"
+  },
+  "common.client.setup-section.aria-label": {
+    "text": "Konfiguracja",
+    "source_hash": "7013af4c42fe"
+  },
+  "common.client.requirements": {
+    "text": "Wymagania",
+    "source_hash": "e0cdd07f6a27"
+  },
+  "common.client.setup": {
+    "text": "Konfiguracja",
+    "source_hash": "7013af4c42fe"
+  },
+  "common.client.setup-p": {
+    "text": "W konsoli <strong>Connect</strong> zapisuje te pliki z adresem twojej instancji LM Warden, twoim kluczem i wybranym modelem. Tutaj są pokazane z symbolami zastępczymi.",
+    "source_hash": "961b2c6bf48f"
+  },
+  "common.file.shell": {
+    "text": "Powłoka",
+    "source_hash": "a733285486d5"
+  },
+  "common.client.docs": {
+    "text": "Oficjalna dokumentacja: {{docs_link}} (stan na {{docs_date}}).",
+    "source_hash": "78599bc11885"
+  },
+  "common.client.related": {
+    "text": "Zobacz też: <a href=\"/coding-agents\">wszyscy agenci do kodowania</a> · <a href=\"/agent-tuning\">pozwól agentowi wybrać model</a> · <a href=\"/api-keys\">klucze API</a>",
+    "source_hash": "5f736e0bdabc"
+  },
+  "common.file.settings": {
+    "text": "Ustawienia",
+    "source_hash": "74a883a037bc"
+  }
+}

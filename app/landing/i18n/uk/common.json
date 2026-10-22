@@ -1,0 +1,102 @@
+{
+  "common.crumbs.aria-label": {
+    "text": "Навігаційний ланцюжок",
+    "source_hash": "2bd873d6c734"
+  },
+  "common.crumb.home": {
+    "text": "Головна",
+    "source_hash": "3a78695388b3"
+  },
+  "common.crumb.coding-agents": {
+    "text": "Агенти для коду",
+    "source_hash": "707c65c28bca"
+  },
+  "common.in-words": {
+    "text": "Текстовий опис:",
+    "source_hash": "3cafefb13fa9"
+  },
+  "common.clients.client": {
+    "text": "Клієнт",
+    "source_hash": "0c77fe09ab33"
+  },
+  "common.client.protocol": {
+    "text": "Протокол",
+    "source_hash": "cf0883343f4a"
+  },
+  "common.client.support": {
+    "text": "Підтримка",
+    "source_hash": "be91940b79f4"
+  },
+  "common.support.full": {
+    "text": "Повна підтримка",
+    "source_hash": "1f95d1324a14"
+  },
+  "common.support.local-only": {
+    "text": "Лише локальні моделі",
+    "source_hash": "12d96c6fb40e"
+  },
+  "common.crumb.agent-tuning": {
+    "text": "Налаштування агентом",
+    "source_hash": "124c9615be9b"
+  },
+  "common.copy": {
+    "text": "Копіювати",
+    "source_hash": "e21f935f11d7"
+  },
+  "common.crumb.features": {
+    "text": "Можливості",
+    "source_hash": "5697d03daef4"
+  },
+  "common.crumb.gpu-monitoring": {
+    "text": "Моніторинг GPU",
+    "source_hash": "cbdfccb24fcc"
+  },
+  "common.crumb.cache-aware-routing": {
+    "text": "Маршрутизація за кешем",
+    "source_hash": "d45c5045a852"
+  },
+  "common.crumb.api-keys": {
+    "text": "Ключі API",
+    "source_hash": "98aae8972102"
+  },
+  "common.crumb.faq": {
+    "text": "Питання",
+    "source_hash": "dbc468a14b60"
+  },
+  "common.crumb.privacy": {
+    "text": "Конфіденційність",
+    "source_hash": "54a57c3147c4"
+  },
+  "common.client.setup-section.aria-label": {
+    "text": "Налаштування",
+    "source_hash": "7013af4c42fe"
+  },
+  "common.client.requirements": {
+    "text": "Вимоги",
+    "source_hash": "e0cdd07f6a27"
+  },
+  "common.client.setup": {
+    "text": "Налаштування",
+    "source_hash": "7013af4c42fe"
+  },
+  "common.client.setup-p": {
+    "text": "У консолі <strong>Connect</strong> записує ці файли з адресою вашого LM Warden, вашим ключем і вибраною моделлю. Тут вони наведені із заповнювачами.",
+    "source_hash": "961b2c6bf48f"
+  },
+  "common.file.shell": {
+    "text": "Оболонка",
+    "source_hash": "a733285486d5"
+  },
+  "common.client.docs": {
+    "text": "Офіційна документація: {{docs_link}} (переглянуто {{docs_date}}).",
+    "source_hash": "78599bc11885"
+  },
+  "common.client.related": {
+    "text": "Див. також: <a href=\"/coding-agents\">усі агенти для програмування</a> · <a href=\"/agent-tuning\">хай агент сам вибере модель</a> · <a href=\"/api-keys\">ключі API</a>",
+    "source_hash": "5f736e0bdabc"
+  },
+  "common.file.settings": {
+    "text": "Налаштування",
+    "source_hash": "74a883a037bc"
+  }
+}

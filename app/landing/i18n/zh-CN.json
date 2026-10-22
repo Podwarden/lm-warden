@@ -4,11 +4,11 @@
     "source_hash": "8b40be948ef4"
   },
   "meta.description": {
-    "text": "在 Linux 的 NVIDIA GPU 或 Apple 芯片 Mac 上用 vLLM、llama.cpp 或 MLX 提供 LLM 服务：一个兼容 OpenAI 的 /v1 端点，每个应用一个密钥。",
+    "text": "在 Linux 主机的 NVIDIA GPU 或 Apple 芯片 Mac 上，用 vLLM、llama.cpp 或 MLX 提供 LLM 服务：一个兼容 OpenAI 的 /v1 端点，每个应用一个密钥。",
     "source_hash": "6cb271edae46"
   },
   "meta.og-image-alt": {
-    "text": "LM Warden：在你桌下或机架里的 GPU 上提供兼容 OpenAI 的 API，旁边是一块 RTX A4000 的 Stats 面板，标出了驱动报告的降频点",
+    "text": "LM Warden：在你手边工作站或机架里的 GPU 上提供兼容 OpenAI 的 API，旁边是一块 RTX A4000 的 Stats 面板，标出了驱动报告的降频温度",
     "source_hash": "7f75ba3bcd9d"
   },
   "jsonld.feature-1": {
@@ -16,7 +16,7 @@
     "source_hash": "615857f542c9"
   },
   "jsonld.feature-2": {
-    "text": "编程智能体（Codex CLI、OpenCode、Aider、Grok CLI、Continue、Cline、Cursor、OpenAI 和 Anthropic SDK、Claude Code）运行在你自己的模型上，配置由系统代劳",
+    "text": "编程智能体（Codex CLI、OpenCode、Aider、Grok CLI、Continue、Cline、Cursor、OpenAI 和 Anthropic SDK、Claude Code）直接使用你自己的模型，并自动完成配置",
     "source_hash": "7b06e74713de"
   },
   "jsonld.feature-3": {
@@ -28,15 +28,15 @@
     "source_hash": "42d6cdab3fb6"
   },
   "jsonld.feature-5": {
-    "text": "缓存感知路由：让每个对话留在持有其前缀的副本上",
+    "text": "缓存感知路由：让每个对话固定在持有其前缀缓存的副本上",
     "source_hash": "9791836d7920"
   },
   "jsonld.feature-6": {
-    "text": "智能体调优：编程智能体通过 API 为你的 GPU 选择模型、引擎和布局，边做边跑基准测试",
+    "text": "智能体调优：编程智能体通过 API 为你的 GPU 选择模型、引擎和多卡切分方式，边调边跑基准测试",
     "source_hash": "b2f04e38f9aa"
   },
   "jsonld.feature-7": {
-    "text": "聊天：流式 Markdown、视觉模型的图片输入和保存的历史记录",
+    "text": "聊天：流式渲染 Markdown，可向视觉模型发送图片，并保存历史记录",
     "source_hash": "0740507f9225"
   },
   "jsonld.feature-8": {
@@ -44,11 +44,11 @@
     "source_hash": "301c375d8a2f"
   },
   "jsonld.feature-9": {
-    "text": "API 密钥：从 9 到 0 的严格优先级，以及每个密钥的用量",
+    "text": "API 密钥：从 9 到 0 的严格优先级，并按密钥统计用量",
     "source_hash": "89c7e3de3f80"
   },
   "jsonld.feature-10": {
-    "text": "逐 GPU 面板，从 16 GB 的 M1 到 8 x B300 NVSwitch 服务器，指出变窄的 PCIe 链路、未激活的 NVLink 和 ECC 差异",
+    "text": "逐 GPU 面板，从 16 GB 的 M1 到 8 × B300 NVSwitch 服务器，指出降宽运行的 PCIe 链路、未激活的 NVLink 和 ECC 差异",
     "source_hash": "bf6f8b147d8a"
   },
   "chrome.copy.done": {
@@ -148,11 +148,11 @@
     "source_hash": "4120132397fd"
   },
   "home.hero.h1-1": {
-    "text": "你的 GPU，像托管 API 一样提供服务。",
+    "text": "让你的 GPU 像托管 API 一样对外提供服务。",
     "source_hash": "b24318c21e4f"
   },
   "home.hero.p-1": {
-    "text": "LM Warden 在你自己的硬件上运行 vLLM、llama.cpp 或 MLX，并在前面提供一个兼容 OpenAI 的端口：每个应用一个密钥，每个密钥的用量，以及每块 GPU 的实时面板。可运行于配备 NVIDIA 显卡的 Linux 主机，或 Apple 芯片 Mac。",
+    "text": "LM Warden 在你自己的硬件上运行 vLLM、llama.cpp 或 MLX，并在其前端提供一个兼容 OpenAI 的端点：每个应用一个密钥，每个密钥的用量，以及每块 GPU 的实时面板。可运行于配备 NVIDIA 显卡的 Linux 主机，或 Apple 芯片 Mac。",
     "source_hash": "e192caf6a5b3"
   },
   "home.hero.a-1": {
@@ -212,7 +212,7 @@
     "source_hash": "3aeff05d5bf6"
   },
   "home.hero.span-8": {
-    "text": "同一端口提供",
+    "text": "同一端点提供",
     "source_hash": "05261121948c"
   },
   "home.hero.span-9": {
@@ -272,7 +272,7 @@
     "source_hash": "b01cff25d51f"
   },
   "home.use-cases.p-2": {
-    "text": "Codex CLI、OpenCode、Aider、Grok CLI、Continue、Cline、Cursor 和 OpenAI SDK 都能运行在你的模型上。Claude Code 和 Anthropic SDK 还可以保留你的 Claude 订阅，把常规调用分流出去。",
+    "text": "Codex CLI、OpenCode、Aider、Grok CLI、Continue、Cline、Cursor 和 OpenAI SDK 都能直接使用你的模型。Claude Code 和 Anthropic SDK 还可以保留你的 Claude 订阅，把常规调用交给本地模型。",
     "source_hash": "022970d73828"
   },
   "home.use-cases.span-2": {
@@ -320,7 +320,7 @@
     "source_hash": "c3ae8600a083"
   },
   "home.use-cases.p-5": {
-    "text": "Claude Code、Codex 或其他智能体会检查你的显卡，筛选出放得下的模型，加载各种布局，用你自己的提示词做基准测试并调整，最后让胜出者保持加载。只需粘贴四条提示词。",
+    "text": "Claude Code、Codex 或其他智能体会盘点你的显卡，筛选出放得下的模型，加载不同的切分方案，用你自己的提示词跑基准测试并调整，最后让最优方案保持加载。只需粘贴四条提示词。",
     "source_hash": "bbfa0ef15601"
   },
   "home.use-cases.span-5": {
@@ -348,7 +348,7 @@
     "source_hash": "2991e046c7d6"
   },
   "home.use-cases.h3-7": {
-    "text": "准确看到模型看到了什么、说了什么。",
+    "text": "确切看到模型收到了什么、回答了什么。",
     "source_hash": "175c055be16a"
   },
   "home.use-cases.p-7": {
@@ -380,11 +380,11 @@
     "source_hash": "7323df202723"
   },
   "home.use-cases.h3-9": {
-    "text": "如实呈现你的硬件：从一台 Mac 到八块 B300。",
+    "text": "如实展示你的硬件状况：从一台 Mac 到八块 B300。",
     "source_hash": "3f3225bbc711"
   },
   "home.use-cases.p-9": {
-    "text": "一个控制台管理 16&#8239;GB 的 M1、两块型号不同的显卡或一台 NVSwitch 服务器，并指出变窄的 PCIe 插槽、未激活的 NVLink 和 ECC 差异。",
+    "text": "同一个控制台可以读取 16&#8239;GB 的 M1、两块型号不同的显卡或一台 NVSwitch 服务器，并指出降宽运行的 PCIe 插槽、未激活的 NVLink 和 ECC 设置差异。",
     "source_hash": "6ea6fbd502b6"
   },
   "home.use-cases.span-9": {
@@ -396,11 +396,11 @@
     "source_hash": "aef48b281a1a"
   },
   "home.use-cases.h3-10": {
-    "text": "即将推出：一体机。一个 USB 驱动器，一台装有 GPU 的机箱，只做一件事。",
+    "text": "即将推出：一体机。一个 USB 启动盘，一台装有 GPU 的机箱，专做一件事。",
     "source_hash": "525b6691292f"
   },
   "home.use-cases.p-10": {
-    "text": "一个精简的 Linux，只运行 LM Warden，自动配置网络和模型存储，可以无线更新，也可以完全物理隔离运行。适合安全的专用 LLM 服务器。",
+    "text": "一个精简的 Linux，只运行 LM Warden，自动配置网络和模型存储，可以在线（OTA）更新，也可以完全物理隔离运行。适合安全的专用 LLM 服务器。",
     "source_hash": "9ab2a4e163b1"
   },
   "home.use-cases.span-10": {
@@ -432,7 +432,7 @@
     "source_hash": "9849f7c407b4"
   },
   "home.install.span-1": {
-    "text": "主要版本",
+    "text": "主力平台",
     "source_hash": "86f0f70c80d2"
   },
   "home.install.b-2": {
@@ -452,7 +452,7 @@
     "source_hash": "1e554752120e"
   },
   "home.install.span-3": {
-    "text": "下一步",
+    "text": "即将支持",
     "source_hash": "c6c1c9a9c854"
   },
   "home.install.b-3": {
@@ -460,7 +460,7 @@
     "source_hash": "98432690c966"
   },
   "home.install.small-4": {
-    "text": "一个 USB 驱动器，把 GPU 机箱变成专用的 LM Warden 服务器",
+    "text": "一个 USB 启动盘，把 GPU 机箱变成专用的 LM Warden 服务器",
     "source_hash": "dc3e1016c4ce"
   },
   "home.install.span-4": {
@@ -532,7 +532,7 @@
     "source_hash": "eb664f8f7d3a"
   },
   "home.p-mac.li-2": {
-    "text": "引擎：MLX 和基于 Metal 构建的 llama.cpp。同样的仪表板和同样的 OpenAI API；没有 vLLM，也没有功耗读数。",
+    "text": "引擎：MLX 和基于 Metal 构建的 llama.cpp。同样的控制台和同样的 OpenAI API；没有 vLLM，也没有功耗读数。",
     "source_hash": "5ff95c0fa25d"
   },
   "home.p-mac.li-3": {
@@ -548,7 +548,7 @@
     "source_hash": "8121128f773c"
   },
   "home.p-mac.img-1.alt": {
-    "text": "Mac 上的 LM Warden 菜单栏菜单：Running，仅在本机 127.0.0.1:8080 上提供服务，未加载模型，一条内存条，以及 Open Dashboard、Copy API Address、Share on Local Network",
+    "text": "Mac 上的 LM Warden 菜单栏菜单：Running，仅在本机 127.0.0.1:8080 上提供服务，未加载模型，一个内存用量条，以及 Open Dashboard、Copy API Address、Share on Local Network",
     "source_hash": "45b8070949bb"
   },
   "home.p-mac.figcaption-1": {
@@ -584,7 +584,7 @@
     "source_hash": "9ff6d73830b6"
   },
   "home.p-appliance.li-1": {
-    "text": "把 USB 驱动器插入装有 GPU 的机箱。它会安装一个只做一件事的精简 Linux：运行 LM Warden。",
+    "text": "把 USB 启动盘插入装有 GPU 的机箱。它会安装一个只做一件事的精简 Linux：运行 LM Warden。",
     "source_hash": "47cb2ad65dc7"
   },
   "home.p-appliance.li-2": {
@@ -592,7 +592,7 @@
     "source_hash": "a2a401f4b2c3"
   },
   "home.p-appliance.li-3": {
-    "text": "可以无线接收更新，也可以完全物理隔离运行。",
+    "text": "可以在线（OTA）接收更新，也可以完全物理隔离运行。",
     "source_hash": "aa9d78e6b6fa"
   },
   "home.p-appliance.li-4": {
@@ -608,15 +608,15 @@
     "source_hash": "8a3fbd7c91f0"
   },
   "home.upgrade.p-1": {
-    "text": "<b>已经在用了？</b>Linux 可原地升级：拉取新镜像，重启，数据库会自动向前迁移。<a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">步骤</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">更新日志</a>。",
+    "text": "<b>已经在用了？</b>Linux 可原地升级：拉取新镜像，重启，数据库会自动迁移到新版本。<a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">步骤</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">更新日志</a>。",
     "source_hash": "5566c16483a2"
   },
   "home.why.h2-1": {
-    "text": "自托管有八个问题。下面是每个问题解决后的样子。",
+    "text": "自托管会遇到八个问题。下面逐一展示解决之后的样子。",
     "source_hash": "65341f9c1497"
   },
   "home.why.p-1": {
-    "text": "裸引擎只能在一个端口上提供一个模型。下面是围绕它的各个部分，有我们自己的数据时会一并给出。",
+    "text": "单独运行的推理引擎只能在一个端口上提供一个模型。下面是 LM Warden 在引擎之外补齐的部分，凡有自测数据的都一并给出。",
     "source_hash": "1668b0870987"
   },
   "home.why-fit.h3-1": {
@@ -624,7 +624,7 @@
     "source_hash": "631429e459b2"
   },
   "home.why-fit.p-1": {
-    "text": "把 Hugging Face 仓库粘贴到 <b>Add model</b> 中。每个文件都会列出针对你所勾选显卡的结论：放得下、余量紧张或放不下。勾选更多显卡，预算会相应累加。在有能放下的文件之前，不会下载任何内容。",
+    "text": "把 Hugging Face 仓库粘贴到 <b>Add model</b> 中。每个文件都会列出针对你所勾选显卡的结论：放得下、余量紧张或放不下。勾选更多显卡，可用显存会相应累加。在有能放下的文件之前，不会下载任何内容。",
     "source_hash": "b0c5f5cbb2ee"
   },
   "home.why-fit.img-1.alt": {
@@ -636,7 +636,7 @@
     "source_hash": "7cd5266e1f4e"
   },
   "home.why-stats.p-1": {
-    "text": "吞吐量 = 并发数 × 提示词长度 × 缓存复用，而裸引擎无法把这些放在一起展示。Stats 页面可以，范围从 1&#8239;h 到 7&#8239;d：VRAM、GPU 利用率、功耗（Linux）、每秒 token 数（提示词 token 分为已缓存和需计算两部分）、p50/p95 延迟、提示词缓存命中率、抢占、按密钥和按客户端 IP 统计的请求数。利用率持平而队列积压，说明“需要更高并发”；缓存占比低，说明“需要固定会话”。",
+    "text": "吞吐量 = 并发数 × 提示词长度 × 缓存复用，而单独运行的推理引擎无法把这些放在一起展示。Stats 页面可以，范围从 1&#8239;h 到 7&#8239;d：VRAM、GPU 利用率、功耗（Linux）、每秒 token 数（提示词 token 分为已缓存和需计算两部分）、p50/p95 延迟、提示词缓存命中率、抢占、按密钥和按客户端 IP 统计的请求数。队列积压而利用率上不去，说明“需要更高并发”；缓存占比低，说明“需要固定会话”。",
     "source_hash": "05ae743f085e"
   },
   "home.why-stats.img-1.alt": {
@@ -652,7 +652,7 @@
     "source_hash": "2e459441dc4f"
   },
   "home.why-chat.img-1.alt": {
-    "text": "Mac 应用仪表板窗口中的聊天，正在从 qwen2.5-3b 流式输出，标题栏显示 GPU 96%",
+    "text": "Mac 应用控制台窗口中的聊天，正在从 qwen2.5-3b 流式输出，标题栏显示 GPU 96%",
     "source_hash": "da46ab93294b"
   },
   "home.why-god.h3-1": {
@@ -680,7 +680,7 @@
     "source_hash": "0f19c82ec35c"
   },
   "home.why-cache.p-2": {
-    "text": "在我们的四卡主机上实测（4&nbsp;×&nbsp;RTX&nbsp;A4000，Qwen3-4B 作为四个单卡副本，模拟 Claude Code 风格的会话，先关闭亲和性再开启，背靠背运行）：固定对话后，在 4 个并发会话时，从缓存提供的提示词 token 占比从 56% 升至 86%，首字节时间中位数从 2.05 降至 0.38&#8239;s。在我们运行的每一级中，每分钟输出 token 数都更高，p95 首字节时间（最慢的 5%）也都更低。实际工作的副本数几乎没变（4 个会话时为 2.71 对 2.83，共四个）：收益来自缓存复用，而不是更多显卡在工作。",
+    "text": "在我们的四卡主机上实测（4&nbsp;×&nbsp;RTX&nbsp;A4000，Qwen3-4B 作为四个单卡副本，模拟 Claude Code 风格的会话，先关闭亲和性再开启，两组连续运行）：把对话固定到副本后，在 4 个并发会话时，从缓存提供的提示词 token 占比从 56% 升至 86%，首字节时间中位数从 2.05 降至 0.38&#8239;s。在我们测试的每一级中，每分钟输出 token 数都更高，p95 首字节时间（最慢的 5%）也都更低。实际在工作的副本数几乎没变（4 个会话时为 2.71 对 2.83，总共四个）：收益来自缓存复用，而不是更多显卡投入工作。",
     "source_hash": "9de8aa8aa7e1"
   },
   "home.why-cache.figcaption-2": {
@@ -692,7 +692,7 @@
     "source_hash": "0ec9d5ccf246"
   },
   "home.why-cache.h3-1": {
-    "text": "负载爬升的每一级，亲和性关闭 → 开启",
+    "text": "逐级加压：亲和性关闭 → 开启",
     "source_hash": "684608311775"
   },
   "home.why-cache.p-3": {
@@ -704,11 +704,11 @@
     "source_hash": "f1bc7fbd6399"
   },
   "home.why-cache.figcaption-4": {
-    "text": "模型页面上的同一组计数器：每个副本一行，显示它持有的请求、有多少对话留下（<code>sticky</code>）或通过溢出到达、正在运行和等待的请求、使用中的 KV 缓存以及前缀缓存命中率。记录于 2026 年十月 4 日，亲和性开启，溢出阈值为 8（自动）：sticky 100%，副本 0 到 3 的前缀缓存命中率分别为 82.2%、86.0%、69.0% 和 80.0%。这是卡片截图，不是结果。<span class=\"cache-hint\">点按卡片可放大。</span>",
+    "text": "模型页面上的同一组计数器：每个副本一行，显示它持有的请求、有多少对话留下（<code>sticky</code>）或通过溢出到达、正在运行和等待的请求、使用中的 KV 缓存以及前缀缓存命中率。记录于 2026 年 10 月 4 日，亲和性开启，溢出阈值为 8（自动）：sticky 100%，副本 0 到 3 的前缀缓存命中率分别为 82.2%、86.0%、69.0% 和 80.0%。这是卡片截图，不是结果。<span class=\"cache-hint\">点按卡片可放大。</span>",
     "source_hash": "234d024e62df"
   },
   "home.why-cache.p-4": {
-    "text": "<b>它在哪里吃亏。</b>24 和 32 个会话这两级是有意让四块小显卡过载，每个副本都已饱和。输出仍然更高（每分钟 11,178 对 9,048 和 16,638 对 14,760 个 token），慢尾也短得多（p95 38 对 59&#8239;s，以及 39 对 83&#8239;s），但开启亲和性后首字节时间中位数更差：24 个会话时为 13.1 对 5.1&#8239;s，32 个会话时为 27.7 对 12.3&#8239;s。我们尚未查明原因，把溢出阈值从 8 降到 4 也没有改变这一点。",
+    "text": "<b>代价在哪里。</b>24 和 32 个会话这两级是有意让四块小显卡过载，每个副本都已饱和。输出仍然更高（每分钟 11,178 对 9,048 和 16,638 对 14,760 个 token），长尾延迟也短得多（p95 38 对 59&#8239;s，以及 39 对 83&#8239;s），但开启亲和性后首字节时间中位数更差：24 个会话时为 13.1 对 5.1&#8239;s，32 个会话时为 27.7 对 12.3&#8239;s。我们尚未查明原因，把溢出阈值从 8 降到 4 也没有改变这一点。",
     "source_hash": "2a468a4b1738"
   },
   "home.why-cache.p-5": {
@@ -716,7 +716,7 @@
     "source_hash": "c245f8292ac7"
   },
   "home.why-cache.a-1": {
-    "text": "完整方法：工作负载、测试框架、溢出阈值，以及一台自那以后一直这样运行的七卡主机 →",
+    "text": "完整方法：工作负载、压测工具、溢出阈值，以及此后一直按此方式运行的一台七卡主机 →",
     "source_hash": "cd240e4bc004"
   },
   "home.agents.h2-1": {
@@ -724,7 +724,7 @@
     "source_hash": "b01cff25d51f"
   },
   "home.agents.p-1": {
-    "text": "十种工具只需一个 base URL 和一个密钥即可连接；其中两种还可以保留付费的 Claude 订阅来处理难题。",
+    "text": "十款编程智能体只需一个 base URL 和一个密钥即可连接；其中两款还能继续用付费的 Claude 订阅处理更难的任务。",
     "source_hash": "26604da90050"
   },
   "home.agents.h3-1": {
@@ -764,11 +764,11 @@
     "source_hash": "9ad204014fc0"
   },
   "home.agents.h3-2": {
-    "text": "保留你的 Claude 订阅，把常规调用分流出去",
+    "text": "保留你的 Claude 订阅，把常规调用交给本地模型",
     "source_hash": "cfeda056d931"
   },
   "home.agents.p-3": {
-    "text": "Claude Code 和 Anthropic SDK，通过路由器。由一条规则指定哪些 Claude 模型由你的 GPU 应答；其余请求以你自己的登录或密钥发往 Anthropic。",
+    "text": "Claude Code 和 Anthropic SDK 通过路由器接入。由一条规则指定由你的 GPU 应答哪些 Claude 模型；其余请求以你自己的登录或密钥发往 Anthropic。",
     "source_hash": "6995102b0af7"
   },
   "home.flow-t.title-1": {
@@ -792,7 +792,7 @@
     "source_hash": "cdf3dc71b947"
   },
   "home.agents.span-8": {
-    "text": "请求在本地应答，占该主机自重启以来 Claude Code 流量的 99%。数据来自我们自己的七卡主机的 Router 页面，2026 年十月 21 日；另有 22 个请求因目标模型未加载而被拒绝。",
+    "text": "请求在本地应答，占该主机自重启以来 Claude Code 流量的 99%。数据来自我们自己那台七卡主机的 Router 页面，2026 年 10 月 21 日；另有 22 个请求因目标模型未加载而被拒绝。",
     "source_hash": "6f10abaf7726"
   },
   "home.agents.img-1.alt": {
@@ -820,7 +820,7 @@
     "source_hash": "c3ae8600a083"
   },
   "home.why-agent.p-1": {
-    "text": "为你的显卡选模型，意味着要选择量化方式、引擎、如何在多块 GPU 间切分、给多大上下文以及 KV 缓存类型；每次猜测都要花一次下载和一次加载。控制台的每项操作都是一次 API 调用，因此 Claude Code、Codex 或其他能使用 shell 的智能体可以替你完成这项搜索，在你的硬件上，针对你的工作负载。",
+    "text": "为你的显卡选模型，意味着要选择量化方式、引擎、如何在多块 GPU 间切分、给多大上下文以及 KV 缓存类型；每次猜测都要花一次下载和一次加载。控制台的每项操作都是一次 API 调用，因此 Claude Code、Codex 或其他能使用 shell 的智能体可以在你的硬件上、针对你的工作负载替你完成这项搜索。",
     "source_hash": "4844283837a3"
   },
   "home.why-agent.h3-1": {
@@ -832,7 +832,7 @@
     "source_hash": "3f22e76a3edc"
   },
   "home.loop-d.desc-1": {
-    "text": "检查 GPU，在下载之前用适配预览筛选模型，加载候选布局，用真实请求做基准测试，调整设置，并让胜出者保持加载。基准测试和调整会反复进行，直到智能体满意为止。",
+    "text": "盘点 GPU，在下载之前用适配预览筛选模型，加载候选切分方案，用真实请求做基准测试，调整设置，并让最优方案保持加载。基准测试和调整会反复进行，直到智能体满意为止。",
     "source_hash": "dd7733aa80ef"
   },
   "home.loop-t2.title-1": {
@@ -840,11 +840,11 @@
     "source_hash": "3f22e76a3edc"
   },
   "home.loop-d2.desc-1": {
-    "text": "检查 GPU，在下载之前用适配预览筛选模型，加载候选布局，用真实请求做基准测试，调整设置，并让胜出者保持加载。基准测试和调整会反复进行，直到智能体满意为止。",
+    "text": "盘点 GPU，在下载之前用适配预览筛选模型，加载候选切分方案，用真实请求做基准测试，调整设置，并让最优方案保持加载。基准测试和调整会反复进行，直到智能体满意为止。",
     "source_hash": "dd7733aa80ef"
   },
   "home.why-agent.p-2": {
-    "text": "智能体会调用：<code>GET /api/system/gpus</code>，在任何下载之前调用 <code>POST /api/models/fit-preview</code>，注册并调用 <code>suggest-config</code>，拉取并加载，一次找出并应用真实上下文上限的压力测试，<code>GET /api/stats/v2/throughput</code> 和 <code>latency</code>，以及它签发的用于发送测试流量的推理密钥。它会先读取 <code>/agent-guide.md</code>，这是一份为语言模型编写的这些调用的简短说明。",
+    "text": "智能体会调用：<code>GET /api/system/gpus</code>，在任何下载之前调用 <code>POST /api/models/fit-preview</code>，注册并调用 <code>suggest-config</code>，拉取并加载，一次压力测试（找出并应用真实的上下文上限），<code>GET /api/stats/v2/throughput</code> 和 <code>latency</code>，以及它签发的用于发送测试流量的推理密钥。它会先读取 <code>/agent-guide.md</code>，这是一份为语言模型编写的这些调用的简短说明。",
     "source_hash": "35230c9469a2"
   },
   "home.why-agent.img-1.alt": {
@@ -852,7 +852,7 @@
     "source_hash": "afd3f600f638"
   },
   "home.why-agent.figcaption-1": {
-    "text": "布局加载时智能体观察的内容：每个步骤都附有以往加载的通常耗时。停止推进的加载会被终止，并释放其 GPU。",
+    "text": "加载某个切分方案时，智能体关注的内容：每个步骤都附有以往加载的通常耗时。停滞不前的加载会被终止，其 GPU 随之释放。",
     "source_hash": "4bb331f9f6fb"
   },
   "home.why-agent.h3-2": {
@@ -860,11 +860,11 @@
     "source_hash": "222000da96d1"
   },
   "home.why-agent.li-1": {
-    "text": "<b>检查并筛选。</b><span class=\"ask\">要求：</span>列出我的 GPU，筛选三个适合智能体编程、能在至少 65,536 个 token 上下文下放得下的开放权重模型，用适配预览逐一检查，什么都不下载。<span class=\"get\">你会得到：</span>一张包含模型、量化方式、引擎、GPU、上下文和理由的表格。",
+    "text": "<b>盘点并筛选。</b><span class=\"ask\">要求：</span>列出我的 GPU，筛选三个适合智能体编程、能在至少 65,536 个 token 上下文下放得下的开放权重模型，用适配预览逐一检查，什么都不下载。<span class=\"get\">你会得到：</span>一张包含模型、量化方式、引擎、GPU、上下文和理由的表格。",
     "source_hash": "4d737111bb76"
   },
   "home.why-agent.li-2": {
-    "text": "<b>为一个模型选择引擎和布局。</b><span class=\"ask\">要求：</span>在我的显卡上决定用 vLLM 还是 llama.cpp，用张量并行还是数据并行副本；加载最好的两种布局，向每种发送同样的 20 个流式请求，在并发 1 和 8 下比较。<span class=\"get\">你会得到：</span>两者的首 token 时间和每秒 token 数，胜出者保持加载，另一个被卸载，测试密钥被吊销。",
+    "text": "<b>为一个模型选择引擎和切分方式。</b><span class=\"ask\">要求：</span>在我的显卡上决定用 vLLM 还是 llama.cpp，用张量并行还是数据并行副本；加载最好的两种方案，向每种发送同样的 20 个流式请求，在并发 1 和 8 下比较。<span class=\"get\">你会得到：</span>两者的首 token 时间和每秒 token 数，胜出方案保持加载，另一个被卸载，测试密钥被吊销。",
     "source_hash": "aadee19b4763"
   },
   "home.why-agent.li-3": {
@@ -876,11 +876,11 @@
     "source_hash": "d25a394b9e41"
   },
   "home.why-agent.p-3": {
-    "text": "<b>开始之前。</b>管理员令牌拥有 warden 的全部管理权限（模型、密钥、设置；目前没有更细的权限范围）：请给它设置较短的有效期，任务完成后在 Settings → Access Tokens 中吊销。压力测试会故意让引擎崩溃以找到其上限：请在没有其他人依赖的 warden 上运行这些提示词。下载量很大；提示词会在拉取前检查是否放得下，但请留意磁盘空间。",
+    "text": "<b>开始之前。</b>管理员令牌拥有 warden 的全部管理权限（模型、密钥、设置；目前没有更细的权限范围）：请给它设置较短的有效期，并在任务完成后到 Settings → Access Tokens 中吊销。压力测试会故意让引擎崩溃以找到其上限：请在没有其他人依赖的 warden 上运行这些提示词。下载量很大；提示词会在拉取前检查是否放得下，但请留意磁盘空间。",
     "source_hash": "505b9916712b"
   },
   "home.why-agent.p-4": {
-    "text": "引擎和布局选择（vLLM、张量并行或数据并行）属于 Linux 安装；在 Mac 上可选的是单 GPU 上的 MLX 或 llama.cpp。负责调优的模型可以是你已经付费的任何模型；被调优的模型是你显卡上的那个。<a href=\"/agent-tuning\">智能体调优页面：四条提示词全文</a>。",
+    "text": "引擎和切分方式的选择（vLLM、张量并行或数据并行）仅适用于 Linux 安装；在 Mac 上可选的是单 GPU 上的 MLX 或 llama.cpp。负责调优的模型可以是你已经付费的任何模型；被调优的模型是你显卡上的那个。<a href=\"/agent-tuning\">智能体调优页面：四条提示词全文</a>。",
     "source_hash": "bbeb89be5de6"
   },
   "home.share.h2-1": {
@@ -896,11 +896,11 @@
     "source_hash": "51396907e61e"
   },
   "home.why-keys.p-2": {
-    "text": "等待中的高优先级请求总是排在低优先级请求之前。在负载下，重要密钥用剩的容量才归低优先级密钥；在繁忙的主机上，低优先级可能无限期等待。默认值为 5。没有按密钥的速率限制；优先级取代了它。",
+    "text": "等待中的高优先级请求总是排在低优先级请求之前。负载较高时，低优先级密钥只能使用重要密钥用剩的容量；在繁忙的主机上，低优先级请求可能无限期等待。默认值为 5。没有按密钥的速率限制，由优先级取而代之。",
     "source_hash": "4dd4ec421cbe"
   },
   "home.why-keys.ol-1.aria-label": {
-    "text": "优先级阶梯示例",
+    "text": "优先级设置示例",
     "source_hash": "1c1bcbbf1789"
   },
   "home.why-keys.b-1": {
@@ -944,15 +944,15 @@
     "source_hash": "687891cb2f66"
   },
   "home.why-keys.p-3": {
-    "text": "这只是示例阶梯，不是规则：数字由你决定。每个密钥还可以暂停（拒绝新请求，同时让正在运行的请求完成）、在宽限期内轮换，以及限制其可调用的模型。",
+    "text": "这只是示例，不是规则：优先级由你自行设定。每个密钥还可以暂停（拒绝新请求，同时让正在运行的请求完成）、在宽限期内轮换，以及限制其可调用的模型。",
     "source_hash": "ca3034a912dc"
   },
   "home.why-keys.img-1.alt": {
-    "text": "API 密钥 coding-agent 的页面：Limits 卡片中有 P0 到 P9 的优先级选择器和文字 Strict, a waiting P9 request always goes before a P8 one；Usage 面板显示过去 7 天的 19k 个请求、1.5B 个提示词 token 和 440k 个补全 token；每分钟 token 数和每分钟请求数图表；下方是队列等待和延迟面板",
+    "text": "API 密钥 coding-agent 的页面：Limits 卡片中有 P0 到 P9 的优先级选择器和文字“Strict, a waiting P9 request always goes before a P8 one”；Usage 面板显示过去 7 天的 19k 个请求、1.5B 个提示词 token 和 440k 个补全 token；每分钟 token 数和每分钟请求数图表；下方是队列等待和延迟面板",
     "source_hash": "ae01537e1ee6"
   },
   "home.why-keys.figcaption-1": {
-    "text": "密钥页面：其优先级、七天内自身的用量（19k 个请求、1.5B 个提示词 token）、每分钟 token 数和请求数、队列等待和延迟。时间窗口可选 1&#8239;h、6&#8239;h、24&#8239;h、7&#8239;d 或任意自定义范围。可以包含它轮换之前的旧密钥。",
+    "text": "密钥页面：其优先级、七天内自身的用量（19k 个请求、1.5B 个提示词 token）、每分钟 token 数和请求数、队列等待和延迟。时间窗口可选 1&#8239;h、6&#8239;h、24&#8239;h、7&#8239;d 或任意自定义范围。还可以把它轮换前的旧密钥一并计入。",
     "source_hash": "a098f63084b6"
   },
   "home.why-keys.img-2.alt": {
@@ -968,15 +968,15 @@
     "source_hash": "b5718f9f8bb5"
   },
   "home.hw.h2-1": {
-    "text": "如实呈现你的硬件：从一台 Mac 到八块 B300。",
+    "text": "如实展示你的硬件状况：从一台 Mac 到八块 B300。",
     "source_hash": "3f3225bbc711"
   },
   "home.hardware.p-1": {
-    "text": "同一个控制台可以读取 16&#8239;GB 的 M1、桌下两块型号不同的显卡，以及一台 8 × B300 NVSwitch 服务器，并且会指出瓶颈，而不是把它平均掉：停留在 x16 中 x4 的 PCIe 链路、未激活的 NVLink 链路、各卡之间不同的 ECC 设置。",
+    "text": "同一个控制台可以读取 16&#8239;GB 的 M1、工作站里两块型号不同的显卡，以及一台 8 × B300 NVSwitch 服务器，并且会指出瓶颈，而不是把它平均掉：在 x16 插槽上只以 x4 运行的 PCIe 链路、未激活的 NVLink 链路、各卡之间不同的 ECC 设置。",
     "source_hash": "f90e55953921"
   },
   "home.hardware.img-1.alt": {
-    "text": "一台 8 × B300 服务器的系统配置：Intel Xeon 6776P，3019&#8239;GiB 内存，八个 NVIDIA B300 SXM6 面板，每块已用 241/268.6&#8239;GiB，Link Gen 6 x16 of x16，NVLink 18 条链路中 18 条激活、每条 53.125&#8239;GB/s，ECC 开启，以及一张一个 NVSwitch 连接所有显卡的服务器架构图",
+    "text": "一台 8 × B300 服务器的系统配置：Intel Xeon 6776P，3019&#8239;GiB 内存，八个 NVIDIA B300 SXM6 面板，每个显示已用 241/268.6&#8239;GiB、Link Gen 6 x16 of x16、NVLink 18 条链路中 18 条激活且每条 53.125&#8239;GB/s、ECC 开启，以及一张 NVSwitch 连接所有显卡的服务器架构图",
     "source_hash": "60071766922d"
   },
   "home.hardware.figcaption-1": {
@@ -988,7 +988,7 @@
     "source_hash": "6006e1039ec1"
   },
   "home.hardware.figcaption-2": {
-    "text": "两块相隔多年购买的显卡：A4000 的链路停留在 x16 中的 x4，并以红色标出；Quadro 的架构、功耗上限、NVLink（支持，但链路未激活）和 ECC 都被标记为 <em>differs</em>。示意图显示哪个插槽是窄的那个。",
+    "text": "两块相隔多年购买的显卡：A4000 的链路在 x16 插槽上只协商到 x4，并以红色标出；Quadro 的架构、功耗上限、NVLink（支持，但链路未激活）和 ECC 都被标记为 <em>differs</em>。示意图标出了哪个插槽在降宽运行。",
     "source_hash": "d67a36ee8dec"
   },
   "home.hardware.img-3.alt": {
@@ -996,7 +996,7 @@
     "source_hash": "2b44277f55cd"
   },
   "home.hardware.figcaption-3": {
-    "text": "同一个 Stats 页面在规模上限处：VRAM 已用 1,932/2,149&#8239;GiB，所有显卡合计 1,893&#8239;W，该小时内峰值 4,351&#8239;W，93% 的提示词 token 来自缓存。",
+    "text": "同一个 Stats 页面在最大规模下：VRAM 已用 1,932/2,149&#8239;GiB，所有显卡合计 1,893&#8239;W，该小时内峰值 4,351&#8239;W，93% 的提示词 token 来自缓存。",
     "source_hash": "f3ceb6c33eb7"
   },
   "home.hardware.img-4.alt": {
@@ -1008,7 +1008,7 @@
     "source_hash": "cddfa5475f94"
   },
   "home.hardware.p-2": {
-    "text": "每个面板按卡显示：温度与该卡自身降频点的对比、功耗与功耗上限的对比、频率、风扇、当前协商的 PCIe 代数和宽度、显卡具备时的 ECC 和 NVLink，以及占用显存的进程。互连示意图读取自 <code>nvidia-smi topo -m</code>。在 Mac 上：GPU 使用率和 Metal 报告的内存预算，不含功耗。底层引擎由它自己的 <code>/health</code> 监控，而不是看进程表：外壳还活着而引擎已死时，会重新加载引擎并保留证据。",
+    "text": "每个面板按卡显示：温度与该卡自身降频温度的对比、功耗与功耗上限的对比、频率、风扇、当前协商的 PCIe 代数和宽度、显卡具备时的 ECC 和 NVLink，以及占用显存的进程。互连示意图读取自 <code>nvidia-smi topo -m</code>。在 Mac 上：GPU 使用率和 Metal 报告的内存预算，不含功耗。底层引擎由它自己的 <code>/health</code> 监控，而不是看进程表：外层进程仍在而引擎已失效时，会重新加载引擎并保留证据。",
     "source_hash": "5a4e8569c432"
   },
   "home.features.h2-1": {
@@ -1020,11 +1020,11 @@
     "source_hash": "cbdfccb24fcc"
   },
   "home.features.h3-1": {
-    "text": "每块卡各自报告。",
+    "text": "每块卡的数据单独呈现。",
     "source_hash": "65fb2dd50a89"
   },
   "home.features.p-2": {
-    "text": "利用率、温度与该卡自身降频点的对比、功耗与功耗上限的对比、VRAM、频率、PCIe 链路，以及哪个进程占用显存。不是整台主机的平均值。",
+    "text": "利用率、温度与该卡自身降频温度的对比、功耗与功耗上限的对比、VRAM、频率、PCIe 链路，以及哪个进程占用显存。不是整台主机的平均值。",
     "source_hash": "1bea9211a232"
   },
   "home.features.img-1.alt": {
@@ -1068,7 +1068,7 @@
     "source_hash": "3317e70f46b3"
   },
   "home.open-source.p-1": {
-    "text": "LM Warden 以 Apache-2.0 许可证发布在 <a href=\"{{repo}}\" rel=\"noopener\">GitHub</a> 上：安装脚本和 Compose 文件就是全部部署内容，你可以阅读这两者。无需账户，没有许可证检查，没有遥测。vLLM、llama.cpp 和 MLX 是我们原样运行的上游项目。",
+    "text": "LM Warden 以 Apache-2.0 许可证发布在 <a href=\"{{repo}}\" rel=\"noopener\">GitHub</a> 上：安装脚本和 Compose 文件就是全部部署内容，两者你都可以直接查看。无需账户，没有许可证检查，没有遥测。vLLM、llama.cpp 和 MLX 是我们原样运行的上游项目。",
     "source_hash": "ba01b625fe70"
   },
   "home.open-source.h2-1": {
@@ -1108,7 +1108,7 @@
     "source_hash": "f3ec8e880a46"
   },
   "chrome.footer.tag-note": {
-    "text": "本页面由 LM Warden 自身提供，并加载 Google 的代码来统计访问量。只有在你同意后才会设置 Cookie（<a href=\"/privacy\">隐私</a>、<a href=\"/privacy\" data-consent-open>Cookie 设置</a>）。",
+    "text": "本页面由 LM Warden 自身提供，并加载 Google 代码（Google tag）来统计访问量。只有在你同意后才会设置 Cookie（<a href=\"/privacy\">隐私</a>、<a href=\"/privacy\" data-consent-open>Cookie 设置</a>）。",
     "source_hash": "09eab402684a"
   },
   "chrome.consent.aria-label": {
@@ -1116,7 +1116,7 @@
     "source_hash": "38db21b38100"
   },
   "chrome.consent.text": {
-    "text": "本网站使用 Google Analytics Cookie 来统计访问量和衡量广告效果，但前提是你允许。<a href=\"/privacy\">隐私</a>",
+    "text": "本网站使用 Google Analytics Cookie 来统计访问量和衡量广告效果，但仅在你允许时才会使用。<a href=\"/privacy\">隐私</a>",
     "source_hash": "cdf7e1f99a7b"
   },
   "chrome.consent.decline": {

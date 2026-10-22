@@ -1,0 +1,154 @@
+{
+  "agent-tuning.meta.title": {
+    "text": "Laissez votre agent de codage choisir le modèle | LM Warden",
+    "source_hash": "c73577a9e93d"
+  },
+  "agent-tuning.meta.description": {
+    "text": "Donnez un jeton admin à Claude Code ou Codex : il choisit le modèle, le moteur et les options pour vos GPU, en mesurant les performances à chaque étape. Prompts inclus.",
+    "source_hash": "42f223176a20"
+  },
+  "agent-tuning.jsonld.name": {
+    "text": "Laisser votre agent de codage choisir et régler le modèle",
+    "source_hash": "d38cc5b44b81"
+  },
+  "agent-tuning.jsonld.step-1": {
+    "text": "Installer LM Warden sur l’hôte GPU",
+    "source_hash": "ea9ef62b2144"
+  },
+  "agent-tuning.jsonld.step-2": {
+    "text": "Créer un jeton admin",
+    "source_hash": "02b6962c341f"
+  },
+  "agent-tuning.jsonld.step-3": {
+    "text": "Connecter Claude Code ou Codex",
+    "source_hash": "23149cd56616"
+  },
+  "agent-tuning.jsonld.step-4": {
+    "text": "Coller un prompt de réglage",
+    "source_hash": "2580a4baddda"
+  },
+  "agent-tuning.tuning.h1-1": {
+    "text": "Laissez votre agent de codage choisir le modèle.",
+    "source_hash": "2df23e8f7918"
+  },
+  "agent-tuning.p-1": {
+    "text": "Choisir un modèle pour vos cartes, c’est choisir une quantification, un moteur (vLLM ou llama.cpp), la façon de le répartir sur les GPU, la taille du contexte à lui allouer, le type de cache KV, et décider si le décodage spéculatif est utile. Chaque essai coûte un téléchargement et un chargement. Un agent de codage peut mener cette recherche pour vous pendant que vous faites autre chose, car tout ce que fait la console passe par un appel d’API.",
+    "source_hash": "47320716621f"
+  },
+  "agent-tuning.h2-1": {
+    "text": "Mise en place en trois étapes",
+    "source_hash": "2a300da26a75"
+  },
+  "agent-tuning.li-1": {
+    "text": "<strong>Installez LM Warden</strong> sur l’hôte GPU (la commande se trouve sous <a href=\"/#p-linux\">Télécharger et installer</a>) et terminez l’assistant de configuration.",
+    "source_hash": "45b78d2f8e02"
+  },
+  "agent-tuning.li-2": {
+    "text": "<strong>Créez un jeton admin</strong> dans Settings → Access Tokens, avec une durée de validité de 30 jours. Exportez-le sous le nom <code>VW_ADMIN_TOKEN</code>, et l’adresse du warden sous le nom <code>W</code>, dans le shell qu’utilise votre agent.",
+    "source_hash": "a316c0dc85b5"
+  },
+  "agent-tuning.li-3": {
+    "text": "<strong>Lancez votre agent</strong> : <a href=\"/coding-agents/claude-code\">Claude Code</a>, <a href=\"/coding-agents/codex-cli\">Codex&nbsp;CLI</a> ou tout autre agent capable d’exécuter des commandes shell. Il peut s’appuyer sur un modèle hébergé pour ce travail ; le modèle qu’il règle est celui qui tourne sur vos cartes.",
+    "source_hash": "45f30ab355a5"
+  },
+  "agent-tuning.h2-2": {
+    "text": "Ce que l’agent utilise",
+    "source_hash": "676f21721809"
+  },
+  "agent-tuning.th-1": {
+    "text": "Étape",
+    "source_hash": "8e6a6cca7aae"
+  },
+  "agent-tuning.th-2": {
+    "text": "Point de terminaison",
+    "source_hash": "3df9726c68ba"
+  },
+  "agent-tuning.th-3": {
+    "text": "Recenser les cartes",
+    "source_hash": "982d52862acc"
+  },
+  "agent-tuning.th-4": {
+    "text": "Vérifier qu’un modèle tient, avant de le télécharger",
+    "source_hash": "966e8813028c"
+  },
+  "agent-tuning.th-5": {
+    "text": "Enregistrer, obtenir une configuration de départ",
+    "source_hash": "6fb4184c2d5a"
+  },
+  "agent-tuning.th-6": {
+    "text": "Télécharger et charger",
+    "source_hash": "a632bbe8e8aa"
+  },
+  "agent-tuning.th-7": {
+    "text": "Mesurer le vrai plafond de contexte",
+    "source_hash": "4c3b52acd644"
+  },
+  "agent-tuning.td-1": {
+    "text": "<code>POST /api/models/{model_id}/stress</code>, puis <code>POST /api/models/{model_id}/stress/apply</code>",
+    "source_hash": "51491b72ded1"
+  },
+  "agent-tuning.th-8": {
+    "text": "Lire les métriques du warden",
+    "source_hash": "ead961a24dc4"
+  },
+  "agent-tuning.th-9": {
+    "text": "Envoyer du trafic de test",
+    "source_hash": "70356d606d14"
+  },
+  "agent-tuning.td-2": {
+    "text": "une clé d’inférence obtenue par <code>POST /api/tokens</code>, sur <code>/v1/chat/completions</code>",
+    "source_hash": "9a72b9938ec6"
+  },
+  "agent-tuning.p-2": {
+    "text": "L’agent lit d’abord <a href=\"/agent-guide.md\">le guide pour agents</a> : une courte description de ces appels rédigée pour un modèle de langage, avec les erreurs à éviter.",
+    "source_hash": "c3bff7c1a9d1"
+  },
+  "agent-tuning.h2-3": {
+    "text": "Prompts à coller",
+    "source_hash": "b273921d2e33"
+  },
+  "agent-tuning.p-3": {
+    "text": "Remplacez <code>https://your-warden</code> par l’adresse de votre warden, et les noms en majuscules par les modèles que vous envisagez.",
+    "source_hash": "a74bbbec589e"
+  },
+  "agent-tuning.h3-1": {
+    "text": "1. Inventorier le matériel et présélectionner des modèles",
+    "source_hash": "c1ebd00d0f72"
+  },
+  "agent-tuning.h3-2": {
+    "text": "2. Choisir le moteur et la répartition pour un modèle",
+    "source_hash": "0cc405dce7f8"
+  },
+  "agent-tuning.h3-3": {
+    "text": "3. Trouver les vraies limites et les appliquer",
+    "source_hash": "906f71857682"
+  },
+  "agent-tuning.h3-4": {
+    "text": "4. Comparer deux candidats sur ma charge de travail",
+    "source_hash": "d6e1c2c66dff"
+  },
+  "agent-tuning.h2-4": {
+    "text": "Avant de commencer",
+    "source_hash": "74e492d5d0df"
+  },
+  "agent-tuning.li-4": {
+    "text": "Un jeton admin a tous les droits d’administration sur le warden : modèles, clés et paramètres. Il n’existe pas encore de portées plus restreintes. Donnez-lui une durée de validité courte.",
+    "source_hash": "4a1f64b32132"
+  },
+  "agent-tuning.li-5": {
+    "text": "Un test de charge fait volontairement planter un moteur pour trouver sa limite. Exécutez ces prompts sur un warden dont personne d’autre ne dépend.",
+    "source_hash": "e127f19fe7da"
+  },
+  "agent-tuning.li-6": {
+    "text": "Les téléchargements sont volumineux. Les prompts demandent à l’agent de vérifier que le modèle tient avant de le télécharger, mais surveillez votre disque.",
+    "source_hash": "dabc7d95f036"
+  },
+  "agent-tuning.li-7": {
+    "text": "Révoquez le jeton admin dans Settings → Access Tokens une fois le travail terminé.",
+    "source_hash": "cc61ece33dc3"
+  },
+  "agent-tuning.p-4": {
+    "text": "Voir aussi : <a href=\"/coding-agents\">agents de codage</a> · <a href=\"/gpu-monitoring\">surveillance des GPU</a> · <a href=\"/faq\">FAQ</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}

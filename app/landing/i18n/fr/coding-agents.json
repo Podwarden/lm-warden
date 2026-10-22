@@ -1,0 +1,42 @@
+{
+  "coding-agents.meta.title": {
+    "text": "Agents de codage sur vos propres GPU | LM Warden",
+    "source_hash": "cec26df70a65"
+  },
+  "coding-agents.meta.description": {
+    "text": "Utilisez Claude Code, Codex CLI, OpenCode, Aider, Cline, Cursor et d’autres avec un modèle hébergé sur vos GPU, sous Linux ou sur Mac, configuration générée pour vous.",
+    "source_hash": "d4374722fecc"
+  },
+  "coding-agents.agents.h1-1": {
+    "text": "Votre agent de codage, sur vos propres GPU.",
+    "source_hash": "e01f3269f454"
+  },
+  "coding-agents.p-1": {
+    "text": "LM Warden prend en charge les trois protocoles qu’utilisent les agents de codage : OpenAI Chat Completions, l’API Anthropic Messages et l’OpenAI Responses API. Claude Code, les SDK Anthropic et OpenAI, OpenCode, Aider, Grok&nbsp;CLI, Continue, Cline, Cursor et Codex&nbsp;CLI se connectent donc avec une URL de base et une clé, et leurs requêtes apparaissent par clé et par session, avec la phase où en est chacune.",
+    "source_hash": "b8783c59365c"
+  },
+  "coding-agents.flow.title": {
+    "text": "Où va une requête de votre agent de codage",
+    "source_hash": "b2c49ca0b033"
+  },
+  "coding-agents.flow.desc": {
+    "text": "Votre agent de codage envoie ses requêtes à LM Warden : l’URL de base pointe vers le warden et la clé API contient une clé du warden. LM Warden vérifie la clé, prend en charge les API OpenAI et Anthropic, place la requête en file d’attente selon la priorité de la clé, puis la confie au routeur de réplicas, qui maintient chaque session sur le réplica détenant déjà son cache (une copie du modèle par GPU). Un chemin distinct mène à api.anthropic.com, pour Claude Code uniquement : les autres modèles Claude y sont envoyés avec vos propres identifiants.",
+    "source_hash": "c24325d4bacf"
+  },
+  "coding-agents.flow.caption": {
+    "text": "Où va la requête d’un agent de codage. Chaque agent définit les deux mêmes paramètres, une URL de base et une clé ; le warden vérifie la clé, place la requête en file d’attente et l’envoie au réplica qui détient déjà le cache de la session. Le schéma de chaque page d’agent reprend ses propres paramètres.",
+    "source_hash": "4c8a44e2f320"
+  },
+  "coding-agents.p-2": {
+    "text": "Inutile d’écrire la configuration à la main : dans la console, vous choisissez votre client, votre modèle et votre clé dans <strong>Connect</strong>, qui génère les fichiers à coller. Chaque page ci-dessous montre ces mêmes fichiers avec des valeurs fictives, ainsi que ce qui fonctionne.",
+    "source_hash": "75d2dc8f6796"
+  },
+  "coding-agents.p-3": {
+    "text": "Il manque un client ? Demandez-le dans <a href=\"https://github.com/Podwarden/lm-warden/discussions/new?category=ideas\" rel=\"noopener\">GitHub Discussions</a>.",
+    "source_hash": "91f99cd9235e"
+  },
+  "coding-agents.p-4": {
+    "text": "Voir aussi : <a href=\"/agent-tuning\">laisser votre agent choisir le modèle</a> · <a href=\"/cache-aware-routing\">routage selon le cache</a> · <a href=\"/faq\">FAQ</a>",
+    "source_hash": "0ced1cfb6f5c"
+  }
+}

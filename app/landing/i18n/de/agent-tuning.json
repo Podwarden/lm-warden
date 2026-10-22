@@ -1,0 +1,154 @@
+{
+  "agent-tuning.meta.title": {
+    "text": "Lassen Sie Ihren Coding-Agenten das Modell wählen | LM Warden",
+    "source_hash": "c73577a9e93d"
+  },
+  "agent-tuning.meta.description": {
+    "text": "Geben Sie Claude Code oder Codex ein Admin-Token, und der Agent wählt Modell, Engine und Flags für Ihre GPUs und misst dabei laufend nach. Prompts inklusive.",
+    "source_hash": "42f223176a20"
+  },
+  "agent-tuning.jsonld.name": {
+    "text": "Den Coding-Agenten das Modell wählen und optimieren lassen",
+    "source_hash": "d38cc5b44b81"
+  },
+  "agent-tuning.jsonld.step-1": {
+    "text": "LM Warden auf dem GPU-Host installieren",
+    "source_hash": "ea9ef62b2144"
+  },
+  "agent-tuning.jsonld.step-2": {
+    "text": "Ein Admin-Token ausstellen",
+    "source_hash": "02b6962c341f"
+  },
+  "agent-tuning.jsonld.step-3": {
+    "text": "Claude Code oder Codex verbinden",
+    "source_hash": "23149cd56616"
+  },
+  "agent-tuning.jsonld.step-4": {
+    "text": "Einen Tuning-Prompt einfügen",
+    "source_hash": "2580a4baddda"
+  },
+  "agent-tuning.tuning.h1-1": {
+    "text": "Lassen Sie Ihren Coding-Agenten das Modell wählen.",
+    "source_hash": "2df23e8f7918"
+  },
+  "agent-tuning.p-1": {
+    "text": "Ein Modell für Ihre Karten auszuwählen heißt: eine Quantisierung wählen, eine Engine (vLLM oder llama.cpp), die Aufteilung auf die GPUs, die Kontextgröße, den KV-Cache-Typ und ob spekulatives Decoding hilft. Jeder Versuch kostet einen Download und einen Ladevorgang. Ein Coding-Agent kann diese Suche für Sie übernehmen, während Sie etwas anderes tun, denn alles, was die Konsole tut, ist ein API-Aufruf.",
+    "source_hash": "47320716621f"
+  },
+  "agent-tuning.h2-1": {
+    "text": "Einrichtung in drei Schritten",
+    "source_hash": "2a300da26a75"
+  },
+  "agent-tuning.li-1": {
+    "text": "<strong>Installieren Sie LM Warden</strong> auf dem GPU-Host (der Befehl steht unter <a href=\"/#p-linux\">Download &amp; Installation</a>) und schließen Sie den Einrichtungsassistenten ab.",
+    "source_hash": "45b78d2f8e02"
+  },
+  "agent-tuning.li-2": {
+    "text": "<strong>Stellen Sie ein Admin-Token aus</strong>, unter Settings → Access Tokens mit einer Gültigkeit von 30 Tagen. Exportieren Sie es als <code>VW_ADMIN_TOKEN</code> und die Adresse des Wardens als <code>W</code> in der Shell, die Ihr Agent verwendet.",
+    "source_hash": "a316c0dc85b5"
+  },
+  "agent-tuning.li-3": {
+    "text": "<strong>Starten Sie Ihren Agenten</strong>: <a href=\"/coding-agents/claude-code\">Claude Code</a>, <a href=\"/coding-agents/codex-cli\">Codex&nbsp;CLI</a> oder einen anderen, der Shell-Befehle ausführen kann. Für diese Aufgabe kann er ein gehostetes Modell nutzen; optimiert wird das Modell auf Ihren Karten.",
+    "source_hash": "45f30ab355a5"
+  },
+  "agent-tuning.h2-2": {
+    "text": "Was der Agent verwendet",
+    "source_hash": "676f21721809"
+  },
+  "agent-tuning.th-1": {
+    "text": "Schritt",
+    "source_hash": "8e6a6cca7aae"
+  },
+  "agent-tuning.th-2": {
+    "text": "Endpunkt",
+    "source_hash": "3df9726c68ba"
+  },
+  "agent-tuning.th-3": {
+    "text": "Karten erfassen",
+    "source_hash": "982d52862acc"
+  },
+  "agent-tuning.th-4": {
+    "text": "Vor dem Download prüfen, ob ein Modell passt",
+    "source_hash": "966e8813028c"
+  },
+  "agent-tuning.th-5": {
+    "text": "Registrieren, eine Startkonfiguration erhalten",
+    "source_hash": "6fb4184c2d5a"
+  },
+  "agent-tuning.th-6": {
+    "text": "Herunterladen und laden",
+    "source_hash": "a632bbe8e8aa"
+  },
+  "agent-tuning.th-7": {
+    "text": "Die echte Kontextobergrenze messen",
+    "source_hash": "4c3b52acd644"
+  },
+  "agent-tuning.td-1": {
+    "text": "<code>POST /api/models/{model_id}/stress</code>, dann <code>POST /api/models/{model_id}/stress/apply</code>",
+    "source_hash": "51491b72ded1"
+  },
+  "agent-tuning.th-8": {
+    "text": "Die Zahlen des Wardens lesen",
+    "source_hash": "ead961a24dc4"
+  },
+  "agent-tuning.th-9": {
+    "text": "Testverkehr senden",
+    "source_hash": "70356d606d14"
+  },
+  "agent-tuning.td-2": {
+    "text": "ein Inferenzschlüssel aus <code>POST /api/tokens</code>, für <code>/v1/chat/completions</code>",
+    "source_hash": "9a72b9938ec6"
+  },
+  "agent-tuning.p-2": {
+    "text": "Der Agent liest zuerst <a href=\"/agent-guide.md\">den Agent-Leitfaden</a>: eine kurze Beschreibung dieser Aufrufe, geschrieben für ein Sprachmodell, samt typischer Fehler, die es zu vermeiden gilt.",
+    "source_hash": "c3bff7c1a9d1"
+  },
+  "agent-tuning.h2-3": {
+    "text": "Prompts zum Einfügen",
+    "source_hash": "b273921d2e33"
+  },
+  "agent-tuning.p-3": {
+    "text": "Ersetzen Sie <code>https://your-warden</code> durch die Adresse Ihres Wardens und die großgeschriebenen Namen durch die Modelle, die Sie im Sinn haben.",
+    "source_hash": "a74bbbec589e"
+  },
+  "agent-tuning.h3-1": {
+    "text": "1. Die Hardware erfassen und Modelle vorauswählen",
+    "source_hash": "c1ebd00d0f72"
+  },
+  "agent-tuning.h3-2": {
+    "text": "2. Engine und Aufteilung für ein Modell wählen",
+    "source_hash": "0cc405dce7f8"
+  },
+  "agent-tuning.h3-3": {
+    "text": "3. Die echten Grenzen finden und anwenden",
+    "source_hash": "906f71857682"
+  },
+  "agent-tuning.h3-4": {
+    "text": "4. Zwei Kandidaten mit meiner Arbeitslast vergleichen",
+    "source_hash": "d6e1c2c66dff"
+  },
+  "agent-tuning.h2-4": {
+    "text": "Bevor Sie beginnen",
+    "source_hash": "74e492d5d0df"
+  },
+  "agent-tuning.li-4": {
+    "text": "Ein Admin-Token hat volle Administratorrechte über den Warden: Modelle, Schlüssel und Einstellungen. Feiner abgestufte Berechtigungen gibt es noch nicht. Geben Sie ihm eine kurze Laufzeit.",
+    "source_hash": "4a1f64b32132"
+  },
+  "agent-tuning.li-5": {
+    "text": "Ein Stresstest bringt eine Engine absichtlich zum Absturz, um ihre Grenze zu finden. Führen Sie diese Prompts auf einem Warden aus, von dem sonst niemand abhängt.",
+    "source_hash": "e127f19fe7da"
+  },
+  "agent-tuning.li-6": {
+    "text": "Downloads sind groß. Die Prompts weisen den Agenten an, vor dem Herunterladen zu prüfen, ob das Modell passt, aber behalten Sie Ihren Speicherplatz im Blick.",
+    "source_hash": "dabc7d95f036"
+  },
+  "agent-tuning.li-7": {
+    "text": "Widerrufen Sie das Admin-Token unter Settings → Access Tokens, wenn die Aufgabe erledigt ist.",
+    "source_hash": "cc61ece33dc3"
+  },
+  "agent-tuning.p-4": {
+    "text": "Siehe auch: <a href=\"/coding-agents\">Coding-Agenten</a> · <a href=\"/gpu-monitoring\">GPU-Monitoring</a> · <a href=\"/faq\">FAQ</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}

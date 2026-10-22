@@ -1,18 +1,18 @@
 {
   "meta.title": {
-    "text": "LM Warden: puerta de enlace LLM autoalojada para tus propias GPU",
+    "text": "LM Warden: puerta de enlace de LLM autoalojada para tus GPU",
     "source_hash": "8b40be948ef4"
   },
   "meta.description": {
-    "text": "Sirve LLM desde GPU NVIDIA en Linux o un Mac con chip de Apple, con vLLM, llama.cpp o MLX: un endpoint /v1 compatible con OpenAI y una clave por app.",
+    "text": "Sirve LLM desde GPU NVIDIA en Linux o en un Mac con chip de Apple, con vLLM, llama.cpp o MLX: un punto de conexión /v1 compatible con OpenAI y una clave por app.",
     "source_hash": "6cb271edae46"
   },
   "meta.og-image-alt": {
-    "text": "LM Warden: una API compatible con OpenAI en las GPU que tienes bajo el escritorio o en el rack, junto al panel Stats de una RTX A4000 con su punto de limitación térmica informado por el controlador",
+    "text": "LM Warden: una API compatible con OpenAI en las GPU que tienes bajo la mesa o en el rack, junto al panel Stats de una RTX A4000 con el umbral de limitación térmica que indica el controlador",
     "source_hash": "7f75ba3bcd9d"
   },
   "jsonld.feature-1": {
-    "text": "Vista previa de ajuste: cada archivo de un repositorio de Hugging Face se comprueba con las GPU que elijas antes de descargar nada",
+    "text": "Vista previa de capacidad: antes de descargar nada, cada archivo de un repositorio de Hugging Face se comprueba con las GPU que elijas",
     "source_hash": "615857f542c9"
   },
   "jsonld.feature-2": {
@@ -20,7 +20,7 @@
     "source_hash": "7b06e74713de"
   },
   "jsonld.feature-3": {
-    "text": "Enrutador de Claude Code: un modelo local responde por los modelos de Claude que elijas y el resto va a Anthropic con tu propio inicio de sesión",
+    "text": "Enrutador de Claude Code: un modelo local responde en lugar de los modelos de Claude que elijas y el resto va a Anthropic con tu propia cuenta",
     "source_hash": "1f350726cef9"
   },
   "jsonld.feature-4": {
@@ -28,11 +28,11 @@
     "source_hash": "42d6cdab3fb6"
   },
   "jsonld.feature-5": {
-    "text": "Enrutamiento consciente de la caché que mantiene cada conversación en la réplica que tiene su prefijo",
+    "text": "Enrutamiento según la caché, que mantiene cada conversación en la réplica que ya tiene su prefijo",
     "source_hash": "9791836d7920"
   },
   "jsonld.feature-6": {
-    "text": "Ajuste con agentes: un agente de programación elige el modelo, el motor y la distribución para tus GPU a través de la API, midiendo sobre la marcha",
+    "text": "Ajuste con agentes: un agente de programación elige, a través de la API, el modelo, el motor y la distribución para tus GPU, con pruebas de rendimiento sobre la marcha",
     "source_hash": "b2f04e38f9aa"
   },
   "jsonld.feature-7": {
@@ -40,7 +40,7 @@
     "source_hash": "0740507f9225"
   },
   "jsonld.feature-8": {
-    "text": "God mode: los prompts y respuestas de una clave transmitidos en directo para depurar, desactivado de forma predeterminada",
+    "text": "God mode: los prompts y las respuestas de una clave, transmitidos en directo para depurar; desactivado de forma predeterminada",
     "source_hash": "301c375d8a2f"
   },
   "jsonld.feature-9": {
@@ -108,7 +108,7 @@
     "source_hash": "d2364b229535"
   },
   "chrome.nav.plat-win": {
-    "text": "Windows (pronto)",
+    "text": "Windows (próximo)",
     "source_hash": "e5a1bb1c3085"
   },
   "chrome.nav.plat-appliance": {
@@ -148,11 +148,11 @@
     "source_hash": "4120132397fd"
   },
   "home.hero.h1-1": {
-    "text": "Tus GPU, servidas como una API alojada.",
+    "text": "Tus propias GPU, tan fáciles de usar como una API en la nube.",
     "source_hash": "b24318c21e4f"
   },
   "home.hero.p-1": {
-    "text": "LM Warden ejecuta vLLM, llama.cpp o MLX en hardware propio y pone delante un único puerto compatible con OpenAI: una clave por app, el uso por clave y un panel en directo para cada GPU. En un equipo Linux con tarjetas NVIDIA o en un Mac con chip de Apple.",
+    "text": "LM Warden ejecuta vLLM, llama.cpp o MLX en tu propio hardware y pone delante un único puerto compatible con OpenAI: una clave por app, el uso de cada clave y un panel en directo para cada GPU. En una máquina Linux con tarjetas NVIDIA o en un Mac con chip de Apple.",
     "source_hash": "e192caf6a5b3"
   },
   "home.hero.a-1": {
@@ -160,7 +160,7 @@
     "source_hash": "4120132397fd"
   },
   "home.hero.a-2": {
-    "text": "Mira lo que muestra",
+    "text": "Ver lo que muestra",
     "source_hash": "51b46bd0add6"
   },
   "home.hero.span-1": {
@@ -172,7 +172,7 @@
     "source_hash": "035ccb7cad8a"
   },
   "home.hero.span-3": {
-    "text": "Linux + NVIDIA · macOS (beta) · Windows después",
+    "text": "Linux + NVIDIA · macOS (beta) · Windows en camino",
     "source_hash": "1f8168eb854e"
   },
   "home.hero.img-1.alt": {
@@ -212,11 +212,11 @@
     "source_hash": "3aeff05d5bf6"
   },
   "home.hero.span-8": {
-    "text": "en un solo puerto",
+    "text": "en un puerto",
     "source_hash": "05261121948c"
   },
   "home.hero.span-9": {
-    "text": "Agentes de código",
+    "text": "Agentes",
     "source_hash": "707c65c28bca"
   },
   "home.hero.b-4": {
@@ -256,11 +256,11 @@
     "source_hash": "631429e459b2"
   },
   "home.use-cases.p-1": {
-    "text": "Pega un repositorio de Hugging Face: cada archivo recibe un veredicto frente a las tarjetas que marques, antes de descargar nada.",
+    "text": "Pega un repositorio de Hugging Face: antes de descargar nada, cada archivo recibe un veredicto según las tarjetas que marques.",
     "source_hash": "7dd1bdcba1fd"
   },
   "home.use-cases.span-1": {
-    "text": "Ver la vista previa",
+    "text": "Ver si cabe",
     "source_hash": "3bf0e7fd520d"
   },
   "home.use-cases.li-2.aria-label": {
@@ -272,7 +272,7 @@
     "source_hash": "b01cff25d51f"
   },
   "home.use-cases.p-2": {
-    "text": "Codex CLI, OpenCode, Aider, Grok CLI, Continue, Cline, Cursor y el OpenAI SDK funcionan con tus modelos. Claude Code y el Anthropic SDK también pueden conservar tu suscripción a Claude y descargar en tus GPU las llamadas rutinarias.",
+    "text": "Codex CLI, OpenCode, Aider, Grok CLI, Continue, Cline, Cursor y el OpenAI SDK funcionan con tus modelos. Con Claude Code y el Anthropic SDK también puedes seguir usando tu suscripción a Claude y derivar a tus GPU las llamadas rutinarias.",
     "source_hash": "022970d73828"
   },
   "home.use-cases.span-2": {
@@ -304,7 +304,7 @@
     "source_hash": "fd528e59f30f"
   },
   "home.use-cases.p-4": {
-    "text": "Cada conversación se queda en su réplica. Medido: aciertos de caché del 56 al 86 %, tiempo mediano hasta el primer byte de 2,05 a 0,38 s.",
+    "text": "Cada conversación se queda en su réplica. Resultado medido: aciertos de caché del 56 al 86 % y mediana del tiempo hasta el primer byte de 2,05 a 0,38 s.",
     "source_hash": "3fd6f50887b9"
   },
   "home.use-cases.span-4": {
@@ -316,11 +316,11 @@
     "source_hash": "4ff9c7d25432"
   },
   "home.use-cases.h3-5": {
-    "text": "Deja que la IA que ya pagas ajuste tus propias GPU.",
+    "text": "Deja que la IA por la que ya pagas ajuste tus propias GPU.",
     "source_hash": "c3ae8600a083"
   },
   "home.use-cases.p-5": {
-    "text": "Claude Code, Codex u otro agente revisa tus tarjetas, preselecciona los modelos que caben, carga distribuciones, mide con tus propios prompts, ajusta y deja cargado el ganador. Cuatro prompts para pegar.",
+    "text": "Claude Code, Codex u otro agente hace inventario de tus tarjetas, preselecciona los modelos que caben, carga distribuciones, mide el rendimiento con tus propios prompts, ajusta y deja cargada la mejor opción. Cuatro prompts listos para pegar.",
     "source_hash": "bbfa0ef15601"
   },
   "home.use-cases.span-5": {
@@ -332,11 +332,11 @@
     "source_hash": "9f1b26eea525"
   },
   "home.use-cases.h3-6": {
-    "text": "Chatea con tu propio modelo, ahí mismo.",
+    "text": "Chatea con tu propio modelo sin salir de la consola.",
     "source_hash": "bcd86e5acf2b"
   },
   "home.use-cases.p-6": {
-    "text": "Markdown, código y matemáticas en streaming; imágenes para modelos de visión; ajustes por chat; historial guardado. La misma ventana en un Mac.",
+    "text": "Markdown, código y fórmulas en streaming; imágenes para modelos de visión; configuración por chat; historial guardado. En un Mac, la misma ventana.",
     "source_hash": "8ab616f9c47d"
   },
   "home.use-cases.span-6": {
@@ -352,11 +352,11 @@
     "source_hash": "175c055be16a"
   },
   "home.use-cases.p-7": {
-    "text": "God mode transmite en directo los prompts y respuestas de una clave para depurar. Desactivado de forma predeterminada, solo en memoria, se borra al reiniciar.",
+    "text": "God mode transmite en directo los prompts y las respuestas de una clave para depurar. Desactivado de forma predeterminada, solo en memoria y se borra al reiniciar.",
     "source_hash": "12446d78110e"
   },
   "home.use-cases.span-7": {
-    "text": "Ver el god mode",
+    "text": "Ver god mode",
     "source_hash": "eca4d500a3da"
   },
   "home.use-cases.li-8.aria-label": {
@@ -368,7 +368,7 @@
     "source_hash": "a04e398227ac"
   },
   "home.use-cases.p-8": {
-    "text": "Tantas claves como necesites, cada una con una prioridad estricta de 9 a 0 y su propia página de uso: los agentes importantes se atienden primero, los demás reciben lo que queda, y ves quién usó el equipo y cómo.",
+    "text": "Tantas claves como necesites, cada una con una prioridad estricta de 9 a 0 y su propia página de uso: las solicitudes de los agentes importantes se sirven primero, el resto recibe lo que sobra y ves quién ha usado la máquina y cómo.",
     "source_hash": "3acf884af623"
   },
   "home.use-cases.span-8": {
@@ -380,7 +380,7 @@
     "source_hash": "7323df202723"
   },
   "home.use-cases.h3-9": {
-    "text": "Tu hardware, sin rodeos: de un Mac a ocho B300.",
+    "text": "Tu hardware, tal como es: de un Mac a ocho B300.",
     "source_hash": "3f3225bbc711"
   },
   "home.use-cases.p-9": {
@@ -388,7 +388,7 @@
     "source_hash": "6ea6fbd502b6"
   },
   "home.use-cases.span-9": {
-    "text": "Ver las páginas de hardware",
+    "text": "Ver el hardware",
     "source_hash": "c90b8269f1d8"
   },
   "home.use-cases.li-10.aria-label": {
@@ -400,7 +400,7 @@
     "source_hash": "525b6691292f"
   },
   "home.use-cases.p-10": {
-    "text": "Un Linux reducido que solo ejecuta LM Warden, configura la red y el almacenamiento de modelos, y se actualiza por red o queda totalmente aislado de la red (air-gapped). Para un servidor LLM seguro y dedicado.",
+    "text": "Un Linux reducido que solo ejecuta LM Warden, configura la red y el almacenamiento de modelos, y se actualiza a través de la red o funciona totalmente aislado de la red (air-gapped). Para un servidor LLM seguro y dedicado.",
     "source_hash": "9ab2a4e163b1"
   },
   "home.use-cases.span-10": {
@@ -452,7 +452,7 @@
     "source_hash": "1e554752120e"
   },
   "home.install.span-3": {
-    "text": "después",
+    "text": "en camino",
     "source_hash": "c6c1c9a9c854"
   },
   "home.install.b-3": {
@@ -484,15 +484,15 @@
     "source_hash": "fc20ff032a73"
   },
   "home.p-linux.li-2": {
-    "text": "Después abre <code>http://HOST:8080/ui/</code>, completa el asistente de primer inicio, agrega un modelo y genera una clave. Tu endpoint es <code>http://HOST:8080/v1</code>.",
+    "text": "Después abre <code>http://HOST:8080/ui/</code>, completa el asistente de primer inicio, agrega un modelo y genera una clave. Tu punto de conexión es <code>http://HOST:8080/v1</code>.",
     "source_hash": "33bfcbda3ad4"
   },
   "home.p-linux.li-3": {
-    "text": "Varias GPU en un equipo: paralelismo de tensores, o una réplica por tarjeta con enrutamiento consciente de la caché.",
+    "text": "Varias GPU en una máquina: paralelismo de tensores, o una réplica por tarjeta con enrutamiento según la caché.",
     "source_hash": "086f8aa8145e"
   },
   "home.p-linux.li-4": {
-    "text": "Hoy, NVIDIA. <b>La compatibilidad con GPU AMD ROCm e Intel llegará próximamente</b>; aún sin fechas. Dinos en cuál lo ejecutarías: <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon\" rel=\"noopener\">Radeon</a> · <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel\" rel=\"noopener\">Intel</a>.",
+    "text": "Hoy, NVIDIA. <b>La compatibilidad con GPU AMD ROCm e Intel llegará próximamente</b>; aún sin fechas. Dinos cuál usarías: <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon\" rel=\"noopener\">Radeon</a> · <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel\" rel=\"noopener\">Intel</a>.",
     "source_hash": "f17d08f00954"
   },
   "home.p-linux.a-1": {
@@ -500,7 +500,7 @@
     "source_hash": "e15a133068af"
   },
   "home.p-linux.a-2": {
-    "text": "Sin conexión / aislado",
+    "text": "Instalación sin conexión",
     "source_hash": "16289eae755d"
   },
   "home.p-linux.a-3": {
@@ -536,15 +536,15 @@
     "source_hash": "5ff95c0fa25d"
   },
   "home.p-mac.li-3": {
-    "text": "<b>Beta, sin rodeos:</b> firmada ad hoc y sin notarizar, así que macOS te pide que la permitas en Privacidad y seguridad la primera vez que la abras; las actualizaciones son una nueva descarga. <a href=\"{{repo}}/blob/main/documents/INSTALL.md#beta-builds\" rel=\"noopener\">Pasos para el primer inicio</a>.",
+    "text": "<b>Beta, sin rodeos:</b> firmada ad hoc y sin notarizar, así que la primera vez que la abras macOS te pedirá que la permitas en Privacidad y seguridad; para actualizarla hay que volver a descargarla. <a href=\"{{repo}}/blob/main/documents/INSTALL.md#beta-builds\" rel=\"noopener\">Pasos para el primer inicio</a>.",
     "source_hash": "cf254395b87e"
   },
   "home.p-mac.li-4": {
-    "text": "Sirve en 127.0.0.1 hasta que eliges <b>Share on Local Network</b>.",
+    "text": "Solo escucha en 127.0.0.1 hasta que elijas <b>Share on Local Network</b>.",
     "source_hash": "013272b7df36"
   },
   "home.p-mac.li-5": {
-    "text": "<b>Próximamente: mlx-rust-lm</b>, un tercer motor. El equipo de LM Warden está portando mlx-lm de Apple de Python a Rust sobre los bindings oficiales mlx-c de Apple; funcionará junto a MLX y llama.cpp y, con el tiempo, sustituirá al motor mlx-lm de Python, que junto con Python y sus bibliotecas es la mayor parte de la descarga actual. No oficial, sin afiliación con Apple.",
+    "text": "<b>Próximamente: mlx-rust-lm</b>, un tercer motor. El equipo de LM Warden está portando mlx-lm de Apple de Python a Rust sobre los bindings oficiales mlx-c de Apple; funcionará junto a MLX y llama.cpp y, con el tiempo, sustituirá al motor mlx-lm de Python, que, con Python y sus bibliotecas, ocupa hoy la mayor parte de la descarga. No oficial y sin afiliación con Apple.",
     "source_hash": "8121128f773c"
   },
   "home.p-mac.img-1.alt": {
@@ -556,15 +556,15 @@
     "source_hash": "785cc05a3c6d"
   },
   "home.p-win.h3-1": {
-    "text": "Windows es lo siguiente. No hay fecha.",
+    "text": "Windows es lo siguiente, aún sin fecha.",
     "source_hash": "3e2f8c30fbd3"
   },
   "home.p-win.p-1": {
-    "text": "Lo estamos desarrollando y pondremos una compilación aquí el día que exista, no un formulario de registro antes. Mientras tanto, dos opciones honestas:",
+    "text": "Lo estamos desarrollando y publicaremos aquí una compilación el día que exista, no un formulario de registro antes. Mientras tanto, tienes dos opciones que sí funcionan:",
     "source_hash": "7389debc8fd3"
   },
   "home.p-win.li-1": {
-    "text": "Ejecuta LM Warden en un equipo Linux con GPU y úsalo desde Windows: cualquier cliente de OpenAI, Claude Code y Codex se conectan por la red.",
+    "text": "Ejecuta LM Warden en una máquina Linux con GPU y úsalo desde Windows: todos los clientes de OpenAI, Claude Code y Codex se conectan a través de la red.",
     "source_hash": "1296afbbf883"
   },
   "home.p-win.li-2": {
@@ -572,7 +572,7 @@
     "source_hash": "9a92060cedbe"
   },
   "home.p-win.li-3": {
-    "text": "Las GPU AMD Radeon e Intel llegarán después; dinos en cuál lo ejecutarías: <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon\" rel=\"noopener\">Radeon</a> · <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel\" rel=\"noopener\">Intel</a>.",
+    "text": "Las GPU AMD Radeon e Intel llegarán después; dinos cuál usarías: <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon\" rel=\"noopener\">Radeon</a> · <a href=\"{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel\" rel=\"noopener\">Intel</a>.",
     "source_hash": "d85b661eb8e6"
   },
   "home.p-appliance.h3-1": {
@@ -580,7 +580,7 @@
     "source_hash": "e45c0fc37b2d"
   },
   "home.p-appliance.p-1": {
-    "text": "Una cuarta forma de ejecutar LM Warden, para un equipo que no debe hacer nada más.",
+    "text": "Una cuarta forma de ejecutar LM Warden, para una máquina que no debe hacer nada más.",
     "source_hash": "9ff6d73830b6"
   },
   "home.p-appliance.li-1": {
@@ -592,11 +592,11 @@
     "source_hash": "a2a401f4b2c3"
   },
   "home.p-appliance.li-3": {
-    "text": "Las actualizaciones llegan por red, o el equipo funciona totalmente aislado de la red (air-gapped).",
+    "text": "Las actualizaciones llegan a través de la red, o la máquina funciona totalmente aislada de la red (air-gapped).",
     "source_hash": "aa9d78e6b6fa"
   },
   "home.p-appliance.li-4": {
-    "text": "Pensado para un servidor LLM seguro y dedicado: un equipo de trabajo que quiere una máquina blindada, o un sitio sin salida al exterior.",
+    "text": "Pensado para un servidor LLM seguro y dedicado: para un equipo que quiere una máquina totalmente cerrada o para una instalación sin salida a internet.",
     "source_hash": "bbc615ea622b"
   },
   "home.p-appliance.p-2": {
@@ -604,19 +604,19 @@
     "source_hash": "177a91e7a6b4"
   },
   "home.p-appliance.div-1": {
-    "text": "Todavía no hay imagen: no hay nombre de producto ni hardware que mostrar, y no vamos a dibujar uno.",
+    "text": "Todavía no hay imagen: no hay nombre de producto ni hardware que mostrar, y no vamos a inventarnos una ilustración.",
     "source_hash": "8a3fbd7c91f0"
   },
   "home.upgrade.p-1": {
-    "text": "<b>¿Ya lo usas?</b> En Linux se actualiza en el sitio: descarga las nuevas imágenes, reinicia y la base de datos migra hacia adelante. <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">Pasos</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">Registro de cambios</a>.",
+    "text": "<b>¿Ya lo usas?</b> En Linux se actualiza sobre la instalación existente: descarga las nuevas imágenes, reinicia y la base de datos se migra automáticamente a la nueva versión. <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">Pasos</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">Registro de cambios</a>.",
     "source_hash": "5566c16483a2"
   },
   "home.why.h2-1": {
-    "text": "Autoalojar tiene ocho problemas. Así se ve cada uno resuelto.",
+    "text": "El autoalojamiento plantea ocho problemas. Así queda resuelto cada uno.",
     "source_hash": "65341f9c1497"
   },
   "home.why.p-1": {
-    "text": "Un motor solo sirve un modelo en un puerto. Estas son las piezas que lo rodean, con nuestras propias cifras cuando las tenemos.",
+    "text": "Un motor, por sí solo, sirve un modelo en un puerto. Estas son las piezas que lo rodean, con nuestras propias cifras cuando las tenemos.",
     "source_hash": "1668b0870987"
   },
   "home.why-fit.h3-1": {
@@ -624,23 +624,23 @@
     "source_hash": "631429e459b2"
   },
   "home.why-fit.p-1": {
-    "text": "Pega un repositorio de Hugging Face en <b>Add model</b>. Cada archivo aparece con un veredicto frente a las tarjetas que marques: cabe, margen justo o no cabe. Marca más tarjetas y el presupuesto se suma. No se descarga nada hasta que algo cabe.",
+    "text": "Pega un repositorio de Hugging Face en <b>Add model</b>. Cada archivo aparece con un veredicto según las tarjetas que marques: cabe, cabe con poco margen o no cabe. Si marcas más tarjetas, su memoria se suma. No se descarga nada hasta que algo quepa.",
     "source_hash": "b0c5f5cbb2ee"
   },
   "home.why-fit.img-1.alt": {
-    "text": "El mismo archivo de 20,22&#8239;GiB marcado como que cabe al seleccionar cuatro GPU",
+    "text": "El mismo archivo de 20,22&#8239;GiB, marcado como que cabe al seleccionar cuatro GPU",
     "source_hash": "906b74daf0f5"
   },
   "home.why-stats.h3-1": {
-    "text": "Compraste GPU. ¿Trabajan o esperan?",
+    "text": "Has comprado GPU. ¿Están trabajando o esperando?",
     "source_hash": "7cd5266e1f4e"
   },
   "home.why-stats.p-1": {
-    "text": "El rendimiento es concurrencia × longitud del prompt × reutilización de la caché, y un motor solo no muestra nada de eso junto. La página Stats sí, de 1&#8239;h a 7&#8239;días: VRAM, uso de GPU, potencia (Linux), tokens por segundo con los tokens de prompt divididos en cacheados y calculados, latencia p50/p95, tasa de aciertos de la caché de prompts, preempciones, solicitudes por clave y por IP de cliente. Un uso plano con cola dice «más concurrencia»; una proporción de caché baja dice «fija las sesiones».",
+    "text": "El rendimiento depende de la concurrencia × la longitud del prompt × la reutilización de la caché, y un motor por sí solo no muestra nada de eso en conjunto. La página Stats sí, de 1&#8239;h a 7&#8239;días: VRAM, uso de GPU, potencia (Linux), tokens por segundo con los tokens de prompt divididos en servidos desde la caché y calculados, latencia p50/p95, tasa de aciertos de la caché de prompts, preempciones y solicitudes por clave y por IP de cliente. Si el uso se estanca mientras hay solicitudes en cola, aumenta la concurrencia; si la proporción de caché es baja, mantén cada sesión en la misma réplica.",
     "source_hash": "05ae743f085e"
   },
   "home.why-stats.img-1.alt": {
-    "text": "Tokens por segundo: tokens de prompt divididos en cacheados y calculados, tokens de respuesta debajo",
+    "text": "Tokens por segundo: los tokens de prompt divididos en servidos desde la caché y calculados, y debajo los tokens de respuesta",
     "source_hash": "94483285e732"
   },
   "home.why-chat.h3-1": {
@@ -648,11 +648,11 @@
     "source_hash": "83831d46fb09"
   },
   "home.why-chat.p-1": {
-    "text": "El chat está en la misma ventana que todo lo demás. Markdown en streaming con código resaltado y matemáticas; hasta ocho imágenes PNG, JPEG o WebP por mensaje para un modelo de visión; temperatura, top-p, máximo de tokens y prompt del sistema por chat, guardados como valores predeterminados; chats guardados, con título y bifurcables. Las llamadas a herramientas que hace el modelo se muestran, para que compruebes las llamadas a herramientas antes de que un agente dependa de ellas.",
+    "text": "El chat está en la misma ventana que todo lo demás. Markdown en streaming con código resaltado y fórmulas; hasta ocho imágenes PNG, JPEG o WebP por mensaje para un modelo de visión; temperatura, top-p, máximo de tokens y prompt del sistema por chat, que se guardan como valores predeterminados; los chats se guardan con título y se pueden bifurcar. Las llamadas a herramientas que hace el modelo se muestran, así que puedes comprobar que funcionan antes de que un agente dependa de ellas.",
     "source_hash": "2e459441dc4f"
   },
   "home.why-chat.img-1.alt": {
-    "text": "El chat en la ventana del panel de la app para Mac, en streaming desde qwen2.5-3b con GPU al 96 % en el encabezado",
+    "text": "El chat en la ventana del panel de la app para Mac, con la respuesta de qwen2.5-3b llegando en streaming y la GPU al 96 % en el encabezado",
     "source_hash": "da46ab93294b"
   },
   "home.why-god.h3-1": {
@@ -660,11 +660,11 @@
     "source_hash": "a49be301a05f"
   },
   "home.why-god.p-1": {
-    "text": "God mode, para depurar prompts: con <code>VW_GODMODE_ENABLED</code> en la implementación, la página de cada clave tiene un panel que transmite en directo los prompts y respuestas de esa clave. Desactivado de forma predeterminada, y ausente cuando está desactivado. Un búfer circular limitado en memoria: nada va a la base de datos ni al disco, y se borra al reiniciar. Cualquiera con la sesión de administrador puede abrirlo; el warden tiene un único rol de administrador y ningún otro.",
+    "text": "God mode, para depurar prompts: con <code>VW_GODMODE_ENABLED</code> activado en la implementación, la página de cada clave incorpora un panel que transmite en directo los prompts y las respuestas de esa clave. Desactivado de forma predeterminada, y cuando está desactivado ni siquiera aparece. Es un búfer circular limitado en memoria: nada se escribe en la base de datos ni en el disco, y se borra al reiniciar. Puede abrirlo cualquiera con la sesión de administrador; el warden tiene un único rol, el de administrador.",
     "source_hash": "a29986e09f7a"
   },
   "home.why-god.img-1.alt": {
-    "text": "La página de la clave de API coding-agent con el panel God mode abierto en la parte inferior: Live, 4 requests, 1 running; una solicitud a qwen3.8-27b-fp8 desde 192.0.2.10 en streaming, que muestra el prompt del usuario sobre una prueba de estadísticas inestable y la respuesta del modelo con una corrección en Python mientras se escribe",
+    "text": "La página de la clave de API coding-agent con el panel God mode abierto en la parte inferior: Live, 4 requests, 1 running; una solicitud a qwen3.8-27b-fp8 desde 192.0.2.10 en streaming, con el prompt del usuario sobre una prueba de estadísticas que falla de forma intermitente y la respuesta del modelo, con una corrección en Python, escribiéndose en ese momento",
     "source_hash": "171f585f7e38"
   },
   "home.cache.h2-1": {
@@ -672,51 +672,51 @@
     "source_hash": "d876efcb94ab"
   },
   "home.why-cache.p-1": {
-    "text": "Un agente reenvía todo su historial en cada turno, así que una conversación larga es sobre todo un prefijo que el motor ya ha leído. vLLM guarda ese trabajo en su caché de prefijos, pero solo en la réplica que lo hizo, y su propio balanceador envía cada turno a la réplica con la cola más corta. LM Warden coloca cada conversación nueva en la réplica menos cargada y la mantiene allí, usando el id de sesión que Claude Code ya envía. Solo mueve una solicitud cuando esa réplica supera su umbral de desbordamiento.",
+    "text": "Un agente reenvía todo su historial en cada turno, así que una conversación larga es, sobre todo, un prefijo que el motor ya ha leído. vLLM guarda ese trabajo en su caché de prefijos, pero solo en la réplica que lo hizo, y su propio balanceador envía cada turno a la réplica con la cola más corta. LM Warden asigna cada conversación nueva a la réplica menos cargada y la mantiene allí, gracias al ID de sesión que Claude Code ya envía. Solo mueve una solicitud cuando esa réplica supera su umbral de desbordamiento.",
     "source_hash": "03e36074672f"
   },
   "home.why-cache.figcaption-1": {
-    "text": "Cuatro turnos de una conversación en un modelo con cuatro réplicas. Con el balanceador de vLLM, cada turno se precalcula (su prompt se lee en la caché) casi desde cero en la réplica que lo recibió. Con LM Warden, la conversación se queda en la réplica&nbsp;2 y solo se precalcula el turno nuevo. Un dibujo del mecanismo, no una medición.",
+    "text": "Cuatro turnos de una conversación en un modelo con cuatro réplicas. Con el balanceador de vLLM, cada turno pasa por el prefill (el motor lee el prompt y lo carga en la caché) casi desde cero en la réplica que lo recibe. Con LM Warden, la conversación se queda en la réplica&nbsp;2 y solo el turno nuevo pasa por el prefill. Es un esquema del mecanismo, no una medición.",
     "source_hash": "0f19c82ec35c"
   },
   "home.why-cache.p-2": {
-    "text": "Medido en nuestro equipo de cuatro tarjetas (4&nbsp;×&nbsp;RTX&nbsp;A4000, Qwen3-4B como cuatro réplicas de una tarjeta, sesiones sintéticas al estilo de Claude Code, afinidad desactivada y luego activada, una tras otra): con las conversaciones fijadas, la proporción de tokens de prompt servidos desde la caché subió del 56 al 86 % con 4 sesiones simultáneas, y el tiempo mediano hasta el primer byte bajó de 2,05 a 0,38&#8239;s. Los tokens de salida por minuto fueron más altos en cada escalón que probamos, y el tiempo p95 hasta el primer byte (el 5 % más lento) fue más bajo en cada escalón. El número de réplicas trabajando apenas cambió (2,71 frente a 2,83 de cuatro con 4 sesiones): la ganancia es la reutilización de la caché, no más tarjetas trabajando.",
+    "text": "Medido en nuestra máquina de cuatro tarjetas (4&nbsp;×&nbsp;RTX&nbsp;A4000, Qwen3-4B como cuatro réplicas de una tarjeta cada una, sesiones sintéticas al estilo de Claude Code, primero sin afinidad y después con ella, una prueba tras otra): con cada conversación fijada a su réplica, la proporción de tokens de prompt servidos desde la caché subió del 56 al 86 % con 4 sesiones simultáneas, y la mediana del tiempo hasta el primer byte bajó de 2,05 a 0,38&#8239;s. Los tokens de salida por minuto fueron mayores en todos los escalones que probamos, y el p95 del tiempo hasta el primer byte (el 5 % más lento) fue menor en todos ellos. El número de réplicas con trabajo apenas cambió (2,71 frente a 2,83 de cuatro con 4 sesiones): la mejora viene de reutilizar la caché, no de tener más tarjetas trabajando.",
     "source_hash": "9de8aa8aa7e1"
   },
   "home.why-cache.figcaption-2": {
-    "text": "Tasa de aciertos de la caché de prefijos en cada escalón: tokens de prompt servidos desde la caché sobre tokens de prompt solicitados, sumando las cuatro réplicas, a partir del cambio en los contadores del propio vLLM durante el escalón. La ganancia se mantiene mientras hay margen y desaparece con 32 sesiones, cuando las conversaciones se desbordan.",
+    "text": "Tasa de aciertos de la caché de prefijos en cada escalón: tokens de prompt servidos desde la caché divididos entre los tokens de prompt solicitados, sumando las cuatro réplicas, según la variación de los contadores del propio vLLM durante el escalón. La mejora se mantiene mientras hay margen y desaparece con 32 sesiones, cuando las conversaciones se desbordan a otras réplicas.",
     "source_hash": "ff04da43c87a"
   },
   "home.why-cache.figcaption-3": {
-    "text": "Tiempo hasta el primer byte con 4 a 32 sesiones simultáneas, mediana y p95, en escala logarítmica para que los escalones de menos de un segundo se lean junto a los de un minuto. Con afinidad, la mediana es mucho más baja hasta 16 sesiones (0,38 frente a 2,05&#8239;s con 4) y más alta con 24 y 32; el p95 es más bajo en cada escalón, aunque con 16 la diferencia (24,9 frente a 26,2&#8239;s) está dentro del ruido de una sola ejecución por variante. Medido en el cliente, por internet, hasta el primer token transmitido.",
+    "text": "Tiempo hasta el primer byte con 4 a 32 sesiones simultáneas, mediana y p95, en escala logarítmica para que los escalones de menos de un segundo se puedan comparar con los de un minuto. Con afinidad, la mediana es mucho más baja hasta 16 sesiones (0,38 frente a 2,05&#8239;s con 4) y más alta con 24 y 32; el p95 es menor en todos los escalones, aunque con 16 la diferencia (24,9 frente a 26,2&#8239;s) está dentro del ruido de una sola ejecución por variante. Medido en el cliente, a través de internet, hasta el primer token recibido.",
     "source_hash": "0ec9d5ccf246"
   },
   "home.why-cache.h3-1": {
-    "text": "Cada escalón de la rampa, afinidad desactivada → activada",
+    "text": "Todos los escalones de la rampa, sin y con afinidad",
     "source_hash": "684608311775"
   },
   "home.why-cache.p-3": {
-    "text": "Medido en nuestro equipo de cuatro tarjetas con un modelo pequeño, primero con la afinidad desactivada y luego activada, sin reiniciar vLLM entre medias: la segunda variante empezó con la caché de prefijos caliente, y ambas tomaron sus prompts de la misma semilla. Cada escalón dura 3&nbsp;minutos, así que solo completa de 9 a 31 sesiones y una sesión más o menos cambia las sesiones por hora en 20; los tokens de salida por minuto son la columna más estable. Tu modelo, tus tarjetas y tu carga de trabajo serán distintos; la tarjeta de réplicas en la página de un modelo muestra los mismos contadores para los tuyos.",
+    "text": "Medido en nuestra máquina de cuatro tarjetas con un modelo pequeño, primero sin afinidad y después con ella, sin reiniciar vLLM entre medias: la segunda variante empezó con la caché de prefijos ya caliente, y ambas generaron sus prompts con la misma semilla. Cada escalón dura 3&nbsp;minutos, así que solo completa entre 9 y 31 sesiones, y una sesión de más o de menos cambia las sesiones por hora en 20; los tokens de salida por minuto son la columna más estable. Tu modelo, tus tarjetas y tu carga de trabajo serán distintos; el panel de réplicas en la página de un modelo muestra los mismos contadores para los tuyos.",
     "source_hash": "4744b11be2ad"
   },
   "home.why-cache.img-1.alt": {
-    "text": "La tarjeta Data-parallel routing en la página de un modelo, con las etiquetas Affinity on, Spill threshold 8 (auto), Sticky 100.0% e In flight 0. Una tabla enumera las réplicas 0 a 3 con in flight, sticky (38, 21, 19 y 29), spilled in, client-pinned, running y waiting, KV usada y tasa de aciertos de la caché de prefijos (82,2; 86,0; 69,0 y 80,0 por ciento), y una línea que indica que los contadores corren desde que se inició el warden.",
+    "text": "El panel Data-parallel routing en la página de un modelo, con las etiquetas Affinity on, Spill threshold 8 (auto), Sticky 100.0% e In flight 0. Una tabla enumera las réplicas 0 a 3 con in flight, sticky (38, 21, 19 y 29), spilled in, client-pinned, running y waiting, la KV usada y la tasa de aciertos de la caché de prefijos (82,2; 86,0; 69,0 y 80,0 por ciento), y una línea que indica que los contadores acumulan desde que se inició el warden.",
     "source_hash": "f1bc7fbd6399"
   },
   "home.why-cache.figcaption-4": {
-    "text": "Los mismos contadores en la página de un modelo: una fila por réplica con las solicitudes que tiene, cuántas conversaciones se quedaron (<code>sticky</code>) o llegaron por desbordamiento, lo que se está ejecutando y lo que espera, la caché KV en uso y la tasa de aciertos de la caché de prefijos. Registrado el 4&nbsp;de&nbsp;octubre&nbsp;de&nbsp;2026 con la afinidad activada y el umbral de desbordamiento en 8 (auto): sticky 100 % y una tasa de aciertos de la caché de prefijos de 82,2; 86,0; 69,0 y 80,0 % en las réplicas 0 a 3. Es la tarjeta, no un resultado.<span class=\"cache-hint\"> Toca la tarjeta para ampliarla.</span>",
+    "text": "Los mismos contadores en la página de un modelo: una fila por réplica con las solicitudes que tiene en curso, cuántas conversaciones se quedaron (<code>sticky</code>) o llegaron por desbordamiento, lo que se está ejecutando y lo que espera, la caché KV en uso y la tasa de aciertos de la caché de prefijos. Captura del 4&nbsp;de&nbsp;octubre&nbsp;de&nbsp;2026 con la afinidad activada y el umbral de desbordamiento en 8 (auto): sticky 100 % y una tasa de aciertos de la caché de prefijos de 82,2; 86,0; 69,0 y 80,0 % en las réplicas 0 a 3. Muestra el panel, no un resultado de medición.<span class=\"cache-hint\"> Toca la imagen para ampliarla.</span>",
     "source_hash": "234d024e62df"
   },
   "home.why-cache.p-4": {
-    "text": "<b>Dónde pierde.</b> Los escalones de 24 y 32 sesiones son una sobrecarga deliberada de cuatro tarjetas pequeñas, y todas las réplicas están saturadas. La salida sigue siendo mayor (11.178 frente a 9.048 y 16.638 frente a 14.760 tokens por minuto) y la cola lenta es mucho más corta (p95 38 frente a 59&#8239;s, y 39 frente a 83&#8239;s), pero el tiempo mediano hasta el primer byte es peor con afinidad: 13,1 frente a 5,1&#8239;s con 24 sesiones, 27,7 frente a 12,3&#8239;s con 32. No hemos aislado la causa, y bajar el umbral de desbordamiento de 8 a 4 no lo cambió.",
+    "text": "<b>Dónde sale perdiendo.</b> Los escalones de 24 y 32 sesiones son una sobrecarga deliberada de cuatro tarjetas pequeñas, y todas las réplicas están saturadas. La salida sigue siendo mayor (11.178 frente a 9.048 y 16.638 frente a 14.760 tokens por minuto) y las solicitudes más lentas tardan mucho menos (p95 38 frente a 59&#8239;s, y 39 frente a 83&#8239;s), pero la mediana del tiempo hasta el primer byte es peor con afinidad: 13,1 frente a 5,1&#8239;s con 24 sesiones y 27,7 frente a 12,3&#8239;s con 32. No hemos aislado la causa, y bajar el umbral de desbordamiento de 8 a 4 no cambió nada.",
     "source_hash": "2a468a4b1738"
   },
   "home.why-cache.p-5": {
-    "text": "<b>Mide ambos en un equipo con carga.</b> La ventaja es mayor mientras hay margen; un equipo que funciona al límite debería medir ambas configuraciones, y la afinidad se puede desactivar por modelo. Las réplicas, y por tanto este enrutamiento, forman parte de la instalación de Linux con GPU NVIDIA; la <a href=\"#p-mac\">app para Mac (beta)</a> no tiene paralelismo de tensores ni de datos.",
+    "text": "<b>Si tu máquina va muy cargada, mide las dos opciones.</b> La ventaja es mayor mientras hay margen; si tu máquina funciona al límite, compara ambas configuraciones; la afinidad se puede desactivar por modelo. Las réplicas, y por tanto este enrutamiento, forman parte de la instalación de Linux con GPU NVIDIA; la <a href=\"#p-mac\">app para Mac (beta)</a> no tiene paralelismo de tensores ni de datos.",
     "source_hash": "c245f8292ac7"
   },
   "home.why-cache.a-1": {
-    "text": "El método completo: la carga de trabajo, el banco de pruebas, el umbral de desbordamiento y un equipo de siete GPU que funciona con ello desde entonces →",
+    "text": "El método completo: la carga de trabajo, el banco de pruebas, el umbral de desbordamiento y una máquina de siete GPU que lo usa desde entonces →",
     "source_hash": "cd240e4bc004"
   },
   "home.agents.h2-1": {
@@ -724,11 +724,11 @@
     "source_hash": "b01cff25d51f"
   },
   "home.agents.p-1": {
-    "text": "Diez herramientas se conectan con una URL base y una clave; dos de ellas también pueden conservar una suscripción de pago a Claude para el trabajo difícil.",
+    "text": "Diez agentes y clientes se conectan con una URL base y una clave; con dos de ellos puedes además seguir usando una suscripción de pago a Claude para el trabajo difícil.",
     "source_hash": "26604da90050"
   },
   "home.agents.h3-1": {
-    "text": "Todo con tus modelos",
+    "text": "Todo en tus modelos",
     "source_hash": "a87ec3988e0d"
   },
   "home.agents.p-2": {
@@ -748,7 +748,7 @@
     "source_hash": "cc7b475640bb"
   },
   "home.agents.span-4": {
-    "text": "Modelo con tu propia clave · <code>/v1</code>",
+    "text": "Modelo con clave propia · <code>/v1</code>",
     "source_hash": "5a0628b4b02d"
   },
   "home.agents.span-5": {
@@ -760,15 +760,15 @@
     "source_hash": "09e5fe8af64a"
   },
   "home.agents.span-7": {
-    "text": "URL base de OpenAI reemplazada · chat",
+    "text": "Sustitución de la URL base de OpenAI · chat",
     "source_hash": "9ad204014fc0"
   },
   "home.agents.h3-2": {
-    "text": "Conserva tu suscripción a Claude y descarga las llamadas rutinarias",
+    "text": "Conserva tu suscripción a Claude y deriva a tus GPU las llamadas rutinarias",
     "source_hash": "cfeda056d931"
   },
   "home.agents.p-3": {
-    "text": "Claude Code y el Anthropic SDK, a través del enrutador. Una regla indica por qué modelos de Claude responden tus GPU; todo lo demás va a Anthropic con tu propio inicio de sesión o clave.",
+    "text": "Claude Code y el Anthropic SDK, a través del enrutador. Una regla indica en lugar de qué modelos de Claude responden tus GPU; todo lo demás va a Anthropic con tu propia cuenta o clave.",
     "source_hash": "6995102b0af7"
   },
   "home.flow-t.title-1": {
@@ -776,7 +776,7 @@
     "source_hash": "d7db08f53325"
   },
   "home.flow-d.desc-1": {
-    "text": "El agente envía cada solicitud al enrutador de LM Warden. Las solicitudes para modelos claude-haiku van a un modelo en tu GPU y se responden como ese modelo. Cualquier otro modelo, Opus incluido, se pasa a Anthropic con tu propio inicio de sesión.",
+    "text": "El agente envía cada solicitud al enrutador de LM Warden. Las solicitudes para modelos claude-haiku van a un modelo en tu GPU, que responde en nombre de ese modelo. Cualquier otro modelo, Opus incluido, se reenvía a Anthropic con tu propia cuenta.",
     "source_hash": "5c598ca9bc7c"
   },
   "home.flow-t2.title-1": {
@@ -784,7 +784,7 @@
     "source_hash": "d7db08f53325"
   },
   "home.flow-d2.desc-1": {
-    "text": "El agente envía cada solicitud al enrutador de LM Warden. Las solicitudes para modelos claude-haiku van a un modelo en tu GPU y se responden como ese modelo. Cualquier otro modelo, Opus incluido, se pasa a Anthropic con tu propio inicio de sesión.",
+    "text": "El agente envía cada solicitud al enrutador de LM Warden. Las solicitudes para modelos claude-haiku van a un modelo en tu GPU, que responde en nombre de ese modelo. Cualquier otro modelo, Opus incluido, se reenvía a Anthropic con tu propia cuenta.",
     "source_hash": "5c598ca9bc7c"
   },
   "home.agents.b-1": {
@@ -792,23 +792,23 @@
     "source_hash": "cdf3dc71b947"
   },
   "home.agents.span-8": {
-    "text": "solicitudes respondidas en local, el 99 % del tráfico de Claude Code del equipo desde su reinicio. Desde la página Router de nuestro propio equipo de siete GPU, 21 de octubre de 2026; 22 rechazadas mientras el destino no estaba cargado.",
+    "text": "solicitudes respondidas por el modelo local: el 99 % del tráfico de Claude Code de la máquina desde su reinicio. Datos de la página Router de nuestra propia máquina de siete GPU, 21 de octubre de 2026; 22 rechazadas mientras el modelo de destino no estaba cargado.",
     "source_hash": "6f10abaf7726"
   },
   "home.agents.img-1.alt": {
-    "text": "La página del enrutador de Claude Code: enrutamiento activado, 99 % respondido en local desde las 23:32; la regla 1 envía claude-haiku* a qwen3.8-27b, 1.981 en local y 22 rechazadas; cualquier otro modelo de Claude va a Anthropic con el inicio de sesión del propio usuario",
+    "text": "La página del enrutador de Claude Code: enrutamiento activado, 99 % respondido por el modelo local desde las 23:32; la regla 1 envía claude-haiku* a qwen3.8-27b, 1.981 locales y 22 rechazadas; cualquier otro modelo de Claude va a Anthropic con la cuenta del propio usuario",
     "source_hash": "d77bbac51675"
   },
   "home.agents.figcaption-1": {
-    "text": "Claude Code 2.1.227 o posterior: <code>ANTHROPIC_BASE_URL</code> apuntando al warden, la clave del warden en <code>ANTHROPIC_CUSTOM_HEADERS</code> y tu inicio de sesión intacto. No hemos medido la calidad de las respuestas: dale al modelo local el trabajo rutinario y bien especificado.",
+    "text": "Claude Code 2.1.227 o posterior: <code>ANTHROPIC_BASE_URL</code> apuntando al warden, la clave del warden en <code>ANTHROPIC_CUSTOM_HEADERS</code> y tu sesión de Claude sin tocar. No hemos evaluado la calidad de las respuestas: encarga al modelo local el trabajo rutinario y bien definido.",
     "source_hash": "bc31fcfd58c7"
   },
   "home.agents.h3-3": {
-    "text": "Connect escribe la configuración de cada cliente y envía una solicitud de prueba.",
+    "text": "Connect genera la configuración de cada cliente y envía una solicitud de prueba.",
     "source_hash": "0ceb9132d312"
   },
   "home.agents.p-4": {
-    "text": "Elige en la consola el cliente, una clave y un modelo cargado; comprueba cada requisito con lo que está realmente cargado (ventana de contexto, llamadas a herramientas, enrutador activado) y te da los archivos para pegar. <a href=\"/coding-agents\">Todos los agentes de programación</a>, una página por cliente con lo que funciona y lo que vimos.",
+    "text": "Elige en la consola el cliente, una clave y un modelo cargado; Connect comprueba cada requisito con lo que está cargado de verdad (ventana de contexto, llamadas a herramientas, enrutador activado) y te da los archivos listos para pegar. <a href=\"/coding-agents\">Todos los agentes de programación</a>: una página por cliente con lo que funciona y lo que observamos.",
     "source_hash": "0b548958da36"
   },
   "home.agents.img-2.alt": {
@@ -816,11 +816,11 @@
     "source_hash": "6a234848eac5"
   },
   "home.tune.h2-1": {
-    "text": "Deja que la IA que ya pagas ajuste tus propias GPU.",
+    "text": "Deja que la IA por la que ya pagas ajuste tus propias GPU.",
     "source_hash": "c3ae8600a083"
   },
   "home.why-agent.p-1": {
-    "text": "Elegir un modelo para tus tarjetas significa elegir una cuantización, un motor, cómo repartirlo entre las GPU, cuánto contexto darle y el tipo de caché KV; cada intento cuesta una descarga y una carga. Todo lo que hace la consola es una llamada a la API, así que Claude Code, Codex u otro agente con un shell pueden hacer esa búsqueda por ti, en tu hardware y con tu carga de trabajo.",
+    "text": "Elegir un modelo para tus tarjetas implica elegir una cuantización, un motor, cómo repartirlo entre las GPU, cuánto contexto darle y el tipo de caché KV; cada intento cuesta una descarga y una carga. Todo lo que hace la consola es una llamada a la API, así que Claude Code, Codex u otro agente con acceso a un shell puede hacer esa búsqueda por ti, en tu hardware y con tu carga de trabajo.",
     "source_hash": "4844283837a3"
   },
   "home.why-agent.h3-1": {
@@ -832,7 +832,7 @@
     "source_hash": "3f22e76a3edc"
   },
   "home.loop-d.desc-1": {
-    "text": "Revisar las GPU, preseleccionar modelos con la vista previa de ajuste antes de descargar nada, cargar distribuciones candidatas, medirlas con solicitudes reales, ajustar la configuración y dejar cargado el ganador. La medición y el ajuste se repiten hasta que el agente queda satisfecho.",
+    "text": "Inventariar las GPU, preseleccionar modelos con la vista previa de capacidad antes de descargar nada, cargar distribuciones candidatas, medir su rendimiento con solicitudes reales, ajustar la configuración y dejar cargada la mejor. Las mediciones y los ajustes se repiten hasta que el agente da el resultado por bueno.",
     "source_hash": "dd7733aa80ef"
   },
   "home.loop-t2.title-1": {
@@ -840,11 +840,11 @@
     "source_hash": "3f22e76a3edc"
   },
   "home.loop-d2.desc-1": {
-    "text": "Revisar las GPU, preseleccionar modelos con la vista previa de ajuste antes de descargar nada, cargar distribuciones candidatas, medirlas con solicitudes reales, ajustar la configuración y dejar cargado el ganador. La medición y el ajuste se repiten hasta que el agente queda satisfecho.",
+    "text": "Inventariar las GPU, preseleccionar modelos con la vista previa de capacidad antes de descargar nada, cargar distribuciones candidatas, medir su rendimiento con solicitudes reales, ajustar la configuración y dejar cargada la mejor. Las mediciones y los ajustes se repiten hasta que el agente da el resultado por bueno.",
     "source_hash": "dd7733aa80ef"
   },
   "home.why-agent.p-2": {
-    "text": "Lo que llama el agente: <code>GET /api/system/gpus</code>, <code>POST /api/models/fit-preview</code> antes de cualquier descarga, el registro y <code>suggest-config</code>, la descarga y la carga, una prueba de estrés que encuentra y aplica el límite real de contexto, <code>GET /api/stats/v2/throughput</code> y <code>latency</code>, y una clave de inferencia que emite para enviar tráfico de prueba. Primero lee <code>/agent-guide.md</code>, una breve descripción de estas llamadas escrita para un modelo de lenguaje.",
+    "text": "Lo que llama el agente: <code>GET /api/system/gpus</code>, <code>POST /api/models/fit-preview</code> antes de cualquier descarga, el registro y <code>suggest-config</code>, la descarga y la carga, una prueba de estrés que encuentra y aplica el límite real de contexto, <code>GET /api/stats/v2/throughput</code> y <code>latency</code>, y una clave de inferencia que el propio agente genera para enviar tráfico de prueba. Antes de nada lee <code>/agent-guide.md</code>, una breve descripción de estas llamadas escrita para un modelo de lenguaje.",
     "source_hash": "35230c9469a2"
   },
   "home.why-agent.img-1.alt": {
@@ -852,35 +852,35 @@
     "source_hash": "afd3f600f638"
   },
   "home.why-agent.figcaption-1": {
-    "text": "Lo que vigila el agente mientras se carga una distribución: cada paso con el tiempo habitual de cargas anteriores. Una carga que deja de avanzar se detiene y sus GPU se liberan.",
+    "text": "Lo que vigila el agente mientras se carga una distribución: cada paso con el tiempo habitual de cargas anteriores. Si una carga deja de avanzar, se detiene y sus GPU quedan libres.",
     "source_hash": "4bb331f9f6fb"
   },
   "home.why-agent.h3-2": {
-    "text": "Cuatro prompts para pegar, y lo que obtienes",
+    "text": "Cuatro prompts para pegar y lo que obtienes con cada uno",
     "source_hash": "222000da96d1"
   },
   "home.why-agent.li-1": {
-    "text": "<b>Revisar y preseleccionar.</b> <span class=\"ask\">Pide:</span> enumera mis GPU, preselecciona tres modelos de pesos abiertos para programación con agentes que quepan con al menos 65.536 tokens de contexto, comprueba cada uno con fit-preview y no descargues nada. <span class=\"get\">Obtienes:</span> una tabla con modelo, cuantización, motor, GPU, contexto y el porqué.",
+    "text": "<b>Inventario y preselección.</b> <span class=\"ask\">Pide:</span> enumera mis GPU, preselecciona tres modelos de pesos abiertos para programación con agentes que quepan con al menos 65.536 tokens de contexto, comprueba cada uno con fit-preview y no descargues nada. <span class=\"get\">Obtienes:</span> una tabla con modelo, cuantización, motor, GPU, contexto y el motivo de cada elección.",
     "source_hash": "4d737111bb76"
   },
   "home.why-agent.li-2": {
-    "text": "<b>Motor y distribución para un modelo.</b> <span class=\"ask\">Pide:</span> decide entre vLLM o llama.cpp, y entre paralelismo de tensores o réplicas en paralelismo de datos en mis tarjetas; carga las dos mejores distribuciones, envía a cada una las mismas 20 solicitudes en streaming y compáralas con concurrencia 1 y 8. <span class=\"get\">Obtienes:</span> el tiempo hasta el primer token y los tokens por segundo de ambas, la ganadora cargada, la otra descargada y la clave de prueba revocada.",
+    "text": "<b>Motor y distribución para un modelo.</b> <span class=\"ask\">Pide:</span> decide entre vLLM y llama.cpp, y entre paralelismo de tensores y réplicas con paralelismo de datos en mis tarjetas; carga las dos mejores distribuciones, envía a cada una las mismas 20 solicitudes en streaming y compáralas con concurrencia 1 y 8. <span class=\"get\">Obtienes:</span> el tiempo hasta el primer token y los tokens por segundo de ambas, la mejor cargada, la otra descargada y la clave de prueba revocada.",
     "source_hash": "aadee19b4763"
   },
   "home.why-agent.li-3": {
-    "text": "<b>Encontrar los límites reales y aplicarlos.</b> <span class=\"ask\">Pide:</span> haz una prueba de estrés del modelo cargado, aplica el contexto medido y luego mide con concurrencia 1, 4 y 16 con prompts de unos 2k y 30k tokens. <span class=\"get\">Obtienes:</span> el límite de contexto escrito en la configuración del modelo y una tabla del tiempo hasta el primer token y los tokens por segundo por concurrencia y tamaño de prompt.",
+    "text": "<b>Encontrar los límites reales y aplicarlos.</b> <span class=\"ask\">Pide:</span> haz una prueba de estrés del modelo cargado, aplica el contexto medido y después mide el rendimiento con concurrencia 1, 4 y 16 y prompts de unos 2 mil y 30 mil tokens. <span class=\"get\">Obtienes:</span> el límite de contexto guardado en la configuración del modelo y una tabla con el tiempo hasta el primer token y los tokens por segundo para cada concurrencia y tamaño de prompt.",
     "source_hash": "5e697967b7ec"
   },
   "home.why-agent.li-4": {
-    "text": "<b>Comparar dos candidatos con tu propio trabajo.</b> <span class=\"ask\">Pide:</span> reproduce los prompts de <code>./workload/*.txt</code> con el modelo A y el modelo B con concurrencia 4 y evalúa cada respuesta. <span class=\"get\">Obtienes:</span> <code>model-comparison.md</code> con latencia, tokens por segundo, corrección según el criterio del agente y una recomendación; el modelo recomendado queda cargado.",
+    "text": "<b>Comparar dos candidatos con tu propio trabajo.</b> <span class=\"ask\">Pide:</span> vuelve a enviar los prompts de <code>./workload/*.txt</code> al modelo A y al modelo B con concurrencia 4 y evalúa cada respuesta. <span class=\"get\">Obtienes:</span> <code>model-comparison.md</code> con latencia, tokens por segundo, corrección según el criterio del agente y una recomendación; el modelo recomendado queda cargado.",
     "source_hash": "d25a394b9e41"
   },
   "home.why-agent.p-3": {
-    "text": "<b>Antes de empezar.</b> Un token de administrador tiene todos los permisos de administración sobre el warden (modelos, claves, configuración; aún no hay ámbitos más restringidos): dale una caducidad corta y revócalo en Settings → Access Tokens cuando termine el trabajo. Una prueba de estrés bloquea un motor a propósito para encontrar su límite: ejecuta estos prompts en un warden del que no dependa nadie más. Las descargas son grandes; los prompts comprueban que el modelo cabe antes de descargarlo, pero vigila tu disco.",
+    "text": "<b>Antes de empezar.</b> Un token de administrador tiene todos los permisos de administración sobre el warden (modelos, claves, configuración; aún no hay permisos más restringidos): dale una caducidad corta y revócalo en Settings → Access Tokens cuando termine el trabajo. Una prueba de estrés hace fallar un motor a propósito para encontrar su límite: ejecuta estos prompts en un warden del que no dependa nadie más. Las descargas son grandes; los prompts comprueban que el modelo cabe antes de descargarlo, pero vigila el espacio en disco.",
     "source_hash": "505b9916712b"
   },
   "home.why-agent.p-4": {
-    "text": "Las opciones de motor y distribución (vLLM, paralelismo de tensores o de datos) son de la instalación de Linux; en un Mac, la elección es MLX o llama.cpp en una sola GPU. El modelo que hace el ajuste puede ser cualquiera que ya pagues; el modelo que se ajusta es el que está en tus tarjetas. <a href=\"/agent-tuning\">La página de ajuste con agentes: los cuatro prompts completos</a>.",
+    "text": "Elegir motor y distribución (vLLM, paralelismo de tensores o de datos) es cosa de la instalación de Linux; en un Mac, la elección es entre MLX y llama.cpp en una sola GPU. El modelo que hace el ajuste puede ser cualquiera por el que ya pagues; el modelo que se ajusta es el que está en tus tarjetas. <a href=\"/agent-tuning\">La página de ajuste con agentes: los cuatro prompts completos</a>.",
     "source_hash": "bbeb89be5de6"
   },
   "home.share.h2-1": {
@@ -888,19 +888,19 @@
     "source_hash": "f1e27da721b7"
   },
   "home.why-keys.p-1": {
-    "text": "Crea tantas claves de API como necesites y repártelas: un colega, un familiar, un trabajo de CI, una granja de agentes, cada uno con su propia clave, su propia prioridad y su propia página de uso. El hardware trabaja para todos, y el trabajo importante nunca tiene que esperar.",
+    "text": "Crea tantas claves de API como necesites y repártelas: un colega, un familiar, un trabajo de CI, una granja de agentes, cada uno con su propia clave, su propia prioridad y su propia página de uso. El hardware trabaja para todos, y el trabajo importante nunca se queda esperando.",
     "source_hash": "dd9352746e6e"
   },
   "home.why-keys.h3-1": {
-    "text": "Prioridad estricta: el 9 se atiende primero, el 0 al final",
+    "text": "Prioridad estricta: el 9 se sirve primero; el 0, el último",
     "source_hash": "51396907e61e"
   },
   "home.why-keys.p-2": {
-    "text": "Una solicitud en espera con prioridad más alta siempre pasa antes que una de prioridad más baja. Con carga, las claves de menor prioridad reciben la capacidad que queda tras las claves importantes; en un equipo muy ocupado, una prioridad baja puede esperar indefinidamente. El valor predeterminado es 5. No hay límite de velocidad por clave; la prioridad lo sustituyó.",
+    "text": "Una solicitud en espera con más prioridad siempre pasa antes que una de menos prioridad. Con carga, las claves de menor prioridad reciben la capacidad que dejan libre las importantes; en una máquina muy ocupada, una prioridad baja puede esperar indefinidamente. El valor predeterminado es 5. No hay límite de tasa por clave: la prioridad lo ha sustituido.",
     "source_hash": "4dd4ec421cbe"
   },
   "home.why-keys.ol-1.aria-label": {
-    "text": "Ejemplo de escala de prioridades",
+    "text": "Ejemplo de niveles de prioridad",
     "source_hash": "1c1bcbbf1789"
   },
   "home.why-keys.b-1": {
@@ -908,15 +908,15 @@
     "source_hash": "c5da4041ea8e"
   },
   "home.why-keys.span-1": {
-    "text": "siempre va primero",
+    "text": "se sirve siempre primero",
     "source_hash": "a2476d66a084"
   },
   "home.why-keys.b-2": {
-    "text": "Tus sesiones de código",
+    "text": "Tus sesiones de programación",
     "source_hash": "6c8888f1d6dc"
   },
   "home.why-keys.span-2": {
-    "text": "a continuación",
+    "text": "justo después",
     "source_hash": "01b7a9f0d1d4"
   },
   "home.why-keys.b-3": {
@@ -924,11 +924,11 @@
     "source_hash": "a76b6c1ae9be"
   },
   "home.why-keys.span-3": {
-    "text": "predeterminada",
+    "text": "predeterminado",
     "source_hash": "6d244abe081b"
   },
   "home.why-keys.b-4": {
-    "text": "Familia y hobbies",
+    "text": "Familia y proyectos personales",
     "source_hash": "724c4cb2e620"
   },
   "home.why-keys.span-4": {
@@ -936,19 +936,19 @@
     "source_hash": "2c1097258738"
   },
   "home.why-keys.b-5": {
-    "text": "Lotes nocturnos",
+    "text": "Tareas nocturnas por lotes",
     "source_hash": "96d527825b4b"
   },
   "home.why-keys.span-5": {
-    "text": "esperan inactividad",
+    "text": "cuando esté libre",
     "source_hash": "687891cb2f66"
   },
   "home.why-keys.p-3": {
-    "text": "Una escala de ejemplo, no una regla: tú eliges los números. Cada clave también se puede pausar (se rechazan las solicitudes nuevas mientras terminan las que están en curso), rotar con un periodo de gracia y restringir a los modelos que puede llamar.",
+    "text": "Es solo un ejemplo, no una regla: los niveles los decides tú. Cada clave también se puede pausar (se rechazan las solicitudes nuevas mientras terminan las que están en curso), rotar con un periodo de gracia y restringir a los modelos que puede usar.",
     "source_hash": "ca3034a912dc"
   },
   "home.why-keys.img-1.alt": {
-    "text": "La página de la clave de API coding-agent: una tarjeta Limits con el selector de prioridad de P0 a P9 y el texto Strict, a waiting P9 request always goes before a P8 one; un panel Usage de los últimos 7 días con 19 mil solicitudes, 1,5 mil millones de tokens de prompt y 440 mil tokens de respuesta; gráficos de tokens por minuto y solicitudes por minuto; debajo, paneles de espera en cola y latencia",
+    "text": "La página de la clave de API coding-agent: un panel Limits con el selector de prioridad de P0 a P9 y el texto Strict, a waiting P9 request always goes before a P8 one; un panel Usage de los últimos 7 días con 19 mil solicitudes, 1,5 mil millones de tokens de prompt y 440 mil tokens de respuesta; gráficos de tokens por minuto y de solicitudes por minuto; debajo, paneles de espera en cola y de latencia",
     "source_hash": "ae01537e1ee6"
   },
   "home.why-keys.figcaption-1": {
@@ -956,27 +956,27 @@
     "source_hash": "a098f63084b6"
   },
   "home.why-keys.img-2.alt": {
-    "text": "El gráfico de solicitudes de Stats de siete días, 28.906 solicitudes, cada marca coloreada según la clave que la envió: opencode-laptop, research-notebook, ui-refactor-agent, agent-sandbox, load-test-filler y demo-agent",
+    "text": "El gráfico de solicitudes de Stats de siete días, con 28.906 solicitudes, cada marca coloreada según la clave que la envió: opencode-laptop, research-notebook, ui-refactor-agent, agent-sandbox, load-test-filler y demo-agent",
     "source_hash": "9ae6aeafcf56"
   },
   "home.why-keys.figcaption-2": {
-    "text": "El gráfico de solicitudes de la página Stats: una marca por solicitud terminada, situada en el momento en que terminó y a la altura de su duración en escala logarítmica, con tamaño según los tokens que generó, forma según cómo terminó y color según la clave que la envió (su nombre, o la IP del cliente si no tiene clave). El color por clave se activa cuando dos o más claves comparten el equipo y ninguna tiene el 95 % de las solicitudes. La leyenda es un filtro: haz clic en una clave para ver solo sus solicitudes.",
+    "text": "El gráfico de solicitudes de la página Stats: una marca por solicitud terminada, situada en el momento en que terminó y a la altura de su duración en escala logarítmica, con tamaño según los tokens que generó, forma según cómo terminó y color según la clave que la envió (su nombre, o la IP del cliente si no tiene clave). El color por clave se activa cuando dos o más claves comparten la máquina y ninguna acumula el 95 % de las solicitudes. La leyenda funciona como filtro: haz clic en una clave para ver solo sus solicitudes.",
     "source_hash": "348b1b23d393"
   },
   "home.why-keys.p-4": {
-    "text": "Quién usa el equipo ahora mismo, y cómo, está en las mismas páginas: cada solicitud en curso con su clave, sesión y fase, una tabla por clave en la página Stats y los <a href=\"#why-stats\">paneles de Stats</a> para todo el host.",
+    "text": "Quién usa la máquina ahora mismo, y cómo, está en las mismas páginas: cada solicitud en curso con su clave, su sesión y su fase, una tabla por clave en la página Stats y los <a href=\"#why-stats\">paneles de Stats</a> para todo el host.",
     "source_hash": "b5718f9f8bb5"
   },
   "home.hw.h2-1": {
-    "text": "Tu hardware, sin rodeos: de un Mac a ocho B300.",
+    "text": "Tu hardware, tal como es: de un Mac a ocho B300.",
     "source_hash": "3f3225bbc711"
   },
   "home.hardware.p-1": {
-    "text": "La misma consola lee un M1 de 16&#8239;GB, dos tarjetas dispares debajo de un escritorio y un servidor NVSwitch de 8 × B300, y nombra el cuello de botella en lugar de diluirlo en un promedio: un enlace PCIe que se quedó en x4 de x16, enlaces NVLink inactivos, ECC que difiere entre tarjetas.",
+    "text": "La misma consola analiza un M1 de 16&#8239;GB, dos tarjetas dispares en un PC bajo la mesa y un servidor NVSwitch de 8 × B300, y señala el cuello de botella en lugar de diluirlo en un promedio: un enlace PCIe negociado a x4 en vez de x16, enlaces NVLink inactivos, ECC distinto entre tarjetas.",
     "source_hash": "f90e55953921"
   },
   "home.hardware.img-1.alt": {
-    "text": "Configuración del sistema en un servidor de 8 × B300: Intel Xeon 6776P, 3019&#8239;GiB de RAM, ocho paneles NVIDIA B300 SXM6, cada uno con 241 de 268,6&#8239;GiB en uso, Link Gen 6 x16 de x16, NVLink con 18 de 18 enlaces activos a 53,125&#8239;GB/s cada uno, ECC activado y un dibujo de la arquitectura del servidor con un NVSwitch unido a cada tarjeta",
+    "text": "Configuración del sistema en un servidor de 8 × B300: Intel Xeon 6776P, 3019&#8239;GiB de RAM, ocho paneles NVIDIA B300 SXM6, cada uno con 241 de 268,6&#8239;GiB en uso, Link Gen 6 x16 de x16, NVLink con 18 de 18 enlaces activos a 53,125&#8239;GB/s cada uno, ECC activado y un esquema de la arquitectura del servidor con un NVSwitch conectado a cada tarjeta",
     "source_hash": "60071766922d"
   },
   "home.hardware.figcaption-1": {
@@ -984,31 +984,31 @@
     "source_hash": "937079060820"
   },
   "home.hardware.img-2.alt": {
-    "text": "Dos GPU dispares: una NVIDIA RTX A4000 con un aviso rojo Reduced link width x4 de x16 y Link Gen 1 ahora, hasta Gen 3, junto a una Quadro RTX 5000 cuya arquitectura, VRAM, límite de potencia, enlace, NVLink y ECC aparecen marcados como differs; debajo, un dibujo de cómo llegan las tarjetas a la CPU por enlaces x4 y x16",
+    "text": "Dos GPU dispares: una NVIDIA RTX A4000 con un aviso rojo Reduced link width x4 de x16 y Link Gen 1 ahora, hasta Gen 3, junto a una Quadro RTX 5000 cuya arquitectura, VRAM, límite de potencia, enlace, NVLink y ECC aparecen marcados como differs; debajo, un esquema de cómo llegan las tarjetas a la CPU por enlaces x4 y x16",
     "source_hash": "6006e1039ec1"
   },
   "home.hardware.figcaption-2": {
-    "text": "Dos tarjetas compradas con años de diferencia: el enlace de la A4000 se quedó en x4 de x16 y aparece marcado en rojo; la arquitectura, el límite de potencia, NVLink (compatible, enlaces inactivos) y ECC de la Quadro aparecen marcados como <em>differs</em>. El dibujo muestra qué ranura es la estrecha.",
+    "text": "Dos tarjetas compradas con años de diferencia: el enlace de la A4000 funciona a x4 en vez de x16 y aparece marcado en rojo; la arquitectura, el límite de potencia, NVLink (compatible, enlaces inactivos) y ECC de la Quadro aparecen marcados como <em>differs</em>. El esquema muestra qué ranura es la estrecha.",
     "source_hash": "d67a36ee8dec"
   },
   "home.hardware.img-3.alt": {
-    "text": "Stats en el servidor de 8 × B300: VRAM 1932,1 de 2148,8&#8239;GiB, potencia de 1893&#8239;W sumada entre las tarjetas, uso de GPU y consumo eléctrico de la última hora, y tokens de prompt por segundo divididos en cacheados y calculados con un 93 % de aciertos de caché",
+    "text": "Stats en el servidor de 8 × B300: VRAM 1932,1 de 2148,8&#8239;GiB, potencia de 1893&#8239;W sumando todas las tarjetas, uso de GPU y consumo eléctrico de la última hora, y tokens de prompt por segundo divididos en servidos desde la caché y calculados, con un 93 % de aciertos de caché",
     "source_hash": "2b44277f55cd"
   },
   "home.hardware.figcaption-3": {
-    "text": "La misma página Stats en lo más alto de la gama: 1.932 de 2.149&#8239;GiB de VRAM, 1.893&#8239;W entre todas las tarjetas, un pico de 4.351&#8239;W en la hora y el 93 % de los tokens de prompt desde la caché.",
+    "text": "La misma página Stats en lo más alto de la gama: 1.932 de 2.149&#8239;GiB de VRAM, 1.893&#8239;W entre todas las tarjetas, un pico de 4.351&#8239;W en esa hora y el 93 % de los tokens de prompt servidos desde la caché.",
     "source_hash": "f3ceb6c33eb7"
   },
   "home.hardware.img-4.alt": {
-    "text": "La página del modelo mientras GLM-5.2 NVFP4 se carga en ocho B300: 9 min 17 s de unos 10 min 46 s habituales, pasos Start engine, Load weights 47 of 47, Compile kernels y Size KV cache terminados, Tune kernels en op 21 of 22, con gráficos de CPU y memoria de GPU y la última línea del registro",
+    "text": "La página del modelo mientras GLM-5.2 NVFP4 se carga en ocho B300: a los 9 min 17 s de unos 10 min 46 s habituales, con los pasos Start engine, Load weights 47 of 47, Compile kernels y Size KV cache terminados y Tune kernels en op 21 of 22, más gráficos de CPU y memoria de GPU y la última línea del registro",
     "source_hash": "c1394a12d331"
   },
   "home.hardware.figcaption-4": {
-    "text": "Una carga de 10 minutos, paso a paso: GLM-5.2 NVFP4 en ocho B300, 9 min 17 s de unos 10 min 46 s habituales, nada en rojo mientras siga avanzando.",
+    "text": "Una carga de 10 minutos, paso a paso: GLM-5.2 NVFP4 en ocho B300, a los 9 min 17 s de unos 10 min 46 s habituales, sin nada en rojo mientras siga avanzando.",
     "source_hash": "cddfa5475f94"
   },
   "home.hardware.p-2": {
-    "text": "Lo que muestra cada panel por tarjeta: la temperatura frente a su propio punto de limitación térmica, la potencia frente a su límite, frecuencias, ventilador, la generación y el ancho PCIe negociados en ese momento, ECC y NVLink cuando la tarjeta los tiene, y el proceso que ocupa la memoria. El dibujo de interconexión se lee de <code>nvidia-smi topo -m</code>. En un Mac: el uso de GPU y el presupuesto de memoria que informa Metal, sin potencia. Y el motor que hay debajo de todo se vigila con su propio <code>/health</code>, no con su tabla de procesos: un motor muerto bajo un contenedor vivo se recarga y se conservan las pruebas.",
+    "text": "Lo que muestra cada panel por tarjeta: la temperatura frente a su propio umbral de limitación térmica, la potencia frente a su límite, frecuencias, ventilador, la generación y el ancho PCIe negociados en ese momento, ECC y NVLink si la tarjeta los tiene, y el proceso que ocupa la memoria. El esquema de interconexión se obtiene de <code>nvidia-smi topo -m</code>. En un Mac: el uso de GPU y el presupuesto de memoria que indica Metal, sin potencia. Y el motor que hay debajo de todo se vigila con su propio <code>/health</code>, no con la tabla de procesos: si el motor se cae mientras su proceso envolvente sigue vivo, se recarga y se conservan los datos de diagnóstico.",
     "source_hash": "5a4e8569c432"
   },
   "home.features.h2-1": {
@@ -1020,11 +1020,11 @@
     "source_hash": "cbdfccb24fcc"
   },
   "home.features.h3-1": {
-    "text": "Cada tarjeta informa por sí misma.",
+    "text": "Cada tarjeta, con sus propios datos.",
     "source_hash": "65fb2dd50a89"
   },
   "home.features.p-2": {
-    "text": "Uso, temperatura frente al punto de limitación térmica de esa tarjeta, potencia frente a su límite, VRAM, frecuencias, enlace PCIe y qué proceso ocupa la memoria. No un promedio de todo el equipo.",
+    "text": "Uso, temperatura frente al umbral de limitación térmica de esa tarjeta, potencia frente a su límite, VRAM, frecuencias, enlace PCIe y qué proceso ocupa la memoria. Nada de promedios de toda la máquina.",
     "source_hash": "1bea9211a232"
   },
   "home.features.img-1.alt": {
@@ -1036,11 +1036,11 @@
     "source_hash": "04423fe4175f"
   },
   "home.features.h3-2": {
-    "text": "Mira lo que hace cada agente ahora mismo.",
+    "text": "Mira qué está haciendo cada agente ahora mismo.",
     "source_hash": "e8070826221c"
   },
   "home.features.p-4": {
-    "text": "Cada solicitud con su clave, su sesión y su fase: en cola, precálculo, pensando, llamada a herramienta, respondiendo. Cuánto de cada prompt vino de la caché de prefijos, medido por solicitud.",
+    "text": "Cada solicitud con su clave, su sesión y su fase: en cola, prefill, pensando, llamada a herramienta, respondiendo. Qué parte de cada prompt salió de la caché de prefijos, medido por solicitud.",
     "source_hash": "49c151ca7020"
   },
   "home.features.img-2.alt": {
@@ -1056,7 +1056,7 @@
     "source_hash": "ba721e4421e2"
   },
   "home.features.p-6": {
-    "text": "Connect escribe la configuración de cada herramienta con la dirección de este warden, una clave y un modelo cargado, comprueba los requisitos con lo que está realmente cargado y envía una solicitud de prueba.",
+    "text": "Connect genera la configuración de cada cliente con la dirección de este warden, una clave y un modelo cargado, comprueba los requisitos con lo que está cargado de verdad y envía una solicitud de prueba.",
     "source_hash": "916edc5f7b60"
   },
   "home.features.img-3.alt": {
@@ -1068,7 +1068,7 @@
     "source_hash": "3317e70f46b3"
   },
   "home.open-source.p-1": {
-    "text": "LM Warden es Apache-2.0 en <a href=\"{{repo}}\" rel=\"noopener\">GitHub</a>: el script de instalación y el archivo Compose son toda la implementación, y puedes leer ambos. Sin cuenta, sin comprobación de licencia, sin telemetría. vLLM, llama.cpp y MLX son proyectos upstream que ejecutamos sin modificar.",
+    "text": "LM Warden tiene licencia Apache-2.0 y está en <a href=\"{{repo}}\" rel=\"noopener\">GitHub</a>: el script de instalación y el archivo Compose son toda la implementación, y puedes leer ambos. Sin cuenta, sin comprobación de licencia y sin telemetría. vLLM, llama.cpp y MLX son proyectos upstream que ejecutamos sin modificar.",
     "source_hash": "ba01b625fe70"
   },
   "home.open-source.h2-1": {
@@ -1076,7 +1076,7 @@
     "source_hash": "19dae78c985d"
   },
   "home.open-source.p-2": {
-    "text": "Un port de mlx-lm de Apple de Python a Rust sobre los bindings oficiales mlx-c de Apple, desarrollado y mantenido por el equipo de LM Warden como proyecto de código abierto independiente, que LM Warden usará como tercer motor en Mac y que con el tiempo sustituirá al motor mlx-lm de Python, que hoy es la mayor parte de la descarga para Mac. No oficial, sin afiliación con Apple.",
+    "text": "Una adaptación de mlx-lm de Apple de Python a Rust sobre los bindings oficiales mlx-c de Apple, desarrollada y mantenida por el equipo de LM Warden como proyecto de código abierto independiente. LM Warden la usará como tercer motor en Mac y, con el tiempo, sustituirá al motor mlx-lm de Python, que hoy ocupa la mayor parte de la descarga para Mac. No oficial y sin afiliación con Apple.",
     "source_hash": "598b6f2514fd"
   },
   "home.lightbox.button-1": {
@@ -1088,7 +1088,7 @@
     "source_hash": "2d3b2f52a3dd"
   },
   "chrome.footer.about": {
-    "text": "Software libre bajo la Apache License 2.0, del equipo de <a href=\"https://podwarden.com\" rel=\"noopener\">PodWarden</a>. vLLM, llama.cpp y MLX son proyectos upstream que ejecutamos sin modificar; no tenemos afiliación con ellos.",
+    "text": "Software libre con licencia Apache License 2.0, creado por el equipo de <a href=\"https://podwarden.com\" rel=\"noopener\">PodWarden</a>. vLLM, llama.cpp y MLX son proyectos upstream que ejecutamos sin modificar; no tenemos ninguna relación con ellos.",
     "source_hash": "7f11ddd74f30"
   },
   "chrome.footer.source": {

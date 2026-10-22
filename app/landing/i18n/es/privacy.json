@@ -1,0 +1,66 @@
+{
+  "privacy.meta.title": {
+    "text": "Privacidad y cookies | LM Warden",
+    "source_hash": "ec9b140b1cc8"
+  },
+  "privacy.meta.description": {
+    "text": "Qué mide este sitio con Google Analytics, cuándo pregunta antes y cómo cambiar tu elección.",
+    "source_hash": "de30b21dbdc3"
+  },
+  "privacy.ads": {
+    "text": " Google Ads mide si los anuncios atraen visitas a este sitio, y sus cookies publicitarias respetan la misma elección de consentimiento.",
+    "source_hash": "9b2a078e8838"
+  },
+  "privacy.contact-official": {
+    "text": " Escribe a <a href=\"mailto:info@podwarden.com\">info@podwarden.com</a> con cualquier pregunta sobre este sitio.",
+    "source_hash": "eebc1d21c39b"
+  },
+  "privacy.contact-operator": {
+    "text": " Las preguntas sobre este sitio deben dirigirse a su operador.",
+    "source_hash": "914390fc9adc"
+  },
+  "privacy.privacy.h1-1": {
+    "text": "Privacidad y cookies.",
+    "source_hash": "f940c0a0e353"
+  },
+  "privacy.p-1": {
+    "text": "Este sitio web lo sirve LM Warden, autoalojado por el operador de este sitio. No tiene cuentas, ni formularios, ni comentarios, así que los únicos datos personales que puede tratar son los que revela la propia visita.",
+    "source_hash": "b3509e8a2750"
+  },
+  "privacy.h2-1": {
+    "text": "Qué se mide",
+    "source_hash": "dd9acabe8622"
+  },
+  "privacy.p-2": {
+    "text": "El operador de este sitio usa Google Analytics 4 para contar visitas y ver qué páginas se leen.{{privacy_ads}} Se registran tres acciones: copiar el comando de instalación y seguir un enlace a GitHub o a PodWarden.",
+    "source_hash": "8de08e36eb6d"
+  },
+  "privacy.h2-2": {
+    "text": "Cuándo se te pide permiso",
+    "source_hash": "910b22425fed"
+  },
+  "privacy.p-3": {
+    "text": "En tu primera visita, un banner te pregunta si permites las cookies de análisis. Mientras no elijas, y si las rechazas, la etiqueta de Google funciona en su modo de consentimiento: no instala cookies y solo envía a Google señales anónimas, sin cookies, que no permiten identificarte entre visitas. Si aceptas, Google instala sus cookies de análisis (llamadas <code>_ga</code> y similares), que duran hasta dos años.",
+    "source_hash": "9405f2778a61"
+  },
+  "privacy.h2-3": {
+    "text": "Cambiar de opinión",
+    "source_hash": "3aa95e4c746f"
+  },
+  "privacy.p-4": {
+    "text": "Usa la <a href=\"/privacy\" data-consent-open>configuración de cookies</a> para volver a ver el banner, o borra los datos de este sitio en tu navegador. Tu elección se guarda en el almacenamiento local del navegador con el nombre <code>lmw-consent</code>.",
+    "source_hash": "319e165f9018"
+  },
+  "privacy.h2-4": {
+    "text": "Quién trata los datos",
+    "source_hash": "795028f063d5"
+  },
+  "privacy.p-5": {
+    "text": "Google LLC trata los datos de medición según sus propias condiciones; consulta <a href=\"https://policies.google.com/technologies/partner-sites\" rel=\"noopener\">cómo usa Google la información de los sitios que usan sus servicios</a>.{{privacy_contact}}",
+    "source_hash": "112b969b0be0"
+  },
+  "privacy.p-6": {
+    "text": "El software LM Warden en sí no envía nada a sus autores ni a Google. Solo este sitio web público, en el que su operador ha introducido un ID de seguimiento, carga la etiqueta de Google.",
+    "source_hash": "0d38cc82e109"
+  }
+}

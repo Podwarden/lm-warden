@@ -1,0 +1,198 @@
+{
+  "gpu-monitoring.meta.title": {
+    "text": "面向 vLLM 的逐卡 GPU 监控 | LM Warden",
+    "source_hash": "d27814ed8b63"
+  },
+  "gpu-monitoring.meta.description": {
+    "text": "在 Linux 上，每块 NVIDIA 显卡都有自己的面板：温度对照其降频温度，功耗对照其上限，PCIe 链路，以及每个进行中的请求。",
+    "source_hash": "507736e1bea9"
+  },
+  "gpu-monitoring.box.h1-1": {
+    "text": "GPU 监控：这些数据来自哪台主机。",
+    "source_hash": "cc0f4c9bbf2b"
+  },
+  "gpu-monitoring.p-1": {
+    "text": "除非图注另有说明，本页的读数都来自同一台工作站：四块 RTX&nbsp;A4000，一个模型跨全部四块卡加载，运行着我们自己的测试流量。这些是我们录制图&nbsp;1 和图&nbsp;5 时控制台显示的数字。下文的适配测试还用到了一块 Quadro&nbsp;RTX&nbsp;5000，并会注明。",
+    "source_hash": "a9ca4640a6e7"
+  },
+  "gpu-monitoring.p-2": {
+    "text": "逐卡面板读取的是 NVIDIA 的驱动，因此属于 Linux 安装的一部分。在 Apple 芯片 Mac 上，<a href=\"/#p-mac\">Mac 应用（测试版）</a>显示 GPU 使用率和 Metal 报告的内存预算，没有功耗读数。",
+    "source_hash": "e6e25a4491ad"
+  },
+  "gpu-monitoring.dt-1": {
+    "text": "GPU",
+    "source_hash": "8f0474fb0c5b"
+  },
+  "gpu-monitoring.dd-1": {
+    "text": "4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000，每块 16&#8239;GiB（Ampere，计算能力&nbsp;8.6）",
+    "source_hash": "065609784858"
+  },
+  "gpu-monitoring.dt-2": {
+    "text": "已用 VRAM",
+    "source_hash": "60de0ad7eb70"
+  },
+  "gpu-monitoring.dd-2": {
+    "text": "59.4/64.0&#8239;GiB，一个模型跨全部四块卡",
+    "source_hash": "2a58556c9272"
+  },
+  "gpu-monitoring.dd-3": {
+    "text": "每块卡 Gen&nbsp;4 x16",
+    "source_hash": "a85ab5eb706a"
+  },
+  "gpu-monitoring.dt-3": {
+    "text": "驱动",
+    "source_hash": "9fe4c68ec20d"
+  },
+  "gpu-monitoring.dd-4": {
+    "text": "<code>610.57.04</code>，CUDA&nbsp;13.3",
+    "source_hash": "a041ea9e5251"
+  },
+  "gpu-monitoring.caption-1": {
+    "text": "GPU 负载、功耗和 token，读自图&nbsp;1",
+    "source_hash": "db678a93d309"
+  },
+  "gpu-monitoring.th-1": {
+    "text": "读数",
+    "source_hash": "463816d07097"
+  },
+  "gpu-monitoring.th-2": {
+    "text": "截图时",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.th-3": {
+    "text": "24&#8239;h 繁忙时中位数",
+    "source_hash": "af088ec66533"
+  },
+  "gpu-monitoring.th-4": {
+    "text": "24&#8239;h 峰值",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-5": {
+    "text": "GPU 利用率，最忙的一块卡&nbsp;(%)",
+    "source_hash": "9739b22b0dce"
+  },
+  "gpu-monitoring.col-capture.data-h": {
+    "text": "截图时",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.col-median.data-h": {
+    "text": "24&#8239;h 中位数",
+    "source_hash": "e6245b901702"
+  },
+  "gpu-monitoring.col-peak.data-h": {
+    "text": "24&#8239;h 峰值",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-6": {
+    "text": "GPU 功耗，四块卡合计&nbsp;(W)",
+    "source_hash": "6554b6cbd5f4"
+  },
+  "gpu-monitoring.th-7": {
+    "text": "每分钟 token 数（9 月 23 日的面板）",
+    "source_hash": "eb7b7fd32e11"
+  },
+  "gpu-monitoring.span-1": {
+    "text": "未显示",
+    "source_hash": "0bedd95628dd"
+  },
+  "gpu-monitoring.td-7": {
+    "text": "190k",
+    "source_hash": "eaa6d59dc9be"
+  },
+  "gpu-monitoring.td-8": {
+    "text": "880k",
+    "source_hash": "8678af14d6a2"
+  },
+  "gpu-monitoring.p-3": {
+    "text": "你的数字会不一样。这正是要测量它们的原因。token 这一行的数据来自改用每秒 token 数之前；统计面板现在绘制的是每秒 token 数，而这些数字来自 9 月 23 日在旧的每分钟面板上的截图。",
+    "source_hash": "fc86e0160504"
+  },
+  "gpu-monitoring.cards.h2-1": {
+    "text": "测不到的数值会显示为“not reported”。",
+    "source_hash": "036e83c1af39"
+  },
+  "gpu-monitoring.p-4": {
+    "text": "大多数 GPU 监控面板会把四块卡平均成一条线，并把缺失的值画成&nbsp;0。这里则给每块卡一个自己的面板：温度对照驱动报告的降频温度，功耗对照该卡自身的功耗上限，频率、风扇、当前协商的 PCIe 链路，以及显卡具备时的 ECC 和 NVLink。相隔十八个月买的两块卡仍然是两块卡，驱动没有提供的值会标为缺失，而不是画成零。",
+    "source_hash": "f87275635f5c"
+  },
+  "gpu-monitoring.img-1.alt": {
+    "text": "负载下 Stats 页面的四个 GPU 面板，每块 RTX A4000 一个：利用率 99 到 100%，处于功耗状态 P2，温度 79 到 94 度，降频温度标记为 100 度，三块卡上有热降频警告，功耗 134 到 138 瓦，上限 140 瓦，另有频率、驱动和 CUDA 版本、PCIe 链路、NVLink 和 ECC",
+    "source_hash": "55b551e38c61"
+  },
+  "gpu-monitoring.span-2": {
+    "text": "降频温度取自驱动，不是猜测",
+    "source_hash": "b3bd726e07ac"
+  },
+  "gpu-monitoring.span-3": {
+    "text": "驱动报告的降频原因",
+    "source_hash": "7be6f5cf26b2"
+  },
+  "gpu-monitoring.span-4": {
+    "text": "功耗对照它自己的 140&#8239;W 上限",
+    "source_hash": "ef8ca2bcafce"
+  },
+  "gpu-monitoring.span-5": {
+    "text": "NVLink 和 ECC，以显卡报告为准",
+    "source_hash": "c4d22dc73625"
+  },
+  "gpu-monitoring.figcaption-1": {
+    "text": "<b>图&nbsp;5</b>同一个 Stats 页面上的四个 GPU 面板，原尺寸，摄于同一负载期间。每块卡都处于 99% 或 100%，功耗状态 P2，其中三块在 90 到 94&#8239;°C，被驱动限制在其最高频率的 76% 到 84% 之间。<span class=\"scroll-hint\">左右滚动图片可查看全部四个面板。</span>",
+    "source_hash": "7aa9957f224d"
+  },
+  "gpu-monitoring.caption-2": {
+    "text": "各项数据的读取范围",
+    "source_hash": "fd76edd0a9d5"
+  },
+  "gpu-monitoring.th-8": {
+    "text": "每块卡",
+    "source_hash": "b596b0114ded"
+  },
+  "gpu-monitoring.td-9": {
+    "text": "温度和降频温度、功耗及其上限、核心和显存频率、风扇、PCIe 代数和宽度、ECC、NVLink，以及使用这块卡的引擎进程",
+    "source_hash": "1f5a45a29bdc"
+  },
+  "gpu-monitoring.th-9": {
+    "text": "每台主机",
+    "source_hash": "fd8f8648eb41"
+  },
+  "gpu-monitoring.td-10": {
+    "text": "已用 VRAM、GPU 利用率（最忙的一块卡）、功耗（各卡之和）和每秒 token 数",
+    "source_hash": "d8e9193ca58e"
+  },
+  "gpu-monitoring.th-10": {
+    "text": "每个请求",
+    "source_hash": "c01f2094044d"
+  },
+  "gpu-monitoring.td-11": {
+    "text": "首 token 时间、token 间延迟和总耗时，在代理层测量，两种引擎采用相同方式",
+    "source_hash": "92c8d3b9a423"
+  },
+  "gpu-monitoring.inflight.h2-1": {
+    "text": "每个请求在等什么。",
+    "source_hash": "87e975182d2c"
+  },
+  "gpu-monitoring.p-5": {
+    "text": "Stats 页面列出每个进行中的请求，附带客户端的会话以及请求所处的生命周期阶段：在 warden 排队、预填充（引擎读取提示词）、思考、编写工具调用或作答。一个徽标给出提示词中可能位于副本缓存里的比例。如果预填充耗时超过这台主机学到的预填充速率所预测的时间，会说明它可能在等什么：排在同一副本上的其他提示词后面、缓存可能已被逐出，或者变慢的原因 warden 无从判断。会话来自每个工具本来就会发送的 ID：Claude Code、Codex、OpenCode 和 pi 开箱即用，Hermes 和 Aider 只需一行设置。",
+    "source_hash": "4d6984e02a57"
+  },
+  "gpu-monitoring.img-2.alt": {
+    "text": "In flight 表格中有 14 个活动请求，全部来自同一客户端地址的密钥 agent-farm。列：令牌、客户端 IP、会话、模型、阶段、上下文窗口和已用时间。六行处于工具调用或作答阶段，八行处于预填充，大多带有估计提示词缓存比例为 94% 到 100% 的徽标；三个预填充带有 evict? 徽标，两个带有沙漏徽标 1·r0 和 1·r4。表格下方：预填充模型 439 tok/s，从 1132 个请求中学得，缓存估计 57% 的时候正确，以及按空闲间隔划分的命中率：空闲 30 秒以内为 68%，5 到 15 分钟后降至 18%。",
+    "source_hash": "850b1ebebfcc"
+  },
+  "gpu-monitoring.span-6": {
+    "text": "还没有 token，缓存可能已被逐出",
+    "source_hash": "807aafa43674"
+  },
+  "gpu-monitoring.span-7": {
+    "text": "副本 4 上有一个提示词排在它前面",
+    "source_hash": "c6220dc860be"
+  },
+  "gpu-monitoring.figcaption-2": {
+    "text": "<b>图&nbsp;12</b>七卡主机上十四个进行中的请求。表格下方是 warden 从已完成请求中学到的内容：这台主机每个请求每秒预填充约 439 个 token，其缓存估计 57% 的时候正确，空闲超过两分钟的对话通常会发现缓存已经没了（2 到 5 分钟后命中率为 20%）。密钥名称为化名，地址是文档专用地址。宽度小于 768 像素时，表格会变成卡片列表。记录于 2026 年 10 月 5 日。<span class=\"scroll-hint\">左右滚动图片可查看所有列。</span>",
+    "source_hash": "cb4966892bbc"
+  },
+  "gpu-monitoring.p-6": {
+    "text": "相关内容：<a href=\"/cache-aware-routing\">缓存感知路由</a> · <a href=\"/api-keys\">API 密钥</a> · <a href=\"/coding-agents\">编程智能体</a>",
+    "source_hash": "1669f0782d97"
+  }
+}

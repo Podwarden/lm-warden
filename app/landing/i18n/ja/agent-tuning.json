@@ -1,0 +1,154 @@
+{
+  "agent-tuning.meta.title": {
+    "text": "コーディング エージェントにモデルを選ばせる | LM Warden",
+    "source_hash": "c73577a9e93d"
+  },
+  "agent-tuning.meta.description": {
+    "text": "Claude Code や Codex に管理者トークンを渡せば、GPU に合うモデル、エンジン、フラグをベンチマークしながら選びます。プロンプト付き。",
+    "source_hash": "42f223176a20"
+  },
+  "agent-tuning.jsonld.name": {
+    "text": "コーディング エージェントにモデルを選ばせて調整する",
+    "source_hash": "d38cc5b44b81"
+  },
+  "agent-tuning.jsonld.step-1": {
+    "text": "GPU ホストに LM Warden をインストールする",
+    "source_hash": "ea9ef62b2144"
+  },
+  "agent-tuning.jsonld.step-2": {
+    "text": "管理者トークンを発行する",
+    "source_hash": "02b6962c341f"
+  },
+  "agent-tuning.jsonld.step-3": {
+    "text": "Claude Code または Codex を接続する",
+    "source_hash": "23149cd56616"
+  },
+  "agent-tuning.jsonld.step-4": {
+    "text": "チューニング用のプロンプトを貼り付ける",
+    "source_hash": "2580a4baddda"
+  },
+  "agent-tuning.tuning.h1-1": {
+    "text": "コーディング エージェントにモデルを選ばせましょう。",
+    "source_hash": "2df23e8f7918"
+  },
+  "agent-tuning.p-1": {
+    "text": "カードに合うモデルを選ぶということは、量子化、エンジン (vLLM か llama.cpp か)、GPU 間での分割方法、与えるコンテキストの量、KV キャッシュの型、投機的デコードが効くかどうかを選ぶということです。推測するたびにダウンロードと読み込みが一回ずつかかります。コンソールが行うことはすべて API 呼び出しなので、ほかの作業をしている間にコーディング エージェントがこの探索を代わりに行えます。",
+    "source_hash": "47320716621f"
+  },
+  "agent-tuning.h2-1": {
+    "text": "三つの手順でセットアップ",
+    "source_hash": "2a300da26a75"
+  },
+  "agent-tuning.li-1": {
+    "text": "GPU ホストに <strong>LM Warden をインストール</strong>し (コマンドは<a href=\"/#p-linux\">ダウンロードとインストール</a>にあります)、セットアップ ウィザードを完了します。",
+    "source_hash": "45b78d2f8e02"
+  },
+  "agent-tuning.li-2": {
+    "text": "Settings → Access Tokens で、有効期限 30 日の<strong>管理者トークンを発行</strong>します。エージェントが使うシェルで、それを <code>VW_ADMIN_TOKEN</code>、warden のアドレスを <code>W</code> としてエクスポートします。",
+    "source_hash": "a316c0dc85b5"
+  },
+  "agent-tuning.li-3": {
+    "text": "<strong>エージェントを起動</strong>します。<a href=\"/coding-agents/claude-code\">Claude Code</a>、<a href=\"/coding-agents/codex-cli\">Codex&nbsp;CLI</a> など、シェル コマンドを実行できるエージェントを使います。この作業にはホストされたモデルを使ってもかまいません。チューニングの対象は、カード上のモデルです。",
+    "source_hash": "45f30ab355a5"
+  },
+  "agent-tuning.h2-2": {
+    "text": "エージェントが使うもの",
+    "source_hash": "676f21721809"
+  },
+  "agent-tuning.th-1": {
+    "text": "手順",
+    "source_hash": "8e6a6cca7aae"
+  },
+  "agent-tuning.th-2": {
+    "text": "エンドポイント",
+    "source_hash": "3df9726c68ba"
+  },
+  "agent-tuning.th-3": {
+    "text": "カードを確認する",
+    "source_hash": "982d52862acc"
+  },
+  "agent-tuning.th-4": {
+    "text": "ダウンロード前にモデルが収まるか確認する",
+    "source_hash": "966e8813028c"
+  },
+  "agent-tuning.th-5": {
+    "text": "登録し、初期設定を得る",
+    "source_hash": "6fb4184c2d5a"
+  },
+  "agent-tuning.th-6": {
+    "text": "取得して読み込む",
+    "source_hash": "a632bbe8e8aa"
+  },
+  "agent-tuning.th-7": {
+    "text": "実際のコンテキスト上限を測定する",
+    "source_hash": "4c3b52acd644"
+  },
+  "agent-tuning.td-1": {
+    "text": "<code>POST /api/models/{model_id}/stress</code>、続いて <code>POST /api/models/{model_id}/stress/apply</code>",
+    "source_hash": "51491b72ded1"
+  },
+  "agent-tuning.th-8": {
+    "text": "warden の数値を読む",
+    "source_hash": "ead961a24dc4"
+  },
+  "agent-tuning.th-9": {
+    "text": "テスト トラフィックを送る",
+    "source_hash": "70356d606d14"
+  },
+  "agent-tuning.td-2": {
+    "text": "<code>POST /api/tokens</code> で得た推論用キーで <code>/v1/chat/completions</code> に",
+    "source_hash": "9a72b9938ec6"
+  },
+  "agent-tuning.p-2": {
+    "text": "エージェントは最初に<a href=\"/agent-guide.md\">エージェント ガイド</a>を読みます。言語モデル向けに書かれた、これらの呼び出しと避けるべき誤りの短い説明です。",
+    "source_hash": "c3bff7c1a9d1"
+  },
+  "agent-tuning.h2-3": {
+    "text": "貼り付けるプロンプト",
+    "source_hash": "b273921d2e33"
+  },
+  "agent-tuning.p-3": {
+    "text": "<code>https://your-warden</code> を warden のアドレスに、大文字の名前を検討中のモデルに置き換えてください。",
+    "source_hash": "a74bbbec589e"
+  },
+  "agent-tuning.h3-1": {
+    "text": "1. ハードウェアを調べてモデルを絞り込む",
+    "source_hash": "c1ebd00d0f72"
+  },
+  "agent-tuning.h3-2": {
+    "text": "2. 一つのモデルのエンジンとレイアウトを選ぶ",
+    "source_hash": "0cc405dce7f8"
+  },
+  "agent-tuning.h3-3": {
+    "text": "3. 実際の限界を見つけて適用する",
+    "source_hash": "906f71857682"
+  },
+  "agent-tuning.h3-4": {
+    "text": "4. 自分のワークロードで二つの候補を比較する",
+    "source_hash": "d6e1c2c66dff"
+  },
+  "agent-tuning.h2-4": {
+    "text": "始める前に",
+    "source_hash": "74e492d5d0df"
+  },
+  "agent-tuning.li-4": {
+    "text": "管理者トークンは、モデル、キー、設定を含め、warden に対する完全な管理者権限を持ちます。より狭いスコープはまだありません。有効期限は短くしてください。",
+    "source_hash": "4a1f64b32132"
+  },
+  "agent-tuning.li-5": {
+    "text": "ストレス テストは、限界を見つけるためにわざとエンジンをクラッシュさせます。これらのプロンプトは、ほかの誰も頼っていない warden で実行してください。",
+    "source_hash": "e127f19fe7da"
+  },
+  "agent-tuning.li-6": {
+    "text": "ダウンロードは大容量です。プロンプトは取得前に収まるかを確認するようエージェントに求めますが、ディスクには注意してください。",
+    "source_hash": "dabc7d95f036"
+  },
+  "agent-tuning.li-7": {
+    "text": "作業が終わったら、Settings → Access Tokens で管理者トークンを失効させてください。",
+    "source_hash": "cc61ece33dc3"
+  },
+  "agent-tuning.p-4": {
+    "text": "関連：<a href=\"/coding-agents\">コーディング エージェント</a> · <a href=\"/gpu-monitoring\">GPU 監視</a> · <a href=\"/faq\">よくある質問</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}

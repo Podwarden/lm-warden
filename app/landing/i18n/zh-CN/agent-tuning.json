@@ -1,0 +1,154 @@
+{
+  "agent-tuning.meta.title": {
+    "text": "让你的编程智能体选择模型 | LM Warden",
+    "source_hash": "c73577a9e93d"
+  },
+  "agent-tuning.meta.description": {
+    "text": "给 Claude Code 或 Codex 一个管理员令牌，它会为你的 GPU 选择模型、引擎和参数，边做边跑基准测试。附带提示词。",
+    "source_hash": "42f223176a20"
+  },
+  "agent-tuning.jsonld.name": {
+    "text": "让你的编程智能体选择并调优模型",
+    "source_hash": "d38cc5b44b81"
+  },
+  "agent-tuning.jsonld.step-1": {
+    "text": "在 GPU 主机上安装 LM Warden",
+    "source_hash": "ea9ef62b2144"
+  },
+  "agent-tuning.jsonld.step-2": {
+    "text": "签发管理员令牌",
+    "source_hash": "02b6962c341f"
+  },
+  "agent-tuning.jsonld.step-3": {
+    "text": "连接 Claude Code 或 Codex",
+    "source_hash": "23149cd56616"
+  },
+  "agent-tuning.jsonld.step-4": {
+    "text": "粘贴一段调优提示词",
+    "source_hash": "2580a4baddda"
+  },
+  "agent-tuning.tuning.h1-1": {
+    "text": "让你的编程智能体选择模型。",
+    "source_hash": "2df23e8f7918"
+  },
+  "agent-tuning.p-1": {
+    "text": "为你的显卡选择模型，意味着要选择量化方式、引擎（vLLM 或 llama.cpp）、如何在多块 GPU 之间切分、给它多少上下文、KV 缓存类型，以及推测解码是否有帮助。每一次猜测都要付出一次下载和一次加载的代价。编程智能体可以在你做别的事情时替你完成这项搜索，因为控制台所做的一切都是 API 调用。",
+    "source_hash": "47320716621f"
+  },
+  "agent-tuning.h2-1": {
+    "text": "三步完成设置",
+    "source_hash": "2a300da26a75"
+  },
+  "agent-tuning.li-1": {
+    "text": "在 GPU 主机上<strong>安装 LM Warden</strong>（命令在<a href=\"/#p-linux\">下载并安装</a>中），并完成设置向导。",
+    "source_hash": "45b78d2f8e02"
+  },
+  "agent-tuning.li-2": {
+    "text": "在 Settings → Access Tokens 中<strong>签发一个管理员令牌</strong>，有效期 30 天。在智能体使用的 shell 中把它导出为 <code>VW_ADMIN_TOKEN</code>，并把 warden 的地址导出为 <code>W</code>。",
+    "source_hash": "a316c0dc85b5"
+  },
+  "agent-tuning.li-3": {
+    "text": "<strong>启动你的智能体</strong>：<a href=\"/coding-agents/claude-code\">Claude Code</a>、<a href=\"/coding-agents/codex-cli\">Codex&nbsp;CLI</a> 或其他能运行 shell 命令的智能体。它做这项工作时可以使用托管模型；它要调优的是你显卡上的模型。",
+    "source_hash": "45f30ab355a5"
+  },
+  "agent-tuning.h2-2": {
+    "text": "智能体会用到哪些接口",
+    "source_hash": "676f21721809"
+  },
+  "agent-tuning.th-1": {
+    "text": "步骤",
+    "source_hash": "8e6a6cca7aae"
+  },
+  "agent-tuning.th-2": {
+    "text": "端点",
+    "source_hash": "3df9726c68ba"
+  },
+  "agent-tuning.th-3": {
+    "text": "查看显卡",
+    "source_hash": "982d52862acc"
+  },
+  "agent-tuning.th-4": {
+    "text": "下载前检查模型是否放得下",
+    "source_hash": "966e8813028c"
+  },
+  "agent-tuning.th-5": {
+    "text": "注册，获取初始配置",
+    "source_hash": "6fb4184c2d5a"
+  },
+  "agent-tuning.th-6": {
+    "text": "拉取并加载",
+    "source_hash": "a632bbe8e8aa"
+  },
+  "agent-tuning.th-7": {
+    "text": "测量真实的上下文上限",
+    "source_hash": "4c3b52acd644"
+  },
+  "agent-tuning.td-1": {
+    "text": "<code>POST /api/models/{model_id}/stress</code>，然后 <code>POST /api/models/{model_id}/stress/apply</code>",
+    "source_hash": "51491b72ded1"
+  },
+  "agent-tuning.th-8": {
+    "text": "读取 warden 的数据",
+    "source_hash": "ead961a24dc4"
+  },
+  "agent-tuning.th-9": {
+    "text": "发送测试流量",
+    "source_hash": "70356d606d14"
+  },
+  "agent-tuning.td-2": {
+    "text": "来自 <code>POST /api/tokens</code> 的推理密钥，用于 <code>/v1/chat/completions</code>",
+    "source_hash": "9a72b9938ec6"
+  },
+  "agent-tuning.p-2": {
+    "text": "智能体会先阅读<a href=\"/agent-guide.md\">智能体指南</a>：这是一份为语言模型编写的简短说明，介绍这些调用以及要避免的错误。",
+    "source_hash": "c3bff7c1a9d1"
+  },
+  "agent-tuning.h2-3": {
+    "text": "可直接粘贴的提示词",
+    "source_hash": "b273921d2e33"
+  },
+  "agent-tuning.p-3": {
+    "text": "把 <code>https://your-warden</code> 替换为你的 warden 地址，把大写的名称替换为你想用的模型。",
+    "source_hash": "a74bbbec589e"
+  },
+  "agent-tuning.h3-1": {
+    "text": "1. 盘点硬件并筛选模型",
+    "source_hash": "c1ebd00d0f72"
+  },
+  "agent-tuning.h3-2": {
+    "text": "2. 为一个模型选择引擎和切分方式",
+    "source_hash": "0cc405dce7f8"
+  },
+  "agent-tuning.h3-3": {
+    "text": "3. 找出真实上限并应用",
+    "source_hash": "906f71857682"
+  },
+  "agent-tuning.h3-4": {
+    "text": "4. 在我的工作负载上比较两个候选模型",
+    "source_hash": "d6e1c2c66dff"
+  },
+  "agent-tuning.h2-4": {
+    "text": "开始之前",
+    "source_hash": "74e492d5d0df"
+  },
+  "agent-tuning.li-4": {
+    "text": "管理员令牌拥有对 warden 的完整管理权限：模型、密钥和设置。目前还没有更细的权限范围。请给它设置较短的有效期。",
+    "source_hash": "4a1f64b32132"
+  },
+  "agent-tuning.li-5": {
+    "text": "压力测试会故意让引擎崩溃，以找出它的上限。请在没有其他人依赖的 warden 上运行这些提示词。",
+    "source_hash": "e127f19fe7da"
+  },
+  "agent-tuning.li-6": {
+    "text": "下载量很大。提示词会要求智能体在拉取之前先检查是否放得下，但请留意你的磁盘空间。",
+    "source_hash": "dabc7d95f036"
+  },
+  "agent-tuning.li-7": {
+    "text": "工作完成后，在 Settings → Access Tokens 中吊销管理员令牌。",
+    "source_hash": "cc61ece33dc3"
+  },
+  "agent-tuning.p-4": {
+    "text": "相关内容：<a href=\"/coding-agents\">编程智能体</a> · <a href=\"/gpu-monitoring\">GPU 监控</a> · <a href=\"/faq\">常见问题</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}

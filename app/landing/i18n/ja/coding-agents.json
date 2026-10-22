@@ -1,0 +1,42 @@
+{
+  "coding-agents.meta.title": {
+    "text": "自分の GPU で動くコーディング エージェント | LM Warden",
+    "source_hash": "cec26df70a65"
+  },
+  "coding-agents.meta.description": {
+    "text": "Claude Code、Codex CLI、OpenCode、Aider、Cline、Cursor などを、Linux や Mac 上の自分の GPU のモデルで実行。設定は自動で書き出されます。",
+    "source_hash": "d4374722fecc"
+  },
+  "coding-agents.agents.h1-1": {
+    "text": "コーディング エージェントを、自分の GPU で。",
+    "source_hash": "e01f3269f454"
+  },
+  "coding-agents.p-1": {
+    "text": "LM Warden は、コーディング エージェントが使う三つのプロトコル (OpenAI Chat Completions、Anthropic Messages API、OpenAI Responses API) に対応しています。そのため、Claude Code、Anthropic SDK と OpenAI SDK、OpenCode、Aider、Grok&nbsp;CLI、Continue、Cline、Cursor、Codex&nbsp;CLI は ベース URL とキーだけで接続でき、そのリクエストはキーごと、セッションごとに、それぞれのフェーズとともに表示されます。",
+    "source_hash": "b8783c59365c"
+  },
+  "coding-agents.flow.title": {
+    "text": "コーディング エージェントからのリクエストの行き先",
+    "source_hash": "b2c49ca0b033"
+  },
+  "coding-agents.flow.desc": {
+    "text": "コーディング エージェントは、ベース URL に warden を、API キーに warden のキーを設定して LM Warden にリクエストを送ります。LM Warden はキーを確認し、OpenAI と Anthropic の API でリクエストを受け付け、キーの優先度に従ってリクエストをキューに入れ、レプリカ ルーターに渡します。ルーターは各セッションを、そのキャッシュをすでに保持しているレプリカ (GPU ごとに一つ置かれたモデルのコピー) に留めます。これとは別に、api.anthropic.com への経路があります (Claude Code のみ)。ほかの Claude モデルは、自分のログインでこちらに送られます。",
+    "source_hash": "c24325d4bacf"
+  },
+  "coding-agents.flow.caption": {
+    "text": "コーディング エージェントからのリクエストの行き先。どのエージェントも ベース URL とキーという同じ二つを設定します。warden はキーを確認し、リクエストをキューに入れ、そのセッションのキャッシュをすでに保持しているレプリカに送ります。各エージェントのページの図には、そのエージェント固有の設定が示されています。",
+    "source_hash": "4c8a44e2f320"
+  },
+  "coding-agents.p-2": {
+    "text": "設定を手で書く必要はありません。コンソールの <strong>Connect</strong> が、クライアント、モデル、キーを選び、貼り付けるファイルを書き出します。以下の各ページでは、同じファイルをプレースホルダー付きで示し、何が動作するかを説明しています。",
+    "source_hash": "75d2dc8f6796"
+  },
+  "coding-agents.p-3": {
+    "text": "使っているクライアントがありませんか？ <a href=\"https://github.com/Podwarden/lm-warden/discussions/new?category=ideas\" rel=\"noopener\">GitHub Discussions</a> でお知らせください。",
+    "source_hash": "91f99cd9235e"
+  },
+  "coding-agents.p-4": {
+    "text": "関連：<a href=\"/agent-tuning\">エージェントにモデルを選ばせる</a> · <a href=\"/cache-aware-routing\">キャッシュを考慮したルーティング</a> · <a href=\"/faq\">よくある質問</a>",
+    "source_hash": "0ced1cfb6f5c"
+  }
+}

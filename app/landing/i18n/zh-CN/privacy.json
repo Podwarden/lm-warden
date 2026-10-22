@@ -1,0 +1,66 @@
+{
+  "privacy.meta.title": {
+    "text": "隐私与 Cookie | LM Warden",
+    "source_hash": "ec9b140b1cc8"
+  },
+  "privacy.meta.description": {
+    "text": "本网站用 Google Analytics 衡量什么、何时会先征求你的同意，以及如何更改你的选择。",
+    "source_hash": "de30b21dbdc3"
+  },
+  "privacy.ads": {
+    "text": " Google Ads 衡量广告是否把访问者带到这里，其广告 Cookie 遵循同一项同意选择。",
+    "source_hash": "9b2a078e8838"
+  },
+  "privacy.contact-official": {
+    "text": " 关于本网站的任何问题，请写信至 <a href=\"mailto:info@podwarden.com\">info@podwarden.com</a>。",
+    "source_hash": "eebc1d21c39b"
+  },
+  "privacy.contact-operator": {
+    "text": " 关于本网站的问题，请联系本网站的运营者。",
+    "source_hash": "914390fc9adc"
+  },
+  "privacy.privacy.h1-1": {
+    "text": "隐私与 Cookie。",
+    "source_hash": "f940c0a0e353"
+  },
+  "privacy.p-1": {
+    "text": "本网站运行在 LM Warden 上，由本网站的运营者自行托管。网站没有账户、没有表单、没有评论，因此它唯一可能接触到的个人数据，就是访问本身所透露的信息。",
+    "source_hash": "b3509e8a2750"
+  },
+  "privacy.h2-1": {
+    "text": "衡量的内容",
+    "source_hash": "dd9acabe8622"
+  },
+  "privacy.p-2": {
+    "text": "本网站的运营者使用 Google Analytics 4 统计访问量，并了解人们阅读了哪些页面。{{privacy_ads}}会记录三种操作：复制安装命令、点击前往 GitHub 的链接，以及点击前往 PodWarden 的链接。",
+    "source_hash": "8de08e36eb6d"
+  },
+  "privacy.h2-2": {
+    "text": "何时会先征求你的同意",
+    "source_hash": "910b22425fed"
+  },
+  "privacy.p-3": {
+    "text": "首次访问时，会有一个横幅询问你是否允许分析 Cookie。在你做出选择之前，以及在你拒绝的情况下，Google 代码以同意模式运行：它不设置任何 Cookie，只向 Google 发送匿名的、无 Cookie 的信号，这些信号无法在多次访问之间识别你。如果你接受，Google 会设置其分析 Cookie（名为 <code>_ga</code> 等），有效期最长两年。",
+    "source_hash": "9405f2778a61"
+  },
+  "privacy.h2-3": {
+    "text": "改变主意",
+    "source_hash": "3aa95e4c746f"
+  },
+  "privacy.p-4": {
+    "text": "使用 <a href=\"/privacy\" data-consent-open>Cookie 设置</a>可再次显示横幅，也可以在浏览器中清除本网站的数据。你的选择保存在浏览器的本地存储中，键名为 <code>lmw-consent</code>。",
+    "source_hash": "319e165f9018"
+  },
+  "privacy.h2-4": {
+    "text": "谁处理这些数据",
+    "source_hash": "795028f063d5"
+  },
+  "privacy.p-5": {
+    "text": "Google LLC 按其自身条款处理衡量数据；请参阅<a href=\"https://policies.google.com/technologies/partner-sites\" rel=\"noopener\">当你使用合作伙伴的网站时，Google 如何使用信息</a>。{{privacy_contact}}",
+    "source_hash": "112b969b0be0"
+  },
+  "privacy.p-6": {
+    "text": "LM Warden 软件本身不会向其作者或 Google 发送任何内容。只有这个公开网站（其运营者填写了跟踪 ID）会加载 Google 代码。",
+    "source_hash": "0d38cc82e109"
+  }
+}

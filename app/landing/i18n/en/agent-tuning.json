@@ -1,0 +1,192 @@
+{
+  "agent-tuning.meta.title": {
+    "text": "Let your coding agent pick the model | LM Warden",
+    "note": "The browser tab and the search-result title. Keep the part after | as it is; at most 65 characters.",
+    "hash": "c73577a9e93d"
+  },
+  "agent-tuning.meta.description": {
+    "text": "Give Claude Code or Codex an admin token and it picks the model, engine and flags for your GPUs, benchmarking as it goes. Prompts included.",
+    "note": "The search-result snippet and link-preview text. At most 160 characters.",
+    "hash": "42f223176a20"
+  },
+  "agent-tuning.jsonld.name": {
+    "text": "Let your coding agent pick and tune the model",
+    "note": "The name of the how-to search engines read (structured data); plain text.",
+    "hash": "d38cc5b44b81"
+  },
+  "agent-tuning.jsonld.step-1": {
+    "text": "Install LM Warden on the GPU host",
+    "note": "One step of that how-to (the page's numbered list, shortened); plain text.",
+    "hash": "ea9ef62b2144"
+  },
+  "agent-tuning.jsonld.step-2": {
+    "text": "Issue an admin token",
+    "note": "One step of that how-to (the page's numbered list, shortened); plain text.",
+    "hash": "02b6962c341f"
+  },
+  "agent-tuning.jsonld.step-3": {
+    "text": "Connect Claude Code or Codex",
+    "note": "One step of that how-to (the page's numbered list, shortened); plain text.",
+    "hash": "23149cd56616"
+  },
+  "agent-tuning.jsonld.step-4": {
+    "text": "Paste a tuning prompt",
+    "note": "One step of that how-to (the page's numbered list, shortened); plain text.",
+    "hash": "2580a4baddda"
+  },
+  "agent-tuning.tuning.h1-1": {
+    "text": "Let your coding agent pick the model.",
+    "note": "page headline (#tuning-title)",
+    "hash": "2df23e8f7918"
+  },
+  "agent-tuning.p-1": {
+    "text": "Choosing a model for your cards means choosing a quantisation, an engine (vLLM or llama.cpp), how to split it across GPUs, how much context to give it, the KV-cache type and whether speculative decoding helps. Each guess costs a download and a load. A coding agent can run that search for you while you do something else, because everything the console does is an API call.",
+    "note": "text (#main)",
+    "hash": "47320716621f"
+  },
+  "agent-tuning.h2-1": {
+    "text": "Set it up in three steps",
+    "note": "section heading (#main)",
+    "hash": "2a300da26a75"
+  },
+  "agent-tuning.li-1": {
+    "text": "<strong>Install LM Warden</strong> on the GPU host (the command is under <a href=\"/#p-linux\">Download &amp; Install</a>) and finish the setup wizard.",
+    "note": "text (#main)",
+    "hash": "45b78d2f8e02"
+  },
+  "agent-tuning.li-2": {
+    "text": "<strong>Issue an admin token</strong> in Settings → Access Tokens, with an expiry of 30 days. Export it as <code>VW_ADMIN_TOKEN</code> and the warden’s address as <code>W</code> in the shell your agent uses.",
+    "note": "text (#main)",
+    "hash": "a316c0dc85b5"
+  },
+  "agent-tuning.li-3": {
+    "text": "<strong>Start your agent</strong>: <a href=\"/coding-agents/claude-code\">Claude Code</a>, <a href=\"/coding-agents/codex-cli\">Codex&nbsp;CLI</a> or another one that can run shell commands. It can use a hosted model for this job; the model it is tuning is the one on your cards.",
+    "note": "text (#main)",
+    "hash": "45f30ab355a5"
+  },
+  "agent-tuning.h2-2": {
+    "text": "What the agent uses",
+    "note": "section heading (#main)",
+    "hash": "676f21721809"
+  },
+  "agent-tuning.th-1": {
+    "text": "Step",
+    "note": "text (#main)",
+    "hash": "8e6a6cca7aae"
+  },
+  "agent-tuning.th-2": {
+    "text": "Endpoint",
+    "note": "text (#main)",
+    "hash": "3df9726c68ba"
+  },
+  "agent-tuning.th-3": {
+    "text": "See the cards",
+    "note": "text (#main)",
+    "hash": "982d52862acc"
+  },
+  "agent-tuning.th-4": {
+    "text": "Check a model fits, before downloading",
+    "note": "text (#main)",
+    "hash": "966e8813028c"
+  },
+  "agent-tuning.th-5": {
+    "text": "Register, get a starting config",
+    "note": "text (#main)",
+    "hash": "6fb4184c2d5a"
+  },
+  "agent-tuning.th-6": {
+    "text": "Pull and load",
+    "note": "text (#main)",
+    "hash": "a632bbe8e8aa"
+  },
+  "agent-tuning.th-7": {
+    "text": "Measure the real context ceiling",
+    "note": "text (#main)",
+    "hash": "4c3b52acd644"
+  },
+  "agent-tuning.td-1": {
+    "text": "<code>POST /api/models/{model_id}/stress</code>, then <code>POST /api/models/{model_id}/stress/apply</code>",
+    "note": "text (#main)",
+    "hash": "51491b72ded1"
+  },
+  "agent-tuning.th-8": {
+    "text": "Read the warden’s numbers",
+    "note": "text (#main)",
+    "hash": "ead961a24dc4"
+  },
+  "agent-tuning.th-9": {
+    "text": "Send test traffic",
+    "note": "text (#main)",
+    "hash": "70356d606d14"
+  },
+  "agent-tuning.td-2": {
+    "text": "an inference key from <code>POST /api/tokens</code>, on <code>/v1/chat/completions</code>",
+    "note": "text (#main)",
+    "hash": "9a72b9938ec6"
+  },
+  "agent-tuning.p-2": {
+    "text": "The agent reads <a href=\"/agent-guide.md\">the agent guide</a> first: a short description of these calls written for a language model, with the mistakes to avoid.",
+    "note": "text (#main)",
+    "hash": "c3bff7c1a9d1"
+  },
+  "agent-tuning.h2-3": {
+    "text": "Prompts to paste",
+    "note": "section heading (#main)",
+    "hash": "b273921d2e33"
+  },
+  "agent-tuning.p-3": {
+    "text": "Replace <code>https://your-warden</code> with your warden’s address, and the capitalised names with models you have in mind.",
+    "note": "text (#main)",
+    "hash": "a74bbbec589e"
+  },
+  "agent-tuning.h3-1": {
+    "text": "1. Survey the hardware and shortlist models",
+    "note": "heading (#main)",
+    "hash": "c1ebd00d0f72"
+  },
+  "agent-tuning.h3-2": {
+    "text": "2. Choose the engine and layout for one model",
+    "note": "heading (#main)",
+    "hash": "0cc405dce7f8"
+  },
+  "agent-tuning.h3-3": {
+    "text": "3. Find the real limits and apply them",
+    "note": "heading (#main)",
+    "hash": "906f71857682"
+  },
+  "agent-tuning.h3-4": {
+    "text": "4. Compare two candidates on my workload",
+    "note": "heading (#main)",
+    "hash": "d6e1c2c66dff"
+  },
+  "agent-tuning.h2-4": {
+    "text": "Before you start",
+    "note": "section heading (#main)",
+    "hash": "74e492d5d0df"
+  },
+  "agent-tuning.li-4": {
+    "text": "An admin token has full admin rights over the warden: models, keys and settings. There are no narrower scopes yet. Give it a short expiry.",
+    "note": "text (#main)",
+    "hash": "4a1f64b32132"
+  },
+  "agent-tuning.li-5": {
+    "text": "A stress run deliberately crashes an engine to find its limit. Run these prompts on a warden nobody else depends on.",
+    "note": "text (#main)",
+    "hash": "e127f19fe7da"
+  },
+  "agent-tuning.li-6": {
+    "text": "Downloads are large. The prompts ask the agent to check fit before pulling, but watch your disk.",
+    "note": "text (#main)",
+    "hash": "dabc7d95f036"
+  },
+  "agent-tuning.li-7": {
+    "text": "Revoke the admin token in Settings → Access Tokens when the job is done.",
+    "note": "text (#main)",
+    "hash": "cc61ece33dc3"
+  },
+  "agent-tuning.p-4": {
+    "text": "Related: <a href=\"/coding-agents\">coding agents</a> · <a href=\"/gpu-monitoring\">GPU monitoring</a> · <a href=\"/faq\">FAQ</a>",
+    "note": "text (#main)",
+    "hash": "cfe5bc772213"
+  }
+}

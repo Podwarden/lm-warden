@@ -1,0 +1,102 @@
+{
+  "common.crumbs.aria-label": {
+    "text": "ब्रेडक्रंब",
+    "source_hash": "2bd873d6c734"
+  },
+  "common.crumb.home": {
+    "text": "होम",
+    "source_hash": "3a78695388b3"
+  },
+  "common.crumb.coding-agents": {
+    "text": "कोडिंग एजेंट",
+    "source_hash": "707c65c28bca"
+  },
+  "common.in-words": {
+    "text": "शब्दों में:",
+    "source_hash": "3cafefb13fa9"
+  },
+  "common.clients.client": {
+    "text": "क्लाइंट",
+    "source_hash": "0c77fe09ab33"
+  },
+  "common.client.protocol": {
+    "text": "प्रोटोकॉल",
+    "source_hash": "cf0883343f4a"
+  },
+  "common.client.support": {
+    "text": "सपोर्ट",
+    "source_hash": "be91940b79f4"
+  },
+  "common.support.full": {
+    "text": "पूरा सपोर्ट",
+    "source_hash": "1f95d1324a14"
+  },
+  "common.support.local-only": {
+    "text": "सिर्फ़ लोकल मॉडल",
+    "source_hash": "12d96c6fb40e"
+  },
+  "common.crumb.agent-tuning": {
+    "text": "एजेंट ट्यूनिंग",
+    "source_hash": "124c9615be9b"
+  },
+  "common.copy": {
+    "text": "कॉपी करें",
+    "source_hash": "e21f935f11d7"
+  },
+  "common.crumb.features": {
+    "text": "सुविधाएँ",
+    "source_hash": "5697d03daef4"
+  },
+  "common.crumb.gpu-monitoring": {
+    "text": "GPU मॉनिटरिंग",
+    "source_hash": "cbdfccb24fcc"
+  },
+  "common.crumb.cache-aware-routing": {
+    "text": "कैश-अवेयर रूटिंग",
+    "source_hash": "d45c5045a852"
+  },
+  "common.crumb.api-keys": {
+    "text": "API कुंजियाँ",
+    "source_hash": "98aae8972102"
+  },
+  "common.crumb.faq": {
+    "text": "सामान्य प्रश्न",
+    "source_hash": "dbc468a14b60"
+  },
+  "common.crumb.privacy": {
+    "text": "गोपनीयता",
+    "source_hash": "54a57c3147c4"
+  },
+  "common.client.setup-section.aria-label": {
+    "text": "सेटअप",
+    "source_hash": "7013af4c42fe"
+  },
+  "common.client.requirements": {
+    "text": "आवश्यकताएँ",
+    "source_hash": "e0cdd07f6a27"
+  },
+  "common.client.setup": {
+    "text": "सेटअप",
+    "source_hash": "7013af4c42fe"
+  },
+  "common.client.setup-p": {
+    "text": "कंसोल में <strong>Connect</strong> ये फ़ाइलें आपके warden के पते, आपकी कुंजी और आपके चुने हुए मॉडल के साथ लिखता है। यहाँ ये प्लेसहोल्डर के साथ दी गई हैं।",
+    "source_hash": "961b2c6bf48f"
+  },
+  "common.file.shell": {
+    "text": "शेल",
+    "source_hash": "a733285486d5"
+  },
+  "common.client.docs": {
+    "text": "आधिकारिक दस्तावेज़: {{docs_link}} ({{docs_date}} की स्थिति)।",
+    "source_hash": "78599bc11885"
+  },
+  "common.client.related": {
+    "text": "संबंधित: <a href=\"/coding-agents\">सभी कोडिंग एजेंट</a> · <a href=\"/agent-tuning\">अपने एजेंट को मॉडल चुनने दें</a> · <a href=\"/api-keys\">API कुंजियाँ</a>",
+    "source_hash": "5f736e0bdabc"
+  },
+  "common.file.settings": {
+    "text": "सेटिंग्स",
+    "source_hash": "74a883a037bc"
+  }
+}

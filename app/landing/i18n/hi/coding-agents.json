@@ -1,0 +1,42 @@
+{
+  "coding-agents.meta.title": {
+    "text": "आपके अपने GPU पर कोडिंग एजेंट | LM Warden",
+    "source_hash": "cec26df70a65"
+  },
+  "coding-agents.meta.description": {
+    "text": "Claude Code, Codex CLI, OpenCode, Aider, Cline, Cursor और दूसरे एजेंट अपने GPU पर चल रहे मॉडल के साथ चलाएँ, Linux या Mac पर, कॉन्फ़िग आपके लिए लिखा हुआ।",
+    "source_hash": "d4374722fecc"
+  },
+  "coding-agents.agents.h1-1": {
+    "text": "आपका कोडिंग एजेंट, आपके अपने GPU पर।",
+    "source_hash": "e01f3269f454"
+  },
+  "coding-agents.p-1": {
+    "text": "LM Warden वे तीनों प्रोटोकॉल समझता है जो कोडिंग एजेंट इस्तेमाल करते हैं: OpenAI Chat Completions, Anthropic Messages API और OpenAI Responses API। इसलिए Claude Code, Anthropic और OpenAI SDK, OpenCode, Aider, Grok&nbsp;CLI, Continue, Cline, Cursor और Codex&nbsp;CLI एक Base URL और एक कुंजी से जुड़ जाते हैं, और उनके अनुरोध हर कुंजी, हर सेशन के हिसाब से दिखते हैं, साथ में यह भी कि हर अनुरोध किस चरण में है।",
+    "source_hash": "b8783c59365c"
+  },
+  "coding-agents.flow.title": {
+    "text": "आपके कोडिंग एजेंट का अनुरोध कहाँ जाता है",
+    "source_hash": "b2c49ca0b033"
+  },
+  "coding-agents.flow.desc": {
+    "text": "आपका कोडिंग एजेंट अपने अनुरोध LM Warden को भेजता है, जिसमें Base URL warden पर सेट है और API कुंजी में warden की कुंजी है। LM Warden कुंजी जाँचता है, OpenAI और Anthropic API समझता है, कुंजी की प्राथमिकता के हिसाब से अनुरोध को क़तार में रखता है और उसे रेप्लिका राउटर को सौंपता है। राउटर हर सेशन को उसी रेप्लिका पर भेजता है जिसके पास उसका कैश पहले से है; हर GPU पर मॉडल की एक अलग कॉपी चलती है। एक अलग रास्ता सीधे api.anthropic.com तक जाता है, जो सिर्फ़ Claude Code के लिए है: बाकी Claude मॉडल के अनुरोध आपके अपने लॉगिन से वहाँ जाते हैं।",
+    "source_hash": "c24325d4bacf"
+  },
+  "coding-agents.flow.caption": {
+    "text": "कोडिंग एजेंट का अनुरोध कहाँ जाता है। हर एजेंट वही दो चीज़ें सेट करता है, एक Base URL और एक कुंजी; warden कुंजी जाँचता है, अनुरोध को क़तार में रखता है और उसे उस रेप्लिका को भेजता है जिसके पास पहले से सेशन का कैश है। हर एजेंट का पेज उसकी अपनी सेटिंग दिखाता है।",
+    "source_hash": "4c8a44e2f320"
+  },
+  "coding-agents.p-2": {
+    "text": "कॉन्फ़िग आपको हाथ से नहीं लिखना पड़ता। कंसोल में <strong>Connect</strong> आपका क्लाइंट, आपका मॉडल और आपकी कुंजी चुनता है और पेस्ट करने के लिए फ़ाइलें लिख देता है। नीचे का हर पेज वही फ़ाइलें प्लेसहोल्डर के साथ दिखाता है, और यह भी कि क्या काम करता है।",
+    "source_hash": "75d2dc8f6796"
+  },
+  "coding-agents.p-3": {
+    "text": "आपका क्लाइंट सूची में नहीं है? <a href=\"https://github.com/Podwarden/lm-warden/discussions/new?category=ideas\" rel=\"noopener\">GitHub Discussions</a> में पूछें।",
+    "source_hash": "91f99cd9235e"
+  },
+  "coding-agents.p-4": {
+    "text": "संबंधित: <a href=\"/agent-tuning\">अपने एजेंट को मॉडल चुनने दें</a> · <a href=\"/cache-aware-routing\">कैश-अवेयर रूटिंग</a> · <a href=\"/faq\">सामान्य प्रश्न</a>",
+    "source_hash": "0ced1cfb6f5c"
+  }
+}

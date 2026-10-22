@@ -1,0 +1,70 @@
+{
+  "claude-code-router.router.h2-1": {
+    "text": "Um <code>ANTHROPIC_BASE_URL</code>, dois lugares de onde uma resposta pode vir.",
+    "source_hash": "88b4b60f90dc"
+  },
+  "claude-code-router.p-1": {
+    "text": "Cada solicitação que o Claude Code envia à Anthropic conta para os limites de uso do seu plano, ou é cobrada por token em uma chave de API, e leva o prompt, incluindo o seu código, para fora da sua máquina. Muitas dessas solicitações são pequenas. Atenda-as nas placas que você já tem: elas custam eletricidade, não contam para os seus limites, e os prompts ficam no seu host.",
+    "source_hash": "47eae55f59c6"
+  },
+  "claude-code-router.p-2": {
+    "text": "O Claude em si nunca roda aqui. Uma regra define por quais modelos Claude esta máquina responde, <code>claude-haiku*</code> por exemplo, e um modelo que você carregou responde no lugar deles, com o nome que o Claude Code pediu. Todo o resto, incluindo o Opus, é repassado à Anthropic byte a byte com o seu próprio login, inclusive o streaming. A sua chave do warden vai em um cabeçalho próprio, então o login nunca é alterado, e nada é repassado para uma chave sem a opção “May relay to Anthropic”.",
+    "source_hash": "23f00b590b6a"
+  },
+  "claude-code-router.p-3": {
+    "text": "Um modelo pequeno é bom o suficiente? Não medimos a qualidade das respostas, então isto é uma avaliação, não um benchmark. O Claude Code usa o modelo da classe Haiku para trabalhos mais leves em segundo plano, e um modelo local pequeno é um substituto razoável nesses casos e em edições simples e bem especificadas. Para mudanças em muitos arquivos, depuração e planos longos, mantenha o Sonnet e o Opus na Anthropic, que é o que a regra geral faz se você não adicionar uma regra. Com um modelo maior em placas maiores, esse limite se desloca; as nossas medições do Claude Code e de réplicas abaixo usaram um modelo de 4B.",
+    "source_hash": "b554407d17a9"
+  },
+  "claude-code-router.p-4": {
+    "text": "Dimensione o contexto para o Claude Code, não para chat: o primeiro turno dele na nossa sessão teve 38.167 tokens, então o modelo local precisa de bem mais de 40k tokens de contexto.",
+    "source_hash": "f87b272c3f76"
+  },
+  "claude-code-router.figcaption-1": {
+    "text": "<b>Fig.&nbsp;2</b>Para onde vai uma solicitação. As regras são testadas em ordem e vale a primeira que corresponder. Uma resposta local passa pelo mesmo agendador e pelo mesmo roteador de réplicas que qualquer outra solicitação; uma réplica é uma cópia completa do modelo, aqui uma por GPU. Uma falha local antes do primeiro byte vai para a Anthropic, ou volta como um 529 que o Claude Code tenta de novo, e depois de 3 falhas seguidas o disjuntor do modelo abre: por 60&#8239;s nada é enviado a ele.",
+    "source_hash": "462151461bb5"
+  },
+  "claude-code-router.p-5": {
+    "text": "Em texto: o Claude Code envia a solicitação ao warden com o seu login da Anthropic em Authorization e a chave do warden em X-LMWarden-Key. O warden testa as regras em ordem. Uma solicitação para um modelo citado em uma regra é traduzida, colocada na fila pelo agendador e enviada pelo roteador de réplicas a uma réplica do vLLM. Qualquer outra solicitação, como a do Opus, é repassada a api.anthropic.com com o login encaminhado e a chave do warden removida. Se o trecho local falhar antes do primeiro byte, a solicitação vai para a Anthropic, ou a regra a recusa com um 529 que o Claude Code tenta de novo.",
+    "source_hash": "038dbec78e21"
+  },
+  "claude-code-router.p-6": {
+    "text": "Claude Code 2.1.227 ou mais recente. Mantenha o seu login normal do <code>claude</code>; a chave vai em um cabeçalho próprio, não em <code>ANTHROPIC_API_KEY</code>.",
+    "source_hash": "bd9385d02ca7"
+  },
+  "claude-code-router.img-1.alt": {
+    "text": "A página Router do console. Um banner verde diz “Routing normally” e “96% answered locally since 13:38”. Em “Where each Claude model goes. First match wins”, a regra 1 envia claude-haiku* ao modelo carregado qwen3-4b-dp4, com “If it fails: Anthropic” e “Thinking off”. A última linha é a regra geral: todos os outros modelos Claude e caminhos /v1 vão para a Anthropic com o próprio login do usuário e precisam de uma chave com “May relay to Anthropic”. O painel Traffic conta 107 locais, 2 repassadas à Anthropic, 0 desviadas para a Anthropic e 2 recusadas ou com erro, e lista dois motivos, no_upstream_credential e relay_not_allowed, um de cada.",
+    "source_hash": "3f1f5682c2a4"
+  },
+  "claude-code-router.span-1": {
+    "text": "Vale a primeira regra que corresponder; todos os outros modelos vão para a Anthropic",
+    "source_hash": "d0410896bcb4"
+  },
+  "claude-code-router.span-2": {
+    "text": "A Anthropic é acessada com o próprio login do usuário",
+    "source_hash": "6d3dcb885877"
+  },
+  "claude-code-router.figcaption-2": {
+    "text": "<b>Fig.&nbsp;3</b>A página Router com o warden em execução desde as 13:38: “Routing normally”, com 96% das solicitações respondidas localmente desde a reinicialização. Uma regra envia <code>claude-haiku*</code> a um modelo local e a regra geral repassa todo o resto à Anthropic; as regras são numeradas na ordem em que são testadas. O painel Traffic conta 107 locais, 2 repassadas, 0 desviadas e 2 recusadas.<span class=\"scroll-hint\"> Role a imagem para o lado para ver a página inteira.</span>",
+    "source_hash": "b4aee34de008"
+  },
+  "claude-code-router.p-7": {
+    "text": "O primeiro turno costuma ser o mais lento. Em uma sessão anterior, o primeiro turno do Claude Code teve 38.167 tokens e o modelo local estava carregado com um contexto de 32.768 tokens, então o mecanismo o recusou (<code>status_400</code>) e a solicitação foi para a Anthropic. Com o contexto aumentado para 65.536 tokens e um cache KV fp8 (o cache de atenção guardado em 8 bits, metade da memória), o modelo de 4B em placas de 16&#8239;GiB respondeu localmente a esse mesmo turno em 28&#8239;s, com todo o prompt de 38k tokens lido a frio e nada ainda no cache. Os turnos seguintes de uma conversa encontram a maior parte do prompt já no cache do mecanismo: o tempo mediano até o primeiro byte da regra <code>claude-haiku*</code> na fig.&nbsp;4 é de 290&#8239;ms.",
+    "source_hash": "174e92b8be51"
+  },
+  "claude-code-router.img-2.alt": {
+    "text": "A página de atividade do Router. Quatro contadores: local 107, repassadas à Anthropic 2, desviadas 0, e recusadas · erros 2 · 0. Uma tabela “By rule” mostra a regra claude-haiku* para qwen3-4b-dp4 com as contagens de locais, desviadas e recusadas, a latência e o tempo até o primeiro byte em p50 e p95, e o estado do disjuntor, fechado; a linha de repasse mostra os mesmos tempos para as solicitações repassadas à Anthropic. Uma tabela de modelos locais mostra qwen3-4b-dp4 com o disjuntor fechado, e um painel “Fallback reasons” lista no_upstream_credential e relay_not_allowed, um de cada.",
+    "source_hash": "1dcf45e042e8"
+  },
+  "claude-code-router.span-3": {
+    "text": "O disjuntor deste modelo: fechado",
+    "source_hash": "e7811be1957f"
+  },
+  "claude-code-router.span-4": {
+    "text": "Por que uma regra encaminhou à Anthropic ou recusou, por motivo",
+    "source_hash": "8c3c6830836a"
+  },
+  "claude-code-router.figcaption-3": {
+    "text": "<b>Fig.&nbsp;4</b>Atividade do Router no mesmo período: 107 solicitações respondidas localmente, 2 repassadas à Anthropic, 0 desviadas e 2 recusadas com 0 erros. Abaixo, a latência e o tempo até o primeiro byte por regra em p50 e p95, o disjuntor por modelo local e os motivos pelos quais uma regra encaminhou à Anthropic ou recusou a solicitação. Os contadores são por processo; uma reinicialização os zera. Registrado em 4&nbsp;de&nbsp;outubro&nbsp;de&nbsp;2026.<span class=\"scroll-hint\"> Role a imagem para o lado para ver a página inteira.</span>",
+    "source_hash": "e6294c26fbc5"
+  }
+}

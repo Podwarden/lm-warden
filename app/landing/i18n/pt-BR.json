@@ -1,18 +1,18 @@
 {
   "meta.title": {
-    "text": "LM Warden: gateway LLM auto-hospedado para as suas próprias GPUs",
+    "text": "LM Warden: gateway de LLM auto-hospedado nas suas próprias GPUs",
     "source_hash": "8b40be948ef4"
   },
   "meta.description": {
-    "text": "Sirva LLMs a partir de GPUs NVIDIA no Linux ou de um Mac com chip Apple, com vLLM, llama.cpp ou MLX: um endpoint /v1 compatível com OpenAI e uma chave por app.",
+    "text": "Disponibilize LLMs em GPUs NVIDIA no Linux ou em um Mac com chip Apple, com vLLM, llama.cpp ou MLX: um endpoint /v1 compatível com OpenAI e uma chave por app.",
     "source_hash": "6cb271edae46"
   },
   "meta.og-image-alt": {
-    "text": "LM Warden: uma API compatível com OpenAI nas GPUs embaixo da sua mesa ou no seu rack, ao lado do painel Stats de uma RTX A4000 com o ponto de throttling informado pelo driver",
+    "text": "LM Warden: uma API compatível com OpenAI nas GPUs embaixo da sua mesa ou no seu rack, ao lado do painel Stats de uma RTX A4000 com o ponto de throttling informado pelo driver em destaque",
     "source_hash": "7f75ba3bcd9d"
   },
   "jsonld.feature-1": {
-    "text": "Prévia de encaixe: cada arquivo de um repositório do Hugging Face verificado em relação às GPUs escolhidas antes de qualquer download",
+    "text": "Verificação de compatibilidade: cada arquivo de um repositório do Hugging Face é conferido com as GPUs que você escolher, antes de qualquer download",
     "source_hash": "615857f542c9"
   },
   "jsonld.feature-2": {
@@ -24,15 +24,15 @@
     "source_hash": "1f350726cef9"
   },
   "jsonld.feature-4": {
-    "text": "Página Stats: utilização da GPU, potência, tokens por segundo, fração de cache, latência e preempções, de 1 hora a 7 dias",
+    "text": "Página Stats: utilização da GPU, potência, tokens por segundo, taxa de acerto do cache, latência e preempções, de 1 hora a 7 dias",
     "source_hash": "42d6cdab3fb6"
   },
   "jsonld.feature-5": {
-    "text": "Roteamento ciente do cache, que mantém cada conversa na réplica que guarda o seu prefixo",
+    "text": "Roteamento orientado a cache, que mantém cada conversa na réplica que já tem o prefixo dela em cache",
     "source_hash": "9791836d7920"
   },
   "jsonld.feature-6": {
-    "text": "Ajuste por agente: um agente de programação escolhe o modelo, o mecanismo e o layout para as suas GPUs pela API, fazendo benchmarks pelo caminho",
+    "text": "Ajuste com agente de IA: um agente de programação escolhe o modelo, o mecanismo e o layout para as suas GPUs pela API, fazendo benchmarks a cada passo",
     "source_hash": "b2f04e38f9aa"
   },
   "jsonld.feature-7": {
@@ -48,7 +48,7 @@
     "source_hash": "89c7e3de3f80"
   },
   "jsonld.feature-10": {
-    "text": "Painéis por GPU, de um M1 de 16 GB a um servidor NVSwitch 8 x B300, apontando links PCIe estreitos, NVLink inativo e diferenças de ECC",
+    "text": "Painéis por GPU, de um M1 de 16 GB a um servidor NVSwitch 8 x B300, que apontam links PCIe com largura reduzida, NVLink inativo e diferenças de ECC",
     "source_hash": "bf6f8b147d8a"
   },
   "chrome.copy.done": {
@@ -108,15 +108,15 @@
     "source_hash": "d2364b229535"
   },
   "chrome.nav.plat-win": {
-    "text": "Windows (a seguir)",
+    "text": "Windows (próximo)",
     "source_hash": "e5a1bb1c3085"
   },
   "chrome.nav.plat-appliance": {
-    "text": "Dispositivo (em breve)",
+    "text": "Appliance (em breve)",
     "source_hash": "6a7fc115677a"
   },
   "chrome.nav.plat-upgrade": {
-    "text": "Atualizar uma instalação",
+    "text": "Atualizar instalação existente",
     "source_hash": "c1fe5f01dc6e"
   },
   "chrome.nav.signin": {
@@ -144,15 +144,15 @@
     "source_hash": "7af023c43013"
   },
   "chrome.install": {
-    "text": "Instalar",
+    "text": "Baixar e instalar",
     "source_hash": "4120132397fd"
   },
   "home.hero.h1-1": {
-    "text": "Suas GPUs, servidas como uma API hospedada.",
+    "text": "Suas GPUs funcionando como uma API hospedada.",
     "source_hash": "b24318c21e4f"
   },
   "home.hero.p-1": {
-    "text": "O LM Warden executa vLLM, llama.cpp ou MLX no hardware que é seu e coloca uma única porta compatível com OpenAI na frente: uma chave por app, uso por chave e um painel ao vivo para cada GPU. Em uma máquina Linux com placas NVIDIA ou em um Mac com chip Apple.",
+    "text": "O LM Warden executa vLLM, llama.cpp ou MLX no seu próprio hardware e expõe um único endpoint compatível com OpenAI: uma chave por app, uso por chave e um painel em tempo real para cada GPU. Em uma máquina Linux com placas NVIDIA ou em um Mac com chip Apple.",
     "source_hash": "e192caf6a5b3"
   },
   "home.hero.a-1": {
@@ -172,7 +172,7 @@
     "source_hash": "035ccb7cad8a"
   },
   "home.hero.span-3": {
-    "text": "Linux + NVIDIA · macOS (beta) · Windows a seguir",
+    "text": "Linux + NVIDIA · macOS (beta) · Windows é o próximo",
     "source_hash": "1f8168eb854e"
   },
   "home.hero.img-1.alt": {
@@ -216,7 +216,7 @@
     "source_hash": "05261121948c"
   },
   "home.hero.span-9": {
-    "text": "Agentes de código",
+    "text": "Agentes de programação",
     "source_hash": "707c65c28bca"
   },
   "home.hero.b-4": {
@@ -228,7 +228,7 @@
     "source_hash": "48d1003061d4"
   },
   "home.uc.h2-1": {
-    "text": "Para que as pessoas usam",
+    "text": "Para que as pessoas usam o LM Warden",
     "source_hash": "a2bc7e06beef"
   },
   "home.use-cases.button-1.aria-label": {
@@ -256,11 +256,11 @@
     "source_hash": "631429e459b2"
   },
   "home.use-cases.p-1": {
-    "text": "Cole um repositório do Hugging Face; cada arquivo recebe um veredito em relação às placas que você marcar, antes de qualquer download.",
+    "text": "Cole um repositório do Hugging Face: antes de qualquer download, você vê se cada arquivo cabe nas placas que marcou.",
     "source_hash": "7dd1bdcba1fd"
   },
   "home.use-cases.span-1": {
-    "text": "Ver a prévia",
+    "text": "Ver se o modelo cabe",
     "source_hash": "3bf0e7fd520d"
   },
   "home.use-cases.li-2.aria-label": {
@@ -268,7 +268,7 @@
     "source_hash": "264c35a47f15"
   },
   "home.use-cases.h3-2": {
-    "text": "Aponte seu agente de programação para as suas próprias GPUs.",
+    "text": "Use as suas próprias GPUs no seu agente de programação.",
     "source_hash": "b01cff25d51f"
   },
   "home.use-cases.p-2": {
@@ -288,7 +288,7 @@
     "source_hash": "02e82cfefb89"
   },
   "home.use-cases.p-3": {
-    "text": "Utilização, tokens por segundo, fração de cache, latência, preempções e potência em uma só página Stats, de 1&#8239;h a 7&#8239;dias.",
+    "text": "Utilização, tokens por segundo, taxa de acerto do cache, latência, preempções e potência em uma só página Stats, de 1&#8239;h a 7&#8239;dias.",
     "source_hash": "ffc4dde74878"
   },
   "home.use-cases.span-3": {
@@ -304,7 +304,7 @@
     "source_hash": "fd528e59f30f"
   },
   "home.use-cases.p-4": {
-    "text": "Cada conversa fica na sua réplica. Medido: acertos de cache de 56 para 86%, tempo mediano até o primeiro byte de 2,05 para 0,38 s.",
+    "text": "Cada conversa fica na sua réplica. Resultado medido: a taxa de acerto do cache subiu de 56% para 86%, e o tempo mediano até o primeiro byte caiu de 2,05 para 0,38 s.",
     "source_hash": "3fd6f50887b9"
   },
   "home.use-cases.span-4": {
@@ -316,11 +316,11 @@
     "source_hash": "4ff9c7d25432"
   },
   "home.use-cases.h3-5": {
-    "text": "Deixe a IA que você já paga ajustar as suas próprias GPUs.",
+    "text": "Deixe a IA que você já assina ajustar as suas próprias GPUs.",
     "source_hash": "c3ae8600a083"
   },
   "home.use-cases.p-5": {
-    "text": "O Claude Code, o Codex ou outro agente levanta suas placas, pré-seleciona modelos que cabem, carrega layouts, faz benchmarks com seus próprios prompts, ajusta e deixa o vencedor carregado. Quatro prompts para colar.",
+    "text": "O Claude Code, o Codex ou outro agente examina as suas placas, seleciona os modelos que cabem, carrega layouts, faz benchmarks com os seus próprios prompts, ajusta e deixa carregada a configuração vencedora. São quatro prompts para colar.",
     "source_hash": "bbfa0ef15601"
   },
   "home.use-cases.span-5": {
@@ -332,7 +332,7 @@
     "source_hash": "9f1b26eea525"
   },
   "home.use-cases.h3-6": {
-    "text": "Converse com o seu próprio modelo, ali mesmo.",
+    "text": "Converse com o seu próprio modelo, no próprio console.",
     "source_hash": "bcd86e5acf2b"
   },
   "home.use-cases.p-6": {
@@ -380,11 +380,11 @@
     "source_hash": "7323df202723"
   },
   "home.use-cases.h3-9": {
-    "text": "Seu hardware, sem disfarces: de um Mac a oito B300.",
+    "text": "Seu hardware como ele é: de um Mac a oito B300.",
     "source_hash": "3f3225bbc711"
   },
   "home.use-cases.p-9": {
-    "text": "Um só console para um M1 de 16&#8239;GB, duas placas diferentes ou um servidor NVSwitch, e ele aponta o slot PCIe estreito, o NVLink inativo e as diferenças de ECC.",
+    "text": "Um só console para um M1 de 16&#8239;GB, duas placas diferentes ou um servidor NVSwitch, que aponta o slot PCIe com largura reduzida, o NVLink inativo e as diferenças de ECC.",
     "source_hash": "6ea6fbd502b6"
   },
   "home.use-cases.span-9": {
@@ -396,15 +396,15 @@
     "source_hash": "aef48b281a1a"
   },
   "home.use-cases.h3-10": {
-    "text": "Em breve: o dispositivo dedicado. Um pendrive USB, um chassi com GPUs, uma única tarefa.",
+    "text": "Em breve: o appliance. Um pendrive USB, um chassi com GPUs, uma só função.",
     "source_hash": "525b6691292f"
   },
   "home.use-cases.p-10": {
-    "text": "Um Linux enxuto que só executa o LM Warden, configura a rede e o armazenamento de modelos e se atualiza pela rede ou fica totalmente isolado da rede (air-gapped). Para um servidor LLM seguro e dedicado.",
+    "text": "Um Linux enxuto que só executa o LM Warden, configura a rede e o armazenamento de modelos e recebe atualizações pela internet ou fica totalmente isolado da rede (air-gapped). Para um servidor de LLM seguro e dedicado.",
     "source_hash": "9ab2a4e163b1"
   },
   "home.use-cases.span-10": {
-    "text": "Saiba mais sobre ele",
+    "text": "Saiba mais sobre o appliance",
     "source_hash": "4ad529d919d4"
   },
   "home.use-cases.dot": {
@@ -440,7 +440,7 @@
     "source_hash": "0d7d5470afac"
   },
   "home.install.small-2": {
-    "text": "Barra de menus · M1 ou posterior",
+    "text": "App na barra de menus · M1 ou posterior",
     "source_hash": "38cba54053bd"
   },
   "home.install.span-2": {
@@ -452,11 +452,11 @@
     "source_hash": "1e554752120e"
   },
   "home.install.span-3": {
-    "text": "a seguir",
+    "text": "próximo",
     "source_hash": "c6c1c9a9c854"
   },
   "home.install.b-3": {
-    "text": "Dispositivo",
+    "text": "Appliance dedicado",
     "source_hash": "98432690c966"
   },
   "home.install.small-4": {
@@ -488,7 +488,7 @@
     "source_hash": "33bfcbda3ad4"
   },
   "home.p-linux.li-3": {
-    "text": "Várias GPUs em uma máquina: paralelismo de tensores ou uma réplica por placa com roteamento ciente do cache.",
+    "text": "Várias GPUs em uma máquina: paralelismo de tensores ou uma réplica por placa com roteamento orientado a cache.",
     "source_hash": "086f8aa8145e"
   },
   "home.p-linux.li-4": {
@@ -496,7 +496,7 @@
     "source_hash": "f17d08f00954"
   },
   "home.p-linux.a-1": {
-    "text": "Instalação",
+    "text": "Guia de instalação",
     "source_hash": "e15a133068af"
   },
   "home.p-linux.a-2": {
@@ -536,15 +536,15 @@
     "source_hash": "5ff95c0fa25d"
   },
   "home.p-mac.li-3": {
-    "text": "<b>Beta, sem rodeios:</b> assinado ad hoc e não notarizado, então o macOS pede que você o permita em Privacidade e Segurança na primeira abertura; as atualizações são um novo download. <a href=\"{{repo}}/blob/main/documents/INSTALL.md#beta-builds\" rel=\"noopener\">Etapas da primeira abertura</a>.",
+    "text": "<b>Beta, sem rodeios:</b> assinado ad hoc e não notarizado, então, na primeira execução, o macOS pede que você o autorize em Privacidade e Segurança; para atualizar, é preciso baixar de novo. <a href=\"{{repo}}/blob/main/documents/INSTALL.md#beta-builds\" rel=\"noopener\">Como abrir pela primeira vez</a>.",
     "source_hash": "cf254395b87e"
   },
   "home.p-mac.li-4": {
-    "text": "Atende em 127.0.0.1 até você escolher <b>Share on Local Network</b>.",
+    "text": "Atende apenas em 127.0.0.1 até você escolher <b>Share on Local Network</b>.",
     "source_hash": "013272b7df36"
   },
   "home.p-mac.li-5": {
-    "text": "<b>Em breve: mlx-rust-lm</b>, um terceiro mecanismo. A equipe do LM Warden está portando o mlx-lm da Apple de Python para Rust sobre os bindings oficiais mlx-c da Apple; ele vai rodar ao lado do MLX e do llama.cpp e, com o tempo, substituir o mecanismo mlx-lm em Python, que, com o Python e as bibliotecas dele, é a maior parte do download atual. Não oficial, sem afiliação com a Apple.",
+    "text": "<b>Em breve: mlx-rust-lm</b>, um terceiro mecanismo. A equipe do LM Warden está portando o mlx-lm da Apple de Python para Rust, sobre os bindings oficiais mlx-c da Apple; ele vai rodar ao lado do MLX e do llama.cpp e, com o tempo, substituir o mecanismo mlx-lm em Python, que, junto com o Python e as suas bibliotecas, ocupa a maior parte do download atual. Não oficial, sem afiliação com a Apple.",
     "source_hash": "8121128f773c"
   },
   "home.p-mac.img-1.alt": {
@@ -552,7 +552,7 @@
     "source_hash": "45b8070949bb"
   },
   "home.p-mac.figcaption-1": {
-    "text": "O menu da beta na barra de menus de um M1 de 16&#8239;GB.",
+    "text": "O menu da versão beta na barra de menus de um M1 de 16&#8239;GB.",
     "source_hash": "785cc05a3c6d"
   },
   "home.p-win.h3-1": {
@@ -560,7 +560,7 @@
     "source_hash": "3e2f8c30fbd3"
   },
   "home.p-win.p-1": {
-    "text": "Estamos desenvolvendo agora e vamos colocar uma build aqui no dia em que ela existir, e não um formulário de cadastro antes disso. Até lá, duas opções honestas:",
+    "text": "Estamos desenvolvendo agora e vamos publicar uma build aqui no dia em que ela existir, e não um formulário de cadastro antes disso. Até lá, há duas opções concretas:",
     "source_hash": "7389debc8fd3"
   },
   "home.p-win.li-1": {
@@ -576,7 +576,7 @@
     "source_hash": "d85b661eb8e6"
   },
   "home.p-appliance.h3-1": {
-    "text": "O dispositivo dedicado: em breve, sem data.",
+    "text": "O appliance: em breve, sem data.",
     "source_hash": "e45c0fc37b2d"
   },
   "home.p-appliance.p-1": {
@@ -592,11 +592,11 @@
     "source_hash": "a2a401f4b2c3"
   },
   "home.p-appliance.li-3": {
-    "text": "As atualizações chegam pela rede, ou a máquina funciona totalmente isolada da rede (air-gapped).",
+    "text": "As atualizações chegam pela internet, ou a máquina funciona totalmente isolada da rede (air-gapped).",
     "source_hash": "aa9d78e6b6fa"
   },
   "home.p-appliance.li-4": {
-    "text": "Feito para um servidor LLM seguro e dedicado: uma equipe que quer uma máquina blindada ou um local sem rota para fora.",
+    "text": "Feito para um servidor de LLM seguro e dedicado: uma equipe que quer uma máquina fechada e controlada, ou um local sem nenhuma saída para a rede externa.",
     "source_hash": "bbc615ea622b"
   },
   "home.p-appliance.p-2": {
@@ -608,15 +608,15 @@
     "source_hash": "8a3fbd7c91f0"
   },
   "home.upgrade.p-1": {
-    "text": "<b>Já usa?</b> No Linux, a atualização é feita no lugar: baixe as novas imagens, reinicie e o banco de dados migra para a frente. <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">Etapas</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">Registro de alterações</a>.",
+    "text": "<b>Já usa?</b> No Linux, a atualização é feita na própria instalação: baixe as novas imagens, reinicie, e o banco de dados é migrado para a nova versão. <a href=\"{{repo}}/blob/main/documents/OPERATING.md#day-to-day\" rel=\"noopener\">Etapas</a> · <a href=\"{{repo}}/blob/main/CHANGELOG.md\" rel=\"noopener\">Registro de alterações</a>.",
     "source_hash": "5566c16483a2"
   },
   "home.why.h2-1": {
-    "text": "Auto-hospedar tem oito problemas. Veja como fica cada um resolvido.",
+    "text": "Hospedar LLMs por conta própria traz oito problemas. Veja cada um deles resolvido.",
     "source_hash": "65341f9c1497"
   },
   "home.why.p-1": {
-    "text": "Um mecanismo sozinho serve um modelo em uma porta. Estas são as peças em volta dele, com nossos próprios números quando os temos.",
+    "text": "Um mecanismo sozinho atende um modelo em uma porta. A seguir, tudo o que vem em volta dele, com números nossos sempre que os temos.",
     "source_hash": "1668b0870987"
   },
   "home.why-fit.h3-1": {
@@ -624,11 +624,11 @@
     "source_hash": "631429e459b2"
   },
   "home.why-fit.p-1": {
-    "text": "Cole um repositório do Hugging Face em <b>Add model</b>. Cada arquivo aparece com um veredito em relação às placas que você marcar: cabe, folga apertada ou não cabe. Marque mais placas e o orçamento se soma. Nada é baixado até que algo caiba.",
+    "text": "Cole um repositório do Hugging Face em <b>Add model</b>. Cada arquivo aparece com uma avaliação para as placas que você marcar: cabe, cabe com pouca folga ou não cabe. Marque mais placas e a memória delas se soma. Nada é baixado até que algo caiba.",
     "source_hash": "b0c5f5cbb2ee"
   },
   "home.why-fit.img-1.alt": {
-    "text": "O mesmo arquivo de 20,22&#8239;GiB marcado como cabendo depois que quatro GPUs são selecionadas",
+    "text": "O mesmo arquivo de 20,22&#8239;GiB passa a caber quando quatro GPUs são selecionadas",
     "source_hash": "906b74daf0f5"
   },
   "home.why-stats.h3-1": {
@@ -636,11 +636,11 @@
     "source_hash": "7cd5266e1f4e"
   },
   "home.why-stats.p-1": {
-    "text": "A vazão é concorrência × tamanho do prompt × reaproveitamento do cache, e um mecanismo sozinho não mostra nada disso junto. A página Stats mostra, de 1&#8239;h a 7&#8239;dias: VRAM, utilização da GPU, potência (Linux), tokens por segundo com os tokens de prompt divididos em cacheados e computados, latência p50/p95, taxa de acerto do cache de prompts, preempções, solicitações por chave e por IP do cliente. Utilização estável com fila diz “mais concorrência”; uma fração de cache baixa diz “fixe as sessões”.",
+    "text": "A vazão é concorrência × tamanho do prompt × reaproveitamento do cache, e um mecanismo sozinho não mostra nada disso junto. A página Stats mostra, de 1&#8239;h a 7&#8239;dias: VRAM, utilização da GPU, potência (Linux), tokens por segundo com os tokens de prompt divididos em atendidos pelo cache e calculados, latência p50/p95, taxa de acerto do cache de prompts, preempções, solicitações por chave e por IP do cliente. Utilização estável com fila indica que é preciso mais concorrência; uma taxa de acerto do cache baixa indica que é hora de fixar as sessões.",
     "source_hash": "05ae743f085e"
   },
   "home.why-stats.img-1.alt": {
-    "text": "Tokens por segundo: tokens de prompt divididos em cacheados e computados, tokens de resposta abaixo",
+    "text": "Tokens por segundo: tokens de prompt divididos em atendidos pelo cache e calculados, tokens de resposta abaixo",
     "source_hash": "94483285e732"
   },
   "home.why-chat.h3-1": {
@@ -648,7 +648,7 @@
     "source_hash": "83831d46fb09"
   },
   "home.why-chat.p-1": {
-    "text": "O chat fica na mesma janela que todo o resto. Markdown em streaming com código destacado e matemática; até oito imagens PNG, JPEG ou WebP por mensagem para um modelo de visão; temperatura, top-p, máximo de tokens e prompt do sistema por chat, salvos como padrão; chats mantidos, com título e que podem ser ramificados. As chamadas de ferramentas que o modelo faz são exibidas, para você verificar as chamadas de ferramentas antes que um agente dependa delas.",
+    "text": "O chat fica na mesma janela que todo o resto. Markdown em streaming com destaque de código e fórmulas matemáticas; até oito imagens PNG, JPEG ou WebP por mensagem para um modelo de visão; temperatura, top-p, máximo de tokens e prompt do sistema por chat, salvos como padrão; as conversas ficam salvas, com título, e podem ser ramificadas. As chamadas de ferramentas que o modelo faz são exibidas, para você conferi-las antes que um agente dependa delas.",
     "source_hash": "2e459441dc4f"
   },
   "home.why-chat.img-1.alt": {
@@ -680,35 +680,35 @@
     "source_hash": "0f19c82ec35c"
   },
   "home.why-cache.p-2": {
-    "text": "Medido na nossa máquina de quatro placas (4&nbsp;×&nbsp;RTX&nbsp;A4000, Qwen3-4B como quatro réplicas de uma placa, sessões sintéticas no estilo do Claude Code, afinidade desligada e depois ligada, uma após a outra): com as conversas fixadas, a fração de tokens de prompt servidos a partir do cache subiu de 56 para 86% com 4 sessões simultâneas, e o tempo mediano até o primeiro byte caiu de 2,05 para 0,38&#8239;s. Os tokens de saída por minuto foram maiores em todos os degraus que executamos, e o tempo p95 até o primeiro byte (os 5% mais lentos) foi menor em todos os degraus. O número de réplicas trabalhando quase não mudou (2,71 contra 2,83 de quatro com 4 sessões): o ganho é o reaproveitamento do cache, não mais placas trabalhando.",
+    "text": "Medido na nossa máquina de quatro placas (4&nbsp;×&nbsp;RTX&nbsp;A4000, Qwen3-4B como quatro réplicas de uma placa, sessões sintéticas no estilo do Claude Code, afinidade desligada e depois ligada, uma rodada após a outra): com as conversas fixadas, a parcela de tokens de prompt atendidos pelo cache subiu de 56% para 86% com 4 sessões simultâneas, e o tempo mediano até o primeiro byte caiu de 2,05 para 0,38&#8239;s. Os tokens de saída por minuto foram maiores em todas as etapas que executamos, e o tempo p95 até o primeiro byte (os 5% mais lentos) foi menor em todas as etapas. O número de réplicas trabalhando quase não mudou (2,71 contra 2,83 de quatro com 4 sessões): o ganho vem do reaproveitamento do cache, não de mais placas trabalhando.",
     "source_hash": "9de8aa8aa7e1"
   },
   "home.why-cache.figcaption-2": {
-    "text": "Taxa de acerto do cache de prefixos em cada degrau: tokens de prompt servidos a partir do cache sobre tokens de prompt pedidos, somando as quatro réplicas, a partir da variação dos próprios contadores do vLLM no degrau. O ganho se mantém enquanto há folga e some com 32 sessões, quando as conversas transbordam.",
+    "text": "Taxa de acerto do cache de prefixos em cada etapa: tokens de prompt atendidos pelo cache divididos pelos tokens de prompt solicitados, somando as quatro réplicas, calculada pela variação dos contadores do próprio vLLM durante a etapa. O ganho se mantém enquanto há folga e desaparece com 32 sessões, quando as conversas transbordam.",
     "source_hash": "ff04da43c87a"
   },
   "home.why-cache.figcaption-3": {
-    "text": "Tempo até o primeiro byte com 4 a 32 sessões simultâneas, mediana e p95, em escala logarítmica para que os degraus abaixo de um segundo possam ser lidos ao lado dos de um minuto. Com afinidade, a mediana é bem menor até 16 sessões (0,38 contra 2,05&#8239;s com 4) e maior com 24 e 32; o p95 é menor em todos os degraus, embora com 16 a diferença (24,9 contra 26,2&#8239;s) esteja dentro do ruído de uma única execução por variante. Medido no cliente, pela internet, até o primeiro token transmitido.",
+    "text": "Tempo até o primeiro byte com 4 a 32 sessões simultâneas, mediana e p95, em escala logarítmica para que as etapas abaixo de um segundo possam ser lidas ao lado das que levam minutos. Com afinidade, a mediana é bem menor até 16 sessões (0,38 contra 2,05&#8239;s com 4) e maior com 24 e 32; o p95 é menor em todas as etapas, embora com 16 a diferença (24,9 contra 26,2&#8239;s) esteja dentro do ruído de uma única execução por variante. Medido no cliente, pela internet, até o primeiro token transmitido.",
     "source_hash": "0ec9d5ccf246"
   },
   "home.why-cache.h3-1": {
-    "text": "Cada degrau da rampa, afinidade desligada → ligada",
+    "text": "Cada etapa da rampa de carga, afinidade desligada → ligada",
     "source_hash": "684608311775"
   },
   "home.why-cache.p-3": {
-    "text": "Medido na nossa máquina de quatro placas com um modelo pequeno, primeiro com a afinidade desligada e depois ligada, sem reiniciar o vLLM entre as duas: a segunda variante começou com o cache de prefixos já aquecido, e ambas tiraram os prompts da mesma semente. Cada degrau dura 3&nbsp;minutos, então conclui só de 9 a 31 sessões, e uma sessão a mais ou a menos muda as sessões por hora em 20; os tokens de saída por minuto são a coluna mais estável. Seu modelo, suas placas e sua carga de trabalho serão diferentes; o cartão de réplicas na página de um modelo mostra os mesmos contadores para os seus.",
+    "text": "Medido na nossa máquina de quatro placas com um modelo pequeno, primeiro com a afinidade desligada e depois ligada, sem reiniciar o vLLM entre as rodadas: a segunda variante começou com o cache de prefixos já aquecido, e as duas geraram os prompts a partir da mesma semente. Cada etapa dura 3&nbsp;minutos, então conclui só de 9 a 31 sessões, e uma sessão a mais ou a menos muda as sessões por hora em 20; os tokens de saída por minuto são a coluna mais estável. Seu modelo, suas placas e sua carga de trabalho serão diferentes; o painel de réplicas na página de um modelo mostra os mesmos contadores para o seu caso.",
     "source_hash": "4744b11be2ad"
   },
   "home.why-cache.img-1.alt": {
-    "text": "O cartão Data-parallel routing na página de um modelo, com os indicadores Affinity on, Spill threshold 8 (auto), Sticky 100.0% e In flight 0. Uma tabela lista as réplicas 0 a 3 com in flight, sticky (38, 21, 19 e 29), spilled in, client-pinned, running e waiting, KV usado e taxa de acerto do cache de prefixos (82,2; 86,0; 69,0 e 80,0 por cento), e uma linha dizendo que os contadores contam desde que o warden foi iniciado.",
+    "text": "O painel Data-parallel routing na página de um modelo, com os indicadores Affinity on, Spill threshold 8 (auto), Sticky 100.0% e In flight 0. Uma tabela lista as réplicas 0 a 3 com in flight, sticky (38, 21, 19 e 29), spilled in, client-pinned, running e waiting, KV usado e taxa de acerto do cache de prefixos (82,2; 86,0; 69,0 e 80,0 por cento), e uma nota informando que os contadores começaram quando o warden foi iniciado.",
     "source_hash": "f1bc7fbd6399"
   },
   "home.why-cache.figcaption-4": {
-    "text": "Os mesmos contadores na página de um modelo: uma linha por réplica com as solicitações que ela tem, quantas conversas ficaram (<code>sticky</code>) ou chegaram por transbordo, o que está rodando e o que está esperando, o cache KV em uso e a taxa de acerto do cache de prefixos. Registrado em 4&nbsp;de&nbsp;outubro&nbsp;de&nbsp;2026 com a afinidade ligada e o limite de transbordo em 8 (auto): sticky 100% e uma taxa de acerto do cache de prefixos de 82,2; 86,0; 69,0 e 80,0% nas réplicas 0 a 3. É o cartão, não um resultado.<span class=\"cache-hint\"> Toque no cartão para ampliá-lo.</span>",
+    "text": "Os mesmos contadores na página de um modelo: uma linha por réplica com as solicitações que ela tem, quantas conversas ficaram (<code>sticky</code>) ou chegaram por transbordo, o que está rodando e o que está esperando, o cache KV em uso e a taxa de acerto do cache de prefixos. Registrado em 4&nbsp;de&nbsp;outubro&nbsp;de&nbsp;2026 com a afinidade ligada e o limite de transbordo em 8 (auto): sticky 100% e uma taxa de acerto do cache de prefixos de 82,2; 86,0; 69,0 e 80,0% nas réplicas 0 a 3. É uma captura do painel, não um resultado de teste.<span class=\"cache-hint\"> Toque no painel para ampliá-lo.</span>",
     "source_hash": "234d024e62df"
   },
   "home.why-cache.p-4": {
-    "text": "<b>Onde ele perde.</b> Os degraus de 24 e 32 sessões são uma sobrecarga proposital de quatro placas pequenas, e todas as réplicas estão saturadas. A saída ainda é maior (11.178 contra 9.048 e 16.638 contra 14.760 tokens por minuto) e a cauda lenta é bem mais curta (p95 38 contra 59&#8239;s, e 39 contra 83&#8239;s), mas o tempo mediano até o primeiro byte é pior com afinidade: 13,1 contra 5,1&#8239;s com 24 sessões, 27,7 contra 12,3&#8239;s com 32. Não isolamos a causa, e baixar o limite de transbordo de 8 para 4 não mudou isso.",
+    "text": "<b>Onde ele sai perdendo.</b> As etapas de 24 e 32 sessões são uma sobrecarga proposital de quatro placas pequenas, e todas as réplicas estão saturadas. A saída ainda é maior (11.178 contra 9.048 e 16.638 contra 14.760 tokens por minuto) e a cauda lenta é bem mais curta (p95 38 contra 59&#8239;s, e 39 contra 83&#8239;s), mas o tempo mediano até o primeiro byte é pior com afinidade: 13,1 contra 5,1&#8239;s com 24 sessões, 27,7 contra 12,3&#8239;s com 32. Não isolamos a causa, e baixar o limite de transbordo de 8 para 4 não mudou isso.",
     "source_hash": "2a468a4b1738"
   },
   "home.why-cache.p-5": {
@@ -716,19 +716,19 @@
     "source_hash": "c245f8292ac7"
   },
   "home.why-cache.a-1": {
-    "text": "O método completo: a carga de trabalho, o harness, o limite de transbordo e uma máquina com sete GPUs que roda com ele desde então →",
+    "text": "O método completo: a carga de trabalho, o ambiente de teste, o limite de transbordo e uma máquina com sete GPUs que usa esse roteamento desde então →",
     "source_hash": "cd240e4bc004"
   },
   "home.agents.h2-1": {
-    "text": "Aponte seu agente de programação para as suas próprias GPUs.",
+    "text": "Use as suas próprias GPUs no seu agente de programação.",
     "source_hash": "b01cff25d51f"
   },
   "home.agents.p-1": {
-    "text": "Dez ferramentas se conectam com uma URL base e uma chave; duas delas também podem manter uma assinatura paga do Claude para o trabalho difícil.",
+    "text": "Dez ferramentas se conectam com uma URL base e uma chave; duas delas também podem manter uma assinatura paga do Claude para as tarefas difíceis.",
     "source_hash": "26604da90050"
   },
   "home.agents.h3-1": {
-    "text": "Tudo nos seus modelos",
+    "text": "Totalmente nos seus modelos",
     "source_hash": "a87ec3988e0d"
   },
   "home.agents.p-2": {
@@ -764,7 +764,7 @@
     "source_hash": "9ad204014fc0"
   },
   "home.agents.h3-2": {
-    "text": "Mantenha sua assinatura do Claude e passe adiante as chamadas de rotina",
+    "text": "Mantenha sua assinatura do Claude e leve as chamadas de rotina para as suas GPUs",
     "source_hash": "cfeda056d931"
   },
   "home.agents.p-3": {
@@ -800,7 +800,7 @@
     "source_hash": "d77bbac51675"
   },
   "home.agents.figcaption-1": {
-    "text": "Claude Code 2.1.227 ou mais recente: <code>ANTHROPIC_BASE_URL</code> apontando para o warden, a chave do warden em <code>ANTHROPIC_CUSTOM_HEADERS</code> e o seu login intocado. Não fizemos benchmark da qualidade das respostas: dê ao modelo local o trabalho de rotina e bem especificado.",
+    "text": "Claude Code 2.1.227 ou mais recente: <code>ANTHROPIC_BASE_URL</code> apontando para o warden, a chave do warden em <code>ANTHROPIC_CUSTOM_HEADERS</code> e o seu login continua intacto. Não fizemos benchmark da qualidade das respostas: dê ao modelo local o trabalho de rotina e bem especificado.",
     "source_hash": "bc31fcfd58c7"
   },
   "home.agents.h3-3": {
@@ -816,7 +816,7 @@
     "source_hash": "6a234848eac5"
   },
   "home.tune.h2-1": {
-    "text": "Deixe a IA que você já paga ajustar as suas próprias GPUs.",
+    "text": "Deixe a IA que você já assina ajustar as suas próprias GPUs.",
     "source_hash": "c3ae8600a083"
   },
   "home.why-agent.p-1": {
@@ -832,7 +832,7 @@
     "source_hash": "3f22e76a3edc"
   },
   "home.loop-d.desc-1": {
-    "text": "Levantar as GPUs, pré-selecionar modelos com a prévia de encaixe antes de qualquer download, carregar layouts candidatos, fazer benchmarks com solicitações reais, ajustar as configurações e manter o vencedor carregado. Benchmark e ajuste se repetem até o agente ficar satisfeito.",
+    "text": "Examinar as GPUs, pré-selecionar modelos com a verificação de compatibilidade antes de qualquer download, carregar layouts candidatos, fazer benchmarks com solicitações reais, ajustar as configurações e manter carregada a configuração vencedora. Benchmark e ajuste se repetem até o agente ficar satisfeito.",
     "source_hash": "dd7733aa80ef"
   },
   "home.loop-t2.title-1": {
@@ -840,7 +840,7 @@
     "source_hash": "3f22e76a3edc"
   },
   "home.loop-d2.desc-1": {
-    "text": "Levantar as GPUs, pré-selecionar modelos com a prévia de encaixe antes de qualquer download, carregar layouts candidatos, fazer benchmarks com solicitações reais, ajustar as configurações e manter o vencedor carregado. Benchmark e ajuste se repetem até o agente ficar satisfeito.",
+    "text": "Examinar as GPUs, pré-selecionar modelos com a verificação de compatibilidade antes de qualquer download, carregar layouts candidatos, fazer benchmarks com solicitações reais, ajustar as configurações e manter carregada a configuração vencedora. Benchmark e ajuste se repetem até o agente ficar satisfeito.",
     "source_hash": "dd7733aa80ef"
   },
   "home.why-agent.p-2": {
@@ -860,7 +860,7 @@
     "source_hash": "222000da96d1"
   },
   "home.why-agent.li-1": {
-    "text": "<b>Levantar e pré-selecionar.</b> <span class=\"ask\">Peça:</span> liste minhas GPUs, pré-selecione três modelos open-weight para programação com agentes que caibam com pelo menos 65.536 tokens de contexto, verifique cada um com fit-preview e não baixe nada. <span class=\"get\">Você recebe:</span> uma tabela com modelo, quantização, mecanismo, GPUs, contexto e o porquê.",
+    "text": "<b>Examinar e pré-selecionar.</b> <span class=\"ask\">Peça:</span> liste minhas GPUs, pré-selecione três modelos de pesos abertos para programação com agentes que caibam com pelo menos 65.536 tokens de contexto, confira cada um com fit-preview e não baixe nada. <span class=\"get\">Você recebe:</span> uma tabela com modelo, quantização, mecanismo, GPUs, contexto e o motivo da escolha.",
     "source_hash": "4d737111bb76"
   },
   "home.why-agent.li-2": {
@@ -876,11 +876,11 @@
     "source_hash": "d25a394b9e41"
   },
   "home.why-agent.p-3": {
-    "text": "<b>Antes de começar.</b> Um token de administrador tem todos os direitos de administração sobre o warden (modelos, chaves, configurações; ainda não há escopos mais restritos): dê a ele uma validade curta e revogue-o em Settings → Access Tokens quando o trabalho terminar. Um teste de estresse derruba um mecanismo de propósito para encontrar o limite dele: execute esses prompts em um warden do qual ninguém mais dependa. Os downloads são grandes; os prompts verificam o encaixe antes de baixar, mas fique de olho no seu disco.",
+    "text": "<b>Antes de começar.</b> Um token de administrador tem direitos plenos de administração sobre o warden (modelos, chaves, configurações; ainda não há escopos mais restritos): dê a ele uma validade curta e revogue-o em Settings → Access Tokens quando o trabalho terminar. Um teste de estresse derruba um mecanismo de propósito para encontrar o limite dele: execute esses prompts em um warden do qual ninguém mais dependa. Os downloads são grandes; os prompts verificam se o modelo cabe antes de baixar, mas fique de olho no espaço em disco.",
     "source_hash": "505b9916712b"
   },
   "home.why-agent.p-4": {
-    "text": "As escolhas de mecanismo e layout (vLLM, paralelismo de tensores ou de dados) são da instalação Linux; no Mac, a escolha é MLX ou llama.cpp em uma GPU. O modelo que faz o ajuste pode ser qualquer um que você já pague; o modelo ajustado é o que está nas suas placas. <a href=\"/agent-tuning\">A página de ajuste por agente: os quatro prompts completos</a>.",
+    "text": "As escolhas de mecanismo e layout (vLLM, paralelismo de tensores ou de dados) são da instalação Linux; no Mac, a escolha é entre MLX e llama.cpp em uma GPU. O modelo que faz o ajuste pode ser qualquer um que você já assine; o modelo ajustado é o que roda nas suas placas. <a href=\"/agent-tuning\">A página de ajuste com agente de IA: os quatro prompts completos</a>.",
     "source_hash": "bbeb89be5de6"
   },
   "home.share.h2-1": {
@@ -888,7 +888,7 @@
     "source_hash": "f1e27da721b7"
   },
   "home.why-keys.p-1": {
-    "text": "Crie quantas chaves de API precisar e distribua: um colega, alguém da família, um job de CI, uma fazenda de agentes, cada um com sua própria chave, sua própria prioridade e sua própria página de uso. O hardware trabalha para todos, e o trabalho importante nunca fica esperando.",
+    "text": "Crie quantas chaves de API precisar e distribua: um colega, alguém da família, um job de CI, um grupo de agentes, cada um com sua própria chave, sua própria prioridade e sua própria página de uso. O hardware trabalha para todos, e o trabalho importante nunca fica esperando.",
     "source_hash": "dd9352746e6e"
   },
   "home.why-keys.h3-1": {
@@ -900,7 +900,7 @@
     "source_hash": "4dd4ec421cbe"
   },
   "home.why-keys.ol-1.aria-label": {
-    "text": "Exemplo de escala de prioridades",
+    "text": "Exemplo de níveis de prioridade",
     "source_hash": "1c1bcbbf1789"
   },
   "home.why-keys.b-1": {
@@ -908,11 +908,11 @@
     "source_hash": "c5da4041ea8e"
   },
   "home.why-keys.span-1": {
-    "text": "sempre atendido antes",
+    "text": "sempre atendido primeiro",
     "source_hash": "a2476d66a084"
   },
   "home.why-keys.b-2": {
-    "text": "Suas sessões de código",
+    "text": "Suas sessões de programação",
     "source_hash": "6c8888f1d6dc"
   },
   "home.why-keys.span-2": {
@@ -940,19 +940,19 @@
     "source_hash": "96d527825b4b"
   },
   "home.why-keys.span-5": {
-    "text": "esperam ociosidade",
+    "text": "esperam a máquina livre",
     "source_hash": "687891cb2f66"
   },
   "home.why-keys.p-3": {
-    "text": "Uma escala de exemplo, não uma regra: você escolhe os números. Cada chave também pode ser pausada (novas solicitações recusadas enquanto as em andamento terminam), rotacionada com um período de carência e restrita aos modelos que pode chamar.",
+    "text": "Os números são só um exemplo, não uma regra: você escolhe os seus. Cada chave também pode ser pausada (novas solicitações são recusadas enquanto as em andamento terminam), rotacionada com um período de carência e restrita aos modelos que pode chamar.",
     "source_hash": "ca3034a912dc"
   },
   "home.why-keys.img-1.alt": {
-    "text": "A página da chave de API coding-agent: um cartão Limits com o seletor de prioridade de P0 a P9 e o texto Strict, a waiting P9 request always goes before a P8 one; um painel Usage dos últimos 7 dias com 19 mil solicitações, 1,5 bilhão de tokens de prompt e 440 mil tokens de resposta; gráficos de tokens por minuto e solicitações por minuto; abaixo, painéis de espera na fila e latência",
+    "text": "A página da chave de API coding-agent: um painel Limits com o seletor de prioridade de P0 a P9 e o texto Strict, a waiting P9 request always goes before a P8 one; um painel Usage dos últimos 7 dias com 19 mil solicitações, 1,5 bilhão de tokens de prompt e 440 mil tokens de resposta; gráficos de tokens por minuto e solicitações por minuto; abaixo, painéis de espera na fila e latência",
     "source_hash": "ae01537e1ee6"
   },
   "home.why-keys.figcaption-1": {
-    "text": "A página de uma chave: a prioridade dela, sete dias do seu próprio uso (19 mil solicitações, 1,5 bilhão de tokens de prompt), tokens e solicitações por minuto, espera na fila e latência. Janelas de 1&#8239;h, 6&#8239;h, 24&#8239;h, 7&#8239;dias ou qualquer intervalo personalizado. Chaves anteriores das quais ela foi rotacionada podem ser incluídas.",
+    "text": "A página de uma chave: a prioridade dela, sete dias do seu próprio uso (19 mil solicitações, 1,5 bilhão de tokens de prompt), tokens e solicitações por minuto, espera na fila e latência. Janelas de 1&#8239;h, 6&#8239;h, 24&#8239;h, 7&#8239;dias ou qualquer intervalo personalizado. É possível incluir as chaves anteriores que ela substituiu na rotação.",
     "source_hash": "a098f63084b6"
   },
   "home.why-keys.img-2.alt": {
@@ -968,11 +968,11 @@
     "source_hash": "b5718f9f8bb5"
   },
   "home.hw.h2-1": {
-    "text": "Seu hardware, sem disfarces: de um Mac a oito B300.",
+    "text": "Seu hardware como ele é: de um Mac a oito B300.",
     "source_hash": "3f3225bbc711"
   },
   "home.hardware.p-1": {
-    "text": "O mesmo console lê um M1 de 16&#8239;GB, duas placas diferentes embaixo de uma mesa e um servidor NVSwitch 8 × B300, e aponta o gargalo em vez de escondê-lo numa média: um link PCIe que se acomodou em x4 de x16, links NVLink inativos, ECC que difere entre as placas.",
+    "text": "O mesmo console lê um M1 de 16&#8239;GB, duas placas diferentes embaixo de uma mesa e um servidor NVSwitch 8 × B300, e aponta o gargalo em vez de escondê-lo numa média: um link PCIe que negociou x4 em vez de x16, links NVLink inativos, ECC diferente entre as placas.",
     "source_hash": "f90e55953921"
   },
   "home.hardware.img-1.alt": {
@@ -988,15 +988,15 @@
     "source_hash": "6006e1039ec1"
   },
   "home.hardware.figcaption-2": {
-    "text": "Duas placas compradas com anos de diferença: o link da A4000 se acomodou em x4 de x16 e aparece em vermelho; a arquitetura, o limite de potência, o NVLink (compatível, links inativos) e o ECC da Quadro estão marcados como <em>differs</em>. O desenho mostra qual slot é o estreito.",
+    "text": "Duas placas compradas com anos de diferença: o link da A4000 negociou x4 em vez de x16 e aparece em vermelho; a arquitetura, o limite de potência, o NVLink (compatível, links inativos) e o ECC da Quadro estão marcados como <em>differs</em>. O desenho mostra qual slot está com a largura reduzida.",
     "source_hash": "d67a36ee8dec"
   },
   "home.hardware.img-3.alt": {
-    "text": "Stats no servidor 8 × B300: VRAM 1932,1 de 2148,8&#8239;GiB, potência de 1893&#8239;W somada entre as placas, utilização da GPU e consumo de energia na última hora, e tokens de prompt por segundo divididos em cacheados e computados com 93% de acerto de cache",
+    "text": "Stats no servidor 8 × B300: VRAM 1932,1 de 2148,8&#8239;GiB, potência de 1893&#8239;W somada entre as placas, utilização da GPU e consumo de energia na última hora, e tokens de prompt por segundo divididos em atendidos pelo cache e calculados, com taxa de acerto do cache de 93%",
     "source_hash": "2b44277f55cd"
   },
   "home.hardware.figcaption-3": {
-    "text": "A mesma página Stats no topo da escala: 1.932 de 2.149&#8239;GiB de VRAM, 1.893&#8239;W somando as placas, um pico de 4.351&#8239;W na hora e 93% dos tokens de prompt vindos do cache.",
+    "text": "A mesma página Stats no hardware mais potente: 1.932 de 2.149&#8239;GiB de VRAM, 1.893&#8239;W somando as placas, um pico de 4.351&#8239;W na hora e 93% dos tokens de prompt vindos do cache.",
     "source_hash": "f3ceb6c33eb7"
   },
   "home.hardware.img-4.alt": {
@@ -1008,7 +1008,7 @@
     "source_hash": "cddfa5475f94"
   },
   "home.hardware.p-2": {
-    "text": "O que cada painel mostra por placa: a temperatura em relação ao próprio ponto de throttling, a potência em relação ao limite, clocks, ventoinha, a geração e a largura PCIe negociadas naquele momento, ECC e NVLink quando a placa os tem e o processo que ocupa a memória. O desenho da interconexão é lido de <code>nvidia-smi topo -m</code>. No Mac: o uso da GPU e o orçamento de memória informado pelo Metal, sem potência. E o mecanismo por baixo de tudo é monitorado pelo seu próprio <code>/health</code>, não pela tabela de processos: um mecanismo morto sob um wrapper vivo é recarregado, e as evidências são guardadas.",
+    "text": "O que cada painel mostra por placa: a temperatura em relação ao próprio ponto de throttling, a potência em relação ao limite, clocks, ventoinha, a geração e a largura PCIe negociadas naquele momento, ECC e NVLink quando a placa os tem e o processo que ocupa a memória. O desenho da interconexão é lido de <code>nvidia-smi topo -m</code>. No Mac: o uso da GPU e a memória disponível informada pelo Metal, sem potência. E o mecanismo por baixo de tudo é monitorado pelo seu próprio <code>/health</code>, não pela tabela de processos: um mecanismo travado por trás de um wrapper ainda ativo é recarregado, e as evidências são guardadas.",
     "source_hash": "5a4e8569c432"
   },
   "home.features.h2-1": {
@@ -1020,11 +1020,11 @@
     "source_hash": "cbdfccb24fcc"
   },
   "home.features.h3-1": {
-    "text": "Cada placa informa por si mesma.",
+    "text": "Cada placa com os seus próprios números.",
     "source_hash": "65fb2dd50a89"
   },
   "home.features.p-2": {
-    "text": "Utilização, temperatura em relação ao ponto de throttling daquela placa, potência em relação ao limite, VRAM, clocks, link PCIe e qual processo ocupa a memória. Não uma média da máquina inteira.",
+    "text": "Utilização, temperatura em relação ao ponto de throttling daquela placa, potência em relação ao limite, VRAM, clocks, link PCIe e qual processo ocupa a memória. E não uma média da máquina inteira.",
     "source_hash": "1bea9211a232"
   },
   "home.features.img-1.alt": {
@@ -1096,7 +1096,7 @@
     "source_hash": "11506c59ef23"
   },
   "chrome.footer.install": {
-    "text": "Instalação",
+    "text": "Guia de instalação",
     "source_hash": "e15a133068af"
   },
   "chrome.footer.changelog": {

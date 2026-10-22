@@ -1,0 +1,134 @@
+{
+  "cache-aware-routing.meta.title": {
+    "text": "Cache-sensitives Routing für vLLM-Replikate | LM Warden",
+    "source_hash": "74d5770bf736"
+  },
+  "cache-aware-routing.meta.description": {
+    "text": "Agent-Sitzungen werden zu dem Replikat zurückgeleitet, das ihren Prompt schon im Präfix-Cache hat, sodass lange Unterhaltungen den Großteil des Prefills einsparen.",
+    "source_hash": "055a37ed3302"
+  },
+  "cache-aware-routing.replica.h1-1": {
+    "text": "Die nächste Runde landet dort, wo die letzte ihren Cache hinterlassen hat.",
+    "source_hash": "7b4386acadc3"
+  },
+  "cache-aware-routing.p-1": {
+    "text": "Ein Agent sendet in jeder Runde seinen gesamten Verlauf erneut, daher besteht eine lange Unterhaltung größtenteils aus einem Präfix, das die Engine schon gelesen hat. vLLM bewahrt diese Arbeit in seinem Präfix-Cache auf (dem Attention-Zustand bereits gesehener Prompts) und überspringt sie, wenn dasselbe Präfix das nächste Mal ankommt, aber nur auf dem Replikat, das die Arbeit geleistet hat: Jede vollständige Kopie des Modells hat ihren eigenen Cache. Der eigene Balancer von vLLM schickt jede Runde an das Replikat mit der kürzesten Warteschlange, das die Unterhaltung meist nie gesehen hat und daher den gesamten Verlauf erneut liest. LM Warden platziert jede neue Unterhaltung auf dem am wenigsten ausgelasteten Replikat (laufende Anfragen, Füllstand seines Caches und Zahl der aktiven Unterhaltungen darauf) und belässt sie dort, anhand der Sitzungs-ID, die Claude Code ohnehin sendet. Eine Anfrage wird nur verschoben, wenn dieses Replikat seinen Überlaufschwellenwert überschreitet: standardmäßig laufende Anfragen über einem Viertel des Limits gleichzeitiger Sequenzen des Modells, auf unserem Rechner mit vier Karten sind das 8.",
+    "source_hash": "6a215639b7d8"
+  },
+  "cache-aware-routing.p-2": {
+    "text": "Replikate, und damit dieses Routing, gehören zur Linux-Installation mit NVIDIA-GPUs; die <a href=\"/#p-mac\">Mac-App (Beta)</a> hat weder Tensor- noch Datenparallelität.",
+    "source_hash": "2022d3c80a9f"
+  },
+  "cache-aware-routing.figcaption-1": {
+    "text": "<b>Abb.&nbsp;6</b>Vier Runden einer Unterhaltung auf einem Modell mit vier Replikaten. Mit dem Balancer von vLLM wird jede Runde fast von Grund auf im Prefill verarbeitet (ihr Prompt in den Cache eingelesen), auf welchem Replikat sie auch landet. Mit LM Warden bleibt die Unterhaltung auf Replikat&nbsp;2, und nur die neue Runde geht durch den Prefill. Eine Zeichnung des Mechanismus, keine Messung.",
+    "source_hash": "a3b037946eda"
+  },
+  "cache-aware-routing.p-3": {
+    "text": "Gemessen auf dem Rechner mit vier Karten: Mit fest zugeordneten Unterhaltungen stieg der Anteil der aus dem Cache bedienten Prompt-Token bei 4 parallelen Sitzungen von 56 auf 86&#8239;%, und die mediane Zeit bis zum ersten Byte sank von 2,05 auf 0,38&#8239;s. Die Ausgabe-Token pro Minute waren bei jeder gemessenen Stufe höher, und das p95 der Zeit bis zum ersten Byte (die langsamsten 5&#8239;%) war bei jeder Stufe niedriger. Die Zahl der arbeitenden Replikate änderte sich kaum (2,71 gegenüber 2,83 von vier bei 4 Sitzungen): Der Vorteil kommt aus der Wiederverwendung des Caches, nicht aus zusätzlich arbeitenden Karten.",
+    "source_hash": "91272c526688"
+  },
+  "cache-aware-routing.p-4": {
+    "text": "Die Stufen mit 24 und 32 Sitzungen sind eine bewusste Überlastung von vier kleinen Karten, bei der die Wartezeiten mit oder ohne Affinität Dutzende Sekunden erreichen. Dort zeigt sich der Zielkonflikt: Die langsamsten Anfragen warten mit Affinität immer noch kürzer, aber der Median ist länger. Die Zahlen dazu folgen.",
+    "source_hash": "22167404e1cf"
+  },
+  "cache-aware-routing.dt-1": {
+    "text": "GPUs",
+    "source_hash": "8f0474fb0c5b"
+  },
+  "cache-aware-routing.dd-1": {
+    "text": "4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000, je 16&#8239;GiB",
+    "source_hash": "a2a87a6a413f"
+  },
+  "cache-aware-routing.dt-2": {
+    "text": "Modell",
+    "source_hash": "5e2c614c23f0"
+  },
+  "cache-aware-routing.dd-2": {
+    "text": "qwen3-4b-dp4 (Qwen/Qwen3-4B-Instruct-2507), bf16",
+    "source_hash": "ca64e381cd89"
+  },
+  "cache-aware-routing.dt-3": {
+    "text": "Aufteilung",
+    "source_hash": "a511909161e1"
+  },
+  "cache-aware-routing.dd-3": {
+    "text": "data_parallel_size 4, tensor_parallel_size 1",
+    "source_hash": "2d27d2565f76"
+  },
+  "cache-aware-routing.dd-5": {
+    "text": "Dieses Release",
+    "source_hash": "056adfd1d823"
+  },
+  "cache-aware-routing.dt-4": {
+    "text": "Aufgezeichnet",
+    "source_hash": "8a03fa9ad749"
+  },
+  "cache-aware-routing.dd-6": {
+    "text": "4.&nbsp;Oktober 2026, beide Varianten direkt hintereinander",
+    "source_hash": "616bab8cda85"
+  },
+  "cache-aware-routing.dt-5": {
+    "text": "Last",
+    "source_hash": "8a6bdb6b18da"
+  },
+  "cache-aware-routing.dd-7": {
+    "text": "Synthetische Sitzungen im Stil von Claude Code aus unserem eigenen Testaufbau, nicht Claude Code selbst: ein gemeinsamer System-Prompt von etwa 3,5&nbsp;Tsd. Token, eine für jede Sitzung eigene erste Nachricht (nominell 6&nbsp;Tsd., gemessen etwa 7,2 bis 7,5&nbsp;Tsd.), dann fünf weitere Runden mit je etwa 400 neuen Token, höchstens 256 Token Ausgabe pro Runde. Geschlossene Schleife: Eine Sitzung beginnt ihre nächste Runde, sobald die letzte endet. 3&nbsp;Minuten pro Stufe.",
+    "source_hash": "bf79aedc37a9"
+  },
+  "cache-aware-routing.figcaption-2": {
+    "text": "<b>Abb.&nbsp;7</b>Zeit bis zum ersten Byte bei 4 bis 32 parallelen Sitzungen, Median und p95, auf logarithmischer Skala, damit die Stufen unter einer Sekunde neben den minutenlangen lesbar bleiben. Mit Affinität ist der Median bis 16 Sitzungen weit niedriger (0,38 gegenüber 2,05&#8239;s bei 4) und bei 24 und 32 höher; das p95 ist bei jeder Stufe niedriger, wobei der Abstand bei 16 (24,9 gegenüber 26,2&#8239;s) im Rauschen eines einzigen Durchlaufs pro Variante liegt. Gemessen beim Client, über das Internet, bis zum ersten gestreamten Token.",
+    "source_hash": "4104b97ee062"
+  },
+  "cache-aware-routing.p-5": {
+    "text": "Gemessen auf unserem Rechner mit vier Karten und einem kleinen Modell, Affinität zuerst aus, dann an, ohne vLLM dazwischen neu zu starten: Die zweite Variante begann mit einem warmen Präfix-Cache, und beide Varianten zogen ihre Prompts aus demselben Seed. Jede Stufe dauert 3&nbsp;Minuten, daher werden nur 9 bis 31 Sitzungen abgeschlossen, und eine Sitzung mehr oder weniger verschiebt die Sitzungen pro Stunde um 20; die Ausgabe-Token pro Minute sind die stabilere Spalte. Ihr Modell, Ihre Karten und Ihre Last werden abweichen; das Replikat-Panel auf der Seite eines Modells zeigt dieselben Zähler für Ihre Konfiguration.",
+    "source_hash": "4744b11be2ad"
+  },
+  "cache-aware-routing.p-6": {
+    "text": "Bis 16 Sitzungen liegt die Affinität bei jeder Stufe vorn, bei Durchsatz, Treffern im Präfix-Cache und beiden Spalten der Zeit bis zum ersten Byte: Die Treffer steigen bei 4 Sitzungen von 56 auf 86&#8239;%, die mediane Zeit bis zum ersten Byte sinkt von 2,05 auf 0,38&#8239;s, und die Ausgabe steigt von 5.886 auf 6.744 Token pro Minute (Sitzungen pro Stunde von 180 auf 240). Bei 24 und 32 Sitzungen, den Überlaststufen, ist jedes Replikat ausgelastet. Die Ausgabe ist dennoch höher (11.178 gegenüber 9.048 und 16.638 gegenüber 14.760 Token pro Minute), und die langsamsten Anfragen warten deutlich kürzer (p95 38 gegenüber 59&#8239;s und 39 gegenüber 83&#8239;s), aber die mediane Zeit bis zum ersten Byte ist mit Affinität schlechter: 13,1 gegenüber 5,1&#8239;s bei 24 Sitzungen, 27,7 gegenüber 12,3&#8239;s bei 32. Die Ursache haben wir nicht isoliert, und eine Senkung des Überlaufschwellenwerts von 8 auf 4 änderte nichts daran. Der Vorteil ist am größten, solange Spielraum besteht; läuft ein Rechner an seiner Grenze, sollten Sie beide Einstellungen messen – die Affinität lässt sich pro Modell abschalten.",
+    "source_hash": "8ab22b61f669"
+  },
+  "cache-aware-routing.figcaption-3": {
+    "text": "<b>Abb.&nbsp;8</b>Beschäftigte Replikate, von vier: Replikate mit laufenden Anfragen bei jeder Abfrage, gemittelt über eine Stufe. Nicht die GPU-Auslastung. Die Affinität ändert daran kaum etwas; der Vorteil zeigt sich in Abb.&nbsp;9.",
+    "source_hash": "d3b521cd1c61"
+  },
+  "cache-aware-routing.figcaption-4": {
+    "text": "<b>Abb.&nbsp;9</b>Trefferquote des Präfix-Caches in jeder Stufe: aus dem Cache bediente Prompt-Token geteilt durch angefragte Prompt-Token, alle vier Replikate zusammengefasst, berechnet aus der Änderung der eigenen Zähler von vLLM während der Stufe. Der Vorteil bleibt erhalten, solange Spielraum besteht, und ist bei 32 Sitzungen verschwunden, wo Unterhaltungen überlaufen.",
+    "source_hash": "7721bb0a3fe0"
+  },
+  "cache-aware-routing.img-1.alt": {
+    "text": "Das Panel Data-parallel routing auf der Seite eines Modells, mit den Badges Affinity on, Spill threshold 8 (auto), Sticky 100.0% und In flight 0. Eine Tabelle listet die Replikate 0 bis 3 mit in flight, sticky (38, 21, 19 und 29), spilled in, client-pinned, running und waiting, belegtem KV und Trefferquote des Präfix-Caches (82,2; 86,0; 69,0 und 80,0 Prozent), dazu eine Zeile, dass die Zähler seit dem Start des Wardens laufen.",
+    "source_hash": "f1bc7fbd6399"
+  },
+  "cache-aware-routing.span-1": {
+    "text": "Affinität an, Überlaufschwellenwert 8 (auto)",
+    "source_hash": "afd07a294687"
+  },
+  "cache-aware-routing.span-2": {
+    "text": "Trefferquote pro Replikat, aus den eigenen Zählern von vLLM",
+    "source_hash": "aeb0dd495f94"
+  },
+  "cache-aware-routing.figcaption-5": {
+    "text": "<b>Abb.&nbsp;10</b>Dieselben Zähler auf der Seite eines Modells: eine Zeile pro Replikat mit den Anfragen, die es gerade bearbeitet, wie viele Unterhaltungen geblieben (<code>sticky</code>) oder durch Überlauf hinzugekommen sind, was läuft und wartet, belegter KV-Cache und die Trefferquote des Präfix-Caches. Aufgenommen am 4.&nbsp;Oktober&nbsp;2026 mit Affinität an und dem Überlaufschwellenwert bei 8 (auto): sticky 100&#8239;%, 38, 21, 19 und 29 Sticky-Anfragen auf den Replikaten 0 bis 3 und eine Trefferquote des Präfix-Caches von 82,2; 86,0; 69,0 und 80,0&#8239;%. Die Zähler laufen seit dem Neustart des Wardens, und der gesamte Verkehr in diesem Zeitraum lief mit Affinität: synthetische Agent-Sitzungen plus echte Runden von Claude Code. Das ist ein Screenshot des Panels, kein Messergebnis.<span class=\"scroll-hint\"> Scrollen Sie das Bild seitlich, um alle Spalten zu sehen.</span>",
+    "source_hash": "c5c62f4909c8"
+  },
+  "cache-aware-routing.p-7": {
+    "text": "Der Rechner, der das Replikat-Routing ursprünglich angestoßen hat, läuft seitdem damit. Er hat sieben RTX&nbsp;5090, die ein 27B-Modell als sieben Replikate mit je einer Karte für eine Farm von Agenten bereitstellen, die Claude Code ohne Benutzeroberfläche ausführen. Unsere erste Platzierungsregel hashte die Sitzungs-ID: Sitzungen blieben so zwar auf ihrem Replikat, die Last wurde aber nicht berücksichtigt. Mit 26 Agent-Sitzungen von je etwa 58&nbsp;Tsd. Token lagen drei Replikate brach, während andere ihren Cache bis auf 93&#8239;% füllten, und der Anteil der aus dem Cache bedienten Prompt-Token fiel von 81&#8239;% nach einem Neustart auf 28&#8239;% innerhalb von etwa 35 Minuten. Daraufhin haben wir die Farm auf 16 Sitzungen reduziert, etwa zwei pro Replikat, damit die Arbeitsmengen in den Cache passen, und neue Unterhaltungen auf das am wenigsten ausgelastete Replikat gelegt. In der folgenden Stunde lag der Cache-Anteil bei 78 bis 79&#8239;%. Das ist eine Beobachtung, kein A/B-Test: eine Last und zwei gleichzeitige Änderungen, der Vorteil geht also nicht allein auf die Platzierung zurück. Die Faustregel, die sich daraus ergibt: Gleichzeitige Sitzungen mal ihr typischer Kontext sollten unter dem gesamten Cache des Rechners bleiben.",
+    "source_hash": "36247db6bebb"
+  },
+  "cache-aware-routing.img-2.alt": {
+    "text": "Das Diagramm Tokens per second der Stats-Seite über eine Stunde. Die Prompt-Balken sind aufgeteilt in zwischengespeicherte Token (gemessen, blau) und berechnete (lila), zwischen etwa 15&nbsp;Tsd. und 45&nbsp;Tsd. Token pro Sekunde; der größte Teil jedes Balkens ist blau, und die Zusammenfassung zeigt cache hit 78% für die letzte Stunde. Completion-Token pro Sekunde, zwischen etwa 70 und 420, sind darunter in Grün dargestellt.",
+    "source_hash": "a40bcea9f2f2"
+  },
+  "cache-aware-routing.span-3": {
+    "text": "Von der Engine gemessen, pro Anfrage",
+    "source_hash": "30f9cc329d1b"
+  },
+  "cache-aware-routing.figcaption-6": {
+    "text": "<b>Abb.&nbsp;11</b>Prompt-Token pro Sekunde auf dem Rechner mit sieben GPUs, aufgeteilt in das, was jedes Replikat aus seinem Präfix-Cache gelesen hat, und das, was es berechnen musste, mit dem Anteil für die letzte Stunde: 78&#8239;%. Der zwischengespeicherte Teil ist die eigene Zählung der Engine für jede abgeschlossene Anfrage, keine Schätzung; eine Anfrage, die sie nicht gemessen hat, zählt als berechnet. Aufgezeichnet am 5.&nbsp;Oktober 2026.<span class=\"scroll-hint\"> Scrollen Sie das Bild seitlich, um die ganze Stunde zu sehen.</span>",
+    "source_hash": "8b698966274e"
+  },
+  "cache-aware-routing.p-8": {
+    "text": "Siehe auch: <a href=\"/gpu-monitoring\">GPU-Monitoring</a> · <a href=\"/coding-agents/claude-code\">Claude Code</a> · <a href=\"/coding-agents\">Coding-Agenten</a>",
+    "source_hash": "f55143f36cbe"
+  }
+}

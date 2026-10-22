@@ -1,0 +1,186 @@
+{
+  "features.meta.title": {
+    "text": "Más funciones y lecciones aprendidas | LM Warden",
+    "source_hash": "ba96eee84458"
+  },
+  "features.meta.description": {
+    "text": "God mode, tokens de administrador, el watchdog de los motores y los dos fallos que marcaron cómo LM Warden supervisa vLLM.",
+    "source_hash": "6e9623164c58"
+  },
+  "features.small.h1-1": {
+    "text": "Detalles que irás descubriendo cuando esté en marcha.",
+    "source_hash": "32313b57288c"
+  },
+  "features.dd-1": {
+    "text": "Observa los prompts y las respuestas de una clave en tiempo real, desde un panel en su página. Solo se guardan en memoria y solo se transmiten mientras el panel está abierto; la función está desactivada a menos que definas <code>VW_GODMODE_ENABLED</code>.",
+    "source_hash": "30b3b2877354"
+  },
+  "features.dt-1": {
+    "text": "Tokens de administrador",
+    "source_hash": "c0b53878c4d4"
+  },
+  "features.dd-2": {
+    "text": "Los tokens <code>vwa_</code> permiten que scripts, sistemas de CI y agentes usen la API de control sin la contraseña de administrador, sin gestionar cookies y sin encabezado CSRF. Se muestran una sola vez y se guardan como hash SHA-256.",
+    "source_hash": "332151669674"
+  },
+  "features.dt-2": {
+    "text": "Un gestor de la caché de HuggingFace",
+    "source_hash": "3b9fd142bcdf"
+  },
+  "features.dd-3": {
+    "text": "Qué hay en el disco y a qué modelo pertenece. Elimina los archivos huérfanos y exporta o importa toda la caché como archivo tar.",
+    "source_hash": "9d11305af39b"
+  },
+  "features.dt-3": {
+    "text": "Un solo puerto",
+    "source_hash": "db562f172ced"
+  },
+  "features.dd-4": {
+    "text": "La interfaz, la API de control y <code>/v1</code> comparten <code>:8080</code>. Puedes poner delante tu propio terminador TLS, ingress o SSO sin cambiar nada.",
+    "source_hash": "0e54e933002b"
+  },
+  "features.dt-4": {
+    "text": "Sin salida a internet",
+    "source_hash": "afddbc532ecf"
+  },
+  "features.dd-5": {
+    "text": "Tres archivos tar de imágenes y, opcionalmente, uno con la caché de modelos es todo lo que hay que llevar a un host aislado de la red. <code>HF_HUB_OFFLINE=1</code> impide incluso la descarga de pesos.",
+    "source_hash": "b61634fa6450"
+  },
+  "features.dt-5": {
+    "text": "Estadísticas del Router",
+    "source_hash": "bf3c9855201c"
+  },
+  "features.dd-6": {
+    "text": "Cada decisión en <code>/router/stats</code>: local, reenviada, desviada por fallo o rechazada, con el motivo, por regla y por destino, y el estado del disyuntor. Contadores por proceso; nunca se guarda ningún encabezado ni cuerpo de solicitud.",
+    "source_hash": "8500a2b3792f"
+  },
+  "features.dt-6": {
+    "text": "Una página de configuración por cliente",
+    "source_hash": "2384f4730652"
+  },
+  "features.dd-7": {
+    "text": "<b>Connect</b> genera la configuración para Claude Code, Codex&nbsp;CLI, OpenCode, Aider, Grok&nbsp;CLI, los SDK de Anthropic y OpenAI y tres editores, con la dirección de este warden, una clave y un modelo cargado, y envía una solicitud de prueba.",
+    "source_hash": "2bc91137abf9"
+  },
+  "features.dd-8": {
+    "text": "Probado con un warden el 5&nbsp;de octubre de 2026 con Codex&nbsp;0.160: llamadas a la herramienta de shell, edición de un archivo y la sesión mantenida en una misma réplica. El razonamiento está activado de forma predeterminada; <code>model_reasoning_effort = \"none\"</code> lo desactiva. Solo modelos locales: las reglas del enrutador no se aplican.",
+    "source_hash": "93a18b286b4e"
+  },
+  "features.dt-7": {
+    "text": "Un chat de pruebas",
+    "source_hash": "989e5691fd83"
+  },
+  "features.dd-9": {
+    "text": "Habla con un modelo cargado desde el navegador, con imágenes incluidas, antes de darle una clave a nadie.",
+    "source_hash": "7c8ef7303dc3"
+  },
+  "features.lessons.h2-1": {
+    "text": "Tres cosas que aprendimos por las malas.",
+    "source_hash": "b2e61284634a"
+  },
+  "features.h3-1": {
+    "text": "El motor se cayó cuatro veces en un día y el proxy seguía enviándole solicitudes.",
+    "source_hash": "a3c2a4abe3bf"
+  },
+  "features.p-1": {
+    "text": "El núcleo del motor vLLM fallaba mientras el proceso envolvente <code>vllm serve</code> seguía en marcha, así que el proceso parecía vivo y se le seguían enviando solicitudes. Ahora un watchdog consulta el propio punto de conexión <code>/health</code> del motor en lugar de la tabla de procesos. Cuando el motor deja de responder, conserva los datos de diagnóstico, incluidas las últimas líneas del registro, y vuelve a cargar el modelo.",
+    "source_hash": "8d323d1c089b"
+  },
+  "features.img-1.alt": {
+    "text": "El panel de registro en directo de un modelo con carga: líneas del servidor de API de vLLM que responden a GET /metrics y a POST /v1/chat/completions de un cliente, líneas del motor que indican 10 solicitudes en ejecución y 0 en espera, y una línea GET /health, todas con 200 OK",
+    "source_hash": "a4f74c626a7f"
+  },
+  "features.span-1": {
+    "text": "La comprobación del watchdog, respondida por el motor",
+    "source_hash": "e1d7e982a29c"
+  },
+  "features.figcaption-1": {
+    "text": "<b>Fig.&nbsp;15</b>El registro en directo en la página de un modelo durante la misma carga: lecturas de <code>/metrics</code>, solicitudes de chat completions entrantes, el recuento del propio motor de 10 solicitudes en ejecución y ninguna en espera, y una comprobación de <code>/health</code> entre ellas.<span class=\"scroll-hint\"> Desplaza la imagen lateralmente para leer las líneas completas.</span>",
+    "source_hash": "40a242621e22"
+  },
+  "features.h3-2": {
+    "text": "Una carga de 12 minutos antes acababa en error.",
+    "source_hash": "69140856abf8"
+  },
+  "features.p-2": {
+    "text": "Un modelo grande puede tardar doce minutos o más en cargarse. Antes, el warden aplicaba un tiempo límite fijo: al vencer, marcaba el modelo con un error rojo «still loading», aunque el motor siguiera cargando. Ahora la página del modelo muestra cada paso de la carga con su barra de progreso, el tiempo habitual de cada uno según cargas anteriores y las constantes vitales de CPU y memoria de GPU. Una carga atascada se detiene y sus GPU quedan libres; nada se pone en rojo mientras la carga siga avanzando. GLM-5.2 NVFP4 con paralelismo de tensores&nbsp;8 en ocho NVIDIA B300 se carga en unos 11 a 12 minutos; una carga tan larga antes superaba el tiempo de espera de 600&#8239;s.",
+    "source_hash": "cceedae9466e"
+  },
+  "features.img-2.alt": {
+    "text": "La página del modelo mientras GLM-5.2 NVFP4 se carga en ocho NVIDIA B300: a los 9 min 17 s de unos 10 min 46 s habituales; Start engine, Load weights 47 de 47, Compile kernels y Size KV cache terminados; Tune kernels en la op 2, 21 de 22; gráficos de CPU y memoria de GPU con 1948 de 2149&#8239;GiB en uso; Capture CUDA graphs y Warm-up request aún pendientes, cada uno con su tiempo habitual",
+    "source_hash": "e3cc9ae4cf3b"
+  },
+  "features.figcaption-2": {
+    "text": "<b>Fig.&nbsp;16</b>GLM-5.2 NVFP4 cargándose con paralelismo de tensores 8 en ocho B300, a los nueve minutos. La optimización de kernels es el paso más largo; los gráficos muestran que el motor sigue vivo aunque el registro solo repita el progreso de esa optimización.",
+    "source_hash": "981fef031d3d"
+  },
+  "features.h3-3": {
+    "text": "En una tarjeta de 16&#8239;GiB cabe menos de lo que dicen las cuentas.",
+    "source_hash": "2269d7489768"
+  },
+  "features.p-3": {
+    "text": "Los pesos de un modelo bf16 8B ocupan por sí solos unos 15&#8239;GiB, y la carga se queda sin memoria. Probamos cada fila de abajo en tarjetas RTX&nbsp;A4000 y Quadro RTX&nbsp;5000 de 16&#8239;GiB y la evaluamos leyendo las respuestas del modelo en el chat de pruebas, no fiándonos de una comprobación de estado.",
+    "source_hash": "a34f00101361"
+  },
+  "features.th-1": {
+    "text": "Modelo",
+    "source_hash": "5e2c614c23f0"
+  },
+  "features.th-2": {
+    "text": "Lo que funciona",
+    "source_hash": "ea5522c7c85e"
+  },
+  "features.th-3": {
+    "text": "Lo que no funciona",
+    "source_hash": "9bebcd3482a7"
+  },
+  "features.col-works.data-h": {
+    "text": "Funciona",
+    "source_hash": "2b4c8c6d38db"
+  },
+  "features.td-1": {
+    "text": "Dos tarjetas, paralelismo de tensores 2, <code>max_model_len</code> 32000, <code>gpu_memory_utilization</code> de 0,7&nbsp;a&nbsp;0,9",
+    "source_hash": "4516d9c167db"
+  },
+  "features.col-does-not.data-h": {
+    "text": "No funciona",
+    "source_hash": "73a6fc7836b8"
+  },
+  "features.td-2": {
+    "text": "Una tarjeta: el MoE 20B no cabe",
+    "source_hash": "6b644f502c34"
+  },
+  "features.th-4": {
+    "text": "Llama 3.1 8B, clase Mistral 7B",
+    "source_hash": "c2f2a5cd5d41"
+  },
+  "features.td-3": {
+    "text": "Una tarjeta, con un checkpoint AWQ-INT4, <code>--enforce-eager</code> y <code>gpu_memory_utilization</code> 0,9",
+    "source_hash": "baa3aea88f30"
+  },
+  "features.td-4": {
+    "text": "El repositorio bf16: unos 15&#8239;GiB de pesos; se queda sin memoria durante la carga",
+    "source_hash": "1ce2fc0f7104"
+  },
+  "features.th-5": {
+    "text": "Dos modelos a la vez",
+    "source_hash": "3bc589f1752e"
+  },
+  "features.td-5": {
+    "text": "Un modelo por tarjeta, cada uno cabiendo en la suya",
+    "source_hash": "6fed9ca4f3d2"
+  },
+  "features.td-6": {
+    "text": "Dos modelos compartiendo una tarjeta",
+    "source_hash": "296d7ad75ac3"
+  },
+  "features.p-4": {
+    "text": "Comprobado con vLLM&nbsp;0.20.0. Las mediciones de réplicas de arriba usaron la 0.26.0. Esta versión incluye la 0.32.0; la primera carga cronometrada con ella es la de GLM-5.2 NVFP4 con paralelismo de tensores 8 en ocho B300: unos 11 a 12 minutos. Las reglas de capacidad no se han vuelto a medir con la 0.32. La tabla completa y sus motivos están en <a href=\"{{repo}}/blob/main/documents/HAZARDS.md#what-fits-on-what\" rel=\"noopener\">HAZARDS.md</a>. ¿No tienes NVIDIA? <a href=\"/#p-mac\">Para chips de Apple hay una beta para Mac</a>, Windows es lo siguiente y <a href=\"/#p-linux\">otras GPU están en la hoja de ruta</a>.",
+    "source_hash": "d5f7cb24d2cc"
+  },
+  "features.p-5": {
+    "text": "Relacionado: <a href=\"/gpu-monitoring\">supervisión de GPU</a> · <a href=\"/cache-aware-routing\">enrutamiento según la caché</a> · <a href=\"/api-keys\">claves de API</a>",
+    "source_hash": "4c5ddc0960f7"
+  }
+}

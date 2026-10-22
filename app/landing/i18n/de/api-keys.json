@@ -1,0 +1,54 @@
+{
+  "api-keys.meta.title": {
+    "text": "API-Schlüssel, Prioritäten und Nutzung pro App | LM Warden",
+    "source_hash": "36d31214a489"
+  },
+  "api-keys.meta.description": {
+    "text": "Ein Schlüssel pro App mit eigener Priorität, Nutzung und Wartezeit, hinter Endpunkten für OpenAI-kompatible APIs, Anthropic Messages und Responses.",
+    "source_hash": "dc32185af3f0"
+  },
+  "api-keys.keys.h1-1": {
+    "text": "Ein Schlüssel pro App und eine Seite für jeden Schlüssel.",
+    "source_hash": "478db02e5440"
+  },
+  "api-keys.p-1": {
+    "text": "Geben Sie jedem Kollegen, Laptop, CI-Job und Agenten einen eigenen Schlüssel. Die Seite eines Schlüssels zeigt, was er verbraucht hat und wie lange seine Anfragen in der Warteschlange warteten, Median und p95, für jeden Zeitraum, den Sie mit der Maus markieren oder eingeben. Rotieren Sie einen Schlüssel mit einer Übergangsfrist, und setzen Sie seine Priorität von P0&nbsp;bis&nbsp;P9: Eine wartende P9-Anfrage kommt immer vor einer P8-Anfrage dran.",
+    "source_hash": "128af00fcd92"
+  },
+  "api-keys.p-2": {
+    "text": "Pausieren Sie ihn, und neue Anfragen werden abgelehnt, während die bereits laufenden noch abgeschlossen werden:",
+    "source_hash": "24b259f012c7"
+  },
+  "api-keys.p-3": {
+    "text": "Aufgenommen auf einer lokalen Instanz am 23.&nbsp;September 2026. Host und Schlüssel ersetzt, weitere Header gekürzt.",
+    "source_hash": "992b035b09f7"
+  },
+  "api-keys.video-1.aria-label": {
+    "text": "Die Seite eines API-Schlüssels während eines Lasttests: seine Priorität von P0 bis P9, ein Streifen mit seinem gesamten Verlauf, Token und Anfragen pro Minute in der letzten Stunde, dann öffnet sich das Panel von God mode mit seinen Prompts und Antworten, während sie gestreamt werden",
+    "source_hash": "146ed912c7a6"
+  },
+  "api-keys.figcaption-1": {
+    "text": "<b>Abb.&nbsp;13</b>Die Seite von <code>demo-agent</code>, dem Schlüssel, der die Last in Abb.&nbsp;1 erzeugte: 37 Anfragen und 43&nbsp;Tsd. generierte Token in der gezeigten Stunde. Dann öffnet sich sein Panel von God mode (eine optionale Live-Ansicht der Prompts und Antworten eines Schlüssels, standardmäßig aus), und seine Antworten laufen ein, während sie geschrieben werden. Die Prompts stammen von uns.",
+    "source_hash": "389cdbc39b42"
+  },
+  "api-keys.img-1.alt": {
+    "text": "Das Diagramm Requests der Stats-Seite über die letzten 7 Tage, 16. bis 23. September: eine Markierung pro Anfrage, gefärbt nach API-Schlüssel, in der Größe nach generierten Token und in der Form nach Abschlussgrund, gegen die Dauer auf einer logarithmischen Skala von 100&#8239;ms bis 10.000&#8239;s. Die meisten Markierungen liegen zwischen 3 und 100 Sekunden; ein Schlüssel zeigt zwei dichte Säulen von unter einer Sekunde bis zu mehreren hundert Sekunden.",
+    "source_hash": "e3200603dcf6"
+  },
+  "api-keys.figcaption-2": {
+    "text": "<b>Abb.&nbsp;14</b>Die Anfragen aller Schlüssel in einem Diagramm, von derselben Stats-Seite: die letzten 7 Tage, 28.906 Anfragen, jede fünfzehnte dargestellt. Eine Markierung ist eine Anfrage, gefärbt nach ihrem Schlüssel, in der Größe nach den generierten Token, in der Form nach ihrem Abschlussgrund und in der Höhe nach ihrer Dauer auf einer logarithmischen Skala. Das gleichmäßige Bernsteingelb ist <code>opencode-laptop</code>, die zwei dichten rosa Säulen sind <code>research-notebook</code>. Aufgezeichnet am 23.&nbsp;September 2026; die Schlüsselnamen sind ersetzt.<span class=\"scroll-hint\"> Scrollen Sie das Bild seitlich, um die ganze Woche zu sehen.</span>",
+    "source_hash": "1a43a2ba1520"
+  },
+  "api-keys.leave.h2-1": {
+    "text": "Der Ausstieg ist eine Änderung an <code>base_url</code>.",
+    "source_hash": "8f28f88090a1"
+  },
+  "api-keys.p-4": {
+    "text": "LM Warden stellt <code>/v1/chat/completions</code> und <code>/v1/models</code> bereit, und <code>/v1/models</code> meldet das <code>max_model_len</code> jedes Modells. Es unterstützt auch die Anthropic Messages API unter <code>/v1/messages</code>, sodass Claude Code <code>ANTHROPIC_BASE_URL</code> auf die Stamm-URL eines Wardens setzen kann (den Pfad <code>/v1/messages</code> hängt Claude Code selbst an), und die OpenAI Responses API unter <code>/v1/responses</code>, sodass Codex&nbsp;CLI ein von Ihnen geladenes Modell nutzen kann. Die Gewichte liegen in einem gewöhnlichen HuggingFace-Cache, den <code>make export-hf-cache</code> Ihnen als Tarball übergibt, und das genaue argv, mit dem jede Engine gestartet wurde, lässt sich mit einem einzigen GET abrufen, sodass sich ein funktionierendes Setup ohne uns nachbauen lässt. Wenden Sie den Diff unten in umgekehrter Richtung an – so steigen Sie wieder aus.",
+    "source_hash": "18372068885f"
+  },
+  "api-keys.p-5": {
+    "text": "Siehe auch: <a href=\"/coding-agents\">Coding-Agenten</a> · <a href=\"/gpu-monitoring\">GPU-Monitoring</a> · <a href=\"/faq\">FAQ</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}

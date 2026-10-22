@@ -1,0 +1,42 @@
+{
+  "coding-agents.meta.title": {
+    "text": "Агенти для програмування на ваших GPU | LM Warden",
+    "source_hash": "cec26df70a65"
+  },
+  "coding-agents.meta.description": {
+    "text": "Запускайте Claude Code, Codex CLI, OpenCode, Aider, Cline, Cursor та інші з моделлю на власних GPU, у Linux або на Mac, із готовою конфігурацією.",
+    "source_hash": "d4374722fecc"
+  },
+  "coding-agents.agents.h1-1": {
+    "text": "Ваш агент для програмування — на ваших власних GPU.",
+    "source_hash": "e01f3269f454"
+  },
+  "coding-agents.p-1": {
+    "text": "LM Warden підтримує три протоколи, якими користуються агенти для програмування: OpenAI Chat Completions, Anthropic Messages API та OpenAI Responses API. Тож Claude Code, SDK від Anthropic та OpenAI, OpenCode, Aider, Grok&nbsp;CLI, Continue, Cline, Cursor і Codex&nbsp;CLI підключаються за базовою URL-адресою та ключем, а їхні запити видно окремо за ключем і сеансом, із фазою, у якій перебуває кожен.",
+    "source_hash": "b8783c59365c"
+  },
+  "coding-agents.flow.title": {
+    "text": "Куди йде запит від вашого агента для програмування",
+    "source_hash": "b2c49ca0b033"
+  },
+  "coding-agents.flow.desc": {
+    "text": "Ваш агент для програмування надсилає запити до LM Warden: базова URL-адреса вказує на LM Warden, а як ключ API використано ключ LM Warden. LM Warden перевіряє ключ, приймає запити у форматах API OpenAI та Anthropic, ставить запит у чергу за пріоритетом ключа й передає маршрутизатору реплік, який тримає кожен сеанс на тій репліці, де вже є його кеш (по одній копії моделі на кожен GPU). Окремий шлях, лише для Claude Code, веде до api.anthropic.com: туди під вашим власним обліковим записом ідуть інші моделі Claude.",
+    "source_hash": "c24325d4bacf"
+  },
+  "coding-agents.flow.caption": {
+    "text": "Куди йде запит від агента для програмування. Кожен агент задає ті самі дві речі: базову URL-адресу та ключ; LM Warden перевіряє ключ, ставить запит у чергу й надсилає його репліці, яка вже має кеш сеансу. На сторінці кожного агента показано його власні налаштування.",
+    "source_hash": "4c8a44e2f320"
+  },
+  "coding-agents.p-2": {
+    "text": "Конфігурацію не треба писати вручну. У консолі <strong>Connect</strong> вибирає ваш клієнт, модель і ключ та записує файли, які залишається вставити. На кожній сторінці нижче показано ті самі файли із заповнювачами й те, що працює.",
+    "source_hash": "75d2dc8f6796"
+  },
+  "coding-agents.p-3": {
+    "text": "Немає потрібного клієнта? Запитайте в <a href=\"https://github.com/Podwarden/lm-warden/discussions/new?category=ideas\" rel=\"noopener\">GitHub Discussions</a>.",
+    "source_hash": "91f99cd9235e"
+  },
+  "coding-agents.p-4": {
+    "text": "Див. також: <a href=\"/agent-tuning\">хай агент сам вибере модель</a> · <a href=\"/cache-aware-routing\">маршрутизація з урахуванням кешу</a> · <a href=\"/faq\">питання й відповіді</a>",
+    "source_hash": "0ced1cfb6f5c"
+  }
+}

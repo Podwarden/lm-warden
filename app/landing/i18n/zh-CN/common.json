@@ -1,0 +1,102 @@
+{
+  "common.crumbs.aria-label": {
+    "text": "面包屑导航",
+    "source_hash": "2bd873d6c734"
+  },
+  "common.crumb.home": {
+    "text": "首页",
+    "source_hash": "3a78695388b3"
+  },
+  "common.crumb.coding-agents": {
+    "text": "编程智能体",
+    "source_hash": "707c65c28bca"
+  },
+  "common.in-words": {
+    "text": "文字说明：",
+    "source_hash": "3cafefb13fa9"
+  },
+  "common.clients.client": {
+    "text": "客户端",
+    "source_hash": "0c77fe09ab33"
+  },
+  "common.client.protocol": {
+    "text": "协议",
+    "source_hash": "cf0883343f4a"
+  },
+  "common.client.support": {
+    "text": "支持情况",
+    "source_hash": "be91940b79f4"
+  },
+  "common.support.full": {
+    "text": "完全支持",
+    "source_hash": "1f95d1324a14"
+  },
+  "common.support.local-only": {
+    "text": "仅限本地模型",
+    "source_hash": "12d96c6fb40e"
+  },
+  "common.crumb.agent-tuning": {
+    "text": "智能体调优",
+    "source_hash": "124c9615be9b"
+  },
+  "common.copy": {
+    "text": "复制",
+    "source_hash": "e21f935f11d7"
+  },
+  "common.crumb.features": {
+    "text": "功能",
+    "source_hash": "5697d03daef4"
+  },
+  "common.crumb.gpu-monitoring": {
+    "text": "GPU 监控",
+    "source_hash": "cbdfccb24fcc"
+  },
+  "common.crumb.cache-aware-routing": {
+    "text": "缓存感知路由",
+    "source_hash": "d45c5045a852"
+  },
+  "common.crumb.api-keys": {
+    "text": "API 密钥",
+    "source_hash": "98aae8972102"
+  },
+  "common.crumb.faq": {
+    "text": "常见问题",
+    "source_hash": "dbc468a14b60"
+  },
+  "common.crumb.privacy": {
+    "text": "隐私",
+    "source_hash": "54a57c3147c4"
+  },
+  "common.client.setup-section.aria-label": {
+    "text": "设置",
+    "source_hash": "7013af4c42fe"
+  },
+  "common.client.requirements": {
+    "text": "要求",
+    "source_hash": "e0cdd07f6a27"
+  },
+  "common.client.setup": {
+    "text": "设置",
+    "source_hash": "7013af4c42fe"
+  },
+  "common.client.setup-p": {
+    "text": "在控制台中，<strong>Connect</strong> 会用你的 warden 地址、你的密钥和你选择的模型写入这些文件。下面以占位符展示这些文件。",
+    "source_hash": "961b2c6bf48f"
+  },
+  "common.file.shell": {
+    "text": "Shell",
+    "source_hash": "a733285486d5"
+  },
+  "common.client.docs": {
+    "text": "官方文档：{{docs_link}}（查阅日期：{{docs_date}}）。",
+    "source_hash": "78599bc11885"
+  },
+  "common.client.related": {
+    "text": "相关内容：<a href=\"/coding-agents\">所有编程智能体</a> · <a href=\"/agent-tuning\">让你的智能体选择模型</a> · <a href=\"/api-keys\">API 密钥</a>",
+    "source_hash": "5f736e0bdabc"
+  },
+  "common.file.settings": {
+    "text": "设置",
+    "source_hash": "74a883a037bc"
+  }
+}

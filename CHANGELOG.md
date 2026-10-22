@@ -7,6 +7,13 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.21.7] — 2026-10-21
+
+### Added
+
+- **Every page of the website in all eleven languages.** Not only the home page: the coding-agent pages, each client's page, the FAQ, features, GPU monitoring, cache-aware routing, agent tuning, API keys and privacy now exist under `/fr/`, `/de/`, `/es/`, `/pt-BR/`, `/ru/`, `/uk/`, `/pl/`, `/zh-CN/`, `/ja/` and `/hi/`. The language switcher keeps you on the same page, links inside a translated page stay in that language, and a visitor who chose a language and opens an English page link directly is taken to the same page in their language. Commands, config snippets and code stay as they are.
+- **Translation quality control.** Every language went through a blind back-translation by a separate model, a monolingual native-editor review, a bilingual meaning check and a fix pass (Russian twice), with calques, mistranslations and inconsistent terms rewritten and units and formats following each language's Microsoft style guide. `scripts/landing_i18n_qa.py` and the "Translation QA" section of the i18n README make the process repeatable.
+
 ## [v2026.10.21.6] — 2026-10-21
 
 ### Changed

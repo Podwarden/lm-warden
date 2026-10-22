@@ -1,0 +1,114 @@
+{
+  "faq.meta.title": {
+    "text": "LM Warden 常见问题：关于自托管 LLM 网关的问题",
+    "source_hash": "fb9dd5739289"
+  },
+  "faq.meta.description": {
+    "text": "安装 LM Warden 之前人们常问的问题：硬件、引擎、模型、客户端、安全性，以及它与直接运行 vLLM 相比如何。",
+    "source_hash": "4c424d1bb872"
+  },
+  "faq.faq.h1-1": {
+    "text": "安装之前人们常问的问题。",
+    "source_hash": "b14e49a87fdf"
+  },
+  "faq.q-1": {
+    "text": "LM Warden 是什么？",
+    "source_hash": "37148ce83843"
+  },
+  "faq.a-1": {
+    "text": "它是你自己硬件上推理引擎外围的控制平面：在配备 NVIDIA GPU 的 Linux 主机上运行 vLLM 和 llama.cpp，或者在 Apple 芯片 Mac 上的测试版应用中运行 MLX 和 llama.cpp。你从 HuggingFace 拉取模型，把它加载到你自己的 GPU 上，生成一个 API 密钥，然后通过兼容 OpenAI 的 <code>/v1</code> 端点调用它。浏览器界面涵盖模型的加载和卸载、实时引擎日志、聊天试验场、GPU 和 token 统计，以及每个 API 密钥的页面。它不会让模型变快，也不修改引擎。它补上的是单独运行的推理引擎所缺少的那些部分。",
+    "source_hash": "5098435c4cfe"
+  },
+  "faq.q-2": {
+    "text": "它能在哪些 GPU 和操作系统上运行？",
+    "source_hash": "fd575095e092"
+  },
+  "faq.a-2": {
+    "text": "Linux 和 macOS。在 Linux 上：x86_64 主机上的 NVIDIA GPU。最低要求是 Turing（sm_75，RTX 20 系列那一代）：基础镜像附带 CUDA 13，它已放弃对 Maxwell、Pascal 和 Volta 的支持，因此 GTX 1080 Ti、Titan X 或 V100 无法使用。从 Turing 到 Blackwell 都受支持，包括 Ada、Hopper 和 RTX 50 系列。在 macOS 上：Apple 芯片（M1 或更新），通过单独的 Mac 应用运行，目前为测试版：这是一个适用于 macOS 14 或更高版本的原生菜单栏应用，用 MLX 和 Metal 版的 llama.cpp 运行模型，提供同样兼容 OpenAI 的 API，并在自己的窗口中显示同样的控制台，可从 <a href=\"/download/mac\">lmwarden.com/download/mac</a> 下载（约 360&#8239;MB，附带 <a href=\"/download/mac.sha256\">SHA-256 文件</a>）。它采用临时签名且未经公证，因此首次启动时请在“系统设置”›“隐私与安全性”›“仍要打开”中允许它（在 macOS 14 上，右键点按 ›“打开”也可以）；它默认只监听环回地址，并且不会自动更新。下一个是 Windows；我们正在开发，尚无具体日期。此版本没有 ROCm、Intel GPU 或 CPU 路径；AMD Radeon 和 Intel GPU 已列入路线图，先支持哪一个取决于我们在项目的 GitHub Discussions 中收到的反馈。支持一台 Linux 主机中的多块 GPU；不支持把一个模型拆分到多台机器上。",
+    "source_hash": "af7c57748da9"
+  },
+  "faq.q-3": {
+    "text": "我现有的 OpenAI 客户端能用吗？",
+    "source_hash": "07d287af578c"
+  },
+  "faq.a-3": {
+    "text": "能。<code>/v1/*</code> 处的网关兼容 OpenAI，因此只要修改 <code>base_url</code> 和密钥，<code>openai</code> SDK、LangChain、OpenWebUI 和你自己的智能体都无需改动即可使用。<code>GET /v1/models</code> 还会报告每个模型的 <code>max_model_len</code>，因此客户端不必猜测上下文窗口。只支持 OpenAI Responses API 的 Codex&nbsp;CLI 也能用：<code>POST /v1/responses</code> 会为你加载的模型转换为 Chat Completions（无状态，且仅限本地：路由器规则不适用）。",
+    "source_hash": "6aa388b69fbe"
+  },
+  "faq.q-4": {
+    "text": "我能把它和 Claude Code 一起使用，同时保留我的 Anthropic 账户吗？",
+    "source_hash": "3cb57cff1faf"
+  },
+  "faq.a-4": {
+    "text": "能。把 <code>ANTHROPIC_BASE_URL</code> 指向 warden，保留你平常的 <code>claude</code> 登录，并把 warden 密钥以 <code>X-LMWarden-Key</code> 的形式放进 <code>ANTHROPIC_CUSTOM_HEADERS</code>。一条规则把 Claude Code 请求的某个模型名称（例如 <code>claude-haiku*</code>）映射到你 GPU 上加载的某个模型；其他所有模型以及其他所有 <code>/v1</code> 路径都会以你自己的登录逐字节转发给 Anthropic。它需要 Claude Code 2.1.227 或更高版本，默认关闭，并且密钥必须带有“May relay to Anthropic”标记才会转发任何内容。较旧的客户端仍可使用仅本地模式。",
+    "source_hash": "680fb986650c"
+  },
+  "faq.q-5": {
+    "text": "Anthropic 能看到我的 warden 密钥吗？warden 能看到我的 Anthropic 登录吗？",
+    "source_hash": "0e5c302159a3"
+  },
+  "faq.a-5": {
+    "text": "Anthropic 永远看不到 warden 密钥：它放在单独的标头中传输，并在请求转发之前被移除。warden 确实会经手你的 Anthropic 登录，因为必须由它来转发，但只转发给 Anthropic。登录信息从不发送给引擎，也从不记录到日志；直通请求的内容一概不会被存储，也不会在 God mode 中显示。",
+    "source_hash": "36a441a68717"
+  },
+  "faq.q-6": {
+    "text": "它使用哪些推理引擎？",
+    "source_hash": "af507f756ef8"
+  },
+  "faq.a-6": {
+    "text": "在 Linux 上，使用主线版 vLLM v0.32.0 和 llama.cpp b11719，按模型选择，原样运行：没有打补丁的镜像，没有分叉，没有猴子补丁。选择 <code>.gguf</code> 文件就会选用 llama.cpp，它借助 GGUF 量化把更大的模型放进更小的显卡，让较旧的 GPU 依然有用。不附带 TensorRT-LLM、SGLang 和 Ollama 的运行时；Mac 测试版用其默认引擎 MLX 运行模型，或对 <code>.gguf</code> 文件使用 Metal 版的 llama.cpp，没有 vLLM。",
+    "source_hash": "71d96023e2e8"
+  },
+  "faq.q-7": {
+    "text": "有任何东西会离开我的机器吗？",
+    "source_hash": "2e943e3c5431"
+  },
+  "faq.a-7": {
+    "text": "除非你开启 Claude Code 路由器，并给某个密钥加上“May relay to Anthropic”标记，否则什么都不会离开主机。开启后，该密钥发出的 Claude 模型请求中，凡是没有规则指向你 GPU 的，都会以用户自己的 Anthropic 登录发往 Anthropic，除此之外不会发出任何内容。没有账户、许可证检查或分析统计。此外，整个栈只在你要求时才会对外连接：从 huggingface.co 拉取权重（<code>HF_HUB_OFFLINE=1</code> 连这一项也能禁止）；打开引擎版本选择器时访问 Docker Hub；以及从镜像仓库拉取发布镜像，在离线或物理隔离安装中则改用 <code>docker load</code>。",
+    "source_hash": "728ba07e9c96"
+  },
+  "faq.q-8": {
+    "text": "提示词和回复会被存储吗？",
+    "source_hash": "5cba7fae2cca"
+  },
+  "faq.a-8": {
+    "text": "默认不会。图表和按密钥统计的用量背后的请求历史只保存元数据，没有存放提示词或补全文本的列。有两个诊断功能可以捕获内容，二者都默认关闭，除非你主动开启：God mode（<code>VW_GODMODE_ENABLED</code>），一个容量有限的内存视图，显示某个密钥的流量；以及内容日志（<code>VW_CONTENT_LOG_ENABLED</code>），它只为你列出的令牌 ID 写入磁盘。",
+    "source_hash": "f047e1060aa4"
+  },
+  "faq.q-9": {
+    "text": "团队如何使用 API 密钥？",
+    "source_hash": "138d847537f5"
+  },
+  "faq.a-9": {
+    "text": "每个应用或每个人都有自己的 <code>vw_</code> 密钥和自己的页面。可以设置 P0&nbsp;到&nbsp;P9 的优先级（等待中的 P9 请求总是排在 P8 请求之前）；可以暂停密钥，此时其客户端会收到 <code>403 token paused</code>，而正在运行的请求会继续完成；也可以轮换密钥并设置宽限期，宽限期内旧密钥仍然有效。请求数、提示词 token 和补全 token 按密钥和客户端 IP 统计，并提供每个密钥的队列等待和延迟。调用控制 API 的脚本、CI 和智能体使用单独的 <code>vwa_</code> 管理员令牌，而不是管理员密码。",
+    "source_hash": "37fb94868ccc"
+  },
+  "faq.q-10": {
+    "text": "我能在一块 GPU 上运行多个模型吗？",
+    "source_hash": "300a4b4adf9a"
+  },
+  "faq.a-10": {
+    "text": "不能。每块 GPU 只加载一个模型，这条规则在引擎启动之前就会强制执行。你可以在同一台主机的不同显卡上加载不同的模型，也可以用 vLLM 的张量并行把一个模型拆分到多块显卡上。",
+    "source_hash": "c4ef5c9a9c54"
+  },
+  "faq.q-11": {
+    "text": "安装它需要什么？",
+    "source_hash": "889f53a02753"
+  },
+  "faq.a-11": {
+    "text": "在 Linux 上，需要一台装有 Docker、Docker Compose&nbsp;v2.24 或更高版本、一块 NVIDIA GPU 和 NVIDIA Container Toolkit 的主机，并在 Docker 存放镜像的位置留出约 40&#8239;GB 的可用空间。安装程序会检查主机、让你选择 GPU、生成密钥、拉取发布镜像，并提供启动整个栈的选项。随后浏览器中的首次运行向导会询问要使用的 GPU、HuggingFace 令牌和你的管理员账户。在 Apple 芯片 Mac 上则是下载测试版应用；请参阅 <a href=\"/#p-mac\">Mac 部分</a>。",
+    "source_hash": "f7c42330b71d"
+  },
+  "faq.q-12": {
+    "text": "它要花多少钱？",
+    "source_hash": "e8dc9deba44c"
+  },
+  "faq.a-12": {
+    "text": "不花钱。LM Warden 采用 Apache-2.0 许可证。它是你自己运行的软件，不是托管 API：硬件、驱动、磁盘和电力由你提供；硬件购置完成后，一个请求的成本就是电费，而不是按 token 计费。",
+    "source_hash": "97000d243331"
+  },
+  "faq.p-1": {
+    "text": "相关内容：<a href=\"/coding-agents\">编程智能体</a> · <a href=\"/agent-tuning\">智能体调优</a> · <a href=\"/features\">功能</a>",
+    "source_hash": "8e86209820fa"
+  }
+}

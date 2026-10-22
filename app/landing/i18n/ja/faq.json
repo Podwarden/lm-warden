@@ -1,0 +1,114 @@
+{
+  "faq.meta.title": {
+    "text": "LM Warden FAQ：セルフホスト型 LLM ゲートウェイに関する質問",
+    "source_hash": "fb9dd5739289"
+  },
+  "faq.meta.description": {
+    "text": "LM Warden をインストールする前によく寄せられる質問：ハードウェア、エンジン、モデル、クライアント、セキュリティ、vLLM を直接実行する場合との比較。",
+    "source_hash": "4c424d1bb872"
+  },
+  "faq.faq.h1-1": {
+    "text": "インストール前によく寄せられる質問。",
+    "source_hash": "b14e49a87fdf"
+  },
+  "faq.q-1": {
+    "text": "LM Warden とは何ですか？",
+    "source_hash": "37148ce83843"
+  },
+  "faq.a-1": {
+    "text": "自分のハードウェア上の推論エンジンを取り巻くコントロール プレーンです。NVIDIA GPU を搭載した Linux ホストでは vLLM と llama.cpp を、Apple シリコン搭載 Mac ではベータ版アプリで MLX と llama.cpp を使います。HuggingFace からモデルを取得し、自分の GPU に読み込み、API キーを発行して、OpenAI 互換の <code>/v1</code> エンドポイント経由で呼び出します。ブラウザーの UI では、モデルの読み込みと読み込み解除、エンジンのライブ ログ、チャットのプレイグラウンド、GPU とトークンの統計、API キーごとのページを扱えます。モデルを速くするものではなく、エンジンを改変することもありません。素のエンジンには含まれない部分を追加します。",
+    "source_hash": "5098435c4cfe"
+  },
+  "faq.q-2": {
+    "text": "どの GPU とオペレーティング システムで動きますか？",
+    "source_hash": "fd575095e092"
+  },
+  "faq.a-2": {
+    "text": "Linux と macOS です。Linux では、x86_64 ホスト上の NVIDIA GPU。最低要件は Turing (sm_75、RTX 20 シリーズの世代) です。ベース イメージには CUDA 13 が含まれており、これは Maxwell、Pascal、Volta のサポートを終了したため、GTX 1080 Ti、Titan X、V100 では動きません。Turing から Blackwell まで対応しており、Ada、Hopper、RTX 50 シリーズも含みます。macOS では、Apple シリコン (M1 以降) で、別の Mac アプリを通じて動作し、現在はベータ版です。macOS 14 以降向けのネイティブなメニュー バー アプリで、MLX と Metal ビルドの llama.cpp でモデルを実行し、同じ OpenAI 互換 API を提供し、同じダッシュボードを専用ウィンドウに表示します。<a href=\"/download/mac\">lmwarden.com/download/mac</a> から入手できます (約 360&#8239;MB、<a href=\"/download/mac.sha256\">SHA-256 ファイル</a>付き)。アドホック署名で公証されていないため、初回起動時に [システム設定] › [プライバシーとセキュリティ] › [このまま開く] で許可してください (macOS 14 では右クリック › [開く] でもかまいません)。既定ではループバックで待ち受け、自動更新はしません。次は Windows です。開発中ですが、時期は未定です。このリリースには ROCm、Intel GPU、CPU の経路はありません。AMD Radeon と Intel GPU はロードマップにあり、どちらを先にするかはプロジェクトの GitHub Discussions で寄せられるフィードバック次第です。一台の Linux マシン内の複数 GPU には対応していますが、一つのモデルを複数のマシンに分割することはできません。",
+    "source_hash": "af7c57748da9"
+  },
+  "faq.q-3": {
+    "text": "既存の OpenAI クライアントはそのまま使えますか？",
+    "source_hash": "07d287af578c"
+  },
+  "faq.a-3": {
+    "text": "はい。<code>/v1/*</code> のゲートウェイは OpenAI 互換なので、<code>base_url</code> とキーを変更すれば、<code>openai</code> SDK、LangChain、OpenWebUI、独自のエージェントは変更なしで動きます。<code>GET /v1/models</code> は各モデルの <code>max_model_len</code> も報告するので、クライアントがコンテキスト ウィンドウを推測する必要はありません。OpenAI Responses API にしか対応していない Codex&nbsp;CLI も動きます。<code>POST /v1/responses</code> は、読み込んだモデル向けに Chat Completions に変換されます (ステートレスで、ローカルのみ。ルーターのルールは適用されません)。",
+    "source_hash": "6aa388b69fbe"
+  },
+  "faq.q-4": {
+    "text": "Claude Code で使いつつ、Anthropic のアカウントも維持できますか？",
+    "source_hash": "3cb57cff1faf"
+  },
+  "faq.a-4": {
+    "text": "はい。<code>ANTHROPIC_BASE_URL</code> を warden に向け、通常の <code>claude</code> のログインはそのままにして、warden のキーを <code>X-LMWarden-Key</code> として <code>ANTHROPIC_CUSTOM_HEADERS</code> に入れます。ルールは、Claude Code が要求するモデル名 (たとえば <code>claude-haiku*</code>) を GPU に読み込んだモデルに対応付けます。それ以外のモデル、それ以外の <code>/v1</code> パスはすべて、自分のログインで Anthropic にバイト単位でそのまま渡されます。Claude Code 2.1.227 以降が必要で、既定ではオフです。何かが転送される前に、キーに 「May relay to Anthropic」 フラグが付いている必要があります。古いクライアントでもローカル専用モードは使えます。",
+    "source_hash": "680fb986650c"
+  },
+  "faq.q-5": {
+    "text": "Anthropic に warden のキーが、warden に Anthropic のログインが見えますか？",
+    "source_hash": "0e5c302159a3"
+  },
+  "faq.a-5": {
+    "text": "Anthropic に warden のキーが見えることはありません。キーは専用のヘッダーで送られ、リクエストが渡される前に取り除かれます。warden は Anthropic のログインを扱いますが、それは転送する必要があるからで、転送先は Anthropic だけです。エンジンに送られることもログに記録されることもなく、パススルーされたリクエストの内容は一切保存されず、God mode にも表示されません。",
+    "source_hash": "36a441a68717"
+  },
+  "faq.q-6": {
+    "text": "どの推論エンジンを使いますか？",
+    "source_hash": "af507f756ef8"
+  },
+  "faq.a-6": {
+    "text": "Linux では、メインラインの vLLM v0.32.0 と llama.cpp b11719 をモデルごとに選び、改変せずに実行します。パッチを当てたイメージも、フォークも、モンキーパッチもありません。<code>.gguf</code> ファイルを選ぶと llama.cpp が選ばれます。llama.cpp は GGUF の量子化で大きなモデルを小さなカードに収め、古い GPU も役立てます。TensorRT-LLM、SGLang、Ollama のランタイムは同梱していません。Mac のベータ版は、既定のエンジンである MLX、または <code>.gguf</code> ファイル用の Metal ビルドの llama.cpp でモデルを実行し、vLLM はありません。",
+    "source_hash": "71d96023e2e8"
+  },
+  "faq.q-7": {
+    "text": "マシンの外に出ていくものはありますか？",
+    "source_hash": "2e943e3c5431"
+  },
+  "faq.a-7": {
+    "text": "Claude Code ルーターをオンにし、キーに「May relay to Anthropic」フラグを付けた場合を除き、ホストの外には何も出ていきません。その場合でも Anthropic に送られるのは、そのキーからのリクエストのうち、どのルールも GPU に送らない Claude モデル宛てのものだけで、ユーザー自身の Anthropic ログインが使われます。それ以外は何も送られません。アカウントも、ライセンス チェックも、アクセス解析もありません。このほかにスタックが外部と通信するのは、依頼したときだけです。重みを取得するための huggingface.co (<code>HF_HUB_OFFLINE=1</code> でそれも止められます)、エンジン バージョンの選択画面を開いたときの Docker Hub、リリース イメージのレジストリです。レジストリは、オフラインやエアギャップ環境のインストールでは <code>docker load</code> で置き換えます。",
+    "source_hash": "728ba07e9c96"
+  },
+  "faq.q-8": {
+    "text": "プロンプトと応答は保存されますか？",
+    "source_hash": "5cba7fae2cca"
+  },
+  "faq.a-8": {
+    "text": "既定では保存されません。グラフとキーごとの使用量の元になるリクエスト履歴はメタデータだけを保持し、プロンプトや生成テキストの列はありません。内容を取得できる診断機能が二つありますが、どちらもオンにしない限りオフです。God mode (<code>VW_GODMODE_ENABLED</code>) は一つのキーのトラフィックを表示する上限付きのメモリ内ビューで、コンテンツ ログ (<code>VW_CONTENT_LOG_ENABLED</code>) は指定したトークン ID についてだけディスクに書き込みます。",
+    "source_hash": "f047e1060aa4"
+  },
+  "faq.q-9": {
+    "text": "チームで API キーはどう機能しますか？",
+    "source_hash": "138d847537f5"
+  },
+  "faq.a-9": {
+    "text": "アプリや人ごとに専用の <code>vw_</code> キーと専用のページがあります。優先度を P0&nbsp;～&nbsp;P9 で設定でき (待機中の P9 リクエストは常に P8 リクエストより先に処理されます)、キーを一時停止すると、そのクライアントには <code>403 token paused</code> が返り、実行中のリクエストは最後まで処理されます。猶予期間付きでローテーションすれば、その間は古いキーも引き続き使えます。リクエスト数、プロンプト トークン、生成トークンはキーとクライアント IP ごとに集計され、キューの待ち時間とレイテンシもキーごとに表示されます。コントロール API を操作するスクリプト、CI、エージェントは、管理者パスワードではなく別の <code>vwa_</code> 管理者トークンを使います。",
+    "source_hash": "37fb94868ccc"
+  },
+  "faq.q-10": {
+    "text": "一つの GPU で複数のモデルを動かせますか？",
+    "source_hash": "300a4b4adf9a"
+  },
+  "faq.a-10": {
+    "text": "いいえ。GPU 一つにつき読み込めるモデルは一つで、このルールはエンジンの起動前に適用されます。同じホストの別々のカードに別々のモデルを読み込むことはでき、vLLM のテンソル並列で一つのモデルを複数のカードに分割することもできます。",
+    "source_hash": "c4ef5c9a9c54"
+  },
+  "faq.q-11": {
+    "text": "インストールには何が必要ですか？",
+    "source_hash": "889f53a02753"
+  },
+  "faq.a-11": {
+    "text": "Linux では、Docker、Docker Compose&nbsp;v2.24 以降、NVIDIA GPU、NVIDIA Container Toolkit を備え、Docker がイメージを保存する場所に約 40&#8239;GB の空きがあるホストが必要です。インストーラーはホストを確認し、GPU を選ばせ、シークレットを生成し、リリース イメージを取得して、スタックの起動を提案します。続いてブラウザーの初回実行ウィザードで、使用する GPU、HuggingFace トークン、管理者アカウントを尋ねられます。Apple シリコン搭載 Mac では、代わりにベータ版アプリをダウンロードします。<a href=\"/#p-mac\">Mac のセクション</a>をご覧ください。",
+    "source_hash": "f7c42330b71d"
+  },
+  "faq.q-12": {
+    "text": "費用はいくらですか？",
+    "source_hash": "e8dc9deba44c"
+  },
+  "faq.a-12": {
+    "text": "無料です。LM Warden は Apache-2.0 でライセンスされています。ホストされた API ではなく、自分で実行するソフトウェアです。ハードウェア、ドライバー、ディスク、電気は自分で用意し、ハードウェアを購入してしまえば、リクエストのコストはトークンごとの料金ではなく電気代です。",
+    "source_hash": "97000d243331"
+  },
+  "faq.p-1": {
+    "text": "関連：<a href=\"/coding-agents\">コーディング エージェント</a> · <a href=\"/agent-tuning\">エージェント チューニング</a> · <a href=\"/features\">機能</a>",
+    "source_hash": "8e86209820fa"
+  }
+}

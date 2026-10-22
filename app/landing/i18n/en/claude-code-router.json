@@ -1,0 +1,87 @@
+{
+  "claude-code-router.router.h2-1": {
+    "text": "One <code>ANTHROPIC_BASE_URL</code>, two places an answer can come from.",
+    "note": "section heading (#router-title)",
+    "hash": "88b4b60f90dc"
+  },
+  "claude-code-router.p-1": {
+    "text": "\n            Every request Claude Code sends to Anthropic counts against your plan’s usage limits, or\n            is billed per token on an API key, and takes its prompt, your code included, off your\n            machine. Many of those requests are small. Answer them on cards you already own and they\n            cost electricity, they don’t count toward your limits, and their prompts stay on your host.\n          ",
+    "note": "text (#main)",
+    "hash": "47eae55f59c6"
+  },
+  "claude-code-router.p-2": {
+    "text": "\n            Claude itself never runs here. A rule names the Claude models this box answers for,\n            <code>claude-haiku*</code> for example, and a model you loaded answers in their place, under\n            the name Claude Code asked for. Anything else, Opus included, is passed to Anthropic byte\n            for byte on your own login, streaming and all. Your warden key rides in its own header, so\n            the login is never touched, and nothing is relayed for a key without the flag\n            “May relay to Anthropic”.\n          ",
+    "note": "text (#main)",
+    "hash": "23f00b590b6a"
+  },
+  "claude-code-router.p-3": {
+    "text": "\n            Is a small model good enough? We have not measured answer quality, so this is judgement,\n            not a benchmark. Claude Code uses its Haiku-class model for lighter background work, and a\n            small local model is a reasonable stand-in there and for simple, well-specified edits.\n            For changes across many files, debugging and long plans, keep Sonnet and Opus on\n            Anthropic, which is what the catch-all does unless you add a rule. A bigger model on bigger\n            cards moves that line; our Claude Code and replica measurements below used a 4B.\n          ",
+    "note": "text (#main)",
+    "hash": "b554407d17a9"
+  },
+  "claude-code-router.p-4": {
+    "text": "\n            Size the context for Claude Code, not for chat: its first turn in our session was 38,167\n            tokens, so the local model needs well over 40k tokens of context.\n          ",
+    "note": "text (#main)",
+    "hash": "f87b272c3f76"
+  },
+  "claude-code-router.figcaption-1": {
+    "text": "<b>Fig.&nbsp;2</b>Where a request goes. Rules are tried in order and the first match wins. A local answer passes the same scheduler and replica router as any other request; a replica is one full copy of the model, here one per GPU. A local failure before the first byte goes to Anthropic, or comes back as a 529 that Claude Code retries, and after 3 failures in a row the model’s breaker opens: for 60&#8239;s nothing is sent to it.",
+    "note": "figure caption (#main)",
+    "hash": "462151461bb5"
+  },
+  "claude-code-router.p-5": {
+    "text": "In words: Claude Code sends the request to the warden with its own Anthropic login in Authorization and the warden key in X-LMWarden-Key. The warden tries its rules in order. A request for a model a rule names is translated, queued by the scheduler and sent by the replica router to one vLLM replica. Any other request, such as Opus, is passed on to api.anthropic.com with the login forwarded and the warden key removed. If the local leg fails before its first byte, the request goes to Anthropic, or the rule refuses it with a 529 that Claude Code retries.",
+    "note": "text (#main)",
+    "hash": "038dbec78e21"
+  },
+  "claude-code-router.p-6": {
+    "text": "Claude Code 2.1.227 or newer. Keep your normal <code>claude</code> login; the key goes in its own header, not in <code>ANTHROPIC_API_KEY</code>.",
+    "note": "text (#main)",
+    "hash": "bd9385d02ca7"
+  },
+  "claude-code-router.img-1.alt": {
+    "text": "The Router page of the console. A green banner reads “Routing normally” and “96% answered locally since 13:38”. Under “Where each Claude model goes. First match wins”, rule 1 sends claude-haiku* to the loaded model qwen3-4b-dp4, with “If it fails: Anthropic” and “Thinking off”. The last row is the catch-all: every other Claude model and /v1 path goes to Anthropic on the user’s own login and needs a key with “May relay to Anthropic”. The Traffic panel counts 107 local, 2 Anthropic pass-through, 0 fell back to Anthropic and 2 refused or error, and lists two reasons, no_upstream_credential and relay_not_allowed, one each.",
+    "note": "image alt text (#main)",
+    "hash": "3f1f5682c2a4"
+  },
+  "claude-code-router.span-1": {
+    "text": "First match wins; every other model goes to Anthropic",
+    "note": "text (#main)",
+    "hash": "d0410896bcb4"
+  },
+  "claude-code-router.span-2": {
+    "text": "Anthropic is reached on the user’s own login",
+    "note": "text (#main)",
+    "hash": "6d3dcb885877"
+  },
+  "claude-code-router.figcaption-2": {
+    "text": "<b>Fig.&nbsp;3</b>The Router page after the warden had been running since 13:38: “Routing normally”, with 96% of requests answered locally since the restart. One rule sends <code>claude-haiku*</code> to a local model and the catch-all passes everything else to Anthropic; rules are numbered in the order they are tried. The Traffic panel counts 107 local, 2 passed through, 0 fell back and 2 refused.<span class=\"scroll-hint\"> Scroll the image sideways to see the whole page.</span>",
+    "note": "figure caption (#main)",
+    "hash": "b4aee34de008"
+  },
+  "claude-code-router.p-7": {
+    "text": "\n          Expect the first turn to be the slow one. In an earlier session, Claude Code’s first turn\n          was 38,167 tokens and the local model was loaded with a 32,768-token context, so the engine\n          refused it (<code>status_400</code>) and the request went to Anthropic instead. With the\n          context raised to 65,536 tokens and an fp8 KV cache (the attention cache kept at 8 bits,\n          half the memory), the 4B model on 16&#8239;GiB cards answered that same turn locally in\n          28&#8239;s, with the whole 38k-token prompt read from cold and nothing in the cache yet. Later turns\n          of a conversation find most of their prompt already in the engine’s cache: the median time\n          to first byte for the <code>claude-haiku*</code> rule in fig.&nbsp;4 is 290&#8239;ms.\n        ",
+    "note": "text (#main)",
+    "hash": "174e92b8be51"
+  },
+  "claude-code-router.img-2.alt": {
+    "text": "The Router activity page. Four counters: local 107, Anthropic pass-through 2, fell back 0, and refused · errors 2 · 0. A table “By rule” gives the rule claude-haiku* to qwen3-4b-dp4 with its local, fell-back and refused counts, latency and time to first byte at p50 and p95, and its breaker state, closed; the pass-through row gives the same timings for the requests passed to Anthropic. A table of local models shows qwen3-4b-dp4 with its breaker closed, and a panel “Fallback reasons” lists no_upstream_credential and relay_not_allowed, one each.",
+    "note": "image alt text (#main)",
+    "hash": "1dcf45e042e8"
+  },
+  "claude-code-router.span-3": {
+    "text": "The breaker for this model: closed",
+    "note": "text (#main)",
+    "hash": "e7811be1957f"
+  },
+  "claude-code-router.span-4": {
+    "text": "Why a rule went to Anthropic or was refused, by reason",
+    "note": "text (#main)",
+    "hash": "8c3c6830836a"
+  },
+  "claude-code-router.figcaption-3": {
+    "text": "<b>Fig.&nbsp;4</b>Router activity for the same period: 107 requests answered locally, 2 passed through to Anthropic, 0 fell back, and 2 refused with 0 errors. Below, latency and time to first byte per rule at p50 and p95, the breaker per local model, and the reasons a rule went to Anthropic or refused. Counters are per process; a restart zeroes them. Recorded on 4&nbsp;October&nbsp;2026.<span class=\"scroll-hint\"> Scroll the image sideways to see the whole page.</span>",
+    "note": "figure caption (#main)",
+    "hash": "e6294c26fbc5"
+  }
+}

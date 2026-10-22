@@ -1,0 +1,22 @@
+{
+  "not-found.meta.title": {
+    "text": "Page not found | LM Warden",
+    "note": "The browser tab and the search-result title. Keep the part after | as it is; at most 65 characters.",
+    "hash": "9997b967a0f9"
+  },
+  "not-found.meta.description": {
+    "text": "This page does not exist on the LM Warden website.",
+    "note": "The search-result snippet and link-preview text. At most 160 characters.",
+    "hash": "f56b56b08c51"
+  },
+  "not-found.nf.h1-1": {
+    "text": "That page isn’t here.",
+    "note": "page headline (#nf-title)",
+    "hash": "0a4c2fc34b17"
+  },
+  "not-found.p-1": {
+    "text": "It may have moved when this site grew from one page into several. Try <a href=\"/\">the home page</a>, <a href=\"/coding-agents\">coding agents</a>, <a href=\"/agent-tuning\">agent tuning</a> or <a href=\"/faq\">the FAQ</a>.",
+    "note": "text (#main)",
+    "hash": "701d00dd6585"
+  }
+}

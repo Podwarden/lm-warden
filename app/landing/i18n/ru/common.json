@@ -1,0 +1,102 @@
+{
+  "common.crumbs.aria-label": {
+    "text": "Навигационная цепочка",
+    "source_hash": "2bd873d6c734"
+  },
+  "common.crumb.home": {
+    "text": "Главная",
+    "source_hash": "3a78695388b3"
+  },
+  "common.crumb.coding-agents": {
+    "text": "Агенты для кода",
+    "source_hash": "707c65c28bca"
+  },
+  "common.in-words": {
+    "text": "Иначе говоря:",
+    "source_hash": "3cafefb13fa9"
+  },
+  "common.clients.client": {
+    "text": "Клиент",
+    "source_hash": "0c77fe09ab33"
+  },
+  "common.client.protocol": {
+    "text": "Протокол",
+    "source_hash": "cf0883343f4a"
+  },
+  "common.client.support": {
+    "text": "Поддержка",
+    "source_hash": "be91940b79f4"
+  },
+  "common.support.full": {
+    "text": "Полная поддержка",
+    "source_hash": "1f95d1324a14"
+  },
+  "common.support.local-only": {
+    "text": "Только локально",
+    "source_hash": "12d96c6fb40e"
+  },
+  "common.crumb.agent-tuning": {
+    "text": "Настройка с помощью агента",
+    "source_hash": "124c9615be9b"
+  },
+  "common.copy": {
+    "text": "Копировать",
+    "source_hash": "e21f935f11d7"
+  },
+  "common.crumb.features": {
+    "text": "Возможности",
+    "source_hash": "5697d03daef4"
+  },
+  "common.crumb.gpu-monitoring": {
+    "text": "Мониторинг GPU",
+    "source_hash": "cbdfccb24fcc"
+  },
+  "common.crumb.cache-aware-routing": {
+    "text": "Маршрутизация с учетом кэша",
+    "source_hash": "d45c5045a852"
+  },
+  "common.crumb.api-keys": {
+    "text": "Ключи API",
+    "source_hash": "98aae8972102"
+  },
+  "common.crumb.faq": {
+    "text": "Вопросы",
+    "source_hash": "dbc468a14b60"
+  },
+  "common.crumb.privacy": {
+    "text": "Конфиденциальность",
+    "source_hash": "54a57c3147c4"
+  },
+  "common.client.setup-section.aria-label": {
+    "text": "Настройка",
+    "source_hash": "7013af4c42fe"
+  },
+  "common.client.requirements": {
+    "text": "Требования",
+    "source_hash": "e0cdd07f6a27"
+  },
+  "common.client.setup": {
+    "text": "Настройка",
+    "source_hash": "7013af4c42fe"
+  },
+  "common.client.setup-p": {
+    "text": "В консоли раздел <strong>Connect</strong> создает эти файлы с адресом вашего сервера LM Warden, вашим ключом и выбранной моделью. Здесь они показаны с заполнителями.",
+    "source_hash": "961b2c6bf48f"
+  },
+  "common.file.shell": {
+    "text": "Оболочка",
+    "source_hash": "a733285486d5"
+  },
+  "common.client.docs": {
+    "text": "Официальная документация: {{docs_link}} (дата обращения: {{docs_date}}).",
+    "source_hash": "78599bc11885"
+  },
+  "common.client.related": {
+    "text": "См. также: <a href=\"/coding-agents\">все агенты для программирования</a> · <a href=\"/agent-tuning\">агент сам подберет модель</a> · <a href=\"/api-keys\">ключи API</a>",
+    "source_hash": "5f736e0bdabc"
+  },
+  "common.file.settings": {
+    "text": "Настройки",
+    "source_hash": "74a883a037bc"
+  }
+}

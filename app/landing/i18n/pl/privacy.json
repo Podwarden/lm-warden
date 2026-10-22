@@ -1,0 +1,66 @@
+{
+  "privacy.meta.title": {
+    "text": "Prywatność i pliki cookie | LM Warden",
+    "source_hash": "ec9b140b1cc8"
+  },
+  "privacy.meta.description": {
+    "text": "Co ta witryna mierzy za pomocą Google Analytics, kiedy najpierw pyta o zgodę i jak zmienić swój wybór.",
+    "source_hash": "de30b21dbdc3"
+  },
+  "privacy.ads": {
+    "text": " Google Ads mierzy, czy reklamy przyprowadzają tu ludzi, a jego reklamowe pliki cookie podlegają temu samemu wyborowi zgody.",
+    "source_hash": "9b2a078e8838"
+  },
+  "privacy.contact-official": {
+    "text": " Z wszelkimi pytaniami o tę witrynę napisz na adres <a href=\"mailto:info@podwarden.com\">info@podwarden.com</a>.",
+    "source_hash": "eebc1d21c39b"
+  },
+  "privacy.contact-operator": {
+    "text": " Pytania o tę witrynę kieruj do jej operatora.",
+    "source_hash": "914390fc9adc"
+  },
+  "privacy.privacy.h1-1": {
+    "text": "Prywatność i pliki cookie.",
+    "source_hash": "f940c0a0e353"
+  },
+  "privacy.p-1": {
+    "text": "Tę witrynę udostępnia LM Warden, samodzielnie hostowany przez operatora tej witryny. Nie ma tu kont, formularzy ani komentarzy, więc jedyne dane osobowe, z jakimi ma styczność, to te, które ujawnia sama wizyta.",
+    "source_hash": "b3509e8a2750"
+  },
+  "privacy.h2-1": {
+    "text": "Co jest mierzone",
+    "source_hash": "dd9acabe8622"
+  },
+  "privacy.p-2": {
+    "text": "Operator tej witryny używa Google Analytics 4 do liczenia odwiedzin i sprawdzania, które strony ludzie czytają.{{privacy_ads}} Rejestrowane są trzy działania: skopiowanie polecenia instalacji oraz przejście przez link do GitHub lub do PodWarden.",
+    "source_hash": "8de08e36eb6d"
+  },
+  "privacy.h2-2": {
+    "text": "Kiedy najpierw pytamy o zgodę",
+    "source_hash": "910b22425fed"
+  },
+  "privacy.p-3": {
+    "text": "Przy pierwszej wizycie baner pyta, czy zezwalasz na analityczne pliki cookie. Dopóki nie wybierzesz, a także jeśli odmówisz, tag Google działa w trybie zgody: nie ustawia plików cookie i wysyła do Google tylko anonimowe sygnały bez plików cookie, które nie pozwalają rozpoznać cię między wizytami. Jeśli zaakceptujesz, Google ustawi swoje analityczne pliki cookie (o nazwach <code>_ga</code> i podobnych), ważne do dwóch lat.",
+    "source_hash": "9405f2778a61"
+  },
+  "privacy.h2-3": {
+    "text": "Zmiana decyzji",
+    "source_hash": "3aa95e4c746f"
+  },
+  "privacy.p-4": {
+    "text": "Otwórz <a href=\"/privacy\" data-consent-open>ustawienia plików cookie</a>, aby ponownie zobaczyć baner, albo wyczyść dane tej witryny w przeglądarce. Twój wybór jest przechowywany w pamięci lokalnej przeglądarki pod kluczem <code>lmw-consent</code>.",
+    "source_hash": "319e165f9018"
+  },
+  "privacy.h2-4": {
+    "text": "Kto przetwarza dane",
+    "source_hash": "795028f063d5"
+  },
+  "privacy.p-5": {
+    "text": "Google LLC przetwarza dane pomiarowe na własnych warunkach; zobacz, <a href=\"https://policies.google.com/technologies/partner-sites\" rel=\"noopener\">jak Google wykorzystuje informacje z witryn korzystających z jego usług</a>.{{privacy_contact}}",
+    "source_hash": "112b969b0be0"
+  },
+  "privacy.p-6": {
+    "text": "Samo oprogramowanie LM Warden nie wysyła niczego swoim autorom ani do Google. Tag Google ładuje tylko ta publiczna witryna, w której operator wpisał identyfikator śledzenia.",
+    "source_hash": "0d38cc82e109"
+  }
+}

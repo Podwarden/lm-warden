@@ -1,0 +1,134 @@
+{
+  "cache-aware-routing.meta.title": {
+    "text": "Enrutamiento según la caché para réplicas de vLLM | LM Warden",
+    "source_hash": "74d5770bf736"
+  },
+  "cache-aware-routing.meta.description": {
+    "text": "Las sesiones de agente vuelven a la réplica que ya tiene su prompt en la caché de prefijos, así que en las conversaciones largas se evita casi todo el prefill.",
+    "source_hash": "055a37ed3302"
+  },
+  "cache-aware-routing.replica.h1-1": {
+    "text": "Cada turno va a parar a la réplica donde el anterior dejó su caché.",
+    "source_hash": "7b4386acadc3"
+  },
+  "cache-aware-routing.p-1": {
+    "text": "Un agente reenvía todo su historial en cada turno, así que una conversación larga es, sobre todo, un prefijo que el motor ya ha leído. vLLM guarda ese trabajo en su caché de prefijos (el estado de atención de los prompts que ya ha visto) y se lo ahorra la próxima vez que llega el mismo prefijo, pero solo en la réplica que hizo el trabajo: cada copia completa del modelo tiene su propia caché. El propio balanceador de vLLM envía cada turno a la réplica con la cola más corta, que normalmente nunca ha visto la conversación, así que vuelve a leer todo el historial. LM Warden asigna cada conversación nueva a la réplica menos cargada (según las solicitudes en curso, lo llena que está su caché y cuántas conversaciones activas tiene) y la mantiene allí, gracias al ID de sesión que Claude Code ya envía. Solo mueve una solicitud cuando esa réplica supera su umbral de desbordamiento: de forma predeterminada, cuando las solicitudes en curso superan un cuarto del límite de secuencias simultáneas del modelo, 8 en nuestra máquina de cuatro tarjetas.",
+    "source_hash": "6a215639b7d8"
+  },
+  "cache-aware-routing.p-2": {
+    "text": "Las réplicas, y por tanto este enrutamiento, forman parte de la instalación de Linux con GPU NVIDIA; la <a href=\"/#p-mac\">app para Mac (beta)</a> no tiene paralelismo de tensores ni de datos.",
+    "source_hash": "2022d3c80a9f"
+  },
+  "cache-aware-routing.figcaption-1": {
+    "text": "<b>Fig.&nbsp;6</b>Cuatro turnos de una conversación en un modelo con cuatro réplicas. Con el balanceador de vLLM, cada turno pasa por el prefill (el motor lee el prompt y lo carga en la caché) casi desde cero en la réplica que lo recibe. Con LM Warden, la conversación se queda en la réplica&nbsp;2 y solo el turno nuevo pasa por el prefill. Es un esquema del mecanismo, no una medición.",
+    "source_hash": "a3b037946eda"
+  },
+  "cache-aware-routing.p-3": {
+    "text": "Medido en la máquina de cuatro tarjetas: con cada conversación fijada a su réplica, la proporción de tokens de prompt servidos desde la caché subió del 56 al 86 % con 4 sesiones simultáneas, y la mediana del tiempo hasta el primer byte bajó de 2,05 a 0,38&#8239;s. Los tokens de salida por minuto fueron mayores en todos los escalones que probamos, y el p95 del tiempo hasta el primer byte (el 5 % más lento) fue menor en todos ellos. El número de réplicas con trabajo apenas cambió (2,71 frente a 2,83 de cuatro con 4 sesiones): la mejora viene de reutilizar la caché, no de tener más tarjetas trabajando.",
+    "source_hash": "91272c526688"
+  },
+  "cache-aware-routing.p-4": {
+    "text": "Los escalones de 24 y 32 sesiones son una sobrecarga deliberada de cuatro tarjetas pequeñas, donde las esperas llegan a decenas de segundos con o sin afinidad. Ahí se ve la contrapartida: con afinidad, las solicitudes más lentas siguen tardando menos, pero la mediana es más alta. A continuación, las cifras.",
+    "source_hash": "22167404e1cf"
+  },
+  "cache-aware-routing.dt-1": {
+    "text": "GPU",
+    "source_hash": "8f0474fb0c5b"
+  },
+  "cache-aware-routing.dd-1": {
+    "text": "4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000, 16&#8239;GiB cada una",
+    "source_hash": "a2a87a6a413f"
+  },
+  "cache-aware-routing.dt-2": {
+    "text": "Modelo",
+    "source_hash": "5e2c614c23f0"
+  },
+  "cache-aware-routing.dd-2": {
+    "text": "qwen3-4b-dp4 (Qwen/Qwen3-4B-Instruct-2507), bf16",
+    "source_hash": "ca64e381cd89"
+  },
+  "cache-aware-routing.dt-3": {
+    "text": "Distribución",
+    "source_hash": "a511909161e1"
+  },
+  "cache-aware-routing.dd-3": {
+    "text": "data_parallel_size 4, tensor_parallel_size 1",
+    "source_hash": "2d27d2565f76"
+  },
+  "cache-aware-routing.dd-5": {
+    "text": "Esta versión",
+    "source_hash": "056adfd1d823"
+  },
+  "cache-aware-routing.dt-4": {
+    "text": "Captura",
+    "source_hash": "8a03fa9ad749"
+  },
+  "cache-aware-routing.dd-6": {
+    "text": "4&nbsp;de octubre de 2026, las dos variantes una tras otra",
+    "source_hash": "616bab8cda85"
+  },
+  "cache-aware-routing.dt-5": {
+    "text": "Carga",
+    "source_hash": "8a6bdb6b18da"
+  },
+  "cache-aware-routing.dd-7": {
+    "text": "Sesiones sintéticas al estilo de Claude Code generadas con nuestro propio banco de pruebas, no con Claude Code: un prompt de sistema compartido de unos 3,5 mil tokens, un primer mensaje propio de cada sesión (6 mil nominales; entre 7,2 mil y 7,5 mil medidos) y luego cinco turnos más de unos 400 tokens nuevos cada uno, con un máximo de 256 tokens de salida por turno. Bucle cerrado: una sesión empieza el siguiente turno cuando termina el anterior. 3&nbsp;minutos por escalón.",
+    "source_hash": "bf79aedc37a9"
+  },
+  "cache-aware-routing.figcaption-2": {
+    "text": "<b>Fig.&nbsp;7</b>Tiempo hasta el primer byte con 4 a 32 sesiones simultáneas, mediana y p95, en escala logarítmica para que los escalones de menos de un segundo se puedan comparar con los de un minuto. Con afinidad, la mediana es mucho más baja hasta 16 sesiones (0,38 frente a 2,05&#8239;s con 4) y más alta con 24 y 32; el p95 es menor en todos los escalones, aunque con 16 la diferencia (24,9 frente a 26,2&#8239;s) está dentro del ruido de una sola ejecución por variante. Medido en el cliente, a través de internet, hasta el primer token recibido.",
+    "source_hash": "4104b97ee062"
+  },
+  "cache-aware-routing.p-5": {
+    "text": "Medido en nuestra máquina de cuatro tarjetas con un modelo pequeño, primero sin afinidad y después con ella, sin reiniciar vLLM entre medias: la segunda variante empezó con la caché de prefijos ya caliente, y ambas generaron sus prompts con la misma semilla. Cada escalón dura 3&nbsp;minutos, así que solo completa entre 9 y 31 sesiones, y una sesión de más o de menos cambia las sesiones por hora en 20; los tokens de salida por minuto son la columna más estable. Tu modelo, tus tarjetas y tu carga de trabajo serán distintos; el panel de réplicas en la página de un modelo muestra los mismos contadores para los tuyos.",
+    "source_hash": "4744b11be2ad"
+  },
+  "cache-aware-routing.p-6": {
+    "text": "Hasta 16 sesiones, la afinidad va por delante en todos los escalones en rendimiento, aciertos de la caché de prefijos y las dos columnas de tiempo hasta el primer byte: los aciertos pasan del 56 al 86 % con 4 sesiones, la mediana del tiempo hasta el primer byte de 2,05 a 0,38&#8239;s y la salida de 5.886 a 6.744 tokens por minuto (las sesiones por hora, de 180 a 240). Con 24 y 32 sesiones, los escalones de sobrecarga, todas las réplicas están saturadas. La salida sigue siendo mayor (11.178 frente a 9.048 y 16.638 frente a 14.760 tokens por minuto) y las solicitudes más lentas tardan mucho menos (p95 38 frente a 59&#8239;s, y 39 frente a 83&#8239;s), pero la mediana del tiempo hasta el primer byte es peor con afinidad: 13,1 frente a 5,1&#8239;s con 24 sesiones y 27,7 frente a 12,3&#8239;s con 32. No hemos aislado la causa, y bajar el umbral de desbordamiento de 8 a 4 no cambió nada. La ventaja es mayor mientras hay margen; si tu máquina funciona al límite, compara ambas configuraciones; la afinidad se puede desactivar por modelo.",
+    "source_hash": "8ab22b61f669"
+  },
+  "cache-aware-routing.figcaption-3": {
+    "text": "<b>Fig.&nbsp;8</b>Réplicas ocupadas, de cuatro: réplicas con solicitudes en ejecución en cada sondeo, promediadas en cada escalón. No es el uso de la GPU. La afinidad apenas lo cambia; la mejora está en la fig.&nbsp;9.",
+    "source_hash": "d3b521cd1c61"
+  },
+  "cache-aware-routing.figcaption-4": {
+    "text": "<b>Fig.&nbsp;9</b>Tasa de aciertos de la caché de prefijos en cada escalón: tokens de prompt servidos desde la caché divididos entre los tokens de prompt solicitados, sumando las cuatro réplicas, según la variación de los contadores del propio vLLM durante el escalón. La mejora se mantiene mientras hay margen y desaparece con 32 sesiones, cuando las conversaciones se desbordan a otras réplicas.",
+    "source_hash": "7721bb0a3fe0"
+  },
+  "cache-aware-routing.img-1.alt": {
+    "text": "El panel Data-parallel routing en la página de un modelo, con las etiquetas Affinity on, Spill threshold 8 (auto), Sticky 100.0% e In flight 0. Una tabla enumera las réplicas 0 a 3 con in flight, sticky (38, 21, 19 y 29), spilled in, client-pinned, running y waiting, la KV usada y la tasa de aciertos de la caché de prefijos (82,2; 86,0; 69,0 y 80,0 por ciento), y una línea que indica que los contadores acumulan desde que se inició el warden.",
+    "source_hash": "f1bc7fbd6399"
+  },
+  "cache-aware-routing.span-1": {
+    "text": "Afinidad activada, umbral de desbordamiento 8 (auto)",
+    "source_hash": "afd07a294687"
+  },
+  "cache-aware-routing.span-2": {
+    "text": "Tasa de aciertos por réplica, según los contadores del propio vLLM",
+    "source_hash": "aeb0dd495f94"
+  },
+  "cache-aware-routing.figcaption-5": {
+    "text": "<b>Fig.&nbsp;10</b>Los mismos contadores en la página de un modelo: una fila por réplica con las solicitudes que tiene en curso, cuántas conversaciones se quedaron (<code>sticky</code>) o llegaron por desbordamiento, lo que se está ejecutando y lo que espera, la caché KV en uso y la tasa de aciertos de la caché de prefijos. Captura del 4&nbsp;de&nbsp;octubre de 2026 con la afinidad activada y el umbral de desbordamiento en 8 (auto): sticky 100 %; 38, 21, 19 y 29 solicitudes sticky en las réplicas 0 a 3, y una tasa de aciertos de la caché de prefijos de 82,2; 86,0; 69,0 y 80,0 %. Los contadores acumulan desde el reinicio del warden, y todo el tráfico de ese intervalo se ejecutó con la afinidad activada: sesiones de agente sintéticas y turnos reales de Claude Code. Muestra el panel, no un resultado de medición.<span class=\"scroll-hint\"> Desplaza la imagen lateralmente para ver todas las columnas.</span>",
+    "source_hash": "c5c62f4909c8"
+  },
+  "cache-aware-routing.p-7": {
+    "text": "La máquina que nos llevó a crear el enrutamiento por réplicas lo usa desde entonces. Tiene siete RTX&nbsp;5090 que sirven un modelo 27B como siete réplicas de una tarjeta cada una a una granja de agentes de Claude Code sin interfaz gráfica. Nuestra primera regla de asignación aplicaba un hash al ID de sesión: cada sesión se quedaba siempre en la misma réplica, pero sin tener en cuenta la carga. Con 26 sesiones de agente de unos 58 mil tokens cada una, tres réplicas estaban inactivas mientras otras llenaban su caché hasta el 93 %, y la proporción de tokens de prompt servidos desde la caché cayó del 81 % tras un reinicio al 28 % en unos 35 minutos. Entonces redujimos la granja a 16 sesiones, unas dos por réplica, para que los conjuntos de trabajo cupieran en la caché, y empezamos a asignar las conversaciones nuevas a la réplica menos cargada. Durante la hora siguiente, esa proporción se mantuvo entre el 78 y el 79 %. Es una observación, no una prueba A/B: una sola carga de trabajo y dos cambios hechos a la vez, así que la mejora no se debe solo a la asignación. La regla práctica que se desprende: que el número de sesiones simultáneas multiplicado por su contexto típico no supere la caché total de la máquina.",
+    "source_hash": "36247db6bebb"
+  },
+  "cache-aware-routing.img-2.alt": {
+    "text": "El gráfico Tokens per second de la página Stats durante una hora. Las barras de prompt se dividen en tokens servidos desde la caché (medidos), en azul, y calculados, en morado, entre unos 15 mil y 45 mil tokens por segundo, con la mayor parte de cada barra en azul y el resumen cache hit 78% en la última hora. Debajo, en verde, los tokens de respuesta por segundo, entre unos 70 y 420.",
+    "source_hash": "a40bcea9f2f2"
+  },
+  "cache-aware-routing.span-3": {
+    "text": "Medido por el motor, por solicitud",
+    "source_hash": "30f9cc329d1b"
+  },
+  "cache-aware-routing.figcaption-6": {
+    "text": "<b>Fig.&nbsp;11</b>Tokens de prompt por segundo en la máquina de siete GPU, divididos entre lo que cada réplica leyó de su caché de prefijos y lo que tuvo que calcular, con la proporción de la última hora: 78 %. La parte servida desde la caché es el recuento del propio motor para cada solicitud terminada, no una estimación; una solicitud que el motor no midió cuenta como calculada. Captura del 5&nbsp;de octubre de 2026.<span class=\"scroll-hint\"> Desplaza la imagen lateralmente para ver toda la hora.</span>",
+    "source_hash": "8b698966274e"
+  },
+  "cache-aware-routing.p-8": {
+    "text": "Relacionado: <a href=\"/gpu-monitoring\">supervisión de GPU</a> · <a href=\"/coding-agents/claude-code\">Claude Code</a> · <a href=\"/coding-agents\">agentes de programación</a>",
+    "source_hash": "f55143f36cbe"
+  }
+}

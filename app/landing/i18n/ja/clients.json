@@ -1,0 +1,422 @@
+{
+  "clients.meta.title": {
+    "text": "{name} を自分の GPU のローカル LLM で | LM Warden",
+    "source_hash": "9a440e2e3c4a"
+  },
+  "clients.meta.description": {
+    "text": "{name} と LM Warden：{summary}",
+    "source_hash": "9d9c76c6bb07"
+  },
+  "clients.claude-code.h1": {
+    "text": "Claude Code を自分の GPU で。",
+    "source_hash": "9bb97352447d"
+  },
+  "clients.claude-code.summary": {
+    "text": "Claude のログインはそのままに、ルールで指定したモデルをここで実行するか、完全にローカルで実行します。",
+    "source_hash": "b46e643eeaac"
+  },
+  "clients.claude-code.capability": {
+    "text": "ルールで指定した Claude モデルはここで実行され、それ以外のモデルと <code>/v1</code> パスはすべて自分のログインで Anthropic に送られます。ルーター モードでは、warden のキーを <code>ANTHROPIC_API_KEY</code> や <code>ANTHROPIC_AUTH_TOKEN</code> に入れないでください。ログインが置き換えられてしまいます。ローカル専用では、小さなバックグラウンド タスクも含めてすべてを一つの提供中のモデルで実行し、Anthropic には何も送りません。",
+    "source_hash": "79cee967a1ad"
+  },
+  "clients.claude-code.req.client_version": {
+    "text": "Claude Code 2.1.227 以降 (<code>ANTHROPIC_CUSTOM_HEADERS</code>)。",
+    "source_hash": "baf574b32f46"
+  },
+  "clients.claude-code.req.router_on": {
+    "text": "ルーティングがオンで、有効なルールが一つ以上必要です。",
+    "source_hash": "f0fd90d78fe4"
+  },
+  "clients.claude-code.req.relay_key": {
+    "text": "キーに Anthropic への中継が許可されている必要があります (May relay)。",
+    "source_hash": "df8e31733077"
+  },
+  "clients.claude-code.req.min_context": {
+    "text": "49,152 トークン以上のコンテキストが必要です。最初のターンだけで、ファイルを読む前から約 38,000 トークンあります。",
+    "source_hash": "5cc65b30acd7"
+  },
+  "clients.claude-code.req.recommended_context": {
+    "text": "実際のセッションには 131,072 トークン以上。短いセッションならそれより少なくても動きます。",
+    "source_hash": "82792a23c7a0"
+  },
+  "clients.claude-code.req.unknown_model_window": {
+    "text": "Claude Code が、モデル名がカタログにないと警告することがあります。これは情報提供にすぎません。200k のウィンドウを想定し、それに合わせて自動圧縮します。<code>CLAUDE_CODE_MAX_CONTEXT_TOKENS</code> にモデルの実際のコンテキスト ウィンドウを設定してください。",
+    "source_hash": "c67abcb52ad3"
+  },
+  "clients.claude-code.mode.router.title": {
+    "text": "Router：Claude のログインはそのまま",
+    "source_hash": "872bcc0e520c"
+  },
+  "clients.claude-code.mode.router.desc": {
+    "text": "Claude のログインは引き続き Anthropic に送られます。warden のキーは専用のヘッダーで送られ、ルールで指定したモデルにはここで応答します。",
+    "source_hash": "9832c50a640e"
+  },
+  "clients.claude-code.mode.local.title": {
+    "text": "ローカル専用 (Anthropic アカウント不要)",
+    "source_hash": "2a51ef910e22"
+  },
+  "clients.claude-code.mode.local.desc": {
+    "text": "すべてのモデル スロットが選んだ提供中のモデルになり、warden のキーが認証トークンになります。Anthropic には何も送られません。",
+    "source_hash": "1dea6fe58a27"
+  },
+  "clients.anthropic-sdk.h1": {
+    "text": "Anthropic SDK を自分の GPU で。",
+    "source_hash": "4229892646ec"
+  },
+  "clients.anthropic-sdk.summary": {
+    "text": "Anthropic の API キーは <code>api_key</code> のまま。warden のキーは専用のヘッダーで送られます。",
+    "source_hash": "910172f40b64"
+  },
+  "clients.anthropic-sdk.flow.title": {
+    "text": "Anthropic SDK からのリクエストの行き先",
+    "source_hash": "26e8b7e39b44"
+  },
+  "clients.anthropic-sdk.flow.desc": {
+    "text": "Anthropic SDK は、base_url に warden を、X-LMWarden-Key に warden のキーを設定して LM Warden にリクエストを送ります。LM Warden はキーを確認し、Anthropic Messages 形式でリクエストを受け付け、キーの優先度に従ってリクエストをキューに入れ、レプリカ ルーターに渡します。ルーターは各セッションを、そのキャッシュをすでに保持しているレプリカ (GPU ごとに一つ置かれたモデルのコピー) に留めます。これとは別に、api.anthropic.com への経路があります。ほかの Claude モデルは、ルールによって自分の API キーでこちらに送られます。",
+    "source_hash": "26917b07643f"
+  },
+  "clients.anthropic-sdk.flow.caption": {
+    "text": "Anthropic SDK からのリクエストの行き先：Connect が書き込む二つの設定、中央に warden、その先に GPU ごとに一つのモデルのコピー。",
+    "source_hash": "a4ec23a63573"
+  },
+  "clients.anthropic-sdk.capability": {
+    "text": "ルールで指定した Claude モデルはここで実行され、それ以外のモデルと <code>/v1</code> パスはすべて自分のログインで Anthropic に送られます。ローカル専用なら Anthropic アカウントは不要です。warden のキーが <code>api_key</code> になり、モデルは提供中の名前を使います。",
+    "source_hash": "3d9a6a025316"
+  },
+  "clients.anthropic-sdk.req.router_on": {
+    "text": "ルーティングがオンで、有効なルールが一つ以上必要です。",
+    "source_hash": "f0fd90d78fe4"
+  },
+  "clients.anthropic-sdk.req.relay_key": {
+    "text": "キーに Anthropic への中継が許可されている必要があります (May relay)。",
+    "source_hash": "df8e31733077"
+  },
+  "clients.anthropic-sdk.mode.router.title": {
+    "text": "Router：Anthropic のキーはそのまま",
+    "source_hash": "5e22bff885a6"
+  },
+  "clients.anthropic-sdk.mode.router.desc": {
+    "text": "<code>base_url</code> はこの warden です。Anthropic の API キーは <code>api_key</code> のままで、warden のキーは既定のヘッダーに入れます。",
+    "source_hash": "fe17e904c7dd"
+  },
+  "clients.anthropic-sdk.mode.local.title": {
+    "text": "ローカル専用",
+    "source_hash": "c905013aab29"
+  },
+  "clients.anthropic-sdk.mode.local.desc": {
+    "text": "warden のキーが <code>api_key</code> になり、モデルは提供中の名前を使います。",
+    "source_hash": "e1b1c200ccb3"
+  },
+  "clients.opencode.h1": {
+    "text": "OpenCode を自分の GPU で。",
+    "source_hash": "0f9f0d85229c"
+  },
+  "clients.opencode.summary": {
+    "text": "LM Warden を OpenCode の OpenAI 互換プロバイダーとして設定し、提供中のモデルを一つ使います。",
+    "source_hash": "0dbe773d1ba9"
+  },
+  "clients.opencode.flow.title": {
+    "text": "OpenCode からのリクエストの行き先",
+    "source_hash": "ae2c3d407d79"
+  },
+  "clients.opencode.flow.desc": {
+    "text": "OpenCode は、baseURL に warden を、apiKey に warden のキーを設定して LM Warden にリクエストを送ります。LM Warden はキーを確認し、OpenAI Chat Completions 形式でリクエストを受け付け、キーの優先度に従ってリクエストをキューに入れ、レプリカ ルーターに渡します。ルーターは各セッションを、そのキャッシュをすでに保持しているレプリカ (GPU ごとに一つ置かれたモデルのコピー) に留めます。",
+    "source_hash": "5a53f0ea3bba"
+  },
+  "clients.opencode.flow.caption": {
+    "text": "OpenCode からのリクエストの行き先：Connect が書き込む二つの設定、中央に warden、その先に GPU ごとに一つのモデルのコピー。",
+    "source_hash": "774655618391"
+  },
+  "clients.opencode.capability": {
+    "text": "ローカル モデルのみで、Chat Completions を使います (<code>@ai-sdk/openai-compatible</code>。<code>@ai-sdk/openai</code> は Responses API を使いますが、この warden が Responses API を変換するのは Codex CLI 向けだけです)。モデル ID は <code>/v1/models</code> にある提供中の名前である必要があります。コミットするファイルでは、キーの代わりに <code>{env:LMWARDEN_KEY}</code> を使ってください。OpenCode の Anthropic プロバイダー経由の Router モードには、まだ対応していません。",
+    "source_hash": "8901779665ff"
+  },
+  "clients.opencode.req.tools": {
+    "text": "ツール呼び出しに対応したモデルが必要です (エージェントによる編集のため)。",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.opencode.req.min_context": {
+    "text": "32,768 トークン以上のコンテキストで最もよく動きます。",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.opencode.mode.default.title": {
+    "text": "ローカル モデル",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.opencode.mode.default.desc": {
+    "text": "<code>opencode.json</code> で LM Warden をプロバイダーとして追加し、既定にします。",
+    "source_hash": "e03771b96f12"
+  },
+  "clients.aider.h1": {
+    "text": "Aider を自分の GPU で。",
+    "source_hash": "b1e1b6bd30b4"
+  },
+  "clients.aider.summary": {
+    "text": "OpenAI 互換プロバイダーを通じて、提供中のモデルで Aider を使います。",
+    "source_hash": "2a2e36942a30"
+  },
+  "clients.aider.flow.title": {
+    "text": "Aider からのリクエストの行き先",
+    "source_hash": "32e01b3b0c97"
+  },
+  "clients.aider.flow.desc": {
+    "text": "Aider は、OPENAI_API_BASE に warden を、OPENAI_API_KEY に warden のキーを設定して LM Warden にリクエストを送ります。LM Warden はキーを確認し、OpenAI Chat Completions 形式でリクエストを受け付け、キーの優先度に従ってリクエストをキューに入れ、レプリカ ルーターに渡します。ルーターは各セッションを、そのキャッシュをすでに保持しているレプリカ (GPU ごとに一つ置かれたモデルのコピー) に留めます。",
+    "source_hash": "3b2c308c114e"
+  },
+  "clients.aider.flow.caption": {
+    "text": "Aider からのリクエストの行き先：Connect が書き込む二つの設定、中央に warden、その先に GPU ごとに一つのモデルのコピー。",
+    "source_hash": "e58a54a34cdc"
+  },
+  "clients.aider.capability": {
+    "text": "ローカル モデルのみで、Chat Completions を使います。Aider はテキスト形式で編集するので、モデルにツール呼び出しは不要です。メタデータ ファイルは、Aider が不明なモデルについて警告するのを止め、コンテキスト サイズを設定するだけです。",
+    "source_hash": "922681946310"
+  },
+  "clients.aider.req.min_context": {
+    "text": "32,768 トークン以上のコンテキストで最もよく動きます。",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.aider.mode.default.title": {
+    "text": "ローカル モデル",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.aider.mode.default.desc": {
+    "text": "Aider の OpenAI プロバイダーの接続先をこの warden に設定します。",
+    "source_hash": "df94297df209"
+  },
+  "clients.aider.mode.default.file.session": {
+    "text": "起動ごとのセッション ID (省略可)",
+    "source_hash": "c1f31c2b83f0"
+  },
+  "clients.grok-cli.h1": {
+    "text": "Grok CLI を自分の GPU で。",
+    "source_hash": "9e97001cf2f3"
+  },
+  "clients.grok-cli.summary": {
+    "text": "xAI の Grok Build CLI で、LM Warden を BYOK (独自キー持ち込み) のモデルとして使います。",
+    "source_hash": "be6e0d9a09ed"
+  },
+  "clients.grok-cli.flow.title": {
+    "text": "Grok CLI からのリクエストの行き先",
+    "source_hash": "eeb620d01d38"
+  },
+  "clients.grok-cli.flow.desc": {
+    "text": "Grok CLI は、base_url に warden を、env_key に warden のキーを設定して LM Warden にリクエストを送ります。LM Warden はキーを確認し、OpenAI Chat Completions 形式でリクエストを受け付け、キーの優先度に従ってリクエストをキューに入れ、レプリカ ルーターに渡します。ルーターは各セッションを、そのキャッシュをすでに保持しているレプリカ (GPU ごとに一つ置かれたモデルのコピー) に留めます。",
+    "source_hash": "ef648e107c77"
+  },
+  "clients.grok-cli.flow.caption": {
+    "text": "Grok CLI からのリクエストの行き先：Connect が書き込む二つの設定、中央に warden、その先に GPU ごとに一つのモデルのコピー。",
+    "source_hash": "b77ddcf1b78a"
+  },
+  "clients.grok-cli.capability": {
+    "text": "ローカル モデルのみで、Chat Completions を使います (<code>api_backend = chat_completions</code>)。xAI へのパススルーはなく、BYOK のモデルに xAI のログインは不要です。<code>session_summary</code> により、Grok のセッション タイトル用のリクエストもこのモデルで処理されます。これがないと、Grok はこの warden に <code>grok-4.6</code> を要求して 404 になります。Grok は実行時に <code>config.toml</code> に独自のセクションを追加します。コミュニティ版の grok-cli (npm <code>grok-dev</code>) は別のツールで、チャットは動きますがツール呼び出しは動きません。",
+    "source_hash": "03938abace0a"
+  },
+  "clients.grok-cli.req.tools": {
+    "text": "ツール呼び出しに対応したモデルが必要です (エージェントによる編集のため)。",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.grok-cli.req.min_context": {
+    "text": "32,768 トークン以上のコンテキストで最もよく動きます。",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.grok-cli.mode.default.title": {
+    "text": "Grok Build (公式)",
+    "source_hash": "1901a8b05d3b"
+  },
+  "clients.grok-cli.mode.default.desc": {
+    "text": "<code>~/.grok/config.toml</code> にモデルのエントリを追加します。キーは <code>LMWARDEN_KEY</code> から取得します。インストール：<code>curl -fsSL https://x.ai/cli/install.sh | bash</code> または <code>npm i -g @xai-official/grok</code>",
+    "source_hash": "b5943bc2443d"
+  },
+  "clients.grok-cli.mode.community.title": {
+    "text": "コミュニティ版 grok-cli",
+    "source_hash": "28bbd28283a3"
+  },
+  "clients.grok-cli.mode.community.desc": {
+    "text": "コミュニティ版の grok-cli はベース URL、キー、モデルを環境変数から読み込み、Bun のインストールが必要です。チャットは動きますが、ツール呼び出しは失敗します。vLLM はツール呼び出しを分割してストリーミングしますが、grok-cli が使う xAI SDK はそうして届くチャンクを受け付けないためです。",
+    "source_hash": "0b589963361a"
+  },
+  "clients.openai-sdk.h1": {
+    "text": "OpenAI SDK を自分の GPU で。",
+    "source_hash": "db3661cee041"
+  },
+  "clients.openai-sdk.summary": {
+    "text": "任意の OpenAI SDK、または OpenAI 互換の ベース URL を設定できるあらゆるツール。",
+    "source_hash": "16d05b661878"
+  },
+  "clients.openai-sdk.flow.title": {
+    "text": "OpenAI SDK からのリクエストの行き先",
+    "source_hash": "13c7ed2b6c10"
+  },
+  "clients.openai-sdk.flow.desc": {
+    "text": "OpenAI SDK は、base_url に warden を、api_key に warden のキーを設定して LM Warden にリクエストを送ります。LM Warden はキーを確認し、OpenAI Chat Completions 形式でリクエストを受け付け、キーの優先度に従ってリクエストをキューに入れ、レプリカ ルーターに渡します。ルーターは各セッションを、そのキャッシュをすでに保持しているレプリカ (GPU ごとに一つ置かれたモデルのコピー) に留めます。",
+    "source_hash": "9b9a5c752e5f"
+  },
+  "clients.openai-sdk.flow.caption": {
+    "text": "OpenAI SDK からのリクエストの行き先：Connect が書き込む二つの設定、中央に warden、その先に GPU ごとに一つのモデルのコピー。",
+    "source_hash": "0d8679dd39d0"
+  },
+  "clients.openai-sdk.capability": {
+    "text": "ローカル モデルのみです。OpenAI へのパススルーはなく、<code>gpt-*</code> へのリクエストは 404 になります。Chat Completions と Completions を提供します。<code>/v1/responses</code> は Chat Completions へのステートレスな変換です (Codex CLI を参照)。",
+    "source_hash": "81a1f26dda28"
+  },
+  "clients.openai-sdk.mode.default.title": {
+    "text": "ローカル モデル",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.openai-sdk.mode.default.desc": {
+    "text": "<code>base_url</code> はこの warden の <code>/v1</code> で、warden のキーが API キーになります。",
+    "source_hash": "81e9b9ed3e66"
+  },
+  "clients.continue.h1": {
+    "text": "Continue を自分の GPU で。",
+    "source_hash": "f33c2b44b3be"
+  },
+  "clients.continue.summary": {
+    "text": "Continue の OpenAI プロバイダーの接続先をこの warden に設定し、提供中のモデルを一つ使います。",
+    "source_hash": "4377b7395411"
+  },
+  "clients.continue.flow.title": {
+    "text": "Continue からのリクエストの行き先",
+    "source_hash": "a55ed462d54e"
+  },
+  "clients.continue.flow.desc": {
+    "text": "Continue は、apiBase に warden を、apiKey に warden のキーを設定して LM Warden にリクエストを送ります。LM Warden はキーを確認し、OpenAI Chat Completions 形式でリクエストを受け付け、キーの優先度に従ってリクエストをキューに入れ、レプリカ ルーターに渡します。ルーターは各セッションを、そのキャッシュをすでに保持しているレプリカ (GPU ごとに一つ置かれたモデルのコピー) に留めます。",
+    "source_hash": "dfee5b6d070e"
+  },
+  "clients.continue.flow.caption": {
+    "text": "Continue からのリクエストの行き先：Connect が書き込む二つの設定、中央に warden、その先に GPU ごとに一つのモデルのコピー。",
+    "source_hash": "c1f803ddf701"
+  },
+  "clients.continue.capability": {
+    "text": "ローカル モデルのみで、Chat Completions を使います。Router モードには、Continue がドキュメント化していないカスタム ヘッダーが必要です。",
+    "source_hash": "d76f0ccb6e86"
+  },
+  "clients.continue.req.min_context": {
+    "text": "32,768 トークン以上のコンテキストで最もよく動きます。",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.continue.mode.default.title": {
+    "text": "ローカル モデル",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.continue.mode.default.desc": {
+    "text": "<code>~/.continue/config.yaml</code> にモデルのエントリを追加します。",
+    "source_hash": "8c8d339555ff"
+  },
+  "clients.cline.h1": {
+    "text": "Cline を自分の GPU で。",
+    "source_hash": "d0efe15bdc4f"
+  },
+  "clients.cline.summary": {
+    "text": "Cline の OpenAI Compatible プロバイダーを、設定画面から入力します。",
+    "source_hash": "d80b0d66c45e"
+  },
+  "clients.cline.flow.title": {
+    "text": "Cline からのリクエストの行き先",
+    "source_hash": "79932fc0e85c"
+  },
+  "clients.cline.flow.desc": {
+    "text": "Cline は、Base URL に warden を、API Key に warden のキーを設定して LM Warden にリクエストを送ります。LM Warden はキーを確認し、OpenAI Chat Completions 形式でリクエストを受け付け、キーの優先度に従ってリクエストをキューに入れ、レプリカ ルーターに渡します。ルーターは各セッションを、そのキャッシュをすでに保持しているレプリカ (GPU ごとに一つ置かれたモデルのコピー) に留めます。",
+    "source_hash": "300648093db4"
+  },
+  "clients.cline.flow.caption": {
+    "text": "Cline からのリクエストの行き先：Connect が書き込む二つの設定、中央に warden、その先に GPU ごとに一つのモデルのコピー。",
+    "source_hash": "26566cb52d8d"
+  },
+  "clients.cline.capability": {
+    "text": "ローカル モデルのみで、ストリーミングの Chat Completions を使います。Cline には設定ファイルがないので、API Provider &gt; OpenAI Compatible にこれらの値を入力してください。Cline の Anthropic プロバイダーにはカスタムのベース URL はありますがカスタム ヘッダーはないため、ルーター モードは使えません。",
+    "source_hash": "21110940c4cb"
+  },
+  "clients.cline.req.tools": {
+    "text": "ツール呼び出しに対応したモデルが必要です (エージェントによる編集のため)。",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.cline.req.min_context": {
+    "text": "32,768 トークン以上のコンテキストで最もよく動きます。",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.cline.mode.default.title": {
+    "text": "ローカル モデル",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.cline.mode.default.desc": {
+    "text": "Settings &gt; API Provider &gt; OpenAI Compatible。",
+    "source_hash": "f65c6df5377b"
+  },
+  "clients.cursor.h1": {
+    "text": "Cursor を自分の GPU で。",
+    "source_hash": "314536df2e7a"
+  },
+  "clients.cursor.summary": {
+    "text": "Cursor の OpenAI ベース URL の上書き設定を使い、提供中のモデルとチャットします。",
+    "source_hash": "1c8912c5ba32"
+  },
+  "clients.cursor.flow.title": {
+    "text": "Cursor からのリクエストの行き先",
+    "source_hash": "43c8f2aed837"
+  },
+  "clients.cursor.flow.desc": {
+    "text": "Cursor は、Override OpenAI Base URL に warden を、OpenAI API Key に warden のキーを設定して LM Warden にリクエストを送ります。LM Warden はキーを確認し、OpenAI Chat Completions 形式でリクエストを受け付け、キーの優先度に従ってリクエストをキューに入れ、レプリカ ルーターに渡します。ルーターは各セッションを、そのキャッシュをすでに保持しているレプリカ (GPU ごとに一つ置かれたモデルのコピー) に留めます。",
+    "source_hash": "524789d9ea5d"
+  },
+  "clients.cursor.flow.caption": {
+    "text": "Cursor からのリクエストの行き先：Connect が書き込む二つの設定、中央に warden、その先に GPU ごとに一つのモデルのコピー。",
+    "source_hash": "79e33449f1a5"
+  },
+  "clients.cursor.capability": {
+    "text": "リクエストは Cursor のサーバーから送られるので、この warden の URL はインターネットから到達できる必要があります。LAN や localhost の warden では動きません。カスタム キーはチャット モデルでのみ使えます。Tab 補完は引き続き Cursor 自身のモデルを使い、Cursor のモデルを使う Agent はカスタム キーを拒否します。Cursor の現在のドキュメントには Override OpenAI Base URL 設定の説明がもうありません。この設定については、Cursor のスタッフがフォーラムで説明しています。",
+    "source_hash": "e3b007a84e77"
+  },
+  "clients.cursor.req.reachable": {
+    "text": "Cursor のサーバーがこの URL を呼び出すので、インターネットから到達できる必要があります。",
+    "source_hash": "0815103f2766"
+  },
+  "clients.cursor.mode.default.title": {
+    "text": "ローカル モデルとチャット",
+    "source_hash": "5e7a9a7b90b9"
+  },
+  "clients.cursor.mode.default.desc": {
+    "text": "Cursor Settings &gt; Models で、モデル名をカスタム モデルとして追加します。",
+    "source_hash": "fce3909f9e49"
+  },
+  "clients.codex-cli.h1": {
+    "text": "Codex CLI を自分の GPU で。",
+    "source_hash": "ee03de1664ad"
+  },
+  "clients.codex-cli.summary": {
+    "text": "LM Warden を Codex CLI のカスタム モデル プロバイダーとして設定し、提供中のモデルを一つ使います。",
+    "source_hash": "4ffc9f534362"
+  },
+  "clients.codex-cli.flow.title": {
+    "text": "Codex CLI からのリクエストの行き先",
+    "source_hash": "4d9d5da5c30b"
+  },
+  "clients.codex-cli.flow.desc": {
+    "text": "Codex CLI は、base_url に warden を、env_key に warden のキーを設定して LM Warden にリクエストを送ります。LM Warden はキーを確認し、OpenAI Responses 形式でリクエストを受け付け、キーの優先度に従ってリクエストをキューに入れ、レプリカ ルーターに渡します。ルーターは各セッションを、そのキャッシュをすでに保持しているレプリカ (GPU ごとに一つ置かれたモデルのコピー) に留めます。",
+    "source_hash": "ae1c2b1f74bf"
+  },
+  "clients.codex-cli.flow.caption": {
+    "text": "Codex CLI からのリクエストの行き先：Connect が書き込む二つの設定、中央に warden、その先に GPU ごとに一つのモデルのコピー。",
+    "source_hash": "4596be3eb188"
+  },
+  "clients.codex-cli.capability": {
+    "text": "ローカル モデルのみです。Codex は Responses API にしか対応していないので、warden が提供中のモデル向けに <code>POST /v1/responses</code> を Chat Completions に変換し、応答、ツール呼び出し、使用量は Responses イベントとして Codex に届きます。ステートレスです。Codex は毎ターン <code>store:false</code> と会話全体を送り、<code>previous_response_id</code> は拒否されます。思考は既定でオンです (Codex は推論の要約を求め、モデルの推論は要約として表示されます。オフにするには <code>config.toml</code> で <code>model_reasoning_effort = \"none\"</code> を設定します)。ホストされた Web 検索は省かれ (<code>web_search = \"disabled\"</code> を設定)、ルーターのルールは適用されません。<code>model_context_window</code> にはモデルの実際のウィンドウを設定してください。Codex は知らない名前には 272k を想定します。エンジンではツール呼び出しを有効にする必要があります (vLLM：<code>--enable-auto-tool-choice</code> と <code>--tool-call-parser</code>)。読み込まれていないモデルへのリクエストは 404 になり、Codex は数秒間再試行してから諦めます。",
+    "source_hash": "b7c7ad7fa0c7"
+  },
+  "clients.codex-cli.req.tools": {
+    "text": "ツール呼び出しに対応したモデルが必要です (エージェントによる編集のため)。",
+    "source_hash": "b9d5cc99b8c8"
+  },
+  "clients.codex-cli.req.min_context": {
+    "text": "32,768 トークン以上のコンテキストで最もよく動きます。",
+    "source_hash": "46484b098fc4"
+  },
+  "clients.codex-cli.mode.default.title": {
+    "text": "ローカル モデル",
+    "source_hash": "8e4bf4368b03"
+  },
+  "clients.codex-cli.mode.default.desc": {
+    "text": "<code>~/.codex/config.toml</code> で LM Warden をモデル プロバイダーとして追加します。",
+    "source_hash": "0e63a370854f"
+  }
+}

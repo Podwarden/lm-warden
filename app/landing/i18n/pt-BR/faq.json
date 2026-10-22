@@ -1,0 +1,114 @@
+{
+  "faq.meta.title": {
+    "text": "FAQ do LM Warden: dúvidas sobre o gateway de LLM auto-hospedado",
+    "source_hash": "fb9dd5739289"
+  },
+  "faq.meta.description": {
+    "text": "O que as pessoas perguntam antes de instalar o LM Warden: hardware, mecanismos, modelos, clientes, segurança e a comparação com rodar o vLLM diretamente.",
+    "source_hash": "4c424d1bb872"
+  },
+  "faq.faq.h1-1": {
+    "text": "O que as pessoas perguntam antes de instalar.",
+    "source_hash": "b14e49a87fdf"
+  },
+  "faq.q-1": {
+    "text": "O que é o LM Warden?",
+    "source_hash": "37148ce83843"
+  },
+  "faq.a-1": {
+    "text": "Um plano de controle em torno de mecanismos de inferência no seu próprio hardware: vLLM e llama.cpp em um host Linux com GPUs NVIDIA, ou MLX e llama.cpp em um app beta em um Mac com chip Apple. Você baixa um modelo do HuggingFace, carrega-o na sua própria GPU, gera uma chave de API e o chama por um endpoint <code>/v1</code> compatível com OpenAI. Uma interface no navegador cobre carregar e descarregar modelos, logs do mecanismo ao vivo, um playground de chat, estatísticas de GPU e de tokens, e uma página por chave de API. Ele não deixa os modelos mais rápidos e não modifica os mecanismos. Ele acrescenta o que falta a um mecanismo usado sozinho.",
+    "source_hash": "5098435c4cfe"
+  },
+  "faq.q-2": {
+    "text": "Em quais GPUs e sistemas operacionais ele roda?",
+    "source_hash": "fd575095e092"
+  },
+  "faq.a-2": {
+    "text": "Linux e macOS. No Linux: GPUs NVIDIA em um host x86_64. O mínimo é Turing (sm_75, a geração RTX série 20): a imagem base traz CUDA 13, que deixou de suportar Maxwell, Pascal e Volta, então uma GTX 1080 Ti, uma Titan X ou uma V100 não vão funcionar. De Turing a Blackwell, tudo é suportado, incluindo Ada, Hopper e a RTX série 50. No macOS: chip Apple (M1 ou posterior), por meio de um app separado para Mac, em beta: um app nativo na barra de menus para macOS 14 ou posterior que roda modelos com MLX e com uma build Metal do llama.cpp, serve a mesma API compatível com OpenAI e mostra o mesmo painel na própria janela, em <a href=\"/download/mac\">lmwarden.com/download/mac</a> (cerca de 360&#8239;MB, com um <a href=\"/download/mac.sha256\">arquivo SHA-256</a>). Ele tem assinatura ad hoc e não é notarizado, então, na primeira execução, autorize-o em Ajustes do Sistema › Privacidade e Segurança › Abrir Mesmo Assim (no macOS 14, clicar com o botão direito › Abrir também funciona); por padrão ele escuta em loopback e não se atualiza sozinho. O Windows é o próximo; estamos trabalhando nisso, ainda sem data. Não há caminho para ROCm, GPU Intel ou CPU nesta versão; GPUs AMD Radeon e Intel estão no roadmap, e qual vem primeiro depende do feedback que recebermos no GitHub Discussions do projeto. Várias GPUs em uma máquina Linux são suportadas; um modelo dividido entre várias máquinas, não.",
+    "source_hash": "af7c57748da9"
+  },
+  "faq.q-3": {
+    "text": "O meu cliente OpenAI atual vai funcionar com ele?",
+    "source_hash": "07d287af578c"
+  },
+  "faq.a-3": {
+    "text": "Sim. O gateway em <code>/v1/*</code> é compatível com OpenAI, então o SDK <code>openai</code>, LangChain, OpenWebUI e os seus próprios agentes funcionam sem alterações depois que você muda o <code>base_url</code> e a chave. <code>GET /v1/models</code> também informa o <code>max_model_len</code> de cada modelo, então um cliente não precisa adivinhar a janela de contexto. O Codex&nbsp;CLI, que só usa a OpenAI Responses API, também funciona: <code>POST /v1/responses</code> é traduzido para Chat Completions para um modelo que você carregou (sem estado, e só local: as regras do roteador não se aplicam).",
+    "source_hash": "6aa388b69fbe"
+  },
+  "faq.q-4": {
+    "text": "Posso usá-lo com o Claude Code e manter a minha conta da Anthropic?",
+    "source_hash": "3cb57cff1faf"
+  },
+  "faq.a-4": {
+    "text": "Sim. Defina <code>ANTHROPIC_BASE_URL</code> com o endereço do warden, mantenha o seu login normal do <code>claude</code> e coloque a chave do warden em <code>ANTHROPIC_CUSTOM_HEADERS</code> como <code>X-LMWarden-Key</code>. Uma regra associa um nome de modelo que o Claude Code pede, como <code>claude-haiku*</code>, a um modelo carregado nas suas GPUs; todos os outros modelos, e todos os outros caminhos <code>/v1</code>, são repassados à Anthropic byte a byte com o seu próprio login. Exige Claude Code 2.1.227 ou mais recente, vem desligado por padrão, e uma chave precisa ter a opção “May relay to Anthropic” antes que qualquer coisa seja encaminhada. Clientes mais antigos ainda podem usar o modo só local.",
+    "source_hash": "680fb986650c"
+  },
+  "faq.q-5": {
+    "text": "A Anthropic vê a minha chave do warden, ou o warden vê o meu login da Anthropic?",
+    "source_hash": "0e5c302159a3"
+  },
+  "faq.a-5": {
+    "text": "A Anthropic nunca vê a chave do warden: ela viaja em um cabeçalho próprio e é removida antes de a solicitação ser repassada. O warden lida com o seu login da Anthropic, porque precisa encaminhá-lo, mas só para a Anthropic. Ele nunca é enviado a um mecanismo nem registrado em log, e nada de uma solicitação repassada é guardado ou mostrado no God mode.",
+    "source_hash": "36a441a68717"
+  },
+  "faq.q-6": {
+    "text": "Quais mecanismos de inferência ele usa?",
+    "source_hash": "af507f756ef8"
+  },
+  "faq.a-6": {
+    "text": "No Linux, vLLM v0.32.0 e llama.cpp b11719 oficiais, escolhidos por modelo e executados sem modificações: sem imagem com patches, sem fork, sem monkeypatching. Escolher um arquivo <code>.gguf</code> seleciona o llama.cpp, que encaixa modelos maiores em placas menores com quantização GGUF e mantém GPUs mais antigas úteis. TensorRT-LLM, SGLang e o runtime do Ollama não vêm incluídos; a beta para Mac roda modelos com MLX, o mecanismo padrão dela, ou com uma build Metal do llama.cpp para arquivos <code>.gguf</code>, e não tem vLLM.",
+    "source_hash": "71d96023e2e8"
+  },
+  "faq.q-7": {
+    "text": "Alguma coisa sai da minha máquina?",
+    "source_hash": "2e943e3c5431"
+  },
+  "faq.a-7": {
+    "text": "Nada sai do host a menos que você ative o roteador do Claude Code e marque uma chave com “May relay to Anthropic”. Nesse caso, as solicitações dessa chave para modelos Claude que nenhuma regra envia às suas GPUs vão para a Anthropic, com o próprio login da Anthropic do usuário, e nada mais sai. Não há conta, verificação de licença nem análise de uso. Fora isso, a stack só faz chamadas externas quando você pede: huggingface.co para baixar pesos (<code>HF_HUB_OFFLINE=1</code> impede até isso), o Docker Hub quando você abre o seletor de versão do mecanismo, e o registry das imagens da versão, que o <code>docker load</code> substitui em uma instalação offline ou isolada da rede (air-gapped).",
+    "source_hash": "728ba07e9c96"
+  },
+  "faq.q-8": {
+    "text": "Os prompts e as respostas são guardados?",
+    "source_hash": "5cba7fae2cca"
+  },
+  "faq.a-8": {
+    "text": "Não por padrão. O histórico de solicitações por trás dos gráficos e do uso por chave guarda só metadados e não tem coluna para o texto do prompt nem da resposta. Dois recursos de diagnóstico podem capturar conteúdo, e os dois ficam desligados a menos que você os ligue: o God mode (<code>VW_GODMODE_ENABLED</code>), uma visão limitada, em memória, do tráfego de uma chave, e o log de conteúdo (<code>VW_CONTENT_LOG_ENABLED</code>), que grava em disco só para os ids de token que você listar.",
+    "source_hash": "f047e1060aa4"
+  },
+  "faq.q-9": {
+    "text": "Como as chaves de API funcionam para uma equipe?",
+    "source_hash": "138d847537f5"
+  },
+  "faq.a-9": {
+    "text": "Cada app ou pessoa recebe a sua própria chave <code>vw_</code> com a sua própria página. Defina uma prioridade de P0&nbsp;a&nbsp;P9 (uma solicitação P9 em espera sempre passa à frente de uma P8), pause uma chave para que os clientes dela recebam <code>403 token paused</code> enquanto as solicitações em execução terminam, ou rotacione-a com um período de carência em que o segredo antigo continua funcionando. Solicitações, tokens de prompt e tokens de resposta são contados por chave e por IP do cliente, com espera na fila e latência por chave. Scripts, CI e agentes que usam a API de controle recebem tokens de administrador <code>vwa_</code> separados em vez da senha de administrador.",
+    "source_hash": "37fb94868ccc"
+  },
+  "faq.q-10": {
+    "text": "Posso rodar vários modelos em uma GPU?",
+    "source_hash": "300a4b4adf9a"
+  },
+  "faq.a-10": {
+    "text": "Não. Um modelo carregado por GPU é uma regra aplicada antes de um mecanismo iniciar. Você pode carregar modelos diferentes em placas diferentes do mesmo host, e dividir um modelo entre várias placas com o paralelismo de tensores do vLLM.",
+    "source_hash": "c4ef5c9a9c54"
+  },
+  "faq.q-11": {
+    "text": "O que é preciso para instalar?",
+    "source_hash": "889f53a02753"
+  },
+  "faq.a-11": {
+    "text": "No Linux, um host com Docker, Docker Compose&nbsp;v2.24 ou mais recente, uma GPU NVIDIA, o NVIDIA Container Toolkit e cerca de 40&#8239;GB livres onde o Docker guarda as imagens. O instalador verifica o host, deixa você escolher as GPUs, gera os segredos, baixa as imagens da versão e se oferece para iniciar a stack. Depois, um assistente de primeira execução no navegador pede as GPUs a usar, um token do HuggingFace e a sua conta de administrador. Em um Mac com chip Apple, basta baixar o app beta; veja <a href=\"/#p-mac\">a seção do Mac</a>.",
+    "source_hash": "f7c42330b71d"
+  },
+  "faq.q-12": {
+    "text": "Quanto custa?",
+    "source_hash": "e8dc9deba44c"
+  },
+  "faq.a-12": {
+    "text": "Nada. O LM Warden é licenciado sob Apache-2.0. É um software que você roda, não uma API hospedada: você fornece o hardware, o driver, o disco e a eletricidade, e, depois que o hardware está pago, uma solicitação custa eletricidade, não uma tarifa por token.",
+    "source_hash": "97000d243331"
+  },
+  "faq.p-1": {
+    "text": "Veja também: <a href=\"/coding-agents\">agentes de programação</a> · <a href=\"/agent-tuning\">ajuste com agente de IA</a> · <a href=\"/features\">recursos</a>",
+    "source_hash": "8e86209820fa"
+  }
+}

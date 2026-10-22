@@ -1,0 +1,54 @@
+{
+  "api-keys.meta.title": {
+    "text": "Claves de API, prioridades y uso por app | LM Warden",
+    "source_hash": "36d31214a489"
+  },
+  "api-keys.meta.description": {
+    "text": "Una clave por app con su propia prioridad, su uso y sus tiempos de cola, detrás de puntos de conexión compatibles con OpenAI, Anthropic Messages y Responses.",
+    "source_hash": "dc32185af3f0"
+  },
+  "api-keys.keys.h1-1": {
+    "text": "Una clave por app, y una página para cada clave.",
+    "source_hash": "478db02e5440"
+  },
+  "api-keys.p-1": {
+    "text": "Da a cada colega, portátil, trabajo de CI y agente su propia clave. La página de una clave muestra lo que ha consumido y cuánto esperaron sus solicitudes en la cola (mediana y p95) en cualquier intervalo que selecciones con el ratón o escribas. Rota una clave con un periodo de gracia y fija su prioridad de P0&nbsp;a&nbsp;P9: una solicitud P9 en espera siempre pasa antes que una P8.",
+    "source_hash": "128af00fcd92"
+  },
+  "api-keys.p-2": {
+    "text": "Si la pausas, las solicitudes nuevas se rechazan mientras terminan las que ya están en curso:",
+    "source_hash": "24b259f012c7"
+  },
+  "api-keys.p-3": {
+    "text": "De una instancia local, el 23&nbsp;de septiembre de 2026. Host y clave sustituidos; el resto de los encabezados, recortados.",
+    "source_hash": "992b035b09f7"
+  },
+  "api-keys.video-1.aria-label": {
+    "text": "La página de una clave de API durante una prueba de carga: su prioridad de P0 a P9, una franja con todo su historial, tokens y solicitudes por minuto en la última hora, y luego el panel God mode que se abre con sus prompts y respuestas mientras se transmiten",
+    "source_hash": "146ed912c7a6"
+  },
+  "api-keys.figcaption-1": {
+    "text": "<b>Fig.&nbsp;13</b>La página de <code>demo-agent</code>, la clave que generó la carga de la fig.&nbsp;1: 37 solicitudes y 43 mil tokens generados en la hora que aparece en pantalla. Después se abre su panel God mode (una vista en directo, opcional, de los prompts y las respuestas de una clave, desactivada de forma predeterminada) y sus respuestas aparecen a medida que se escriben. Los prompts son nuestros.",
+    "source_hash": "389cdbc39b42"
+  },
+  "api-keys.img-1.alt": {
+    "text": "El gráfico Requests de la página Stats en los últimos 7 días, del 16 al 23 de septiembre: una marca por solicitud, coloreada por clave de API, con tamaño según los tokens generados y forma según el motivo de finalización, frente a la duración en escala logarítmica de 100&#8239;ms a 10.000&#8239;s. La mayoría de las marcas están entre 3 y 100 segundos; una clave muestra dos columnas densas que van de menos de un segundo a varios cientos de segundos.",
+    "source_hash": "e3200603dcf6"
+  },
+  "api-keys.figcaption-2": {
+    "text": "<b>Fig.&nbsp;14</b>Las solicitudes de todas las claves en un solo gráfico, de la misma página Stats: los últimos 7 días, 28.906 solicitudes, de las que se dibuja una de cada quince. Cada marca es una solicitud, coloreada según su clave, con tamaño según los tokens que generó y forma según cómo terminó, a la altura de su duración en escala logarítmica. El ámbar constante es <code>opencode-laptop</code>; las dos columnas rosas densas son <code>research-notebook</code>. Captura del 23&nbsp;de septiembre de 2026; los nombres de las claves se han sustituido.<span class=\"scroll-hint\"> Desplaza la imagen lateralmente para ver toda la semana.</span>",
+    "source_hash": "1a43a2ba1520"
+  },
+  "api-keys.leave.h2-1": {
+    "text": "Para irte, basta con cambiar <code>base_url</code>.",
+    "source_hash": "8f28f88090a1"
+  },
+  "api-keys.p-4": {
+    "text": "Expone <code>/v1/chat/completions</code> y <code>/v1/models</code>, y <code>/v1/models</code> indica el <code>max_model_len</code> de cada modelo. También es compatible con la API Anthropic Messages en <code>/v1/messages</code>, así que en Claude Code basta con que <code>ANTHROPIC_BASE_URL</code> sea la URL raíz de un warden (Claude Code añade él mismo la ruta <code>/v1/messages</code>), y con la OpenAI Responses API en <code>/v1/responses</code>, así que Codex&nbsp;CLI puede usar un modelo que hayas cargado. Los pesos están en una caché normal de HuggingFace que <code>make export-hf-cache</code> te entrega como archivo tar, y el argv exacto con el que se inició cada motor se obtiene con una simple solicitud GET, así que una instalación que funciona se puede reconstruir sin nosotros. El diff de abajo, aplicado a la inversa, es justo lo que tienes que hacer para irte.",
+    "source_hash": "18372068885f"
+  },
+  "api-keys.p-5": {
+    "text": "Relacionado: <a href=\"/coding-agents\">agentes de programación</a> · <a href=\"/gpu-monitoring\">supervisión de GPU</a> · <a href=\"/faq\">FAQ</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}

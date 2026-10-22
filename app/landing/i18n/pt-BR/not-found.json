@@ -1,0 +1,18 @@
+{
+  "not-found.meta.title": {
+    "text": "Página não encontrada | LM Warden",
+    "source_hash": "9997b967a0f9"
+  },
+  "not-found.meta.description": {
+    "text": "Esta página não existe no site do LM Warden.",
+    "source_hash": "f56b56b08c51"
+  },
+  "not-found.nf.h1-1": {
+    "text": "Página não encontrada.",
+    "source_hash": "0a4c2fc34b17"
+  },
+  "not-found.p-1": {
+    "text": "Ela pode ter mudado de lugar quando este site deixou de ser uma página só e passou a ter várias. Tente <a href=\"/\">a página inicial</a>, <a href=\"/coding-agents\">agentes de programação</a>, <a href=\"/agent-tuning\">ajuste com agente de IA</a> ou <a href=\"/faq\">o FAQ</a>.",
+    "source_hash": "701d00dd6585"
+  }
+}

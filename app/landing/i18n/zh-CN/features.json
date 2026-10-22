@@ -1,0 +1,186 @@
+{
+  "features.meta.title": {
+    "text": "更多功能和经验教训 | LM Warden",
+    "source_hash": "ba96eee84458"
+  },
+  "features.meta.description": {
+    "text": "God mode、管理员令牌、引擎看门狗，以及塑造了 LM Warden 监管 vLLM 方式的两次故障。",
+    "source_hash": "6e9623164c58"
+  },
+  "features.small.h1-1": {
+    "text": "用起来之后，你还会发现这些小功能。",
+    "source_hash": "32313b57288c"
+  },
+  "features.dd-1": {
+    "text": "在某个密钥页面的停靠面板中，实时查看该密钥的提示词和回复。只保存在内存中，只在停靠面板打开时流式传输，除非你设置 <code>VW_GODMODE_ENABLED</code>，否则处于关闭状态。",
+    "source_hash": "30b3b2877354"
+  },
+  "features.dt-1": {
+    "text": "管理员令牌",
+    "source_hash": "c0b53878c4d4"
+  },
+  "features.dd-2": {
+    "text": "<code>vwa_</code> 令牌让脚本、CI 和智能体无需管理员密码、Cookie 存储或 CSRF 标头即可调用控制 API。只显示一次，以 SHA-256 哈希存储。",
+    "source_hash": "332151669674"
+  },
+  "features.dt-2": {
+    "text": "HuggingFace 缓存管理器",
+    "source_hash": "3b9fd142bcdf"
+  },
+  "features.dd-3": {
+    "text": "磁盘上有哪些文件，分别属于哪个模型。可清理无主文件，并把整个缓存打包成 tarball 导出或导入。",
+    "source_hash": "9d11305af39b"
+  },
+  "features.dt-3": {
+    "text": "一个端口",
+    "source_hash": "db562f172ced"
+  },
+  "features.dd-4": {
+    "text": "UI、控制 API 和 <code>/v1</code> 共享 <code>:8080</code>。你自己的 TLS 终结器、Ingress 或 SSO 可以原样放在它前面。",
+    "source_hash": "0e54e933002b"
+  },
+  "features.dt-4": {
+    "text": "无需对外路由",
+    "source_hash": "afddbc532ecf"
+  },
+  "features.dd-5": {
+    "text": "对于物理隔离的主机，三个镜像 tarball 加上一个可选的模型缓存 tarball 就是需要传入的全部内容。<code>HF_HUB_OFFLINE=1</code> 甚至可以禁止下载权重。",
+    "source_hash": "b61634fa6450"
+  },
+  "features.dt-5": {
+    "text": "Router 统计",
+    "source_hash": "bf3c9855201c"
+  },
+  "features.dd-6": {
+    "text": "<code>/router/stats</code> 记录每一个路由决策：本地、直通、回退、拒绝，附带原因，按规则和按目标分别统计，并给出熔断器状态。按进程统计，从不记录标头或正文。",
+    "source_hash": "8500a2b3792f"
+  },
+  "features.dt-6": {
+    "text": "每个客户端一个设置页面",
+    "source_hash": "2384f4730652"
+  },
+  "features.dd-7": {
+    "text": "<b>Connect</b> 为 Claude Code、Codex&nbsp;CLI、OpenCode、Aider、Grok&nbsp;CLI、Anthropic 和 OpenAI SDK 以及三款编辑器写好设置，填入这个 warden 的地址、一个密钥和一个已加载的模型，并发送一个测试请求。",
+    "source_hash": "2bc91137abf9"
+  },
+  "features.dd-8": {
+    "text": "2026 年 10 月 5 日用 Codex&nbsp;0.160 对一个 warden 实测：shell 工具调用、一次文件编辑，会话始终保持在同一个副本上。思考默认开启；<code>model_reasoning_effort = \"none\"</code> 可将其关闭。仅限本地模型：路由器规则不适用。",
+    "source_hash": "93a18b286b4e"
+  },
+  "features.dt-7": {
+    "text": "聊天试验场",
+    "source_hash": "989e5691fd83"
+  },
+  "features.dd-9": {
+    "text": "在把密钥交给任何人之前，先在浏览器中与已加载的模型对话，包括图片在内。",
+    "source_hash": "7c8ef7303dc3"
+  },
+  "features.lessons.h2-1": {
+    "text": "我们吃过苦头才学到的三件事。",
+    "source_hash": "b2e61284634a"
+  },
+  "features.h3-1": {
+    "text": "引擎一天内崩溃了四次，而代理服务还在继续向它转发请求。",
+    "source_hash": "a3c2a4abe3bf"
+  },
+  "features.p-1": {
+    "text": "vLLM 引擎核心崩溃了，而包裹它的 <code>vllm serve</code> 进程仍在运行，因此进程看起来还活着，请求也继续发给它。现在由一个看门狗询问引擎自己的 <code>/health</code> 端点，而不是查看进程表。当引擎不再应答时，看门狗会保留证据（包括有限长度的日志末尾），并重新加载模型。",
+    "source_hash": "8d323d1c089b"
+  },
+  "features.img-1.alt": {
+    "text": "负载下模型的实时日志面板：vLLM API 服务器行在响应 GET /metrics 和来自客户端的 POST /v1/chat/completions，引擎行报告 10 个请求正在运行、0 个在等待，还有一行 GET /health，全部返回 200 OK",
+    "source_hash": "a4f74c626a7f"
+  },
+  "features.span-1": {
+    "text": "看门狗的探测，由引擎应答",
+    "source_hash": "e1d7e982a29c"
+  },
+  "features.figcaption-1": {
+    "text": "<b>图&nbsp;15</b>同一负载期间模型页面上的实时日志：对 <code>/metrics</code> 的抓取、不断进来的聊天补全、引擎自己统计的 10 个请求正在运行且没有等待，以及其间的一次 <code>/health</code> 探测。<span class=\"scroll-hint\">左右滚动图片可阅读完整的行。</span>",
+    "source_hash": "40a242621e22"
+  },
+  "features.h3-2": {
+    "text": "一次 12 分钟的加载过去会以错误告终。",
+    "source_hash": "69140856abf8"
+  },
+  "features.p-2": {
+    "text": "大模型可能需要十二分钟甚至更久才能加载完。过去 warden 只看一个固定的计时：到了截止时间，它会给模型写入一个红色的“still loading”错误，尽管引擎仍在加载。现在模型页面会显示每个加载步骤及其进度条、根据以往加载得出的每一步通常耗时，以及 CPU 和 GPU 内存的实时状态。停滞的加载会被停止，其 GPU 会被释放；只要加载还在推进，就不会有任何东西变红。GLM-5.2 NVFP4 以张量并行&nbsp;8 在八块 NVIDIA B300 上加载约需 11 到 12 分钟；这么长的加载过去会触发 600&#8239;s 的超时。",
+    "source_hash": "cceedae9466e"
+  },
+  "features.img-2.alt": {
+    "text": "GLM-5.2 NVFP4 在八块 NVIDIA B300 上加载时的模型页面：通常需要 10 min 46 s，已进行 9 min 17 s；Start engine、Load weights 47/47、Compile kernels 和 Size KV cache 已完成；Tune kernels 在 op 2，21/22；CPU 和 GPU 内存图表显示已用 1948/2149&#8239;GiB；Capture CUDA graphs 和 Warm-up request 尚未开始，每一步都标有通常耗时",
+    "source_hash": "e3cc9ae4cf3b"
+  },
+  "features.figcaption-2": {
+    "text": "<b>图&nbsp;16</b>GLM-5.2 NVFP4 以张量并行 8 在八块 B300 上加载，已进行九分钟。内核调优是耗时最长的一步；日志只是重复调优进度，而图表显示引擎还活着。",
+    "source_hash": "981fef031d3d"
+  },
+  "features.h3-3": {
+    "text": "一块 16&#8239;GiB 的显卡实际能装下的，比算出来的少。",
+    "source_hash": "2269d7489768"
+  },
+  "features.p-3": {
+    "text": "一个 bf16 8B 模型光权重就约有 15&#8239;GiB，在这样的显卡上加载时会耗尽显存。我们在 16&#8239;GiB 的 RTX&nbsp;A4000 和 Quadro RTX&nbsp;5000 显卡上逐一尝试了下面每一行，判断依据是在聊天试验场中阅读模型的回答，而不是相信健康检查。",
+    "source_hash": "a34f00101361"
+  },
+  "features.th-1": {
+    "text": "模型",
+    "source_hash": "5e2c614c23f0"
+  },
+  "features.th-2": {
+    "text": "可行的配置",
+    "source_hash": "ea5522c7c85e"
+  },
+  "features.th-3": {
+    "text": "不可行的配置",
+    "source_hash": "9bebcd3482a7"
+  },
+  "features.col-works.data-h": {
+    "text": "可行",
+    "source_hash": "2b4c8c6d38db"
+  },
+  "features.td-1": {
+    "text": "两块显卡，张量并行 2，<code>max_model_len</code> 32000，<code>gpu_memory_utilization</code> 0.7&nbsp;到&nbsp;0.9",
+    "source_hash": "4516d9c167db"
+  },
+  "features.col-does-not.data-h": {
+    "text": "不可行",
+    "source_hash": "73a6fc7836b8"
+  },
+  "features.td-2": {
+    "text": "一块显卡：20B MoE 放不下",
+    "source_hash": "6b644f502c34"
+  },
+  "features.th-4": {
+    "text": "Llama 3.1 8B、Mistral 7B 级别",
+    "source_hash": "c2f2a5cd5d41"
+  },
+  "features.td-3": {
+    "text": "一块显卡，使用 AWQ-INT4 检查点、<code>--enforce-eager</code> 和 <code>gpu_memory_utilization</code> 0.9",
+    "source_hash": "baa3aea88f30"
+  },
+  "features.td-4": {
+    "text": "bf16 仓库：权重约 15&#8239;GiB，加载时显存不足",
+    "source_hash": "1ce2fc0f7104"
+  },
+  "features.th-5": {
+    "text": "同时运行两个模型",
+    "source_hash": "3bc589f1752e"
+  },
+  "features.td-5": {
+    "text": "每块显卡一个模型，且各自都能放进所在的显卡",
+    "source_hash": "6fed9ca4f3d2"
+  },
+  "features.td-6": {
+    "text": "两个模型共享一块显卡",
+    "source_hash": "296d7ad75ac3"
+  },
+  "features.p-4": {
+    "text": "基于 vLLM&nbsp;0.20.0 验证。上文的副本测量使用的是 0.26.0。本版本附带 0.32.0；在该版本上首次计时的加载是 GLM-5.2 NVFP4 以张量并行 8 在八块 B300 上加载，约需 11 到 12 分钟。适配规则尚未在 0.32 上重新测量。完整的表格及其背后的原因见 <a href=\"{{repo}}/blob/main/documents/HAZARDS.md#what-fits-on-what\" rel=\"noopener\">HAZARDS.md</a>。不用 NVIDIA？<a href=\"/#p-mac\">Apple 芯片有 Mac 测试版</a>，下一个是 Windows，<a href=\"/#p-linux\">其他 GPU 已列入路线图</a>。",
+    "source_hash": "d5f7cb24d2cc"
+  },
+  "features.p-5": {
+    "text": "相关内容：<a href=\"/gpu-monitoring\">GPU 监控</a> · <a href=\"/cache-aware-routing\">缓存感知路由</a> · <a href=\"/api-keys\">API 密钥</a>",
+    "source_hash": "4c5ddc0960f7"
+  }
+}

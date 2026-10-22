@@ -1,0 +1,198 @@
+{
+  "gpu-monitoring.meta.title": {
+    "text": "Monitorowanie każdej karty GPU dla vLLM | LM Warden",
+    "source_hash": "d27814ed8b63"
+  },
+  "gpu-monitoring.meta.description": {
+    "text": "W systemie Linux każda karta NVIDIA ma własny panel: temperatura względem progu dławienia, moc względem limitu, łącze PCIe i każde żądanie w toku.",
+    "source_hash": "507736e1bea9"
+  },
+  "gpu-monitoring.box.h1-1": {
+    "text": "Monitorowanie GPU: serwer, z którego pochodzą te liczby.",
+    "source_hash": "cc0f4c9bbf2b"
+  },
+  "gpu-monitoring.p-1": {
+    "text": "O ile podpis nie mówi inaczej, odczyty na tej stronie pochodzą z jednej stacji roboczej: czterech kart RTX&nbsp;A4000 z jednym modelem załadowanym na wszystkie, zajętych naszym własnym ruchem testowym. Te liczby pokazywała konsola, gdy wykonywaliśmy zrzuty do rys.&nbsp;1 i&nbsp;5. Testy dopasowania niżej używały też karty Quadro&nbsp;RTX&nbsp;5000, o czym tam mowa.",
+    "source_hash": "a9ca4640a6e7"
+  },
+  "gpu-monitoring.p-2": {
+    "text": "Panele poszczególnych kart odczytują sterownik NVIDIA, więc są częścią instalacji dla systemu Linux. Na Macu z procesorem Apple <a href=\"/#p-mac\">aplikacja na Maca (beta)</a> pokazuje wykorzystanie GPU i budżet pamięci zgłaszany przez Metal, bez odczytu mocy.",
+    "source_hash": "e6e25a4491ad"
+  },
+  "gpu-monitoring.dt-1": {
+    "text": "Karty GPU",
+    "source_hash": "8f0474fb0c5b"
+  },
+  "gpu-monitoring.dd-1": {
+    "text": "4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000, każda 16&#8239;GiB (Ampere, compute&nbsp;8.6)",
+    "source_hash": "065609784858"
+  },
+  "gpu-monitoring.dt-2": {
+    "text": "Użycie VRAM",
+    "source_hash": "60de0ad7eb70"
+  },
+  "gpu-monitoring.dd-2": {
+    "text": "59,4 z 64,0&#8239;GiB, jeden model na wszystkich czterech kartach",
+    "source_hash": "2a58556c9272"
+  },
+  "gpu-monitoring.dd-3": {
+    "text": "Gen&nbsp;4 x16 na kartę",
+    "source_hash": "a85ab5eb706a"
+  },
+  "gpu-monitoring.dt-3": {
+    "text": "Sterownik",
+    "source_hash": "9fe4c68ec20d"
+  },
+  "gpu-monitoring.dd-4": {
+    "text": "<code>610.57.04</code>, CUDA&nbsp;13.3",
+    "source_hash": "a041ea9e5251"
+  },
+  "gpu-monitoring.caption-1": {
+    "text": "Obciążenie GPU, moc i tokeny odczytane z rys.&nbsp;1",
+    "source_hash": "db678a93d309"
+  },
+  "gpu-monitoring.th-1": {
+    "text": "Odczyt",
+    "source_hash": "463816d07097"
+  },
+  "gpu-monitoring.th-2": {
+    "text": "W chwili zrzutu",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.th-3": {
+    "text": "Mediana pod obciążeniem, 24&#8239;h",
+    "source_hash": "af088ec66533"
+  },
+  "gpu-monitoring.th-4": {
+    "text": "Szczyt w 24&#8239;h",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-5": {
+    "text": "Wykorzystanie GPU, najbardziej obciążona karta&nbsp;(%)",
+    "source_hash": "9739b22b0dce"
+  },
+  "gpu-monitoring.col-capture.data-h": {
+    "text": "W chwili zrzutu",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.col-median.data-h": {
+    "text": "Mediana w 24&#8239;h",
+    "source_hash": "e6245b901702"
+  },
+  "gpu-monitoring.col-peak.data-h": {
+    "text": "Szczyt w 24&#8239;h",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-6": {
+    "text": "Moc GPU, suma czterech kart&nbsp;(W)",
+    "source_hash": "6554b6cbd5f4"
+  },
+  "gpu-monitoring.th-7": {
+    "text": "Tokeny na minutę (panel z 23 wrz.)",
+    "source_hash": "eb7b7fd32e11"
+  },
+  "gpu-monitoring.span-1": {
+    "text": "nie pokazano",
+    "source_hash": "0bedd95628dd"
+  },
+  "gpu-monitoring.td-7": {
+    "text": "190 tys.",
+    "source_hash": "eaa6d59dc9be"
+  },
+  "gpu-monitoring.td-8": {
+    "text": "880 tys.",
+    "source_hash": "8678af14d6a2"
+  },
+  "gpu-monitoring.p-3": {
+    "text": "Twoje liczby będą inne. Właśnie po to się je mierzy. Wiersz tokenów powstał, zanim przeszliśmy na tokeny na sekundę; panel statystyk pokazuje teraz tokeny na sekundę, a te liczby pochodzą ze zrzutu z 23&nbsp;września na starszym panelu minutowym.",
+    "source_hash": "fc86e0160504"
+  },
+  "gpu-monitoring.cards.h2-1": {
+    "text": "Wartość, której nie da się zmierzyć, jest oznaczona jako „not reported”.",
+    "source_hash": "036e83c1af39"
+  },
+  "gpu-monitoring.p-4": {
+    "text": "Większość pulpitów GPU uśrednia cztery karty do jednej linii i rysuje brakującą wartość jako&nbsp;0. Ten daje każdej karcie własny panel: temperaturę względem progu dławienia zgłaszanego przez sterownik, moc względem własnego limitu karty, taktowanie, wentylator, łącze PCIe w stanie wynegocjowanym w tej chwili oraz ECC i NVLink, jeśli karta je ma. Dwie karty kupione w odstępie osiemnastu miesięcy pozostają dwiema kartami, a wartość, której sterownik nie podaje, jest oznaczana jako brakująca, a nie rysowana jako zero.",
+    "source_hash": "f87275635f5c"
+  },
+  "gpu-monitoring.img-1.alt": {
+    "text": "Cztery panele GPU ze strony Stats pod obciążeniem, po jednym na każdą RTX A4000: wykorzystanie 99–100 procent w stanie zasilania P2, temperatury od 79 do 94 stopni przy progu dławienia 100 stopni, ostrzeżenie o spowolnieniu termicznym na trzech kartach, moc 134–138 przy limicie 140 watów, taktowanie, wersja sterownika i CUDA, łącze PCIe, NVLink i ECC",
+    "source_hash": "55b551e38c61"
+  },
+  "gpu-monitoring.span-2": {
+    "text": "Próg dławienia ze sterownika, a nie z domysłu",
+    "source_hash": "b3bd726e07ac"
+  },
+  "gpu-monitoring.span-3": {
+    "text": "Dlaczego taktowanie spadło, według sterownika",
+    "source_hash": "7be6f5cf26b2"
+  },
+  "gpu-monitoring.span-4": {
+    "text": "Moc względem własnego limitu 140&#8239;W",
+    "source_hash": "ef8ca2bcafce"
+  },
+  "gpu-monitoring.span-5": {
+    "text": "NVLink i ECC, tak jak zgłasza je karta",
+    "source_hash": "c4d22dc73625"
+  },
+  "gpu-monitoring.figcaption-1": {
+    "text": "<b>Rys.&nbsp;5</b>Cztery panele GPU z tej samej strony Stats w pełnym rozmiarze, zrobione podczas tego samego obciążenia. Każda karta jest na 99 lub 100% w stanie zasilania P2, a trzy z nich, przy 90–94&#8239;°C, sterownik utrzymuje na poziomie od 76 do 84% maksymalnego taktowania.<span class=\"scroll-hint\"> Przewiń obraz w bok, aby zobaczyć wszystkie cztery.</span>",
+    "source_hash": "7aa9957f224d"
+  },
+  "gpu-monitoring.caption-2": {
+    "text": "Co jest odczytywane gdzie",
+    "source_hash": "fd76edd0a9d5"
+  },
+  "gpu-monitoring.th-8": {
+    "text": "Na kartę",
+    "source_hash": "b596b0114ded"
+  },
+  "gpu-monitoring.td-9": {
+    "text": "Temperatura i próg dławienia, moc i jej limit, taktowanie rdzenia i pamięci, wentylator, generacja i szerokość PCIe, ECC, NVLink oraz proces silnika używający karty",
+    "source_hash": "1f5a45a29bdc"
+  },
+  "gpu-monitoring.th-9": {
+    "text": "Na host",
+    "source_hash": "fd8f8648eb41"
+  },
+  "gpu-monitoring.td-10": {
+    "text": "Użycie VRAM, wykorzystanie GPU (najbardziej obciążona karta), moc (suma kart) i tokeny na sekundę",
+    "source_hash": "d8e9193ca58e"
+  },
+  "gpu-monitoring.th-10": {
+    "text": "Na żądanie",
+    "source_hash": "c01f2094044d"
+  },
+  "gpu-monitoring.td-11": {
+    "text": "Czas do pierwszego tokenu, opóźnienie między tokenami i czas trwania, mierzone na proxy w ten sam sposób dla obu silników",
+    "source_hash": "92c8d3b9a423"
+  },
+  "gpu-monitoring.inflight.h2-1": {
+    "text": "Na co czeka każde żądanie.",
+    "source_hash": "87e975182d2c"
+  },
+  "gpu-monitoring.p-5": {
+    "text": "Strona Stats wymienia każde żądanie w toku z sesją klienta i etapem, na którym jest żądanie: w kolejce LM Warden, prefill (silnik czyta prompt), myślenie, pisanie wywołania narzędzia lub odpowiadanie. Plakietka podaje część promptu, która prawdopodobnie jest w cache repliki. Jeśli prefill trwa dłużej, niż przewiduje wyuczona dla tego serwera szybkość prefill, widać prawdopodobną przyczynę: żądanie czeka za innymi promptami na tej samej replice, cache został prawdopodobnie usunięty albo żądanie jest powolne z powodu, którego LM Warden nie widzi. Sesja pochodzi z identyfikatora, który każde narzędzie już wysyła: Claude Code, Codex, OpenCode i pi od razu, Hermes i Aider po jednym wierszu konfiguracji.",
+    "source_hash": "4d6984e02a57"
+  },
+  "gpu-monitoring.img-2.alt": {
+    "text": "Tabela In flight z 14 aktywnymi żądaniami, wszystkie z klucza agent-farm z jednego adresu klienta. Kolumny: token, IP klienta, sesja, model, faza, okno kontekstu i czas trwania. Sześć wierszy jest w fazie tool call lub answering, a osiem w prefill, większość z plakietką szacującą 94–100% promptu w cache; trzy prefill mają plakietkę evict?, a dwa plakietkę klepsydry, 1·r0 i 1·r4. Pod tabelą: model prefill 439 tok/s wyuczony z 1132 żądań, szacunek cache trafny w 57% przypadków oraz współczynnik trafień według przerwy bezczynności, 68% po maksymalnie 30 sekundach, spadający do 18% po 5–15 minutach.",
+    "source_hash": "850b1ebebfcc"
+  },
+  "gpu-monitoring.span-6": {
+    "text": "Jeszcze bez tokenu, cache prawdopodobnie usunięty",
+    "source_hash": "807aafa43674"
+  },
+  "gpu-monitoring.span-7": {
+    "text": "Jeden prompt przed nim na replice 4",
+    "source_hash": "c6220dc860be"
+  },
+  "gpu-monitoring.figcaption-2": {
+    "text": "<b>Rys.&nbsp;12</b>Czternaście żądań w toku na serwerze z siedmioma kartami GPU. Pod tabelą jest to, czego LM Warden nauczył się z zakończonych żądań: ten serwer wykonuje prefill około 439 tokenów na sekundę na żądanie, jego szacunek cache był trafny w 57% przypadków, a rozmowa bezczynna dłużej niż dwie minuty zwykle nie ma już swojego cache (20% trafień po 2–5 minutach). Nazwa klucza jest zastępcza, a adres to adres dokumentacyjny. Poniżej 768 pikseli szerokości tabela zmienia się w listę kart. Zarejestrowano 5&nbsp;października 2026&nbsp;r.<span class=\"scroll-hint\"> Przewiń obraz w bok, aby zobaczyć wszystkie kolumny.</span>",
+    "source_hash": "cb4966892bbc"
+  },
+  "gpu-monitoring.p-6": {
+    "text": "Zobacz też: <a href=\"/cache-aware-routing\">routing z uwzględnieniem cache</a> · <a href=\"/api-keys\">klucze API</a> · <a href=\"/coding-agents\">agenci do kodowania</a>",
+    "source_hash": "1669f0782d97"
+  }
+}

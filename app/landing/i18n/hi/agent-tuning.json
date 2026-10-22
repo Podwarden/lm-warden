@@ -1,0 +1,154 @@
+{
+  "agent-tuning.meta.title": {
+    "text": "अपने कोडिंग एजेंट को मॉडल चुनने दें | LM Warden",
+    "source_hash": "c73577a9e93d"
+  },
+  "agent-tuning.meta.description": {
+    "text": "Claude Code या Codex को एक एडमिन टोकन दें और वह आपके GPU के लिए मॉडल, इंजन और फ़्लैग चुनता है, साथ-साथ बेंचमार्क करते हुए। प्रॉम्प्ट शामिल हैं।",
+    "source_hash": "42f223176a20"
+  },
+  "agent-tuning.jsonld.name": {
+    "text": "अपने कोडिंग एजेंट को मॉडल चुनने और ट्यून करने दें",
+    "source_hash": "d38cc5b44b81"
+  },
+  "agent-tuning.jsonld.step-1": {
+    "text": "GPU होस्ट पर LM Warden इंस्टॉल करें",
+    "source_hash": "ea9ef62b2144"
+  },
+  "agent-tuning.jsonld.step-2": {
+    "text": "एक एडमिन टोकन जारी करें",
+    "source_hash": "02b6962c341f"
+  },
+  "agent-tuning.jsonld.step-3": {
+    "text": "Claude Code या Codex कनेक्ट करें",
+    "source_hash": "23149cd56616"
+  },
+  "agent-tuning.jsonld.step-4": {
+    "text": "एक ट्यूनिंग प्रॉम्प्ट पेस्ट करें",
+    "source_hash": "2580a4baddda"
+  },
+  "agent-tuning.tuning.h1-1": {
+    "text": "अपने कोडिंग एजेंट को मॉडल चुनने दें।",
+    "source_hash": "2df23e8f7918"
+  },
+  "agent-tuning.p-1": {
+    "text": "अपने कार्ड के लिए मॉडल चुनने का मतलब है कई फ़ैसले: क्वांटाइज़ेशन, इंजन (vLLM या llama.cpp), मॉडल को GPU में कैसे बाँटें, कितना कॉन्टेक्स्ट दें, KV-कैश का प्रकार, और स्पेक्युलेटिव डिकोडिंग से फ़ायदा होगा या नहीं। हर अंदाज़े की क़ीमत एक डाउनलोड और एक लोड है। जब तक आप कोई और काम करते हैं, कोडिंग एजेंट यह खोज आपके लिए कर सकता है, क्योंकि कंसोल जो भी करता है वह एक API कॉल है।",
+    "source_hash": "47320716621f"
+  },
+  "agent-tuning.h2-1": {
+    "text": "तीन चरणों में सेट करें",
+    "source_hash": "2a300da26a75"
+  },
+  "agent-tuning.li-1": {
+    "text": "GPU होस्ट पर <strong>LM Warden इंस्टॉल करें</strong> (कमांड <a href=\"/#p-linux\">डाउनलोड और इंस्टॉल</a> में है) और सेटअप विज़ार्ड पूरा करें।",
+    "source_hash": "45b78d2f8e02"
+  },
+  "agent-tuning.li-2": {
+    "text": "Settings → Access Tokens में 30 दिन की समाप्ति के साथ <strong>एक एडमिन टोकन जारी करें</strong>। जिस शेल को आपका एजेंट इस्तेमाल करता है, उसमें इसे <code>VW_ADMIN_TOKEN</code> और warden के पते को <code>W</code> के रूप में एक्सपोर्ट करें।",
+    "source_hash": "a316c0dc85b5"
+  },
+  "agent-tuning.li-3": {
+    "text": "<strong>अपना एजेंट शुरू करें</strong>: <a href=\"/coding-agents/claude-code\">Claude Code</a>, <a href=\"/coding-agents/codex-cli\">Codex&nbsp;CLI</a> या कोई और जो शेल कमांड चला सके। इस काम के लिए वह होस्टेड मॉडल इस्तेमाल कर सकता है; जिस मॉडल को वह ट्यून कर रहा है वह आपके कार्ड पर है।",
+    "source_hash": "45f30ab355a5"
+  },
+  "agent-tuning.h2-2": {
+    "text": "एजेंट क्या इस्तेमाल करता है",
+    "source_hash": "676f21721809"
+  },
+  "agent-tuning.th-1": {
+    "text": "चरण",
+    "source_hash": "8e6a6cca7aae"
+  },
+  "agent-tuning.th-2": {
+    "text": "एंडपॉइंट",
+    "source_hash": "3df9726c68ba"
+  },
+  "agent-tuning.th-3": {
+    "text": "कार्ड देखें",
+    "source_hash": "982d52862acc"
+  },
+  "agent-tuning.th-4": {
+    "text": "डाउनलोड से पहले जाँचें कि मॉडल फ़िट होता है",
+    "source_hash": "966e8813028c"
+  },
+  "agent-tuning.th-5": {
+    "text": "रजिस्टर करें, शुरुआती कॉन्फ़िग पाएँ",
+    "source_hash": "6fb4184c2d5a"
+  },
+  "agent-tuning.th-6": {
+    "text": "पुल करें और लोड करें",
+    "source_hash": "a632bbe8e8aa"
+  },
+  "agent-tuning.th-7": {
+    "text": "कॉन्टेक्स्ट की असली सीमा मापें",
+    "source_hash": "4c3b52acd644"
+  },
+  "agent-tuning.td-1": {
+    "text": "<code>POST /api/models/{model_id}/stress</code>, फिर <code>POST /api/models/{model_id}/stress/apply</code>",
+    "source_hash": "51491b72ded1"
+  },
+  "agent-tuning.th-8": {
+    "text": "warden के आँकड़े पढ़ें",
+    "source_hash": "ead961a24dc4"
+  },
+  "agent-tuning.th-9": {
+    "text": "टेस्ट ट्रैफ़िक भेजें",
+    "source_hash": "70356d606d14"
+  },
+  "agent-tuning.td-2": {
+    "text": "<code>POST /api/tokens</code> से मिली इन्फ़रेंस कुंजी, <code>/v1/chat/completions</code> पर",
+    "source_hash": "9a72b9938ec6"
+  },
+  "agent-tuning.p-2": {
+    "text": "एजेंट पहले <a href=\"/agent-guide.md\">एजेंट गाइड</a> पढ़ता है: भाषा मॉडल के लिए लिखा गया इन कॉल का छोटा विवरण, जिसमें बचने वाली ग़लतियाँ भी हैं।",
+    "source_hash": "c3bff7c1a9d1"
+  },
+  "agent-tuning.h2-3": {
+    "text": "पेस्ट करने के लिए प्रॉम्प्ट",
+    "source_hash": "b273921d2e33"
+  },
+  "agent-tuning.p-3": {
+    "text": "<code>https://your-warden</code> को अपने warden के पते से, और बड़े अक्षरों वाले नामों को उन मॉडल से बदलें जो आपके मन में हैं।",
+    "source_hash": "a74bbbec589e"
+  },
+  "agent-tuning.h3-1": {
+    "text": "1. हार्डवेयर देखें और फ़िट होने वाले मॉडल छाँटें",
+    "source_hash": "c1ebd00d0f72"
+  },
+  "agent-tuning.h3-2": {
+    "text": "2. एक मॉडल के लिए इंजन और लेआउट चुनें",
+    "source_hash": "0cc405dce7f8"
+  },
+  "agent-tuning.h3-3": {
+    "text": "3. असली सीमाएँ ढूँढें और लागू करें",
+    "source_hash": "906f71857682"
+  },
+  "agent-tuning.h3-4": {
+    "text": "4. मेरे वर्कलोड पर दो उम्मीदवारों की तुलना करें",
+    "source_hash": "d6e1c2c66dff"
+  },
+  "agent-tuning.h2-4": {
+    "text": "शुरू करने से पहले",
+    "source_hash": "74e492d5d0df"
+  },
+  "agent-tuning.li-4": {
+    "text": "एडमिन टोकन को warden पर पूरे एडमिन अधिकार मिलते हैं: मॉडल, कुंजियाँ और सेटिंग्स। इससे सीमित अधिकारों वाले टोकन अभी नहीं हैं। इसकी अवधि छोटी रखें।",
+    "source_hash": "4a1f64b32132"
+  },
+  "agent-tuning.li-5": {
+    "text": "स्ट्रेस रन उसकी सीमा ढूँढने के लिए जान-बूझकर इंजन को क्रैश करता है। ये प्रॉम्प्ट ऐसे warden पर चलाएँ जिस पर कोई और निर्भर न हो।",
+    "source_hash": "e127f19fe7da"
+  },
+  "agent-tuning.li-6": {
+    "text": "डाउनलोड बड़े होते हैं। प्रॉम्प्ट एजेंट से पुल करने से पहले फ़िट जाँचने को कहते हैं, फिर भी अपनी डिस्क पर नज़र रखें।",
+    "source_hash": "dabc7d95f036"
+  },
+  "agent-tuning.li-7": {
+    "text": "काम पूरा होने पर Settings → Access Tokens में एडमिन टोकन रद्द करें।",
+    "source_hash": "cc61ece33dc3"
+  },
+  "agent-tuning.p-4": {
+    "text": "संबंधित: <a href=\"/coding-agents\">कोडिंग एजेंट</a> · <a href=\"/gpu-monitoring\">GPU मॉनिटरिंग</a> · <a href=\"/faq\">सामान्य प्रश्न</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}

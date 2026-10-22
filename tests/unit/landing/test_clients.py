@@ -7,7 +7,11 @@ from fastapi.testclient import TestClient
 
 from app.connect.catalog import CLIENTS
 from app.landing.clients import CLIENT_PAGES, capability
-from app.landing.clients import _e as prose
+
+# The site prints catalogue prose through prose_html, which also puts its
+# code-like words in <code> (so a translation must keep them verbatim); it
+# replaced plain _e here when the coding-agent pages were localized.
+from app.landing.clients import prose_html as prose
 
 
 def test_one_page_per_catalogue_client(client: TestClient) -> None:

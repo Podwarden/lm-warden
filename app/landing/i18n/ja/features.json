@@ -1,0 +1,186 @@
+{
+  "features.meta.title": {
+    "text": "その他の機能と学んだこと | LM Warden",
+    "source_hash": "ba96eee84458"
+  },
+  "features.meta.description": {
+    "text": "God mode、管理者トークン、エンジンのウォッチドッグ、そして LM Warden の vLLM 監視方法を形づくった二つの障害。",
+    "source_hash": "6e9623164c58"
+  },
+  "features.small.h1-1": {
+    "text": "動かし始めると見つかる、細かな機能。",
+    "source_hash": "32313b57288c"
+  },
+  "features.dd-1": {
+    "text": "キーのページにあるドックから、そのキーのプロンプトと応答をリアルタイムで確認できます。メモリ内にだけ保持され、ドックが開いている間だけストリーミングされ、<code>VW_GODMODE_ENABLED</code> を設定しない限りオフです。",
+    "source_hash": "30b3b2877354"
+  },
+  "features.dt-1": {
+    "text": "管理者トークン",
+    "source_hash": "c0b53878c4d4"
+  },
+  "features.dd-2": {
+    "text": "<code>vwa_</code> トークンを使うと、スクリプト、CI、エージェントが管理者パスワード、Cookie の管理、CSRF ヘッダーなしでコントロール API を操作できます。表示は一度だけで、SHA-256 ハッシュとして保存されます。",
+    "source_hash": "332151669674"
+  },
+  "features.dt-2": {
+    "text": "HuggingFace キャッシュ マネージャー",
+    "source_hash": "3b9fd142bcdf"
+  },
+  "features.dd-3": {
+    "text": "ディスク上に何があり、どのモデルのものか。どのモデルにも属さない孤立したファイルを削除し、キャッシュ全体を tarball としてエクスポートまたはインポートできます。",
+    "source_hash": "9d11305af39b"
+  },
+  "features.dt-3": {
+    "text": "ポートは一つ",
+    "source_hash": "db562f172ced"
+  },
+  "features.dd-4": {
+    "text": "UI、コントロール API、<code>/v1</code> は <code>:8080</code> を共有します。独自の TLS ターミネーター、Ingress、SSO をそのまま前段に置けます。",
+    "source_hash": "0e54e933002b"
+  },
+  "features.dt-4": {
+    "text": "外部への経路は不要",
+    "source_hash": "afddbc532ecf"
+  },
+  "features.dd-5": {
+    "text": "エアギャップ環境のホストに運ぶのは、三つのイメージ tarball と、任意のモデル キャッシュ tarball だけです。<code>HF_HUB_OFFLINE=1</code> で重みのダウンロードも止められます。",
+    "source_hash": "b61634fa6450"
+  },
+  "features.dt-5": {
+    "text": "Router の統計",
+    "source_hash": "bf3c9855201c"
+  },
+  "features.dd-6": {
+    "text": "すべての判定が <code>/router/stats</code> にあります。ローカル、パススルー、フォールバック、拒否を理由とともに、ルールごと、ターゲットごとに、ブレーカーの状態も含めて。プロセスごとの集計で、ヘッダーや本文は一切含みません。",
+    "source_hash": "8500a2b3792f"
+  },
+  "features.dt-6": {
+    "text": "クライアントごとのセットアップ ページ",
+    "source_hash": "2384f4730652"
+  },
+  "features.dd-7": {
+    "text": "<b>Connect</b> は、Claude Code、Codex&nbsp;CLI、OpenCode、Aider、Grok&nbsp;CLI、Anthropic SDK と OpenAI SDK、三つのエディターのセットアップを、この warden のアドレス、キー、読み込み済みのモデルで書き出し、テスト リクエストを送ります。",
+    "source_hash": "2bc91137abf9"
+  },
+  "features.dd-8": {
+    "text": "2026 年 10 月 5 日に Codex&nbsp;0.160 で warden に対して実行：シェル ツール呼び出し、ファイルの編集、一つのレプリカに留まるセッション。思考は既定でオンで、<code>model_reasoning_effort = \"none\"</code> でオフになります。ローカル モデルのみで、ルーターのルールは適用されません。",
+    "source_hash": "93a18b286b4e"
+  },
+  "features.dt-7": {
+    "text": "チャットのプレイグラウンド",
+    "source_hash": "989e5691fd83"
+  },
+  "features.dd-9": {
+    "text": "キーを誰かに渡す前に、ブラウザーで読み込み済みのモデルと会話できます。画像も使えます。",
+    "source_hash": "7c8ef7303dc3"
+  },
+  "features.lessons.h2-1": {
+    "text": "苦労して学んだ三つのこと。",
+    "source_hash": "b2e61284634a"
+  },
+  "features.h3-1": {
+    "text": "エンジンが一日に四回落ちても、プロキシはそこへ転送し続けていました。",
+    "source_hash": "a3c2a4abe3bf"
+  },
+  "features.p-1": {
+    "text": "vLLM のエンジン コアがクラッシュしても、それを包む <code>vllm serve</code> ラッパーは動き続けていたため、プロセスは生きているように見え、リクエストは送られ続けました。現在はウォッチドッグが、プロセス テーブルではなくエンジン自身の <code>/health</code> エンドポイントに問い合わせます。エンジンが応答しなくなると、上限付きのログ末尾を含む証拠を残し、モデルを再読み込みします。",
+    "source_hash": "8d323d1c089b"
+  },
+  "features.img-1.alt": {
+    "text": "負荷がかかった状態のモデルのライブ ログ パネル：GET /metrics とクライアントからの POST /v1/chat/completions に応答する vLLM API サーバーの行、実行中 10 件、待機中 0 件と報告するエンジンの行、GET /health の行が一つ。すべて 200 OK を返している",
+    "source_hash": "a4f74c626a7f"
+  },
+  "features.span-1": {
+    "text": "ウォッチドッグのプローブに、エンジンが応答",
+    "source_hash": "e1d7e982a29c"
+  },
+  "features.figcaption-1": {
+    "text": "<b>図&nbsp;15</b>同じ負荷の間のモデル ページのライブ ログ：<code>/metrics</code> のスクレイプ、届き続けるチャット補完、実行中 10 件で待機なしというエンジン自身のカウント、その間に一回の <code>/health</code> プローブ。<span class=\"scroll-hint\">画像を横にスクロールすると行全体が読めます。</span>",
+    "source_hash": "40a242621e22"
+  },
+  "features.h3-2": {
+    "text": "12 分かかる読み込みが、以前はエラーで終わっていました。",
+    "source_hash": "69140856abf8"
+  },
+  "features.p-2": {
+    "text": "大きなモデルは読み込みに十二分以上かかることがあります。これまで warden は固定のタイムアウトで判断しており、期限が来るとエンジンがまだ読み込み中でもモデルに赤い 「still loading」 エラーを書き込んでいました。現在のモデル ページは、各読み込み手順を進行状況バー、過去の読み込みから得たそれぞれの通常の所要時間、CPU と GPU メモリの稼働状況とともに表示します。停滞した読み込みは停止され、その GPU は解放されます。読み込みが進んでいる間は何も赤くなりません。NVIDIA B300 八基でテンソル並列&nbsp;8 の GLM-5.2 NVFP4 は約 11～12 分で読み込まれます。これほど長い読み込みは、以前は 600&#8239;s のタイムアウトに引っかかっていました。",
+    "source_hash": "cceedae9466e"
+  },
+  "features.img-2.alt": {
+    "text": "NVIDIA B300 八基で GLM-5.2 NVFP4 を読み込み中のモデル ページ：通常 10 min 46 s のうち 9 min 17 s 経過。Start engine、Load weights 47 of 47、Compile kernels、Size KV cache は完了。Tune kernels は op 2 (22 中 21) を実行中。CPU と GPU メモリのグラフで 2149&#8239;GiB 中 1948 を使用中。Capture CUDA graphs と Warm-up request はこれからで、それぞれに通常の所要時間が付いている",
+    "source_hash": "e3cc9ae4cf3b"
+  },
+  "features.figcaption-2": {
+    "text": "<b>図&nbsp;16</b>B300 八基でテンソル並列 8 の GLM-5.2 NVFP4 を読み込み中、開始から九分。カーネルのチューニングが長い手順です。ログはチューニングの進行を繰り返すだけですが、グラフはエンジンが生きていることを示しています。",
+    "source_hash": "981fef031d3d"
+  },
+  "features.h3-3": {
+    "text": "16&#8239;GiB のカードに収まるのは、計算上の値より少なくなります。",
+    "source_hash": "2269d7489768"
+  },
+  "features.p-3": {
+    "text": "bf16 8B モデルは重みだけで約 15&#8239;GiB あり、読み込み中にメモリが不足します。以下の各行を 16&#8239;GiB の RTX&nbsp;A4000 と Quadro RTX&nbsp;5000 のカードで試し、ヘルス チェックを信用するのではなく、チャットのプレイグラウンドでモデルの回答を読んで判断しました。",
+    "source_hash": "a34f00101361"
+  },
+  "features.th-1": {
+    "text": "モデル",
+    "source_hash": "5e2c614c23f0"
+  },
+  "features.th-2": {
+    "text": "動くもの",
+    "source_hash": "ea5522c7c85e"
+  },
+  "features.th-3": {
+    "text": "動かないもの",
+    "source_hash": "9bebcd3482a7"
+  },
+  "features.col-works.data-h": {
+    "text": "動く",
+    "source_hash": "2b4c8c6d38db"
+  },
+  "features.td-1": {
+    "text": "カード二枚、テンソル並列 2、<code>max_model_len</code> 32000、<code>gpu_memory_utilization</code> 0.7&nbsp;～&nbsp;0.9",
+    "source_hash": "4516d9c167db"
+  },
+  "features.col-does-not.data-h": {
+    "text": "動かない",
+    "source_hash": "73a6fc7836b8"
+  },
+  "features.td-2": {
+    "text": "カード一枚：20B の MoE は収まらない",
+    "source_hash": "6b644f502c34"
+  },
+  "features.th-4": {
+    "text": "Llama 3.1 8B、Mistral 7B クラス",
+    "source_hash": "c2f2a5cd5d41"
+  },
+  "features.td-3": {
+    "text": "カード一枚で、AWQ-INT4 チェックポイント、<code>--enforce-eager</code>、<code>gpu_memory_utilization</code> 0.9",
+    "source_hash": "baa3aea88f30"
+  },
+  "features.td-4": {
+    "text": "bf16 のリポジトリ：重みが約 15&#8239;GiB で、読み込み中にメモリ不足",
+    "source_hash": "1ce2fc0f7104"
+  },
+  "features.th-5": {
+    "text": "二つのモデルを同時に",
+    "source_hash": "3bc589f1752e"
+  },
+  "features.td-5": {
+    "text": "カードごとに一つのモデルで、それぞれが自分のカードに収まる",
+    "source_hash": "6fed9ca4f3d2"
+  },
+  "features.td-6": {
+    "text": "二つのモデルで一枚のカードを共有",
+    "source_hash": "296d7ad75ac3"
+  },
+  "features.p-4": {
+    "text": "vLLM&nbsp;0.20.0 で確認しました。上記のレプリカの測定には 0.26.0 を使っています。このリリースには 0.32.0 が含まれており、これで最初に計測した読み込みは B300 八基でテンソル並列 8 の GLM-5.2 NVFP4 で、約 11～12 分でした。収まるかどうかのルールは 0.32 ではまだ測り直していません。完全な表とその理由は <a href=\"{{repo}}/blob/main/documents/HAZARDS.md#what-fits-on-what\" rel=\"noopener\">HAZARDS.md</a> にあります。NVIDIA ではありませんか？ <a href=\"/#p-mac\">Apple シリコンには Mac のベータ版</a>があり、次は Windows、<a href=\"/#p-linux\">ほかの GPU はロードマップにあります</a>。",
+    "source_hash": "d5f7cb24d2cc"
+  },
+  "features.p-5": {
+    "text": "関連：<a href=\"/gpu-monitoring\">GPU 監視</a> · <a href=\"/cache-aware-routing\">キャッシュを考慮したルーティング</a> · <a href=\"/api-keys\">API キー</a>",
+    "source_hash": "4c5ddc0960f7"
+  }
+}

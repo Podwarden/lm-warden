@@ -1,0 +1,198 @@
+{
+  "gpu-monitoring.meta.title": {
+    "text": "Surveillance GPU carte par carte pour vLLM | LM Warden",
+    "source_hash": "d27814ed8b63"
+  },
+  "gpu-monitoring.meta.description": {
+    "text": "Sous Linux, chaque carte NVIDIA a son propre panneau : température face à son seuil de bridage, puissance face à sa limite, lien PCIe et chaque requête en cours.",
+    "source_hash": "507736e1bea9"
+  },
+  "gpu-monitoring.box.h1-1": {
+    "text": "Surveillance des GPU : la machine derrière ces chiffres.",
+    "source_hash": "cc0f4c9bbf2b"
+  },
+  "gpu-monitoring.p-1": {
+    "text": "Sauf mention contraire dans une légende, les relevés de cette page proviennent d’une seule station de travail : quatre RTX&nbsp;A4000, avec un seul modèle chargé sur l’ensemble, occupées par notre propre trafic de test. Ce sont les chiffres qu’affichait la console pendant l’enregistrement des fig.&nbsp;1 et&nbsp;5. Les tests de capacité présentés plus bas ont aussi utilisé une Quadro&nbsp;RTX&nbsp;5000, et le précisent.",
+    "source_hash": "a9ca4640a6e7"
+  },
+  "gpu-monitoring.p-2": {
+    "text": "Les panneaux par carte lisent les données du pilote NVIDIA : ils font donc partie de l’installation Linux. Sur un Mac à puce Apple, l’<a href=\"/#p-mac\">app Mac (bêta)</a> affiche l’utilisation du GPU et le budget mémoire indiqué par Metal, sans mesure de la consommation électrique.",
+    "source_hash": "e6e25a4491ad"
+  },
+  "gpu-monitoring.dt-1": {
+    "text": "GPU",
+    "source_hash": "8f0474fb0c5b"
+  },
+  "gpu-monitoring.dd-1": {
+    "text": "4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000, 16&#8239;Gio chacune (Ampere, compute&nbsp;8.6)",
+    "source_hash": "065609784858"
+  },
+  "gpu-monitoring.dt-2": {
+    "text": "VRAM utilisée",
+    "source_hash": "60de0ad7eb70"
+  },
+  "gpu-monitoring.dd-2": {
+    "text": "59,4 sur 64,0&#8239;Gio, un seul modèle réparti sur les quatre cartes",
+    "source_hash": "2a58556c9272"
+  },
+  "gpu-monitoring.dd-3": {
+    "text": "Gen&nbsp;4 x16 par carte",
+    "source_hash": "a85ab5eb706a"
+  },
+  "gpu-monitoring.dt-3": {
+    "text": "Pilote",
+    "source_hash": "9fe4c68ec20d"
+  },
+  "gpu-monitoring.dd-4": {
+    "text": "<code>610.57.04</code>, CUDA&nbsp;13.3",
+    "source_hash": "a041ea9e5251"
+  },
+  "gpu-monitoring.caption-1": {
+    "text": "Charge GPU, puissance et jetons, relevés sur la fig.&nbsp;1",
+    "source_hash": "db678a93d309"
+  },
+  "gpu-monitoring.th-1": {
+    "text": "Mesure",
+    "source_hash": "463816d07097"
+  },
+  "gpu-monitoring.th-2": {
+    "text": "À la capture",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.th-3": {
+    "text": "Médiane sur 24&#8239;h d’activité",
+    "source_hash": "af088ec66533"
+  },
+  "gpu-monitoring.th-4": {
+    "text": "Pic sur 24&#8239;h",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-5": {
+    "text": "Utilisation GPU, carte la plus sollicitée&nbsp;(%)",
+    "source_hash": "9739b22b0dce"
+  },
+  "gpu-monitoring.col-capture.data-h": {
+    "text": "À la capture",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.col-median.data-h": {
+    "text": "Médiane 24&#8239;h",
+    "source_hash": "e6245b901702"
+  },
+  "gpu-monitoring.col-peak.data-h": {
+    "text": "Pic 24&#8239;h",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-6": {
+    "text": "Puissance GPU, somme des quatre cartes&nbsp;(W)",
+    "source_hash": "6554b6cbd5f4"
+  },
+  "gpu-monitoring.th-7": {
+    "text": "Jetons par minute (panneau du 23 sept.)",
+    "source_hash": "eb7b7fd32e11"
+  },
+  "gpu-monitoring.span-1": {
+    "text": "non affiché",
+    "source_hash": "0bedd95628dd"
+  },
+  "gpu-monitoring.td-7": {
+    "text": "190&nbsp;k",
+    "source_hash": "eaa6d59dc9be"
+  },
+  "gpu-monitoring.td-8": {
+    "text": "880&nbsp;k",
+    "source_hash": "8678af14d6a2"
+  },
+  "gpu-monitoring.p-3": {
+    "text": "Vos chiffres seront différents : c’est tout l’intérêt de les mesurer. La ligne des jetons est antérieure au passage aux jetons par seconde ; le panneau Stats affiche désormais des jetons par seconde, et ces chiffres proviennent de la capture du 23&nbsp;septembre, sur l’ancien panneau par minute.",
+    "source_hash": "fc86e0160504"
+  },
+  "gpu-monitoring.cards.h2-1": {
+    "text": "Une valeur impossible à mesurer s’affiche « not reported ».",
+    "source_hash": "036e83c1af39"
+  },
+  "gpu-monitoring.p-4": {
+    "text": "La plupart des tableaux de bord GPU fondent quatre cartes en une seule courbe moyenne et affichent une valeur manquante comme un&nbsp;0. Celui-ci donne à chaque carte son propre panneau : la température face au seuil de bridage indiqué par son pilote, la puissance face à la limite propre à la carte, les fréquences, le ventilateur, le lien PCIe tel qu’il est négocié à cet instant, ainsi que l’ECC et le NVLink quand la carte en dispose. Deux cartes achetées à dix-huit mois d’écart restent deux cartes, et une valeur que le pilote ne fournit pas est signalée comme manquante au lieu d’être tracée à zéro.",
+    "source_hash": "f87275635f5c"
+  },
+  "gpu-monitoring.img-1.alt": {
+    "text": "Quatre panneaux GPU de la page Stats en charge, un par RTX A4000 : utilisation de 99 à 100 % en état d’alimentation P2, températures de 79 à 94 degrés face à un seuil de bridage de 100 degrés, un avertissement de ralentissement thermique sur trois cartes, puissance de 134 à 138 sur une limite de 140 watts, fréquences, version du pilote et de CUDA, lien PCIe, NVLink et ECC",
+    "source_hash": "55b551e38c61"
+  },
+  "gpu-monitoring.span-2": {
+    "text": "Seuil de bridage fourni par le pilote, pas une estimation",
+    "source_hash": "b3bd726e07ac"
+  },
+  "gpu-monitoring.span-3": {
+    "text": "Pourquoi la fréquence baisse, selon le pilote",
+    "source_hash": "7be6f5cf26b2"
+  },
+  "gpu-monitoring.span-4": {
+    "text": "Puissance face à sa propre limite de 140&#8239;W",
+    "source_hash": "ef8ca2bcafce"
+  },
+  "gpu-monitoring.span-5": {
+    "text": "NVLink et ECC, tels que la carte les rapporte",
+    "source_hash": "c4d22dc73625"
+  },
+  "gpu-monitoring.figcaption-1": {
+    "text": "<b>Fig.&nbsp;5</b>Les quatre panneaux GPU de la même page Stats, en taille réelle, capturés pendant la même charge. Chaque carte est à 99 ou 100 % en état d’alimentation P2, et trois d’entre elles, entre 90 et 94&#8239;°C, sont maintenues par le pilote entre 76 et 84 % de leur fréquence maximale.<span class=\"scroll-hint\"> Faites défiler l’image horizontalement pour voir les quatre panneaux.</span>",
+    "source_hash": "7aa9957f224d"
+  },
+  "gpu-monitoring.caption-2": {
+    "text": "Ce qui est lu, et où",
+    "source_hash": "fd76edd0a9d5"
+  },
+  "gpu-monitoring.th-8": {
+    "text": "Par carte",
+    "source_hash": "b596b0114ded"
+  },
+  "gpu-monitoring.td-9": {
+    "text": "Température et seuil de bridage, puissance et sa limite, fréquences du cœur et de la mémoire, ventilateur, génération et largeur PCIe, ECC, NVLink, et le processus du moteur qui utilise la carte",
+    "source_hash": "1f5a45a29bdc"
+  },
+  "gpu-monitoring.th-9": {
+    "text": "Par hôte",
+    "source_hash": "fd8f8648eb41"
+  },
+  "gpu-monitoring.td-10": {
+    "text": "VRAM utilisée, utilisation du GPU (la carte la plus sollicitée), puissance (la somme des cartes) et jetons par seconde",
+    "source_hash": "d8e9193ca58e"
+  },
+  "gpu-monitoring.th-10": {
+    "text": "Par requête",
+    "source_hash": "c01f2094044d"
+  },
+  "gpu-monitoring.td-11": {
+    "text": "Délai avant le premier jeton, latence entre jetons et durée, mesurés au niveau du proxy de la même façon pour les deux moteurs",
+    "source_hash": "92c8d3b9a423"
+  },
+  "gpu-monitoring.inflight.h2-1": {
+    "text": "Ce qu’attend chaque requête.",
+    "source_hash": "87e975182d2c"
+  },
+  "gpu-monitoring.p-5": {
+    "text": "La page Stats liste chaque requête en cours avec la session du client et l’étape où elle en est : en file d’attente au warden, prefill (le moteur lit le prompt), réflexion, écriture d’un appel d’outil, ou réponse. Un badge indique la part du prompt probablement présente dans le cache du réplica. Lorsqu’un prefill dure plus longtemps que ne le prévoit le débit de prefill appris sur cette machine, la ligne indique la cause probable de l’attente : d’autres prompts devant lui sur le même réplica, un cache probablement évincé, ou une lenteur sans cause visible pour le warden. La session provient de l’ID que chaque outil envoie déjà : Claude Code, Codex, OpenCode et pi sans aucun réglage, Hermes et Aider avec une ligne de configuration.",
+    "source_hash": "4d6984e02a57"
+  },
+  "gpu-monitoring.img-2.alt": {
+    "text": "Le tableau In flight avec 14 requêtes actives, toutes de la clé agent-farm depuis une seule adresse client. Colonnes : token, IP du client, session, modèle, phase, fenêtre de contexte et temps écoulé. Six lignes sont en appel d’outil ou en réponse et huit en prefill, la plupart avec un badge estimant que 94 à 100 % du prompt est en cache ; trois prefills portent un badge evict? et deux un badge sablier, 1·r0 et 1·r4. Sous le tableau : modèle de prefill à 439 tok/s appris sur 1 132 requêtes, estimation du cache juste dans 57 % des cas, et le taux de succès selon la durée d’inactivité : 68 % après jusqu’à 30 secondes, et seulement 18 % après 5 à 15 minutes.",
+    "source_hash": "850b1ebebfcc"
+  },
+  "gpu-monitoring.span-6": {
+    "text": "Pas encore de jeton, cache probablement évincé",
+    "source_hash": "807aafa43674"
+  },
+  "gpu-monitoring.span-7": {
+    "text": "Un prompt le précède sur le réplica 4",
+    "source_hash": "c6220dc860be"
+  },
+  "gpu-monitoring.figcaption-2": {
+    "text": "<b>Fig.&nbsp;12</b>Quatorze requêtes en cours sur la machine à sept GPU. Sous le tableau figure ce que le warden a appris des requêtes terminées : cette machine traite le prefill à environ 439 jetons par seconde et par requête, son estimation du cache était juste dans 57 % des cas, et une conversation inactive depuis plus de deux minutes trouve généralement son cache vidé (20 % de succès après 2 à 5 minutes). Le nom de la clé est fictif et l’adresse est une adresse réservée à la documentation. Sous 768 pixels de large, le tableau devient une liste de fiches. Relevé le 5&nbsp;octobre 2026.<span class=\"scroll-hint\"> Faites défiler l’image horizontalement pour voir toutes les colonnes.</span>",
+    "source_hash": "cb4966892bbc"
+  },
+  "gpu-monitoring.p-6": {
+    "text": "Voir aussi : <a href=\"/cache-aware-routing\">routage selon le cache</a> · <a href=\"/api-keys\">clés API</a> · <a href=\"/coding-agents\">agents de codage</a>",
+    "source_hash": "1669f0782d97"
+  }
+}

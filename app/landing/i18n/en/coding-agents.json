@@ -1,0 +1,52 @@
+{
+  "coding-agents.meta.title": {
+    "text": "Coding agents on your own GPUs | LM Warden",
+    "note": "The browser tab and the search-result title. Keep the part after | as it is; at most 65 characters.",
+    "hash": "cec26df70a65"
+  },
+  "coding-agents.meta.description": {
+    "text": "Run Claude Code, Codex CLI, OpenCode, Aider, Cline, Cursor and more against a model on your own GPUs, on Linux or a Mac, with the config written for you.",
+    "note": "The search-result snippet and link-preview text. At most 160 characters.",
+    "hash": "d4374722fecc"
+  },
+  "coding-agents.agents.h1-1": {
+    "text": "Your coding agent, on your own GPUs.",
+    "note": "page headline (#agents-title)",
+    "hash": "e01f3269f454"
+  },
+  "coding-agents.p-1": {
+    "text": "LM Warden speaks the three protocols coding agents use: OpenAI Chat Completions, the Anthropic Messages API and the OpenAI Responses API. So Claude Code, the Anthropic and OpenAI SDKs, OpenCode, Aider, Grok&nbsp;CLI, Continue, Cline, Cursor and Codex&nbsp;CLI connect with a base URL and a key, and their requests show up per key, per session, with the phase each one is in.",
+    "note": "text (#main)",
+    "hash": "b8783c59365c"
+  },
+  "coding-agents.flow.title": {
+    "text": "Where a request from Your coding agent goes",
+    "note": "drawing title for screen readers (#flow-generic-title)",
+    "hash": "b2c49ca0b033"
+  },
+  "coding-agents.flow.desc": {
+    "text": "Your coding agent sends its requests to LM Warden with base URL set to the warden and API key holding a warden key. LM Warden checks the key, speaks the OpenAI and Anthropic APIs, queues the request by key priority and hands it to the replica router, which keeps each session on the replica that already holds its cache, one model copy per GPU. A separate path goes to api.anthropic.com: Claude Code only: other Claude models go here, on your own login.",
+    "note": "drawing description for screen readers (#flow-generic-desc)",
+    "hash": "c24325d4bacf"
+  },
+  "coding-agents.flow.caption": {
+    "text": "Where a request from a coding agent goes. Every agent sets the same two things, a base URL and a key; the warden checks the key, queues the request and sends it to the replica that already holds the session’s cache. Each agent’s page draws its own settings.",
+    "note": "figure caption (#main)",
+    "hash": "4c8a44e2f320"
+  },
+  "coding-agents.p-2": {
+    "text": "You don’t write the config by hand. In the console, <strong>Connect</strong> picks your client, your model and your key and writes the files to paste. Each page below shows the same files with placeholders and what works.",
+    "note": "text (#main)",
+    "hash": "75d2dc8f6796"
+  },
+  "coding-agents.p-3": {
+    "text": "Missing a client? Ask in <a href=\"https://github.com/Podwarden/lm-warden/discussions/new?category=ideas\" rel=\"noopener\">GitHub Discussions</a>.",
+    "note": "text (#main)",
+    "hash": "91f99cd9235e"
+  },
+  "coding-agents.p-4": {
+    "text": "Related: <a href=\"/agent-tuning\">let your agent pick the model</a> · <a href=\"/cache-aware-routing\">cache-aware routing</a> · <a href=\"/faq\">FAQ</a>",
+    "note": "text (#main)",
+    "hash": "0ced1cfb6f5c"
+  }
+}

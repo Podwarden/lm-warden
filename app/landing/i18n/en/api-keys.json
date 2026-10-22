@@ -1,0 +1,67 @@
+{
+  "api-keys.meta.title": {
+    "text": "API keys, priorities and usage per app | LM Warden",
+    "note": "The browser tab and the search-result title. Keep the part after | as it is; at most 65 characters.",
+    "hash": "36d31214a489"
+  },
+  "api-keys.meta.description": {
+    "text": "One key per app with its own priority, usage and queue times, behind OpenAI-compatible, Anthropic Messages and Responses endpoints.",
+    "note": "The search-result snippet and link-preview text. At most 160 characters.",
+    "hash": "dc32185af3f0"
+  },
+  "api-keys.keys.h1-1": {
+    "text": "One key per app, and a page for every key.",
+    "note": "page headline (#keys-title)",
+    "hash": "478db02e5440"
+  },
+  "api-keys.p-1": {
+    "text": "\n            Give each colleague, laptop, CI job and agent its own key. A key’s page shows\n            what it spent and how long its requests waited in the queue, median and p95,\n            over any window you drag or type. Rotate a key with a grace window, and set\n            its priority from P0&nbsp;to&nbsp;P9: a waiting P9 request always goes before a P8 one.\n          ",
+    "note": "text (#main)",
+    "hash": "128af00fcd92"
+  },
+  "api-keys.p-2": {
+    "text": "Pause it, and new requests are refused while the ones already running finish:",
+    "note": "text (#main)",
+    "hash": "24b259f012c7"
+  },
+  "api-keys.p-3": {
+    "text": "From a local instance on 23&nbsp;September 2026. Host and key replaced, other headers cut.",
+    "note": "text (#main)",
+    "hash": "992b035b09f7"
+  },
+  "api-keys.video-1.aria-label": {
+    "text": "An API key’s page during a load test: its priority from P0 to P9, a strip of its whole history, tokens and requests per minute over the last hour, then the god-mode dock opening on its prompts and responses as they stream",
+    "note": "screen-reader label (#main)",
+    "hash": "146ed912c7a6"
+  },
+  "api-keys.figcaption-1": {
+    "text": "<b>Fig.&nbsp;13</b>The page of <code>demo-agent</code>, the key that ran the load in fig.&nbsp;1: 37 requests and 43k generated tokens in the hour on screen. Then its god-mode dock opens (an opt-in live view of one key’s prompts and replies, off by default) and its replies stream in as they are written. The prompts are ours.",
+    "note": "figure caption (#main)",
+    "hash": "389cdbc39b42"
+  },
+  "api-keys.img-1.alt": {
+    "text": "The Requests chart from the Stats page over the last 7 days, 16 to 23 September: one mark per request, coloured by API key, sized by generated tokens and shaped by finish reason, against duration on a log scale from 100&#8239;ms to 10,000&#8239;s. Most marks sit between 3 and 100 seconds; one key shows two dense columns reaching from under a second to several hundred seconds.",
+    "note": "image alt text (#main)",
+    "hash": "e3200603dcf6"
+  },
+  "api-keys.figcaption-2": {
+    "text": "<b>Fig.&nbsp;14</b>Every key’s requests on one chart, from the same Stats page: the last 7 days, 28,906 requests, one in fifteen drawn. A mark is one request, coloured by its key, sized by the tokens it generated and shaped by how it finished, at the height of its duration on a log scale. The steady amber is <code>opencode-laptop</code>, the two dense pink columns are <code>research-notebook</code>. Recorded on 23&nbsp;September 2026; the key names are replaced.<span class=\"scroll-hint\"> Scroll the image sideways to see the whole week.</span>",
+    "note": "figure caption (#main)",
+    "hash": "1a43a2ba1520"
+  },
+  "api-keys.leave.h2-1": {
+    "text": "Leaving is a <code>base_url</code> change.",
+    "note": "section heading (#leave-title)",
+    "hash": "8f28f88090a1"
+  },
+  "api-keys.p-4": {
+    "text": "\n            It speaks <code>/v1/chat/completions</code> and <code>/v1/models</code>, and\n            <code>/v1/models</code> reports each model’s <code>max_model_len</code>. It also\n            speaks the Anthropic Messages API at <code>/v1/messages</code>, so Claude Code\n            points <code>ANTHROPIC_BASE_URL</code> at a warden’s root URL (Claude Code adds the\n            <code>/v1/messages</code> path itself), and the OpenAI Responses API at\n            <code>/v1/responses</code>, so Codex&nbsp;CLI can use a model you loaded. The weights sit\n            in an ordinary HuggingFace cache that <code>make export-hf-cache</code> hands you as a\n            tarball, and the exact argv each engine was started with is one GET away, so a\n            working setup can be rebuilt without us. Read the diff below backwards and\n            that is how you leave.\n          ",
+    "note": "text (#main)",
+    "hash": "18372068885f"
+  },
+  "api-keys.p-5": {
+    "text": "Related: <a href=\"/coding-agents\">coding agents</a> · <a href=\"/gpu-monitoring\">GPU monitoring</a> · <a href=\"/faq\">FAQ</a>",
+    "note": "text (#main)",
+    "hash": "cfe5bc772213"
+  }
+}

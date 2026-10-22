@@ -159,9 +159,10 @@ class Locale:
     og: str  # og:locale
 
 
-#: Home is published in these languages (owner's request 2026-10-21). English
-#: is the source and has no prefix; each other locale answers at /<tag>/ only
-#: once app/landing/i18n/<tag>.json exists (app.landing.i18n.available).
+#: The site is published in these languages (owner's request 2026-10-21).
+#: English is the source and has no prefix; each other locale answers at
+#: /<tag>/ (Home) and /<tag><path> (every other page) only once that page's
+#: catalogs ship complete (app.landing.i18n.page_locales).
 LOCALES: tuple[Locale, ...] = (
     Locale("en", "English", "en_US"),
     Locale("fr", "Français", "fr_FR"),
@@ -184,6 +185,17 @@ LOCALE_HOME_PATHS: frozenset[str] = frozenset(
 #: Path template for generated client pages (app/landing/clients.py).
 CLIENT_PATH = "/coding-agents/{client_id}"
 
+#: Every other page in each other language: /de/faq, /de/coding-agents/{client_id},
+#: and their trailing-slash spellings, which redirect. Routed for every locale;
+#: a page whose catalog is not complete in that locale answers 404.
+LOCALE_PAGE_PATHS: frozenset[str] = frozenset(
+    f"/{loc.tag}{path}{slash}"
+    for loc in LOCALES
+    if loc.tag != "en"
+    for path in [p.path for p in PAGES if p.path != "/"] + [CLIENT_PATH]
+    for slash in ("", "/")
+)
+
 #: Every route the website registers, for app/auth/policy.py (public) and
 #: app/auth/csrf.py (no cookie): each page, its trailing-slash redirect, and
 #: the client-page template.
@@ -192,4 +204,5 @@ PUBLIC_PAGE_PATHS: frozenset[str] = frozenset(
     | {p.path + "/" for p in PAGES if p.path != "/"}
     | {CLIENT_PATH, CLIENT_PATH + "/"}
     | LOCALE_HOME_PATHS
+    | LOCALE_PAGE_PATHS
 )

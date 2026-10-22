@@ -1,0 +1,42 @@
+{
+  "coding-agents.meta.title": {
+    "text": "Agenci do kodowania na własnych GPU | LM Warden",
+    "source_hash": "cec26df70a65"
+  },
+  "coding-agents.meta.description": {
+    "text": "Uruchamiaj Claude Code, Codex CLI, OpenCode, Aider, Cline, Cursor i inne z modelem na własnych GPU, w systemie Linux lub na Macu, z gotową konfiguracją.",
+    "source_hash": "d4374722fecc"
+  },
+  "coding-agents.agents.h1-1": {
+    "text": "Twój agent do kodowania na twoich własnych kartach GPU.",
+    "source_hash": "e01f3269f454"
+  },
+  "coding-agents.p-1": {
+    "text": "LM Warden obsługuje trzy protokoły, których używają agenci do kodowania: OpenAI Chat Completions, Anthropic Messages API i OpenAI Responses API. Dzięki temu Claude Code, zestawy SDK Anthropic i OpenAI, OpenCode, Aider, Grok&nbsp;CLI, Continue, Cline, Cursor i Codex&nbsp;CLI łączą się za pomocą bazowego adresu URL i klucza, a ich żądania są widoczne z podziałem na klucze i sesje, wraz z fazą, w której jest każde z nich.",
+    "source_hash": "b8783c59365c"
+  },
+  "coding-agents.flow.title": {
+    "text": "Dokąd trafia żądanie od twojego agenta do kodowania",
+    "source_hash": "b2c49ca0b033"
+  },
+  "coding-agents.flow.desc": {
+    "text": "Twój agent do kodowania wysyła żądania do LM Warden: bazowy adres URL wskazuje instancję LM Warden, a kluczem API jest klucz LM Warden. LM Warden sprawdza klucz, obsługuje API OpenAI i Anthropic, ustawia żądanie w kolejce według priorytetu klucza i przekazuje je routerowi replik, który utrzymuje każdą sesję na replice mającej już jej cache, po jednej kopii modelu na kartę GPU. Osobna ścieżka prowadzi do api.anthropic.com, tylko dla Claude Code: tam trafiają pozostałe modele Claude, na twoim własnym koncie.",
+    "source_hash": "c24325d4bacf"
+  },
+  "coding-agents.flow.caption": {
+    "text": "Dokąd trafia żądanie od agenta do kodowania. Każdy agent ustawia te same dwie rzeczy: bazowy adres URL i klucz; LM Warden sprawdza klucz, ustawia żądanie w kolejce i wysyła je do repliki, która ma już cache sesji. Strona każdego agenta pokazuje jego własne ustawienia.",
+    "source_hash": "4c8a44e2f320"
+  },
+  "coding-agents.p-2": {
+    "text": "Nie piszesz konfiguracji ręcznie. W konsoli <strong>Connect</strong> wybiera twojego klienta, model i klucz, a potem zapisuje pliki do wklejenia. Każda strona poniżej pokazuje te same pliki z symbolami zastępczymi oraz to, co działa.",
+    "source_hash": "75d2dc8f6796"
+  },
+  "coding-agents.p-3": {
+    "text": "Brakuje klienta? Zapytaj w <a href=\"https://github.com/Podwarden/lm-warden/discussions/new?category=ideas\" rel=\"noopener\">GitHub Discussions</a>.",
+    "source_hash": "91f99cd9235e"
+  },
+  "coding-agents.p-4": {
+    "text": "Zobacz też: <a href=\"/agent-tuning\">pozwól agentowi wybrać model</a> · <a href=\"/cache-aware-routing\">routing z uwzględnieniem cache</a> · <a href=\"/faq\">FAQ</a>",
+    "source_hash": "0ced1cfb6f5c"
+  }
+}

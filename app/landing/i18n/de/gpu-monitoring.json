@@ -1,0 +1,198 @@
+{
+  "gpu-monitoring.meta.title": {
+    "text": "GPU-Monitoring pro Karte für vLLM | LM Warden",
+    "source_hash": "d27814ed8b63"
+  },
+  "gpu-monitoring.meta.description": {
+    "text": "Unter Linux bekommt jede NVIDIA-Karte ein eigenes Panel: Temperatur im Verhältnis zur Drosselschwelle, Leistungsaufnahme im Verhältnis zum Limit, die PCIe-Verbindung und jede laufende Anfrage.",
+    "source_hash": "507736e1bea9"
+  },
+  "gpu-monitoring.box.h1-1": {
+    "text": "GPU-Monitoring: der Rechner hinter diesen Zahlen.",
+    "source_hash": "cc0f4c9bbf2b"
+  },
+  "gpu-monitoring.p-1": {
+    "text": "Sofern eine Bildunterschrift nichts anderes sagt, stammen die Werte auf dieser Seite von einer Workstation: vier RTX&nbsp;A4000, mit einem einzigen Modell über alle verteilt, ausgelastet mit unserem eigenen Testverkehr. Das sind die Zahlen, die die Konsole zeigte, während wir Abb.&nbsp;1 und&nbsp;5 aufzeichneten. Die Fit-Tests weiter unten verwendeten zusätzlich eine Quadro&nbsp;RTX&nbsp;5000, was dort jeweils vermerkt ist.",
+    "source_hash": "a9ca4640a6e7"
+  },
+  "gpu-monitoring.p-2": {
+    "text": "Die Panels pro Karte lesen den NVIDIA-Treiber aus und gehören daher zur Linux-Installation. Auf einem Mac mit Apple Silicon zeigt die <a href=\"/#p-mac\">Mac-App (Beta)</a> die GPU-Nutzung und das Speicherbudget, das Metal meldet, ohne Anzeige der Leistungsaufnahme.",
+    "source_hash": "e6e25a4491ad"
+  },
+  "gpu-monitoring.dt-1": {
+    "text": "GPUs",
+    "source_hash": "8f0474fb0c5b"
+  },
+  "gpu-monitoring.dd-1": {
+    "text": "4&nbsp;×&nbsp;NVIDIA RTX&nbsp;A4000, je 16&#8239;GiB (Ampere, Compute&nbsp;8.6)",
+    "source_hash": "065609784858"
+  },
+  "gpu-monitoring.dt-2": {
+    "text": "Belegter VRAM",
+    "source_hash": "60de0ad7eb70"
+  },
+  "gpu-monitoring.dd-2": {
+    "text": "59,4 von 64,0&#8239;GiB, ein Modell über alle vier Karten",
+    "source_hash": "2a58556c9272"
+  },
+  "gpu-monitoring.dd-3": {
+    "text": "Gen&nbsp;4 x16 pro Karte",
+    "source_hash": "a85ab5eb706a"
+  },
+  "gpu-monitoring.dt-3": {
+    "text": "Treiber",
+    "source_hash": "9fe4c68ec20d"
+  },
+  "gpu-monitoring.dd-4": {
+    "text": "<code>610.57.04</code>, CUDA&nbsp;13.3",
+    "source_hash": "a041ea9e5251"
+  },
+  "gpu-monitoring.caption-1": {
+    "text": "GPU-Last, Leistungsaufnahme und Token, abgelesen aus Abb.&nbsp;1",
+    "source_hash": "db678a93d309"
+  },
+  "gpu-monitoring.th-1": {
+    "text": "Messwert",
+    "source_hash": "463816d07097"
+  },
+  "gpu-monitoring.th-2": {
+    "text": "Bei Aufnahme",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.th-3": {
+    "text": "Median über 24&#8239;h (unter Last)",
+    "source_hash": "af088ec66533"
+  },
+  "gpu-monitoring.th-4": {
+    "text": "Spitze über 24&#8239;h",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-5": {
+    "text": "GPU-Auslastung, am stärksten belastete Karte&nbsp;(%)",
+    "source_hash": "9739b22b0dce"
+  },
+  "gpu-monitoring.col-capture.data-h": {
+    "text": "Bei Aufnahme",
+    "source_hash": "5e1bc5df87b6"
+  },
+  "gpu-monitoring.col-median.data-h": {
+    "text": "Median 24&#8239;h",
+    "source_hash": "e6245b901702"
+  },
+  "gpu-monitoring.col-peak.data-h": {
+    "text": "Spitze 24&#8239;h",
+    "source_hash": "0cb077815ec8"
+  },
+  "gpu-monitoring.th-6": {
+    "text": "GPU-Leistungsaufnahme, Summe der vier Karten&nbsp;(W)",
+    "source_hash": "6554b6cbd5f4"
+  },
+  "gpu-monitoring.th-7": {
+    "text": "Token pro Minute (Panel vom 23. Sep.)",
+    "source_hash": "eb7b7fd32e11"
+  },
+  "gpu-monitoring.span-1": {
+    "text": "nicht angezeigt",
+    "source_hash": "0bedd95628dd"
+  },
+  "gpu-monitoring.td-7": {
+    "text": "190&nbsp;Tsd.",
+    "source_hash": "eaa6d59dc9be"
+  },
+  "gpu-monitoring.td-8": {
+    "text": "880&nbsp;Tsd.",
+    "source_hash": "8678af14d6a2"
+  },
+  "gpu-monitoring.p-3": {
+    "text": "Ihre Zahlen werden anders aussehen – genau deshalb lohnt es sich, sie zu messen. Die Token-Zeile stammt aus der Zeit vor der Umstellung auf Token pro Sekunde; das Stats-Panel stellt jetzt Token pro Sekunde dar, und diese Werte stammen aus der Aufnahme vom 23.&nbsp;September auf dem älteren Panel mit Werten pro Minute.",
+    "source_hash": "fc86e0160504"
+  },
+  "gpu-monitoring.cards.h2-1": {
+    "text": "Was sich nicht messen lässt, wird als „nicht gemeldet“ angezeigt.",
+    "source_hash": "036e83c1af39"
+  },
+  "gpu-monitoring.p-4": {
+    "text": "Die meisten GPU-Dashboards mitteln vier Karten zu einer Linie und stellen einen fehlenden Wert als&nbsp;0 dar. Dieses Dashboard gibt jeder Karte ein eigenes Panel: Temperatur im Verhältnis zur Drosselschwelle, die ihr Treiber meldet, Leistungsaufnahme im Verhältnis zum eigenen Limit der Karte, Takte, Lüfter, die PCIe-Verbindung, wie sie gerade ausgehandelt ist, sowie ECC und NVLink, sofern die Karte sie hat. Zwei Karten, die achtzehn Monate auseinander gekauft wurden, bleiben zwei Karten, und ein Wert, den der Treiber nicht liefert, wird als fehlend gekennzeichnet, statt als Null dargestellt zu werden.",
+    "source_hash": "f87275635f5c"
+  },
+  "gpu-monitoring.img-1.alt": {
+    "text": "Vier GPU-Panels der Stats-Seite unter Last, eines pro RTX A4000: 99 bis 100 Prozent Auslastung im Energiezustand P2, Temperaturen von 79 bis 94 Grad bei einer Drosselschwelle von 100 Grad, eine Warnung wegen thermischer Drosselung auf drei Karten, Leistungsaufnahme bei 134 bis 138 von 140 Watt Limit, Takte, Treiber- und CUDA-Version, PCIe-Link, NVLink und ECC",
+    "source_hash": "55b551e38c61"
+  },
+  "gpu-monitoring.span-2": {
+    "text": "Drosselschwelle vom Treiber, nicht geschätzt",
+    "source_hash": "b3bd726e07ac"
+  },
+  "gpu-monitoring.span-3": {
+    "text": "Warum der Takt gesenkt wird, laut Treiber",
+    "source_hash": "7be6f5cf26b2"
+  },
+  "gpu-monitoring.span-4": {
+    "text": "Leistungsaufnahme im Verhältnis zum eigenen Limit von 140&#8239;W",
+    "source_hash": "ef8ca2bcafce"
+  },
+  "gpu-monitoring.span-5": {
+    "text": "NVLink und ECC, wie die Karte sie meldet",
+    "source_hash": "c4d22dc73625"
+  },
+  "gpu-monitoring.figcaption-1": {
+    "text": "<b>Abb.&nbsp;5</b>Die vier GPU-Panels derselben Stats-Seite in voller Größe, aufgenommen unter derselben Last. Jede Karte liegt bei 99 oder 100&#8239;% im Energiezustand P2, und drei davon werden bei 90 bis 94&#8239;°C vom Treiber auf 76 bis 84&#8239;% ihres Höchsttakts begrenzt.<span class=\"scroll-hint\"> Scrollen Sie das Bild seitlich, um alle vier zu sehen.</span>",
+    "source_hash": "7aa9957f224d"
+  },
+  "gpu-monitoring.caption-2": {
+    "text": "Was wo ausgelesen wird",
+    "source_hash": "fd76edd0a9d5"
+  },
+  "gpu-monitoring.th-8": {
+    "text": "Pro Karte",
+    "source_hash": "b596b0114ded"
+  },
+  "gpu-monitoring.td-9": {
+    "text": "Temperatur und Drosselschwelle, Leistungsaufnahme und ihr Limit, Kern- und Speichertakt, Lüfter, PCIe-Generation und -Breite, ECC, NVLink und der Engine-Prozess, der die Karte nutzt",
+    "source_hash": "1f5a45a29bdc"
+  },
+  "gpu-monitoring.th-9": {
+    "text": "Pro Host",
+    "source_hash": "fd8f8648eb41"
+  },
+  "gpu-monitoring.td-10": {
+    "text": "Belegter VRAM, GPU-Auslastung (die am stärksten belastete Karte), Leistungsaufnahme (Summe der Karten) und Token pro Sekunde",
+    "source_hash": "d8e9193ca58e"
+  },
+  "gpu-monitoring.th-10": {
+    "text": "Pro Anfrage",
+    "source_hash": "c01f2094044d"
+  },
+  "gpu-monitoring.td-11": {
+    "text": "Zeit bis zum ersten Token, Latenz zwischen Token und Dauer, für beide Engines auf dieselbe Weise am Proxy gemessen",
+    "source_hash": "92c8d3b9a423"
+  },
+  "gpu-monitoring.inflight.h2-1": {
+    "text": "Worauf jede Anfrage wartet.",
+    "source_hash": "87e975182d2c"
+  },
+  "gpu-monitoring.p-5": {
+    "text": "Die Stats-Seite listet jede laufende Anfrage mit der Sitzung des Clients und der Phase, in der sich die Anfrage befindet: in der Warteschlange des Wardens, Prefill (die Engine liest den Prompt), Nachdenken, Schreiben eines Tool-Aufrufs oder Antworten. Ein Badge gibt den Anteil des Prompts an, der wahrscheinlich im Cache des Replikats liegt. Dauert ein Prefill länger, als die gelernte Prefill-Rate dieses Rechners vorhersagt, wird angezeigt, warum er vermutlich wartet: weil andere Prompts auf demselben Replikat vor ihm liegen, weil der Cache vermutlich verdrängt wurde oder aus einem Grund, den der Warden nicht erkennen kann. Die Sitzung stammt aus der ID, die jedes Tool ohnehin sendet: bei Claude Code, Codex, OpenCode und pi ohne zusätzliche Konfiguration, bei Hermes und Aider mit einer Zeile Konfiguration.",
+    "source_hash": "4d6984e02a57"
+  },
+  "gpu-monitoring.img-2.alt": {
+    "text": "Die Tabelle In flight mit 14 aktiven Anfragen, alle vom Schlüssel agent-farm von einer Client-Adresse. Spalten: Token, Client-IP, Sitzung, Modell, Phase, Kontextfenster und verstrichene Zeit. Sechs Zeilen sind im Tool-Aufruf oder beim Antworten und acht im Prefill, die meisten mit einem Badge, das 94 bis 100&#8239;% des Prompts als zwischengespeichert schätzt; drei Prefills tragen ein Badge evict? und zwei ein Sanduhr-Badge, 1·r0 und 1·r4. Unter der Tabelle: Prefill-Modell 439 tok/s, gelernt aus 1132 Anfragen, Cache-Schätzung in 57&#8239;% der Fälle richtig und die Trefferquote nach Leerlaufzeit, 68&#8239;% nach bis zu 30 Sekunden, fallend auf 18&#8239;% nach 5 bis 15 Minuten.",
+    "source_hash": "850b1ebebfcc"
+  },
+  "gpu-monitoring.span-6": {
+    "text": "Noch kein Token, Cache wahrscheinlich verdrängt",
+    "source_hash": "807aafa43674"
+  },
+  "gpu-monitoring.span-7": {
+    "text": "Ein Prompt vor ihr auf Replikat 4",
+    "source_hash": "c6220dc860be"
+  },
+  "gpu-monitoring.figcaption-2": {
+    "text": "<b>Abb.&nbsp;12</b>Vierzehn laufende Anfragen auf dem Rechner mit sieben GPUs. Unter der Tabelle steht, was der Warden aus abgeschlossenen Anfragen gelernt hat: Dieser Rechner verarbeitet im Prefill etwa 439 Token pro Sekunde und Anfrage, seine Cache-Schätzung lag in 57&#8239;% der Fälle richtig, und eine Unterhaltung, die länger als zwei Minuten ruht, findet ihren Cache meist geleert vor (20&#8239;% Treffer nach 2 bis 5 Minuten). Der Schlüsselname ist ein Platzhalter und die Adresse eine Dokumentationsadresse. Unter 768 Pixel Breite wird die Tabelle zu einer Liste von Panels. Aufgezeichnet am 5.&nbsp;Oktober 2026.<span class=\"scroll-hint\"> Scrollen Sie das Bild seitlich, um alle Spalten zu sehen.</span>",
+    "source_hash": "cb4966892bbc"
+  },
+  "gpu-monitoring.p-6": {
+    "text": "Siehe auch: <a href=\"/cache-aware-routing\">Cache-sensitives Routing</a> · <a href=\"/api-keys\">API-Schlüssel</a> · <a href=\"/coding-agents\">Coding-Agenten</a>",
+    "source_hash": "1669f0782d97"
+  }
+}

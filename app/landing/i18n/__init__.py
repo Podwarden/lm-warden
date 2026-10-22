@@ -1,6 +1,6 @@
-"""Localization of the public home page (owner's request 2026-10-21; PodWarden
-epic #2134 decisions 4-8). Only Home and the chrome rendered with it are
-translated; every other page stays English and is linked from every locale.
+"""Localization of the public website (owner's request 2026-10-21; PodWarden
+epic #2134 decisions 4-8). Home first; since 2026-10-21 every page of the
+registry too, each in the locales whose catalogs for it are complete.
 
 English is the single source of truth. A translatable piece of text is a
 *segment*, marked in the HTML source where the English is written:
@@ -13,15 +13,26 @@ JSON-LD featureList, og:image:alt): render.PY_SEGMENTS. The markers are
 stripped from every page served, so the English output is byte-identical to
 the unmarked source.
 
-Catalogs, all in this directory:
+Catalogs, all in this directory, one *part* each. A part is a namespace of
+segment keys ("home": Home and the chrome on every page; "common": what
+every other page shares; one per page fragment; "clients": the generated
+coding-agent pages); its keys start with "<part>." (Home's with chrome.,
+home., meta. or jsonld.):
 
-  en.json         the source catalog, written by `scripts/landing_i18n.py
-                  write-source` from the marked HTML: {key: {text, note, hash}}
-  <locale>.json   one per translated locale: {key: {text, source_hash}}, where
-                  source_hash is en.json's hash of the English the
-                  translation was made from. A locale with no file is not
-                  served (its URL 404s) and not offered anywhere.
-  glossary.json   do-not-translate terms and preferred translations.
+  en.json, <locale>.json           part "home" (the first catalogs, kept
+                                   where they were)
+  en/<part>.json                   every other part's source catalog
+  <locale>/<part>.json             its translation
+  glossary.json                    do-not-translate terms and preferred
+                                   translations, for every part
+
+A source catalog is {key: {text, note, hash}}, written by
+`scripts/landing_i18n.py write-source` from the marked HTML; a translation is
+{key: {text, source_hash}}, where source_hash is the source's hash of the
+English the translation was made from. A page is served in a locale only
+when every part it needs (page_parts) is complete there: Home needs "home";
+every other page "home", "common" and its own. Otherwise its localized URL
+404s and no switcher, hreflang or sitemap offers it.
 
 How to add or refresh a locale: README.md beside this file.
 """
@@ -37,7 +48,7 @@ from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from pathlib import Path
 
-from app.landing.pages import LOCALES, Locale
+from app.landing.pages import LOCALES, Locale, Page
 
 __all__ = ["LOCALES", "Locale"]
 
@@ -61,36 +72,131 @@ def _load(path: Path) -> dict[str, dict[str, str]]:
     return data
 
 
+#: The parts besides "home", each with its source at en/<part>.json. A page
+#: fragment's part is its file's stem (page_parts).
+PARTS: tuple[str, ...] = (
+    "common",
+    "coding-agents",
+    "clients",
+    "claude-code-router",
+    "agent-tuning",
+    "gpu-monitoring",
+    "cache-aware-routing",
+    "api-keys",
+    "features",
+    "faq",
+    "privacy",
+    "not-found",
+)
+#: Keys of part "home" start with one of these.
+HOME_PREFIXES = ("chrome.", "home.", "meta.", "jsonld.")
+
+
+def part_of(key: str) -> str:
+    """The part a segment key belongs to."""
+    if key.startswith(HOME_PREFIXES):
+        return "home"
+    part = key.split(".", 1)[0]
+    if part not in PARTS:
+        raise ValueError(f"segment key {key!r} names no part (PARTS or {HOME_PREFIXES})")
+    return part
+
+
+def source_path(part: str) -> Path:
+    return DIR / "en.json" if part == "home" else DIR / "en" / f"{part}.json"
+
+
+def catalog_path(part: str, tag: str) -> Path:
+    return DIR / f"{tag}.json" if part == "home" else DIR / tag / f"{part}.json"
+
+
 def _load_catalogs() -> dict[str, dict[str, str]]:
-    """locale tag -> {key: translated text}, for every locale with a file.
-    Read once at import, like the rest of the site."""
+    """locale tag -> {key: translated text} of part "home", for every locale
+    with a file. Read once at import, like the rest of the site."""
     out: dict[str, dict[str, str]] = {}
     for loc in LOCALES:
         if loc.tag == "en":
             continue
-        path = DIR / f"{loc.tag}.json"
+        path = catalog_path("home", loc.tag)
         if path.is_file():
             out[loc.tag] = {k: v["text"] for k, v in _load(path).items()}
     return out
 
 
+def _load_parts() -> dict[str, dict[str, dict[str, str]]]:
+    """part -> locale tag -> {key: translated text}, for the other parts, only
+    where the translation covers every key of the part's source (a partial
+    file is not served: the page stays English in that locale)."""
+    out: dict[str, dict[str, dict[str, str]]] = {}
+    for part in PARTS:
+        src = source_path(part)
+        keys = set(_load(src)) if src.is_file() else None
+        out[part] = {}
+        for loc in LOCALES:
+            path = catalog_path(part, loc.tag)
+            if loc.tag == "en" or keys is None or not path.is_file():
+                continue
+            cat = {k: v["text"] for k, v in _load(path).items()}
+            if keys <= set(cat):
+                out[part][loc.tag] = cat
+    return out
+
+
 _CATALOGS = _load_catalogs()
+_PARTS = _load_parts()
 
 
 def available() -> tuple[Locale, ...]:
-    """English plus every locale whose catalog ships, in LOCALES order."""
+    """English plus every locale Home ships in, in LOCALES order."""
     return tuple(loc for loc in LOCALES if loc.tag == "en" or loc.tag in _CATALOGS)
 
 
 def is_available(tag: str) -> bool:
+    """Whether Home ships in `tag`."""
     return tag == "en" or tag in _CATALOGS
+
+
+def page_parts(page: Page) -> tuple[str, ...]:
+    """The parts a page's text comes from: Home's own; every other page
+    also the shared "common" and its own (the fragment's stem, or "clients"
+    for a generated coding-agent page, whose Claude Code page also carries
+    the router section)."""
+    if page.path == "/":
+        return ("home",)
+    if page.client_id:
+        own: tuple[str, ...] = ("clients",)
+        if page.client_id == "claude-code":
+            own += ("claude-code-router",)
+    else:
+        own = (page.fragment.removesuffix(".html"),)
+    return ("home", "common", *own)
+
+
+def part_ships(part: str, tag: str) -> bool:
+    if tag == "en":
+        return True
+    if part == "home":
+        return tag in _CATALOGS
+    return tag in _PARTS.get(part, {})
+
+
+def page_ships(page: Page, tag: str) -> bool:
+    """Whether `page` is served in `tag`: every part it needs is complete."""
+    return all(part_ships(part, tag) for part in page_parts(page))
+
+
+def page_locales(page: Page) -> tuple[Locale, ...]:
+    """English plus every locale `page` ships in, in LOCALES order."""
+    return tuple(loc for loc in LOCALES if page_ships(page, loc.tag))
 
 
 def text(locale: str, key: str, english: str) -> str:
     """One segment in `locale`; the English when there is no translation."""
     if locale == "en":
         return english
-    return _CATALOGS.get(locale, {}).get(key, english)
+    if key.startswith(HOME_PREFIXES):
+        return _CATALOGS.get(locale, {}).get(key, english)
+    return _PARTS.get(key.split(".", 1)[0], {}).get(locale, {}).get(key, english)
 
 
 def locale(tag: str) -> Locale:
@@ -99,6 +205,23 @@ def locale(tag: str) -> Locale:
 
 def home_path(tag: str) -> str:
     return "/" if tag == "en" else f"/{tag}/"
+
+
+def page_path(page: Page, tag: str) -> str:
+    """A page's URL path in `tag`: "/faq" in English, "/de/faq" in German,
+    and Home's "/" and "/de/"."""
+    if page.path == "/":
+        return home_path(tag)
+    return page.path if tag == "en" else f"/{tag}{page.path}"
+
+
+def split_locale(path: str) -> tuple[str, str]:
+    """("de", "/faq") for "/de/faq", ("en", path) for an unprefixed path."""
+    for loc in LOCALES:
+        prefix = f"/{loc.tag}/"
+        if loc.tag != "en" and (path.startswith(prefix) or path == prefix[:-1]):
+            return loc.tag, path[len(prefix) - 1 :] or "/"
+    return "en", path
 
 
 # --- Choosing a language for a visitor of / -----------------------------------------
@@ -177,6 +300,16 @@ def negotiate(accept_language: str | None, cookie: str | None) -> str:
     return "en"
 
 
+def cookie_locale(page: Page, cookie: str | None) -> str:
+    """The language for a visitor of an English page other than Home: the
+    switcher's cookie when it names a locale this page ships in, else
+    English. Accept-Language is never consulted here: only Home negotiates."""
+    if cookie and cookie != "en" and any(loc.tag == cookie for loc in LOCALES):
+        if page_ships(page, cookie):
+            return cookie
+    return "en"
+
+
 # --- Scanning marked HTML --------------------------------------------------------
 
 #: Elements that never have content or an end tag.
@@ -189,8 +322,9 @@ INLINE = {
     "a", "abbr", "b", "br", "code", "em", "i", "kbd", "small", "span", "strong",
     "sub", "sup", "wbr",
 }  # fmt: skip
-#: Attributes whose values are read by people (alt) or assistive tech.
-TEXT_ATTRS = ("alt", "aria-label", "title")
+#: Attributes whose values are read by people (alt; data-h, a table cell's
+#: column label on a phone) or assistive tech.
+TEXT_ATTRS = ("alt", "aria-label", "title", "data-h")
 #: Inside an SVG drawing only these carry text to translate: what a screen
 #: reader reads. The drawings' own labels stay English, like the measured
 #: figures' (README.md, "What is not translated").
@@ -326,10 +460,12 @@ def segments(src: str) -> list[Segment]:
                 out.append(
                     Segment(key, attr, node.start + a, node.start + b, node.tag, scope_of(node))
                 )
-    keys = [s.key for s in out]
-    dupes = sorted({k for k in keys if keys.count(k) > 1})
-    if dupes:
-        raise ValueError(f"segment keys used twice: {dupes}")
+    # One key may mark the same English in several places (a "Copy" label,
+    # a drawing's title in its wide and its phone cut); never two texts.
+    english: dict[str, str] = {}
+    for seg in out:
+        if english.setdefault(seg.key, src[seg.start : seg.end]) != src[seg.start : seg.end]:
+            raise ValueError(f"segment key {seg.key!r} marks two different texts")
     spans = sorted((s.start, s.end, s.key) for s in out)
     for (_a0, a1, ak), (b0, _b1, bk) in zip(spans, spans[1:], strict=False):
         if b0 < a1:
@@ -345,10 +481,10 @@ def translate(src: str, locale: str) -> str:
     """The marked document with every segment in `locale` (English where a
     key has no translation), markers removed."""
     if locale != "en":
-        cat = _CATALOGS.get(locale, {})
         for seg in sorted(segments(src), key=lambda s: s.start, reverse=True):
-            if seg.key in cat:
-                src = src[: seg.start] + cat[seg.key] + src[seg.end :]
+            tr = text(locale, seg.key, "")
+            if tr:
+                src = src[: seg.start] + tr + src[seg.end :]
     return strip_markers(src)
 
 
@@ -362,11 +498,19 @@ class Unmarked:
     text: str
 
 
+#: A table cell that is only an integer ("548") or a version ("0.26.0"):
+#: nothing in it changes with the language.
+_BARE_NUMBER_RE = re.compile(r"\s*(?:\d+|\d+(?:\.\d+){2,})\s*")
+
+
 def _needs_marker(s: str, dnt: list[str]) -> bool:
     """Words a reader would read in another language: not only do-not-
     translate terms (a tile that says just "Codex CLI"), tokens or
-    punctuation. Digits count: their separators are localized."""
+    punctuation, nor a bare integer or version. Other digits count: their
+    separators are localized."""
     s = _TOKEN_RE.sub("", html.unescape(s))
+    if _BARE_NUMBER_RE.fullmatch(s):
+        return False
     for term in sorted(dnt, key=len, reverse=True):
         s = s.replace(term, " ")
     return _has_words(s)
@@ -537,10 +681,16 @@ def catalog_problems(
 
 
 def _is_attribute(key: str) -> bool:
-    return key.rsplit(".", 1)[-1] in {
-        *TEXT_ATTRS,
-        "resume",
-        "dot",
-        "done",
-        "fail",
-    } or key.startswith("meta.")
+    return (
+        key.rsplit(".", 1)[-1]
+        in {
+            *TEXT_ATTRS,
+            "resume",
+            "dot",
+            "done",
+            "fail",
+        }
+        or key.startswith("meta.")
+        or ".meta." in key
+        or ".jsonld." in key
+    )

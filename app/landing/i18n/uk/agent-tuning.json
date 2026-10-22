@@ -1,0 +1,154 @@
+{
+  "agent-tuning.meta.title": {
+    "text": "Хай агент для програмування вибере модель | LM Warden",
+    "source_hash": "c73577a9e93d"
+  },
+  "agent-tuning.meta.description": {
+    "text": "Дайте Claude Code або Codex токен адміністратора, і він сам підбере модель, рушій і прапорці для ваших GPU, попутно проводячи бенчмарки. Промпти додано.",
+    "source_hash": "42f223176a20"
+  },
+  "agent-tuning.jsonld.name": {
+    "text": "Хай агент для програмування вибере й налаштує модель",
+    "source_hash": "d38cc5b44b81"
+  },
+  "agent-tuning.jsonld.step-1": {
+    "text": "Установіть LM Warden на хост із GPU",
+    "source_hash": "ea9ef62b2144"
+  },
+  "agent-tuning.jsonld.step-2": {
+    "text": "Створіть токен адміністратора",
+    "source_hash": "02b6962c341f"
+  },
+  "agent-tuning.jsonld.step-3": {
+    "text": "Підключіть Claude Code або Codex",
+    "source_hash": "23149cd56616"
+  },
+  "agent-tuning.jsonld.step-4": {
+    "text": "Вставте промпт для налаштування",
+    "source_hash": "2580a4baddda"
+  },
+  "agent-tuning.tuning.h1-1": {
+    "text": "Хай агент для програмування сам вибере модель.",
+    "source_hash": "2df23e8f7918"
+  },
+  "agent-tuning.p-1": {
+    "text": "Вибрати модель для ваших карт — це вибрати квантування, рушій (vLLM або llama.cpp), спосіб розподілу між GPU, обсяг контексту, тип KV-кешу і те, чи допоможе спекулятивне декодування. Кожна спроба означає нове завантаження файлів і запуск моделі. Агент для програмування може виконати цей пошук за вас, поки ви займаєтеся іншим, бо все, що робить консоль, — це виклик API.",
+    "source_hash": "47320716621f"
+  },
+  "agent-tuning.h2-1": {
+    "text": "Налаштування у три кроки",
+    "source_hash": "2a300da26a75"
+  },
+  "agent-tuning.li-1": {
+    "text": "<strong>Установіть LM Warden</strong> на хост із GPU (команду наведено в розділі <a href=\"/#p-linux\">Завантажити й установити</a>) і пройдіть майстер налаштування.",
+    "source_hash": "45b78d2f8e02"
+  },
+  "agent-tuning.li-2": {
+    "text": "<strong>Створіть токен адміністратора</strong> в Settings → Access Tokens із терміном дії 30 днів. Експортуйте його як <code>VW_ADMIN_TOKEN</code>, а адресу LM Warden — як <code>W</code> в оболонці, якою користується ваш агент.",
+    "source_hash": "a316c0dc85b5"
+  },
+  "agent-tuning.li-3": {
+    "text": "<strong>Запустіть агента</strong>: <a href=\"/coding-agents/claude-code\">Claude Code</a>, <a href=\"/coding-agents/codex-cli\">Codex&nbsp;CLI</a> або інший, що вміє виконувати команди оболонки. Для цієї роботи він може використовувати хмарну модель; налаштовує він ту модель, що працює на ваших картах.",
+    "source_hash": "45f30ab355a5"
+  },
+  "agent-tuning.h2-2": {
+    "text": "Чим користується агент",
+    "source_hash": "676f21721809"
+  },
+  "agent-tuning.th-1": {
+    "text": "Крок",
+    "source_hash": "8e6a6cca7aae"
+  },
+  "agent-tuning.th-2": {
+    "text": "Ендпоінт",
+    "source_hash": "3df9726c68ba"
+  },
+  "agent-tuning.th-3": {
+    "text": "Переглянути карти",
+    "source_hash": "982d52862acc"
+  },
+  "agent-tuning.th-4": {
+    "text": "Перевірити, чи вміститься модель, до завантаження",
+    "source_hash": "966e8813028c"
+  },
+  "agent-tuning.th-5": {
+    "text": "Зареєструвати й отримати початкову конфігурацію",
+    "source_hash": "6fb4184c2d5a"
+  },
+  "agent-tuning.th-6": {
+    "text": "Завантажити й запустити",
+    "source_hash": "a632bbe8e8aa"
+  },
+  "agent-tuning.th-7": {
+    "text": "Виміряти реальну межу контексту",
+    "source_hash": "4c3b52acd644"
+  },
+  "agent-tuning.td-1": {
+    "text": "<code>POST /api/models/{model_id}/stress</code>, потім <code>POST /api/models/{model_id}/stress/apply</code>",
+    "source_hash": "51491b72ded1"
+  },
+  "agent-tuning.th-8": {
+    "text": "Прочитати показники LM Warden",
+    "source_hash": "ead961a24dc4"
+  },
+  "agent-tuning.th-9": {
+    "text": "Надіслати тестовий трафік",
+    "source_hash": "70356d606d14"
+  },
+  "agent-tuning.td-2": {
+    "text": "ключ для інференсу з <code>POST /api/tokens</code>, на <code>/v1/chat/completions</code>",
+    "source_hash": "9a72b9938ec6"
+  },
+  "agent-tuning.p-2": {
+    "text": "Спершу агент читає <a href=\"/agent-guide.md\">посібник для агента</a>: короткий опис цих викликів, написаний для мовної моделі, з помилками, яких слід уникати.",
+    "source_hash": "c3bff7c1a9d1"
+  },
+  "agent-tuning.h2-3": {
+    "text": "Промпти для вставлення",
+    "source_hash": "b273921d2e33"
+  },
+  "agent-tuning.p-3": {
+    "text": "Замініть <code>https://your-warden</code> на адресу вашого LM Warden, а назви великими літерами — на моделі, які ви маєте на увазі.",
+    "source_hash": "a74bbbec589e"
+  },
+  "agent-tuning.h3-1": {
+    "text": "1. Вивчити обладнання й відібрати моделі",
+    "source_hash": "c1ebd00d0f72"
+  },
+  "agent-tuning.h3-2": {
+    "text": "2. Вибрати рушій і розкладку для однієї моделі",
+    "source_hash": "0cc405dce7f8"
+  },
+  "agent-tuning.h3-3": {
+    "text": "3. Знайти реальні межі й застосувати їх",
+    "source_hash": "906f71857682"
+  },
+  "agent-tuning.h3-4": {
+    "text": "4. Порівняти двох кандидатів на моєму навантаженні",
+    "source_hash": "d6e1c2c66dff"
+  },
+  "agent-tuning.h2-4": {
+    "text": "Перш ніж почати",
+    "source_hash": "74e492d5d0df"
+  },
+  "agent-tuning.li-4": {
+    "text": "Токен адміністратора має повні адміністративні права в LM Warden: моделі, ключі й налаштування. Вужчих прав доступу поки немає. Задайте йому короткий термін дії.",
+    "source_hash": "4a1f64b32132"
+  },
+  "agent-tuning.li-5": {
+    "text": "Стрес-тест навмисно доводить рушій до збою, щоб знайти його межу. Запускайте ці промпти на LM Warden, від якого ніхто інший не залежить.",
+    "source_hash": "e127f19fe7da"
+  },
+  "agent-tuning.li-6": {
+    "text": "Завантаження великі. Промпти просять агента перевірити, чи вміститься модель, перш ніж завантажувати, але стежте за диском.",
+    "source_hash": "dabc7d95f036"
+  },
+  "agent-tuning.li-7": {
+    "text": "Відкличте токен адміністратора в Settings → Access Tokens, коли роботу буде завершено.",
+    "source_hash": "cc61ece33dc3"
+  },
+  "agent-tuning.p-4": {
+    "text": "Див. також: <a href=\"/coding-agents\">агенти для програмування</a> · <a href=\"/gpu-monitoring\">моніторинг GPU</a> · <a href=\"/faq\">питання й відповіді</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}

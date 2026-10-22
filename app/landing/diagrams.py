@@ -126,7 +126,16 @@ def _desc(a: Agent) -> str:
     return s
 
 
-def flow_wide(a: Agent, uid: str) -> str:
+def _marks(key: str) -> tuple[str, str]:
+    """The i18n markers of a drawing's <title> and <desc> (key.title,
+    key.desc), or none."""
+    if not key:
+        return "", ""
+    return f' data-t="{key}.title"', f' data-t="{key}.desc"'
+
+
+def flow_wide(a: Agent, uid: str, key: str = "") -> str:
+    mt, md = _marks(key)
     h = 400 if a.relay else 300
     (m1, n1), (m2, n2) = a.settings
     arrow = f'marker-end="url(#{uid}-head)"'
@@ -134,8 +143,8 @@ def flow_wide(a: Agent, uid: str) -> str:
     out = [
         f'<svg class="flow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 {h}" '
         f'width="1240" height="{h}" role="img" aria-labelledby="{uid}-title" aria-describedby="{uid}-desc">',
-        f'<title id="{uid}-title">Where a request from {_e(a.name)} goes</title>',
-        f'<desc id="{uid}-desc">{_e(_desc(a))}</desc>',
+        f'<title id="{uid}-title"{mt}>Where a request from {_e(a.name)} goes</title>',
+        f'<desc id="{uid}-desc"{md}>{_e(_desc(a))}</desc>',
         _marker(uid),
         # the agent
         '<rect class="box" x="0.75" y="40.75" width="248.5" height="180" rx="3"/>',
@@ -191,16 +200,19 @@ def flow_wide(a: Agent, uid: str) -> str:
     return "\n".join(out)
 
 
-def flow_narrow(a: Agent, uid: str) -> str:
+def flow_narrow(a: Agent, uid: str, key: str = "") -> str:
+    mt, md = _marks(key)
     h = 760 if a.relay else 640
     (m1, n1), (m2, n2) = a.settings
     arrow = f'marker-end="url(#{uid}-head)"'
     out = [
         f'<svg class="flow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 {h}" '
         f'width="340" height="{h}" role="img" aria-labelledby="{uid}-title" aria-describedby="{uid}-desc">',
-        f'<title id="{uid}-title">Where a request from {_e(a.name)} goes</title>',
-        f'<desc id="{uid}-desc">{_e(_desc(a))} The same flow as the wide drawing, '
-        "top to bottom.</desc>",
+        f'<title id="{uid}-title"{mt}>Where a request from {_e(a.name)} goes</title>',
+        # The wide cut's text, so both are one segment: only one cut shows,
+        # so a screen reader reads one (it used to add "The same flow as the
+        # wide drawing, top to bottom.", which told a listener nothing).
+        f'<desc id="{uid}-desc"{md}>{_e(_desc(a))}</desc>',
         _marker(uid),
         '<rect class="box" x="0.75" y="0.75" width="298.5" height="128" rx="3"/>',
         f'<text class="h" x="14" y="28">{_e(a.name)}</text>',
@@ -249,16 +261,24 @@ def flow_narrow(a: Agent, uid: str) -> str:
     return "\n".join(out)
 
 
-def figure_html(a: Agent, uid: str, caption: str) -> str:
+def figure_html(a: Agent, uid: str, caption: str, key: str = "") -> str:
     """A figure in the page's diagram frame: wide cut, narrow phone cut, a
-    caption and the same flow in words for screen readers."""
+    caption and the same flow in words for screen readers. With `key`, the
+    words a reader gets are i18n segments: key.title, key.desc, key.caption."""
+    _, md = _marks(key)
+    mc = f' data-t="{key}.caption"' if key else ""
+    words = (
+        f'<p class="vh"><span data-t="common.in-words">In words:</span> '
+        f"<span{md}>{_e(_desc(a))}</span></p>\n"
+        if key
+        else f'<p class="vh">In words: {_e(_desc(a))}</p>\n'
+    )
     return (
         '<figure class="diagram-fig flow-top">\n'
         '  <div class="diagram swap-1200">\n'
-        f'    <div class="v-wide">\n{flow_wide(a, uid)}\n    </div>\n'
-        f'    <div class="v-narrow">\n{flow_narrow(a, uid + "n")}\n    </div>\n'
+        f'    <div class="v-wide">\n{flow_wide(a, uid, key)}\n    </div>\n'
+        f'    <div class="v-narrow">\n{flow_narrow(a, uid + "n", key)}\n    </div>\n'
         "  </div>\n"
-        f"  <figcaption>{caption}</figcaption>\n"
-        "</figure>\n"
-        f'<p class="vh">In words: {_e(_desc(a))}</p>\n'
+        f"  <figcaption{mc}>{caption}</figcaption>\n"
+        "</figure>\n" + words
     )

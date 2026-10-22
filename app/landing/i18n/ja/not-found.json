@@ -1,0 +1,18 @@
+{
+  "not-found.meta.title": {
+    "text": "ページが見つかりません | LM Warden",
+    "source_hash": "9997b967a0f9"
+  },
+  "not-found.meta.description": {
+    "text": "このページは LM Warden の Web サイトに存在しません。",
+    "source_hash": "f56b56b08c51"
+  },
+  "not-found.nf.h1-1": {
+    "text": "そのページはここにはありません。",
+    "source_hash": "0a4c2fc34b17"
+  },
+  "not-found.p-1": {
+    "text": "このサイトを一ページ構成から複数ページ構成に広げた際に、ページが移動した可能性があります。<a href=\"/\">ホーム ページ</a>、<a href=\"/coding-agents\">コーディング エージェント</a>、<a href=\"/agent-tuning\">エージェント チューニング</a>、<a href=\"/faq\">よくある質問</a>をお試しください。",
+    "source_hash": "701d00dd6585"
+  }
+}

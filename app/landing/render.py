@@ -20,7 +20,7 @@ from typing import Any
 
 from app.landing import i18n
 from app.landing.downloads import MAC_DMG_NAME, MAC_DMG_URL, MAC_RELEASE_URL
-from app.landing.pages import HOME, PAGES, Page
+from app.landing.pages import HOME, NOT_FOUND, PAGES, Page
 from app.landing.site import Analytics
 
 _HERE = Path(__file__).parent
@@ -139,16 +139,29 @@ def _faq_markdown(answer_html: str) -> str:
 
 
 def _faq_html() -> str:
-    """Every answer visible: no accordion hides the page's plainest text."""
+    """Every answer visible: no accordion hides the page's plainest text.
+    Question n is segment faq.q-n, its answer faq.a-n (the FAQ JSON-LD reads
+    the same two)."""
     items = []
-    for i, qa in enumerate(_FAQ):
+    for i, qa in enumerate(_FAQ, start=1):
         items.append(
-            f'<div class="qa" id="faq-{i + 1}">\n'
-            f"  <h3>{html.escape(qa['q'])}</h3>\n"
-            f"  <p>{qa['a']}</p>\n"
+            f'<div class="qa" id="faq-{i}">\n'
+            f"  <h3 data-t=\"faq.q-{i}\">{html.escape(qa['q'])}</h3>\n"
+            f"  <p data-t=\"faq.a-{i}\">{qa['a']}</p>\n"
             "</div>"
         )
     return "\n".join(items)
+
+
+def _faq_items(locale: str) -> list[tuple[str, str]]:
+    """(question, answer HTML) in `locale`, English where untranslated."""
+    return [
+        (
+            html.unescape(i18n.text(locale, f"faq.q-{i}", html.escape(qa["q"]))),
+            i18n.text(locale, f"faq.a-{i}", qa["a"]),
+        )
+        for i, qa in enumerate(_FAQ, start=1)
+    ]
 
 
 # --- Page rendering -----------------------------------------------------------
@@ -211,7 +224,7 @@ PODWARDEN: dict[str, Any] = {
 
 
 def _url(origin: str, page: Page, locale: str = "en") -> str:
-    return origin + (i18n.home_path(locale) if page.path == "/" else page.path)
+    return origin + i18n.page_path(page, locale)
 
 
 #: og:image:alt, the alt text a link preview shows with the image.
@@ -247,8 +260,109 @@ PY_SEGMENTS: dict[str, tuple[str, str]] = {
 }
 
 
+#: The same for every other part: each page's <title> and meta description,
+#: and the strings of its JSON-LD and generated text that no HTML marks.
+_TITLE_NOTE = (
+    "The browser tab and the search-result title. Keep the part after | as "
+    "it is; at most 65 characters."
+)
+_DESC_NOTE = "The search-result snippet and link-preview text. At most 160 characters."
+_HOWTO_STEPS = (
+    "Install LM Warden on the GPU host",
+    "Issue an admin token",
+    "Connect Claude Code or Codex",
+    "Paste a tuning prompt",
+)
+_HOWTO_NAME = "Let your coding agent pick and tune the model"
+
+
+def _part_py_segments() -> dict[str, tuple[str, str]]:
+    out: dict[str, tuple[str, str]] = {}
+    for page in (*PAGES, NOT_FOUND):
+        if page.path == "/":
+            continue
+        part = page.fragment.removesuffix(".html")
+        out[f"{part}.meta.title"] = (page.title, _TITLE_NOTE)
+        out[f"{part}.meta.description"] = (page.description, _DESC_NOTE)
+    out["agent-tuning.jsonld.name"] = (
+        _HOWTO_NAME,
+        "The name of the how-to search engines read (structured data); plain text.",
+    )
+    for i, step in enumerate(_HOWTO_STEPS, start=1):
+        out[f"agent-tuning.jsonld.step-{i}"] = (
+            step,
+            "One step of that how-to (the page's numbered list, shortened); plain text.",
+        )
+    out["privacy.ads"] = (
+        _PRIVACY_ADS,
+        "Inserted after the sentence on Google Analytics 4 when a Google Ads ID is set; "
+        "starts with a space.",
+    )
+    out["privacy.contact-official"] = (
+        _CONTACT_OFFICIAL,
+        "Ends the 'Who processes the data' paragraph on lmwarden.com; starts with a space.",
+    )
+    out["privacy.contact-operator"] = (
+        _CONTACT_OPERATOR,
+        "Ends the same paragraph on anyone else's copy of the site; starts with a space.",
+    )
+    out["clients.meta.title"] = (
+        "{name} with a local LLM on your GPUs | LM Warden",
+        "Title of each coding-agent page; {name} is the client (Claude Code, Aider, ...). "
+        "Keep the part after | as it is; at most 60 characters with a 12-character name.",
+    )
+    out["clients.meta.description"] = (
+        "{name} with LM Warden: {summary}",
+        "Meta description of each coding-agent page: {summary} is that page's lede "
+        "(clients.<id>.summary, tags removed). Cut at 155 characters.",
+    )
+    return out
+
+
+#: Their English, for the privacy page's {{privacy_ads}} and {{privacy_contact}}.
+_PRIVACY_ADS = (
+    " Google Ads measures whether ads bring people here, and its "
+    "advertising cookies follow the same consent choice."
+)
+_CONTACT_OFFICIAL = (
+    ' Write to <a href="mailto:info@podwarden.com">info@podwarden.com</a> '
+    "with any question about this site."
+)
+_CONTACT_OPERATOR = " Questions about this site go to the operator of this site."
+
+PART_PY_SEGMENTS: dict[str, tuple[str, str]] = _part_py_segments()
+
+
 def _t(locale: str, key: str) -> str:
-    return i18n.text(locale, key, PY_SEGMENTS[key][0])
+    english = PY_SEGMENTS[key][0] if key in PY_SEGMENTS else PART_PY_SEGMENTS[key][0]
+    return i18n.text(locale, key, english)
+
+
+def page_meta(page: Page, locale: str) -> tuple[str, str]:
+    """A page's <title> and meta description in `locale`."""
+    if page.path == "/":
+        return _t(locale, "meta.title"), _t(locale, "meta.description")
+    if page.client_id:
+        from app.landing.clients import client_def, prose_html, short_name
+
+        c = client_def(page.client_id)
+        name = short_name(c)
+        summary = (
+            c.summary  # the English description as it always was
+            if locale == "en"
+            else _TAG_RE.sub(
+                "",
+                html.unescape(i18n.text(locale, f"clients.{c.id}.summary", prose_html(c.summary))),
+            )
+        )
+        title = _t(locale, "clients.meta.title").replace("{name}", name)
+        desc = _t(locale, "clients.meta.description").replace("{name}", name)
+        desc = desc.replace("{summary}", summary)
+        if len(desc) >= 156:
+            desc = desc[:152].rsplit(" ", 1)[0] + "…"
+        return title, desc
+    part = page.fragment.removesuffix(".html")
+    return _t(locale, f"{part}.meta.title"), _t(locale, f"{part}.meta.description")
 
 
 def _jsonld(origin: str, page: Page, locale: str = "en") -> str:
@@ -287,13 +401,14 @@ def _jsonld(origin: str, page: Page, locale: str = "en") -> str:
     faq = {
         "@context": "https://schema.org",
         "@type": "FAQPage",
+        "inLanguage": locale,
         "mainEntity": [
             {
                 "@type": "Question",
-                "name": qa["q"],
-                "acceptedAnswer": {"@type": "Answer", "text": _faq_text(qa["a"])},
+                "name": q,
+                "acceptedAnswer": {"@type": "Answer", "text": _faq_text(a)},
             }
-            for qa in _FAQ
+            for q, a in _faq_items(locale)
         ],
     }
     website: dict[str, Any] = {
@@ -302,41 +417,43 @@ def _jsonld(origin: str, page: Page, locale: str = "en") -> str:
         "name": "LM Warden",
         "publisher": PODWARDEN,
     }
+    title, description = page_meta(page, locale)
     article: dict[str, Any] = {
         "@context": "https://schema.org",
         "@type": "TechArticle",
-        "headline": page.title.split(" | ")[0],
-        "description": page.description,
+        "headline": title.split(" | ")[0],
+        "description": description,
+        "inLanguage": locale,
         "publisher": PODWARDEN,
     }
     howto: dict[str, Any] = {
         "@context": "https://schema.org",
         "@type": "HowTo",
-        "name": "Let your coding agent pick and tune the model",
-        "description": page.description,
+        "name": i18n.text(locale, "agent-tuning.jsonld.name", _HOWTO_NAME),
+        "description": description,
+        "inLanguage": locale,
         "step": [
-            {"@type": "HowToStep", "position": i, "name": name}
-            for i, name in enumerate(
-                (
-                    "Install LM Warden on the GPU host",
-                    "Issue an admin token",
-                    "Connect Claude Code or Codex",
-                    "Paste a tuning prompt",
-                ),
-                start=1,
-            )
+            {
+                "@type": "HowToStep",
+                "position": i,
+                "name": i18n.text(locale, f"agent-tuning.jsonld.step-{i}", name),
+            }
+            for i, name in enumerate(_HOWTO_STEPS, start=1)
         ],
     }
     if origin:
         website["url"] = origin + "/"
-        article["url"] = _url(origin, page)
+        article["url"] = _url(origin, page, locale)
     chosen = {"app": app, "website": website, "faq": faq, "article": article, "howto": howto}
     objs = [chosen[k] for k in page.jsonld if k in chosen]
     if page.crumbs:
-        trail = [("Home", "/"), *page.crumbs]
         items = []
-        for i, (label, path) in enumerate(trail, start=1):
-            item: dict[str, Any] = {"@type": "ListItem", "position": i, "name": label}
+        for i, (label, path, _key) in enumerate(_trail(page, locale), start=1):
+            item: dict[str, Any] = {
+                "@type": "ListItem",
+                "position": i,
+                "name": html.unescape(label),
+            }
             if origin:  # a private instance names no URLs
                 item["item"] = origin + path
             items.append(item)
@@ -353,10 +470,10 @@ def _jsonld(origin: str, page: Page, locale: str = "en") -> str:
 
 def _head(origin: str, page: Page, locale: str = "en") -> str:
     """The origin-dependent part of <head>: robots, canonical and OG URLs,
-    and on Home the language alternates."""
+    and, on a page published in more than one language, the alternates."""
     e = html.escape
     image = e(origin + asset_url(_OG_IMAGE))
-    home = page.path == "/"
+    locs = i18n.page_locales(page) if page is not NOT_FOUND else ()
     lines = []
     if origin:
         lines += [
@@ -364,22 +481,24 @@ def _head(origin: str, page: Page, locale: str = "en") -> str:
             f'<link rel="canonical" href="{e(_url(origin, page, locale))}">',
             f'<meta property="og:url" content="{e(_url(origin, page, locale))}">',
         ]
-        if home and len(i18n.available()) > 1:
-            # Every published language of Home, itself included, and
+        if len(locs) > 1:
+            # Every published language of this page, itself included, and
             # x-default (English: the page a visitor with no match gets).
             lines += [
                 f'<link rel="alternate" hreflang="{loc.tag}" '
-                f'href="{e(origin + i18n.home_path(loc.tag))}">'
-                for loc in i18n.available()
+                f'href="{e(_url(origin, page, loc.tag))}">'
+                for loc in locs
             ]
-            lines.append(f'<link rel="alternate" hreflang="x-default" href="{e(origin)}/">')
+            lines.append(
+                f'<link rel="alternate" hreflang="x-default" href="{e(_url(origin, page))}">'
+            )
     else:
         lines.append('<meta name="robots" content="noindex">')
-    if home and len(i18n.available()) > 1:
+    if len(locs) > 1:
         lines.append(f'<meta property="og:locale" content="{i18n.locale(locale).og}">')
         lines += [
             f'<meta property="og:locale:alternate" content="{loc.og}">'
-            for loc in i18n.available()
+            for loc in locs
             if loc.tag != locale
         ]
     lines += [
@@ -495,7 +614,7 @@ def nav_html(current: Page, locale: str = "en", *, every_part: bool = False) -> 
         f'                <ul style="list-style:none;padding:0;margin:0">{plats}</ul></li>\n'
         '              <li class="signin"><a href="/ui/login" data-t="chrome.nav.signin">'
         "Console sign-in</a></li>\n"
-        f"{_langs_menu(locale, always=every_part)}"
+        f"{_langs_menu(locale, current, always=every_part)}"
         "            </ul>\n"
         "          </div>\n"
         "        </details>\n"
@@ -511,41 +630,53 @@ _GLOBE = (
 )
 
 
-def _lang_links(locale: str, locs: tuple[i18n.Locale, ...]) -> str:
+def _lang_links(locale: str, locs: tuple[i18n.Locale, ...], page: Page) -> str:
+    """One link per language, each to this same page in that language."""
     current = ' aria-current="true"'
     return "".join(
-        f'<li><a href="{i18n.home_path(loc.tag)}?lang={loc.tag}" hreflang="{loc.tag}" '
+        f'<li><a href="{i18n.page_path(page, loc.tag)}?lang={loc.tag}" hreflang="{loc.tag}" '
         f'lang="{loc.tag}"{current if loc.tag == locale else ""}>{html.escape(loc.name)}</a></li>'
         for loc in locs
     )
 
 
-def _langs_menu(locale: str, *, always: bool = False) -> str:
+def _switch_locales(page: Page, always: bool) -> tuple[i18n.Locale, ...]:
+    """The languages the switcher offers on `page`: those it ships in (all
+    of them while writing the source catalog)."""
+    if always:
+        return i18n.LOCALES
+    if page is NOT_FOUND:
+        return ()  # a 404 has no "same page" elsewhere
+    return i18n.page_locales(page)
+
+
+def _langs_menu(locale: str, page: Page, *, always: bool = False) -> str:
     """The same list inside the phone's menu sheet, where the bar has no
     room for the switcher (the CSS shows one or the other)."""
-    locs = i18n.LOCALES if always else i18n.available()
+    locs = _switch_locales(page, always)
     if len(locs) < 2:
         return ""
     return (
         f'              <li class="langs-m"><span class="langs-h">{_GLOBE}'
         '<span data-t="chrome.lang.heading">Language</span></span>\n'
-        f"                <ul>{_lang_links(locale, locs)}</ul></li>\n"
+        f"                <ul>{_lang_links(locale, locs, page)}</ul></li>\n"
     )
 
 
-def langs_html(locale: str = "en", *, always: bool = False) -> str:
+def langs_html(locale: str = "en", page: Page = HOME, *, always: bool = False) -> str:
     """The language switcher in the top bar: the current language's own
-    name, and a list of every published one, English first. Each item is a
-    plain link whose ?lang= the server turns into the lw_lang cookie before
-    redirecting to the clean URL, so it works without scripts. Translated
-    pages add a visible "English" link beside it. Nothing at all while
-    English is the only language published."""
-    locs = i18n.LOCALES if always else i18n.available()
+    name, and a list of every language this page is published in, English
+    first, each linking to this same page in that language. Each item is a
+    plain link whose ?lang= the server turns into the lw_lang cookie, so it
+    works without scripts. Translated pages add a visible "English" link to
+    the same page in English beside it. Nothing at all while English is the
+    only language this page is published in."""
+    locs = _switch_locales(page, always)
     if len(locs) < 2:
         return ""
     e = html.escape
     here = i18n.locale(locale)
-    items = _lang_links(locale, locs)
+    items = _lang_links(locale, locs, page)
     out = (
         '      <details class="langsw">\n'
         f'        <summary>{_GLOBE}<span class="vh" data-t="chrome.lang.label">Language:</span> '
@@ -555,7 +686,8 @@ def langs_html(locale: str = "en", *, always: bool = False) -> str:
     )
     if locale != "en":
         out += (
-            '      <a class="en-link" href="/?lang=en" hreflang="en" lang="en" '
+            f'      <a class="en-link" href="{i18n.page_path(page, "en")}?lang=en" hreflang="en" '
+            'lang="en" '
             'aria-label="English">'
             '<span class="full">English</span><span class="short" aria-hidden="true">EN</span>'
             "</a>\n"
@@ -563,18 +695,79 @@ def langs_html(locale: str = "en", *, always: bool = False) -> str:
     return out
 
 
+def _crumb_key(path: str) -> str:
+    """The segment key of a breadcrumb label: common.crumb.<page path>. A
+    coding-agent page's own crumb is the client's name and has none."""
+    if path == "/":
+        return "common.crumb.home"
+    if path.startswith("/coding-agents/"):
+        return ""
+    return "common.crumb." + path.strip("/")
+
+
+def _trail(page: Page, locale: str) -> list[tuple[str, str, str]]:
+    """The breadcrumb trail: (label HTML in `locale`, path in `locale`,
+    segment key or "")."""
+    out = []
+    for label, path in (("Home", "/"), *page.crumbs):
+        key = _crumb_key(path)
+        english = html.escape(label)
+        target = _page_by_path().get(path)
+        if target is not None and i18n.page_ships(target, locale):
+            path = i18n.page_path(target, locale)
+        out.append((i18n.text(locale, key, english) if key else english, path, key))
+    return out
+
+
 def crumbs_html(page: Page) -> str:
+    """The breadcrumb, in English with markers (translated like the page;
+    its links are localized with the rest, localize_links)."""
     if not page.crumbs:
         return ""
-    items = ['<li><a href="/">Home</a></li>']
-    for i, (label, path) in enumerate(page.crumbs):
-        cur = ' aria-current="page"' if i == len(page.crumbs) - 1 else ""
-        items.append(f'<li><a href="{path}"{cur}>{html.escape(label)}</a></li>')
+    items = []
+    trail = _trail(page, "en")
+    for i, (label, path, key) in enumerate(trail):
+        cur = ' aria-current="page"' if i == len(trail) - 1 and i else ""
+        mark = f' data-t="{key}"' if key else ""
+        items.append(f'<li><a href="{path}"{cur}{mark}>{label}</a></li>')
     return (
-        '    <nav class="crumbs" aria-label="Breadcrumb"><div class="wrap"><ol>'
+        '    <nav class="crumbs" aria-label="Breadcrumb" '
+        'data-t-aria-label="common.crumbs.aria-label"><div class="wrap"><ol>'
         + "".join(items)
         + "</ol></div></nav>\n"
     )
+
+
+@lru_cache(maxsize=1)
+def _page_by_path() -> dict[str, Page]:
+    """Every routed page by its English path: the registry and the
+    coding-agent pages."""
+    from app.landing.clients import CLIENT_PAGES
+
+    return {p.path: p for p in (*PAGES, *CLIENT_PAGES.values())}
+
+
+_HREF_RE = re.compile(r'\bhref="(/[^"#?]*)([^"]*)"')
+
+
+def localize_links(body: str, locale: str) -> str:
+    """Links to the site's own pages, rewritten to the same pages in
+    `locale` where they are published there ("/faq" -> "/de/faq", "/#why"
+    -> "/de/#why"); a page not published in `locale` keeps its English
+    link. Everything else -- other hosts, /ui/, /download/, /llms.txt,
+    assets, and the switcher's ?lang= links -- is left as written."""
+    if locale == "en":
+        return body
+    pages = _page_by_path()
+
+    def sub(m: re.Match[str]) -> str:
+        path, rest = m.group(1), m.group(2)
+        target = pages.get(path)
+        if target is None or "lang=" in rest or not i18n.page_ships(target, locale):
+            return m.group(0)
+        return f'href="{i18n.page_path(target, locale)}{rest}"'
+
+    return _HREF_RE.sub(sub, body)
 
 
 #: Links to the single page's sections (README, catalogue, bookmarks) still
@@ -612,9 +805,11 @@ def page_source(
     page: Page, analytics: Analytics, locale: str = "en", *, every_part: bool = False
 ) -> str:
     """The page's marked template: layout, body and the chrome generated
-    here (menu, switcher, cookie banner), with i18n markers and the
-    remaining {{tokens}} still in place."""
-    from app.landing.clients import client_body, client_def
+    here (menu, switcher, cookie banner), plus the generated blocks that
+    carry their own markers (the FAQ, the clients table, the generic flow
+    figure), with i18n markers and the remaining {{tokens}} still in place."""
+    from app.landing.clients import client_body, client_def, clients_table_html
+    from app.landing.diagrams import GENERIC, figure_html
 
     home = page.path == "/"
     if page.client_id:
@@ -624,8 +819,13 @@ def page_source(
     src = _LAYOUT_SRC.replace("{{body}}\n", body)
     src = src.replace("{{preload}}", _POSTER_PRELOAD if home else "", 1)
     chrome = {
+        "faq": _faq_html(),
+        "clients_table": clients_table_html(),
+        "flow_generic": figure_html(
+            GENERIC, "flow-generic", _GENERIC_CAPTION, key="coding-agents.flow"
+        ),
         "nav": nav_html(page, locale, every_part=every_part),
-        "langs": langs_html(locale, always=every_part),
+        "langs": langs_html(locale, page, always=every_part),
         "crumbs": crumbs_html(page),
         "tag": tag_html(analytics),
         "banner": banner_html(analytics),
@@ -642,23 +842,40 @@ def page_source(
     return src
 
 
-@lru_cache(maxsize=256)
+@lru_cache(maxsize=1024)
 def render_page(page: Page, origin: str, analytics: Analytics, locale: str = "en") -> str:
     """One page for one canonical origin ("" = private instance), one set
-    of tracking IDs and one language (Home only; every other page is
-    English). Body first, then the layout, so tokens inside the body
-    (assets, figures, the FAQ) are filled by the same pass; segments are
-    translated before the tokens are filled, so a translation carries the
-    same {{tokens}} as its English."""
-    from app.landing.clients import clients_table_html
-    from app.landing.diagrams import GENERIC, figure_html
-
-    home = page.path == "/"
-    if not home:
-        locale = "en"
+    of tracking IDs and one language (the caller checks the page is
+    published in it: i18n.page_ships). Body first, then the layout, so
+    tokens inside the body (assets, figures) are filled by the same pass;
+    segments are translated before the tokens are filled, so a translation
+    carries the same {{tokens}} as its English. Last, links to the site's
+    own pages are pointed at their versions in `locale`."""
     src = i18n.translate(page_source(page, analytics, locale), locale)
-    title = _t(locale, "meta.title") if home else page.title
-    description = _t(locale, "meta.description") if home else page.description
+    title, description = page_meta(page, locale)
+    return localize_links(
+        _render_fill(src, page, origin, analytics, locale, title, description), locale
+    )
+
+
+def _client_tokens(page: Page) -> dict[str, str]:
+    if not page.client_id:
+        return {}
+    from app.landing.clients import client_def, docs_tokens
+
+    return docs_tokens(client_def(page.client_id))
+
+
+def _render_fill(
+    src: str,
+    page: Page,
+    origin: str,
+    analytics: Analytics,
+    locale: str,
+    title: str,
+    description: str,
+) -> str:
+    home = page.path == "/"
     return _fill(
         src,
         {
@@ -668,26 +885,19 @@ def render_page(page: Page, origin: str, analytics: Analytics, locale: str = "en
             "description": html.escape(description),
             "head": _head(origin, page, locale),
             "jsonld": _jsonld(origin, page, locale),
-            "faq": _faq_html(),
             "repo": REPO_URL,
             "mac_release": MAC_RELEASE_URL,
             "mac_dmg": MAC_DMG_NAME,
             "install": _install_html(),
             "page_css": _STYLES["home" if home else "content"] + "\n" + _STYLES["figures"],
             "anchors": _ANCHORS if home else "",
-            "clients_table": clients_table_html(),
-            "flow_generic": figure_html(GENERIC, "flow-generic", _GENERIC_CAPTION),
-            "privacy_ads": (
-                " Google Ads measures whether ads bring people here, and its "
-                "advertising cookies follow the same consent choice."
-                if analytics.ads_id
-                else ""
-            ),
-            "privacy_contact": (
-                ' Write to <a href="mailto:info@podwarden.com">info@podwarden.com</a> '
-                "with any question about this site."
+            **_client_tokens(page),
+            "privacy_ads": _t(locale, "privacy.ads") if analytics.ads_id else "",
+            "privacy_contact": _t(
+                locale,
+                "privacy.contact-official"
                 if origin == OFFICIAL_ORIGIN
-                else " Questions about this site go to the operator of this site."
+                else "privacy.contact-operator",
             ),
             "gsc": (
                 f'  <meta name="google-site-verification" '
@@ -707,6 +917,7 @@ def _note(seg: i18n.Segment, english: str) -> str:
             "alt": "image alt text",
             "aria-label": "screen-reader label",
             "title": "tooltip",
+            "data-h": "column label shown above a table cell on phones",
         }.get(seg.attr, "label read by a script")
     else:
         kind = {
@@ -746,29 +957,61 @@ _LIMITS: dict[str, int] = {
     "chrome.lang.heading": 20,
     "chrome.lang.label": 20,
     "chrome.copy.done": 14,
+    "common.copy": 14,
     "home.hero.a-1": 30,
     "home.hero.a-2": 30,
     "home.p-mac.a-1": 32,
 }
 
 
-def source_catalog() -> dict[str, dict[str, str]]:
-    """Every translatable segment of Home and its chrome, in page order:
-    key -> {text, note, hash}. en.json is this, written to disk."""
-    tagged = Analytics(ga4_id="G-SOURCE")  # so the cookie banner's segments are present
-    src = page_source(HOME, tagged, "en", every_part=True)
+def pages_of(part: str) -> list[Page]:
+    """Every page whose text draws on `part` (the 404 page included)."""
+    from app.landing.clients import CLIENT_PAGES
+
+    return [p for p in (*PAGES, NOT_FOUND, *CLIENT_PAGES.values()) if part in i18n.page_parts(p)]
+
+
+def marked_source(page: Page) -> str:
+    """A page's marked English with every optional part present (the cookie
+    banner, the Ads sentence): what the source catalog and the coverage
+    test read."""
+    tagged = Analytics(ga4_id="G-SOURCE", ads_id="AW-SOURCE")
+    return page_source(page, tagged, "en", every_part=True)
+
+
+@lru_cache(maxsize=32)
+def source_catalog(part: str = "home") -> dict[str, dict[str, str]]:
+    """Every translatable segment of one part, in page order: key -> {text,
+    note, hash}. en.json (part "home") and en/<part>.json are this, written
+    to disk. A key marking different English on two pages is an error."""
     out: dict[str, dict[str, str]] = {}
-    for key, (english, note) in PY_SEGMENTS.items():
+    py = (
+        PY_SEGMENTS
+        if part == "home"
+        else {k: v for k, v in PART_PY_SEGMENTS.items() if i18n.part_of(k) == part}
+    )
+    for key, (english, note) in py.items():
         out[key] = {"text": english, "note": note, "hash": i18n.source_hash(english)}
-    for seg in i18n.segments(src):
-        english = src[seg.start : seg.end]
-        if seg.key in out:
-            raise ValueError(f"segment key {seg.key!r} used twice")
-        out[seg.key] = {
-            "text": english,
-            "note": _note(seg, english),
-            "hash": i18n.source_hash(english),
-        }
+    pages = [HOME] if part == "home" else pages_of(part)
+    for page in pages:
+        src = (
+            page_source(HOME, Analytics(ga4_id="G-SOURCE"), "en", every_part=True)
+            if (page is HOME)
+            else marked_source(page)
+        )
+        for seg in i18n.segments(src):
+            if i18n.part_of(seg.key) != part:
+                continue
+            english = src[seg.start : seg.end]
+            if seg.key in out:
+                if out[seg.key]["text"] != english:
+                    raise ValueError(f"segment key {seg.key!r} marks different English")
+                continue
+            out[seg.key] = {
+                "text": english,
+                "note": _note(seg, english),
+                "hash": i18n.source_hash(english),
+            }
     return out
 
 

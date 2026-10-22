@@ -1,0 +1,18 @@
+{
+  "not-found.meta.title": {
+    "text": "पेज नहीं मिला | LM Warden",
+    "source_hash": "9997b967a0f9"
+  },
+  "not-found.meta.description": {
+    "text": "यह पेज LM Warden वेबसाइट पर मौजूद नहीं है।",
+    "source_hash": "f56b56b08c51"
+  },
+  "not-found.nf.h1-1": {
+    "text": "यह पेज यहाँ नहीं है।",
+    "source_hash": "0a4c2fc34b17"
+  },
+  "not-found.p-1": {
+    "text": "हो सकता है कि यह साइट के एक पेज से कई पेज में बँटने के दौरान कहीं और चला गया हो। <a href=\"/\">होम पेज</a>, <a href=\"/coding-agents\">कोडिंग एजेंट</a>, <a href=\"/agent-tuning\">एजेंट ट्यूनिंग</a> या <a href=\"/faq\">सामान्य प्रश्न</a> देखें।",
+    "source_hash": "701d00dd6585"
+  }
+}

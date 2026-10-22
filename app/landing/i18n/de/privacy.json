@@ -1,0 +1,66 @@
+{
+  "privacy.meta.title": {
+    "text": "Datenschutz und Cookies | LM Warden",
+    "source_hash": "ec9b140b1cc8"
+  },
+  "privacy.meta.description": {
+    "text": "Was diese Website mit Google Analytics misst, wann sie vorher fragt und wie Sie Ihre Wahl ändern.",
+    "source_hash": "de30b21dbdc3"
+  },
+  "privacy.ads": {
+    "text": " Google Ads misst, ob Anzeigen Besucher hierher bringen, und seine Werbe-Cookies folgen derselben Einwilligungsentscheidung.",
+    "source_hash": "9b2a078e8838"
+  },
+  "privacy.contact-official": {
+    "text": " Schreiben Sie bei Fragen zu dieser Website an <a href=\"mailto:info@podwarden.com\">info@podwarden.com</a>.",
+    "source_hash": "eebc1d21c39b"
+  },
+  "privacy.contact-operator": {
+    "text": " Fragen zu dieser Website richten Sie an ihren Betreiber.",
+    "source_hash": "914390fc9adc"
+  },
+  "privacy.privacy.h1-1": {
+    "text": "Datenschutz und Cookies.",
+    "source_hash": "f940c0a0e353"
+  },
+  "privacy.p-1": {
+    "text": "Diese Website wird von LM Warden ausgeliefert, selbst gehostet vom Betreiber dieser Website. Sie hat keine Konten, keine Formulare und keine Kommentare, daher kann sie nur die personenbezogenen Daten verarbeiten, die ein Besuch selbst preisgibt.",
+    "source_hash": "b3509e8a2750"
+  },
+  "privacy.h2-1": {
+    "text": "Was gemessen wird",
+    "source_hash": "dd9acabe8622"
+  },
+  "privacy.p-2": {
+    "text": "Der Betreiber dieser Website verwendet Google Analytics 4, um Besuche zu zählen und zu sehen, welche Seiten gelesen werden.{{privacy_ads}} Drei Aktionen werden erfasst: das Kopieren des Installationsbefehls und das Folgen eines Links zu GitHub oder zu PodWarden.",
+    "source_hash": "8de08e36eb6d"
+  },
+  "privacy.h2-2": {
+    "text": "Wann Sie vorher gefragt werden",
+    "source_hash": "910b22425fed"
+  },
+  "privacy.p-3": {
+    "text": "Beim ersten Besuch fragt ein Banner, ob Sie Analyse-Cookies erlauben. Bis Sie wählen, und wenn Sie ablehnen, läuft das Tag von Google im Einwilligungsmodus: Es setzt keine Cookies und sendet Google nur anonyme, cookielose Signale, anhand derer Sie über mehrere Besuche hinweg nicht wiedererkannt werden können. Wenn Sie zustimmen, setzt Google seine Analyse-Cookies (namens <code>_ga</code> und ähnlich), die bis zu zwei Jahre gelten.",
+    "source_hash": "9405f2778a61"
+  },
+  "privacy.h2-3": {
+    "text": "Einwilligung ändern",
+    "source_hash": "3aa95e4c746f"
+  },
+  "privacy.p-4": {
+    "text": "Über die <a href=\"/privacy\" data-consent-open>Cookie-Einstellungen</a> rufen Sie das Banner erneut auf; alternativ löschen Sie die Daten dieser Website in Ihrem Browser. Ihre Wahl wird im lokalen Speicher Ihres Browsers unter <code>lmw-consent</code> gespeichert.",
+    "source_hash": "319e165f9018"
+  },
+  "privacy.h2-4": {
+    "text": "Wer die Daten verarbeitet",
+    "source_hash": "795028f063d5"
+  },
+  "privacy.p-5": {
+    "text": "Google LLC verarbeitet die Messdaten nach eigenen Bedingungen; siehe <a href=\"https://policies.google.com/technologies/partner-sites\" rel=\"noopener\">wie Google Informationen von Websites verwendet, die seine Dienste nutzen</a>.{{privacy_contact}}",
+    "source_hash": "112b969b0be0"
+  },
+  "privacy.p-6": {
+    "text": "Die Software LM Warden selbst sendet nichts an ihre Autoren oder an Google. Nur diese öffentliche Website, deren Betreiber eine Tracking-ID eingetragen hat, lädt das Tag von Google.",
+    "source_hash": "0d38cc82e109"
+  }
+}

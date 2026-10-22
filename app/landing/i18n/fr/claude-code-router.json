@@ -1,0 +1,70 @@
+{
+  "claude-code-router.router.h2-1": {
+    "text": "Un seul <code>ANTHROPIC_BASE_URL</code>, deux sources de réponse possibles.",
+    "source_hash": "88b4b60f90dc"
+  },
+  "claude-code-router.p-1": {
+    "text": "Chaque requête que Claude Code envoie à Anthropic est décomptée des limites d’utilisation de votre abonnement, ou facturée au jeton sur une clé API, et fait sortir son prompt, votre code compris, de votre machine. Beaucoup de ces requêtes sont petites. Traitez-les sur des cartes que vous possédez déjà : elles ne coûtent que de l’électricité, ne sont pas décomptées de vos limites, et leurs prompts restent sur votre machine.",
+    "source_hash": "47eae55f59c6"
+  },
+  "claude-code-router.p-2": {
+    "text": "Claude lui-même ne tourne jamais ici. Une règle désigne les modèles Claude que cette machine remplace, <code>claude-haiku*</code> par exemple, et un modèle que vous avez chargé répond à leur place, sous le nom demandé par Claude Code. Tout le reste, Opus compris, est transmis à Anthropic octet pour octet avec vos propres identifiants, streaming compris. Votre clé warden est transmise dans un en-tête distinct : vos identifiants ne sont donc jamais modifiés, et rien n’est relayé pour une clé qui n’a pas l’option « May relay to Anthropic ».",
+    "source_hash": "23f00b590b6a"
+  },
+  "claude-code-router.p-3": {
+    "text": "Un petit modèle suffit-il ? Nous n’avons pas mesuré la qualité des réponses : c’est donc une appréciation, pas un benchmark. Claude Code utilise son modèle de la classe Haiku pour les tâches de fond plus légères ; un petit modèle local peut raisonnablement le remplacer pour celles-ci et pour des modifications simples et bien définies. Pour les changements touchant de nombreux fichiers, le débogage et les plans de longue haleine, gardez Sonnet et Opus chez Anthropic : c’est ce que fait la règle par défaut, sauf si vous ajoutez une règle. Un modèle plus gros sur des cartes plus puissantes déplace cette limite ; nos mesures avec Claude Code et les réplicas, ci-dessous, ont été faites avec un modèle 4B.",
+    "source_hash": "b554407d17a9"
+  },
+  "claude-code-router.p-4": {
+    "text": "Dimensionnez le contexte pour Claude Code, pas pour le chat : son premier tour dans notre session faisait 38 167 jetons, donc le modèle local a besoin de bien plus de 40 k jetons de contexte.",
+    "source_hash": "f87b272c3f76"
+  },
+  "claude-code-router.figcaption-1": {
+    "text": "<b>Fig.&nbsp;2</b>Où va une requête. Les règles sont essayées dans l’ordre et la première correspondance l’emporte. Une réponse locale passe par le même ordonnanceur et le même routeur de réplicas que toute autre requête ; un réplica est une copie complète du modèle, ici une par GPU. En cas d’échec local avant le premier octet, la requête part chez Anthropic ou revient sous forme d’une erreur 529 que Claude Code réessaie ; après 3 échecs d’affilée, le disjoncteur du modèle s’ouvre : pendant 60&#8239;s, plus rien ne lui est envoyé.",
+    "source_hash": "462151461bb5"
+  },
+  "claude-code-router.p-5": {
+    "text": "En clair : Claude Code envoie la requête au warden avec ses propres identifiants Anthropic dans Authorization et la clé warden dans X-LMWarden-Key. Le warden essaie ses règles dans l’ordre. Une requête pour un modèle désigné par une règle est traduite, mise en file par l’ordonnanceur et envoyée par le routeur de réplicas à un réplica vLLM. Toute autre requête, par exemple pour Opus, est transmise à api.anthropic.com avec les identifiants transférés et la clé warden retirée. Si la partie locale échoue avant son premier octet, la requête part chez Anthropic, ou la règle la refuse avec une erreur 529 que Claude Code réessaie.",
+    "source_hash": "038dbec78e21"
+  },
+  "claude-code-router.p-6": {
+    "text": "Claude Code 2.1.227 ou version ultérieure. Restez connecté à <code>claude</code> comme d’habitude ; la clé va dans un en-tête distinct, pas dans <code>ANTHROPIC_API_KEY</code>.",
+    "source_hash": "bd9385d02ca7"
+  },
+  "claude-code-router.img-1.alt": {
+    "text": "La page Router de la console. Un bandeau vert indique « Routing normally » et « 96% answered locally since 13:38 ». Sous « Where each Claude model goes. First match wins », la règle 1 envoie claude-haiku* au modèle chargé qwen3-4b-dp4, avec « If it fails: Anthropic » et « Thinking off ». La dernière ligne est la règle par défaut : tous les autres modèles Claude et chemins /v1 partent chez Anthropic avec les identifiants de l’utilisateur et exigent une clé dotée de l’option « May relay to Anthropic ». Le panneau Traffic compte 107 requêtes en local, 2 transmises à Anthropic, 0 repli sur Anthropic et 2 refusées ou en erreur, et liste deux motifs, no_upstream_credential et relay_not_allowed, un de chaque.",
+    "source_hash": "3f1f5682c2a4"
+  },
+  "claude-code-router.span-1": {
+    "text": "La première correspondance l’emporte ; tous les autres modèles vont chez Anthropic",
+    "source_hash": "d0410896bcb4"
+  },
+  "claude-code-router.span-2": {
+    "text": "Anthropic est contacté avec les identifiants de l’utilisateur",
+    "source_hash": "6d3dcb885877"
+  },
+  "claude-code-router.figcaption-2": {
+    "text": "<b>Fig.&nbsp;3</b>La page Router, le warden tournant depuis 13 h 38 : « Routing normally », 96 % des requêtes traitées en local depuis le redémarrage. Une règle envoie <code>claude-haiku*</code> à un modèle local et la règle par défaut transmet tout le reste à Anthropic ; les règles sont numérotées dans l’ordre où elles sont essayées. Le panneau Traffic compte 107 requêtes en local, 2 transmises, 0 repli et 2 refusées.<span class=\"scroll-hint\"> Faites défiler l’image horizontalement pour voir toute la page.</span>",
+    "source_hash": "b4aee34de008"
+  },
+  "claude-code-router.p-7": {
+    "text": "Attendez-vous à ce que le premier tour soit le plus lent. Dans une session précédente, le premier tour de Claude Code faisait 38 167 jetons et le modèle local était chargé avec un contexte de 32 768 jetons : le moteur l’a donc refusé (<code>status_400</code>) et la requête est partie chez Anthropic. Avec le contexte porté à 65 536 jetons et un cache KV fp8 (le cache d’attention stocké sur 8 bits, soit moitié moins de mémoire), le modèle 4B sur des cartes de 16&#8239;Gio a traité ce même tour en local en 28&#8239;s, avec tout le prompt de 38 k jetons lu à froid, sans rien encore dans le cache. Les tours suivants d’une conversation trouvent l’essentiel de leur prompt déjà dans le cache du moteur : le délai médian avant le premier octet pour la règle <code>claude-haiku*</code> de la fig.&nbsp;4 est de 290&#8239;ms.",
+    "source_hash": "174e92b8be51"
+  },
+  "claude-code-router.img-2.alt": {
+    "text": "La page d’activité Router. Quatre compteurs : local 107, transmises à Anthropic 2, repli 0, et refusées · erreurs 2 · 0. Un tableau « By rule » donne la règle claude-haiku* vers qwen3-4b-dp4 avec ses nombres de réponses locales, de replis et de refus, la latence et le délai avant le premier octet en p50 et p95, et l’état de son disjoncteur, fermé ; la ligne de transmission donne les mêmes délais pour les requêtes transmises à Anthropic. Un tableau des modèles locaux montre qwen3-4b-dp4 avec son disjoncteur fermé, et un panneau « Fallback reasons » liste no_upstream_credential et relay_not_allowed, un de chaque.",
+    "source_hash": "1dcf45e042e8"
+  },
+  "claude-code-router.span-3": {
+    "text": "Le disjoncteur de ce modèle : fermé",
+    "source_hash": "e7811be1957f"
+  },
+  "claude-code-router.span-4": {
+    "text": "Pourquoi une règle a renvoyé vers Anthropic ou refusé, par motif",
+    "source_hash": "8c3c6830836a"
+  },
+  "claude-code-router.figcaption-3": {
+    "text": "<b>Fig.&nbsp;4</b>L’activité du Router sur la même période : 107 requêtes traitées en local, 2 transmises à Anthropic, 0 repli, et 2 refusées avec 0 erreur. En dessous, la latence et le délai avant le premier octet par règle en p50 et p95, le disjoncteur de chaque modèle local, et les motifs pour lesquels une règle a renvoyé vers Anthropic ou refusé. Les compteurs sont propres à chaque processus ; un redémarrage les remet à zéro. Relevé le 4&nbsp;octobre&nbsp;2026.<span class=\"scroll-hint\"> Faites défiler l’image horizontalement pour voir toute la page.</span>",
+    "source_hash": "e6294c26fbc5"
+  }
+}

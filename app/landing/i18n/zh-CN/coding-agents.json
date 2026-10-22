@@ -1,0 +1,42 @@
+{
+  "coding-agents.meta.title": {
+    "text": "在你自己的 GPU 上运行编程智能体 | LM Warden",
+    "source_hash": "cec26df70a65"
+  },
+  "coding-agents.meta.description": {
+    "text": "让 Claude Code、Codex CLI、OpenCode、Aider、Cline、Cursor 等使用你自己 GPU 上的模型，支持 Linux 或 Mac，配置自动为你写好。",
+    "source_hash": "d4374722fecc"
+  },
+  "coding-agents.agents.h1-1": {
+    "text": "你的编程智能体，运行在你自己的 GPU 上。",
+    "source_hash": "e01f3269f454"
+  },
+  "coding-agents.p-1": {
+    "text": "LM Warden 支持编程智能体使用的三种协议：OpenAI Chat Completions、Anthropic Messages API 和 OpenAI Responses API。因此 Claude Code、Anthropic 和 OpenAI SDK、OpenCode、Aider、Grok&nbsp;CLI、Continue、Cline、Cursor 和 Codex&nbsp;CLI 只需一个 Base URL 和一个密钥即可连接，它们的请求按密钥、按会话显示，并标出每个请求所处的阶段。",
+    "source_hash": "b8783c59365c"
+  },
+  "coding-agents.flow.title": {
+    "text": "来自你的编程智能体的请求去往何处",
+    "source_hash": "b2c49ca0b033"
+  },
+  "coding-agents.flow.desc": {
+    "text": "你的编程智能体把请求发送给 LM Warden，Base URL 设为 warden，API 密钥填写 warden 密钥。LM Warden 检查密钥，支持 OpenAI 和 Anthropic API，按密钥优先级为请求排队，并交给副本路由器。路由器让每个会话留在已持有其缓存的副本上（每块 GPU 一个模型副本）。另有一条单独的路径通往 api.anthropic.com（仅限 Claude Code）：其他 Claude 模型经由这条路径，使用你自己的登录。",
+    "source_hash": "c24325d4bacf"
+  },
+  "coding-agents.flow.caption": {
+    "text": "来自编程智能体的请求去往何处。每个智能体都设置同样的两项：一个 Base URL 和一个密钥；warden 检查密钥，为请求排队，并发送到已持有该会话缓存的副本。每个智能体的页面会画出它自己的设置。",
+    "source_hash": "4c8a44e2f320"
+  },
+  "coding-agents.p-2": {
+    "text": "你不需要手写配置。在控制台的 <strong>Connect</strong> 中选好客户端、模型和密钥，它就会写出可直接粘贴的文件。下面每个页面都用占位符展示同样的文件，并说明哪些功能可用。",
+    "source_hash": "75d2dc8f6796"
+  },
+  "coding-agents.p-3": {
+    "text": "没有你的客户端？请在 <a href=\"https://github.com/Podwarden/lm-warden/discussions/new?category=ideas\" rel=\"noopener\">GitHub Discussions</a> 中提出。",
+    "source_hash": "91f99cd9235e"
+  },
+  "coding-agents.p-4": {
+    "text": "相关内容：<a href=\"/agent-tuning\">让你的智能体选择模型</a> · <a href=\"/cache-aware-routing\">缓存感知路由</a> · <a href=\"/faq\">常见问题</a>",
+    "source_hash": "0ced1cfb6f5c"
+  }
+}

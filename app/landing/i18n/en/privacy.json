@@ -1,0 +1,82 @@
+{
+  "privacy.meta.title": {
+    "text": "Privacy and cookies | LM Warden",
+    "note": "The browser tab and the search-result title. Keep the part after | as it is; at most 65 characters.",
+    "hash": "ec9b140b1cc8"
+  },
+  "privacy.meta.description": {
+    "text": "What this site measures with Google Analytics, when it asks first, and how to change your choice.",
+    "note": "The search-result snippet and link-preview text. At most 160 characters.",
+    "hash": "de30b21dbdc3"
+  },
+  "privacy.ads": {
+    "text": " Google Ads measures whether ads bring people here, and its advertising cookies follow the same consent choice.",
+    "note": "Inserted after the sentence on Google Analytics 4 when a Google Ads ID is set; starts with a space.",
+    "hash": "9b2a078e8838"
+  },
+  "privacy.contact-official": {
+    "text": " Write to <a href=\"mailto:info@podwarden.com\">info@podwarden.com</a> with any question about this site.",
+    "note": "Ends the 'Who processes the data' paragraph on lmwarden.com; starts with a space.",
+    "hash": "eebc1d21c39b"
+  },
+  "privacy.contact-operator": {
+    "text": " Questions about this site go to the operator of this site.",
+    "note": "Ends the same paragraph on anyone else's copy of the site; starts with a space.",
+    "hash": "914390fc9adc"
+  },
+  "privacy.privacy.h1-1": {
+    "text": "Privacy and cookies.",
+    "note": "page headline (#privacy-title)",
+    "hash": "f940c0a0e353"
+  },
+  "privacy.p-1": {
+    "text": "This website is served by LM Warden, self-hosted by the operator of this site. It has no accounts, no forms and no comments, so the only personal data it can touch is what a visit itself reveals.",
+    "note": "text (#main)",
+    "hash": "b3509e8a2750"
+  },
+  "privacy.h2-1": {
+    "text": "What is measured",
+    "note": "section heading (#main)",
+    "hash": "dd9acabe8622"
+  },
+  "privacy.p-2": {
+    "text": "The operator of this site uses Google Analytics 4 to count visits and see which pages people read.{{privacy_ads}} Three actions are recorded: copying the install command, and following a link to GitHub or to PodWarden.",
+    "note": "text (#main)",
+    "hash": "8de08e36eb6d"
+  },
+  "privacy.h2-2": {
+    "text": "When you are asked first",
+    "note": "section heading (#main)",
+    "hash": "910b22425fed"
+  },
+  "privacy.p-3": {
+    "text": "On your first visit a banner asks whether you allow analytics cookies. Until you choose, and if you decline, Google’s tag runs in its consent mode: it sets no cookies and sends Google only anonymous, cookieless signals that cannot identify you across visits. If you accept, Google sets its analytics cookies (named <code>_ga</code> and similar), which last up to two years.",
+    "note": "text (#main)",
+    "hash": "9405f2778a61"
+  },
+  "privacy.h2-3": {
+    "text": "Changing your mind",
+    "note": "section heading (#main)",
+    "hash": "3aa95e4c746f"
+  },
+  "privacy.p-4": {
+    "text": "Use <a href=\"/privacy\" data-consent-open>cookie settings</a> to see the banner again, or clear this site’s data in your browser. Your choice is kept in your browser’s local storage under <code>lmw-consent</code>.",
+    "note": "text (#main)",
+    "hash": "319e165f9018"
+  },
+  "privacy.h2-4": {
+    "text": "Who processes the data",
+    "note": "section heading (#main)",
+    "hash": "795028f063d5"
+  },
+  "privacy.p-5": {
+    "text": "Google LLC processes the measurement data under its own terms; see <a href=\"https://policies.google.com/technologies/partner-sites\" rel=\"noopener\">how Google uses information from sites that use its services</a>.{{privacy_contact}}",
+    "note": "text (#main)",
+    "hash": "112b969b0be0"
+  },
+  "privacy.p-6": {
+    "text": "The LM Warden software itself sends nothing to its authors or to Google. Only this public website, where its operator has entered a tracking ID, loads Google’s tag.",
+    "note": "text (#main)",
+    "hash": "0d38cc82e109"
+  }
+}

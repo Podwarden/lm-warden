@@ -1,0 +1,18 @@
+{
+  "not-found.meta.title": {
+    "text": "Seite nicht gefunden | LM Warden",
+    "source_hash": "9997b967a0f9"
+  },
+  "not-found.meta.description": {
+    "text": "Diese Seite gibt es auf der Website von LM Warden nicht.",
+    "source_hash": "f56b56b08c51"
+  },
+  "not-found.nf.h1-1": {
+    "text": "Diese Seite gibt es hier nicht.",
+    "source_hash": "0a4c2fc34b17"
+  },
+  "not-found.p-1": {
+    "text": "Vielleicht wurde sie verschoben, als diese Website von einer Seite auf mehrere wuchs. Weiter geht es zur <a href=\"/\">Startseite</a>, zu den <a href=\"/coding-agents\">Coding-Agenten</a>, zum <a href=\"/agent-tuning\">Agent-Tuning</a> oder zu den <a href=\"/faq\">FAQ</a>.",
+    "source_hash": "701d00dd6585"
+  }
+}

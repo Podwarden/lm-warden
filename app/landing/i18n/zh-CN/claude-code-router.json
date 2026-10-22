@@ -1,0 +1,70 @@
+{
+  "claude-code-router.router.h2-1": {
+    "text": "一个 <code>ANTHROPIC_BASE_URL</code>，回复可能来自两个地方。",
+    "source_hash": "88b4b60f90dc"
+  },
+  "claude-code-router.p-1": {
+    "text": "Claude Code 发给 Anthropic 的每个请求都会计入你套餐的用量限制，或者在 API 密钥上按 token 计费，并且会把它的提示词（包括你的代码）带出你的机器。这些请求中有很多都很小。用你已经拥有的显卡来应答它们，花费的只是电费，它们不计入你的用量限制，提示词也留在你的主机上。",
+    "source_hash": "47eae55f59c6"
+  },
+  "claude-code-router.p-2": {
+    "text": "Claude 本身从不在这里运行。由一条规则指定这台主机代为应答哪些 Claude 模型，例如 <code>claude-haiku*</code>，然后由你加载的某个模型以 Claude Code 请求的名称代替它们应答。其他任何请求（包括 Opus）都会以你自己的登录逐字节转发给 Anthropic，包括流式输出在内。你的 warden 密钥放在单独的标头中，因此登录信息从不被改动；对于没有“May relay to Anthropic”标记的密钥，不会转发任何内容。",
+    "source_hash": "23f00b590b6a"
+  },
+  "claude-code-router.p-3": {
+    "text": "小模型够用吗？我们没有测量过回答质量，所以这只是判断，不是基准测试。Claude Code 用它的 Haiku 级模型做较轻的后台工作，小型本地模型在这类工作以及简单、明确的编辑中是合理的替代。对于跨多个文件的修改、调试和长计划，请让 Sonnet 和 Opus 继续使用 Anthropic，在你添加规则之前，兜底规则默认就是这样处理的。更大的显卡上运行更大的模型会改变这条分界；我们下面关于 Claude Code 和副本的测量使用的是一个 4B 模型。",
+    "source_hash": "b554407d17a9"
+  },
+  "claude-code-router.p-4": {
+    "text": "上下文大小要按 Claude Code 的需要来设，而不是按聊天：在我们的会话中，它的第一轮就有 38,167 个 token，因此本地模型需要远超 40k token 的上下文。",
+    "source_hash": "f87b272c3f76"
+  },
+  "claude-code-router.figcaption-1": {
+    "text": "<b>图&nbsp;2</b>请求去往何处。规则按顺序尝试，第一个匹配的规则生效。本地应答和其他请求一样经过同一个调度器和副本路由器；一个副本就是模型的一份完整拷贝，这里每块 GPU 一个。在第一个字节之前发生的本地失败会转到 Anthropic，或者以 529 返回，由 Claude Code 重试；连续失败 3 次后，该模型的熔断器断开：60&#8239;s 内不会再向它发送任何请求。",
+    "source_hash": "462151461bb5"
+  },
+  "claude-code-router.p-5": {
+    "text": "文字说明：Claude Code 把请求发给 warden，Authorization 中带着它自己的 Anthropic 登录，X-LMWarden-Key 中带着 warden 密钥。warden 按顺序尝试它的规则。针对某条规则指定的模型的请求会被转换，由调度器排队，再由副本路由器发送到某一个 vLLM 副本。其他任何请求（例如 Opus）都会转发到 api.anthropic.com，登录信息原样转发，warden 密钥被移除。如果本地这一段在第一个字节之前失败，请求会转到 Anthropic，或者由规则以 529 拒绝，由 Claude Code 重试。",
+    "source_hash": "038dbec78e21"
+  },
+  "claude-code-router.p-6": {
+    "text": "需要 Claude Code 2.1.227 或更高版本。保留你平常的 <code>claude</code> 登录；密钥放在单独的标头中，而不是 <code>ANTHROPIC_API_KEY</code> 中。",
+    "source_hash": "bd9385d02ca7"
+  },
+  "claude-code-router.img-1.alt": {
+    "text": "控制台的 Router 页面。绿色横幅写着“Routing normally”和“96% answered locally since 13:38”。在“Where each Claude model goes. First match wins”下，规则 1 把 claude-haiku* 发往已加载的模型 qwen3-4b-dp4，带有“If it fails: Anthropic”和“Thinking off”。最后一行是兜底规则：其他所有 Claude 模型和 /v1 路径都以用户自己的登录发往 Anthropic，并且需要带有“May relay to Anthropic”的密钥。Traffic 面板统计本地 107 个、Anthropic 直通 2 个、回退到 Anthropic 0 个、拒绝或出错 2 个，并列出两个原因 no_upstream_credential 和 relay_not_allowed，各一次。",
+    "source_hash": "3f1f5682c2a4"
+  },
+  "claude-code-router.span-1": {
+    "text": "第一个匹配生效；其他所有模型都发往 Anthropic",
+    "source_hash": "d0410896bcb4"
+  },
+  "claude-code-router.span-2": {
+    "text": "以用户自己的登录访问 Anthropic",
+    "source_hash": "6d3dcb885877"
+  },
+  "claude-code-router.figcaption-2": {
+    "text": "<b>图&nbsp;3</b>warden 自 13:38 起运行后的 Router 页面：“Routing normally”，自重启以来 96% 的请求在本地应答。一条规则把 <code>claude-haiku*</code> 发往本地模型，兜底规则把其余所有请求转发给 Anthropic；规则按尝试顺序编号。Traffic 面板统计本地 107 个、直通 2 个、回退 0 个、拒绝 2 个。<span class=\"scroll-hint\">左右滚动图片可查看整个页面。</span>",
+    "source_hash": "b4aee34de008"
+  },
+  "claude-code-router.p-7": {
+    "text": "第一轮通常最慢。在之前的一次会话中，Claude Code 的第一轮有 38,167 个 token，而本地模型加载时的上下文是 32,768 个 token，因此引擎拒绝了它（<code>status_400</code>），请求改发给了 Anthropic。把上下文提高到 65,536 个 token 并使用 fp8 KV 缓存（注意力缓存以 8 位保存，内存减半）后，16&#8239;GiB 显卡上的 4B 模型在 28&#8239;s 内于本地应答了同样的这一轮，整个 38k token 的提示词都需从头读取，缓存中还什么都没有。对话的后续轮次会发现大部分提示词已经在引擎的缓存中：图&nbsp;4 中 <code>claude-haiku*</code> 规则的首字节时间中位数为 290&#8239;ms。",
+    "source_hash": "174e92b8be51"
+  },
+  "claude-code-router.img-2.alt": {
+    "text": "Router 活动页面。四个计数器：本地 107、Anthropic 直通 2、回退 0、拒绝 · 错误 2 · 0。“By rule”表格给出规则 claude-haiku* 到 qwen3-4b-dp4 的本地、回退和拒绝计数，p50 和 p95 的延迟和首字节时间，以及其熔断器状态 closed；直通一行给出转发给 Anthropic 的请求的同样计时。本地模型表格显示 qwen3-4b-dp4 的熔断器为 closed，“Fallback reasons”面板列出 no_upstream_credential 和 relay_not_allowed，各一次。",
+    "source_hash": "1dcf45e042e8"
+  },
+  "claude-code-router.span-3": {
+    "text": "该模型的熔断器：closed",
+    "source_hash": "e7811be1957f"
+  },
+  "claude-code-router.span-4": {
+    "text": "请求被规则转到 Anthropic 或被拒绝的原因，按原因分列",
+    "source_hash": "8c3c6830836a"
+  },
+  "claude-code-router.figcaption-3": {
+    "text": "<b>图&nbsp;4</b>同一时段的 Router 活动：107 个请求在本地应答，2 个直通到 Anthropic，0 个回退，2 个被拒绝，0 个错误。下方是每条规则在 p50 和 p95 的延迟和首字节时间、每个本地模型的熔断器，以及请求被规则转到 Anthropic 或被拒绝的原因。计数器按进程统计；重启会清零。记录于 2026 年 10 月 4 日。<span class=\"scroll-hint\">左右滚动图片可查看整个页面。</span>",
+    "source_hash": "e6294c26fbc5"
+  }
+}

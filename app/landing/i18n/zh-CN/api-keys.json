@@ -1,0 +1,54 @@
+{
+  "api-keys.meta.title": {
+    "text": "API 密钥、优先级和按应用统计的用量 | LM Warden",
+    "source_hash": "36d31214a489"
+  },
+  "api-keys.meta.description": {
+    "text": "每个应用一个密钥，各有自己的优先级、用量和排队时间，适用于兼容 OpenAI、Anthropic Messages 和 Responses 的各个端点。",
+    "source_hash": "dc32185af3f0"
+  },
+  "api-keys.keys.h1-1": {
+    "text": "每个应用一个密钥，每个密钥一个页面。",
+    "source_hash": "478db02e5440"
+  },
+  "api-keys.p-1": {
+    "text": "给每位同事、每台笔记本电脑、每个 CI 任务和每个智能体都分配自己的密钥。密钥页面会显示它的用量，以及其请求在队列中的等待时间（中位数和 p95），时间范围可以拖动选择，也可以直接输入。轮换密钥时可设置宽限期；优先级可设为 P0&nbsp;到&nbsp;P9：等待中的 P9 请求总是排在 P8 请求之前。",
+    "source_hash": "128af00fcd92"
+  },
+  "api-keys.p-2": {
+    "text": "暂停它后，新请求会被拒绝，而已经在运行的请求会继续完成：",
+    "source_hash": "24b259f012c7"
+  },
+  "api-keys.p-3": {
+    "text": "来自 2026 年 9 月 23 日的一个本地实例。主机和密钥已替换，其他标头已删减。",
+    "source_hash": "992b035b09f7"
+  },
+  "api-keys.video-1.aria-label": {
+    "text": "负载测试期间某个 API 密钥的页面：它的优先级 P0 到 P9、一条显示其完整历史的色带、过去一小时每分钟的 token 数和请求数，然后 God mode 停靠面板打开，显示正在流式输出的提示词和回复",
+    "source_hash": "146ed912c7a6"
+  },
+  "api-keys.figcaption-1": {
+    "text": "<b>图&nbsp;13</b><code>demo-agent</code> 的页面，也就是图&nbsp;1 中产生负载的那个密钥：屏幕上这一小时内有 37 个请求和 43k 个生成的 token。然后它的 God mode 停靠面板打开（一个可选开启的实时视图，显示某个密钥的提示词和回复，默认关闭），回复在写出的同时流式显示。提示词是我们自己的。",
+    "source_hash": "389cdbc39b42"
+  },
+  "api-keys.img-1.alt": {
+    "text": "Stats 页面上过去 7 天（9 月 16 日到 23 日）的 Requests 图表：每个请求一个标记，颜色表示 API 密钥，大小表示生成的 token 数，形状表示结束原因，纵轴是对数刻度的耗时，从 100&#8239;ms 到 10,000&#8239;s。大多数标记位于 3 到 100 秒之间；有一个密钥显示出两列密集的标记，从不到一秒一直延伸到几百秒。",
+    "source_hash": "e3200603dcf6"
+  },
+  "api-keys.figcaption-2": {
+    "text": "<b>图&nbsp;14</b>所有密钥的请求都在一张图表上，来自同一个 Stats 页面：过去 7 天，28,906 个请求，按十五分之一抽样绘制。一个标记代表一个请求，颜色取决于它的密钥，大小取决于它生成的 token 数，形状取决于它的结束方式，高度是对数刻度上的耗时。平稳的琥珀色是 <code>opencode-laptop</code>，两列密集的粉色是 <code>research-notebook</code>。记录于 2026 年 9 月 23 日；密钥名称已替换。<span class=\"scroll-hint\">左右滚动图片可查看整周。</span>",
+    "source_hash": "1a43a2ba1520"
+  },
+  "api-keys.leave.h2-1": {
+    "text": "想离开？改一下 <code>base_url</code> 就行。",
+    "source_hash": "8f28f88090a1"
+  },
+  "api-keys.p-4": {
+    "text": "它支持 <code>/v1/chat/completions</code> 和 <code>/v1/models</code>，并且 <code>/v1/models</code> 会报告每个模型的 <code>max_model_len</code>。它还在 <code>/v1/messages</code> 支持 Anthropic Messages API，因此 Claude Code 把 <code>ANTHROPIC_BASE_URL</code> 指向 warden 的根 URL 即可（Claude Code 会自己加上 <code>/v1/messages</code> 路径）；它也在 <code>/v1/responses</code> 支持 OpenAI Responses API，因此 Codex&nbsp;CLI 可以使用你加载的模型。权重位于普通的 HuggingFace 缓存中，<code>make export-hf-cache</code> 会把它打包成 tarball 交给你；每个引擎启动时使用的确切命令行参数（argv）只需一次 GET 即可取得，因此不需要我们也能重建一套可用的环境。把下面的 diff 反过来看，就是迁出的步骤。",
+    "source_hash": "18372068885f"
+  },
+  "api-keys.p-5": {
+    "text": "相关内容：<a href=\"/coding-agents\">编程智能体</a> · <a href=\"/gpu-monitoring\">GPU 监控</a> · <a href=\"/faq\">常见问题</a>",
+    "source_hash": "cfe5bc772213"
+  }
+}
