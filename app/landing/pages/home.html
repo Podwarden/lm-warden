@@ -1,167 +1,558 @@
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-text wrap">
-        <h1 id="hero-title"><span class="nw">An OpenAI-compatible</span> API on the GPUs under&nbsp;your&nbsp;desk or&nbsp;in&nbsp;your&nbsp;rack.</h1>
-        <p class="lede">
-          LM Warden runs vLLM v0.32.0 and llama.cpp b11719 on your NVIDIA cards behind one port.
-          Each app gets its own key, and each card reports for itself.
-          Point Claude Code, Codex&nbsp;CLI, OpenCode or another coding agent at it; with Claude Code, a model on your cards can answer for the Claude models you choose, under their names, while the rest go to Anthropic on your own login.
-        </p>
-        <div class="install" id="install">
-          <div class="cmd">
-            <pre id="cmd-hero" tabindex="0" aria-label="Install command">{{install}}</pre>
-            <button class="btn" type="button" data-copy="cmd-hero"><span>Copy</span></button>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap">
+      <h1 id="hero-title">Your GPUs, served like a hosted API.</h1>
+      <p class="lede">LM Warden runs vLLM, llama.cpp or MLX on hardware you own and puts one OpenAI-compatible port in front: a key per app, usage per key, and a live panel for every GPU. On a Linux box with NVIDIA cards, or on an Apple silicon Mac.</p>
+      <div class="ctas">
+        <a class="btn go" href="#install">Download &amp; Install</a>
+        <a class="btn" href="#features">See what it shows</a>
+      </div>
+      <p class="facts"><span>Open source, Apache-2.0</span><span>No account, no telemetry</span><span>Linux + NVIDIA · macOS (beta) · Windows next</span></p>
+    </div>
+    <div class="heroshot">
+      <div class="frame">
+        <div class="chrome" aria-hidden="true"><i></i><i></i><i></i></div>
+        <a class="zoom" href="{{a:demo-stats-poster.webp}}"><img src="{{a:demo-stats-poster.webp}}" width="1280" height="800" alt="The Stats page of a busy LM Warden instance: VRAM 59.4 of 64&#8239;GiB, GPU utilisation 100%, power 548&#8239;W, and charts of GPU utilisation, power draw and tokens per minute over the last hour" fetchpriority="high"></a>
+      </div>
+    </div>
+    <div class="specbar" aria-label="At a glance">
+      <ul class="wrap">
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><circle cx="7" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="7" cy="17" r="1" fill="currentColor" stroke="none"/></svg>
+          <span class="k">Linux · NVIDIA</span>
+          <b>vLLM v0.32.0 and llama.cpp b11719</b>
+          <span class="d">on CUDA</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M1.5 19.5h21"/></svg>
+          <span class="k">macOS · Apple silicon</span>
+          <b>MLX and llama.cpp</b>
+          <span class="d">on Metal</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4c-2 0-3 1-3 3v3c0 1-1 2-2 2 1 0 2 1 2 2v3c0 2 1 3 3 3M16 4c2 0 3 1 3 3v3c0 1 1 2 2 2-1 0-2 1-2 2v3c0 2-1 3-3 3"/></svg>
+          <span class="k">APIs</span>
+          <b>OpenAI, Anthropic Messages and Responses</b>
+          <span class="d">on one port</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7l5 5-5 5M12 17h8"/></svg>
+          <span class="k">Coding agents</span>
+          <b>Claude Code, Codex CLI, OpenCode and 7 more</b>
+          <span class="d">configured for you</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Use-case carousel: one short slide per use case, each a link to its detailed block below.
+       Without scripts every slide renders as a list item (html lacks .js). With scripts: one visible
+       slide, prev/next, a visible pause/play, dots, auto-advance that pauses on hover and focus,
+       stops for good on any manual navigation, never starts under prefers-reduced-motion, and
+       announces only while not auto-rotating. -->
+  <section class="uc" id="use-cases" aria-roledescription="carousel" aria-labelledby="uc-title">
+    <div class="wrap">
+      <div class="uc-head">
+        <h2 id="uc-title">What people use it for</h2>
+        <div class="uc-ctl" hidden>
+          <button type="button" class="uc-btn" data-uc="prev" aria-label="Previous use case">&#8592;</button>
+          <button type="button" class="uc-btn" data-uc="toggle" aria-label="Pause automatic rotation" aria-pressed="false"><span data-pause>&#10074;&#10074;</span><span data-play hidden>&#9654;</span></button>
+          <button type="button" class="uc-btn" data-uc="next" aria-label="Next use case">&#8594;</button>
+        </div>
+      </div>
+      <div class="uc-view">
+        <ul class="uc-track" aria-live="off" aria-atomic="false">
+          <li class="uc-slide" role="group" aria-roledescription="slide" aria-label="1 of 10"><a href="#why-fit"><h3>Will this model fit my GPU?</h3><p>Paste a Hugging Face repo; every file gets a verdict against the cards you tick before anything downloads.</p><span class="uc-more">See the fit preview</span></a></li>
+          <li class="uc-slide" role="group" aria-roledescription="slide" aria-label="2 of 10"><a href="#agents"><h3>Point your coding agent at your own GPUs.</h3><p>Codex CLI, OpenCode, Aider, Grok CLI, Continue, Cline, Cursor and the OpenAI SDK run on your models. Claude Code and the Anthropic SDK can also keep your Claude subscription and offload the routine calls.</p><span class="uc-more">See the coding agents</span></a></li>
+          <li class="uc-slide" role="group" aria-roledescription="slide" aria-label="3 of 10"><a href="#why-stats"><h3>Are your GPUs working or waiting?</h3><p>Utilisation, tokens per second, cache share, latency, preemptions and power on one Stats page, 1&#8239;h to 7&#8239;d.</p><span class="uc-more">See the Stats page</span></a></li>
+          <li class="uc-slide" role="group" aria-roledescription="slide" aria-label="4 of 10"><a href="#why-cache"><h3>Agent turns that reuse the cache.</h3><p>Each conversation stays on its replica. Measured: cache hits 56 → 86%, median time to first byte 2.05 → 0.38 s.</p><span class="uc-more">See the measurement</span></a></li>
+          <li class="uc-slide" role="group" aria-roledescription="slide" aria-label="5 of 10"><a href="#why-agent"><h3>Let the AI you already pay for tune your own GPUs.</h3><p>Claude Code, Codex or another agent surveys your cards, shortlists models that fit, loads layouts, benchmarks on your own prompts, adjusts, and leaves the winner loaded. Four prompts to paste.</p><span class="uc-more">See the loop and the prompts</span></a></li>
+          <li class="uc-slide" role="group" aria-roledescription="slide" aria-label="6 of 10"><a href="#why-chat"><h3>Chat with your own model, right there.</h3><p>Streaming Markdown, code and maths; images for vision models; settings per chat; saved history. Same window on a Mac.</p><span class="uc-more">See the chat</span></a></li>
+          <li class="uc-slide" role="group" aria-roledescription="slide" aria-label="7 of 10"><a href="#why-god"><h3>See exactly what the model saw and said.</h3><p>God mode streams one key’s prompts and replies live for debugging. Off by default, in memory only, gone on restart.</p><span class="uc-more">See god mode</span></a></li>
+          <li class="uc-slide" role="group" aria-roledescription="slide" aria-label="8 of 10"><a href="#why-keys"><h3>One GPU box, shared by your team, your family and your agents.</h3><p>As many keys as you need, each with a strict priority from 9 to 0 and its own usage page: the important agents are served first, everyone else gets what is left, and you see who used the box and how.</p><span class="uc-more">See keys and usage</span></a></li>
+          <li class="uc-slide" role="group" aria-roledescription="slide" aria-label="9 of 10"><a href="#hardware"><h3>Your hardware, honestly: from a Mac to eight B300s.</h3><p>One console for a 16&#8239;GB M1, two mismatched cards, or an NVSwitch server, and it names the narrow PCIe slot, inactive NVLink and ECC differences.</p><span class="uc-more">See the hardware pages</span></a></li>
+          <li class="uc-slide" role="group" aria-roledescription="slide" aria-label="10 of 10"><a href="#p-appliance"><h3>Coming soon: the appliance. A USB drive, a chassis with GPUs, one job.</h3><p>A stripped-down Linux that runs only LM Warden, sets up networking and model storage, and updates over the air or stays fully air-gapped. For a secure, dedicated LLM server.</p><span class="uc-more">Read about the appliance</span></a></li>
+        </ul>
+      </div>
+      <div class="uc-dots" role="group" aria-label="Choose a use case" hidden></div>
+    </div>
+  </section>
+
+  <section class="sec" id="install" aria-labelledby="install-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 id="install-title">Where will you run it?</h2>
+        <p>Pick the machine the models will run on, not the one you are reading this on; a Mac visitor often installs on a Linux GPU server. Nothing is chosen for you and nothing is guessed from your browser.</p>
+      </div>
+      <div class="tabs">
+        <input type="radio" name="plat" id="t-linux">
+        <input type="radio" name="plat" id="t-mac">
+        <input type="radio" name="plat" id="t-win">
+        <input type="radio" name="plat" id="t-app">
+        <div class="tablist" role="group" aria-label="Platform">
+          <label for="t-linux"><b>Linux + NVIDIA GPUs</b><small>Docker Compose · one or many cards</small><span class="st">main release</span></label>
+          <label for="t-mac"><b>macOS, Apple silicon</b><small>Menu-bar app · M1 or later</small><span class="st">beta</span></label>
+          <label for="t-win"><b>Windows</b><small>In progress · no date yet</small><span class="st">next</span></label>
+          <label for="t-app" class="soon-tab"><b>Appliance</b><small>A USB drive that turns a GPU chassis into a dedicated LM Warden server</small><span class="st">coming soon</span></label>
+        </div>
+        <p class="pick small">Choose a platform above to see its steps, or <a href="#install-all">show all four</a>.</p>
+        <div class="panels" id="install-all">
+          <div class="panel-p" id="p-linux">
+            <div class="text">
+              <h3>One command on the GPU host.</h3>
+              <div class="cmd">
+                <pre id="cmd-linux" tabindex="0" aria-label="Install command">{{install}}</pre>
+                <button class="btn" type="button" data-copy="cmd-linux"><span>Copy</span></button>
+              </div>
+              <ul>
+                <li>x86_64 host, Docker Compose v2.24+, the NVIDIA Container Toolkit, a Turing-or-newer card.</li>
+                <li>Then open <code>http://HOST:8080/ui/</code>, finish the first-run wizard, add a model, mint a key. Your endpoint is <code>http://HOST:8080/v1</code>.</li>
+                <li>Several GPUs in one box: tensor parallel, or one replica per card with cache-aware routing.</li>
+                <li>NVIDIA today. <b>AMD ROCm and Intel GPU support are coming soon</b>; no dates yet. Tell us which you would run it on: <a href="{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon" rel="noopener">Radeon</a> · <a href="{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel" rel="noopener">Intel</a>.</li>
+                <li><a href="{{repo}}/blob/main/documents/INSTALL.md" rel="noopener">Install guide</a> · <a href="{{repo}}/blob/main/documents/INSTALL.md#a7-offline--air-gapped-install" rel="noopener">Offline / air-gapped</a> · <a href="{{repo}}/blob/main/documents/INSTALL.md#path-b-build-everything-from-source" rel="noopener">From source</a> · <a href="#upgrade">Upgrading</a></li>
+              </ul>
+            </div>
+            <figure>
+              <div class="shotb"><a class="zoom" href="{{a:shot-load-progress.webp}}"><img src="{{a:shot-load-progress.webp}}" width="1700" height="1050" alt="A model load in progress on the Models page, each step with its elapsed and usual time" loading="lazy" decoding="async"></a></div>
+              <figcaption class="cap">A model loading after install: each step with the usual time from earlier loads.</figcaption>
+            </figure>
+          </div>
+          <div class="panel-p" id="p-mac">
+            <div class="text">
+              <h3>A menu-bar app, in beta.</h3>
+              <p><a class="btn go" href="/download/mac">Download for Mac (beta)</a></p>
+              <ul>
+                <li>About 360&nbsp;MB. Apple silicon (M1 or later), macOS 14 or later. <a href="/download/mac.sha256">SHA-256</a> · <a href="{{mac_release}}" rel="noopener">release notes</a>.</li>
+                <li>Engines: MLX and llama.cpp built with Metal. The same dashboard and the same OpenAI API; no vLLM, no power reading.</li>
+                <li><b>Beta, plainly:</b> ad-hoc signed and not notarized, so macOS asks you to allow it under Privacy &amp; Security on first launch; updates are a new download. <a href="{{repo}}/blob/main/documents/INSTALL.md#beta-builds" rel="noopener">First-launch steps</a>.</li>
+                <li>Serves on 127.0.0.1 until you choose <b>Share on Local Network</b>.</li>
+                <li><b>Coming soon: mlx-rust-lm</b>, a third engine. The LM Warden team is porting Apple’s mlx-lm from Python to Rust on Apple’s official mlx-c bindings; it will run beside MLX and llama.cpp and in time replace the Python mlx-lm engine, which with Python and its libraries is most of today’s download. Unofficial, not affiliated with Apple.</li>
+              </ul>
+            </div>
+            <figure>
+              <div class="shotb"><a class="zoom" href="{{a:shot-mac-menu.webp}}"><img src="{{a:shot-mac-menu.webp}}" width="868" height="868" alt="The LM Warden menu-bar menu on a Mac: Running, serving on this Mac only at 127.0.0.1:8080, no models loaded, a memory bar, Open Dashboard, Copy API Address, Share on Local Network" loading="lazy" decoding="async"></a></div>
+              <figcaption class="cap">The menu-bar menu of the beta on a 16&#8239;GB M1.</figcaption>
+            </figure>
+          </div>
+          <div class="panel-p" id="p-win">
+            <div class="text">
+              <h3>Windows is next. There is no date.</h3>
+              <p class="small">We are building it now and will put a build here the day it exists, not a sign-up form before. Until then, two honest options:</p>
+              <ul>
+                <li>Run LM Warden on a Linux GPU box and use it from Windows: every OpenAI client, Claude Code and Codex connect over the network.</li>
+                <li><a href="{{repo}}/releases" rel="noopener">Watch releases on GitHub</a> to hear about the first Windows build.</li>
+                <li>AMD Radeon and Intel GPUs come after; tell us which you would run it on: <a href="{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon" rel="noopener">Radeon</a> · <a href="{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel" rel="noopener">Intel</a>.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="panel-p" id="p-appliance">
+            <div class="text">
+              <h3>The appliance: coming soon, no date.</h3>
+              <p class="small">A fourth way to run LM Warden, for a box that should do nothing else.</p>
+              <ul>
+                <li>You put a USB drive into a chassis with GPUs. It installs a stripped-down Linux that does one thing: run LM Warden.</li>
+                <li>It configures networking and storage for models for you.</li>
+                <li>Updates arrive over the air, or the box works fully air-gapped.</li>
+                <li>Made for a secure, dedicated LLM server: a team that wants a locked-down box, or a site with no route out.</li>
+              </ul>
+              <p class="small">Until it ships, the Linux install above does the same job on a host you set up yourself, including the <a href="{{repo}}/blob/main/documents/INSTALL.md#a7-offline--air-gapped-install" rel="noopener">offline / air-gapped install</a>. <a href="{{repo}}/releases" rel="noopener">Watch releases on GitHub</a>.</p>
+            </div>
+            <div class="small" style="align-self:center">No picture yet: there is no product name or hardware to show, and we will not draw one.</div>
           </div>
         </div>
-        <p class="guide"><a href="{{repo}}/blob/main/documents/INSTALL.md" rel="noopener">Read the install guide</a>: every command, and what it printed.</p>
-        <p class="guide">On an Apple silicon Mac? <a href="#mac">Get the Mac beta</a>.</p>
-        <!-- src: README.md, "Quick start" (Compose v2.24+) and "Will it run on my hardware?" (Turing floor) -->
-        <p class="req">Needs Linux x86_64, Docker Compose&nbsp;v2.24+, the NVIDIA Container Toolkit and a card of the Turing generation (RTX&nbsp;20-series, Quadro&nbsp;RTX) or newer.</p>
-        <!-- src: install.sh (VW_APP="vllm-warden", DIR="/opt/$VW_APP"); app/auth/bearer.py (INFERENCE_TOKEN_PREFIX "vw_", ADMIN_TOKEN_PREFIX "vwa_") -->
-        <p class="req">LM Warden was formerly vLLM Warden. The install directory and the <code>vw_</code> key prefix keep the old name, so existing installs and keys keep working.</p>
       </div>
-
-      <figure class="hero-fig wrap">
-        <div class="shot">
-          <video data-autoplay controls muted loop playsinline preload="metadata"
-                 width="1280" height="800"
-                 poster="{{a:demo-stats-poster.webp}}"
-                 aria-label="The Stats page of a busy instance switching between its 1 hour, 6 hour and 24 hour windows, then scrolling to the live generation rate, latency histograms and the requests in flight">
-            <source src="{{a:demo-stats.webm}}" type="video/webm">
-            <source src="{{a:demo-stats.mp4}}" type="video/mp4">
-          </video>
-        </div>
-        <!-- date: the same session as demo-token-poster.webp, whose window reads "Sep 23 16:06 to Sep 23 17:06" -->
-        <!-- src: demo-stats.mp4 (IN FLIGHT "10 active", every row "demo-agent") -->
-        <figcaption><b>Fig.&nbsp;1</b>The Stats page of our four-card box while ten of our own streaming requests ran on it, stepping through its 1&#8239;h, 6&#8239;h and 24&#8239;h windows. Recorded on 23&nbsp;September 2026.</figcaption>
-      </figure>
-    </section>
-
-    <hr class="topic">
-
-    <section class="sec mac" id="mac" aria-labelledby="mac-title">
-      <div class="wrap">
-        <h2 id="mac-title">On a Mac: the beta.</h2>
-        <p class="mac-lede">
-          A native menu-bar app for Apple silicon that runs models with MLX and shows the same web dashboard in its own window.
-          It is a beta: ad-hoc signed and not notarized, so macOS asks you to confirm before its first launch.
-          Linux with NVIDIA GPUs, above, is still the main way to run LM Warden.
-        </p>
-        <p class="mac-dl">
-          <a class="btn" href="/download/mac"><span>Download for Mac (beta)</span></a>
-          <a href="/download/mac.sha256">SHA-256 checksum</a> · <a href="{{mac_release}}" rel="noopener">release notes on GitHub</a>
-        </p>
-        <!-- src: README.md, "Mac app (beta)"; documents/INSTALL.md, "What it needs" and "Beta builds"; macos/Package.swift (.macOS(.v14)) -->
-        <p class="req">About 360&#8239;MB. Needs an Apple silicon Mac on macOS&nbsp;14 or later. Updates are manual: a newer beta is a new download.</p>
-        <ul class="mac-points">
-          <li><strong>Menu bar, no Dock icon.</strong> It starts and supervises the server, walks you through a first-run setup and can open at login. <b>Open Dashboard</b> shows the web console in a window of its own.</li>
-          <li><strong>MLX first.</strong> Models run with MLX. llama.cpp is registered as a second engine, with a Metal build of its server bundled in the app; vLLM is not available on a Mac.</li>
-          <li><strong>This Mac only, until you say otherwise.</strong> The server listens on loopback. <b>Share on Local Network</b> opens it to your network, in plain HTTP. For HTTPS, put a reverse proxy such as Caddy, or Tailscale, in front; the app has no TLS of its own.</li>
-        </ul>
-        <h3 id="mac-open">First launch</h3>
-        <ol class="mac-steps">
-          <li>Check the download. With the DMG and its checksum file in one folder, run <code>shasum -a 256 -c {{mac_dmg}}.sha256</code> in Terminal. It prints <code>OK</code> for an intact file.</li>
-          <li>Open the DMG and drag LM Warden to Applications.</li>
-          <li>In Applications, double-click LM Warden. macOS refuses it; open <b>System Settings</b> &rsaquo; <b>Privacy &amp; Security</b> and click <b>Open Anyway</b> next to LM Warden. (On macOS 14, right-click LM Warden and choose <b>Open</b> also works.)</li>
-        </ol>
-        <p class="src">Do this only for a download whose checksum matched. The full walk-through is in the <a href="{{repo}}/blob/main/documents/INSTALL.md#beta-builds" rel="noopener">install guide</a>.</p>
-        <div class="mac-figs">
-          <figure>
-            <div class="shot">
-              <img src="{{a:shot-mac-menu.webp}}" width="868" height="868" loading="lazy" decoding="async"
-                   alt="The LM Warden menu-bar menu on a Mac: a green status dot and LM Warden, Running; Serving on this Mac only, 127.0.0.1:8080; no models loaded; a memory bar reading 0.0 of 12.7&#8239;GB usable for models and 0 requests in flight; then Open Dashboard, Copy API Address, Share on Local Network, Stop Server, Open at Login, Check for Updates, About LM Warden and Quit LM Warden">
-            </div>
-            <figcaption>The menu-bar menu of the beta, on an M1 Mac with 16&#8239;GB: status, the loopback address, a memory bar and Open Dashboard.</figcaption>
-          </figure>
-          <figure>
-            <div class="shot">
-              <img src="{{a:shot-mac-setup.webp}}" width="1440" height="1096" loading="lazy" decoding="async"
-                   alt="The first step of the native setup window, Welcome: the machine checks read Apple M1 OK, 16&#8239;GB OK (16&#8239;GB is the minimum) and 289&#8239;GB free disk space OK, with steps Network, Models and Finish still to come">
-            </div>
-            <figcaption>First-run setup, step 1 of 4: it checks the chip, the memory and the free disk before anything is installed.</figcaption>
-          </figure>
-        </div>
+      <div class="honest" id="upgrade">
+        <p><b>Already running it?</b> Linux upgrades in place: pull the new images, restart, the database migrates forward. <a href="{{repo}}/blob/main/documents/OPERATING.md#day-to-day" rel="noopener">Steps</a> · <a href="{{repo}}/blob/main/CHANGELOG.md" rel="noopener">Changelog</a>.</p>
+        <p><b>Formerly vLLM Warden.</b> The install directory <code>/opt/vllm-warden</code> and the <code>vw_</code> key prefix keep the old name, so existing keys keep working.</p>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <hr class="topic">
-
-    <section class="sec what-sec" aria-labelledby="what-title">
-      <div class="wrap what">
-        <h2 id="what-title">What it is.</h2>
-        <div class="what-text">
-          <!-- adapted from faq.json, "What is LM Warden?" -->
-          <p>
-            LM Warden is a control plane around two inference engines, vLLM and llama.cpp, that you
-            install on one Linux host with NVIDIA GPUs. You pull a model from HuggingFace, load it
-            onto your cards, give each app its own key, and call it through an OpenAI-compatible
-            <code>/v1</code> endpoint, through the Anthropic Messages API if the app is Claude Code,
-            or through the OpenAI Responses API if it is Codex&nbsp;CLI.
-            A browser console covers loading and unloading models, live engine logs, a chat
-            playground, GPU and token statistics, and a page per key. It does not make models faster
-            and does not modify the engines. It adds the parts a bare engine does not ship.
-          </p>
-          <p>
-            There is no hosted service and no account. Every warden serves this page itself, and
-            the Console sign-in link at the top opens that warden’s own console.
-            Nothing leaves your host unless you turn on the Claude Code router described next.
-          </p>
-        </div>
-{{flow_generic}}      </div>
-    </section>
-
-    <hr class="topic">
-
-    <section class="sec teasers" aria-labelledby="teasers-title">
-      <div class="wrap">
-        <h2 id="teasers-title">What you get.</h2>
-        <ul class="cards-list">
-          <li><a href="/coding-agents"><h3>Coding agents</h3><p>Claude Code, Codex&nbsp;CLI, OpenCode, Aider, Cline, Cursor and four more. The console writes each one’s config for you.</p></a></li>
-          <li><a href="/agent-tuning"><h3>Agent tuning</h3><p>Give Claude Code or Codex an admin token and let it choose the model, the engine and the flags for your cards.</p></a></li>
-          <li><a href="/gpu-monitoring"><h3>GPU monitoring</h3><p>One panel per card: temperature against its own throttle point, power against its own cap, and every request in flight.</p></a></li>
-          <li><a href="/cache-aware-routing"><h3>Cache-aware routing</h3><p>Each agent session goes back to the replica that already holds its prompt in cache.</p></a></li>
-          <li><a href="/api-keys"><h3>API keys</h3><p>A key per app, with its own priority, usage and queue times. Leaving is a <code>base_url</code> change.</p></a></li>
-          <li><a href="/features"><h3>Model loads, step by step</h3><p>Each load shows its steps with the usual time from earlier loads. A load that stops making progress is stopped and its GPUs freed, not left holding them.</p></a></li>
-          <li><a href="/features"><h3>More features</h3><p>God mode, admin tokens, the engine watchdog, and the lessons behind them.</p></a></li>
-        </ul>
+  <!-- Problems → answers, as a numbered ladder because it IS a sequence a newcomer climbs: fit it, run it cheaper, run it faster, let an agent do it, see who used it. -->
+  <section class="sec why" id="why" aria-labelledby="why-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 id="why-title">Self-hosting has eight problems. Here is what each one looks like solved.</h2>
+        <p>A bare engine serves one model on one port. These are the parts around it, with our own numbers where we have them.</p>
       </div>
-    </section>
+      <ol class="ladder">
+        <li id="why-fit">
+          <div class="text">
+            <h3>Will this model fit my GPU?</h3>
+            <p>Paste a Hugging Face repo into <b>Add model</b>. Every file is listed with a verdict against the cards you tick: fits, tight headroom, or won’t fit. Tick more cards and the budget adds up. Nothing downloads until something fits.</p>
+          </div>
+          <div class="shotb"><a class="zoom" href="{{a:shot-quant-fit-combined.webp}}"><img src="{{a:shot-quant-fit-combined.webp}}" width="1456" height="762" alt="The same 20.22&#8239;GiB file marked as fitting once four GPUs are selected" loading="lazy" decoding="async"></a></div>
+        </li>
+        <li id="why-cache">
+          <div class="text">
+            <h3>Every agent turn re-reads the whole conversation.</h3>
+            <p>Each conversation stays on the replica that already holds its prefix in cache. Measured on our four-card box at 4 concurrent agent sessions: cache hits 56 → 86%, median time to first byte 2.05 → 0.38&nbsp;s. Under deliberate overload the median got worse; the full table says so. Linux only.</p>
+          </div>
+          <div class="shotb"><a class="zoom" href="{{a:shot-tokens-cached-vs-computed.webp}}"><img src="{{a:shot-tokens-cached-vs-computed.webp}}" width="1270" height="757" alt="Prompt tokens per second split into cached and computed, 78% cache-hit share over the last hour on a seven-GPU box" loading="lazy" decoding="async"></a></div>
+        </li>
+        <li id="why-stats">
+          <div class="text">
+            <h3>You bought GPUs. Are they working or waiting?</h3>
+            <p>Throughput is concurrency × prompt length × cache reuse, and a bare engine shows none of it together. The Stats page does, over 1&#8239;h to 7&#8239;d: VRAM, GPU utilisation, power (Linux), tokens per second with prompt tokens split into cached and computed, p50/p95 latency, prompt-cache hit rate, preemptions, requests per key and per client IP. Flat utilisation with a queue says “more concurrency”; a low cache share says “pin sessions”.</p>
+          </div>
+          <div class="shotb"><a class="zoom" href="{{a:shot-tokens-cached.webp}}"><img src="{{a:shot-tokens-cached.webp}}" width="1270" height="392" alt="Tokens per second: prompt tokens split into cached and computed, completion tokens below" loading="lazy" decoding="async"></a></div>
+        </li>
+        <li id="why-chat">
+          <div class="text">
+            <h3>Talk to the model before you wire anything up.</h3>
+            <p>The chat is in the same window as everything else. Streaming Markdown with highlighted code and maths; up to eight PNG, JPEG or WebP images per message for a vision model; temperature, top-p, max tokens and system prompt per chat, saved as defaults; chats kept, titled, forkable. Tool calls the model makes are rendered, so you can check tool calling before an agent depends on it.</p>
+          </div>
+          <div class="shotb"><a class="zoom" href="{{a:shot-mac-dashboard.webp}}"><img src="{{a:shot-mac-dashboard.webp}}" width="1400" height="898" alt="The chat in the Mac app’s dashboard window, streaming from qwen2.5-3b with GPU 96% in the header" loading="lazy" decoding="async"></a></div>
+        </li>
+        <li id="why-god">
+          <div class="text">
+            <h3>What did the model actually see, and say?</h3>
+            <p>God mode, for debugging prompts: with <code>VW_GODMODE_ENABLED</code> on the deployment, each key’s page gets a dock that streams that key’s prompts and completions live. Off by default, and absent when off. A bounded in-memory ring: nothing to the database or disk, gone on restart. Anyone with the admin session can open it; the warden has one admin role and no others.</p>
+          </div>
+          <div class="shotb"><a class="zoom" href="{{a:shot-godmode.webp}}"><img src="{{a:shot-godmode.webp}}" width="1456" height="822" alt="The page of the API key coding-agent with the God mode dock open along the bottom: Live, 4 requests, 1 running; a qwen3.8-27b-fp8 request from 192.0.2.10 streaming, showing the user prompt about a flaky stats test and the model’s reply with a Python fix as it is written" loading="lazy" decoding="async"></a></div>
+        </li>
+      </ol>
+    </div>
+  </section>
 
-    <hr class="topic">
-
-    <section class="dont" aria-labelledby="dont-title">
-      <div class="wrap">
-        <h2 id="dont-title">Don’t use this if…</h2>
-        <ul>
-          <li><strong>You have no NVIDIA GPU and no Apple silicon Mac.</strong> On Linux it runs on NVIDIA cards with CUDA only, and the Mac app is a beta. There is no ROCm, Intel GPU or CPU path yet.</li>
-          <li><strong>You need one model served across several machines.</strong> This is one host. Several GPUs in one box, yes; several boxes, no.</li>
-          <li><strong>You want several models resident on one card.</strong> One loaded model per GPU is enforced before an engine starts.</li>
-          <li><strong>You need an engine other than vLLM or llama.cpp.</strong> TensorRT-LLM, SGLang and Ollama’s runtime are not shipped; MLX runs only in the Mac beta.</li>
-          <li><strong>You want a hosted API.</strong> Nobody runs this for you. You supply the hardware, the driver and the electricity.</li>
-          <li><strong>Your host isn’t Linux x86_64 or an Apple silicon Mac.</strong> On a Mac you get the beta described above, not the Docker stack.</li>
-        </ul>
-
-        <div class="roadmap" id="roadmap">
-          <h3>Other GPUs are on the roadmap.</h3>
-          <p>
-            Apple silicon is covered by the <a href="#mac">Mac beta</a> above.
-            AMD Radeon and Intel GPUs are on our immediate roadmap, with no dates. Which comes
-            first depends on who asks, so tell us which one you would run it on:
-          </p>
-          <ul>
-            <li><a href="{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Radeon" rel="noopener">AMD Radeon</a></li>
-            <li><a href="{{repo}}/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Intel" rel="noopener">Intel GPUs</a></li>
+  <!-- Coding agents: its own section. Left, the eight OpenAI-API clients as equal tiles; right, the two Anthropic-protocol clients with the router. Connect is the shared proof under both. Facts from app/connect/catalog.py. -->
+  <section class="sec agents" id="agents" aria-labelledby="agents-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 id="agents-title">Point your coding agent at your own GPUs.</h2>
+        <p>Ten harnesses connect with a base URL and a key; two of them can also keep a paid Claude subscription for the hard work.</p>
+      </div>
+      <div class="ag-panels">
+        <div class="ag-panel">
+          <h3>Run fully on your models</h3>
+          <p class="small">Over the OpenAI-compatible API. Every request shows up per key and per session.</p>
+          <ul class="tiles">
+            <li><a href="/coding-agents/codex-cli"><b>Codex CLI</b><span>Custom model provider · Responses API</span><em class="badge">tested</em></a></li>
+            <li><a href="/coding-agents/opencode"><b>OpenCode</b><span>OpenAI-compatible provider · <code>/v1</code></span><em class="badge">tested</em></a></li>
+            <li><a href="/coding-agents/aider"><b>Aider</b><span>OpenAI-compatible provider · <code>/v1</code></span><em class="badge">tested</em></a></li>
+            <li><a href="/coding-agents/grok-cli"><b>Grok CLI</b><span>Bring-your-own-key model · <code>/v1</code></span><em class="badge">tested</em></a></li>
+            <li><a href="/coding-agents/openai-sdk"><b>OpenAI SDK</b><span>Python, TypeScript, curl · <code>base_url</code></span><em class="badge">tested</em></a></li>
+            <li><a href="/coding-agents/continue"><b>Continue</b><span>OpenAI provider · one served model</span><em class="badge doc">documented</em></a></li>
+            <li><a href="/coding-agents/cline"><b>Cline</b><span>OpenAI Compatible provider · settings screen</span><em class="badge doc">documented</em></a></li>
+            <li><a href="/coding-agents/cursor"><b>Cursor</b><span>OpenAI base URL override · chat</span><em class="badge doc">documented</em></a></li>
           </ul>
-          <p class="src">Each link opens a new post in the Ideas category of the project’s GitHub Discussions, titled “Hardware support:” and the platform. A GitHub account is needed to post.</p>
+          <p class="small"><b>tested</b>: we ran the client against a warden and the page shows what we saw. <b>documented</b>: the request it sends was tested from Connect; the editor itself was not run.</p>
+        </div>
+        <div class="ag-panel router">
+          <h3>Keep your Claude subscription, offload the routine calls</h3>
+          <p class="small">Claude Code and the Anthropic SDK, through the router. A rule names the Claude models your GPUs answer for; everything else goes to Anthropic on your own login or key.</p>
+          <div class="dia dia-flow">
+          <svg class="flow v-wide" viewBox="0 0 680 236" role="img" aria-labelledby="flow-t flow-d">
+            <title id="flow-t">Where a Claude Code request goes</title>
+            <desc id="flow-d">The agent sends every request to LM Warden’s router. Requests for claude-haiku models go to a model on your GPU and are answered as that model. Every other model, Opus included, is passed to Anthropic on your own login.</desc>
+            <g font-size="13" fill="currentColor" text-anchor="middle">
+              <rect x="8" y="90" width="136" height="56" rx="6" fill="none" stroke="currentColor" opacity=".7"/>
+              <text x="76" y="113" font-weight="600">Claude Code</text><text x="76" y="131" opacity=".75">or Anthropic SDK</text>
+              <line x1="144" y1="118" x2="194" y2="118" stroke="currentColor" stroke-width="1.5"/><polygon points="202,118 193,113 193,123" fill="currentColor"/>
+              <rect x="204" y="80" width="196" height="76" rx="6" fill="none" stroke="#F2A516" stroke-width="1.5"/>
+              <text x="302" y="104" font-weight="600">LM Warden router</text><text x="302" y="122" opacity=".75">rules, first match wins</text><text x="302" y="140" opacity=".75">your key stays yours</text>
+              <path d="M400 100 C 452 100, 466 54, 508 54" fill="none" stroke="#F2A516" stroke-width="1.5"/><polygon points="516,54 507,49 507,59" fill="#F2A516"/>
+              <text x="452" y="40" font-family="ui-monospace, Menlo, monospace" font-size="12">claude-haiku*</text>
+              <rect x="518" y="28" width="154" height="52" rx="6" fill="#F2A516" opacity=".92"/>
+              <text x="595" y="50" font-weight="600" fill="#1C1409">your GPU</text><text x="595" y="68" fill="#1C1409" font-size="12">answers as that model</text>
+              <path d="M400 136 C 452 136, 466 182, 508 182" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4"/><polygon points="516,182 507,177 507,187" fill="currentColor"/>
+              <text x="456" y="110" font-size="12" opacity=".8">everything else,</text><text x="456" y="125" font-size="12" opacity=".8">Opus included</text>
+              <rect x="518" y="156" width="154" height="52" rx="6" fill="none" stroke="currentColor" opacity=".7"/>
+              <text x="595" y="178" font-weight="600">Anthropic</text><text x="595" y="196" font-size="12" opacity=".8">on your own login</text>
+            </g>
+          </svg>
+          <svg class="flow v-narrow" viewBox="0 0 340 400" role="img" aria-labelledby="flow-t2 flow-d2">
+            <title id="flow-t2">Where a Claude Code request goes</title>
+            <desc id="flow-d2">The agent sends every request to LM Warden’s router. Requests for claude-haiku models go to a model on your GPU and are answered as that model. Every other model, Opus included, is passed to Anthropic on your own login.</desc>
+            <g font-size="13" fill="currentColor" text-anchor="middle">
+              <rect x="92" y="8" width="156" height="56" rx="6" fill="none" stroke="currentColor" opacity=".7"/>
+              <text x="170" y="31" font-weight="600">Claude Code</text><text x="170" y="49" opacity=".75">or Anthropic SDK</text>
+              <line x1="170" y1="64" x2="170" y2="94" stroke="currentColor" stroke-width="1.5"/><polygon points="170,102 165,93 175,93" fill="currentColor"/>
+              <rect x="72" y="104" width="196" height="76" rx="6" fill="none" stroke="#F2A516" stroke-width="1.5"/>
+              <text x="170" y="128" font-weight="600">LM Warden router</text><text x="170" y="146" opacity=".75">rules, first match wins</text><text x="170" y="164" opacity=".75">your key stays yours</text>
+              <path d="M130 180 C 130 230, 86 240, 86 288" fill="none" stroke="#F2A516" stroke-width="1.5"/><polygon points="86,296 81,287 91,287" fill="#F2A516"/>
+              <text x="86" y="236" font-family="ui-monospace, Menlo, monospace" font-size="12" text-anchor="start" dx="-78">claude-haiku*</text>
+              <path d="M210 180 C 210 230, 254 240, 254 288" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4"/><polygon points="254,296 249,287 259,287" fill="currentColor"/>
+              <text x="254" y="230" font-size="12" opacity=".8" text-anchor="start" dx="8">everything</text><text x="254" y="246" font-size="12" opacity=".8" text-anchor="start" dx="8">else, Opus</text><text x="254" y="262" font-size="12" opacity=".8" text-anchor="start" dx="8">included</text>
+              <rect x="8" y="298" width="156" height="56" rx="6" fill="#F2A516" opacity=".92"/>
+              <text x="86" y="321" font-weight="600" fill="#1C1409">your GPU</text><text x="86" y="339" fill="#1C1409" font-size="12">answers as that model</text>
+              <rect x="176" y="298" width="156" height="56" rx="6" fill="none" stroke="currentColor" opacity=".7"/>
+              <text x="254" y="321" font-weight="600">Anthropic</text><text x="254" y="339" font-size="12" opacity=".8">on your own login</text>
+            </g>
+          </svg>
+        </div>
+          <div class="bignum"><b>1,981</b><span>requests answered locally, 99% of the box’s Claude Code traffic since its restart. From the Router page of our own seven-GPU box, 21 October 2026; 22 refused while the target was not loaded.</span></div>
+          <figure>
+            <div class="shotb"><a class="zoom" href="{{a:shot-router-haiku-rule.webp}}"><img src="{{a:shot-router-haiku-rule.webp}}" width="1270" height="757" alt="The Claude Code router page: routing is on, 99% answered locally since 23:32; rule 1 sends claude-haiku* to qwen3.8-27b, 1,981 local and 22 refused; every other Claude model goes to Anthropic on the user’s own login" loading="lazy" decoding="async"></a></div>
+            <figcaption class="cap">Claude Code 2.1.227 or newer: <code>ANTHROPIC_BASE_URL</code> to the warden, the warden key in <code>ANTHROPIC_CUSTOM_HEADERS</code>, your login untouched. We have not benchmarked answer quality: give the local model the routine, well-specified work.</figcaption>
+          </figure>
         </div>
       </div>
-    </section>
-
-    <hr class="topic">
-
-    <section class="sec family" aria-labelledby="family-title">
-      <div class="wrap">
-        <h2 id="family-title">Part of the PodWarden family.</h2>
-        <p>LM Warden is one of the open-source apps from PodWarden, which runs fleets of servers as a product: self-host anything on bare metal, VMs or LXC without becoming a Kubernetes company.</p>
-        <p><a href="https://podwarden.com" rel="noopener">podwarden.com</a> · <a href="https://github.com/Podwarden" rel="noopener">PodWarden on GitHub</a></p>
+      <div class="ag-connect">
+        <div class="text">
+          <h3>Connect writes each client’s config and sends a test request.</h3>
+          <p class="small">Pick the client, a key and a loaded model in the console; it checks each requirement against what is actually loaded (context window, tool calling, router on) and gives you the files to paste. <a href="/coding-agents">All coding agents</a>, one page per client with what works and what we saw.</p>
+        </div>
+        <figure>
+          <div class="shotb"><a class="zoom" href="{{a:shot-connect-client.webp}}"><img src="{{a:shot-connect-client.webp}}" width="1270" height="757" alt="The Connect a client page: a key picker, the router rule claude-haiku* to qwen3.8-27b, clients grouped by protocol with Full, Local models only and Documented, not run badges, and the Claude Code panel with its requirements checked" loading="lazy" decoding="async"></a></div>
+        </figure>
       </div>
-    </section>
+    </div>
+  </section>
+
+  <!-- Agent tuning: its own section. The loop as a drawing, the four prompts as "ask → you get back", the safety line, the load-progress proof. Facts from app/landing/pages/agent-tuning.html and agent-guide.md. -->
+  <section class="sec tune" id="why-agent" aria-labelledby="tune-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 id="tune-title">Let the AI you already pay for tune your own GPUs.</h2>
+        <p>Choosing a model for your cards means choosing a quantisation, an engine, how to split it across GPUs, how much context to give it and the KV-cache type; each guess costs a download and a load. Everything the console does is an API call, so Claude Code, Codex or another agent with a shell can run that search for you, on your hardware, against your workload.</p>
+      </div>
+      <div class="tune-grid">
+        <div>
+          <h3>The loop</h3>
+          <div class="dia dia-loop">
+          <svg class="loop v-wide" viewBox="0 0 520 236" role="img" aria-labelledby="loop-t loop-d">
+            <title id="loop-t">The tuning loop</title>
+            <desc id="loop-d">Survey the GPUs, shortlist models with fit-preview before any download, load candidate layouts, benchmark them with real requests, adjust the settings, and keep the winner loaded. Benchmark and adjust repeat until the agent is satisfied.</desc>
+            <g font-size="13" fill="currentColor" text-anchor="middle">
+              <rect x="8" y="12" width="150" height="56" rx="6" fill="none" stroke="currentColor" opacity=".7"/><text x="83" y="35" font-weight="600">1 Survey</text><text x="83" y="53" opacity=".75">your GPUs</text>
+              <line x1="158" y1="40" x2="176" y2="40" stroke="currentColor" stroke-width="1.5"/><polygon points="184,40 175,35 175,45" fill="currentColor"/>
+              <rect x="185" y="12" width="150" height="56" rx="6" fill="none" stroke="currentColor" opacity=".7"/><text x="260" y="35" font-weight="600">2 Shortlist</text><text x="260" y="53" opacity=".75">fit-preview first</text>
+              <line x1="335" y1="40" x2="353" y2="40" stroke="currentColor" stroke-width="1.5"/><polygon points="361,40 352,35 352,45" fill="currentColor"/>
+              <rect x="362" y="12" width="150" height="56" rx="6" fill="none" stroke="currentColor" opacity=".7"/><text x="437" y="35" font-weight="600">3 Load</text><text x="437" y="53" opacity=".75">candidate layouts</text>
+              <path d="M437 68 L437 94 L83 94 L83 112" fill="none" stroke="currentColor" stroke-width="1.5"/><polygon points="83,120 78,111 88,111" fill="currentColor"/>
+              <rect x="8" y="122" width="150" height="56" rx="6" fill="none" stroke="#F2A516" stroke-width="1.5"/><text x="83" y="145" font-weight="600">4 Benchmark</text><text x="83" y="163" opacity=".75">TTFT, tokens/s</text>
+              <line x1="158" y1="150" x2="176" y2="150" stroke="currentColor" stroke-width="1.5"/><polygon points="184,150 175,145 175,155" fill="currentColor"/>
+              <rect x="185" y="122" width="150" height="56" rx="6" fill="none" stroke="#F2A516" stroke-width="1.5"/><text x="260" y="145" font-weight="600">5 Adjust</text><text x="260" y="163" opacity=".75">one thing at a time</text>
+              <path d="M260 178 C 260 212, 83 212, 83 186" fill="none" stroke="#F2A516" stroke-width="1.5" stroke-dasharray="5 4"/><polygon points="83,178 78,187 88,187" fill="#F2A516"/>
+              <text x="172" y="226" font-size="12" opacity=".8">repeat until it stops improving</text>
+              <line x1="335" y1="150" x2="353" y2="150" stroke="currentColor" stroke-width="1.5"/><polygon points="361,150 352,145 352,155" fill="currentColor"/>
+              <rect x="362" y="122" width="150" height="56" rx="6" fill="#F2A516" opacity=".92"/><text x="437" y="145" font-weight="600" fill="#1C1409">6 Keep</text><text x="437" y="163" fill="#1C1409">the winner</text>
+            </g>
+          </svg>
+          <svg class="loop v-narrow" viewBox="0 0 340 470" role="img" aria-labelledby="loop-t2 loop-d2">
+            <title id="loop-t2">The tuning loop</title>
+            <desc id="loop-d2">Survey the GPUs, shortlist models with fit-preview before any download, load candidate layouts, benchmark them with real requests, adjust the settings, and keep the winner loaded. Benchmark and adjust repeat until the agent is satisfied.</desc>
+            <g font-size="13" fill="currentColor" text-anchor="middle">
+              <rect x="40" y="8" width="200" height="56" rx="6" fill="none" stroke="currentColor" opacity=".7"/><text x="140" y="31" font-weight="600">1 Survey</text><text x="140" y="49" opacity=".75">your GPUs</text>
+              <line x1="140" y1="64" x2="140" y2="78" stroke="currentColor" stroke-width="1.5"/><polygon points="140,86 135,77 145,77" fill="currentColor"/>
+              <rect x="40" y="88" width="200" height="56" rx="6" fill="none" stroke="currentColor" opacity=".7"/><text x="140" y="111" font-weight="600">2 Shortlist</text><text x="140" y="129" opacity=".75">fit-preview first</text>
+              <line x1="140" y1="144" x2="140" y2="158" stroke="currentColor" stroke-width="1.5"/><polygon points="140,166 135,157 145,157" fill="currentColor"/>
+              <rect x="40" y="168" width="200" height="56" rx="6" fill="none" stroke="currentColor" opacity=".7"/><text x="140" y="191" font-weight="600">3 Load</text><text x="140" y="209" opacity=".75">candidate layouts</text>
+              <line x1="140" y1="224" x2="140" y2="238" stroke="currentColor" stroke-width="1.5"/><polygon points="140,246 135,237 145,237" fill="currentColor"/>
+              <rect x="40" y="248" width="200" height="56" rx="6" fill="none" stroke="#F2A516" stroke-width="1.5"/><text x="140" y="271" font-weight="600">4 Benchmark</text><text x="140" y="289" opacity=".75">TTFT, tokens/s</text>
+              <line x1="140" y1="304" x2="140" y2="318" stroke="currentColor" stroke-width="1.5"/><polygon points="140,326 135,317 145,317" fill="currentColor"/>
+              <rect x="40" y="328" width="200" height="56" rx="6" fill="none" stroke="#F2A516" stroke-width="1.5"/><text x="140" y="351" font-weight="600">5 Adjust</text><text x="140" y="369" opacity=".75">one thing at a time</text>
+              <path d="M240 356 C 300 356, 300 276, 248 276" fill="none" stroke="#F2A516" stroke-width="1.5" stroke-dasharray="5 4"/><polygon points="240,276 249,271 249,281" fill="#F2A516"/>
+              <text x="296" y="312" font-size="11" opacity=".8" transform="rotate(90 296 312)">repeat until it stops improving</text>
+              <line x1="140" y1="384" x2="140" y2="398" stroke="currentColor" stroke-width="1.5"/><polygon points="140,406 135,397 145,397" fill="currentColor"/>
+              <rect x="40" y="408" width="200" height="56" rx="6" fill="#F2A516" opacity=".92"/><text x="140" y="431" font-weight="600" fill="#1C1409">6 Keep</text><text x="140" y="449" fill="#1C1409">the winner</text>
+            </g>
+          </svg>
+        </div>
+          <p class="small">What the agent calls: <code>GET /api/system/gpus</code>, <code>POST /api/models/fit-preview</code> before any download, register and <code>suggest-config</code>, pull and load, a stress run that finds and applies the real context ceiling, <code>GET /api/stats/v2/throughput</code> and <code>latency</code>, and an inference key it issues to send test traffic. It reads <code>/agent-guide.md</code> first, a short description of these calls written for a language model.</p>
+        </div>
+        <figure>
+          <div class="shotb"><a class="zoom" href="{{a:shot-load-progress.webp}}"><img src="{{a:shot-load-progress.webp}}" width="1700" height="1050" alt="A model load in progress on the Models page: each step with its elapsed and usual time" loading="lazy" decoding="async"></a></div>
+          <figcaption class="cap">What the agent watches while a layout loads: each step with the usual time from earlier loads. A load that stops making progress is stopped and its GPUs freed.</figcaption>
+        </figure>
+      </div>
+      <h3 class="tune-h">Four prompts to paste, and what comes back</h3>
+      <ol class="prompts">
+        <li><b>Survey and shortlist.</b> <span class="ask">Ask:</span> list my GPUs, shortlist three open-weight models for agentic coding that fit with at least 65,536 tokens of context, check each with fit-preview, download nothing. <span class="get">You get:</span> a table of model, quantisation, engine, GPUs, context, and why.</li>
+        <li><b>Engine and layout for one model.</b> <span class="ask">Ask:</span> decide vLLM or llama.cpp and tensor parallel or data-parallel replicas on my cards; load the best two layouts, send each the same 20 streaming requests, compare at concurrency 1 and 8. <span class="get">You get:</span> time to first token and tokens per second for both, the winner left loaded, the other unloaded, the test key revoked.</li>
+        <li><b>Find the real limits and apply them.</b> <span class="ask">Ask:</span> stress-run the loaded model, apply the measured context, then benchmark at concurrency 1, 4 and 16 with prompts of about 2k and 30k tokens. <span class="get">You get:</span> the context ceiling written into the model’s settings and a table of time to first token and tokens per second per concurrency and prompt size.</li>
+        <li><b>Compare two candidates on your own work.</b> <span class="ask">Ask:</span> replay the prompts in <code>./workload/*.txt</code> against model A and model B at concurrency 4, judge each answer. <span class="get">You get:</span> <code>model-comparison.md</code> with latency, tokens per second, correctness by the agent’s judgement and a recommendation; the recommended model stays loaded.</li>
+      </ol>
+      <div class="tune-foot">
+        <p class="small"><b>Before you start.</b> An admin token has full admin rights over the warden (models, keys, settings; there are no narrower scopes yet): give it a short expiry and revoke it in Settings → Access Tokens when the job is done. A stress run deliberately crashes an engine to find its limit: run these prompts on a warden nobody else depends on. Downloads are large; the prompts check fit before pulling, but watch your disk.</p>
+        <p class="small">Engine and layout choices (vLLM, tensor or data parallel) are the Linux install; on a Mac the choice is MLX or llama.cpp on one GPU. The model doing the tuning can be whichever you already pay for; the model it tunes is the one on your cards. <a href="/agent-tuning">The agent-tuning page: the four prompts in full</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sharing: one box, many keys, strict priority. Facts from app/tokens/routes_api.py (priority 0..9 strict, default 5, rate limits removed, allowed_models) and screenshots 10/11/godmode. -->
+  <section class="sec share" id="why-keys" aria-labelledby="share-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 id="share-title">One GPU box, shared by your whole team, your family and your agents.</h2>
+        <p>Create as many API keys as you need and hand them out: a colleague, a family member, a CI job, an agent farm, each with its own key, its own priority and its own usage page. The hardware works for everyone, and the important work is never kept waiting.</p>
+      </div>
+      <div class="share-grid">
+        <div>
+          <h3>Strict priority: 9 is served first, 0 last</h3>
+          <p class="small">A waiting higher-priority request always goes before a lower one. Under load, the capacity left after the important keys is what the lower keys get; on a busy box a low priority can wait indefinitely. Default is 5. There is no per-key rate limit; priority replaced it.</p>
+          <ol class="ladder-p" aria-label="Example priority ladder">
+            <li><span class="pn p9">P9</span><div><b>The production agent</b><span>always answered first</span></div></li>
+            <li><span class="pn p7">P7</span><div><b>Your own coding sessions</b><span>next in line</span></div></li>
+            <li><span class="pn p5">P5</span><div><b>Colleagues’ keys</b><span>the default</span></div></li>
+            <li><span class="pn p3">P3</span><div><b>Family and hobby projects</b><span>whatever is left</span></div></li>
+            <li><span class="pn p1">P1</span><div><b>Overnight batch jobs</b><span>wait for idle time</span></div></li>
+          </ol>
+          <p class="small">An example ladder, not a rule: you choose the numbers. Each key can also be paused (new requests refused while the running ones finish), rotated with a grace window, and restricted to the models it may call.</p>
+        </div>
+        <figure>
+          <div class="shotb"><a class="zoom" href="{{a:shot-token-details.webp}}"><img src="{{a:shot-token-details.webp}}" width="1456" height="768" alt="The page of the API key coding-agent: a Limits card with the P0 to P9 priority picker and the text Strict, a waiting P9 request always goes before a P8 one; a Usage panel over the last 7 days with 19k requests, 1.5B prompt tokens and 440k completion tokens; charts of tokens per minute and requests per minute; queue wait and latency panels below" loading="lazy" decoding="async"></a></div>
+          <figcaption class="cap">A key’s page: its priority, seven days of its own usage (19k requests, 1.5B prompt tokens), tokens and requests per minute, queue wait and latency. Windows of 1&#8239;h, 6&#8239;h, 24&#8239;h, 7&#8239;d or any custom range. Earlier keys it was rotated from can be included.</figcaption>
+        </figure>
+        <figure class="bykey">
+          <div class="shotb"><a class="zoom" href="{{a:shot-requests-by-key.webp}}"><img src="{{a:shot-requests-by-key.webp}}" width="2464" height="884" alt="The Stats requests chart over seven days, 28,906 requests, each mark coloured by the key that sent it: opencode-laptop, research-notebook, ui-refactor-agent, agent-sandbox, load-test-filler and demo-agent" loading="lazy" decoding="async"></a></div>
+          <figcaption class="cap">The Stats page’s requests chart: one mark per finished request, placed at the time it finished and the height of its duration on a log scale, sized by the tokens it generated, shaped by how it ended, and coloured by the key that sent it (its name, or the client IP when a key has none). Colour by key switches on when two or more keys share the box and none of them carries 95% of the requests. The legend is a filter: click a key to see only its requests.</figcaption>
+        </figure>
+      </div>
+      <p class="small share-foot">Who is using the box right now, and how, is on the same pages: every request in flight with its key, session and phase, a per-key table on the Stats page, and the <a href="#why-stats">Stats panels</a> for the whole host.</p>
+    </div>
+  </section>
+
+  <!-- Hardware range and honesty: the same console from two mismatched consumer cards to eight B300s on an NVSwitch, and the bottlenecks it names. -->
+  <section class="sec hw" id="hardware" aria-labelledby="hw-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 id="hw-title">Your hardware, honestly: from a Mac to eight B300s.</h2>
+        <p>The same console reads a 16&#8239;GB M1, two mismatched cards under a desk, and an 8 × B300 NVSwitch server, and it names the bottleneck instead of averaging it away: a PCIe link that settled at x4 of x16, NVLink links that are inactive, ECC that differs between cards.</p>
+      </div>
+      <div class="hw-grid">
+        <figure>
+          <div class="shotb"><a class="zoom" href="{{a:shot-b300-gpus-nvswitch.webp}}"><img src="{{a:shot-b300-gpus-nvswitch.webp}}" width="1600" height="1433" alt="System configuration on an 8 × B300 server: Intel Xeon 6776P, 3019&#8239;GiB RAM, eight NVIDIA B300 SXM6 panels each with 241 of 268.6&#8239;GiB in use, Link Gen 6 x16 of x16, NVLink 18 of 18 links active at 53.125&#8239;GB/s each, ECC on, and a server-architecture drawing of one NVSwitch joined to every card" loading="lazy" decoding="async"></a></div>
+          <figcaption class="cap">Eight B300 SXM6 cards on one NVSwitch: 18 of 18 NVLink links active per card, ECC on, PCIe Gen 6 x16, 241 of 268.6&#8239;GiB in use per card while serving GLM-5.2 NVFP4 at tensor-parallel 8.</figcaption>
+        </figure>
+        <figure>
+          <div class="shotb"><a class="zoom" href="{{a:shot-gpu-cards-mixed.webp}}"><img src="{{a:shot-gpu-cards-mixed.webp}}" width="1456" height="821" alt="Two mismatched GPUs: an NVIDIA RTX A4000 with a red Reduced link width x4 of x16 warning and Link Gen 1 now, up to Gen 3, beside a Quadro RTX 5000 whose architecture, VRAM, power cap, link, NVLink and ECC are each marked differs; below, a drawing of how the cards reach the CPU over x4 and x16 links" loading="lazy" decoding="async"></a></div>
+          <figcaption class="cap">Two cards bought years apart: the A4000’s link has settled at x4 of x16 and is flagged in red; the Quadro’s architecture, power cap, NVLink (supported, links inactive) and ECC are each marked <em>differs</em>. The drawing shows which slot is the narrow one.</figcaption>
+        </figure>
+        <figure>
+          <div class="shotb"><a class="zoom" href="{{a:shot-b300-stats.webp}}"><img src="{{a:shot-b300-stats.webp}}" width="1600" height="1027" alt="Stats on the 8 × B300 server: VRAM 1932.1 of 2148.8&#8239;GiB, power 1893&#8239;W summed across the cards, GPU utilisation and power draw for the last hour, and prompt tokens per second split into cached and computed with a 93% cache hit" loading="lazy" decoding="async"></a></div>
+          <figcaption class="cap">The same Stats page at the top of the range: 1,932 of 2,149&#8239;GiB VRAM, 1,893&#8239;W across the cards, a 4,351&#8239;W peak in the hour, and 93% of prompt tokens from the cache.</figcaption>
+        </figure>
+        <figure>
+          <div class="shotb"><a class="zoom" href="{{a:shot-b300-glm-load.webp}}"><img src="{{a:shot-b300-glm-load.webp}}" width="1600" height="989" alt="The model page while GLM-5.2 NVFP4 loads on eight B300s: 9 min 17 s into a usual 10 min 46 s, steps Start engine, Load weights 47 of 47, Compile kernels and Size KV cache done, Tune kernels at op 21 of 22, with CPU and GPU-memory charts and the last log line" loading="lazy" decoding="async"></a></div>
+          <figcaption class="cap">A 10-minute load, step by step: GLM-5.2 NVFP4 on eight B300s, 9 min 17 s into a usual 10 min 46 s, nothing red while it is still moving.</figcaption>
+        </figure>
+      </div>
+      <p class="small" style="margin-top:24px">What each panel shows per card: temperature against its own throttle point, power against its cap, clocks, fan, the PCIe generation and width as negotiated right now, ECC and NVLink when the card has them, and the process holding the memory. The interconnect drawing is read from <code>nvidia-smi topo -m</code>. On a Mac: GPU use and the memory budget Metal reports, without power. And the engine under all of it is watched by its own <code>/health</code>, not its process table: a dead engine under a live wrapper is reloaded with its evidence kept.</p>
+    </div>
+  </section>
+
+  <section class="proof" id="features" aria-labelledby="features-title">
+    <div class="wrap">
+      <h2 id="features-title" class="vh">What it shows</h2>
+      <div class="item">
+        <div class="text">
+          <p class="n">GPU monitoring</p>
+          <h3>Every card reports for itself.</h3>
+          <p>Utilisation, temperature against that card’s own throttle point, power against its cap, VRAM, clocks, PCIe link and which process holds the memory. Not an average across the box.</p>
+        </div>
+        <div class="shotb"><a class="zoom" href="{{a:shot-gpu-cards-four.webp}}"><img src="{{a:shot-gpu-cards-four.webp}}" width="1456" height="822" alt="System configuration and four GPU panels for NVIDIA RTX A4000 cards with per-card utilisation, temperature, VRAM, power, fan and clocks" loading="lazy" decoding="async"></a></div>
+      </div>
+      <div class="item flip">
+        <div class="text">
+          <p class="n">Requests in flight</p>
+          <h3>See what each agent is doing right now.</h3>
+          <p>Every request with its key, its session and its phase: queued, prefill, thinking, tool call, answering. How much of each prompt came from the prefix cache, measured per request.</p>
+        </div>
+        <div class="shotb"><a class="zoom" href="{{a:shot-inflight.webp}}"><img src="{{a:shot-inflight.webp}}" width="1270" height="757" alt="The in-flight requests table: ten active requests, each with key, session, phase and tokens" loading="lazy" decoding="async"></a></div>
+      </div>
+      <div class="item">
+        <div class="text">
+          <p class="n">Coding agents</p>
+          <h3>Claude Code, Codex and OpenCode, connected from one page.</h3>
+          <p>Connect writes each tool’s config with this warden’s address, a key and a loaded model, checks the requirements against what is actually loaded, and sends a test request.</p>
+        </div>
+        <div class="shotb"><a class="zoom" href="{{a:shot-connect-client.webp}}"><img src="{{a:shot-connect-client.webp}}" width="1270" height="757" alt="The Connect a client page with Claude Code selected and requirements checked" loading="lazy" decoding="async"></a></div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+  (function () {
+    "use strict";
+    var root = document.querySelector(".uc"); if (!root) return;
+    var track = root.querySelector(".uc-track"), slides = Array.prototype.slice.call(track.children);
+    var ctl = root.querySelector(".uc-ctl"), dotsBox = root.querySelector(".uc-dots");
+    var toggle = ctl.querySelector('[data-uc="toggle"]'), pauseI = toggle.querySelector("[data-pause]"), playI = toggle.querySelector("[data-play]");
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var i = 0, timer = null, stopped = reduce, hovering = false, focused = false;
+    ctl.hidden = false; dotsBox.hidden = false;
+    // Interval from reading time: ~3.5 words a second plus a second to orient, never under 6 s.
+    function interval(n) { var w = slides[n].textContent.trim().split(/\s+/).length; return Math.max(6000, 1000 + w / 3.5 * 1000); }
+    slides.forEach(function (s, n) {
+      var b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-label", "Use case " + (n + 1) + " of " + slides.length);
+      b.addEventListener("click", function () { stop(); go(n); }); dotsBox.appendChild(b);
+    });
+    var dots = Array.prototype.slice.call(dotsBox.children);
+    function render() {
+      track.style.transform = "translateX(" + (-100 * i) + "%)";
+      slides.forEach(function (s, n) { var on = n === i; s.setAttribute("aria-hidden", on ? "false" : "true"); s.querySelectorAll("a").forEach(function (a) { a.tabIndex = on ? 0 : -1; }); });
+      dots.forEach(function (d, n) { if (n === i) d.setAttribute("aria-current", "true"); else d.removeAttribute("aria-current"); });
+    }
+    function go(n) { i = (n + slides.length) % slides.length; render(); }
+    function schedule() { clearTimeout(timer); if (stopped || hovering || focused || document.hidden) return; timer = setTimeout(function () { go(i + 1); schedule(); }, interval(i)); }
+    function setLive() { track.setAttribute("aria-live", (stopped || hovering || focused) ? "polite" : "off"); }
+    function stop() { stopped = true; clearTimeout(timer); toggle.setAttribute("aria-pressed", "true"); toggle.setAttribute("aria-label", "Resume automatic rotation"); pauseI.hidden = true; playI.hidden = false; setLive(); }
+    function start() { stopped = false; toggle.setAttribute("aria-pressed", "false"); toggle.setAttribute("aria-label", "Pause automatic rotation"); pauseI.hidden = false; playI.hidden = true; setLive(); schedule(); }
+    toggle.addEventListener("click", function () { if (stopped) start(); else stop(); });
+    ctl.querySelector('[data-uc="prev"]').addEventListener("click", function () { stop(); go(i - 1); });
+    ctl.querySelector('[data-uc="next"]').addEventListener("click", function () { stop(); go(i + 1); });
+    root.addEventListener("mouseenter", function () { hovering = true; clearTimeout(timer); setLive(); });
+    root.addEventListener("mouseleave", function () { hovering = false; setLive(); schedule(); });
+    root.addEventListener("focusin", function () { focused = true; clearTimeout(timer); setLive(); });
+    root.addEventListener("focusout", function (e) { if (!root.contains(e.relatedTarget)) { focused = false; setLive(); schedule(); } });
+    root.addEventListener("keydown", function (e) { if (e.key === "ArrowLeft") { stop(); go(i - 1); } else if (e.key === "ArrowRight") { stop(); go(i + 1); } });
+    document.addEventListener("visibilitychange", function () { if (document.hidden) clearTimeout(timer); else schedule(); });
+    // Touch: a horizontal swipe of 40px or more; vertical scrolling is left to the browser (touch-action: pan-y).
+    var x0 = null;
+    track.addEventListener("pointerdown", function (e) { if (e.pointerType === "touch") x0 = e.clientX; });
+    track.addEventListener("pointerup", function (e) { if (x0 === null) return; var dx = e.clientX - x0; x0 = null; if (Math.abs(dx) >= 40) { stop(); go(dx < 0 ? i + 1 : i - 1); } });
+    render();
+    if (reduce) { stop(); } else { setLive(); schedule(); }
+  })();
+  </script>
+
+  <section class="oss" id="open-source" aria-labelledby="oss-title">
+    <div class="wrap">
+      <div>
+        <h2 id="oss-title">Free and open source, and built in the open.</h2>
+        <p>LM Warden is Apache-2.0 on <a href="{{repo}}" rel="noopener">GitHub</a>: the install script and the Compose file are the whole deployment, and you can read both. No account, no licence check, no telemetry. vLLM, llama.cpp and MLX are upstream projects we run unmodified.</p>
+      </div>
+      <div>
+        <h2>mlx-rust-lm <span class="soon">coming soon</span></h2>
+        <p>A port of Apple’s mlx-lm from Python to Rust on Apple’s official mlx-c bindings, developed and maintained by the LM Warden team as a standalone open-source project that LM Warden will use as a third Mac engine, eventually replacing the Python mlx-lm engine that makes up most of today’s Mac download. Unofficial, not affiliated with Apple.</p>
+      </div>
+    </div>
+  </section>
+
+  <dialog class="lb" aria-labelledby="lb-cap">
+    <figure>
+      <img id="lb-img" alt="">
+      <figcaption id="lb-cap"></figcaption>
+    </figure>
+    <button type="button" class="lb-close" aria-label="Close enlarged screenshot">Close ✕</button>
+  </dialog>
+  <script>
+  (function () {
+    "use strict";
+    var dlg = document.querySelector("dialog.lb");
+    if (!dlg || typeof dlg.showModal !== "function") return; // no <dialog>: links stay plain links
+    var img = dlg.querySelector("#lb-img"), cap = dlg.querySelector("#lb-cap"), close = dlg.querySelector(".lb-close");
+    var opener = null;
+    document.querySelectorAll("a.zoom").forEach(function (a) {
+      var thumb = a.querySelector("img");
+      a.setAttribute("aria-haspopup", "dialog");
+      a.addEventListener("click", function (e) {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return; // let "open in new tab" through
+        e.preventDefault();
+        opener = a;
+        img.src = a.getAttribute("href");
+        img.alt = thumb ? thumb.alt : "";
+        cap.textContent = img.alt;
+        dlg.showModal();
+        close.focus();
+      });
+    });
+    close.addEventListener("click", function () { dlg.close(); });
+    dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); }); // backdrop; Esc is native
+    dlg.addEventListener("close", function () {
+      img.removeAttribute("src"); cap.textContent = "";
+      if (opener) { opener.focus(); opener = null; }
+    });
+  })();
+  </script>

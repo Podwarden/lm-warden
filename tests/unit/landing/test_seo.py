@@ -73,8 +73,19 @@ def test_llms_txt_links_every_page_and_names_podwarden(client: TestClient) -> No
 
 
 def test_podwarden_strip_and_footer(client: TestClient) -> None:
-    assert 'aria-labelledby="family-title"' in fetch(client, "/")
+    """Every page's footer names PodWarden and links podwarden.com. The
+    redesign (mockup B) dropped Home's "Part of the PodWarden family" strip
+    and the footer's "PodWarden on GitHub" link; the approved footer says "by
+    the team behind PodWarden", and that name is the link. The PodWarden
+    GitHub organisation stays in the structured data and llms.txt."""
+    home = fetch(client, "/")
+    assert 'aria-labelledby="family-title"' not in home
     for p in all_site_pages():
         body = fetch(client, p.path)
-        assert "LM Warden is a PodWarden project" in body, p.path
-        assert 'href="https://github.com/Podwarden"' in body, p.path
+        footer = body[body.index('<footer class="colophon"') :]
+        assert (
+            'by the team behind <a href="https://podwarden.com" rel="noopener">PodWarden</a>.'
+            in footer
+        ), p.path
+    app = _ld(home)["SoftwareApplication"]
+    assert app["publisher"]["sameAs"] == ["https://github.com/Podwarden"]

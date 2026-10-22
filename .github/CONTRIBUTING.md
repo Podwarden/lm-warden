@@ -11,7 +11,8 @@ expected to follow the [Code of Conduct](../CODE_OF_CONDUCT.md).
 - **Bugs and ideas** — open an
   [issue](https://github.com/Podwarden/lm-warden/issues/new/choose). A bug
   report is most useful with the version (menu footer, or `GET /api/version`),
-  the GPU and driver, the engine and model, and the engine log.
+  the platform (Linux or macOS), the GPU and driver (or the Mac model), the
+  engine and model, and the engine log.
 - **Security problems** — never in a public issue; see
   [SECURITY.md](../SECURITY.md).
 - **Pull requests** — fork, branch from `main`, and open a PR against `main`.
@@ -47,6 +48,10 @@ and do not patch them.
 ---
 
 ## Build from source
+
+This section builds the Linux images. The Mac app (beta) builds on an Apple
+silicon Mac with Swift and `make macos-bundle-python`; see
+[On a Mac (preview)](../documents/INSTALL.md#on-a-mac-preview).
 
 Both images build from this repository with nothing but Docker. There is no
 token, no account, and no private registry anywhere in the build: every input is

@@ -151,16 +151,23 @@ def test_landing_html_contains_required_entry_points(client: TestClient) -> None
         assert 'href="https://github.com/Podwarden/lm-warden"' in page, path
         assert "podwarden.com" in page, path
         shown = re.sub(r'<wbr>|<span class="nw">|</span>', "", page)
-        want = 2 if path == "/" else 1  # hero and colophon on Home, colophon elsewhere
+        # Redesign (mockup B, 2026-10-21; decisions D15): the command lives in
+        # Home's Linux panel only. The footer's second copy was cut, because a
+        # Linux-only command in a site-wide footer re-introduces the platform
+        # guess; every page's bar links to the chooser instead.
+        want = 1 if path == "/" else 0
         assert shown.count(html.escape(landing_routes.INSTALL_CMD)) == want, path
+        assert 'class="btn go" href="/#install">Download &amp; Install</a>' in page, path
     body = client.get("/_landing").text
     assert "podwarden.com" in body
-    # The product is "LM Warden"; neither older name is its name any more.
-    # The one exception is the sentence that says so, beside the install
-    # command whose directory still carries the old name.
+    # The product is "LM Warden". The one older name on the page is the
+    # upgrader's note beside "Already running it?" in the install section
+    # (mockup B: the rename matters only to an upgrader, D15), not the hero.
     assert "LM Warden" in body
     olds = re.findall(r"[^.>]*v?llm\s+warden[^.<]*", body, re.IGNORECASE)
-    assert olds == ["LM Warden was formerly vLLM Warden"], olds
+    assert olds == ["Formerly vLLM Warden"], olds
+    upgrade = body[body.index('id="upgrade"') :]
+    assert upgrade.index("Formerly vLLM Warden") < upgrade.index("</div>")
     assert "llmwarden" not in body.lower()
     # The former-name sentence is on Home only.
     others = "".join(b for p, b in all_pages(client).items() if p != "/")
@@ -173,8 +180,10 @@ def test_install_command_wraps_only_at_path_boundaries(client: TestClient) -> No
     a <wbr> follows every path segment. The copy button copies textContent,
     which a <wbr> adds nothing to, so the clipboard gets the exact command."""
     body = client.get("/_landing").text
-    pres = re.findall(r'<pre id="cmd-(?:hero|end)"[^>]*>(.*?)</pre>', body, re.S)
-    assert len(pres) == 2
+    # One copy since the redesign: the Linux panel of the install chooser.
+    pres = re.findall(r'<pre id="cmd-linux"[^>]*>(.*?)</pre>', body, re.S)
+    assert len(pres) == 1
+    assert 'data-copy="cmd-linux"' in body
     for pre in pres:
         assert (
             "https://<wbr>raw.githubusercontent.com/<wbr>Podwarden/<wbr>"
@@ -272,26 +281,48 @@ def test_copy_typography(client: TestClient) -> None:
     assert not re.search(r"\w'\w", faq)
 
 
-def test_fonts_are_preloaded_and_declared(client: TestClient) -> None:
-    """The sans and the mono (the hero command) are preloaded; the condensed
-    label face is not, because nothing above the fold uses it. Each web font
-    has a metric-matched local fallback so the swap does not move the text."""
+#: The self-hosted fonts are the official release files, byte for byte: Mona
+#: Sans declares the Reserved Font Name "Mona", so a modified (subset or
+#: instanced) copy could not keep its name. sha256 of each file as shipped in
+#: mona-sans-webfonts-v2.0.27.zip (MonaSansVF[wdth,opsz,wght].woff2) and
+#: JetBrainsMono-2.304.zip (fonts/webfonts/JetBrainsMono-{Regular,Medium}.woff2).
+FONT_SHA256 = {
+    "fonts/mona-sans-vf.woff2": "875ad1fab0c1f4854927fa8086963fb6ddd4608b04a58b267cddf8a9d78f80d3",
+    "fonts/jetbrains-mono-regular.woff2": "a9cb1cd82332b23a47e3a1239d25d13c86d16c4220695e34b243effa999f45f2",
+    "fonts/jetbrains-mono-medium.woff2": "086c48dfbea9ddaff1320f7e09399b8e2924e88ce67453721255db3bdbb5a353",
+}
+
+
+def test_fonts_are_self_hosted_official_and_declared(client: TestClient) -> None:
+    """Mona Sans (variable) and JetBrains Mono are served by the instance from
+    assets/fonts/, unmodified, with their SIL OFL licences beside them. Only
+    the sans is preloaded: the H1 is the first paint, and no code is above the
+    fold. CSP keeps font-src 'self'."""
+    import hashlib
+
     body = client.get("/_landing").text
     preloads = re.findall(
-        r'<link rel="preload" href="/_landing/assets/(font-[a-z-]+)\.woff2\?v=[0-9a-f]{12}" '
+        r'<link rel="preload" href="/_landing/assets/(fonts/[a-z-]+)\.woff2\?v=[0-9a-f]{12}" '
         r'as="font" type="font/woff2" crossorigin>',
         body,
     )
-    assert preloads == ["font-sans", "font-mono"]
-    for name in ("font-sans", "font-sans-cond", "font-mono"):
-        assert re.search(rf'url\("/_landing/assets/{name}\.woff2\?v=[0-9a-f]{{12}}"\)', body), name
-    for family in ("LMW Sans Fallback", "LMW Mono Fallback"):
-        assert f'font-family: "{family}"' in body
-    assert body.count("size-adjust:") >= 5
-    assert "font-optical-sizing: auto" in body
-    assert "font-synthesis: none" in body
-    assert "optimizeLegibility" not in body
-    assert "font-variant-ligatures: none" not in body
+    assert preloads == ["fonts/mona-sans-vf"]
+    for name, digest in FONT_SHA256.items():
+        assert re.search(rf'url\("/_landing/assets/{name}\?v=[0-9a-f]{{12}}"\)', body), name
+        data = (_LANDING_DIR / "assets" / name).read_bytes()
+        assert hashlib.sha256(data).hexdigest() == digest, name
+    assert '@font-face{font-family:"Mona Sans";' in body
+    assert body.count('@font-face{font-family:"JetBrains Mono";') == 2
+    assert "font-display:swap" in body
+    for lic, holder in (
+        ("mona-sans-ofl.txt", 'Reserved Font Name "Mona"'),
+        ("jetbrains-mono-ofl.txt", "The JetBrains Mono Project Authors"),
+    ):
+        text = (_LANDING_DIR / "assets" / "fonts" / lic).read_text()
+        assert "SIL Open Font License, Version 1.1" in text and holder in text, lic
+        assert client.get(f"/_landing/assets/fonts/{lic}").status_code == 200, lic
+    # The old renamed subsets are gone.
+    assert not list((_LANDING_DIR / "assets").glob("font-*.woff2"))
 
 
 def test_landing_seo_tags(client: TestClient) -> None:
@@ -313,20 +344,23 @@ def test_landing_seo_tags(client: TestClient) -> None:
     ):
         assert tag in body
     # Every image has alt text and explicit dimensions; below-the-fold ones
-    # are lazy. Videos carry a poster and preload only metadata.
+    # are lazy. The one exception is Home's hero shot, the LCP image (mockup
+    # B replaced the hero video with the same Stats poster in a frame): it
+    # loads eagerly at high priority. The lightbox's <img id="lb-img"> has no
+    # file until a thumbnail is opened; it takes that thumbnail's alt then.
+    # Videos carry a poster and preload nothing until played.
     site = "\n".join(all_pages(client).values())
-    imgs = re.findall(r"<img\b[^>]*>", site)
+    imgs = [i for i in re.findall(r"<img\b[^>]*>", site) if 'id="lb-img"' not in i]
     assert imgs
+    eager = [i for i in imgs if 'loading="lazy"' not in i]
+    assert len(eager) == 1 and 'fetchpriority="high"' in eager[0], eager
+    assert "demo-stats-poster.webp" in eager[0] and eager[0] in body
     for img in imgs:
         assert re.search(r'\balt="[^"]{10,}"', img), img
         assert 'width="' in img and 'height="' in img, img
-        assert 'loading="lazy"' in img, img
-    # Home has the hero video, the LCP poster, which fetches metadata up front;
-    # the key-page recording elsewhere fetches nothing until played.
-    home_videos = re.findall(r"<video\b[^>]*>", body, re.S)
-    assert len(home_videos) == 1 and 'preload="metadata"' in home_videos[0]
+    assert re.findall(r"<video\b[^>]*>", body, re.S) == []
     videos = re.findall(r"<video\b[^>]*>", site, re.S)
-    assert len(videos) == 2
+    assert len(videos) == 1
     assert sum('preload="none"' in v for v in videos) == 1
     assert re.search(
         r'<link rel="preload" href="/_landing/assets/demo-stats-poster\.webp[^"]*" '
@@ -491,10 +525,11 @@ def test_load_settings_reads_and_validates_env(
         ("demo-stats.webm", "video/webm"),
         ("shot-gpu-cards.webp", "image/webp"),
         ("demo-stats.gif", "image/gif"),
-        ("font-sans.woff2", "font/woff2"),
-        ("font-sans-cond.woff2", "font/woff2"),
-        ("font-mono.woff2", "font/woff2"),
-        ("fonts-license.txt", "text/plain"),
+        ("fonts/mona-sans-vf.woff2", "font/woff2"),
+        ("fonts/jetbrains-mono-regular.woff2", "font/woff2"),
+        ("fonts/jetbrains-mono-medium.woff2", "font/woff2"),
+        ("fonts/mona-sans-ofl.txt", "text/plain"),
+        ("fonts/jetbrains-mono-ofl.txt", "text/plain"),
     ],
 )
 def test_asset_served_with_type_and_long_cache(client: TestClient, name: str, ctype: str) -> None:
@@ -509,7 +544,7 @@ def test_asset_served_with_type_and_long_cache(client: TestClient, name: str, ct
 
 def test_every_asset_the_page_names_is_served(client: TestClient) -> None:
     body = site_html(client)
-    urls = set(re.findall(r"/_landing/assets/[a-z0-9._-]+\?v=[0-9a-f]{12}", body))
+    urls = set(re.findall(r"/_landing/assets/(?:fonts/)?[a-z0-9._-]+\?v=[0-9a-f]{12}", body))
     assert len(urls) >= 10
     for url in urls:
         assert client.get(url).status_code == 200, url
@@ -535,6 +570,13 @@ def test_asset_range_request_returns_206(client: TestClient) -> None:
         "/_landing/assets/.hidden",
         "/_landing/assets/SHOT-GPU-CARDS.WEBP",
         "/_landing/assets/font-archivo.woff2",
+        "/_landing/assets/font-sans.woff2",
+        "/_landing/assets/fonts/nope.woff2",
+        "/_landing/assets/fonts/..%2frender.py",
+        "/_landing/assets/fonts/..%2F..%2Froutes.py",
+        "/_landing/assets/fonts/",
+        "/_landing/assets/fonts/MONA-SANS-VF.WOFF2",
+        "/_landing/assets/mona-sans-vf.woff2",
     ],
 )
 def test_asset_traversal_and_unknown_names_404(client: TestClient, path: str) -> None:
@@ -640,8 +682,9 @@ def test_landing_csp_allows_exactly_the_inline_scripts(client):
             for attrs, body in re.findall(r"<script\b([^>]*)>(.*?)</script>", r.text, re.DOTALL)
             if "ld+json" not in attrs
         ]
-        # Theme (head) and behaviour (body) everywhere; Home adds the old-anchor map.
-        assert len(executable) == (3 if path == "/" else 2), path
+        # The "js" class (head) and the menu/copy/video script (body) everywhere;
+        # Home adds the carousel, the lightbox and the old-anchor map.
+        assert len(executable) == (5 if path == "/" else 2), path
         assert csp["script-src"].split() == [_sha(b) for b in executable], path
 
 
@@ -667,7 +710,7 @@ def test_landing_csp_follows_the_canonical_variant(client):
     page2, csp2 = _csp(client)
     assert page2 != page  # canonical links differ...
     scripts = landing_routes.inline_scripts(page2)
-    assert len(scripts) == 3  # ...and the hashes are computed from the page served
+    assert len(scripts) == 5  # ...and the hashes are computed from the page served
     assert csp2["script-src"].split() == [_sha(b) for b in scripts]
 
 
@@ -688,9 +731,13 @@ def test_assets_keep_immutable_caching_and_get_the_api_headers(client):
     assert r.headers["x-content-type-options"] == "nosniff"
 
 
-# --- Colour themes and the toggle ---------------------------------------------------
+# --- Colour: dark only (mockup B, decisions D-B1) -----------------------------------
+#
+# The redesign puts every page on the console's own ground, as the approved
+# mockup does: one dark palette, no light theme, no toggle. The guard that
+# every colour is a token stays: one :root block holds them all.
 
-_DARK_MQ = '@media (prefers-color-scheme: dark) {\n      :root:not([data-theme="light"]) {'
+_TOKENS_OPENER = ":root{\n    --ground:"
 
 
 def _css(body: str) -> str:
@@ -698,118 +745,67 @@ def _css(body: str) -> str:
 
 
 def _token_block(css: str, opener: str) -> dict[str, str]:
-    start = css.index(opener) + len(opener)
+    start = css.index(opener) + len(":root{")
     block = css[start : css.index("}", start)]
     return dict(re.findall(r"(--[a-z0-9-]+):\s*([^;]+);", block))
 
 
-def test_both_themes_define_every_colour_token(client: TestClient) -> None:
-    """Light is :root; dark is the prefers-color-scheme block and the
-    data-theme="dark" override. All three carry the same token set, the two
-    dark blocks are identical, and every colour in the page's CSS comes from
-    a token (no hex outside the token blocks)."""
-    css = _css(client.get("/_landing").text)
-    light = _token_block(css, ":root {\n      color-scheme: light;")
-    dark_auto = _token_block(css, _DARK_MQ)
-    dark_forced = _token_block(css, ':root[data-theme="dark"] {')
-    assert set(light) == set(dark_auto) == set(dark_forced)
-    assert dark_auto == dark_forced
-    for token in (
-        "--paper",
-        "--paper-2",
-        "--ink",
-        "--ink-2",
-        "--ink-hover",
-        "--rule",
-        "--tape",
-        "--tape-ink",
-        "--screen",
-        "--link-line",
-        "--selection",
-        "--selection-ink",
-        "--focus",
-        "--scroll-thumb",
-        "--scroll-track",
-        "--well",
-        "--well-ink",
-        "--well-dim",
-        "--well-edge",
-        "--diff-add",
-        "--diff-del",
-        "--diff-ctx",
-        "--mat",
-        "--mat-edge",
-        "--plate",
-        "--plate-edge",
-    ):
-        assert token in light, token
-        assert light[token] != dark_auto[token] or token in (
+def test_one_dark_palette_holds_every_colour(client: TestClient) -> None:
+    """Every colour in the CSS of every page (the shared layout plus Home's or
+    the article pages' rules) comes from the one token block; no hex, rgb()
+    or oklch() literal anywhere else."""
+    for path in ("/", "/gpu-monitoring", "/coding-agents/claude-code", "/faq"):
+        css = _css(client.get("/_landing" if path == "/" else path).text)
+        tokens = _token_block(css, _TOKENS_OPENER)
+        assert tokens["--ground"] == "#1C1409" and tokens["--amber"] == "#F2A516", path
+        # The article pages' own tokens are defined, on the same dark ground.
+        for token in (
+            "--paper",
+            "--paper-2",
+            "--ink",
+            "--ink-2",
+            "--rule",
             "--tape",
+            "--well",
+            "--well-ink",
             "--screen",
-            "--selection",
-        ), token
-    assert light["--paper"] == "#EFECE7" and dark_auto["--paper"] == "#1C1409"
-    assert "color-scheme: dark;" in css and "color-scheme: light;" in css
-    # No colour literal outside the three token blocks.
-    rest = css
-    for opener in (":root {\n      color-scheme: light;", _DARK_MQ, ':root[data-theme="dark"] {'):
-        start = rest.index(opener)
-        rest = rest[:start] + rest[rest.index("}", start + len(opener)) + 1 :]
-    assert not re.findall(
-        r"#[0-9A-Fa-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(", re.sub(r"/\*.*?\*/", "", rest, flags=re.S)
-    )
+            "--plate-edge",
+            "--series-on",
+            "--series-off",
+        ):
+            assert token in tokens, (path, token)
+        assert tokens["--paper"] == tokens["--ground"], path
+        assert css.count(":root{\n    --ground:") == 1, path
+        start = css.index(_TOKENS_OPENER)
+        rest = css[:start] + css[css.index("}", start) + 1 :]
+        assert not re.findall(
+            r"#[0-9A-Fa-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(",
+            re.sub(r"/\*.*?\*/", "", rest, flags=re.S),
+        ), path
+        assert "color-scheme:dark" in css and "color-scheme: light" not in css, path
 
 
-def test_theme_colour_meta_for_both_schemes(client: TestClient) -> None:
-    body = client.get("/_landing").text
-    assert (
-        '<meta name="theme-color" content="#EFECE7" media="(prefers-color-scheme: light)">' in body
-    )
-    assert (
-        '<meta name="theme-color" content="#1C1409" media="(prefers-color-scheme: dark)">' in body
-    )
-    assert '<meta name="color-scheme" content="light dark">' in body
+def test_dark_only_head(client: TestClient) -> None:
+    """One theme colour and color-scheme dark; no light/dark media pair, no
+    stored-theme script and no toggle."""
+    for path in ("/", "/faq"):
+        body = client.get("/_landing" if path == "/" else path).text
+        assert '<meta name="theme-color" content="#1C1409">' in body
+        assert body.count('name="theme-color"') == 1
+        assert '<meta name="color-scheme" content="dark">' in body
+        assert "lmw-theme" not in body and "theme-toggle" not in body
+        assert 'data-theme="' not in body
 
 
-def test_theme_script_runs_before_the_stylesheet(client: TestClient) -> None:
-    """No flash of the wrong theme: the script that applies a stored choice
-    sits in <head>, after the theme-color metas it rewrites and before the
-    <style> block, so data-theme is set before anything is painted. It wraps
-    storage in try/catch, since blocked storage throws."""
+def test_head_script_marks_the_page_scripted_before_the_stylesheet(client: TestClient) -> None:
+    """The .js class (the carousel's one-slide layout and the menu sheet key
+    off it) is set in <head>, before the <style> block, so nothing reflows
+    once the body scripts run."""
     body = client.get("/_landing").text
     head = body[: body.index("</head>")]
-    scripts = landing_routes.inline_scripts(body)
-    first = scripts[0]
-    at = head.index(first)
-    assert head.rindex('name="theme-color"', 0, at) < at < head.index("<style>")
-    assert 'localStorage.getItem("lmw-theme")' in first and "try {" in first
-    assert 'setAttribute("data-theme", pick)' in first
-    assert 'root.classList.add("js")' in first
-    # The toggle script also guards every storage write.
-    tail = scripts[1]
-    assert "localStorage.setItem(KEY, next)" in tail
-    assert tail.index("try {", tail.index("toggle.addEventListener")) < tail.index(
-        "localStorage.setItem(KEY"
-    )
-
-
-def test_theme_toggle_markup(client: TestClient) -> None:
-    """A single quiet button in the header, keyboard-operable because it is a
-    <button>, named for screen readers, with a status region that announces
-    the change; hidden until the head script marks the page as scripted."""
-    body = client.get("/_landing").text
-    header = body[body.index("<header") : body.index("</header>")]
-    button = re.search(r'<button class="theme-toggle" type="button"[^>]*>', header)
-    assert button, "the toggle lives in the header"
-    assert 'aria-label="Colour theme: Auto"' in button.group(0)
-    assert 'data-pref="auto"' in button.group(0)
-    for icon in ("auto", "light", "dark"):
-        assert f'data-icon="{icon}"' in header
-    assert '<span class="label">Auto</span>' in header
-    assert 'role="status"' in header and "data-theme-status" in header
-    css = _css(body)
-    assert ".theme-toggle { display: none; }" in css
-    assert ".js .theme-toggle {" in css
+    first = landing_routes.inline_scripts(body)[0]
+    assert first == 'document.documentElement.classList.add("js");'
+    assert head.index(first) < head.index("<style>")
 
 
 def test_requests_figure(client: TestClient) -> None:
@@ -817,9 +813,12 @@ def test_requests_figure(client: TestClient) -> None:
     source comment naming the asset and figures numbered 1 to 15 in order."""
     assert "<!-- src: shot-requests-7d.webp" in _sources()
     body = site_html(client)
-    # Figures keep their site-wide numbers, 1 to 16, each once.
+    # Figures keep their site-wide numbers, 2 to 16, each once. Fig. 1 was
+    # the caption of Home's hero video; the redesigned Home (mockup B) has a
+    # framed Stats shot and no numbered captions, and the article pages keep
+    # their own numbers rather than being renumbered.
     nums = re.findall(r"<b>Fig\.&nbsp;(\d+)</b>", body)
-    assert sorted(map(int, nums)) == list(range(1, 17))
+    assert sorted(map(int, nums)) == list(range(2, 17))
     img = re.search(
         r'<img src="/_landing/assets/shot-requests-7d\.webp\?v=[0-9a-f]{12}"[^>]*>', body
     )
@@ -879,12 +878,13 @@ def test_drawn_figures_have_a_phone_cut(client: TestClient) -> None:
     cropped or shrunk to unreadable text on a phone; the narrow D1 has its own
     ids so the two drawings never collide."""
     body = site_html(client)
-    # 5 hand-drawn figures, plus the generated request-flow diagram on Home
-    # (the agent pages' own versions: test_diagrams.py).
-    assert body.count('class="v-wide"') == body.count('class="v-narrow"') == 6
+    # 5 hand-drawn figures on the article pages (the agent pages' generated
+    # versions: test_diagrams.py; Home's router flow and tuning loop, which
+    # carry "flow v-wide" / "loop v-wide": test_home.py).
+    assert body.count('class="v-wide"') == body.count('class="v-narrow"') == 5
     for svg_id in ("d1n-title", "d1n-desc", "d1n-head"):
         assert f'id="{svg_id}"' in body
-    css = _css(body)
+    css = _css(client.get("/gpu-monitoring").text)
     assert ".v-narrow { display: none; }" in css
     assert "@media (max-width: 999px)" in css
     assert ".connect pre.term { white-space: pre-wrap;" in css
@@ -932,14 +932,18 @@ def test_download_mac_registered_with_or_without_canonical_url(
 
 
 def test_home_links_the_mac_download(client: TestClient) -> None:
+    """The macOS panel of the install chooser (#p-mac, mockup B) carries the
+    download, its checksum, the release notes and the first-launch steps. The
+    steps themselves (and the shasum command) now live in the install guide
+    the panel links: the redesign keeps the Mac facts in one card (D15)."""
     body = client.get("/_landing").text
-    assert 'id="mac"' in body
-    assert 'href="/download/mac"' in body
-    assert 'href="/download/mac.sha256"' in body
+    panel = body[body.index('id="p-mac"') : body.index('id="p-win"')]
+    assert '<a class="btn go" href="/download/mac">Download for Mac (beta)</a>' in panel
+    assert 'href="/download/mac.sha256"' in panel
+    assert f'href="{_downloads.MAC_RELEASE_URL}"' in panel
+    assert "documents/INSTALL.md#beta-builds" in panel
     assert "TODO(mac-screenshots)" not in (_LANDING_DIR / "pages" / "home.html").read_text()
-    for asset in ("shot-mac-menu.webp", "shot-mac-setup.webp"):
-        assert f"/_landing/assets/{asset}?v=" in body
-        assert client.get(f"/_landing/assets/{asset}").status_code == 200
+    assert "/_landing/assets/shot-mac-menu.webp?v=" in panel
+    assert client.get("/_landing/assets/shot-mac-menu.webp").status_code == 200
     assert "/download/mac" in client.get("/llms.txt").text
-    assert f"shasum -a 256 -c {_downloads.MAC_DMG_NAME}.sha256" in body
-    assert "{{mac_dmg}}" not in body
+    assert "{{mac_dmg}}" not in body and "{{mac_release}}" not in body

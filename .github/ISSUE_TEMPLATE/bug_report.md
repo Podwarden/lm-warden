@@ -19,10 +19,12 @@ labels: bug
 **Environment**
 
 - LM Warden version (menu footer in the UI, or `GET /api/version`):
-- Install route (published images / built from source / offline):
-- Host OS, Docker and Compose versions:
-- GPU(s), driver and CUDA version (`nvidia-smi`):
-- Engine and model (vLLM or llama.cpp; Hugging Face repo and file):
+- Platform (Linux / macOS):
+- Install route (Linux: published images / built from source / offline; macOS: beta DMG / built from source):
+- Linux: host OS, Docker and Compose versions:
+- Linux: GPU(s), driver and CUDA version (`nvidia-smi`):
+- macOS: Mac model, chip and memory, macOS version:
+- Engine and model (vLLM, llama.cpp or MLX; Hugging Face repo and file):
 
 **Logs**
 

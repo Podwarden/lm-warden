@@ -1,22 +1,21 @@
 # LM Warden
 
-**Your own OpenAI-compatible LLM API on NVIDIA GPUs you already own: vLLM
-v0.32.0 and llama.cpp b11719 behind one port, a key per consumer with its usage,
-and a live view of what the cards are doing.**
+**Your own OpenAI-compatible LLM API on the hardware you already own: NVIDIA
+GPUs on Linux, with vLLM v0.32.0 and llama.cpp b11719, or an Apple silicon Mac,
+with MLX and llama.cpp (beta). One port, a key per consumer with its usage, and
+a live view of what the hardware is doing.**
 
-> Formerly LLM Warden and, before that, vLLM Warden. Existing installs upgrade
-> in place ([how](documents/OPERATING.md#day-to-day)); the install directory
-> (`/opt/vllm-warden`) and the key prefixes (`vw_`, `vwa_`) keep the old name.
 > Website: [lmwarden.com](https://lmwarden.com).
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Engines](https://img.shields.io/badge/engines-vLLM%200.32.0%20%C2%B7%20llama.cpp%20b11719-4b8bbe.svg)](#two-engines-and-the-model-that-made-us-add-the-second)
-[![Deploy](https://img.shields.io/badge/deploy-Docker%20Compose-2496ed.svg)](documents/INSTALL.md)
+[![Platforms](https://img.shields.io/badge/platforms-Linux%20%C2%B7%20macOS%20%28beta%29-555.svg)](#will-it-run-on-my-hardware)
+[![Engines](https://img.shields.io/badge/engines-vLLM%200.32.0%20%C2%B7%20llama.cpp%20b11719%20%C2%B7%20MLX-4b8bbe.svg)](#two-engines-and-the-model-that-made-us-add-the-second)
+[![Deploy](https://img.shields.io/badge/deploy-Docker%20Compose%20%C2%B7%20Mac%20app-2496ed.svg)](documents/INSTALL.md)
 
 ![LM Warden's Stats page under load, stepping through its 1 h, 6 h and 24 h windows: host VRAM, GPU utilisation, power draw and tokens per minute (23 September capture, before the panel switched to tokens per second)](app/landing/assets/demo-stats.gif)
 
-**Install it** on a Linux x86_64 host with Docker, an NVIDIA GPU and the NVIDIA
-Container Toolkit:
+**Install it on Linux**: an x86_64 host with Docker, an NVIDIA GPU and the
+NVIDIA Container Toolkit:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Podwarden/lm-warden/main/install.sh | sh -s -- --dir /opt/vllm-warden
@@ -28,12 +27,16 @@ Your endpoint is `http://YOUR-HOST:8080/v1`: in any OpenAI client, only the
 install are under [Quick start](#quick-start) and in
 [documents/INSTALL.md](documents/INSTALL.md).
 
-**On an Apple silicon Mac?** There is a beta of a native menu-bar app:
-[download it](https://lmwarden.com/download/mac) (about 360 MB), then read
+**On macOS**: an Apple silicon Mac (M1 or later) runs a native menu-bar app,
+in beta, with MLX and a Metal build of llama.cpp and the same dashboard and
+API. [Download it](https://lmwarden.com/download/mac) (about 360 MB), then read
 [Mac app (beta)](#mac-app-beta) before the first launch.
 
+**Windows is next.** We are working on it; there is no date yet.
+
 You have NVIDIA GPUs: in a rack, in a workstation, or two cards bought eighteen
-months apart in a box under a desk. You want what is on them reachable the way
+months apart in a box under a desk. Or you have an Apple silicon Mac with memory
+to spare. You want what is on them reachable the way
 a hosted API is reachable: a base URL, a key, and a client library that already
 exists. You also want what a hosted API gives you as a matter of course and a
 bare engine does not: a separate key per consumer, usage attributed to it, and
@@ -144,7 +147,8 @@ computed.</td>
 </tr>
 </table>
 
-**Macs and other GPUs.** Apple silicon is covered by the
+**Windows, Macs and other GPUs.** Windows is next: we are working on it, with
+no date yet. Apple silicon is covered by the
 [Mac app (beta)](#mac-app-beta) below. AMD Radeon and Intel GPUs are on our
 roadmap, with no dates; which comes first depends on who asks. Tell us which
 one you would run it on, in the Ideas category of the project's GitHub
@@ -166,12 +170,14 @@ None of these are solvable by configuration today.
 - **You need a backend that is not vLLM or llama.cpp** (TensorRT-LLM, SGLang,
   Ollama's runtime). The seam to add one is real and small, but nothing else
   ships today on Linux; the Mac beta runs MLX.
-- **You want several models resident on one card.** One loaded model per GPU
-  is an ownership rule enforced before an engine starts.
+- **You want several models resident on one card, on Linux.** One loaded
+  model per GPU is an ownership rule enforced before an engine starts. (On a
+  Mac, models share the GPU when they fit.)
 - **You want tensor parallelism out of llama.cpp.** It splits layers, not
   tensors. For a model too large for one card, vLLM is still the right answer.
 - **Your host is not Linux x86_64 or an Apple silicon Mac.** The api image is
   built on upstream's CUDA base and needs both; a Mac runs the app below.
+  Windows is next, with no date yet.
 
 ## Mac app (beta)
 
@@ -213,7 +219,12 @@ reports Macs with less than 16 GiB of memory but does not block first run.
   it. vLLM is not available on a Mac.
 - **Models share the GPU.** The server sizes each load, the weights and the
   KV cache, against the Mac's unified-memory budget, so several models can
-  share the GPU when they fit.
+  share the GPU when they fit. The budget is the GPU's working set as Metal
+  reports it: about 11.8 GiB usable on a 16 GiB M1.
+- **Same dashboard, fewer readings.** There is no power telemetry on a Mac,
+  and MLX exposes no engine metrics, so for an MLX model the Stats page shows
+  LM Warden's own proxy numbers. vLLM, tensor and data parallelism and the
+  NVIDIA per-card panels are Linux only.
 - **This Mac only, until you say otherwise.** The server listens on 127.0.0.1,
   port 8080 (falling back to 8081 to 8099), in plain HTTP. The **Share on Local
   Network** switch opens it to your network, still plain HTTP. There is no
@@ -305,12 +316,12 @@ line on someone's invoice.
 | A bare engine | With LM Warden |
 |---|---|
 | One model per container, restart to switch | Register, pull, load and unload from the browser |
-| One engine, take it or leave it | vLLM v0.32.0 **and** llama.cpp b11719, chosen per model |
+| One engine, take it or leave it | vLLM v0.32.0 **and** llama.cpp b11719 on Linux, MLX **and** llama.cpp on a Mac, chosen per model |
 | A single shared API key, or none | A key per consumer, each with its own page, priority lane, pause switch and rotation grace window |
 | No record of who used what | Requests, prompt tokens and completion tokens rolled up per key and per client IP, plus each key's queue wait and latency |
 | No way to see what a client actually sent | God mode: an opt-in, in-memory live view of one key's prompts and completions, streaming only while open; off by default |
 | A port per engine to expose | One published port; your own TLS terminator, ingress, SSO or network policy goes in front of it |
-| `nvidia-smi` in a second terminal | Per-card VRAM, utilisation, power, temperature against the driver's own throttle point, PCIe width, ECC, NVLink |
+| `nvidia-smi` in a second terminal | On Linux, per-card VRAM, utilisation, power, temperature against the driver's own throttle point, PCIe width, ECC, NVLink; on a Mac, GPU use and the memory budget Metal reports, without power |
 | No idea why a request is slow | Live request table, TTFT and duration distributions from the proxy, KV-cache pressure and preemptions where the engine reports them |
 | Hand-edited `--tensor-parallel-size` | Guided setup, a fit preview before you pull, and a stress test that measures the ceiling |
 | A dead engine nobody notices | `/health` watchdog, evidence captured, model reloaded |
@@ -369,7 +380,7 @@ line on someone's invoice.
   timeout; nothing turns red while a load is still moving.
 
   <img src="assets/screenshots/20-b300-glm-load.jpg" alt="The model page while GLM-5.2 NVFP4 loads on eight B300s: 9 min 17 s into a usual 10 min 46 s, steps Start engine, Load weights 47 of 47, Compile kernels and Size KV cache done, Tune kernels at op 2, 21 of 22, with CPU and GPU-memory charts (1948 of 2149 GiB) and the last log line; Capture CUDA graphs and Warm-up request still to come with their usual times">
-- **GPU observability**: per-card telemetry with engine process attribution,
+- **GPU observability** (NVIDIA, on Linux): per-card telemetry with engine process attribution,
   plus an interconnect graph read from `nvidia-smi topo -m`, so you can see
   whether two cards have a path to each other before splitting a model across
   them.
@@ -615,6 +626,24 @@ warden process, so a restart zeroes them. The whole mechanism, every refusal
 reason, the failure table and a five-call setup are in
 [documents/ROUTING.md](documents/ROUTING.md).
 
+**Other agents and clients.** Claude Code is the one with split routing; every
+other client uses your local models over the OpenAI-compatible API. The
+**Connect a client** page in the console (`/connect`) writes the files for each:
+
+| Client | What it gets | Endpoint |
+|---|---|---|
+| Claude Code | Router (keep your Claude login) or local only | `/v1/messages` |
+| Anthropic SDK (Python, TypeScript, curl) | Router (keep your Anthropic key) or local only | `/v1/messages` |
+| OpenCode, Aider, Grok CLI | Local models | `/v1/chat/completions` |
+| Continue, Cline, Cursor | Local models (configured from their docs; Cursor needs a warden reachable from the internet) | `/v1/chat/completions` |
+| OpenAI SDK (Python, TypeScript, curl) | Local models | `/v1/chat/completions` |
+| Codex CLI | Local models | `/v1/responses` |
+
+Most of these need a model with tool calling and, ideally, 32k or more of
+context. Per-client requirements and notes are in
+[API.md](documents/API.md#supported-clients), and each client has a setup page
+at [lmwarden.com/coding-agents](https://lmwarden.com/coding-agents).
+
 ---
 
 ## Two engines, and the model that made us add the second
@@ -702,7 +731,8 @@ Each of these is one hop from here and says what it holds.
   manual, recorded from two real installs: the published images (Path A), a
   build from source (Path B), the unattended flags, the no-clone one-liner,
   the offline / air-gapped install, what `make uninstall` does and does not
-  free, and a symptom-to-cause table.
+  free, and a symptom-to-cause table; for the Mac, building the app from
+  source and opening a beta.
 - [documents/API.md](documents/API.md): driving it without a browser: the
   six-call first run, minting and managing a key (rename, pause, rotation
   history, its usage and timing series, its god-mode stream), register / pull /

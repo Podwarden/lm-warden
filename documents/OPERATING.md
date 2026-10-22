@@ -1,6 +1,10 @@
 # Operating LM Warden day to day
 
-Everything here assumes an install that already passes `make smoke`.
+Everything here is about the Linux install and assumes one that already
+passes `make smoke`. The Mac app (beta) is run from its menu-bar menu instead;
+its dashboard and API are the same, and
+[MACOS-REMOTE-ACCESS.md](MACOS-REMOTE-ACCESS.md) covers reaching it from
+another machine.
 Getting there is [INSTALL.md](INSTALL.md); the things to read before the
 first model is loaded are [HAZARDS.md](HAZARDS.md).
 

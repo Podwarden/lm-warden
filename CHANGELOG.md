@@ -7,6 +7,13 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.21.3] — 2026-10-21
+
+### Changed
+
+- **A redesigned website home page.** lmwarden.com's home page is the approved "console-first" design: the page on the console's dark ground, a sticky bar with Documentation and Download & Install, a framed Stats screenshot and spec bar, a use-case carousel, a "Where will you run it?" chooser with four options (Linux + NVIDIA, macOS beta, Windows next, the appliance coming soon) and nothing pre-selected, sections for the eight self-hosting problems, coding agents, agent tuning, sharing one box by key priority and the hardware range, and a lightbox on every screenshot. Every other page takes the new header and footer and the dark palette (the light theme and its toggle are gone). Fonts are now Mona Sans and JetBrains Mono, self-hosted unmodified from their official releases. `llms.txt` and `llms-full.txt` gain Platforms and Use cases sections, and the structured data lists both downloads and the features.
+- **The README, the website and the docs say Linux and macOS.** The README hero and the home page hero now lead with both platforms: NVIDIA GPUs on Linux (vLLM and llama.cpp) and Apple silicon Macs (MLX and llama.cpp, beta). The README gains a platforms badge and MLX in the engines badge; page descriptions, the FAQ, `llms.txt`, `llms-full.txt`, INSTALL, OPERATING, API, HAZARDS, ROUTING and the Hub catalogue copy scope NVIDIA-only features (vLLM, tensor and data parallelism, per-card power) to Linux. Windows is announced as next, with no date, in the README and the home page roadmap. The bug report template asks for the platform.
+
 ## [v2026.10.21.2] — 2026-10-21
 
 ### Added

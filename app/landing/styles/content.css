@@ -1,0 +1,339 @@
+    /* Article pages (every page but Home): the styles these pages were written
+       against, kept as they were except for what the shared layout now owns
+       (fonts, colour tokens, the base type, links, buttons, masthead, footer,
+       consent banner). Their own type scale and spacing tokens stay here, so
+       their content reads as before on the dark ground. Element rules are
+       scoped to the main element with :where(), which adds no specificity. */
+    :root {
+      --t-h1:    clamp(1.875rem, 1.5417rem + 1.4815vw, 2.875rem);
+      --t-h2:    clamp(1.5625rem, 1.375rem + 0.833vw, 2.125rem);
+      --t-h3:    clamp(1.1875rem, 1.125rem + 0.278vw, 1.375rem);
+      --t-lede:  clamp(1.1875rem, 1.135rem + 0.231vw, 1.34375rem);
+      --t-body:  clamp(1.0625rem, 1.042rem + 0.0926vw, 1.125rem);
+      --t-table: clamp(0.96875rem, 0.958rem + 0.0463vw, 1rem);
+      --t-code:  clamp(0.84375rem, 0.823rem + 0.0926vw, 0.90625rem);
+      --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+      --s7: 48px; --s8: 64px; --s9: 96px; --s10: 128px; --s11: 160px;
+      --mat-w: 0px;
+    }
+    @media (max-width: 699px) { :root { --s9: 64px; --s10: 88px; --s11: 104px; --s8: 48px; } }
+    ::selection { background: var(--selection); color: var(--selection-ink); }
+    :where(main) :is(strong, b) { font-weight: 620; }
+    :where(main) :is(h1, h2, h3) { margin: 0; font-weight: 600; text-wrap: balance; overflow-wrap: break-word; min-width: 0; font-stretch: 100%;
+                 text-box: trim-both cap alphabetic; }
+    :where(main) h1 { font-size: var(--t-h1); font-weight: 640; line-height: 1.1; letter-spacing: -0.012em; max-width: 15em; }
+    :where(main) h2 { font-size: var(--t-h2); font-weight: 620; line-height: 1.15; letter-spacing: -0.008em; max-width: 22em; }
+    :where(main) h3 { font-size: var(--t-h3); line-height: 1.25; letter-spacing: -0.003em; max-width: 30em; }
+    @media (min-width: 700px) { :where(main) h2 { line-height: 1.12; } }
+    @media (min-width: 1100px) { :where(main) h1 { line-height: 1.06; } }
+    @media (min-width: 375px) { h1 .nw { white-space: nowrap; } }
+    :where(main) p { margin: 0; max-width: 34em; }
+    :where(main) :is(p, li, dd, figcaption, td) { text-wrap: pretty; }
+    :where(main) p + p { margin-top: 0.9em; }
+    /* Mono only for literal machine strings. cv01 2 is the slashed zero, and
+       ligatures stay on because that also keeps calt, Monaspace's texture
+       healing; the file carries no coding ligatures to turn "->" into an arrow. */
+    code, kbd, samp, pre { font-family: var(--mono); font-feature-settings: "cv01" 2; font-variant-ligatures: normal; }
+    /* Inline code at the prose's own x-height, whichever mono renders it. */
+    :where(p, li, dd, td, th, figcaption, h2, h3) code { font-size: 1em; font-size-adjust: ex-height 0.47; }
+    /* Inline code never breaks: the page's longest token is 22 characters,
+       which fits a 320px phone, and a break after the first hyphen of
+       "--enforce-eager" reads as a different flag. */
+    :where(p, li, dd, td, th, figcaption, h2, h3) code { white-space: nowrap; }
+    /* Code wells are light on the light page. On the dark one, light text
+       reads heavier than it is: a lighter weight and greyscale smoothing (the
+       two --code tokens) bring it back to the page's colour. */
+    pre {
+      font-size: var(--t-code); font-size-adjust: none; line-height: 1.6; font-weight: var(--code-weight);
+      -webkit-font-smoothing: var(--code-smoothing); tab-size: 4;
+    }
+    pre { -moz-osx-font-smoothing: grayscale; }
+    .topic { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+    .lede { font-size: var(--t-lede); line-height: 1.42; letter-spacing: -0.003em; max-width: 27em; }
+    .cmd { display: flex; gap: var(--s2); align-items: flex-start; }
+    /* The one wrapped code block: it breaks only at the <wbr> after each "/"
+       and at spaces, never inside a word. */
+    .cmd pre {
+      flex: 1; min-width: 0; margin: 0; padding: var(--s3) var(--s4);
+      background: var(--well); color: var(--well-ink); border: 1px solid var(--well-edge); border-radius: var(--r);
+      white-space: pre-wrap; overflow-wrap: break-word;
+    }
+    .cmd pre::before { content: "$ "; color: var(--well-dim); }
+    .cmd .nw { white-space: nowrap; }
+    .guide { font-size: var(--t-ui); }
+    .req, .src, .plate-note { font-size: var(--t-small); line-height: 1.45; letter-spacing: 0.003em; color: var(--ink-2); max-width: 40em; }
+    @media (max-width: 559px) {
+      .cmd { flex-direction: column; }
+      .cmd pre { align-self: stretch; }
+      .cmd .btn { width: 100%; }
+    }
+
+    figure { margin: 0; }
+    figcaption { font-size: var(--t-small); line-height: 1.45; letter-spacing: 0.003em; color: var(--ink-2); max-width: 35em; margin-top: calc(var(--s3) + var(--mat-w) + 1px); }
+    figcaption b { color: var(--ink); font-weight: 600; margin-right: 0.4em; }
+    video, img { display: block; max-width: 100%; height: auto; }
+    /* Light: a passe-partout, a mat in paper-2 and a hairline, so a dark
+       figure is an object on the sheet, not a hole in it. Dark: the hairline
+       alone. Drawn outside the box, so the tape and leader geometry inside
+       is untouched. */
+    .shot { background: var(--screen); border-radius: var(--r); overflow: hidden;
+            box-shadow: 0 0 0 var(--mat-w) var(--mat), 0 0 0 calc(var(--mat-w) + 1px) var(--mat-edge); }
+    .shot video, .shot img { width: 100%; }
+    /* --- Sections: the spacing is not uniform on purpose ----------------------- */
+    .sec { padding-block: var(--s9); }
+    .sec-head > * + * { margin-top: var(--s4); }
+    /* A trimmed heading measures its gap from the baseline, so the text under
+       it needs a little more than the gap between two paragraphs. */
+    :is(.sec-head, .keys-text, .note-text) > :is(h2, h3) + * { margin-top: var(--s5); }
+    .tight { padding-top: var(--s7); }
+    .plate-sec { padding-bottom: 0; }
+
+    /* Tables: text left, numbers right under right-aligned heads, units in
+       the row label instead of every cell, one light rule. Measured numbers
+       are set in the text face, not in mono. Tabular figures only in the
+       numeric columns, where they line up: Mona's tabular zero is its slashed
+       one, which reads as noise in running text like "RTX A4000". */
+    table { border-collapse: collapse; width: 100%; font-size: var(--t-table); line-height: 1.35; }
+    caption { text-align: left; font-size: var(--t-body); font-weight: 600; padding-bottom: var(--s3); text-wrap: balance; }
+    thead th { border-bottom: 1px solid var(--rule); }
+    thead th, .spec dt {
+      font-size: var(--t-label); font-weight: 560; font-stretch: 85%; line-height: 1.3;
+      letter-spacing: 0.01em; color: var(--ink-2);
+    }
+    th, td { text-align: left; vertical-align: top; padding: 0.45em 1em 0.45em 0; }
+    th:last-child, td:last-child { padding-right: 0; }
+    thead th { vertical-align: bottom; }
+    tbody th { font-weight: 500; }
+    td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+    td.n { white-space: nowrap; }
+    .muted { color: var(--ink-2); font-size: var(--t-small); }
+
+    /* Reference-host plate */
+    .plate { margin-top: var(--s6); background: var(--plate); border: 1px solid var(--plate-edge); border-radius: var(--r); padding: var(--s5) var(--s4); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
+    @media (min-width: 560px) { .plate { padding: var(--s5); } }
+    .table-scroll { overflow-x: auto; }
+    @media (min-width: 960px) { .plate { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); padding: var(--s6); gap: var(--s7); } }
+    .spec { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: baseline; gap: var(--s3) var(--s5);
+            font-size: var(--t-table); line-height: 1.4; }
+    .spec dd { margin: 0; }
+    @media (max-width: 419px) { .spec { grid-template-columns: minmax(0, 1fr); gap: 0; } .spec dd + dt { margin-top: var(--s3); } }
+    /* Phones: each reading becomes a row label over three values. */
+    @media (max-width: 479px) {
+      .readings thead { display: none; }
+      .readings, .readings tbody, .readings caption { display: block; }
+      .readings tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding-block: var(--s3); }
+      .readings tr + tr { border-top: 1px solid var(--rule); }
+      .readings tbody th { grid-column: 1 / -1; padding: 0 0 var(--s1); }
+      .readings td { text-align: left; padding: 0; }
+      .readings td::before { content: attr(data-h); display: block; font: 560 var(--t-label)/1.4 var(--sans); font-stretch: 85%; letter-spacing: 0.01em; color: var(--ink-2); }
+    }
+    .plate-note { margin-top: var(--s4); }
+
+    /* --- Router and replica routing: drawn figures and the A/B plate ------------ */
+    /* A diagram is paper with a hairline round it, not a mounted screenshot:
+       it follows the theme tokens instead of sitting on --screen. */
+    .diagram { border: 1px solid var(--rule); border-radius: var(--r); padding: var(--s5); }
+    .diagram svg { display: block; width: 100%; height: auto; }
+    .diagram-fig { margin-top: var(--s7); }
+    .diagram-fig figcaption { margin-top: var(--s3); }
+    svg.flow { font-family: var(--sans); }
+    .flow text { fill: var(--ink); font-size: 14px; }
+    .flow .h { font-size: 16px; font-weight: 620; }
+    .flow .m { font-family: var(--mono); font-size: 13px; font-feature-settings: "cv01" 2; }
+    .flow .s { fill: var(--ink-2); font-stretch: 85%; font-weight: 500; }
+    .flow .box { fill: var(--paper-2); stroke: var(--rule); stroke-width: 1.5px; }
+    .flow .row { fill: var(--paper); stroke: var(--rule); stroke-width: 1px; }
+    .flow .rule { stroke: var(--rule); stroke-width: 1px; }
+    .flow .edge { fill: none; stroke: var(--ink); stroke-width: 1.5px; }
+    .flow .dash { stroke-dasharray: 7 5; }
+    .flow .head { fill: var(--ink); }
+    .chart svg { display: block; width: 100%; height: auto; }
+    .chart figcaption { margin-top: var(--s3); }
+    /* Every drawn figure comes in two cuts: wide, and narrow (stacked or
+       vertical) for a phone column, each drawn so its text lands at 12 to 16px
+       on screen. Only one is displayed, so only one is in the accessibility
+       tree. The swap width is the one at which the wide cut's text would drop
+       under about 12px. */
+    .v-narrow { display: none; }
+    .v-narrow svg { max-width: 460px; }
+    .swap-1200 .v-wide svg { max-width: 1280px; margin-inline: auto; }
+    .swap-1000 .v-wide svg { max-width: 1100px; }
+    .swap-700 .v-wide svg { max-width: 760px; }
+    @media (max-width: 1199px) {
+      .swap-1200 .v-wide { display: none; } .swap-1200 .v-narrow { display: block; }
+      .swap-1200.diagram { max-width: calc(460px + 2 * var(--s5) + 2px); }
+    }
+    @media (max-width: 999px) {
+      .swap-1000 .v-wide { display: none; } .swap-1000 .v-narrow { display: block; }
+      .swap-1000.diagram { max-width: calc(460px + 2 * var(--s5) + 2px); }
+    }
+    @media (max-width: 699px) { .swap-700 .v-wide { display: none; } .swap-700 .v-narrow { display: block; } }
+    .plate .plate-wide { grid-column: 1 / -1; }
+    .plate-wide .table-scroll + .plate-note { margin-top: var(--s3); }
+    /* The A/B plate: the spec runs across the top in two pairs of columns,
+       then the TTFB chart and the table each take the full width. */
+    @media (min-width: 960px) {
+      .plate.ab { grid-template-columns: minmax(0, 1fr); }
+      .ab .spec { grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr); }
+      .ab .spec .span { grid-column: 2 / -1; }
+    }
+    /* Eight columns do not fit three across on a phone: two values a row. */
+    @media (max-width: 479px) { .plate-wide .readings tr { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3) var(--s4); } }
+    .pair { margin-top: var(--s7); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s7); }
+    @media (min-width: 1240px) { .pair { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s8); } }
+    .reading { margin-top: var(--s6); max-width: 40rem; }
+    .connect { margin-top: var(--s7); max-width: 40rem; }
+    .connect > * + * { margin-top: var(--s3); }
+    @media (max-width: 799px) { .diagram { padding: var(--s4); } }
+    /* The connect snippet wraps on a phone instead of hiding its ends: a soft
+       wrap, so a copy still gives the three lines as written. */
+    .connect pre.term { white-space: pre-wrap; overflow-wrap: break-word; text-indent: 2ch hanging each-line; }
+    .connect .nw { white-space: nowrap; }
+    @media (max-width: 559px) { .connect pre.term { padding-inline: var(--s3); } }
+
+    /* Full-bleed moment: the four GPU panels at 1:1, taped */
+    .cards-sec { padding-top: var(--s11); }
+    .bleed { margin-top: var(--s7); background: var(--screen); padding-block: 84px; }
+    .stage { position: relative; width: min(100% - 2 * var(--gutter), 1246px); margin-inline: auto; }
+    .stage img { width: 100%; }
+    svg.leads { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+    .leads path, .leads line, .leads rect { fill: none; stroke: var(--tape); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+    .leads circle { fill: none; stroke: var(--tape); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+    @media (max-width: 799px) {
+      .bleed { overflow-x: auto; overscroll-behavior-x: contain; }
+      .stage { width: 1000px; margin-inline: var(--gutter); }
+      .stage::after { content: ""; position: absolute; right: calc(-1 * var(--gutter)); width: var(--gutter); height: 1px; }
+    }
+    .scroll-hint { display: none; }
+    @media (max-width: 799px) { .scroll-hint { display: block; } }
+
+    /* Label-maker tape. Positioned in % of the image box, so it tracks the
+       pixel it names at any width. The condensed face, and a box trimmed to
+       cap height and baseline, so equal padding reads as centred. */
+    .tape {
+      position: absolute; z-index: 1;
+      background: var(--tape); color: var(--tape-ink);
+      font: 600 var(--t-label)/1.2 var(--sans); font-stretch: 85%; letter-spacing: 0.01em;
+      padding: 0.5em 0.65em; text-box: trim-both cap alphabetic;
+      border-radius: 1px; white-space: nowrap;
+    }
+    .tape.up   { bottom: calc(100% + 18px); }
+    .tape.down { top: calc(100% + 18px); }
+    .tape.l { right: calc(100% - var(--x)); transform: translateX(1px) rotate(var(--rot, -0.6deg)); transform-origin: right center; }
+    .tape.r { left: var(--x); transform: translateX(-1px) rotate(var(--rot, 0.5deg)); transform-origin: left center; }
+    /* the stub between tape and image edge */
+    .tape.up::after, .tape.down::after { content: ""; position: absolute; width: 2px; height: 18px; background: var(--tape); }
+    .tape.up::after { top: 100%; } .tape.down::after { bottom: 100%; }
+    .tape.l::after { right: -1px; } .tape.r::after { left: -1px; }
+    .tape.side { top: var(--y); left: var(--x); transform: translateY(-50%) rotate(var(--rot, -0.4deg));
+                 white-space: normal; width: max-content; max-width: min(15rem, calc(100% - var(--x) - 12px)); }
+
+    .per { margin-top: var(--s7); max-width: 60rem; }
+    .per th[scope="row"] { width: 9rem; white-space: nowrap; }
+    @media (max-width: 599px) {
+      .per, .per tbody, .per tr, .per th, .per td { display: block; width: auto; }
+      .per th[scope="row"] { padding-bottom: 0; }
+      .per caption { display: block; }
+      .per td { padding-top: var(--s1); padding-bottom: var(--s4); }
+    }
+
+    /* Keys: figure on the left, narrower */
+    .keys { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s7); }
+    @media (min-width: 1100px) {
+      .keys { grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--s8); align-items: start; }
+      .keys .keys-text { grid-column: 2; grid-row: 1; }
+      .keys .keys-fig { grid-column: 1; grid-row: 1; }
+    }
+    .keys-text > * + * { margin-top: var(--s4); }
+    /* The transcript and the diff never wrap mid-token: they scroll instead. */
+    pre.term, pre.diff {
+      margin: 0; padding: var(--s4) var(--s5); background: var(--well); color: var(--well-ink); border: 1px solid var(--well-edge);
+      border-radius: var(--r); overflow-x: auto; white-space: pre;
+    }
+    .term .dim { color: var(--well-dim); }
+    .diff .ctx { color: var(--diff-ctx); }
+    .diff .del { color: var(--diff-del); }
+    .diff .add { color: var(--diff-add); font-weight: 520; }
+
+    .leave-code { margin-top: var(--s6); }
+
+    /* Incident notes */
+    .note { margin-top: var(--s8); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
+    .note > .note-text > * + * { margin-top: var(--s4); }
+    @media (min-width: 1100px) {
+      .note.with-fig { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--s8); align-items: start; }
+    }
+    .logs-stage { position: relative; }
+    /* Phones: a wide figure keeps a readable size and scrolls sideways; the
+       padding leaves room for the mat on every side. */
+    @media (max-width: 799px) {
+      .logs-scroll, .wide-scroll { overflow-x: auto; overscroll-behavior-x: contain; margin-inline: calc(-1 * var(--gutter));
+                                   padding: calc(var(--mat-w) + 1px) var(--gutter); }
+      .logs-scroll .logs-stage { width: 760px; }
+      .wide-scroll .req-stage { width: 900px; }
+    }
+    .req-fig { margin-top: var(--s9); }
+    .fits { margin-top: var(--s2); }
+    .fits-wrap { overflow-x: auto; }
+    .fits-wrap .src { margin-top: var(--s3); }
+    @media (max-width: 699px) {
+      .fits thead { display: none; }
+      .fits, .fits tbody, .fits tr, .fits th, .fits td { display: block; width: auto; padding-right: 0; }
+      .fits tr { padding-block: var(--s3); }
+      .fits tr + tr { border-top: 1px solid var(--rule); }
+      .fits td::before { content: attr(data-h) ": "; font-weight: 560; font-stretch: 85%; letter-spacing: 0.01em; color: var(--ink-2); }
+      .fits tbody th { font-weight: 600; }
+    }
+
+    /* Smaller things: a definition list, no icons */
+    .small-things { margin: var(--s6) 0 0; max-width: 60rem; }
+    .small-things > div + div { margin-top: var(--s5); }
+    .small-things dt { font-weight: 600; }
+    .small-things dd { margin: var(--s1) 0 0; max-width: 34em; }
+    @media (min-width: 900px) {
+      .small-things > div { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: var(--s6); }
+      .small-things dd { margin: 0; }
+    }
+
+    /* FAQ: every answer visible, two columns on desktop, each column about
+       65 characters wide */
+    .faq-list { margin-top: var(--s6); max-width: 66rem; }
+    @media (min-width: 1000px) { .faq-list { columns: 2; column-gap: var(--s8); } }
+    .qa { break-inside: avoid; padding-bottom: var(--s6); }
+    .qa h3 { font-size: var(--t-body); line-height: 1.35; letter-spacing: 0; margin-bottom: var(--s3); }
+    .qa p { font-size: var(--t-ui); line-height: 1.55; max-width: 36em; }
+    /* Multi-page site (spec 2026-10-07 §3): menu, breadcrumbs, teaser cards. */
+    h1.as-h2 { font-size: var(--t-h2); font-weight: 620; line-height: 1.15; letter-spacing: -0.008em; max-width: 22em; }
+    @media (min-width: 700px) { h1.as-h2 { line-height: 1.12; } }
+    .crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: var(--s2); margin: var(--s4) 0 0; padding: 0; font-size: var(--t-small); color: var(--ink-2); }
+    .crumbs li + li::before { content: "›"; margin-right: var(--s2); }
+    .crumbs a { color: inherit; }
+    .cards-list { list-style: none; margin: var(--s5) 0 0; padding: 0; display: grid; gap: var(--s4);
+                  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); }
+    .cards-list a { display: block; height: 100%; padding: var(--s4); border: 1px solid var(--rule); border-radius: var(--r); color: inherit; text-decoration: none; }
+    .cards-list a:hover, .cards-list a:focus-visible { border-color: var(--ink-2); }
+    .cards-list h3 { margin: 0 0 var(--s2); }
+    .related-wrap { margin-block: var(--s6); }
+    .table-wrap { overflow-x: auto; margin-block: var(--s5); }
+    table.clients { width: 100%; border-collapse: collapse; }
+    table.clients th, table.clients td { text-align: left; padding: var(--s2) var(--s3); border-bottom: 1px solid var(--rule); }
+    .facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--s2) var(--s4); margin: var(--s5) 0; }
+    .facts dt { font-weight: 620; }
+    .facts dd { margin: 0; }
+    .client h2 { margin-top: var(--s7); }
+    .client p a { overflow-wrap: anywhere; }
+    h1.as-h2 + .lede, h1.as-h2 + p { margin-top: var(--s4); }
+    .client ol, .client ul:not(.cards-list) { margin: var(--s3) 0 0; padding-left: 1.25rem; }
+    .client li { max-width: 40em; margin-top: var(--s2); }
+    .client h3 { margin-top: var(--s6); }
+    .client p, .client ul { margin-top: var(--s3); }
+    .snippet { margin: var(--s4) 0 0; }
+    .snippet figcaption { font-size: var(--t-small); color: var(--ink-2); margin-bottom: var(--s2); }
+    .snippet pre { overflow-x: auto; white-space: pre; }
+    @media (max-width: 559px) {
+      table.clients thead { display: none; }
+      table.clients tr { display: block; padding: var(--s2) 0; border-bottom: 1px solid var(--rule); }
+      table.clients th, table.clients td { display: block; border: 0; padding: 2px 0; }
+      .facts { grid-template-columns: minmax(0, 1fr); gap: 0; }
+      .facts dd + dt { margin-top: var(--s3); }
+    }

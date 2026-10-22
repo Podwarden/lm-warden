@@ -91,6 +91,7 @@ PUBLIC_ROUTES: frozenset[tuple[str, str]] = frozenset(
         ("GET", "/healthz"),
         ("GET", "/_landing"),
         ("GET", "/_landing/assets/{name}"),
+        ("GET", "/_landing/assets/fonts/{name}"),
         ("GET", "/robots.txt"),
         ("GET", "/sitemap.xml"),
         ("GET", "/llms.txt"),

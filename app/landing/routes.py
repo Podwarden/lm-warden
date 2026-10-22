@@ -9,8 +9,10 @@ Routes (all unauthenticated, all hidden from the OpenAPI schema):
                                 its trailing-slash spelling.
   GET /coding-agents/{client_id} one generated page per Connect client
                                 (app/landing/clients.py).
-  GET /_landing/assets/{name}   video, screenshots and fonts, from a filename
-                                allowlist built at import.
+  GET /_landing/assets/{name}   video and screenshots, and
+  GET /_landing/assets/fonts/{name}  the self-hosted web fonts and their
+                                licences, from a filename allowlist built at
+                                import.
   GET /robots.txt               crawl policy (see "Indexing" below).
   GET /sitemap.xml              every page; only with a canonical origin.
   GET /llms.txt                 llmstxt.org summary for language models.
@@ -241,6 +243,17 @@ async def client_page_slash(client_id: str) -> Response:
 
 @router.api_route("/_landing/assets/{name}", methods=["GET", "HEAD"], include_in_schema=False)
 async def landing_asset(name: str, request: Request) -> Response:
+    return await _send_asset(name, request)
+
+
+@router.api_route("/_landing/assets/fonts/{name}", methods=["GET", "HEAD"], include_in_schema=False)
+async def landing_font(name: str, request: Request) -> Response:
+    # The index keys assets/fonts/ files as "fonts/<name>"; {name} never
+    # holds a "/", so this names exactly one file of that folder or nothing.
+    return await _send_asset("fonts/" + name, request)
+
+
+async def _send_asset(name: str, request: Request) -> Response:
     entry = _ASSETS.get(name)
     if entry is None or not await _is_enabled(request):
         return Response(status_code=404)

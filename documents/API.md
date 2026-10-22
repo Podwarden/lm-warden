@@ -8,6 +8,11 @@ script, a CI job or an agent that will never open `/ui/`.
 [INSTALL.md](INSTALL.md) walks the same first run and the same model add as a
 recorded transcript, with the failures it hit on the way and what they meant.
 
+The calls were recorded against the Linux install. The Mac app (beta) serves
+the same OpenAI-compatible API, on `http://127.0.0.1:8080` by default; it has
+no vLLM, so the vLLM-only fields below (tensor and data parallelism among
+them) do not apply there.
+
 ## First run without a browser
 
 <!-- The `shared:` marker pairs in this file fence generated regions. Their text
@@ -839,6 +844,77 @@ saying it is a guess. The response never contains a key: the warden stores
 only hashes. A requirement's `modes` names the modes it applies to (`null`:
 all), and a file's `requires_tools` (`true`/`false`) marks a variant meant only
 for a model whose `supports_tools` matches.
+
+### Supported clients
+
+The catalogue behind that endpoint has ten entries. Each says which protocol
+the client speaks, which modes it has, and what it needs from the model. Every
+client sends the warden key; the origin is the warden's root URL for the
+Anthropic-protocol clients (they add `/v1/messages` themselves) and its `/v1`
+for the OpenAI ones.
+
+| Client | Modes | Endpoint | Requirements (from the catalogue) |
+|---|---|---|---|
+| Claude Code | Router: keep your Claude login; Local only (no Anthropic account) | `POST /v1/messages` | Router: Claude Code 2.1.227 or newer, routing on with an enabled rule, a key allowed to relay. At least 49,152 tokens of context (the first turn is about 38,000), 131,072 or more for real sessions. |
+| Anthropic SDK (Python, TypeScript, curl) | Router: keep your Anthropic key; Local only | `POST /v1/messages` | Router: routing on with an enabled rule, a key allowed to relay. |
+| OpenCode | Local models | `POST /v1/chat/completions` | Tool calling; 32,768 tokens of context or more recommended. |
+| Aider | Local models | `POST /v1/chat/completions` | 32,768 tokens or more recommended; no tool calling needed (it edits through text formats). |
+| Grok CLI | Grok Build (official); Community grok-cli | `POST /v1/chat/completions` | Tool calling; 32,768 tokens or more recommended. |
+| OpenAI SDK (Python, TypeScript, curl) | Local models | `POST /v1/chat/completions` | None. |
+| Continue | Local models | `POST /v1/chat/completions` | 32,768 tokens or more recommended; two config variants, chosen by whether the model supports tools. |
+| Cline | Local models | `POST /v1/chat/completions` (streaming) | Tool calling; 32,768 tokens or more recommended. |
+| Cursor | Chat with a local model | `POST /v1/chat/completions` | The warden's URL must be reachable from the internet. |
+| Codex CLI | Local models | `POST /v1/responses` | Tool calling; 32,768 tokens or more recommended. |
+
+The catalogue's own notes, per client:
+
+- **Claude Code.** Router mode keeps your Claude login: the warden key travels
+  in `ANTHROPIC_CUSTOM_HEADERS`, the Claude models your rules name run here,
+  and every other model and `/v1` path goes to Anthropic. Never put the warden
+  key in `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN` in router mode: that
+  would replace your login. Local only runs everything, background tasks
+  included, on one served model, and nothing goes to Anthropic. Claude Code may
+  warn that a local model name is not in its catalogue; that is informational,
+  so set `CLAUDE_CODE_MAX_CONTEXT_TOKENS` to the real window.
+- **Anthropic SDK.** Router mode: `base_url` is the warden, your Anthropic key
+  stays in `api_key`, the warden key goes in default headers. Local only: the
+  warden key is the `api_key` and the model is a served name.
+- **OpenCode.** Local models only, over Chat Completions through
+  `@ai-sdk/openai-compatible` (`@ai-sdk/openai` would use the Responses API,
+  which the warden translates for Codex CLI only). The model id must be a
+  served name from `/v1/models`. For a committed file, use `{env:LMWARDEN_KEY}`
+  instead of the key. Router mode through OpenCode's Anthropic provider is not
+  covered yet.
+- **Aider.** Local models only. The metadata file only stops Aider warning
+  about an unknown model and sets its context size.
+- **Grok CLI.** Local models only (`api_backend = chat_completions`); there is
+  no pass-through to xAI and a bring-your-own-key model needs no xAI login.
+  `session_summary` keeps Grok's session-title requests on your model; without
+  it Grok asks the warden for `grok-4.6` and gets a 404. Grok adds its own
+  sections to `config.toml` when it runs. The community `grok-cli` (npm
+  `grok-dev`) is a different tool: it needs Bun, chat works, tool calls do not,
+  because its xAI SDK rejects tool-call chunks that arrive in parts.
+- **OpenAI SDK.** Local models only. There is no pass-through to OpenAI: a
+  request for `gpt-*` gets 404. Chat Completions and Completions are served;
+  `/v1/responses` is a stateless translation to Chat Completions.
+- **Continue.** Local models only. The config follows Continue's docs and the
+  request it sends was tested from the Connect page; the editor itself was not
+  run. Router mode would need custom headers Continue does not document.
+- **Cline.** Local models only. Cline has no config file: enter the values
+  under API Provider > OpenAI Compatible. Its Anthropic provider has a custom
+  base URL but no custom header, so router mode is not available.
+- **Cursor.** Requests are issued from Cursor's servers, so a LAN or localhost
+  warden will not work. Custom keys only work with chat models: Tab completion
+  keeps using Cursor's own models, and Agent with Cursor's models rejects custom
+  keys. Cursor's current docs no longer describe the Override OpenAI Base URL
+  setting; it is known from Cursor staff forum replies.
+- **Codex CLI.** See [Codex CLI and the OpenAI Responses
+  API](#codex-cli-and-the-openai-responses-api) below.
+
+Public pages for each client, with the same files and placeholders, are at
+`/coding-agents/<id>` on the website (`claude-code`, `anthropic-sdk`,
+`opencode`, `aider`, `grok-cli`, `openai-sdk`, `continue`, `cline`, `cursor`,
+`codex-cli`).
 
 ---
 

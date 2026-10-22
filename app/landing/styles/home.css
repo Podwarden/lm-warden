@@ -1,0 +1,217 @@
+  /* Home: the console-first landing page (mockup B, approved 2026-10-21), its section
+     rules as drawn. Shared tokens, type, buttons and the masthead are in layout.html. */
+  /* Hero: centred composition, the product shot the full width beneath, bleeding into the next band. */
+  .hero{padding:72px 0 0;text-align:center}
+  .hero .wrap{display:flex;flex-direction:column;align-items:center;gap:24px}
+  .hero h1{max-width:16ch}
+  .hero .lede{font-size:var(--t-lede);max-width:44ch;color:var(--ink-2)}
+  .hero .ctas{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:8px}
+  .hero .facts{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 20px;color:var(--ink-2);font-size:var(--t-small);margin-top:4px}
+  .hero .facts span::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--amber);margin-right:8px;vertical-align:middle}
+  .heroshot{margin:56px auto 0;max-width:1200px;padding:0 var(--gutter)}
+  /* The product shot is a whole window: all four corners, its own bottom edge fading into the page, and clear air before the spec bar. */
+  .frame{border:1px solid var(--rule);border-radius:10px;overflow:hidden;background:var(--black);box-shadow:0 30px 90px var(--shadow)}
+  .frame .chrome{display:flex;gap:6px;padding:10px 12px;background:var(--plate);border-bottom:1px solid var(--rule)}
+  .frame .chrome i{width:10px;height:10px;border-radius:50%;background:var(--rule);display:block}
+  .frame img{width:100%;-webkit-mask-image:linear-gradient(to bottom,var(--black) 86%,transparent 100%);mask-image:linear-gradient(to bottom,var(--black) 86%,transparent 100%)}
+  /* Spec bar: four facts with an icon, a label, a bold value and a muted detail, on the plate with the amber hairline; 2×2 on tablets, one column on phones. */
+  .specbar{margin-top:56px;text-align:left;background:linear-gradient(180deg,var(--plate-2),var(--plate));border-top:1px solid var(--amber);border-bottom:1px solid var(--rule)}
+  /* The Windows panel has text only (no figure), so it takes one column at every width. */
+  #p-win{grid-template-columns:minmax(0,1fr)} #p-win .text{max-width:64ch}
+  /* .hero .wrap is a centred flex column; this list is a grid, so the rule is written at the same specificity and later. */
+  .specbar .wrap{list-style:none;margin-inline:auto;padding:0;display:grid;align-items:stretch;grid-template-columns:repeat(4,minmax(0,1fr))}
+  .specbar li{display:grid;grid-template-columns:28px minmax(0,1fr);grid-template-rows:auto auto auto;column-gap:12px;row-gap:3px;padding:24px 24px 24px 0;align-content:start}
+  .specbar li+li{border-left:1px solid var(--rule);padding-left:24px}
+  .specbar svg{grid-row:1 / span 3;width:22px;height:22px;margin-top:2px;fill:none;stroke:var(--amber);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .specbar .k{font-size:var(--t-label);color:var(--ink-2);letter-spacing:.01em}
+  .specbar b{font-weight:640;font-size:1.0625rem;line-height:1.3;text-wrap:balance}
+  .specbar .d{font-size:var(--t-small);color:var(--ink-2)}
+  @media (max-width:1099px){
+    .specbar .wrap{grid-template-columns:1fr 1fr}
+    .specbar li{padding:20px 20px 20px 0}
+    .specbar li+li{border-left:0;padding-left:0}
+    .specbar li:nth-child(even){border-left:1px solid var(--rule);padding-left:20px}
+    .specbar li:nth-child(n+3){border-top:1px solid var(--rule)}
+  }
+  @media (max-width:559px){
+    .specbar .wrap{grid-template-columns:1fr}
+    .specbar li,.specbar li:nth-child(even){border-left:0;padding:16px 0}
+    .specbar li+li{border-top:1px solid var(--rule)}
+  }
+
+  .sec{padding:96px 0}
+  .sec-head{max-width:60ch}
+  .sec-head p{margin-top:16px;color:var(--ink-2);font-size:var(--t-lede)}
+
+  /* Platform chooser: CSS-only tabs (radio inputs). Linux is pre-selected because it is the production platform, never because of the visitor's browser; the label says so. */
+  .tabs{margin-top:40px}
+  .tabs input{position:absolute;opacity:0;pointer-events:none}
+  .tablist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));gap:8px;border-bottom:1px solid var(--rule);padding-bottom:16px}
+  .tablist label{display:flex;flex-direction:column;gap:4px;padding:16px 18px;border:1px solid var(--rule);border-radius:var(--r);cursor:pointer;background:transparent}
+  .tablist label b{font-weight:640;font-size:1.0625rem}
+  .tablist label small{color:var(--ink-2);font-size:var(--t-small)}
+  .tablist label .st{align-self:flex-start;margin-top:6px;font-size:var(--t-label);padding:2px 8px;border-radius:999px;border:1px solid var(--rule);color:var(--ink-2)}
+  .tablist label:hover{border-color:var(--ink-2)}
+  #t-linux:focus-visible~.tablist label[for="t-linux"],#t-mac:focus-visible~.tablist label[for="t-mac"],#t-win:focus-visible~.tablist label[for="t-win"],#t-app:focus-visible~.tablist label[for="t-app"]{outline:2px solid var(--focus);outline-offset:2px}
+  #t-linux:checked~.tablist label[for="t-linux"],#t-mac:checked~.tablist label[for="t-mac"],#t-win:checked~.tablist label[for="t-win"]{border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+  #t-linux:checked~.tablist label[for="t-linux"] .st,#t-mac:checked~.tablist label[for="t-mac"] .st{border-color:var(--amber);color:var(--amber)}
+  .panel-p{display:none;padding-top:32px}
+  /* No panel until the visitor picks one. Three ways to open content, none automatic:
+     a tab (radio), a direct link to a panel (#p-mac, :target), or "show all four" (#install-all, :target). */
+  #t-linux:checked~.panels #p-linux,#t-mac:checked~.panels #p-mac,#t-win:checked~.panels #p-win,#t-app:checked~.panels #p-appliance{display:grid}
+  #t-app:checked~.tablist label[for="t-app"]{border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+  .tablist label.soon-tab{border-style:dashed} .tablist label.soon-tab b{color:var(--ink-2)}
+  .panel-p:target,.panels:target .panel-p{display:grid}
+  .panels:target .panel-p+.panel-p{margin-top:40px;padding-top:40px;border-top:1px solid var(--rule)}
+  .pick{margin-top:24px;text-align:center}
+  .tabs:has(input:checked) .pick,.panels:target~.pick{display:none}
+  .panel-p{gap:32px;grid-template-columns:minmax(0,1fr);align-items:start}
+  @media (min-width:900px){.panel-p{grid-template-columns:minmax(0,6fr) minmax(0,6fr);gap:48px}}
+  .panel-p .text>*+*{margin-top:16px}
+  .panel-p ul{margin:0;padding-left:1.1em;color:var(--ink-2);font-size:var(--t-small);line-height:1.55}
+  .panel-p li+li{margin-top:6px}
+  .cmd{display:flex;gap:8px;align-items:stretch}
+  .cmd pre{flex:1;min-width:0;padding:14px 16px;background:var(--well-deep);color:var(--ink);border:1px solid var(--rule);border-radius:var(--r);white-space:pre-wrap;overflow-wrap:break-word}
+  .cmd pre::before{content:"$ ";color:var(--ink-2)}
+  @media (max-width:559px){.cmd{flex-direction:column}.cmd .btn{width:100%}}
+  .shotb{border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;background:var(--black)}
+  .shotb img{width:100%}
+  .cap{margin-top:10px;font-size:var(--t-small);color:var(--ink-2)}
+  .honest{margin-top:40px;padding:20px 24px;border:1px solid var(--rule);border-radius:var(--r);background:var(--plate);display:grid;gap:8px 32px;grid-template-columns:minmax(0,1fr)}
+  @media (min-width:900px){.honest{grid-template-columns:1fr 1fr}}
+  .honest p{color:var(--ink-2);font-size:var(--t-small)} .honest b{color:var(--ink)}
+
+  /* Proof: three full-width bands, each one claim and one screenshot; they alternate sides. */
+  .proof{border-top:1px solid var(--rule)}
+  .proof .item{display:grid;gap:32px;align-items:center;grid-template-columns:minmax(0,1fr);padding:64px 0;border-bottom:1px solid var(--rule)}
+  @media (min-width:900px){.proof .item{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:64px}.proof .item.flip .shotb{order:-1}}
+  .proof .item .text>*+*{margin-top:16px}
+  .proof .text p{color:var(--ink-2)}
+  .proof .text h3{font-size:var(--t-h2)}
+  .proof .n{color:var(--amber);font-weight:600;font-size:var(--t-small)}
+
+  /* Carousel. Default (no JS): a readable list. .js on <html> turns it into one slide at a time. */
+  .uc{padding:48px 0 40px;border-top:1px solid var(--rule)}
+  .uc-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .uc-head h2{font-size:var(--t-h3);font-weight:600;color:var(--ink-2)}
+  .uc-ctl{display:flex;gap:8px}
+  .uc-btn{min-width:44px;min-height:44px;border:1px solid var(--rule);border-radius:var(--r);background:transparent;color:var(--ink);font:500 1rem/1 var(--sans);cursor:pointer}
+  .uc-btn:hover{border-color:var(--ink-2)}
+  .uc-btn[aria-pressed="true"]{border-color:var(--amber);color:var(--amber)}
+  .uc-track{list-style:none;margin:20px 0 0;padding:0;display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,20rem),1fr))}
+  .uc-slide a{display:block;height:100%;padding:20px 22px;border:1px solid var(--rule);border-radius:var(--r);text-decoration:none;color:var(--ink);background:var(--ground)}
+  .uc-slide a:hover{border-color:var(--amber)}
+  .uc-slide h3{font-size:var(--t-h3)}
+  .uc-slide p{margin-top:8px;color:var(--ink-2)}
+  .uc-slide code{font-size:.95em}
+  .uc-more{display:inline-block;margin-top:14px;color:var(--amber);font-weight:600;font-size:var(--t-small)}
+  .uc-dots{display:flex;gap:10px;justify-content:center;margin-top:16px}
+  .uc-dots button{width:12px;height:12px;padding:0;border-radius:50%;border:1px solid var(--ink-2);background:transparent;cursor:pointer;position:relative}
+  .uc-dots button::after{content:"";position:absolute;inset:-16px} /* 44px target */
+  .uc-dots button[aria-current="true"]{background:var(--amber);border-color:var(--amber)}
+  .js .uc-view{overflow:hidden;margin-top:20px;touch-action:pan-y}
+  .js .uc-track{display:flex;gap:0;margin:0;transition:transform .45s ease}
+  .js .uc-slide{flex:0 0 100%;min-width:0}
+  .js .uc-slide a{min-height:180px;border:0;border-left:2px solid var(--amber);border-radius:0;padding:8px 0 8px 24px;background:transparent}
+  .js .uc-slide a:hover h3{text-decoration:underline;text-decoration-color:var(--amber)}
+  .js .uc-slide h3{font-size:var(--t-h2);max-width:22ch}
+  .js .uc-slide p{font-size:var(--t-lede);max-width:52ch}
+  .js .uc-slide[aria-hidden="true"]{visibility:hidden}
+  @media (prefers-reduced-motion:reduce){.js .uc-track{transition:none}}
+  .chips{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .chips li{display:inline-flex;align-items:baseline;gap:4px}
+  .chips li a{display:inline-block;padding:4px 10px;border:1px solid var(--rule);border-radius:999px;text-decoration:none;color:var(--ink);font-size:var(--t-small)}
+  .chips li a:hover{border-color:var(--amber)}
+  .chips small{color:var(--ink-2);font-size:.8rem}
+  .chips .chips-h{flex-basis:100%;margin-top:6px;font-size:var(--t-small);color:var(--ink-2)}
+  .chips .chips-h:first-child{margin-top:0}
+  /* Lightbox: every screenshot is a plain link to its file; with scripts the link opens a <dialog>. */
+  .zoom{display:block;cursor:zoom-in}
+  .zoom:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  dialog.lb{max-width:none;max-height:none;width:auto;padding:0;border:0;background:transparent;color:var(--ink);margin:auto;overflow:visible}
+  dialog.lb::backdrop{background:var(--backdrop)}
+  dialog.lb figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:10px}
+  dialog.lb img{display:block;max-width:95vw;max-height:calc(92vh - 3.5rem);width:auto;height:auto;border:1px solid var(--rule);border-radius:var(--r);background:var(--black)}
+  dialog.lb figcaption{max-width:min(95vw,80ch);font-size:var(--t-small);color:var(--ink-2);text-align:center;padding:0 8px}
+  dialog.lb .lb-close{position:fixed;top:12px;right:12px;min-width:44px;min-height:44px;padding:0 14px;border:1px solid var(--ink-2);border-radius:var(--r);background:var(--ground);color:var(--ink);font:600 var(--t-ui)/1 var(--sans);cursor:pointer}
+  dialog.lb .lb-close:hover{border-color:var(--amber)}
+  @media (prefers-reduced-motion:no-preference){
+    dialog.lb[open]{animation:lb-in .18s ease-out}
+    @keyframes lb-in{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:none}}
+  }
+  /* Coding agents: two panels, tiles left, router right, Connect under both. */
+  .agents{border-top:1px solid var(--rule)}
+  .ag-panels{display:grid;gap:24px;margin-top:40px;grid-template-columns:minmax(0,1fr)}
+  @media (min-width:900px){.ag-panels{grid-template-columns:1fr 1fr;gap:32px}}
+  .ag-panel{border:1px solid var(--rule);border-radius:var(--r);padding:24px;display:flex;flex-direction:column;gap:14px}
+  .ag-panel.router{border-color:var(--amber)}
+  .ag-panel h3{font-size:var(--t-h3)}
+  .tiles{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,11.5rem),1fr))}
+  .tiles a{display:grid;grid-template-rows:auto 1fr auto;gap:4px;min-height:6.5rem;padding:12px 14px;border:1px solid var(--rule);border-radius:var(--r);text-decoration:none;color:var(--ink);background:var(--ground)}
+  .tiles a:hover{border-color:var(--amber)}
+  .tiles b{font-weight:640}
+  .tiles span{font-size:var(--t-small);color:var(--ink-2);line-height:1.35}
+  .tiles span code{font-size:.9em}
+  .badge{font-style:normal;justify-self:start;font-size:var(--t-label);padding:1px 8px;border-radius:999px;border:1px solid var(--amber);color:var(--amber)}
+  .badge.doc{border-color:var(--rule);color:var(--ink-2)}
+  .dia{margin-top:8px;color:var(--ink)}
+  .dia svg{display:block;width:100%;height:auto;font-family:var(--sans)}
+  .dia .v-narrow{display:none;max-width:360px;margin-inline:auto}
+  @media (max-width:639px){.dia .v-wide{display:none}.dia .v-narrow{display:block}}
+  /* The router panel is half the row from 900px up; under 1100px that half is too narrow for the wide drawing's text, so the tall variant is used there too. */
+  @media (min-width:900px) and (max-width:1099px){.dia-flow .v-wide{display:none}.dia-flow .v-narrow{display:block}}
+  .dia-flow .v-wide{max-width:680px}
+  .dia-loop .v-wide{max-width:560px}
+  .bignum{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 16px;align-items:baseline;padding:14px 16px;border:1px solid var(--rule);border-radius:var(--r);background:var(--plate)}
+  .bignum b{font-size:clamp(2rem,1.5rem+1.5vw,2.75rem);font-weight:700;letter-spacing:-.02em;color:var(--amber);line-height:1}
+  .bignum span{font-size:var(--t-small);color:var(--ink-2)}
+  .ag-connect{display:grid;gap:24px;align-items:center;margin-top:32px;padding-top:32px;border-top:1px solid var(--rule);grid-template-columns:minmax(0,1fr)}
+  @media (min-width:900px){.ag-connect{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:48px}}
+  .ag-connect h3{font-size:var(--t-h3)} .ag-connect .text p{margin-top:10px}
+  .ag-connect figure{margin:0}
+  /* Agent tuning: loop drawing + proof, then the four prompts as ask → get. */
+  .tune{border-top:1px solid var(--rule);background:var(--plate)}
+  .tune-grid{display:grid;gap:32px;margin-top:40px;align-items:start;grid-template-columns:minmax(0,1fr)}
+  @media (min-width:900px){.tune-grid{grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:48px}}
+  .tune-grid h3,.tune-h{font-size:var(--t-h3)}
+  .tune-h{margin-top:48px}
+  .tune-grid .small{margin-top:16px}
+  .tune-grid figure{margin:0}
+  .prompts{margin:20px 0 0;padding:0;list-style:none;counter-reset:pr;display:grid;gap:12px}
+  .prompts li{counter-increment:pr;padding:16px 18px 16px 52px;border:1px solid var(--rule);border-radius:var(--r);background:var(--ground);position:relative;color:var(--ink-2);font-size:var(--t-small);line-height:1.55}
+  .prompts li::before{content:counter(pr);position:absolute;left:16px;top:14px;width:24px;height:24px;border-radius:50%;background:var(--amber);color:var(--amber-ink);font-weight:700;font-size:.85rem;display:grid;place-items:center}
+  .prompts b{color:var(--ink);font-size:var(--t-body)}
+  .prompts .ask,.prompts .get{font-weight:600;color:var(--ink)} .prompts .get{color:var(--amber)}
+  .tune-foot{margin-top:24px;display:grid;gap:12px;max-width:70ch}
+  /* Sharing: priority ladder left, the key page right. */
+  .share{border-top:1px solid var(--rule)}
+  .share-grid{display:grid;gap:32px;margin-top:40px;align-items:start;grid-template-columns:minmax(0,1fr)}
+  @media (min-width:900px){.share-grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:48px}}
+  .share-grid h3{font-size:var(--t-h3)} .share-grid .small{margin-top:12px}
+  .share-grid figure{margin:0}
+  .ladder-p{list-style:none;margin:20px 0 0;padding:0;display:grid;gap:8px}
+  .ladder-p li{display:grid;grid-template-columns:3rem minmax(0,1fr);gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--rule);border-radius:var(--r);background:var(--plate)}
+  .ladder-p li div{display:flex;flex-direction:column} .ladder-p b{font-weight:640} .ladder-p li div span{font-size:var(--t-small);color:var(--ink-2)}
+  .pn{display:grid;place-items:center;height:2.25rem;border-radius:var(--r);font-weight:700;font-family:var(--mono);font-size:.95rem;color:var(--amber-ink);background:var(--amber)}
+  .pn.p7{opacity:.85} .pn.p5{opacity:.7} .pn.p3{opacity:.55} .pn.p1{opacity:.4}
+  .ladder-p li:nth-child(n+3) .pn{color:var(--ink);background:transparent;border:1px solid var(--amber);opacity:1}
+  .ladder-p li:nth-child(4) .pn,.ladder-p li:nth-child(5) .pn{border-color:var(--rule);color:var(--ink-2)}
+  .share-grid .bykey{grid-column:1 / -1;margin-top:8px}
+  .ph{display:grid;place-items:center;aspect-ratio:16/7;border:1px dashed var(--ink-2);border-radius:var(--r);color:var(--ink-2);font-size:var(--t-small);text-align:center;padding:16px}
+  .share-foot{margin-top:24px;max-width:70ch}
+  .hw{border-top:1px solid var(--rule)}
+  .hw-grid{display:grid;gap:32px 40px;margin-top:40px;grid-template-columns:minmax(0,1fr)}
+  @media (min-width:900px){.hw-grid{grid-template-columns:1fr 1fr}}
+  .hw-grid figure{margin:0}
+  .oss{border-top:1px solid var(--rule);background:var(--plate);padding:40px 0}
+  .oss .wrap{display:grid;gap:24px 48px;grid-template-columns:minmax(0,1fr)}
+  @media (min-width:900px){.oss .wrap{grid-template-columns:1fr 1fr}}
+  .oss h2{font-size:var(--t-h3)} .oss p{margin-top:8px;color:var(--ink-2)}
+  .soon{display:inline-block;margin-left:6px;padding:1px 8px;border:1px solid var(--rule);border-radius:999px;font-size:var(--t-label);color:var(--ink-2);vertical-align:middle}
+  .why{border-top:1px solid var(--rule);background:var(--plate)}
+  .ladder{list-style:none;margin:48px 0 0;padding:0;counter-reset:step}
+  .ladder li{counter-increment:step;display:grid;gap:24px;align-items:center;grid-template-columns:minmax(0,1fr);padding:32px 0;border-top:1px solid var(--rule)}
+  @media (min-width:900px){.ladder li{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:48px}}
+  .ladder h3{font-size:var(--t-h3)}
+  .ladder h3::before{content:counter(step) ". ";color:var(--amber)}
+  .ladder .text p{margin-top:10px;color:var(--ink-2)}

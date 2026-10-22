@@ -134,6 +134,33 @@ def _blocks(body: str) -> list[str]:
 
 #: Blocks of the pre-split page that were deliberately rewritten, with why.
 REWRITTEN = {
+    # Home redesign (mockup B, owner's choice 2026-10-21, ported 1:1). The
+    # approved page cut these blocks of the old Home; decisions.md D15 gives
+    # each one's replacement on the new page. None moved to another page.
+    '<a href="https://github.com/Podwarden/lm-warden/blob/main/documents/INSTALL.md" '
+    'rel="noopener">Read the install guide</a>: every command, and what it printed.': "redesign: the Linux panel and footer link the install guide (D15)",
+    "<b>Fig.&nbsp;1</b>The Stats page of our four-card box while ten of our own streaming "
+    "requests ran on it, stepping through its 1&#8239;h, 6&#8239;h and 24&#8239;h windows. "
+    "Recorded on 23&nbsp;September 2026.": "redesign: the hero video became the framed Stats shot (D-B2)",
+    "What it is.": "redesign: the hero lede and the facts band say what it is (D-B2)",
+    "There is no hosted service and no account. Every warden serves this page itself, and the "
+    "Console sign-in link at the top opens that warden’s own console. Nothing leaves your host "
+    "unless you turn on the Claude Code router described next.": "redesign: “No account, no telemetry” in the hero facts and the open-source band",
+    "Don’t use this if…": "redesign: the honest limits moved into the platform panels (D15, D-B10)",
+    "<strong>You need one model served across several machines.</strong> This is one host. "
+    "Several GPUs in one box, yes; several boxes, no.": "redesign: Don’t use this if… cut (D15); README and llms.txt keep it",
+    "<strong>You want a hosted API.</strong> Nobody runs this for you. You supply the hardware, "
+    "the driver and the electricity.": "redesign: Don’t use this if… cut (D15); README and llms.txt keep it",
+    '<a href="https://github.com/Podwarden/lm-warden/discussions/new?category=ideas&amp;'
+    'title=Hardware%20support%3A%20Radeon" rel="noopener">AMD Radeon</a>': "redesign: the same discussion link, labelled Radeon, in the Linux and Windows panels (D-B10)",
+    '<a href="https://github.com/Podwarden/lm-warden/discussions/new?category=ideas&amp;'
+    'title=Hardware%20support%3A%20Intel" rel="noopener">Intel GPUs</a>': "redesign: the same discussion link, labelled Intel, in the Linux and Windows panels (D-B10)",
+    "Each link opens a new post in the Ideas category of the project’s GitHub Discussions, titled "
+    "“Hardware support:” and the platform. A GitHub account is needed to post.": "redesign: the roadmap block became the Linux and Windows panels (D15)",
+    # The rename note was dropped from the home page (owner, 2026-10-21): it told
+    # new visitors nothing; OPERATING.md keeps it for upgraders.
+    "LM Warden was formerly vLLM Warden. The install directory and the <code>vw_</code> key "
+    "prefix keep the old name, so existing installs and keys keep working.": "removed: rename note",
     # Hero lede named only Claude Code; now names the other agents too (spec §3).
     "LM Warden runs vLLM and llama.cpp on your NVIDIA cards behind one port. Each app gets "
     "its own key, and each card reports for itself. Point Claude Code at it, and a model on "
@@ -167,6 +194,15 @@ REWRITTEN = {
     "<strong>You need an engine other than vLLM or llama.cpp.</strong> TensorRT-LLM, SGLang, MLX and Ollama’s runtime are not shipped.": "Mac beta: MLX runs in the Mac app",
     "<strong>Your host isn’t Linux x86_64.</strong>": "Mac beta: or an Apple silicon Mac",
     '<a href="https://github.com/Podwarden/lm-warden/discussions/new?category=ideas&amp;title=Hardware%20support%3A%20Mac" rel="noopener">Mac, Apple silicon</a>': "Mac beta: the Mac section replaces the request link",
+    # Linux and macOS (2026-10-21): the hero, the requirements line, "What
+    # it is" and the one-model-per-card item name both platforms or are
+    # scoped to Linux; Windows is announced as next.
+    '<span class="nw">An OpenAI-compatible</span> API on the GPUs under&nbsp;your&nbsp;desk or&nbsp;in&nbsp;your&nbsp;rack.': "Linux and macOS: hero names both platforms",
+    "Needs Linux x86_64, Docker Compose&nbsp;v2.24+, the NVIDIA Container Toolkit and a card of the Turing generation (RTX&nbsp;20-series, Quadro&nbsp;RTX) or newer.": "Linux and macOS: requirements line scoped to the Linux command",
+    "LM Warden is a control plane around two inference engines, vLLM and llama.cpp, that you install on one Linux host with NVIDIA GPUs. You pull a model from HuggingFace, load it onto your cards, give each app its own key, and call it through an OpenAI-compatible <code>/v1</code> endpoint, through the Anthropic Messages API if the app is Claude Code, or through the OpenAI Responses API if it is Codex&nbsp;CLI. A browser console covers loading and unloading models, live engine logs, a chat playground, GPU and token statistics, and a page per key. It does not make models faster and does not modify the engines. It adds the parts a bare engine does not ship.": "Linux and macOS: What it is names both platforms",
+    "<strong>You want several models resident on one card.</strong> One loaded model per GPU is enforced before an engine starts.": "Linux and macOS: one model per card is a Linux rule",
+    "A control plane around two inference engines, vLLM and llama.cpp. You pull a model from HuggingFace, load it onto your own NVIDIA GPUs, mint an API key and call it through an OpenAI-compatible <code>/v1</code> endpoint. A browser UI covers loading and unloading models, live engine logs, a chat playground, GPU and token statistics, and a page per API key. It does not make models faster and does not modify the engines. It adds the parts a bare engine does not ship.": "Linux and macOS: FAQ answer names both platforms",
+    "A Linux host with Docker, Docker Compose&nbsp;v2.24 or newer, an NVIDIA GPU, the NVIDIA Container Toolkit and about 40&#8239;GB free where Docker keeps its images. The installer checks the host, lets you pick GPUs, generates the secrets, pulls the release images and offers to start the stack. A first-run wizard in the browser then asks for the GPUs to use, a HuggingFace token and your admin account.": "Linux and macOS: install FAQ scoped to Linux, Mac pointer added",
 }
 
 

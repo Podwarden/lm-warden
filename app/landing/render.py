@@ -18,7 +18,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from app.landing.downloads import MAC_DMG_NAME, MAC_RELEASE_URL
+from app.landing.downloads import MAC_DMG_NAME, MAC_DMG_URL, MAC_RELEASE_URL
 from app.landing.pages import HOME, PAGES, Page
 from app.landing.site import Analytics
 
@@ -34,10 +34,8 @@ RAW_URL = "https://raw.githubusercontent.com/Podwarden/lm-warden/main"
 #: clone"), on the renamed repository. The install directory keeps its old
 #: identity slug on purpose: install.sh defaults to /opt/vllm-warden and an
 #: existing install must still be found there.
-INSTALL_CMD = (
-    "curl -fsSL https://raw.githubusercontent.com/Podwarden/lm-warden/main/install.sh"
-    " | sh -s -- --dir /opt/vllm-warden"
-)
+INSTALL_SCRIPT_URL = "https://raw.githubusercontent.com/Podwarden/lm-warden/main/install.sh"
+INSTALL_CMD = f"curl -fsSL {INSTALL_SCRIPT_URL} | sh -s -- --dir /opt/vllm-warden"
 
 # --- Assets ------------------------------------------------------------------
 
@@ -58,20 +56,32 @@ _ASSET_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
 _ASSET_CACHE = "public, max-age=31536000, immutable"
 
 
+#: The one subdirectory of assets/ that is served: the self-hosted web fonts
+#: and their licences, keyed "fonts/<name>". Nothing deeper is ever indexed.
+ASSET_SUBDIRS = ("fonts",)
+
+
 def _build_asset_index() -> dict[str, tuple[Path, str, str]]:
     """name -> (path, content type, short content hash). Built once; a request
-    can only ever name a key of this dict, so there is no path to traverse."""
+    can only ever name a key of this dict, so there is no path to traverse.
+    Files in assets/fonts/ are keyed "fonts/<name>"."""
     index: dict[str, tuple[Path, str, str]] = {}
     if not _ASSET_DIR.is_dir():
         return index
-    for path in sorted(_ASSET_DIR.iterdir()):
-        ctype = _ASSET_TYPES.get(path.suffix.lower())
-        if ctype is None or not path.is_file() or path.is_symlink():
-            continue
-        if not _ASSET_NAME_RE.match(path.name) or ".." in path.name:
-            continue
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()[:12]
-        index[path.name] = (path, ctype, digest)
+    dirs = [("", _ASSET_DIR)] + [
+        (sub + "/", _ASSET_DIR / sub)
+        for sub in ASSET_SUBDIRS
+        if (_ASSET_DIR / sub).is_dir() and not (_ASSET_DIR / sub).is_symlink()
+    ]
+    for prefix, folder in dirs:
+        for path in sorted(folder.iterdir()):
+            ctype = _ASSET_TYPES.get(path.suffix.lower())
+            if ctype is None or not path.is_file() or path.is_symlink():
+                continue
+            if not _ASSET_NAME_RE.match(path.name) or ".." in path.name:
+                continue
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()[:12]
+            index[prefix + path.name] = (path, ctype, digest)
     return index
 
 
@@ -142,7 +152,7 @@ def _faq_html() -> str:
 
 # --- Page rendering -----------------------------------------------------------
 
-_TOKEN_RE = re.compile(r"\{\{([a-z_]+)(?::([a-z0-9._-]+))?\}\}")
+_TOKEN_RE = re.compile(r"\{\{([a-z_]+)(?::([a-z0-9._/-]+))?\}\}")
 _LAYOUT_SRC: str = (_HERE / "layout.html").read_text(encoding="utf-8")
 _FRAGMENTS: dict[str, str] = {
     p.name: p.read_text(encoding="utf-8") for p in sorted((_HERE / "pages").glob("*.html"))
@@ -150,10 +160,37 @@ _FRAGMENTS: dict[str, str] = {
 _LLMS_SRC: str = (_HERE / "llms.txt").read_text(encoding="utf-8")
 _LLMS_FULL_SRC: str = (_HERE / "llms-full.txt").read_text(encoding="utf-8")
 _AGENT_GUIDE_SRC: str = (_HERE / "agent-guide.md").read_text(encoding="utf-8")
+#: Page CSS, appended to the layout's shared <style> block: home.css for Home
+#: (the console-first landing page), content.css for every other page (the
+#: article styles the pages were written against, on the same dark tokens).
+_STYLES: dict[str, str] = {
+    p.stem: p.read_text(encoding="utf-8").strip() for p in sorted((_HERE / "styles").glob("*.css"))
+}
 
 TITLE = HOME.title
 DESCRIPTION = HOME.description
 _OG_IMAGE = "og-image.jpg"
+
+#: What the home page shows LM Warden doing, one line each, for the
+#: SoftwareApplication's featureList (its carousel and sections, in order).
+FEATURES: tuple[str, ...] = (
+    "Fit preview: every file of a Hugging Face repo checked against the GPUs you pick "
+    "before anything downloads",
+    "Coding agents (Codex CLI, OpenCode, Aider, Grok CLI, Continue, Cline, Cursor, the "
+    "OpenAI and Anthropic SDKs, Claude Code) on your own models, configured for you",
+    "Claude Code router: a local model answers for the Claude models you choose, the rest "
+    "go to Anthropic on your own login",
+    "Stats page: GPU utilisation, power, tokens per second, cache share, latency and "
+    "preemptions, 1 hour to 7 days",
+    "Cache-aware routing that keeps each conversation on the replica holding its prefix",
+    "Agent tuning: a coding agent picks the model, engine and layout for your GPUs through "
+    "the API, benchmarking as it goes",
+    "Chat with streaming Markdown, images for vision models and saved history",
+    "God mode: one key's prompts and replies streamed live for debugging, off by default",
+    "API keys with strict priority 9 to 0 and per-key usage",
+    "Per-GPU panels from a 16 GB M1 to an 8 x B300 NVSwitch server, naming narrow PCIe "
+    "links, inactive NVLink and ECC differences",
+)
 
 
 #: The project's own public instance. The privacy page names PodWarden as
@@ -193,7 +230,11 @@ def _jsonld(origin: str, page: Page) -> str:
         "license": "https://www.apache.org/licenses/LICENSE-2.0",
         "isAccessibleForFree": True,
         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
-        "downloadUrl": REPO_URL,
+        # One download per platform that ships today: the Linux installer
+        # script and the Mac beta DMG. Windows (next) and the appliance
+        # (coming soon) have nothing to download yet, so they are not here.
+        "downloadUrl": [INSTALL_SCRIPT_URL, MAC_DMG_URL],
+        "featureList": list(FEATURES),
         "sameAs": [REPO_URL],
         "screenshot": absolute(asset_url(_OG_IMAGE)),
         "publisher": PODWARDEN,
@@ -201,6 +242,7 @@ def _jsonld(origin: str, page: Page) -> str:
     }
     if origin:
         app["url"] = origin + "/"
+        app["installUrl"] = origin + "/#install"
     faq = {
         "@context": "https://schema.org",
         "@type": "FAQPage",
@@ -335,51 +377,64 @@ def all_site_pages() -> list[Page]:
     return [p for p in PAGES if not p.tag_only] + list(CLIENT_PAGES.values())
 
 
-_NAV_AGENTS = (
-    ("/coding-agents", "All coding agents"),
-    ("/coding-agents/claude-code", "Claude Code"),
-    ("/coding-agents/codex-cli", "Codex CLI"),
-    ("/coding-agents/opencode", "OpenCode"),
+#: The GitHub mark (16px, decorative) for the menu's GitHub item.
+_GH_MARK = (
+    '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 '
+    "3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53"
+    "-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 "
+    "1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15"
+    "-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 "
+    "1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 "
+    '1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>'
 )
-_NAV_FEATURES = (
-    ("/gpu-monitoring", "GPU monitoring"),
-    ("/cache-aware-routing", "Cache-aware routing"),
-    ("/api-keys", "API keys"),
-    ("/features", "More features"),
+
+#: The menu's Download & Install sub-items: each opens its panel of the
+#: install chooser on Home through :target (nothing is pre-selected).
+_NAV_PLATFORMS = (
+    ("/#p-linux", "Linux + NVIDIA GPUs"),
+    ("/#p-mac", "macOS, Apple silicon (beta)"),
+    ("/#p-win", "Windows (next)"),
+    ("/#p-appliance", "Appliance (coming soon)"),
+    ("/#upgrade", "Upgrade an existing install"),
 )
 
 
 def nav_html(current: Page) -> str:
-    """The primary menu. A <details> rendered open: with scripts off every
-    link shows; with scripts on, phones collapse it behind "Menu"."""
+    """The primary menu, shared by every page. A <details>: on a phone it is
+    the Menu button that opens a full-screen sheet; from 1280px the layout
+    script keeps it open and the CSS lays the links out in the bar. Links to
+    Home's sections are written "/#id" so they work from any page."""
 
     marked: list[str] = []
 
     def link(path: str, label: str) -> str:
-        # The current page is marked once, at its first (top-level) link.
         cur = ""
         if path == current.path and not marked:
             marked.append(path)
             cur = ' aria-current="page"'
-        return f'<a href="{path}"{cur}>{html.escape(label)}</a>'
+        return f'<a href="{path}"{cur}>{label}</a>'
 
-    def sub(items: tuple[tuple[str, str], ...]) -> str:
-        return "".join(f"<li>{link(p, label)}</li>" for p, label in items)
-
+    plats = "".join(f'<li><a href="{p}">{label}</a></li>' for p, label in _NAV_PLATFORMS)
     return (
-        '<nav aria-label="Primary"><details class="menu" open><summary>Menu</summary>'
-        '<div class="menu-panel"><ul>'
-        f'<li class="sub">{link("/coding-agents", "Coding agents")}<ul>{sub(_NAV_AGENTS)}</ul></li>'
-        f"<li>{link('/agent-tuning', 'Agent tuning')}</li>"
-        f'<li class="sub">{link("/features", "Features")}<ul>{sub(_NAV_FEATURES)}</ul></li>'
-        f"<li>{link('/faq', 'FAQ')}</li>"
-        f'<li class="wide"><a href="{REPO_URL}#readme" rel="noopener">Docs</a></li>'
-        '<li class="wide"><a href="#install-end">Install</a></li>'
-        f'<li class="gh"><a href="{REPO_URL}" rel="noopener">GitHub</a></li>'
-        '<li class="signin"><a href="/ui/login" title="Sign in to the console of the warden '
-        'serving this page. There is no hosted account.">Console<span class="hide-xs"> '
-        "sign-in</span></a></li>"
-        "</ul></div></details></nav>"
+        '<nav aria-label="Primary">\n'
+        '        <details class="menu">\n'
+        "          <summary>Menu</summary>\n"
+        '          <div class="panel">\n'
+        "            <ul>\n"
+        '              <li><a href="/#why">Use cases</a></li>\n'
+        '              <li><a href="/#features">Features</a></li>\n'
+        f"              <li>{link('/coding-agents', 'Coding agents')}</li>\n"
+        f"              <li>{link('/faq', 'FAQ')}</li>\n"
+        f'              <li class="gh"><a href="{REPO_URL}" rel="noopener" '
+        f'title="Source on GitHub, Apache-2.0">{_GH_MARK}GitHub<span class="lic"> · '
+        "Apache-2.0</span></a></li>\n"
+        '              <li class="plats"><a href="/#install">Download &amp; Install</a>\n'
+        f'                <ul style="list-style:none;padding:0;margin:0">{plats}</ul></li>\n'
+        '              <li class="signin"><a href="/ui/login">Console sign-in</a></li>\n'
+        "            </ul>\n"
+        "          </div>\n"
+        "        </details>\n"
+        "      </nav>"
     )
 
 
@@ -398,14 +453,18 @@ def crumbs_html(page: Page) -> str:
 
 
 #: Links to the single page's sections (README, catalogue, bookmarks) still
-#: land: on Home, a fragment that names a moved section goes to its new page.
+#: land: on Home, a fragment that names a moved section goes to its new page,
+#: and one that names a section the redesign (2026-10-21) folded into the
+#: install chooser opens that panel instead.
 _ANCHORS = """  <script>
     (function () {
+      var here = { "#mac": "#p-mac", "#mac-open": "#p-mac", "#roadmap": "#p-linux", "#install-end": "#install" };
       var map = { "#faq": "/faq", "#faq-title": "/faq", "#router-title": "/coding-agents/claude-code",
         "#box-title": "/gpu-monitoring", "#cards-title": "/gpu-monitoring", "#inflight-title": "/gpu-monitoring",
         "#replica-title": "/cache-aware-routing", "#keys-title": "/api-keys", "#leave-title": "/api-keys",
         "#lessons-title": "/features", "#small-title": "/features" };
       var h = window.location.hash;
+      if (here[h]) { window.location.replace(here[h]); return; }
       if (/^#faq-[0-9]+$/.test(h)) { window.location.replace("/faq" + h); return; }
       if (map[h]) window.location.replace(map[h] + h);
     })();
@@ -452,13 +511,18 @@ def render_page(page: Page, origin: str, analytics: Analytics) -> str:
             "mac_dmg": MAC_DMG_NAME,
             "install": _install_html(),
             "nav": nav_html(page),
+            "page_css": _STYLES["home" if home else "content"],
             "crumbs": crumbs_html(page),
             "anchors": _ANCHORS if home else "",
             "clients_table": clients_table_html(),
             "flow_generic": figure_html(GENERIC, "flow-generic", _GENERIC_CAPTION),
             "tag": tag_html(analytics),
             "banner": banner_html(analytics),
-            "thirdparty": _WITH_TAG if analytics.tag_on else _NO_THIRD_PARTY,
+            # Only with a Google tag: the footer then says what loads and
+            # links the cookie settings (the banner's way back).
+            "thirdparty": (
+                f'      <p class="tag-note">{_WITH_TAG}</p>\n' if analytics.tag_on else ""
+            ),
             "privacy_ads": (
                 " Google Ads measures whether ads bring people here, and its "
                 "advertising cookies follow the same consent choice."
@@ -516,11 +580,11 @@ def render_agent_guide(origin: str) -> str:
 
 # --- Content-Security-Policy ------------------------------------------------------
 #
-# The page is static: no framework, fonts and media from this instance, two
-# inline scripts (in <head>, the stored colour theme applied before the first
-# paint; at the end of <body>, the theme toggle, copy buttons and video
-# autoplay) and two JSON-LD data blocks, which a browser never executes and
-# CSP does not govern. So the policy can be strict: nothing loads from
+# The page is static: no framework, fonts and media from this instance, a few
+# inline scripts (in <head>, the one line that marks the page as scripted; on
+# Home, the use-case carousel and the screenshot lightbox; at the end of
+# <body>, the menu, copy buttons and video autoplay) and JSON-LD data blocks,
+# which a browser never executes and CSP does not govern. So the policy can be strict: nothing loads from
 # anywhere but this origin, and the only scripts that run are the ones whose
 # hashes are in the header -- every executable inline <script> in the page
 # served, whatever attributes it carries. A script injected into the page by
@@ -741,7 +805,6 @@ _BANNER = (
     '<button class="btn" type="button" data-consent="granted"><span>Accept</span></button>'
     "</div></div>\n"
 )
-_NO_THIRD_PARTY = "This page is served by LM Warden itself and makes no third-party requests."
 _WITH_TAG = (
     "This page is served by LM Warden itself and loads Google’s tag to count visits. "
     'Cookies are set only if you accept them (<a href="/privacy">privacy</a>, '

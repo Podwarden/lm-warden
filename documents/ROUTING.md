@@ -10,7 +10,9 @@ your host. The second is **replica routing**:
 a model that runs as several vLLM replicas places each new conversation on its
 least-loaded replica and keeps it there, so its prefix cache is used instead of
 rebuilt. A request the router
-answers locally goes through the replica router like any other.
+answers locally goes through the replica router like any other. Replicas are
+vLLM data-parallel copies, so replica routing is part of the Linux install
+with NVIDIA GPUs; the Mac app (beta) has no vLLM and no data parallelism.
 
 - [The problem](#the-problem), [what prompted it](#what-prompted-it), and [the same box since](#the-same-box-since)
 - [What changed](#what-changed)

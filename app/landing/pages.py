@@ -27,8 +27,8 @@ HOME = Page(
     fragment="home.html",
     title="LM Warden: self-hosted LLM gateway for your own GPUs",
     description=(
-        "Serve LLMs from your own NVIDIA GPUs with vLLM and llama.cpp: one "
-        "OpenAI-compatible /v1 endpoint, a key per app, and readings per card."
+        "Serve LLMs from NVIDIA GPUs on Linux or an Apple silicon Mac, with vLLM, "
+        "llama.cpp or MLX: one OpenAI-compatible /v1 endpoint and a key per app."
     ),
     nav="home",
     jsonld=("app", "website"),
@@ -39,7 +39,7 @@ AGENTS = Page(
     title="Coding agents on your own GPUs | LM Warden",
     description=(
         "Run Claude Code, Codex CLI, OpenCode, Aider, Cline, Cursor and more against a "
-        "model on your own NVIDIA GPUs, with the config written for you."
+        "model on your own GPUs, on Linux or a Mac, with the config written for you."
     ),
     nav="agents",
     crumbs=(("Coding agents", "/coding-agents"),),
@@ -62,8 +62,8 @@ GPU = Page(
     fragment="gpu-monitoring.html",
     title="Per-card GPU monitoring for vLLM | LM Warden",
     description=(
-        "Each NVIDIA card gets its own panel: temperature against its throttle point, power "
-        "against its cap, the PCIe link, and every request in flight."
+        "On Linux, each NVIDIA card gets its own panel: temperature against its throttle "
+        "point, power against its cap, the PCIe link, and every request in flight."
     ),
     nav="features",
     crumbs=(("Features", "/features"), ("GPU monitoring", "/gpu-monitoring")),

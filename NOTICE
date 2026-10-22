@@ -12,13 +12,16 @@ Third-party components
 The source tree includes the following third-party material, each under its
 own licence:
 
-* app/landing/assets/font-sans.woff2, font-sans-cond.woff2 -- modified
-  versions of Mona Sans (https://github.com/github/mona-sans),
-  Copyright 2022 The Mona Sans Project Authors.
-* app/landing/assets/font-mono.woff2 -- a modified version of Monaspace Neon
-  (https://github.com/githubnext/monaspace), Copyright (c) 2023, GitHub.
+* app/landing/assets/fonts/mona-sans-vf.woff2 -- Mona Sans v2.0.27
+  (https://github.com/github/mona-sans), the release's
+  MonaSansVF[wdth,opsz,wght].woff2, unmodified. Copyright 2022 The Mona Sans
+  Project Authors, with Reserved Font Name "Mona".
+* app/landing/assets/fonts/jetbrains-mono-regular.woff2 and
+  jetbrains-mono-medium.woff2 -- JetBrains Mono v2.304
+  (https://github.com/JetBrains/JetBrainsMono), the release's webfonts,
+  unmodified. Copyright 2020 The JetBrains Mono Project Authors.
   Both fonts are licensed under the SIL Open Font License, Version 1.1; the
-  full licence texts are in app/landing/assets/fonts-license.txt.
+  licence texts are beside them, in mona-sans-ofl.txt and jetbrains-mono-ofl.txt.
 
 The container images built from this repository additionally contain, unmodified:
 

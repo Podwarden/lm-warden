@@ -1,11 +1,11 @@
 [
   {
     "q": "What is LM Warden?",
-    "a": "A control plane around two inference engines, vLLM and llama.cpp. You pull a model from HuggingFace, load it onto your own NVIDIA GPUs, mint an API key and call it through an OpenAI-compatible <code>/v1</code> endpoint. A browser UI covers loading and unloading models, live engine logs, a chat playground, GPU and token statistics, and a page per API key. It does not make models faster and does not modify the engines. It adds the parts a bare engine does not ship."
+    "a": "A control plane around inference engines on your own hardware: vLLM and llama.cpp on a Linux host with NVIDIA GPUs, or MLX and llama.cpp in a beta app on an Apple silicon Mac. You pull a model from HuggingFace, load it onto your own GPU, mint an API key and call it through an OpenAI-compatible <code>/v1</code> endpoint. A browser UI covers loading and unloading models, live engine logs, a chat playground, GPU and token statistics, and a page per API key. It does not make models faster and does not modify the engines. It adds the parts a bare engine does not ship."
   },
   {
     "q": "Which GPUs and operating systems does it run on?",
-    "a": "NVIDIA GPUs on a Linux x86_64 host. The floor is Turing (sm_75, the RTX 20-series generation): the base image ships CUDA 13, which dropped Maxwell, Pascal and Volta, so a GTX 1080 Ti, a Titan X or a V100 will not work. Turing through Blackwell is covered, including Ada, Hopper and the RTX 50-series. Apple silicon is covered by a separate Mac app, in beta: a native menu-bar app for macOS 14 or later that runs models with MLX and shows the same dashboard in its own window, from <a href=\"/download/mac\">lmwarden.com/download/mac</a> (about 360&#8239;MB, with a <a href=\"/download/mac.sha256\">SHA-256 file</a>). It is ad-hoc signed and not notarized, so on first launch allow it under System Settings › Privacy & Security › Open Anyway (on macOS 14, right-click › Open also works); it listens on loopback by default, and it does not update itself. There is no ROCm, Intel GPU or CPU path in this release; AMD Radeon and Intel GPUs are on the roadmap, and which comes first depends on the feedback we get in the project’s GitHub Discussions. Several GPUs in one box are supported; one model split across several machines is not."
+    "a": "Linux and macOS. On Linux: NVIDIA GPUs on an x86_64 host. The floor is Turing (sm_75, the RTX 20-series generation): the base image ships CUDA 13, which dropped Maxwell, Pascal and Volta, so a GTX 1080 Ti, a Titan X or a V100 will not work. Turing through Blackwell is covered, including Ada, Hopper and the RTX 50-series. On macOS: Apple silicon (M1 or later), through a separate Mac app, in beta: a native menu-bar app for macOS 14 or later that runs models with MLX and a Metal build of llama.cpp, serves the same OpenAI-compatible API and shows the same dashboard in its own window, from <a href=\"/download/mac\">lmwarden.com/download/mac</a> (about 360&#8239;MB, with a <a href=\"/download/mac.sha256\">SHA-256 file</a>). It is ad-hoc signed and not notarized, so on first launch allow it under System Settings › Privacy & Security › Open Anyway (on macOS 14, right-click › Open also works); it listens on loopback by default, and it does not update itself. Windows is next; we are working on it, with no date yet. There is no ROCm, Intel GPU or CPU path in this release; AMD Radeon and Intel GPUs are on the roadmap, and which comes first depends on the feedback we get in the project’s GitHub Discussions. Several GPUs in one Linux box are supported; one model split across several machines is not."
   },
   {
     "q": "Will my existing OpenAI client work with it?",
@@ -21,7 +21,7 @@
   },
   {
     "q": "Which inference engines does it use?",
-    "a": "Mainline vLLM v0.32.0 and llama.cpp b11719, chosen per model and run unmodified: no patched image, no fork, no monkeypatching. Picking a <code>.gguf</code> file selects llama.cpp, which fits larger models onto smaller cards with GGUF quantisation and keeps older GPUs useful. TensorRT-LLM, SGLang and Ollama’s runtime are not shipped; the Mac beta runs models with MLX instead of vLLM."
+    "a": "On Linux, mainline vLLM v0.32.0 and llama.cpp b11719, chosen per model and run unmodified: no patched image, no fork, no monkeypatching. Picking a <code>.gguf</code> file selects llama.cpp, which fits larger models onto smaller cards with GGUF quantisation and keeps older GPUs useful. TensorRT-LLM, SGLang and Ollama’s runtime are not shipped; the Mac beta runs models with MLX, its default engine, or with a Metal build of llama.cpp for <code>.gguf</code> files, and has no vLLM."
   },
   {
     "q": "Does anything leave my machine?",
@@ -41,7 +41,7 @@
   },
   {
     "q": "What does installing it take?",
-    "a": "A Linux host with Docker, Docker Compose&nbsp;v2.24 or newer, an NVIDIA GPU, the NVIDIA Container Toolkit and about 40&#8239;GB free where Docker keeps its images. The installer checks the host, lets you pick GPUs, generates the secrets, pulls the release images and offers to start the stack. A first-run wizard in the browser then asks for the GPUs to use, a HuggingFace token and your admin account."
+    "a": "On Linux, a host with Docker, Docker Compose&nbsp;v2.24 or newer, an NVIDIA GPU, the NVIDIA Container Toolkit and about 40&#8239;GB free where Docker keeps its images. The installer checks the host, lets you pick GPUs, generates the secrets, pulls the release images and offers to start the stack. A first-run wizard in the browser then asks for the GPUs to use, a HuggingFace token and your admin account. On an Apple silicon Mac it is a download of the beta app instead; see <a href=\"/#p-mac\">the Mac section</a>."
   },
   {
     "q": "What does it cost?",

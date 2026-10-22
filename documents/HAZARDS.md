@@ -1,7 +1,10 @@
 # Hazards worth reading before you load anything
 
 Each of the following is a thing that costs an afternoon to diagnose and one
-paragraph to prevent. They are true of LM Warden however it was deployed.
+paragraph to prevent. They are true of the Linux install with NVIDIA GPUs,
+however it was deployed. Most concern vLLM, which the Mac app (beta) does not
+run: on a Mac, models run with MLX or llama.cpp and each load is sized against
+the Mac's memory budget.
 
 ## Shared memory: tensor-parallel models need 2 GiB of `/dev/shm`
 
@@ -65,6 +68,10 @@ it succeeded. Poll `GET /api/models/{id}` for the outcome.
 Switching models on a card means unload, then load. The same error can also mean
 a stale claim left by a model that is already gone; unloading it clears the
 claim.
+
+This is the rule of the Linux install. The Mac app (beta) sizes each load
+against the Mac's memory budget instead, so several models can share its GPU
+when they fit.
 <!-- /shared:one-model-per-gpu -->
 
 ## `gpu_memory_utilization` reserves a fraction of the whole card

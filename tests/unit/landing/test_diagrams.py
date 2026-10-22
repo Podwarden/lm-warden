@@ -28,8 +28,25 @@ def test_hub_opens_with_the_generic_diagram(client: TestClient) -> None:
     assert fig < main.index("You don’t write the config by hand")
 
 
-def test_home_shows_the_generic_diagram(client: TestClient) -> None:
-    assert 'aria-labelledby="flow-generic-title"' in client.get("/_landing").text
+def test_home_shows_the_router_flow_and_tuning_loop(client: TestClient) -> None:
+    """The redesigned Home (mockup B) replaced the generic request-flow figure
+    with two hand-drawn ones: where a Claude Code request goes (coding-agents
+    section) and the agent-tuning loop. The generic diagram stays at the top
+    of /coding-agents (test above). Each drawing has a wide and a tall cut,
+    each cut its own <title> and <desc>."""
+    main = _main(client.get("/_landing").text)
+    assert 'aria-labelledby="flow-generic-title"' not in main
+    for cut, ids in (
+        ('class="flow v-wide"', "flow-t flow-d"),
+        ('class="flow v-narrow"', "flow-t2 flow-d2"),
+        ('class="loop v-wide"', "loop-t loop-d"),
+        ('class="loop v-narrow"', "loop-t2 loop-d2"),
+    ):
+        at = main.index(f"<svg {cut}")
+        tag = main[at : main.index(">", at)]
+        assert f'role="img" aria-labelledby="{ids}"' in tag, cut
+        for i in ids.split():
+            assert f'id="{i}"' in main, i
 
 
 def test_each_agent_page_opens_with_its_own_diagram(client: TestClient) -> None:
@@ -70,12 +87,17 @@ def test_every_diagram_has_a_phone_cut_and_unique_ids(client: TestClient) -> Non
         assert len(ids) == len(set(ids)), path
 
 
-def test_home_figure_spans_the_what_grid(client: TestClient) -> None:
-    """On Home the figure is a third child of the two-column .what grid; without
-    a full-row span it auto-places into the 15rem heading column and renders as
-    a thumbnail beside empty space (reported on lmwarden.com, 2026-10-09)."""
+def test_home_drawings_switch_to_their_tall_cuts(client: TestClient) -> None:
+    """Phones get the tall cuts (under 640px), and the router flow also gets
+    its tall cut between 900 and 1099px, where it sits in a half-width panel
+    and the wide cut's text would fall under 9px (decisions D-B18). Replaces
+    the .what-grid span check: that grid left Home with the redesign."""
     body = client.get("/").text
-    main = _main(body)
-    what = main.index('class="wrap what"')
-    assert what < main.index('aria-labelledby="flow-generic-title"')
-    assert re.search(r"\.what\s*>\s*\.diagram-fig\s*\{\s*grid-column:\s*1\s*/\s*-1", body)
+    assert (
+        "@media (max-width:639px){.dia .v-wide{display:none}.dia .v-narrow{display:block}}" in body
+    )
+    assert (
+        "@media (min-width:900px) and (max-width:1099px)"
+        "{.dia-flow .v-wide{display:none}.dia-flow .v-narrow{display:block}}" in body
+    )
+    assert ".dia .v-narrow{display:none;" in body

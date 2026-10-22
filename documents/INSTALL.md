@@ -1,12 +1,18 @@
 # Installing LM Warden
 
-This is a step-by-step manual for getting LM Warden onto your own hardware. It
-is written from two recorded installs on a real machine, not from what the
+This is a step-by-step manual for getting LM Warden onto your own hardware.
+LM Warden runs on Linux and on macOS. On Linux, the main route and the one
+most of this manual covers, it is a Docker Compose stack on an x86_64 host
+with NVIDIA GPUs. On macOS it is a native menu-bar app for Apple silicon, in
+beta: see [On a Mac (preview)](#on-a-mac-preview). Windows is next; we are
+working on it, with no date yet.
+
+The Linux part is written from two recorded installs on a real machine, not from what the
 software is supposed to do. Every command below was run; every block of output
 is what the terminal actually printed. Where something went wrong, the error is
 here in full, at the step where it happens, with what it means and what to do.
 
-There are two routes, and you should pick one before you start:
+On Linux there are two routes, and you should pick one before you start:
 
 | | [Path A: run the published images](#path-a-run-the-published-images) | [Path B: build everything from source](#path-b-build-everything-from-source) |
 |---|---|---|
@@ -66,6 +72,9 @@ directory is written as `/home/you`, and host addresses are written as
 ## Before you start
 
 ### What the host needs
+
+This is the Linux host. A Mac needs only what
+[On a Mac (preview)](#what-it-needs) lists.
 
 - **Linux x86_64** with Docker Engine and the Docker Compose v2 plugin, 2.24 or
   newer. Check with `docker compose version`. A v5.x plugin is fine — this host
@@ -1343,8 +1352,13 @@ DMG you downloaded from the releases page whose checksum matched.
   Metal build of its `llama-server` (the default for `make macos-dmg`;
   `MACOS_LLAMACPP=0` leaves it out); vLLM is not available on a Mac.
 - The server sizes each load — weights and KV cache — against the Mac's
-  unified-memory budget read from Metal's recommended working-set size, so
-  several models can share the GPU when they fit.
+  unified-memory budget read from Metal's recommended working-set size (about
+  11.8 GiB usable on a 16 GiB M1), so several models can share the GPU when
+  they fit.
+- The web dashboard and the OpenAI-compatible API are the same as on Linux;
+  **Open Dashboard** shows the dashboard in a window of its own. There is no
+  power telemetry on a Mac, and MLX exposes no engine metrics, so for an MLX
+  model the Stats page shows LM Warden's own proxy numbers.
 
 By default it listens on 127.0.0.1 port 8080 (falling back to 8081–8099) over
 plain HTTP. [MACOS-REMOTE-ACCESS.md](MACOS-REMOTE-ACCESS.md) covers reaching it

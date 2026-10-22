@@ -104,11 +104,74 @@ def test_search_console_meta_only_on_home(client: TestClient, tmp_data_dir: Path
 
 
 def test_footer_says_what_loads(client: TestClient, tmp_data_dir: Path) -> None:
-    assert "makes no third-party requests" in client.get("/faq").text
-    _set(tmp_data_dir, analytics_ga4_id="G-AB12CD34EF")
+    """With a tag ID the footer says Google's tag loads and links the privacy
+    page and the cookie settings (the way back to the banner). Without one it
+    is the approved footer exactly: the redesign (mockup B) dropped the old
+    "makes no third-party requests" line, which has nothing to qualify when
+    nothing third-party loads."""
     body = client.get("/faq").text
-    assert "makes no third-party requests" not in body
-    assert 'href="/privacy"' in body and "data-consent-open" in body
+    assert 'class="tag-note"' not in body and "data-consent-open" not in body
+    _set(tmp_data_dir, analytics_ga4_id="G-AB12CD34EF")
+    for path in ("/", "/faq"):
+        body = _get(client, path).text
+        footer = body[body.index('<footer class="colophon"') : body.index("</footer>")]
+        assert 'class="tag-note"' in footer, path
+        assert 'href="/privacy"' in footer and "data-consent-open" in footer, path
+
+
+def test_banner_on_every_page_only_with_an_id(client: TestClient, tmp_data_dir: Path) -> None:
+    """Rule for the redesign: the consent banner renders on every page,
+    Home included, whenever a GA4 or Ads ID is set, and on none when neither
+    is (test_no_id_means_no_google_anywhere). It ships hidden and is shown by
+    the boot script only while no choice is stored; Decline and Accept are
+    equal buttons."""
+    pages = [p.path for p in all_site_pages()] + ["/privacy"]
+    for ids in ({"analytics_ga4_id": "G-AB12CD34EF"}, {"analytics_google_ads_id": "AW-123456789"}):
+        _set(tmp_data_dir, **{"analytics_ga4_id": "", "analytics_google_ads_id": "", **ids})
+        for path in pages:
+            body = _get(client, path).text
+            assert (
+                body.count('<div class="consent" role="region" aria-label="Cookie choice" hidden>')
+                == 1
+            ), (ids, path)
+            assert (
+                '<button class="btn" type="button" data-consent="denied"><span>Decline</span></button>'
+                in body
+            )
+            assert (
+                '<button class="btn" type="button" data-consent="granted"><span>Accept</span></button>'
+                in body
+            )
+            assert body.index('<div class="consent"') > body.index("</footer>"), path
+    css = _get(client, "/").text
+    for rule in (
+        ".consent{position:fixed;",
+        ".consent[hidden]{display:none}",
+        ".consent .btn{min-height:44px;",
+    ):
+        assert rule in css, rule
+
+
+def test_csp_adds_google_only_with_an_id(client: TestClient, tmp_data_dir: Path) -> None:
+    """Every page's CSP names googletagmanager.com (script, img, connect,
+    frame) only when an ID is set; Ads origins only with an Ads ID; nothing
+    else changes (font-src and media-src stay 'self')."""
+    pages = [p.path for p in all_site_pages()]
+    for path in pages:
+        assert "googletagmanager" not in _get(client, path).headers["content-security-policy"], path
+    _set(tmp_data_dir, analytics_ga4_id="G-AB12CD34EF")
+    for path in pages:
+        csp = dict(
+            part.strip().partition(" ")[::2]
+            for part in _get(client, path).headers["content-security-policy"].split(";")
+        )
+        for d in ("script-src", "img-src", "connect-src", "frame-src"):
+            assert "https://www.googletagmanager.com" in csp[d], (path, d)
+        assert "googleadservices" not in " ".join(csp.values()), path
+        assert csp["font-src"] == "'self'" and csp["media-src"] == "'self'", path
+    _set(tmp_data_dir, analytics_ga4_id="", analytics_google_ads_id="AW-123456789")
+    csp = _get(client, "/").headers["content-security-policy"]
+    assert "https://www.googleadservices.com" in csp and "google-analytics" not in csp
 
 
 def test_banner_records_the_choice_and_events(client: TestClient, tmp_data_dir: Path) -> None:
