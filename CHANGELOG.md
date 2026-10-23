@@ -7,6 +7,13 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.21.9] — 2026-10-21
+
+### Added
+
+- **An "API reference" link in the website footer,** on every page and in every language. It opens documents/API.md, which covers both the APIs your apps call (OpenAI-compatible `/v1`, the Anthropic Messages API, the OpenAI Responses API) and the API that controls LM Warden itself (first run, models, keys, admin).
+- **`scripts/landing_i18n_qa.py record --incremental`:** a QA record keeps the segments whose English and translation are unchanged, so a new or edited segment needs only its own blind back-translation.
+
 ## [v2026.10.21.8] — 2026-10-21
 
 ### Changed

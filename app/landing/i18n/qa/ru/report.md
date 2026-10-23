@@ -1,8 +1,8 @@
 # Translation QA: ru
 
-- Date: 2026-10-21
+- Date: 2026-10-23
 - Back-translation model: claude-sonnet-5-5; fixer: claude-opus-5-5
-- Segments covered: 666 of 666 published (14400 English words)
+- Segments covered: 667 of 667 published (14402 English words)
 - Issues found (critical/major/minor): 0/126/428
 - Issues remaining (critical/major/minor): 0/0/2
 - MQM score: 0.14 per 1,000 words (pass at <= 10.0, no critical or major)

@@ -1374,6 +1374,11 @@
     "note": "link (#docs); short label, keep near 13 characters",
     "hash": "e15a133068af"
   },
+  "chrome.footer.api": {
+    "text": "API reference",
+    "note": "link (#docs); short label, keep near 13 characters",
+    "hash": "484ee9bb6e51"
+  },
   "chrome.footer.changelog": {
     "text": "Changelog",
     "note": "link (#docs); short label, keep near 12 characters",

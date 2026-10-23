@@ -1,11 +1,11 @@
 {
   "locale": "es",
-  "date": "2026-10-21",
+  "date": "2026-10-23",
   "back_model": "claude-sonnet-5-5",
   "fix_model": "claude-opus-5-5",
-  "published_segments": 666,
-  "covered_segments": 666,
-  "english_words": 14400,
+  "published_segments": 667,
+  "covered_segments": 667,
+  "english_words": 14402,
   "issues_found": {
     "minor": 327,
     "major": 62,
@@ -20,6 +20,11 @@
   "max_score": 10.0,
   "pass": true,
   "segments": {
+    "chrome.footer.api": {
+      "part": "home",
+      "source_hash": "484ee9bb6e51",
+      "target_hash": "4cf631c10fbb"
+    },
     "meta.title": {
       "part": "home",
       "source_hash": "8b40be948ef4",

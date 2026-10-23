@@ -1099,6 +1099,10 @@
     "text": "इंस्टॉल गाइड",
     "source_hash": "e15a133068af"
   },
+  "chrome.footer.api": {
+    "text": "API दस्तावेज़",
+    "source_hash": "484ee9bb6e51"
+  },
   "chrome.footer.changelog": {
     "text": "चेंजलॉग",
     "source_hash": "ead07c84baac"

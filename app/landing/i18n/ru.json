@@ -1099,6 +1099,10 @@
     "text": "Инструкция",
     "source_hash": "e15a133068af"
   },
+  "chrome.footer.api": {
+    "text": "Справочник по API",
+    "source_hash": "484ee9bb6e51"
+  },
   "chrome.footer.changelog": {
     "text": "Список изменений",
     "source_hash": "ead07c84baac"

@@ -323,7 +323,14 @@ def record(
     backs: list[Path],
     back_model: str | None,
     fix_model: str | None,
+    incremental: bool = False,
 ) -> int:
+    """Write qa/<loc>/report.json from the issues and back-translations given.
+
+    With incremental=True the existing report is the base: a segment it
+    covered stays covered while its English and its translation are unchanged
+    (same source and target hash), its issues and back notes are kept, and the
+    back-translations given only need to cover new or changed segments."""
     if back_model and fix_model and back_model == fix_model:
         print("the back-translator must be a different model from the fixer", file=sys.stderr)
         return 2
@@ -331,6 +338,24 @@ def record(
     back, notes = _load_back(backs)
     covered = {k: s for k, s in segs.items() if k in back}
     issues = _read_json(issues_file)
+    if incremental:
+        prev = _read_json(report_path(loc))
+        for k, rec in prev.get("segments", {}).items():
+            s = segs.get(k)
+            if (
+                s
+                and k not in covered
+                and (rec["source_hash"], rec["target_hash"])
+                == (
+                    s.source_hash,
+                    s.target_hash,
+                )
+            ):
+                covered[k] = s
+        notes = {**{k: v for k, v in prev.get("back_notes", {}).items() if k in covered}, **notes}
+        issues = [i for i in prev.get("issues", []) if i["key"] in segs] + issues
+        back_model = back_model or prev.get("back_model")
+        fix_model = fix_model or prev.get("fix_model")
     errs = _validate_issues(issues, set(segs))
     if errs:
         print("refused:", *errs, sep="\n  ", file=sys.stderr)
@@ -492,6 +517,11 @@ def main(argv: list[str]) -> int:
     p.add_argument("--back", type=Path, action="append", required=True)
     p.add_argument("--back-model")
     p.add_argument("--fix-model")
+    p.add_argument(
+        "--incremental",
+        action="store_true",
+        help="keep the existing report's unchanged segments; --back covers only new/changed ones",
+    )
     sub.add_parser("status")
     a = ap.parse_args(argv)
     if a.cmd != "status" and a.locale not in _locales():
@@ -503,7 +533,7 @@ def main(argv: list[str]) -> int:
     if a.cmd == "apply":
         return apply(a.locale, a.fixes)
     if a.cmd == "record":
-        return record(a.locale, a.issues, a.back, a.back_model, a.fix_model)
+        return record(a.locale, a.issues, a.back, a.back_model, a.fix_model, a.incremental)
     return status()
 
 
