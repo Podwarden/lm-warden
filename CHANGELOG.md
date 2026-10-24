@@ -7,6 +7,16 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.23.1] — 2026-10-23
+
+### Added
+
+- **A menu for selected chat text.** Select text in a reply and, after a moment, a small menu offers Copy, Quote, Explain, Ask… and More (Simplify, Make shorter, Translate, Give an example, Branch from here). Quotes collect as chips above the message box and link back to where they came from. Each reply also has a Quote button and each code block an Ask button. Alt+Enter (Option+Return on a Mac) opens the menu from the keyboard, and on phones the actions sit above the message box. Settings has a "Text selection" section to turn the menu off, change its delay, and choose whether Explain sends straight away or fills the message box. (chat-ui 0.1.25)
+
+### Fixed
+
+- **Code blocks in a reply that is still streaming** can now be expanded and collapsed, and no longer flicker in height as lines arrive. (chat-ui 0.1.25)
+
 ## [v2026.10.21.9] — 2026-10-21
 
 ### Added

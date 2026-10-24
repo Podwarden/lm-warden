@@ -27,8 +27,8 @@
 # the lockfile, then set CHATUI_VERSION and CHATUI_REF to the release commit on
 # github.com/Podwarden/chat-ui whose package.json carries that version.
 ARG CHATUI_REPO=https://github.com/Podwarden/chat-ui.git
-ARG CHATUI_REF=83f100ff28a412d530d170cc8b9bf7c9787656ab
-ARG CHATUI_VERSION=0.1.23
+ARG CHATUI_REF=40972b9cbb8e512375caa29b792e2e7c1a367353
+ARG CHATUI_VERSION=0.1.25
 
 # ---------------------------------------------------------------------------
 # Stage 1 — compile chat-ui from source.
