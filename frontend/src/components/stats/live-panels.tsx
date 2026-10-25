@@ -695,6 +695,7 @@ type PhaseRow = Pick<
   | "prefill_rate_source"
   | "est_decayed"
   | "est_accuracy"
+  | "thinking_forced_off"
 >;
 
 /** The full sentence behind the pill and its badges: tooltip and aria-label. */
@@ -796,6 +797,16 @@ function PhasePill({
         />
         {label}
       </span>
+      {/* Only an explicit true: `false`/absent says nothing about the policy. */}
+      {row.thinking_forced_off === true && (
+        <span
+          data-testid="badge-thinking-off"
+          title="Thinking turned off by policy (the key's or the model's)"
+          className="inline-flex items-center whitespace-nowrap rounded-full border border-chat-accent/70 px-2 py-px text-[10px] font-medium text-chat-accent"
+        >
+          thinking off · policy
+        </span>
+      )}
       {/* Badge columns are fixed-width so a badge appearing never moves the
           columns to its right, and only exist while some visible row needs
           them, so an all-generating table reserves no empty space. */}

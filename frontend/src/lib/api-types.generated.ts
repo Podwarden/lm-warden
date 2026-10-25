@@ -1842,6 +1842,10 @@ export interface paths {
          *     The `supports_*` capability flags come back RAW (null / 0 / 1) rather than
          *     coerced to a bool, so a client can tell "the operator said no" from "nobody
          *     said, so it is auto-detected" — see `_MODEL_TRISTATE_FIELDS`.
+         *
+         *     Also carries the derived, read-only `thinking_policy_supported` (true / false
+         *     / null when the chat template cannot be read), same helper as the models
+         *     list and detail routes.
          */
         get: operations["get_model_settings_api_models__model_id__settings_get"];
         put?: never;
@@ -3564,6 +3568,12 @@ export interface components {
             /** Dp Spill Threshold */
             dp_spill_threshold?: number | null;
             /**
+             * Thinking Policy
+             * @default client
+             * @enum {string}
+             */
+            thinking_policy: "client" | "off";
+            /**
              * Parallelism Strategy
              * @default auto
              * @enum {string}
@@ -3708,6 +3718,13 @@ export interface components {
             dp_affinity_enabled: boolean;
             /** Dp Spill Threshold */
             dp_spill_threshold: number | null;
+            /**
+             * Thinking Policy
+             * @enum {string}
+             */
+            thinking_policy: "client" | "off";
+            /** Thinking Policy Supported */
+            thinking_policy_supported: boolean | null;
             layout_notice: components["schemas"]["LayoutNotice"] | null;
             engine: components["schemas"]["ModelEngine"] | null;
         } & {
@@ -4200,6 +4217,12 @@ export interface components {
              * @default false
              */
             anthropic_relay: boolean;
+            /**
+             * Thinking Policy
+             * @default client
+             * @enum {string}
+             */
+            thinking_policy: "client" | "off";
         };
         /**
          * TokenListItem
@@ -4240,6 +4263,11 @@ export interface components {
             priority: number;
             /** Anthropic Relay */
             anthropic_relay: boolean;
+            /**
+             * Thinking Policy
+             * @enum {string}
+             */
+            thinking_policy: "client" | "off";
             usage_24h: components["schemas"]["TokenUsage24h"];
             /** Paused At */
             paused_at: string | null;
@@ -4292,6 +4320,8 @@ export interface components {
             paused?: boolean | null;
             /** Anthropic Relay */
             anthropic_relay?: boolean | null;
+            /** Thinking Policy */
+            thinking_policy?: ("client" | "off") | null;
         };
         /** TokenUsage24h */
         TokenUsage24h: {

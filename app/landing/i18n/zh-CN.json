@@ -528,8 +528,8 @@
     "source_hash": "95612856681e"
   },
   "home.p-mac.li-1": {
-    "text": "约 360&nbsp;MB。Apple 芯片（M1 或更新机型），macOS 14 或更高版本。<a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">发行说明</a>。",
-    "source_hash": "eb664f8f7d3a"
+    "text": "约 110&nbsp;MB。Apple 芯片（M1 或更新机型），macOS 14 或更高版本。<a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">发行说明</a>。",
+    "source_hash": "27126352436e"
   },
   "home.p-mac.li-2": {
     "text": "引擎：MLX 和基于 Metal 构建的 llama.cpp。同样的控制台和同样的 OpenAI API；没有 vLLM，也没有功耗读数。",

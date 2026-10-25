@@ -528,8 +528,8 @@
     "source_hash": "95612856681e"
   },
   "home.p-mac.li-1": {
-    "text": "Environ 360&nbsp;Mo. Mac à puce Apple (M1 ou plus récent), macOS 14 ou version ultérieure. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">notes de version</a>.",
-    "source_hash": "eb664f8f7d3a"
+    "text": "Environ 110&nbsp;Mo. Mac à puce Apple (M1 ou plus récent), macOS 14 ou version ultérieure. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">notes de version</a>.",
+    "source_hash": "27126352436e"
   },
   "home.p-mac.li-2": {
     "text": "Moteurs : MLX et llama.cpp compilés avec Metal. Le même tableau de bord et la même API OpenAI ; ni vLLM, ni mesure de la consommation électrique.",

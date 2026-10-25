@@ -528,8 +528,8 @@
     "source_hash": "95612856681e"
   },
   "home.p-mac.li-1": {
-    "text": "Etwa 360&nbsp;MB. Apple Silicon (M1 oder neuer), macOS 14 oder neuer. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">Versionshinweise</a>.",
-    "source_hash": "eb664f8f7d3a"
+    "text": "Etwa 110&nbsp;MB. Apple Silicon (M1 oder neuer), macOS 14 oder neuer. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">Versionshinweise</a>.",
+    "source_hash": "27126352436e"
   },
   "home.p-mac.li-2": {
     "text": "Engines: MLX und llama.cpp mit Metal-Unterstützung. Dasselbe Dashboard und dieselbe OpenAI-API; kein vLLM, keine Anzeige der Leistungsaufnahme.",

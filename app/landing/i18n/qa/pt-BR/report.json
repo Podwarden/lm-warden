@@ -1,6 +1,6 @@
 {
   "locale": "pt-BR",
-  "date": "2026-10-23",
+  "date": "2026-10-25",
   "back_model": "claude-sonnet-5-5",
   "fix_model": "claude-opus-5-5",
   "published_segments": 667,
@@ -20,6 +20,16 @@
   "max_score": 10.0,
   "pass": true,
   "segments": {
+    "home.p-mac.li-1": {
+      "part": "home",
+      "source_hash": "27126352436e",
+      "target_hash": "e565af9b1196"
+    },
+    "faq.a-2": {
+      "part": "faq",
+      "source_hash": "37efcaff43f1",
+      "target_hash": "52cb8a9a2fc8"
+    },
     "chrome.footer.api": {
       "part": "home",
       "source_hash": "484ee9bb6e51",
@@ -684,11 +694,6 @@
       "part": "home",
       "source_hash": "95612856681e",
       "target_hash": "cb3a617545e9"
-    },
-    "home.p-mac.li-1": {
-      "part": "home",
-      "source_hash": "eb664f8f7d3a",
-      "target_hash": "df89be5baa63"
     },
     "home.p-mac.li-2": {
       "part": "home",
@@ -3144,11 +3149,6 @@
       "part": "faq",
       "source_hash": "fd575095e092",
       "target_hash": "89f22e14afe5"
-    },
-    "faq.a-2": {
-      "part": "faq",
-      "source_hash": "af7c57748da9",
-      "target_hash": "2f255bcaba43"
     },
     "faq.q-3": {
       "part": "faq",

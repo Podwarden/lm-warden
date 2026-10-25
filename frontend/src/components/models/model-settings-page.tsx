@@ -16,7 +16,7 @@
 // loaded-editable carve-out, the two kinds of 409, list-shaped 422s.
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { authFetch, authFetchJSON } from "@/lib/auth-fetch";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -225,6 +225,15 @@ const SECTION_GROUPS: ReadonlyArray<SectionGroup> = [
     keys: ["dp_affinity_enabled", "dp_spill_threshold"],
     summary: ({ draft }) =>
       `affinity ${draft.dp_affinity_enabled ? "on" : "off"} · spill ${draft.dp_spill_threshold ?? "auto"}`,
+    defaultOpen: () => true,
+  },
+  {
+    title: "Thinking",
+    testId: "section-thinking",
+    band: "live",
+    keys: ["thinking_policy"],
+    summary: ({ draft }) =>
+      draft.thinking_policy === "off" ? "off for every key" : "client decides",
     defaultOpen: () => true,
   },
   {
@@ -634,6 +643,9 @@ export function ModelSettingsPage({ id }: { id: string }) {
             else if (typeof v === "number" && Number.isFinite(v))
               next.dp_spill_threshold = Math.max(1, Math.floor(v));
             break;
+          case "thinking_policy":
+            if (v === "client" || v === "off") next.thinking_policy = v;
+            break;
           case "supports_vision":
           case "supports_tools":
           case "supports_reasoning":
@@ -758,6 +770,23 @@ export function ModelSettingsPage({ id }: { id: string }) {
             Layout and are not set here.{" "}
             <code className="font-mono text-[12px]">--tensor-split</code> is left to
             llama.cpp&apos;s memory-proportional default. Anything else goes in Extra args.
+          </p>
+        )}
+        {group.testId === "section-thinking" && data.thinking_policy_supported === false && (
+          <p
+            data-testid="thinking-unsupported-note"
+            className="m-0 rounded-lg bg-vw-amber-bg/40 px-3 py-2 text-[12.5px] leading-[1.45] text-vw-amber-fg"
+          >
+            This model&apos;s template has no thinking switch, so this setting has no effect on it.
+          </p>
+        )}
+        {group.testId === "section-thinking" && data.thinking_policy_supported == null && (
+          <p
+            data-testid="thinking-unknown-note"
+            className="m-0 text-[12.5px] leading-[1.45] text-chat-muted"
+          >
+            LM Warden can&apos;t tell whether this model&apos;s template supports it (usual for GGUF
+            models).
           </p>
         )}
         {group.testId === "section-capabilities" && (
@@ -1140,6 +1169,16 @@ function SettingFieldFor({
           allowNull
         />
       );
+    case "thinking_policy":
+      return (
+        <ThinkingPolicyField
+          hint={hint}
+          value={draft.thinking_policy}
+          disabled={disabled}
+          dirty={dirty}
+          onChange={(v) => set("thinking_policy", v)}
+        />
+      );
     case "supports_vision":
     case "supports_tools":
     case "supports_reasoning":
@@ -1239,4 +1278,61 @@ function SettingFieldFor({
         />
       );
   }
+}
+
+// The model's thinking policy: a two-option radio group (not the tristate
+// select the capability flags use -- there is no "auto" here).
+function ThinkingPolicyField({
+  hint,
+  value,
+  disabled,
+  dirty,
+  onChange,
+}: {
+  hint: FieldHint;
+  value: "client" | "off";
+  disabled: boolean;
+  dirty: boolean;
+  onChange: (v: "client" | "off") => void;
+}) {
+  const descId = useId();
+  const options: ReadonlyArray<{ v: "client" | "off"; label: string }> = [
+    { v: "client", label: "Let the client decide" },
+    { v: "off", label: "Off for every key" },
+  ];
+  return (
+    <div className="flex flex-col gap-2">
+      <div
+        role="radiogroup"
+        aria-label="Thinking policy for this model"
+        aria-describedby={descId}
+        className="flex flex-wrap gap-2.5"
+      >
+        {options.map((o) => (
+          <label
+            key={o.v}
+            className={cn(
+              "flex min-h-[44px] flex-1 items-center gap-2.5 rounded-lg border border-vw-rule-soft/70 bg-chat-surface px-3 text-sm text-chat-fg",
+              disabled ? "opacity-60" : "cursor-pointer",
+              value === o.v && "border-chat-accent",
+            )}
+          >
+            <input
+              type="radio"
+              name="thinking_policy"
+              value={o.v}
+              checked={value === o.v}
+              disabled={disabled}
+              onChange={() => onChange(o.v)}
+            />
+            {o.label}
+          </label>
+        ))}
+      </div>
+      <p id={descId} className="m-0 text-[12.5px] leading-[1.45] text-chat-muted">
+        {hint.hint}
+        {dirty && <span className="ml-1 text-chat-accent">Unsaved</span>}
+      </p>
+    </div>
+  );
 }

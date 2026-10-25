@@ -133,6 +133,11 @@ MODEL_FIELD_POLICY: dict[str, FieldPolicy] = {
         editable_while_loaded=True,
         why="#286; proxy-side knob read per request, no reload needed",
     ),
+    "thinking_policy": FieldPolicy(
+        Writer.OPERATOR,
+        editable_while_loaded=True,
+        why="spec 2026-10-25 17.3; proxy-side knob read per request, no reload needed",
+    ),
     # -- engine axis ---------------------------------------------------------
     "backend": FieldPolicy(
         Writer.OPERATOR,

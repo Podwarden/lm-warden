@@ -100,6 +100,8 @@ async def test_request_history_table_exists_with_columns(tmp_data_dir):
         "diverged_at_own": "INTEGER",
         "cached_source": "TEXT",
         "cached_ttft_est_tokens": "INTEGER",
+        # Added by 0051 (thinking policy), likewise.
+        "thinking_forced_off": "INTEGER",
     }
     assert set(cols) == set(expected)
     for name, typ in expected.items():

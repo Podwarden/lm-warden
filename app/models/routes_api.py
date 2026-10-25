@@ -986,6 +986,7 @@ async def create_model(body: ModelCreate, request: Request, _user: str = Depends
                 "data_parallel_size": data_parallel_size,
                 "dp_affinity_enabled": body.dp_affinity_enabled,
                 "dp_spill_threshold": body.dp_spill_threshold,
+                "thinking_policy": body.thinking_policy,
                 "dtype": dtype,
                 "max_model_len": max_model_len,
                 "gpu_memory_utilization": gpu_mem,
@@ -1030,7 +1031,7 @@ async def list_models(request: Request, _user: str = Depends(require_jwt)):
     # `backend`, `mmproj_filename` and `n_gpu_layers` correctly while both
     # responses dropped all three -- surfacing to the operator as
     # "Engine: vllm" on a model that was running llama-server.
-    return {"models": [model_summary(r) for r in rows]}
+    return {"models": [model_summary(r, settings.hf_cache_dir) for r in rows]}
 
 
 # ---------------------------------------------------------------------------
@@ -1274,7 +1275,7 @@ async def get_model(model_id: str, request: Request, _user: str = Depends(requir
         row = await ModelRepo(db).get(model_id)
     if not row:
         raise HTTPException(404, "not found")
-    return model_detail(row)
+    return model_detail(row, settings.hf_cache_dir)
 
 
 @router.post("/{model_id}/try-stack", status_code=201)

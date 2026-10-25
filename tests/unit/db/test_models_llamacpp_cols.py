@@ -112,7 +112,9 @@ def test_new_columns_are_appended_last():
 
     cols = [c.strip() for c in _MODEL_COLS.split(",")]
     # 0038 (#286) appended three more after the llama.cpp pair.
-    assert cols[-8:-5] == ["backend", "mmproj_filename", "n_gpu_layers"]
+    assert cols[-9:-6] == ["backend", "mmproj_filename", "n_gpu_layers"]
     # 0039 (#286 review) appended the boot-reconcile notice pair.
-    assert cols[-5:-2] == ["data_parallel_size", "dp_affinity_enabled", "dp_spill_threshold"]
-    assert cols[-2:] == ["layout_notice_level", "layout_notice"]
+    assert cols[-6:-3] == ["data_parallel_size", "dp_affinity_enabled", "dp_spill_threshold"]
+    assert cols[-3:-1] == ["layout_notice_level", "layout_notice"]
+    # 0051 appended the thinking policy.
+    assert cols[-1:] == ["thinking_policy"]

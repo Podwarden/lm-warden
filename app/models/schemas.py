@@ -12,6 +12,7 @@ from pydantic import (
 )
 
 from app.models.parallelism import PARALLEL_FLAGS_REFUSAL, parallel_flag_values
+from app.proxy.thinking_policy import ThinkingPolicy
 from app.runtime.backends import registry
 
 SLUG_RE = re.compile(r"^[a-zA-Z0-9._-]+$")
@@ -203,6 +204,8 @@ class ModelSpec(BaseModel):
     data_parallel_size: int = Field(1, ge=1)
     dp_affinity_enabled: bool = True
     dp_spill_threshold: int | None = Field(None, ge=1)
+    # Proxy-side knob (migration 0051): "off" forces thinking off for this model.
+    thinking_policy: ThinkingPolicy = "client"
     # ``parallelism_strategy`` records the operator's choice; ``auto`` is the
     # safe default — single GPU is no-parallelism, multi-GPU defaults to TP.
     parallelism_strategy: Literal["tp", "pp", "auto"] = "auto"
@@ -585,6 +588,9 @@ class ModelOut(BaseModel):
     data_parallel_size: int
     dp_affinity_enabled: bool
     dp_spill_threshold: int | None
+    thinking_policy: ThinkingPolicy
+    # Whether the chat template branches on enable_thinking; None = template unreadable.
+    thinking_policy_supported: bool | None
     layout_notice: LayoutNotice | None
     engine: ModelEngine | None
 

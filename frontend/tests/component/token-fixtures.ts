@@ -10,7 +10,7 @@ export function tokenDetail(o: Partial<TokenDetail> = {}): TokenDetail {
     created_at: '2026-09-06 13:59:00', last_used_at: '2026-09-18 13:19:00', expires_at: null,
     rotated_at: null, rotated_from: 'tok-old2', successor_id: null, successor_deleted: false,
     is_expired: false, is_near_expiry: false, revoked_at: null, is_revoked: false,
-    paused_at: null, is_paused: false, priority: 9, anthropic_relay: false,
+    paused_at: null, is_paused: false, priority: 9, anthropic_relay: false, thinking_policy: 'client',
     usage_24h: { requests: 1500, prompt_tokens: 108_000_000, completion_tokens: 2_000_000, total_tokens: 110_000_000 },
     lineage: [
       { id: 'tok-old1', name: 'opencode-laptop (old 1)', created_at: '2026-09-05 12:16:00', rotated_at: '2026-09-05 13:55:00', is_revoked: true, in_grace: false, is_self: false },

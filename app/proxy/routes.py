@@ -21,7 +21,7 @@ from app.models.parallelism import spill_threshold_for
 from app.proxy import content_log, forest_fields
 from app.proxy.auth import require_bearer, token_allows
 from app.proxy.dp_affinity import KV_MAX_AGE_S, RANK_HEADER, client_rank
-from app.proxy.dp_affinity import affinity_key as _dp_affinity_key
+from app.proxy.dp_affinity import conversation_key as _dp_affinity_key
 from app.proxy.envelope_hint import enrich_5xx_from_db
 from app.proxy.model_cache import all_models, model_by_served_name
 from app.proxy.reaggregate import StreamAggregator, parse_sse_event
@@ -29,6 +29,7 @@ from app.proxy.request_registry import LiveRequest, finished_record
 from app.proxy.runaway import RunawayDetector
 from app.proxy.scheduler import model_admission_cap
 from app.proxy.session_id import SessionInfo, extract_session
+from app.proxy.thinking_policy import apply_thinking_off, effective_policy
 
 # Aliased: the forward handler already binds a LOCAL `registry` (the Plane-B
 # live-request registry off app.state), which would shadow an unaliased import
@@ -938,6 +939,7 @@ async def _forward(
     # that already carries X-data-parallel-rank is never overridden.
     dp_rank: int | None = None
     dp_state = None
+    place_epoch = ""
     client_pin_header = False
     try:
         dp = getattr(model, "data_parallel_size", 1) or 1
@@ -953,14 +955,15 @@ async def _forward(
                 )
                 # Placement inputs, all cheap reads: the engine run (so a restart
                 # forgets placements) and the latest cached KV scrape if fresh.
-                place_epoch = ""
                 place_kv = None
+                place_pool = None
                 try:
                     gen = getattr(request.app.state.supervisor, "get_generation", None)
                     place_epoch = f"{variant.id}:{gen(model.id) if gen else 0}"
                     scrapes = getattr(request.app.state, "dp_rank_scrape_cache", None)
                     if scrapes is not None:
                         place_kv = scrapes.recent_kv(model.id, KV_MAX_AGE_S, place_epoch)
+                        place_pool = scrapes.recent_pool_tokens(model.id, KV_MAX_AGE_S, place_epoch)
                 except Exception:  # noqa: BLE001
                     pass
                 dp_rank, dp_decision = dp_state.route(
@@ -972,13 +975,15 @@ async def _forward(
                     affinity_enabled=bool(getattr(model, "dp_affinity_enabled", 1)),
                     epoch=place_epoch,
                     kv=place_kv,
+                    pool_tokens=place_pool,
                 )
                 logger.debug(
-                    "dp-routing model=%s rank=%s decision=%s source=%s",
+                    "dp-routing model=%s rank=%s decision=%s source=%s reason=%s",
                     model.id,
                     dp_rank,
                     dp_decision,
                     dp_key_source,
+                    getattr(dp_state, "last_reason", None),
                 )
     except Exception:  # noqa: BLE001 — routing must never fail a request
         dp_rank = None
@@ -1096,6 +1101,30 @@ async def _forward(
         body_json["model"] = engine_id
         body = json.dumps(body_json).encode()
 
+    # Thinking policy (spec 2026-10-25 §17.3): a token or model set to "off"
+    # forces chat_template_kwargs.enable_thinking=false. Runs on the final
+    # (already translated, for /v1/messages and /v1/responses) chat body.
+    # "client" forwards the bytes untouched. Fail open: any error forwards the
+    # body as it was.
+    thinking_forced_off = False
+    try:
+        if (
+            effective_policy(
+                getattr(token, "thinking_policy", None), getattr(model, "thinking_policy", None)
+            )
+            == "off"
+        ):
+            if apply_thinking_off(body_json):
+                body = json.dumps(body_json).encode()
+            # Marked for every chat body under an effective "off", even when the
+            # body already carried enable_thinking=false (translated
+            # /v1/messages and /v1/responses do): the flag means "policy forced
+            # it", so the post-deploy check reads 1 on every turn.
+            if isinstance(body_json.get("messages"), list):
+                thinking_forced_off = True
+    except Exception:
+        logger.debug("thinking policy: could not apply, forwarding unchanged", exc_info=True)
+
     async def _release_slot() -> None:
         nonlocal slot_released
         if slot_released:
@@ -1181,6 +1210,21 @@ async def _forward(
         except Exception:  # noqa: BLE001 — bookkeeping must never fail a request
             logger.debug("stats: could not remember prefix", exc_info=True)
         try:
+            if (
+                dp_state is not None
+                and dp_key is not None
+                and dp_rank is not None
+                and dp_decision != "client_pinned"
+                and upstream_ok
+                and prefix_processed
+                and not prefix_failed
+            ):
+                dp_state.placement.note_prompt(
+                    model.id, place_epoch, dp_key, engine_prompt or prompt_tokens
+                )
+        except Exception:  # noqa: BLE001 — bookkeeping must never fail a request
+            logger.debug("dp: could not note prompt size", exc_info=True)
+        try:
             if cache_index is not None and obs_chain is not None:
                 served = upstream_ok and prefix_processed and not prefix_failed
                 dp_n = getattr(model, "data_parallel_size", 1) or 1
@@ -1237,6 +1281,7 @@ async def _forward(
             # duration_s agree; the wait is queued_s, separately.
             live_req.started_iso = datetime.now(UTC).isoformat().replace("+00:00", "Z")
             live_req.queued_s = queued_s
+            live_req.thinking_forced_off = thinking_forced_off
             live_req.cache_est_tokens = cache_est_tokens
             live_req.cache_est_raw_tokens = cache_est_raw_tokens
             live_req.est_decayed = est_decayed
@@ -1284,6 +1329,7 @@ async def _forward(
                 est_decayed=est_decayed,
                 gap_s=est_gap_s,
                 dp_rank=dp_rank,
+                thinking_forced_off=thinking_forced_off,
                 phase="prefill" if client_wants_stream else "waiting",
                 is_stream=client_wants_stream,
             )

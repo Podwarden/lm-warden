@@ -13,22 +13,28 @@ export interface LimitsPatch {
 }
 
 export interface LimitsCardProps {
-  token: Pick<TokenDetail, "id" | "priority"> & Partial<Pick<TokenDetail, "anthropic_relay">>;
+  token: Pick<TokenDetail, "id" | "priority"> & Partial<Pick<TokenDetail, "anthropic_relay" | "thinking_policy">>;
   onSave: (patch: LimitsPatch) => Promise<string | null>;
   /** Flips the Claude Code router relay flag; resolves true on success. */
   onRelay?: (on: boolean) => Promise<boolean>;
   relayError?: string | null;
   relaying?: boolean;
+  /** Sets the key's thinking policy; resolves true on success. */
+  onThinking?: (policy: "client" | "off") => Promise<boolean>;
+  thinkingError?: string | null;
+  thinkingBusy?: boolean;
 }
 
 const PRIORITIES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
-export function LimitsCard({ token, onSave, onRelay, relayError, relaying }: LimitsCardProps) {
+export function LimitsCard({ token, onSave, onRelay, relayError, relaying, onThinking, thinkingError, thinkingBusy }: LimitsCardProps) {
   const [prio, setPrio] = useState(token.priority);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const prioLabelId = useId();
   const relayLabelId = useId();
+  const thinkingLabelId = useId();
+  const forcedOff = token.thinking_policy === "off";
 
   // A poll that brings a new saved value resets a CLEAN form; an edit in
   // progress is never overwritten under the operator's cursor. "Clean" is
@@ -133,6 +139,34 @@ export function LimitsCard({ token, onSave, onRelay, relayError, relaying }: Lim
         </div>
         {relayError && (
           <div role="alert" className="mt-1 text-[12px] text-vw-danger-fg">{relayError}</div>
+        )}
+      </div>
+
+      <div className="mt-[18px] border-t border-chat-rule pt-3.5">
+        <div className="flex items-center justify-between gap-2">
+          <span id={thinkingLabelId} className="text-[13px] text-chat-muted">
+            Thinking:{" "}
+            <span className="font-semibold text-chat-fg">{forcedOff ? "forced off" : "client decides"}</span>
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={forcedOff}
+            aria-label="Force thinking off"
+            disabled={!onThinking || thinkingBusy}
+            onClick={() => void onThinking?.(forcedOff ? "client" : "off")}
+            className={btn(forcedOff ? "primary" : "default")}
+          >
+            {forcedOff ? "Let the client decide" : "Force off"}
+          </button>
+        </div>
+        <div className="mt-1.5 text-[12px] leading-[1.45] text-chat-dim">
+          Off: requests with this key never think, whatever the client asks. Takes effect on
+          the next request, no reload. Client decides: the request&apos;s own setting applies
+          (default). If the model&apos;s own policy is off, it stays off.
+        </div>
+        {thinkingError && (
+          <div role="alert" className="mt-1 text-[12px] text-vw-danger-fg">{thinkingError}</div>
         )}
       </div>
     </section>

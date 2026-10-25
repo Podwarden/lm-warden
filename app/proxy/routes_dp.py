@@ -87,6 +87,21 @@ class RankScrapeCache:
         }
         return kv or None
 
+    def recent_pool_tokens(
+        self, model_id: str, max_age_s: float, epoch: str | None = None
+    ) -> int | None:
+        """One replica's KV pool in tokens from the latest scrape; the same age
+        and epoch rules as ``recent_kv``."""
+        hit = self._entries.get(model_id)
+        if hit is None or self._clock() - hit[0] > max_age_s or hit[3] is not None:
+            return None
+        if epoch is not None and self._epochs.get(model_id) != epoch:
+            return None
+        for reading in hit[2].values():
+            if reading.kv_pool_tokens is not None:
+                return reading.kv_pool_tokens
+        return None
+
     async def get(
         self, model_id: str, host: str, port: int, epoch: str = ""
     ) -> tuple[dict[int, RankReading], str | None, str]:

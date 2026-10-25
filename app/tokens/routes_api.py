@@ -22,6 +22,7 @@ from app.db.repos.tokens import (
     sqlite_utc_in,
     sqlite_utc_now,
 )
+from app.proxy.thinking_policy import ThinkingPolicy
 from app.stats import request_history
 from app.tokens import series
 
@@ -55,6 +56,8 @@ class TokenCreate(BaseModel):
     # Claude Code model router (#287): may this key make the warden relay its
     # request to Anthropic? Off unless the operator opts the key in.
     anthropic_relay: bool = False
+    # "off" makes the proxy force thinking off for every request on this key.
+    thinking_policy: ThinkingPolicy = "client"
 
     @model_validator(mode="before")
     @classmethod
@@ -80,6 +83,7 @@ class TokenUpdate(BaseModel):
     priority: int | None = Field(default=None, ge=0, le=9)
     paused: bool | None = None
     anthropic_relay: bool | None = None
+    thinking_policy: ThinkingPolicy | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -95,7 +99,7 @@ class TokenUpdate(BaseModel):
             raise ValueError("name cannot be null")
         return v.strip() if isinstance(v, str) else v
 
-    @field_validator("paused", "anthropic_relay", mode="before")
+    @field_validator("paused", "anthropic_relay", "thinking_policy", mode="before")
     @classmethod
     def _flag_not_null(cls, v: object) -> object:
         if v is None:
@@ -176,6 +180,7 @@ def _enrich(
         # round-trip per row.
         "priority": r.priority,
         "anthropic_relay": bool(r.anthropic_relay),
+        "thinking_policy": r.thinking_policy,
         "usage_24h": {
             "requests": usage_requests,
             "prompt_tokens": usage_prompt,
@@ -246,6 +251,7 @@ async def create_token(body: TokenCreate, request: Request, _user: str = Depends
             expires_in_days=body.expires_in_days,
             priority=body.priority,
             anthropic_relay=body.anthropic_relay,
+            thinking_policy=body.thinking_policy,
         )
         created = await repo.get(tid)
     if created is None:  # defensive — race between insert and read is impossible
@@ -260,6 +266,7 @@ async def create_token(body: TokenCreate, request: Request, _user: str = Depends
         "expires_at": created.expires_at,
         "priority": created.priority,
         "anthropic_relay": bool(created.anthropic_relay),
+        "thinking_policy": created.thinking_policy,
     }
 
 
@@ -306,6 +313,7 @@ async def update_token(
             priority=raw.get("priority", _UNSET),
             paused=raw.get("paused", _UNSET),
             anthropic_relay=raw.get("anthropic_relay", _UNSET),
+            thinking_policy=raw.get("thinking_policy", _UNSET),
         )
         detail = await _token_detail(db, token_id)
     # get() found the row above and sqlite serialises the write, so the row
@@ -409,6 +417,7 @@ class TokenListItem(BaseModel):
     is_revoked: bool
     priority: int
     anthropic_relay: bool
+    thinking_policy: ThinkingPolicy
     usage_24h: TokenUsage24h
     paused_at: str | None
     is_paused: bool

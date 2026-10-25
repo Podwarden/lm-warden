@@ -42,3 +42,20 @@ def test_legacy_spellings_are_accepted():
     r = read_ranks(body)[0]
     assert r.kv_cache_usage_perc == 0.1
     assert r.prefix_cache_hits == 3.0
+
+
+def _expo(info: bool) -> str:
+    lines = [
+        'vllm:kv_cache_usage_perc{engine="0"} 0.1',
+        'vllm:kv_cache_usage_perc{engine="1"} 0.2',
+    ]
+    if info:
+        lines.append('vllm:cache_config_info{block_size="1584",num_gpu_blocks="431",engine="0"} 1')
+    return "\n".join(lines) + "\n"
+
+
+def test_read_ranks_carries_kv_pool_tokens():
+    ranks = read_ranks(_expo(True))
+    assert ranks[0].kv_pool_tokens == 682_704
+    assert ranks[1].kv_pool_tokens == 682_704
+    assert all(r.kv_pool_tokens is None for r in read_ranks(_expo(False)).values())

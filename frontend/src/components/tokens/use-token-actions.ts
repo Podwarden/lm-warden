@@ -39,6 +39,10 @@ export interface TokenActions {
   relayError: string | null;
   /** PATCHes {anthropic_relay}; resolves true on success. */
   setAnthropicRelay: (on: boolean) => Promise<boolean>;
+  thinkingBusy: boolean;
+  thinkingError: string | null;
+  /** PATCHes {thinking_policy}; resolves true on success. */
+  setThinkingPolicy: (policy: "client" | "off") => Promise<boolean>;
   rotateOpen: boolean;
   openRotate: () => void;
   closeRotate: () => void;
@@ -66,6 +70,8 @@ export function useTokenActions(
   const [pauseError, setPauseError] = useState<string | null>(null);
   const [relaying, setRelaying] = useState(false);
   const [relayError, setRelayError] = useState<string | null>(null);
+  const [thinkingBusy, setThinkingBusy] = useState(false);
+  const [thinkingError, setThinkingError] = useState<string | null>(null);
   const [rotateOpen, setRotateOpen] = useState(false);
   const path = `/api/tokens/${encodeURIComponent(token.id)}`;
   // Re-entrancy guards. Refs rather than the `busy`/`testing` state, which a
@@ -190,6 +196,29 @@ export function useTokenActions(
     }
   }, [path, onChange]);
 
+  const setThinkingPolicy = useCallback(async (policy: "client" | "off"): Promise<boolean> => {
+    setThinkingBusy(true);
+    setThinkingError(null);
+    try {
+      const r = await authFetch(path, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ thinking_policy: policy }),
+      });
+      if (!r.ok) {
+        setThinkingError(await errorDetail(r, `Failed to change thinking policy (HTTP ${r.status})`));
+        return false;
+      }
+      onChange();
+      return true;
+    } catch (err) {
+      setThinkingError(err instanceof Error ? err.message : "Network error");
+      return false;
+    } finally {
+      setThinkingBusy(false);
+    }
+  }, [path, onChange]);
+
   const openRotate = useCallback(() => setRotateOpen(true), []);
   const closeRotate = useCallback(() => {
     setRotateOpen(false);
@@ -201,6 +230,7 @@ export function useTokenActions(
     busy, deleteError, remove,
     pausing, pauseError, setPaused,
     relaying, relayError, setAnthropicRelay,
+    thinkingBusy, thinkingError, setThinkingPolicy,
     rotateOpen, openRotate, closeRotate,
   };
 }

@@ -712,6 +712,35 @@ on paths with no model (the catch-all) and a fallback is held to its list; and
 unknown `/v1` paths keep answering `404`/`405`/`307` as they did before the
 router when it is off, authenticated or not.
 
+Thinking can be switched off for every chat request a token or a model serves
+(on models whose chat template has a thinking switch):
+`"thinking_policy": "off"` on `POST /api/tokens` or `PATCH /api/tokens/{id}`,
+or on `PATCH /api/models/{id}/settings`. The default, `"client"`, leaves the
+request in charge; any other value is a `422`. Thinking is off when either the
+token or the model says `off`. On chat requests the proxy sets
+`chat_template_kwargs.enable_thinking` to `false`, overriding the client. That
+covers `/v1/messages` and `/v1/responses` (translated to chat first) and the
+local leg of a router rule; `/v1/completions` is untouched. The change takes
+effect on the next request, and a model setting can be changed while the model
+is loaded, with no reload. A rotated token's successor inherits the policy.
+
+Only models whose chat template has an `enable_thinking` switch are affected
+(#248). `GET /api/models` shows `thinking_policy_supported`: `true`, `false`, or
+`null` when the warden cannot tell, which is usual for GGUF models, whose
+template lives inside the model file. It reads the model's Hugging Face chat template, so an
+operator `--chat-template` in `extra_args` (or a list-form named template) is not reflected.
+`GET /api/models/{id}` and `GET /api/models/{id}/settings` carry the same field. Every chat
+request served under an effective `off` policy is marked `thinking_forced_off` on the live request
+row and in request history, including requests that already had thinking off. Requests relayed to
+Anthropic (the router relay on a relay-enabled key) are not subject to `thinking_policy`. The admin
+stress runner talks to engines directly and is not subject to the policy.
+
+```bash
+curl -s -X PATCH $W/api/tokens/53e7011c… -H "Authorization: Bearer $ACCESS" \
+     -H "X-CSRF-Token: $CSRF" -b jar -H 'Content-Type: application/json' \
+     -d '{"thinking_policy":"off"}'
+```
+
 What is translated, and how:
 
 - **Request.** `system` (a string or text blocks) becomes a leading system

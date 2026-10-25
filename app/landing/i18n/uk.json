@@ -528,8 +528,8 @@
     "source_hash": "95612856681e"
   },
   "home.p-mac.li-1": {
-    "text": "Близько 360&nbsp;МБ. Apple silicon (M1 або новіший), macOS 14 або новіша. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">примітки до випуску</a>.",
-    "source_hash": "eb664f8f7d3a"
+    "text": "Близько 110&nbsp;МБ. Apple silicon (M1 або новіший), macOS 14 або новіша. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">примітки до випуску</a>.",
+    "source_hash": "27126352436e"
   },
   "home.p-mac.li-2": {
     "text": "Рушії: MLX і llama.cpp, зібраний із підтримкою Metal. Та сама панель керування й той самий OpenAI API; без vLLM і без даних про потужність.",

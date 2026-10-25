@@ -142,6 +142,7 @@ _EXPECTED_OPERATOR_WRITABLE = {
     "data_parallel_size",
     "dp_affinity_enabled",
     "dp_spill_threshold",
+    "thinking_policy",
     "parallelism_strategy",
     "max_batch_size",
     "max_model_len",
@@ -239,6 +240,7 @@ def test_tristate_and_loaded_editable_are_the_capability_flags():
     assert LOADED_EDITABLE_FIELDS == capability_flags | {
         "dp_affinity_enabled",
         "dp_spill_threshold",
+        "thinking_policy",
     }
     assert TRISTATE_FIELDS == capability_flags
 
@@ -291,6 +293,7 @@ def test_patchable_surface_pins_the_pre_policy_frozenset():
             "data_parallel_size",
             "dp_affinity_enabled",
             "dp_spill_threshold",
+            "thinking_policy",
             "backend",
             "dtype",
             "engine_channel",
@@ -318,7 +321,7 @@ def test_patchable_surface_pins_the_pre_policy_frozenset():
             "trust_remote_code",
         }
     )
-    assert len(_PATCHABLE_MODEL_FIELDS) == 28
+    assert len(_PATCHABLE_MODEL_FIELDS) == 29
 
 
 @pytest.mark.parametrize(

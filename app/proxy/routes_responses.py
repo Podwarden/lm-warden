@@ -43,7 +43,12 @@ from app.proxy.responses_translate import (
 )
 from app.proxy.routes import _forward, _resolve_target
 from app.proxy.routes_messages import _as_bytes, _detail_text
-from app.proxy.session_id import PROMPT_HASH_CHARS, extract_session, responses_first_user_text
+from app.proxy.session_id import (
+    PROMPT_HASH_CHARS,
+    conversation_discriminator,
+    extract_session,
+    responses_first_user_text,
+)
 from app.utils.sse import sse_headers
 
 logger = logging.getLogger(__name__)
@@ -87,7 +92,8 @@ def responses_affinity(
     """
     info = extract_session(body, headers)
     if info.id and info.source:
-        return info.id, info.source, info.id
+        disc = conversation_discriminator(body)
+        return (f"{info.id}\x00{disc}" if disc else info.id), info.source, info.id
     text = responses_first_user_text(body.get("input"))[:PROMPT_HASH_CHARS]
     if text:
         return f"{token_id}\x00{text}", "prompt_hash", None
@@ -123,7 +129,11 @@ async def responses(request: Request, token: TokenRow = Depends(require_bearer))
         logger.debug("responses: dropped %s", ",".join(tr.dropped))
     target = await _resolve_target(request, req.model)
     await clamp_max_tokens(request, target, tr.oai)
-    key, source, session_id = responses_affinity(data, request.headers, token.id)
+    try:
+        key, source, session_id = responses_affinity(data, request.headers, token.id)
+    except Exception:  # noqa: BLE001 -- affinity must never fail a request
+        logger.debug("responses: affinity failed; serving without it", exc_info=True)
+        key, source, session_id = None, "none", None
     return await _serve_local(request, token, req, tr, target, affinity=(key, source, session_id))
 
 

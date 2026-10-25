@@ -1,6 +1,6 @@
 {
   "locale": "pl",
-  "date": "2026-10-23",
+  "date": "2026-10-25",
   "back_model": "claude-sonnet-5-5",
   "fix_model": "claude-opus-5-5",
   "published_segments": 667,
@@ -20,6 +20,16 @@
   "max_score": 10.0,
   "pass": true,
   "segments": {
+    "home.p-mac.li-1": {
+      "part": "home",
+      "source_hash": "27126352436e",
+      "target_hash": "5ebdc963af3c"
+    },
+    "faq.a-2": {
+      "part": "faq",
+      "source_hash": "37efcaff43f1",
+      "target_hash": "e4c8cf99de7d"
+    },
     "chrome.footer.api": {
       "part": "home",
       "source_hash": "484ee9bb6e51",
@@ -684,11 +694,6 @@
       "part": "home",
       "source_hash": "95612856681e",
       "target_hash": "d09e291819fe"
-    },
-    "home.p-mac.li-1": {
-      "part": "home",
-      "source_hash": "eb664f8f7d3a",
-      "target_hash": "cea093a4098a"
     },
     "home.p-mac.li-2": {
       "part": "home",
@@ -3145,11 +3150,6 @@
       "source_hash": "fd575095e092",
       "target_hash": "1aca70c16cd0"
     },
-    "faq.a-2": {
-      "part": "faq",
-      "source_hash": "af7c57748da9",
-      "target_hash": "f4b20403b9d5"
-    },
     "faq.q-3": {
       "part": "faq",
       "source_hash": "07d287af578c",
@@ -3357,6 +3357,7 @@
     }
   },
   "back_notes": {
+    "faq.a-2": "\"to, co będzie pierwsze, zależy od opinii\" is vague; \"w systemie macOS\" and \"w systemie Linux\" repeat \"system\".",
     "jsonld.feature-2": "\"skonfigurowani za Ciebie\" (\"configured for you\") is slightly odd said of agents; \"Twoim własnym logowaniu\" (\"on your own login\") is clumsy.",
     "chrome.nav.aria-label": "\"Główne\" alone as the aria-label of the navigation is incomplete (just \"Main\").",
     "home.uc.h2-1": "\"Do czego się go używa\" - impersonal \"it is used for what\".",
@@ -3386,7 +3387,6 @@
     "features.dd-2": "\"magazynu plików cookie\" (lit. \"store of cookie files\") is a calque of \"cookie jar\".",
     "features.dt-4": "\"Bez potrzeby wyjścia na zewnątrz\" is clumsy (lit. \"without the need of going outside\").",
     "features.dt-7": "\"Czat do testów\" (lit. \"chat for tests\") is an unusual name for a playground.",
-    "faq.a-2": "\"to, co będzie pierwsze, zależy od opinii\" is vague; \"w systemie macOS\" and \"w systemie Linux\" repeat \"system\".",
     "faq.a-3": "'Twoi własni agenci' capitalizes 'Twoi' while the rest of the site uses lowercase 'twoje'; inconsistent. | QA r3: addressed by fix (see issues).",
     "faq.a-6": "\"W systemie Linux oficjalnych wersji vLLM ... \" lacks a verb (sentence fragment in the answer to \"Jakich silników używa?\").",
     "faq.a-7": "\"łączy się z zewnątrz\" (lit. \"connects from outside\") is awkwardly phrased: the stack connects out, not in.",

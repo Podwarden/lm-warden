@@ -1,6 +1,6 @@
 # Translation QA: ja
 
-- Date: 2026-10-23
+- Date: 2026-10-25
 - Back-translation model: claude-sonnet-5-5; fixer: claude-opus-5-5
 - Segments covered: 667 of 667 published (14402 English words)
 - Issues found (critical/major/minor): 1/26/135

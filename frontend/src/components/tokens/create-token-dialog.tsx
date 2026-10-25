@@ -56,6 +56,7 @@ export function CreateTokenDialog({
   const [expiresInDays, setExpiresInDays] = useState("365");
   const [priority, setPriority] = useState(String(PRIORITY_DEFAULT));
   const [anthropicRelay, setAnthropicRelay] = useState(initialRelay);
+  const [thinkingPolicy, setThinkingPolicy] = useState<"client" | "off">("client");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // Holds the freshly-minted plaintext token. We deliberately keep this in
@@ -79,6 +80,7 @@ export function CreateTokenDialog({
     setExpiresInDays("365");
     setPriority(String(PRIORITY_DEFAULT));
     setAnthropicRelay(initialRelay);
+    setThinkingPolicy("client");
     setError(null);
     setCreated(null);
     setCopied(false);
@@ -128,6 +130,7 @@ export function CreateTokenDialog({
           expires_in_days: days,
           priority: parsedPrio,
           anthropic_relay: anthropicRelay,
+          thinking_policy: thinkingPolicy,
         }),
       });
       if (!r.ok) {
@@ -273,6 +276,36 @@ export function CreateTokenDialog({
               </span>
             </span>
           </label>
+
+          <fieldset className="space-y-2 rounded-md border border-slate-700 px-3 py-2.5">
+            <legend className="px-1 text-xs text-slate-400">Thinking</legend>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="thinking_policy"
+                value="client"
+                checked={thinkingPolicy === "client"}
+                onChange={() => setThinkingPolicy("client")}
+              />
+              <span>
+                Let the client decide <span className="text-xs text-slate-500">(default)</span>
+              </span>
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="thinking_policy"
+                value="off"
+                checked={thinkingPolicy === "off"}
+                onChange={() => setThinkingPolicy("off")}
+              />
+              <span>Always off for this key</span>
+            </label>
+            <span className="block text-xs text-slate-500">
+              Use &quot;always off&quot; for agent fleets and batch jobs that should never spend
+              tokens on reasoning. Changeable later, takes effect on the next request.
+            </span>
+          </fieldset>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 

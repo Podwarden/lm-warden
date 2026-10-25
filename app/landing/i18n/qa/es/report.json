@@ -1,6 +1,6 @@
 {
   "locale": "es",
-  "date": "2026-10-23",
+  "date": "2026-10-25",
   "back_model": "claude-sonnet-5-5",
   "fix_model": "claude-opus-5-5",
   "published_segments": 667,
@@ -20,6 +20,16 @@
   "max_score": 10.0,
   "pass": true,
   "segments": {
+    "home.p-mac.li-1": {
+      "part": "home",
+      "source_hash": "27126352436e",
+      "target_hash": "a479c16a7c96"
+    },
+    "faq.a-2": {
+      "part": "faq",
+      "source_hash": "37efcaff43f1",
+      "target_hash": "1ff3cba4c4d8"
+    },
     "chrome.footer.api": {
       "part": "home",
       "source_hash": "484ee9bb6e51",
@@ -684,11 +694,6 @@
       "part": "home",
       "source_hash": "95612856681e",
       "target_hash": "792d810165e7"
-    },
-    "home.p-mac.li-1": {
-      "part": "home",
-      "source_hash": "eb664f8f7d3a",
-      "target_hash": "bf855b7b006f"
     },
     "home.p-mac.li-2": {
       "part": "home",
@@ -3145,11 +3150,6 @@
       "source_hash": "fd575095e092",
       "target_hash": "1aa7419d7f90"
     },
-    "faq.a-2": {
-      "part": "faq",
-      "source_hash": "af7c57748da9",
-      "target_hash": "88d60e6cfaef"
-    },
     "faq.q-3": {
       "part": "faq",
       "source_hash": "07d287af578c",
@@ -3357,6 +3357,7 @@
     }
   },
   "back_notes": {
+    "faq.a-2": "\"splitting a model across several machines, no\" ends in an elliptical \"no\", colloquial.",
     "meta.og-image-alt": "\"the GPUs you have under the desk\" (bajo la mesa) is colloquial; reads slightly odd next to \"in the rack\".",
     "chrome.nav.coding-agents": "Nav label is just 'Agentes' (Agents), dropping the 'coding' qualifier used elsewhere; also inconsistent with 'Agentes de código' vs 'Agentes de programación'",
     "home.hero.a-2": "\"See what it shows\" - subject of \"shows\" unspecified.",
@@ -3382,7 +3383,6 @@
     "features.dd-5": "Subject-verb agreement is odd: \"Three tar files ... and, optionally, one ... is all that has to be carried\" (singular verb for a compound subject).",
     "features.p-1": "\"enveloping process\" again used for the parent/wrapper process; \"connection point\" for endpoint.",
     "faq.a-1": "The list \"you can load and unload models and consult the engines' logs live, a test chat, the statistics..., and a page per API key\" is ungrammatical: the last items are not governed by a verb.",
-    "faq.a-2": "\"splitting a model across several machines, no\" ends in an elliptical \"no\", colloquial.",
     "faq.a-11": "\"offers you to start all the services\" (te ofrece iniciar todos los servicios) is a slight calque; \"all the services\" where the stack is meant.",
     "faq.a-12": "\"once the hardware has paid for itself\" (amortizado) - fine, but implies cost recovery, not just that it is paid for.",
     "privacy.ads": "Starts with a leading space and has no context sentence; fragment depends on a preceding sentence.",

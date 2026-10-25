@@ -36,6 +36,7 @@ function fakeItem(overrides: Partial<TokenItem> = {}): TokenItem {
     // defaults for a freshly minted token.
     priority: 5,
     anthropic_relay: false,
+    thinking_policy: 'client',
     usage_24h: {
       requests: 0,
       prompt_tokens: 0,
@@ -272,7 +273,7 @@ describe('CreateTokenDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
     await waitFor(() => expect(screen.getByText('vw_freshtoken')).toBeInTheDocument());
     const body = JSON.parse(String((f.mock.calls[0][1] as RequestInit).body));
-    expect(body).toEqual({ name: 'ci-bot', expires_in_days: 365, priority: 5, anthropic_relay: false });
+    expect(body).toEqual({ name: 'ci-bot', expires_in_days: 365, priority: 5, anthropic_relay: false, thinking_policy: 'client' });
   });
 
   it('clears plaintext from DOM after close', async () => {

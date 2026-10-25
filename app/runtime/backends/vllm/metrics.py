@@ -135,6 +135,8 @@ class RankReading:
     kv_cache_usage_perc: float | None = None
     prefix_cache_hits: float | None = None
     prefix_cache_queries: float | None = None
+    #: this rank's KV pool in tokens (block_size * num_gpu_blocks); the same on every rank
+    kv_pool_tokens: int | None = None
 
 
 def read_ranks(body: str) -> dict[int, RankReading]:
@@ -161,6 +163,7 @@ def read_ranks(body: str) -> dict[int, RankReading]:
         for label in m.label_values(name, "engine"):
             if label.isdigit():
                 ids.add(int(label))
+    pool = _kv_tokens_total(m, 1)
     out: dict[int, RankReading] = {}
     for i in sorted(ids):
         e = str(i)
@@ -174,5 +177,6 @@ def read_ranks(body: str) -> dict[int, RankReading]:
             prefix_cache_queries=m.value_any(
                 "vllm:prefix_cache_queries_total", "vllm:prefix_cache_queries", engine=e
             ),
+            kv_pool_tokens=int(pool) if pool is not None else None,
         )
     return out

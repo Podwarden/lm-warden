@@ -48,7 +48,7 @@ describe('CreateTokenDialog presets', () => {
     fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
     await waitFor(() => expect(screen.getByTestId('new-token')).toHaveTextContent('vw_relaysecret'));
     expect(postBody(f)).toEqual({
-      name: 'claude-code', expires_in_days: 365, priority: 5, anthropic_relay: true,
+      name: 'claude-code', expires_in_days: 365, priority: 5, anthropic_relay: true, thinking_policy: 'client',
     });
   });
 

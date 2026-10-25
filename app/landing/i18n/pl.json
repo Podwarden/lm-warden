@@ -528,8 +528,8 @@
     "source_hash": "95612856681e"
   },
   "home.p-mac.li-1": {
-    "text": "Około 360&nbsp;MB. Procesor Apple (M1 lub nowszy), macOS 14 lub nowszy. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">informacje o wydaniu</a>.",
-    "source_hash": "eb664f8f7d3a"
+    "text": "Około 110&nbsp;MB. Procesor Apple (M1 lub nowszy), macOS 14 lub nowszy. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">informacje o wydaniu</a>.",
+    "source_hash": "27126352436e"
   },
   "home.p-mac.li-2": {
     "text": "Silniki: MLX i llama.cpp skompilowany z Metal. Ten sam pulpit i to samo API OpenAI; bez vLLM, bez odczytu mocy.",

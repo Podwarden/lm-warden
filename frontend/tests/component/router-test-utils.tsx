@@ -175,7 +175,7 @@ export function token(over: Partial<TokenItem> = {}): TokenItem {
     id: 't1', name: 'laptop', prefix: 'vw_abcd', preview: 'vw_abcd…', created_at: '2026-10-01T00:00:00Z',
     last_used_at: null, expires_at: null, rotated_at: null, rotated_from: null, successor_id: null,
     successor_deleted: false, is_expired: false, is_near_expiry: false, revoked_at: null, is_revoked: false,
-    priority: 5, anthropic_relay: false, usage_24h: { requests: 0, prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+    priority: 5, anthropic_relay: false, thinking_policy: 'client', usage_24h: { requests: 0, prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
     paused_at: null, is_paused: false, ...over,
   };
 }

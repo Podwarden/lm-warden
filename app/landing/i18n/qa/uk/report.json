@@ -1,6 +1,6 @@
 {
   "locale": "uk",
-  "date": "2026-10-23",
+  "date": "2026-10-25",
   "back_model": "claude-sonnet-5-5",
   "fix_model": "claude-opus-5-5",
   "published_segments": 667,
@@ -20,6 +20,16 @@
   "max_score": 10.0,
   "pass": true,
   "segments": {
+    "home.p-mac.li-1": {
+      "part": "home",
+      "source_hash": "27126352436e",
+      "target_hash": "438247ff4524"
+    },
+    "faq.a-2": {
+      "part": "faq",
+      "source_hash": "37efcaff43f1",
+      "target_hash": "1feddadcb933"
+    },
     "chrome.footer.api": {
       "part": "home",
       "source_hash": "484ee9bb6e51",
@@ -684,11 +694,6 @@
       "part": "home",
       "source_hash": "95612856681e",
       "target_hash": "82c0b6e97bd3"
-    },
-    "home.p-mac.li-1": {
-      "part": "home",
-      "source_hash": "eb664f8f7d3a",
-      "target_hash": "a426d0f71cf2"
     },
     "home.p-mac.li-2": {
       "part": "home",
@@ -3145,11 +3150,6 @@
       "source_hash": "fd575095e092",
       "target_hash": "ced874f99959"
     },
-    "faq.a-2": {
-      "part": "faq",
-      "source_hash": "af7c57748da9",
-      "target_hash": "a7a2f2e0e930"
-    },
     "faq.q-3": {
       "part": "faq",
       "source_hash": "07d287af578c",
@@ -3357,6 +3357,7 @@
     }
   },
   "back_notes": {
+    "faq.a-2": "\"Системні параметри\" and \"Усе одно відкрити\" are quoted UI labels; fine, but \"Приватність і безпека\" differs from the earlier \"Конфіденційність і безпека\" used for the same macOS section.",
     "jsonld.feature-4": "\"витіснення\" (displacement/eviction) is used for what is presumably preemptions; the term is ambiguous (could mean cache eviction).",
     "chrome.nav.plat-win": "'Windows (наступна)' / 'наступна' uses feminine agreement for Windows; reads oddly, as if 'the next one' referred to a feminine noun. | QA r3: addressed by fix (see issues).",
     "chrome.nav.plat-appliance": "\"Пристрій\" (device) as a platform name is vague; \"appliance\" sense not obvious.",
@@ -3384,7 +3385,6 @@
     "features.dd-2": "\"сховища файлів cookie\" (lit. \"storage of cookie files\") is an awkward calque of \"cookie jar\".",
     "features.dd-9": "\"Чат для випробувань\" (lit. \"chat for trials/tests\") is an unusual name for a playground.",
     "features.img-2.alt": "'Tune kernels на op 2, 21 з 22' is unclear ('op 2, 21 of 22'). | QA r3 verdict: no issue, \"Tune kernels at op 2, 21 of 22\" mirrors the on-screen UI text exactly as the English does; the reader sees it beside the image.",
-    "faq.a-2": "\"Системні параметри\" and \"Усе одно відкрити\" are quoted UI labels; fine, but \"Приватність і безпека\" differs from the earlier \"Конфіденційність і безпека\" used for the same macOS section.",
     "faq.a-6": "\"основні версії vLLM ... і llama.cpp\" (lit. \"main versions\") is unclear; presumably \"official/upstream\", not \"main\".",
     "privacy.p-1": "\"сам відвідувач своїм візитом\" - masculine generic \"the visitor himself\"."
   },

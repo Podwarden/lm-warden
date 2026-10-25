@@ -48,6 +48,7 @@ from app.db.database import open_db
 from app.db.repos.models import ModelRepo
 from app.db.repos.settings import SettingsRepo
 from app.models.policy import OPERATOR_FIELDS, TRISTATE_FIELDS
+from app.models.serialisation import thinking_policy_supported_for
 from app.models.writer import apply_model_change, refuse_session_to_set
 from app.settings.tracking_ids import ADS_ID_RE, GA4_ID_RE, GSC_TOKEN_RE
 from app.system.hf import validate_hf_token
@@ -581,13 +582,19 @@ async def get_model_settings(
     The `supports_*` capability flags come back RAW (null / 0 / 1) rather than
     coerced to a bool, so a client can tell "the operator said no" from "nobody
     said, so it is auto-detected" — see `_MODEL_TRISTATE_FIELDS`.
+
+    Also carries the derived, read-only `thinking_policy_supported` (true / false
+    / null when the chat template cannot be read), same helper as the models
+    list and detail routes.
     """
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
         m = await ModelRepo(db).get(model_id)
     if not m:
         raise HTTPException(status_code=404, detail="model not found")
-    return asdict(m)
+    body = asdict(m)
+    body["thinking_policy_supported"] = thinking_policy_supported_for(m, settings.hf_cache_dir)
+    return body
 
 
 @model_settings_router.patch("/{model_id}/settings")

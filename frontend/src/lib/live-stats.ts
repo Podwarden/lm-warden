@@ -302,6 +302,10 @@ export interface LiveRequestRow {
   est_decayed?: boolean;
   /** How often this model's estimate was right (0..1), or null. */
   est_accuracy?: number | null;
+  /** True when the warden forced thinking off for this request (key or model
+   *  policy). False/absent means only "not forced": it does NOT mean the policy
+   *  is "client". */
+  thinking_forced_off?: boolean;
   orphan: boolean;
   /** Client session id (full; the UI shows the first 8 chars). Null = unknown. */
   session_id: string | null;

@@ -30,6 +30,8 @@ export const PATCHABLE_KEYS = [
   "supports_vision",
   "supports_tools",
   "supports_reasoning",
+  // Thinking policy ("client" | "off"); editable while loaded, no reload.
+  "thinking_policy",
   "trust_remote_code",
   "extra_args",
   "extra_env",
@@ -76,6 +78,10 @@ export interface ModelSettings {
   supports_vision: number | boolean | null;
   supports_tools: number | boolean | null;
   supports_reasoning: number | boolean | null;
+  // Optional on the wire: an older server omits both, which reads as "client".
+  thinking_policy?: "client" | "off";
+  // null = LM Warden cannot tell (usual for GGUF); false = no thinking switch.
+  thinking_policy_supported?: boolean | null;
   status:
     | "registered"
     | "pulling"
@@ -97,13 +103,14 @@ export type TristateKey = (typeof TRISTATE_KEYS)[number];
 
 export type Draft = Omit<
   Pick<ModelSettings, PatchableKey>,
-  TristateKey | "data_parallel_size" | "dp_affinity_enabled" | "dp_spill_threshold"
+  TristateKey | "data_parallel_size" | "dp_affinity_enabled" | "dp_spill_threshold" | "thinking_policy"
 > & {
   [K in TristateKey]: boolean | null;
 } & {
   data_parallel_size: number;
   dp_affinity_enabled: boolean;
   dp_spill_threshold: number | null;
+  thinking_policy: "client" | "off";
 };
 
 /**
@@ -115,6 +122,7 @@ export const LOADED_EDITABLE_KEYS: readonly string[] = [
   ...TRISTATE_KEYS,
   "dp_affinity_enabled",
   "dp_spill_threshold",
+  "thinking_policy",
 ];
 
 /** Normalise a raw tri-state column (null / 0 / 1 / bool) to `boolean | null`. */
@@ -138,6 +146,7 @@ export function snapshotToDraft(s: ModelSettings): Draft {
     gpu_memory_utilization: s.gpu_memory_utilization,
     n_gpu_layers: s.n_gpu_layers ?? null,
     mmproj_filename: s.mmproj_filename ?? null,
+    thinking_policy: s.thinking_policy ?? "client",
     supports_vision: triState(s.supports_vision),
     supports_tools: triState(s.supports_tools),
     supports_reasoning: triState(s.supports_reasoning),
@@ -197,6 +206,7 @@ export function labelFor(key: string): string {
  * "default" for dtype and the llama.cpp flags), never as JSON.
  */
 export function formatSettingValue(key: string, v: unknown): string {
+  if (key === "thinking_policy") return v === "off" ? "Off for every key" : "Let the client decide";
   if (key.startsWith("supports_")) return v === null || v === undefined ? "Auto" : v ? "Yes" : "No";
   if (typeof v === "boolean") return v ? "on" : "off";
   if (v === null || v === undefined) {

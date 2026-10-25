@@ -7,6 +7,22 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.25.3] — 2026-10-25
+
+### Changed
+
+- **The landing page and FAQ size the Mac beta download at about 110 MB, not about 360 MB.** The home panel download line and the FAQ's system-requirements answer now say about 110 MB in the English source and all ten locales; the locale QA reports were re-recorded to match.
+
+## [v2026.10.25.2] — 2026-10-25
+
+### Added
+
+- **An operator can switch thinking off for a key or a model.** Set `thinking_policy` to `off` on an API token, or on a model's settings, and the warden stops thinking for every chat request that key or model serves, on models whose template has a thinking switch. The proxy overrides the client's choice on chat requests, and the change takes effect on the next request with no reload. Requests forced off are marked in the live row and in request history, and `GET /api/models` says whether a model's chat template has a thinking switch at all, since models without one are not affected.
+
+### Fixed
+
+- **Parallel agents spread across the data-parallel replicas.** Several agents running in one Claude Code or OpenCode session share one session id, so they used to pile onto a single replica while the others kept serving normally: on lmw48, one replica thrashed at a 3% cache hit rate while the others were at 96%. Replica affinity is now keyed by conversation (the harness session plus a digest of the system prompt and the first user message), so parallel agents land on different replicas. A session that spills over to another replica is re-homed there and stays put instead of bouncing back. A replica whose live context exceeds 85% of its KV cache is now avoided while another replica has room, in addition to the existing in-flight limit, and the session moved is the smaller one, so the biggest stays warm. Where no KV-pool reading is available (llama.cpp, older vLLM), behaviour is unchanged.
+
 ## [v2026.10.25.1] — 2026-10-25
 
 ### Changed

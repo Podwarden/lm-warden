@@ -145,6 +145,24 @@ def test_different_users_land_on_different_ranks(tmp_data_dir, client):
     assert len(ranks) > 1
 
 
+def test_parallel_agents_with_one_session_header_spread_across_ranks(tmp_data_dir, client):
+    _ready(client, tmp_data_dir)
+    hdr = {"X-Claude-Code-Session-Id": "0b6f1d2e-1111-4222-8333-944455556666"}
+
+    def body(task):
+        return {
+            "model": "qwen",
+            "messages": [
+                {"role": "system", "content": "S"},
+                {"role": "user", "content": task},
+            ],
+        }
+
+    _, seen_a = _post(client, body("task A"), headers=hdr)
+    _, seen_b = _post(client, body("task B"), headers=hdr)
+    assert seen_a[0].headers[RANK_HEADER] != seen_b[0].headers[RANK_HEADER]
+
+
 def test_client_supplied_rank_is_forwarded_untouched_any_case(tmp_data_dir, client):
     _ready(client, tmp_data_dir)
     _, seen = _post(client, _msgs("alice-user-1"), headers={"x-DATA-parallel-RANK": "5"})
@@ -183,12 +201,18 @@ def test_explicit_spill_threshold_setting_applies_without_reload(tmp_data_dir, c
     for _ in range(2):
         state.route("qwen", dp=7, key=None, threshold=99, pinned=home, affinity_enabled=True)
     _, seen = _post(client, _msgs("alice-user-1"))
-    assert seen[0].headers[RANK_HEADER] != str(home)
+    spilled_to = int(seen[0].headers[RANK_HEADER])
+    assert spilled_to != home
+    # The session is re-homed to spilled_to. Saturate that rank to the old
+    # threshold (2): under threshold 2 the next request would spill again, under
+    # 50 it stays put. So the assertion below only passes if the flip applied.
+    for _ in range(2):
+        state.route("qwen", dp=7, key=None, threshold=99, pinned=spilled_to, affinity_enabled=True)
     # flip the setting through ModelRepo: the very next request sees it (the
-    # write drops the model cache, #293)
+    # write drops the model cache, #293).
     _update_model(client, tmp_data_dir, dp_spill_threshold=50)
     _, seen = _post(client, _msgs("alice-user-1"))
-    assert seen[0].headers[RANK_HEADER] == str(home)
+    assert seen[0].headers[RANK_HEADER] == str(spilled_to)
 
 
 def test_affinity_disabled_no_header_and_flip_without_reload(tmp_data_dir, client):
@@ -411,8 +435,16 @@ def test_session_header_used_when_no_user(tmp_data_dir, client):
     body = {"model": "qwen", "messages": [{"role": "user", "content": "hi"}]}
     _, seen = _post(client, body, headers={"X-Session-Id": "sess-0001"})
     first = seen[0].headers[RANK_HEADER]
-    # same session id, a different prompt: still the same session, same replica
-    other = {"model": "qwen", "messages": [{"role": "user", "content": "something else"}]}
+    # same session id, same conversation (a later turn): same replica. A different
+    # FIRST message is a different conversation since the conversation-keyed key.
+    other = {
+        "model": "qwen",
+        "messages": [
+            {"role": "user", "content": "hi"},
+            {"role": "assistant", "content": "ok"},
+            {"role": "user", "content": "something else"},
+        ],
+    }
     _, seen2 = _post(client, other, headers={"X-Session-Id": "sess-0001"})
     assert seen2[0].headers[RANK_HEADER] == first
     assert _snap(client)["totals"]["placed"] == 1
@@ -612,3 +644,42 @@ def test_forward_reuses_one_pooled_upstream_client(tmp_data_dir, client):
     assert len(used) == 2 and used[0] is used[1]
     assert used[0] is next(iter(pool._clients.values()))
     assert not used[0].is_closed
+
+
+def test_a_served_request_records_its_prompt_size_on_the_rank(tmp_data_dir, client):
+    _ready(client, tmp_data_dir)
+    body = {
+        **OK_BODY,
+        "usage": {"prompt_tokens": 1234, "completion_tokens": 1, "total_tokens": 1235},
+    }
+    _, seen = _post(
+        client, _msgs("alice-user-1"), headers={"X-Session-Id": "sess-1"}, resp=_resp(body)
+    )
+    rank = int(seen[0].headers[RANK_HEADER])
+    ctx = client.app.state.dp_routing.placement.live_context("qwen")
+    assert ctx == {rank: 1234}
+
+
+def test_a_client_pinned_request_does_not_change_live_context(tmp_data_dir, client):
+    _ready(client, tmp_data_dir)
+    body = {
+        **OK_BODY,
+        "usage": {"prompt_tokens": 1234, "completion_tokens": 1, "total_tokens": 1235},
+    }
+    _post(client, _msgs("alice-user-1"), headers={RANK_HEADER: "3"}, resp=_resp(body))
+    assert client.app.state.dp_routing.placement.live_context("qwen") == {}
+    # a session placed earlier keeps its size untouched by a pinned request
+    _post(client, _msgs("bob-user-1"), headers={"X-Session-Id": "s"}, resp=_resp(body))
+    before = client.app.state.dp_routing.placement.live_context("qwen")
+    _post(
+        client,
+        _msgs("bob-user-1"),
+        headers={"X-Session-Id": "s", RANK_HEADER: "3"},
+        resp=_resp(
+            {
+                **body,
+                "usage": {"prompt_tokens": 9999, "completion_tokens": 1, "total_tokens": 10000},
+            }
+        ),
+    )
+    assert client.app.state.dp_routing.placement.live_context("qwen") == before

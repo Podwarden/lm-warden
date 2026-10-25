@@ -39,8 +39,10 @@ of lifecycle legality, which is E's alone.
 """
 
 import dataclasses
+from pathlib import Path
 from typing import Any
 
+from app.chat2.catalog import chat_template_suggests_reasoning, read_hf_chat_template
 from app.db.repos.models import ModelRow
 from app.runtime.backends.registry import DEFAULT_BACKEND
 
@@ -107,7 +109,22 @@ def _backend_of(row: ModelRow) -> str:
     return row.backend or DEFAULT_BACKEND
 
 
-def _serialise(row: ModelRow) -> dict[str, Any]:
+def thinking_policy_supported_for(row: ModelRow, hf_cache_dir: Path | None) -> bool | None:
+    """Does the chat template branch on ``enable_thinking``?
+
+    Read from the HF cache on the GET/list path only, never per proxied request.
+    ``None`` when the template cannot be read (or no cache dir is known), so the
+    UI can tell "no" from "cannot tell".
+    """
+    if hf_cache_dir is None:
+        return None
+    template = read_hf_chat_template(hf_cache_dir, row.hf_config_repo or row.hf_repo)
+    if template is None:
+        return None
+    return chat_template_suggests_reasoning(template)
+
+
+def _serialise(row: ModelRow, hf_cache_dir: Path | None = None) -> dict[str, Any]:
     """Everything ``ModelRow`` carries, minus ``_PRIVATE_FIELDS``.
 
     The engine pin is presented as a nested object (``None`` until a channel is
@@ -128,6 +145,7 @@ def _serialise(row: ModelRow) -> dict[str, Any]:
         body[name] = _tristate(getattr(row, name))
     for name in _BOOL_FIELDS:
         body[name] = bool(getattr(row, name))
+    body["thinking_policy_supported"] = thinking_policy_supported_for(row, hf_cache_dir)
     body["layout_notice"] = (
         {"level": row.layout_notice_level, "message": row.layout_notice}
         if row.layout_notice_level and row.layout_notice
@@ -145,15 +163,15 @@ def _serialise(row: ModelRow) -> dict[str, Any]:
     return body
 
 
-def model_summary(row: ModelRow) -> dict[str, Any]:
+def model_summary(row: ModelRow, hf_cache_dir: Path | None = None) -> dict[str, Any]:
     """One row of ``GET /api/models``.
 
     Field-for-field identical to ``model_detail`` -- see the module docstring
     for why the two used to diverge and why that was a bug, not a design.
     """
-    return _serialise(row)
+    return _serialise(row, hf_cache_dir)
 
 
-def model_detail(row: ModelRow) -> dict[str, Any]:
+def model_detail(row: ModelRow, hf_cache_dir: Path | None = None) -> dict[str, Any]:
     """The body of ``GET /api/models/{id}``."""
-    return _serialise(row)
+    return _serialise(row, hf_cache_dir)

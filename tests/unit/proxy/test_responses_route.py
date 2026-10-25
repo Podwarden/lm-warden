@@ -268,11 +268,10 @@ def test_affinity_unit():
         "prompt_hash",
         None,
     )
-    assert responses_affinity({"input": items, "prompt_cache_key": THREAD}, {}, "tok1") == (
-        THREAD,
-        "prompt_cache_key",
-        THREAD,
-    )
+    key, source, sid = responses_affinity({"input": items, "prompt_cache_key": THREAD}, {}, "tok1")
+    # the session id narrowed to the conversation (16-hex digest), source/id unchanged
+    assert key is not None and key.startswith(THREAD + "\x00") and len(key) == len(THREAD) + 17
+    assert (source, sid) == ("prompt_cache_key", THREAD)
     assert responses_affinity({"input": []}, {}, "tok1") == (None, "none", None)
     assert (
         responses_affinity({"input": "plain"}, {"x-session-affinity": "ses_12345678"}, "t")[1]
@@ -616,3 +615,20 @@ def test_translator_crash_mid_stream_still_ends_with_one_terminal_event(tmp_data
     assert ev[-1]["response"]["error"]["message"] == "response translation failed"
     assert "TOP-SECRET" not in json.dumps(ev)
     assert client.app.state.scheduler._inflight_for_test("qwen") == 0
+
+
+def test_affinity_failure_is_fail_open(tmp_data_dir, client, monkeypatch):
+    from app.proxy import routes_responses
+
+    def boom(_body):
+        raise RuntimeError("discriminator broke")
+
+    monkeypatch.setattr(routes_responses, "conversation_discriminator", boom)
+    ready(client, tmp_data_dir)
+    r, _ = post(
+        client,
+        {**BODY, "prompt_cache_key": THREAD},
+        headers={"X-LMWarden-Key": PLAINTEXT},
+        upstream=json_upstream(OK),
+    )
+    assert r.status_code == 200

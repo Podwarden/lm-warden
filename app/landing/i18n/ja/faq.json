@@ -24,8 +24,8 @@
     "source_hash": "fd575095e092"
   },
   "faq.a-2": {
-    "text": "Linux と macOS です。Linux では、x86_64 ホスト上の NVIDIA GPU。最低要件は Turing (sm_75、RTX 20 シリーズの世代) です。ベース イメージには CUDA 13 が含まれており、これは Maxwell、Pascal、Volta のサポートを終了したため、GTX 1080 Ti、Titan X、V100 では動きません。Turing から Blackwell まで対応しており、Ada、Hopper、RTX 50 シリーズも含みます。macOS では、Apple シリコン (M1 以降) で、別の Mac アプリを通じて動作し、現在はベータ版です。macOS 14 以降向けのネイティブなメニュー バー アプリで、MLX と Metal ビルドの llama.cpp でモデルを実行し、同じ OpenAI 互換 API を提供し、同じダッシュボードを専用ウィンドウに表示します。<a href=\"/download/mac\">lmwarden.com/download/mac</a> から入手できます (約 360&#8239;MB、<a href=\"/download/mac.sha256\">SHA-256 ファイル</a>付き)。アドホック署名で公証されていないため、初回起動時に [システム設定] › [プライバシーとセキュリティ] › [このまま開く] で許可してください (macOS 14 では右クリック › [開く] でもかまいません)。既定ではループバックで待ち受け、自動更新はしません。次は Windows です。開発中ですが、時期は未定です。このリリースには ROCm、Intel GPU、CPU の経路はありません。AMD Radeon と Intel GPU はロードマップにあり、どちらを先にするかはプロジェクトの GitHub Discussions で寄せられるフィードバック次第です。一台の Linux マシン内の複数 GPU には対応していますが、一つのモデルを複数のマシンに分割することはできません。",
-    "source_hash": "af7c57748da9"
+    "text": "Linux と macOS です。Linux では、x86_64 ホスト上の NVIDIA GPU。最低要件は Turing (sm_75、RTX 20 シリーズの世代) です。ベース イメージには CUDA 13 が含まれており、これは Maxwell、Pascal、Volta のサポートを終了したため、GTX 1080 Ti、Titan X、V100 では動きません。Turing から Blackwell まで対応しており、Ada、Hopper、RTX 50 シリーズも含みます。macOS では、Apple シリコン (M1 以降) で、別の Mac アプリを通じて動作し、現在はベータ版です。macOS 14 以降向けのネイティブなメニュー バー アプリで、MLX と Metal ビルドの llama.cpp でモデルを実行し、同じ OpenAI 互換 API を提供し、同じダッシュボードを専用ウィンドウに表示します。<a href=\"/download/mac\">lmwarden.com/download/mac</a> から入手できます (約 110&#8239;MB、<a href=\"/download/mac.sha256\">SHA-256 ファイル</a>付き)。アドホック署名で公証されていないため、初回起動時に [システム設定] › [プライバシーとセキュリティ] › [このまま開く] で許可してください (macOS 14 では右クリック › [開く] でもかまいません)。既定ではループバックで待ち受け、自動更新はしません。次は Windows です。開発中ですが、時期は未定です。このリリースには ROCm、Intel GPU、CPU の経路はありません。AMD Radeon と Intel GPU はロードマップにあり、どちらを先にするかはプロジェクトの GitHub Discussions で寄せられるフィードバック次第です。一台の Linux マシン内の複数 GPU には対応していますが、一つのモデルを複数のマシンに分割することはできません。",
+    "source_hash": "37efcaff43f1"
   },
   "faq.q-3": {
     "text": "既存の OpenAI クライアントはそのまま使えますか？",

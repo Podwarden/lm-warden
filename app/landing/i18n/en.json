@@ -660,9 +660,9 @@
     "hash": "95612856681e"
   },
   "home.p-mac.li-1": {
-    "text": "About 360&nbsp;MB. Apple silicon (M1 or later), macOS 14 or later. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">release notes</a>.",
+    "text": "About 110&nbsp;MB. Apple silicon (M1 or later), macOS 14 or later. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">release notes</a>.",
     "note": "text (#p-mac)",
-    "hash": "eb664f8f7d3a"
+    "hash": "27126352436e"
   },
   "home.p-mac.li-2": {
     "text": "Engines: MLX and llama.cpp built with Metal. The same dashboard and the same OpenAI API; no vLLM, no power reading.",

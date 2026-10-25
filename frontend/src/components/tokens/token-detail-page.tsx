@@ -388,6 +388,12 @@ export function TokenDetailPage({ id }: { id: string }) {
     if (!err) toast.show("Limits saved");
     return err;
   }
+  async function onThinking(policy: "client" | "off"): Promise<boolean> {
+    const ok = await actions.setThinkingPolicy(policy);
+    if (ok) toast.show(policy === "off" ? "Thinking forced off" : "Client decides thinking");
+    return ok;
+  }
+
   async function onRelay(on: boolean): Promise<boolean> {
     const ok = await actions.setAnthropicRelay(on);
     if (ok) toast.show(on ? "Relay enabled" : "Relay disabled");
@@ -449,6 +455,9 @@ export function TokenDetailPage({ id }: { id: string }) {
             onRelay={onRelay}
             relayError={actions.relayError}
             relaying={actions.relaying}
+            onThinking={onThinking}
+            thinkingError={actions.thinkingError}
+            thinkingBusy={actions.thinkingBusy}
           />
           <DetailsCard token={token} nowSec={nowSec} />
           <LineageCard lineage={lineage} nowSec={nowSec} />

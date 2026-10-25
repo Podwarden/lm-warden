@@ -24,8 +24,8 @@
     "source_hash": "fd575095e092"
   },
   "faq.a-2": {
-    "text": "Linux 和 macOS。在 Linux 上：x86_64 主机上的 NVIDIA GPU。最低要求是 Turing（sm_75，RTX 20 系列那一代）：基础镜像附带 CUDA 13，它已放弃对 Maxwell、Pascal 和 Volta 的支持，因此 GTX 1080 Ti、Titan X 或 V100 无法使用。从 Turing 到 Blackwell 都受支持，包括 Ada、Hopper 和 RTX 50 系列。在 macOS 上：Apple 芯片（M1 或更新），通过单独的 Mac 应用运行，目前为测试版：这是一个适用于 macOS 14 或更高版本的原生菜单栏应用，用 MLX 和 Metal 版的 llama.cpp 运行模型，提供同样兼容 OpenAI 的 API，并在自己的窗口中显示同样的控制台，可从 <a href=\"/download/mac\">lmwarden.com/download/mac</a> 下载（约 360&#8239;MB，附带 <a href=\"/download/mac.sha256\">SHA-256 文件</a>）。它采用临时签名且未经公证，因此首次启动时请在“系统设置”›“隐私与安全性”›“仍要打开”中允许它（在 macOS 14 上，右键点按 ›“打开”也可以）；它默认只监听环回地址，并且不会自动更新。下一个是 Windows；我们正在开发，尚无具体日期。此版本没有 ROCm、Intel GPU 或 CPU 路径；AMD Radeon 和 Intel GPU 已列入路线图，先支持哪一个取决于我们在项目的 GitHub Discussions 中收到的反馈。支持一台 Linux 主机中的多块 GPU；不支持把一个模型拆分到多台机器上。",
-    "source_hash": "af7c57748da9"
+    "text": "Linux 和 macOS。在 Linux 上：x86_64 主机上的 NVIDIA GPU。最低要求是 Turing（sm_75，RTX 20 系列那一代）：基础镜像附带 CUDA 13，它已放弃对 Maxwell、Pascal 和 Volta 的支持，因此 GTX 1080 Ti、Titan X 或 V100 无法使用。从 Turing 到 Blackwell 都受支持，包括 Ada、Hopper 和 RTX 50 系列。在 macOS 上：Apple 芯片（M1 或更新），通过单独的 Mac 应用运行，目前为测试版：这是一个适用于 macOS 14 或更高版本的原生菜单栏应用，用 MLX 和 Metal 版的 llama.cpp 运行模型，提供同样兼容 OpenAI 的 API，并在自己的窗口中显示同样的控制台，可从 <a href=\"/download/mac\">lmwarden.com/download/mac</a> 下载（约 110&#8239;MB，附带 <a href=\"/download/mac.sha256\">SHA-256 文件</a>）。它采用临时签名且未经公证，因此首次启动时请在“系统设置”›“隐私与安全性”›“仍要打开”中允许它（在 macOS 14 上，右键点按 ›“打开”也可以）；它默认只监听环回地址，并且不会自动更新。下一个是 Windows；我们正在开发，尚无具体日期。此版本没有 ROCm、Intel GPU 或 CPU 路径；AMD Radeon 和 Intel GPU 已列入路线图，先支持哪一个取决于我们在项目的 GitHub Discussions 中收到的反馈。支持一台 Linux 主机中的多块 GPU；不支持把一个模型拆分到多台机器上。",
+    "source_hash": "37efcaff43f1"
   },
   "faq.q-3": {
     "text": "我现有的 OpenAI 客户端能用吗？",

@@ -13,6 +13,7 @@ counts and lifetime counters. The hash is blake2b, never Python's salted
 """
 
 import hashlib
+import logging
 import time
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
@@ -21,13 +22,20 @@ from datetime import UTC, datetime
 from typing import Any, Literal
 
 from app.proxy.session_id import (
+    CONV_HASH_BYTES as CONV_HASH_BYTES,  # re-export; defined in session_id (import cycle)
+)
+from app.proxy.session_id import (
+    conversation_discriminator,
     extract_session,
     first_user_text,
 )
 
+logger = logging.getLogger(__name__)
+
 RANK_HEADER = "X-data-parallel-rank"
 
 Decision = Literal["sticky", "placed", "spilled", "client_pinned", "balanced", "unrouted"]
+SpillReason = Literal["pressure", "in_flight"]
 KeySource = Literal[
     "claude_code_header",
     "anthropic_metadata",
@@ -72,6 +80,23 @@ def affinity_key(
     return None, "none"
 
 
+def conversation_key(
+    body_json: dict[str, Any],
+    headers: Mapping[str, str],
+    token_id: str | None,
+    *,
+    explicit: str | None = None,
+) -> tuple[str | None, KeySource]:
+    """``affinity_key``, but a harness session id is narrowed to the conversation
+    (session id + digest of system text and first user message), so parallel
+    agents sharing one session id are placed independently."""
+    key, source = affinity_key(body_json, headers, token_id, explicit=explicit)
+    if key is None or source in ("prompt_hash", "none"):
+        return key, source
+    disc = conversation_discriminator(body_json)
+    return (f"{key}\x00{disc}" if disc is not None else key), source
+
+
 def session_id_of(
     body_json: Any, headers: Mapping[str, str], explicit_user_id: str | None
 ) -> str | None:
@@ -102,17 +127,77 @@ def choose_rank(
     threshold: int,
     *,
     home: int | None = None,
+    live_ctx: Mapping[int, int] | None = None,
+    pool_tokens: int | None = None,
+    own_tokens: int = 0,
 ) -> tuple[int, Decision]:
-    """``home`` overrides the hash home with a rank the session already owns."""
+    """``choose_rank_why`` without the reason (the public shape)."""
+    rank, decision, _ = choose_rank_why(
+        key,
+        dp,
+        in_flight,
+        threshold,
+        home=home,
+        live_ctx=live_ctx,
+        pool_tokens=pool_tokens,
+        own_tokens=own_tokens,
+    )
+    return rank, decision
+
+
+def choose_rank_why(
+    key: str | None,
+    dp: int,
+    in_flight: Mapping[int, int],
+    threshold: int,
+    *,
+    home: int | None = None,
+    live_ctx: Mapping[int, int] | None = None,
+    pool_tokens: int | None = None,
+    own_tokens: int = 0,
+) -> tuple[int, Decision, SpillReason | None]:
+    """``home`` overrides the hash home with a rank the session already owns.
+
+    With ``live_ctx`` (live prompt tokens per rank) and ``pool_tokens`` (one
+    replica's KV pool) a home rank whose live context exceeds ``SPILL_FILL`` of
+    the pool spills the session to a rank with room for it that is under the
+    in-flight ``threshold`` (fewest in-flight, then least context, then lowest
+    index). The session moves only if the rest of its home is at least as big as
+    it, so the biggest session stays warm. The in-flight spill also prefers a
+    rank with room. The third value says which rule spilled (log only)."""
     if key is None:
-        return _least_loaded(dp, in_flight), "balanced"
+        return _least_loaded(dp, in_flight), "balanced", None
     if home is None:
         home = home_rank(key, dp)
+    cap = SPILL_FILL * pool_tokens if pool_tokens and live_ctx else None
+    if cap is not None and live_ctx is not None:
+        home_ctx = live_ctx.get(home, 0)
+        if home_ctx > cap and own_tokens <= home_ctx - own_tokens:
+            room = [
+                r
+                for r in range(dp)
+                if r != home
+                and live_ctx.get(r, 0) + own_tokens <= cap
+                and in_flight.get(r, 0) < threshold
+            ]
+            if room:
+                target = min(room, key=lambda r: (in_flight.get(r, 0), live_ctx.get(r, 0), r))
+                return target, "spilled", "pressure"
     if in_flight.get(home, 0) >= threshold:
         target = _least_loaded(dp, in_flight)
+        if cap is not None and live_ctx is not None:
+            room = [
+                r
+                for r in range(dp)
+                if r != home
+                and live_ctx.get(r, 0) + own_tokens <= cap
+                and in_flight.get(r, 0) < threshold
+            ]
+            if room:
+                target = min(room, key=lambda r: (in_flight.get(r, 0), r))
         if target != home:
-            return target, "spilled"
-    return home, "sticky"
+            return target, "spilled", "in_flight"
+    return home, "sticky", None
 
 
 def client_rank(headers: Mapping[str, str], dp: int) -> int | None:
@@ -139,6 +224,9 @@ PLACEMENT_MAX_KEYS = 8192
 PLACEMENT_TTL_S = 1800.0
 #: A session counts as "live" on its replica for this long after its last use.
 PLACEMENT_LIVE_S = 300.0
+#: A replica whose live context exceeds this fraction of its KV pool is full:
+#: a session on it spills to a replica with room (prefix cache thrashes above it).
+SPILL_FILL = 0.85
 
 
 class SessionPlacement:
@@ -167,7 +255,7 @@ class SessionPlacement:
         self._ttl = ttl_s
         self._live = live_s
         self._clock = clock
-        self._m: dict[str, OrderedDict[tuple[str, bytes], tuple[int, float]]] = {}
+        self._m: dict[str, OrderedDict[tuple[str, bytes], tuple[int, float, int]]] = {}
 
     @staticmethod
     def _k(epoch: str, key: str) -> tuple[str, bytes]:
@@ -186,22 +274,54 @@ class SessionPlacement:
         hit = d.get(k)
         if hit is None:
             return None
-        rank, at = hit
+        rank, at, tokens = hit
         now = self._clock()
         if now - at > self._ttl or not 0 <= rank < dp:
             del d[k]
             return None
-        d[k] = (rank, now)
+        d[k] = (rank, now, tokens)
         d.move_to_end(k)
         return rank
 
     def assign(self, model_id: str, epoch: str, key: str, rank: int) -> None:
         d = self._m.setdefault(model_id, OrderedDict())
         k = self._k(epoch, key)
-        d[k] = (rank, self._clock())
+        prev = d.get(k)
+        d[k] = (rank, self._clock(), prev[2] if prev is not None else 0)
         d.move_to_end(k)
         while len(d) > self._max:
             d.popitem(last=False)
+
+    def note_prompt(self, model_id: str, epoch: str, key: str, prompt_tokens: int) -> None:
+        """Record the session's latest prompt size. Keeps rank and recency; a
+        no-op for an unknown key."""
+        d = self._m.get(model_id)
+        if d is None:
+            return
+        k = self._k(epoch, key)
+        hit = d.get(k)
+        if hit is not None:
+            d[k] = (hit[0], hit[1], max(0, int(prompt_tokens)))
+
+    def tokens_of(self, model_id: str, epoch: str, key: str) -> int:
+        d = self._m.get(model_id)
+        hit = d.get(self._k(epoch, key)) if d else None
+        return hit[2] if hit is not None else 0
+
+    def live_context(self, model_id: str, epoch: str | None = None) -> dict[int, int]:
+        """Sum of the last prompt sizes of sessions used within ``live_s``, per
+        rank (scanned like ``live_counts``)."""
+        d = self._m.get(model_id)
+        out: dict[int, int] = {}
+        if not d:
+            return out
+        floor = self._clock() - self._live
+        for (ep, _), (rank, at, tokens) in reversed(d.items()):
+            if at < floor:
+                break
+            if epoch is None or ep == epoch:
+                out[rank] = out.get(rank, 0) + tokens
+        return out
 
     def live_counts(self, model_id: str, epoch: str | None = None) -> dict[int, int]:
         """Sessions with activity in the last ``live_s`` seconds, per rank. The
@@ -211,7 +331,7 @@ class SessionPlacement:
         if not d:
             return counts
         floor = self._clock() - self._live
-        for (ep, _), (rank, at) in reversed(d.items()):
+        for (ep, _), (rank, at, _tok) in reversed(d.items()):
             if at < floor:
                 break
             if epoch is None or ep == epoch:
@@ -225,19 +345,29 @@ class SessionPlacement:
         dp: int,
         in_flight: Mapping[int, int],
         kv: Mapping[int, float] | None,
+        pressure: Mapping[int, float] | None = None,
     ) -> int:
         """Least loaded: in_flight + KV_WEIGHT x kv fill + LIVE_WEIGHT x live
         sessions; ties go to the rank with the fewest live sessions, then the
         lowest index. The KV term is used only when EVERY rank has a reading (a
-        partial scrape would favour the unread ranks). A session just placed
+        partial scrape would favour the unread ranks). ``pressure`` (live context
+        / KV pool per rank, when every rank has it) replaces the KV term with
+        max(kv, pressure), since idle-but-cached sessions fill the pool while
+        the gauge reads empty. A session just placed
         counts as live at once, so a burst of new keys spreads. O(dp)."""
         live = self.live_counts(model_id, epoch)
         use_kv = kv is not None and all(r in kv for r in range(dp))
+        use_pressure = pressure is not None and all(r in pressure for r in range(dp))
         best = 0
         best_score: tuple[float, int] | None = None
         for r in range(dp):
             load: float = in_flight.get(r, 0) + LIVE_WEIGHT * live.get(r, 0)
-            if use_kv and kv is not None:
+            if use_pressure and pressure is not None:
+                fill = pressure[r]
+                if use_kv and kv is not None:
+                    fill = max(fill, kv[r])
+                load += KV_WEIGHT * max(0.0, min(1.0, fill))
+            elif use_kv and kv is not None:
                 load += KV_WEIGHT * max(0.0, min(1.0, kv[r]))
             score = (round(load, 3), live.get(r, 0))
             if best_score is None or score < best_score:
@@ -281,6 +411,9 @@ class DpRoutingState:
     def __init__(self, placement: SessionPlacement | None = None) -> None:
         self._models: dict[str, _ModelState] = {}
         self.placement = placement or SessionPlacement()
+        #: Which rule the latest ``route`` spilled on; read synchronously by the
+        #: caller's debug log only (route has no await, so it cannot interleave).
+        self.last_reason: SpillReason | None = None
 
     def route(
         self,
@@ -293,10 +426,12 @@ class DpRoutingState:
         affinity_enabled: bool,
         epoch: str = "",
         kv: Mapping[int, float] | None = None,
+        pool_tokens: int | None = None,
     ) -> tuple[int | None, Decision]:
         """Decide the rank. ``pinned`` is a valid client rank (counted on it
         only). Increments ``in_flight`` for a non-None rank; the caller must
         ``release`` exactly once."""
+        self.last_reason = None
         st = self._models.setdefault(model_id, _ModelState())
         if st.since is None:
             st.since = _now_iso()
@@ -311,20 +446,48 @@ class DpRoutingState:
         in_flight = {r: c.in_flight for r, c in st.ranks.items()}
         home: int | None = None
         new_session = False
+        live_ctx: dict[int, int] | None = None
+        own = 0
         if key is not None:
             # Place on first sight, then stick. Any failure here falls back to
             # the plain hash home (the previous behaviour).
             try:
                 home = self.placement.lookup(model_id, epoch, key, dp)
+                if pool_tokens:
+                    live_ctx = self.placement.live_context(model_id, epoch)
+                    own = self.placement.tokens_of(model_id, epoch, key)
                 if home is None:
                     new_session = True
-                    home = self.placement.place(model_id, epoch, dp, in_flight, kv)
+                    pressure = (
+                        {r: (live_ctx or {}).get(r, 0) / pool_tokens for r in range(dp)}
+                        if pool_tokens
+                        else None
+                    )
+                    home = self.placement.place(
+                        model_id, epoch, dp, in_flight, kv, pressure=pressure
+                    )
                     self.placement.assign(model_id, epoch, key, home)
             except Exception:  # noqa: BLE001 -- routing must never fail a request
-                home, new_session = None, False
-        rank, decision = choose_rank(key, dp, in_flight, threshold, home=home)
+                home, new_session, live_ctx, own = None, False, None, 0
+        rank, decision, self.last_reason = choose_rank_why(
+            key,
+            dp,
+            in_flight,
+            threshold,
+            home=home,
+            live_ctx=live_ctx,
+            pool_tokens=pool_tokens,
+            own_tokens=own,
+        )
         if new_session and decision == "sticky":
             decision = "placed"
+        if decision == "spilled" and key is not None:
+            # The session now lives on the replica it spilled to, so its next
+            # turn follows it there. A failure keeps the old home.
+            try:
+                self.placement.assign(model_id, epoch, key, rank)
+            except Exception:  # noqa: BLE001 -- routing must never fail a request
+                logger.debug("dp re-home after spill failed; keeping old home", exc_info=True)
         c = st.rank(rank)
         c.in_flight += 1
         if decision == "placed":

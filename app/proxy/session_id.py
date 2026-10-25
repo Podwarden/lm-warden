@@ -32,6 +32,7 @@ surface whichever field a client put it in.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from collections.abc import Mapping
@@ -47,6 +48,10 @@ CLIENT_REQUEST_ID_HEADER = "x-client-request-id"
 PARENT_HEADERS = ("x-parent-session-id", "x-codex-parent-thread-id")
 
 PROMPT_HASH_CHARS = 512
+#: Most encoded bytes of (system + first user message) the conversation
+#: discriminator hashes. Defined here (dp_affinity imports this module) and
+#: re-exported from dp_affinity.
+CONV_HASH_BYTES = 1 << 20
 
 _OPAQUE_RE = re.compile(r"^[A-Za-z0-9_.:-]{8,128}$")
 _UUID = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
@@ -215,7 +220,7 @@ def responses_first_user_text(input_value: Any) -> str:
     return ""
 
 
-def _chat_opening(msgs: list[Any]) -> str:
+def _chat_opening(msgs: list[Any], limit: int | None = PROMPT_HASH_CHARS) -> str:
     """First user message after any known preamble; if that is only a context
     block (repo map), the next user message is hashed with it."""
     turns = [(m.get("role"), text_of(m.get("content"))) for m in msgs if isinstance(m, dict)]
@@ -235,16 +240,16 @@ def _chat_opening(msgs: list[Any]) -> str:
         i += 1  # system and the like
     else:
         # no user turn left: fall back to the first message, as before
-        return next((t for _, t in turns if t), "")[:PROMPT_HASH_CHARS]
+        return next((t for _, t in turns if t), "")[:limit]
     first = turns[i][1]
     if _starts(first, CONTEXT_BLOCK_PREFIXES):
         for role, text in turns[i + 1 :]:
             if role == "user" and text:
-                return first[:PROMPT_HASH_CHARS] + "\x00" + text[:PROMPT_HASH_CHARS]
-    return first[:PROMPT_HASH_CHARS]
+                return first[:limit] + "\x00" + text[:limit]
+    return first[:limit]
 
 
-def first_user_text(body_json: Any) -> str:
+def first_user_text(body_json: Any, *, limit: int | None = PROMPT_HASH_CHARS) -> str:
     """Text the prompt-hash key is built from. The system message is
     deliberately not the input: it is identical across sessions of one client
     and would pin a whole token to one replica."""
@@ -252,12 +257,41 @@ def first_user_text(body_json: Any) -> str:
         return ""
     msgs = body_json.get("messages")
     if isinstance(msgs, list) and msgs:
-        return _chat_opening(msgs)
+        return _chat_opening(msgs, limit)
     if "input" in body_json:
-        return responses_first_user_text(body_json.get("input"))[:PROMPT_HASH_CHARS]
+        return responses_first_user_text(body_json.get("input"))[:limit]
     prompt = body_json.get("prompt")
     if isinstance(prompt, str):
-        return prompt[:PROMPT_HASH_CHARS]
+        return prompt[:limit]
     if isinstance(prompt, list) and prompt:
-        return prompt[0][:PROMPT_HASH_CHARS] if isinstance(prompt[0], str) else ""
+        return prompt[0][:limit] if isinstance(prompt[0], str) else ""
     return ""
+
+
+def _system_text(body_json: dict[str, Any]) -> str:
+    msgs = body_json.get("messages")
+    if isinstance(msgs, list) and msgs:
+        return "\x1e".join(
+            text_of(m.get("content"))
+            for m in msgs
+            if isinstance(m, dict) and m.get("role") in ("system", "developer")
+        )
+    instructions = body_json.get("instructions")
+    return instructions if isinstance(instructions, str) else ""
+
+
+def conversation_discriminator(body_json: Any) -> str | None:
+    """16 hex chars telling parallel conversations of one session apart: a digest
+    of the system text and the FULL first user message. None without user text."""
+    if not isinstance(body_json, dict):
+        return None
+    msgs = body_json.get("messages")
+    if isinstance(msgs, list) and not any(
+        isinstance(m, dict) and m.get("role") == "user" and text_of(m.get("content")) for m in msgs
+    ):
+        return None  # first_user_text would fall back to a system message here
+    user = first_user_text(body_json, limit=None)
+    if not user:
+        return None
+    raw = (_system_text(body_json) + "\x00" + user).encode("utf-8", "surrogatepass")
+    return hashlib.blake2b(raw[:CONV_HASH_BYTES], digest_size=8).hexdigest()

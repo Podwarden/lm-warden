@@ -149,6 +149,16 @@ export function TokenRow({ item, onChange }: TokenRowProps) {
               Relay
             </Badge>
           )}
+          {item.thinking_policy === "off" && (
+            <Badge
+              variant="warning"
+              className="ml-2"
+              title="Thinking is always off for this key"
+              data-testid="token-thinking-badge"
+            >
+              Thinking off
+            </Badge>
+          )}
         </td>
         <td className="px-2 py-2 font-mono text-xs">{item.prefix}</td>
         <td className="px-2 py-2 text-xs text-slate-400" data-testid="token-created">

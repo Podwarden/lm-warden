@@ -147,6 +147,35 @@ def test_mac_beta_size_text_says_110_mb() -> None:
         )
 
 
+def test_landing_mac_download_size_says_110_mb() -> None:
+    """The landing page and FAQ size the Mac beta download at about 110 MB
+    (LZMA-compressed since v2026.10.24.2), in the English source and in all
+    ten locales. Red today: the catalogs still say 360.
+
+    The locale unit differs (ru writes 'МБ', the rest 'MB' or 'Mo'), so the
+    leg is '110&' (the number next to the non-breaking space) plus 'no 360
+    anywhere in the two segments'."""
+    import json
+
+    locales = ("fr", "de", "es", "pt-BR", "ru", "uk", "pl", "zh-CN", "ja", "hi")
+    targets = [
+        ("app/landing/i18n/en.json", "home.p-mac.li-1"),
+        ("app/landing/i18n/en/faq.json", "faq.a-2"),
+    ]
+    for loc in locales:
+        targets.append((f"app/landing/i18n/{loc}.json", "home.p-mac.li-1"))
+        targets.append((f"app/landing/i18n/{loc}/faq.json", "faq.a-2"))
+    for rel, key in targets:
+        seg = json.loads(_read(rel))[key]
+        text = seg["text"]
+        assert "110&" in text, f"{rel} {key!r} does not size the download at 110 MB: {text!r}"
+        assert "360" not in text, f"{rel} {key!r} still sizes the download at 360 MB: {text!r}"
+    home_html = _read("app/landing/pages/home.html")
+    assert "360&nbsp;MB" not in home_html, "app/landing/pages/home.html still says '360&nbsp;MB'"
+    faq = _read("app/landing/faq.json")
+    assert "360&#8239;MB" not in faq, "app/landing/faq.json still says '360&#8239;MB'"
+
+
 def test_readme_mac_beta_pins_the_current_beta_from_downloads() -> None:
     """Leg 6 (guard): the README hard-codes the current beta's tag, version,
     DMG name and size text by hand (it renders on GitHub, not from this

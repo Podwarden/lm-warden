@@ -20,7 +20,7 @@ from app.db.database import open_db
 from app.db.migrations import apply_migrations
 from app.db.repos.counters import CountersRepo
 from app.db.repos.models import ModelRepo, ModelRow
-from app.db.repos.tokens import TokenRepo
+from app.db.repos.tokens import TokenRepo, hash_token
 
 INDEX = "idx_counters_null_token_model"
 
@@ -53,6 +53,26 @@ async def _seed(db) -> None:
     await TokenRepo(db).create("tok-b", "b", "vw_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
 
 
+async def _seed_at_0046(db) -> None:
+    """Raw inserts: the repos write columns (0051+) that a 0046 schema lacks."""
+    for mid in ("m1", "m2"):
+        await db.execute(
+            "INSERT INTO models(id, served_model_name, hf_repo, hf_revision, gpu_indices, "
+            "extra_args, status, extra_env) VALUES (?, ?, 'o/r', 'main', '[0]', '[]', "
+            "'registered', '{}')",
+            (mid, mid),
+        )
+    for tid, name, plain in (
+        ("tok-a", "a", "vw_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+        ("tok-b", "b", "vw_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
+    ):
+        await db.execute(
+            "INSERT INTO api_tokens(id, name, prefix, hash) VALUES (?, ?, ?, ?)",
+            (tid, name, plain[:8], hash_token(plain)),
+        )
+    await db.commit()
+
+
 def _rows(db_path):
     with sqlite3.connect(db_path) as c:
         return c.execute(
@@ -73,7 +93,7 @@ async def test_0047_merges_duplicate_null_token_rows(tmp_data_dir, tmp_path, mon
     monkeypatch.setattr(migrations, "SQL_DIR", old_sql)
     async with open_db(db_path) as db:
         await apply_migrations(db)
-        await _seed(db)
+        await _seed_at_0046(db)
         await db.executemany(
             "INSERT INTO counters(model_id, token_id, requests, prompt_tokens, completion_tokens) "
             "VALUES (?, ?, ?, ?, ?)",

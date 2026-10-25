@@ -74,5 +74,7 @@ def test_the_typed_responses_equal_the_serialiser(client, auth, tmp_data_dir):
 
 def test_an_undeclared_key_is_not_dropped(client, auth, monkeypatch):
     real = routes_api.model_detail
-    monkeypatch.setattr(routes_api, "model_detail", lambda row: {**real(row), "future_column": 7})
+    monkeypatch.setattr(
+        routes_api, "model_detail", lambda row, *a: {**real(row, *a), "future_column": 7}
+    )
     assert client.get("/api/models/m1", headers=auth).json()["future_column"] == 7

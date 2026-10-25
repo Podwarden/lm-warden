@@ -528,8 +528,8 @@
     "source_hash": "95612856681e"
   },
   "home.p-mac.li-1": {
-    "text": "Unos 360&nbsp;MB. Mac con chip de Apple (M1 o posterior), macOS 14 o posterior. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">notas de la versión</a>.",
-    "source_hash": "eb664f8f7d3a"
+    "text": "Unos 110&nbsp;MB. Mac con chip de Apple (M1 o posterior), macOS 14 o posterior. <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">notas de la versión</a>.",
+    "source_hash": "27126352436e"
   },
   "home.p-mac.li-2": {
     "text": "Motores: MLX y llama.cpp compilados con Metal. El mismo panel y la misma API de OpenAI; sin vLLM ni lectura de potencia.",

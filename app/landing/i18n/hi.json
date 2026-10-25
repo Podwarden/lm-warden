@@ -528,8 +528,8 @@
     "source_hash": "95612856681e"
   },
   "home.p-mac.li-1": {
-    "text": "लगभग 360&nbsp;MB। Apple silicon (M1 या नया), macOS 14 या नया। <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">रिलीज़ नोट्स</a>।",
-    "source_hash": "eb664f8f7d3a"
+    "text": "लगभग 110&nbsp;MB। Apple silicon (M1 या नया), macOS 14 या नया। <a href=\"/download/mac.sha256\">SHA-256</a> · <a href=\"{{mac_release}}\" rel=\"noopener\">रिलीज़ नोट्स</a>।",
+    "source_hash": "27126352436e"
   },
   "home.p-mac.li-2": {
     "text": "इंजन: MLX और Metal के साथ बना llama.cpp। वही डैशबोर्ड और वही OpenAI API; vLLM नहीं, पावर रीडिंग नहीं।",

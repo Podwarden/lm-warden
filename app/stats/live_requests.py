@@ -152,6 +152,7 @@ def _serialize(
         "prefill_tok_s": round(prefill_tok_s, 1),
         "prefill_rate_source": rate_source,
         "est_decayed": req.est_decayed,
+        "thinking_forced_off": req.thinking_forced_off,
         "est_accuracy": est_accuracy,
         "phase": req.phase,
         "is_stream": req.is_stream,

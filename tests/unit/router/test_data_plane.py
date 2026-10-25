@@ -851,3 +851,24 @@ def test_cold_tokenizer_load_does_not_burn_the_header_timeout(tmp_data_dir, clie
     (d,) = decisions(client)
     assert d["route"] == "local", d
     assert not up.called
+
+
+def test_rule_local_leg_honours_off_token(tmp_data_dir, client):
+    """A router rule's local leg goes through _forward, so an off token marks it forced off."""
+    ids, up = _setup(client, tmp_data_dir)
+    db_path = tmp_data_dir / "vllm-warden.db"
+    with sqlite3.connect(db_path) as db:
+        db.execute("UPDATE api_tokens SET thinking_policy='off'")
+    with fake_engine(client, _engine_returning(chat_completion)) as calls:
+        r = _post(client, haiku_body())
+    assert r.status_code == 200, r.text
+    assert not up.called
+    (req,) = calls
+    assert json.loads(req.content)["chat_template_kwargs"]["enable_thinking"] is False
+    deadline = time.time() + 5
+    rows: list = []
+    while time.time() < deadline and not rows:
+        with sqlite3.connect(db_path) as db:
+            rows = db.execute("SELECT thinking_forced_off FROM request_history").fetchall()
+        time.sleep(0.05)
+    assert rows == [(1,)]

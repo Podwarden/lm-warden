@@ -61,12 +61,16 @@ class TokenRow:
     # Claude Code model router (0040, #287) -- 1 = this key may make the warden
     # relay its request to Anthropic. Appended last, per the rule above.
     anthropic_relay: int = 0
+    # Thinking policy (0051): "client" = the request decides, "off" = the proxy
+    # forces thinking off. Appended last, per the rule above.
+    thinking_policy: str = "client"
 
 
 _SELECT_COLS = (
     "id, name, prefix, scope, allowed_models, rate_limit_rpm, rate_limit_tpm, "
     "revoked_at, last_used_at, created_at, expires_at, rotated_at, rotated_from, "
-    "rate_limit_tps, priority, paused_at, created_by, anthropic_relay"
+    "rate_limit_tps, priority, paused_at, created_by, anthropic_relay, "
+    "thinking_policy"
 )
 
 
@@ -123,6 +127,7 @@ class TokenRepo:
         priority: int = 5,
         created_by: str | None = None,
         anthropic_relay: bool = False,
+        thinking_policy: str = "client",
     ) -> None:
         """Insert a new API token row and commit.
 
@@ -139,8 +144,8 @@ class TokenRepo:
         await self.db.execute(
             "INSERT INTO api_tokens"
             "(id, name, prefix, hash, scope, allowed_models, expires_at, "
-            " priority, created_by, anthropic_relay) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " priority, created_by, anthropic_relay, thinking_policy) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 token_id,
                 name,
@@ -152,6 +157,7 @@ class TokenRepo:
                 priority,
                 created_by,
                 int(anthropic_relay),
+                thinking_policy,
             ),
         )
         await self.db.commit()
@@ -235,8 +241,8 @@ class TokenRepo:
         """
         # Look up predecessor for inheritable fields + the current name.
         cur = await self.db.execute(
-            "SELECT name, expires_at, priority, rotated_at, scope, created_by, anthropic_relay "
-            "FROM api_tokens WHERE id = ?",
+            "SELECT name, expires_at, priority, rotated_at, scope, created_by, anthropic_relay, "
+            "thinking_policy FROM api_tokens WHERE id = ?",
             (old_id,),
         )
         row = await cur.fetchone()
@@ -252,6 +258,7 @@ class TokenRepo:
             pred_scope,
             pred_owner,
             pred_relay,
+            pred_thinking,
         ) = row
 
         if pred_rotated_at is not None:
@@ -290,8 +297,8 @@ class TokenRepo:
         await self.db.execute(
             "INSERT INTO api_tokens"
             "(id, name, prefix, hash, scope, rotated_from, expires_at, "
-            " priority, created_by, anthropic_relay) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " priority, created_by, anthropic_relay, thinking_policy) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 new_id,
                 pred_name,
@@ -303,6 +310,7 @@ class TokenRepo:
                 pred_priority,
                 pred_owner,
                 pred_relay,
+                pred_thinking,
             ),
         )
 
@@ -420,6 +428,7 @@ class TokenRepo:
         priority: "int | _Unset" = _UNSET,
         paused: "bool | _Unset" = _UNSET,
         anthropic_relay: "bool | _Unset" = _UNSET,
+        thinking_policy: "str | _Unset" = _UNSET,
     ) -> bool:
         """PATCH-style update for the operator-editable fields.
 
@@ -452,6 +461,9 @@ class TokenRepo:
         if not isinstance(anthropic_relay, _Unset):
             sets.append("anthropic_relay = ?")
             params.append(int(anthropic_relay))
+        if not isinstance(thinking_policy, _Unset):
+            sets.append("thinking_policy = ?")
+            params.append(thinking_policy)
         if not sets:
             return True  # noop PATCH — treat as success (idempotent)
         params.append(token_id)

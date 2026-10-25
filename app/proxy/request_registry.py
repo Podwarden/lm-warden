@@ -123,6 +123,9 @@ class LiveRequest:
     est_decayed: bool = False
     #: The estimate BEFORE any decay, so history can audit the raw guess.
     cache_est_raw_tokens: int | None = None
+    #: True when the thinking policy (token or model "off") forced
+    #: enable_thinking=false on this request.
+    thinking_forced_off: bool = False
 
 
 class RequestRegistry:
@@ -227,6 +230,7 @@ def finished_record(req: LiveRequest, *, now: float) -> dict[str, Any]:
         "dp_rank": req.dp_rank,
         "inflight_same_rank_at_start": req.inflight_same_rank_at_start,
         "gap_s": round(req.gap_s, 3) if req.gap_s is not None else None,
+        "thinking_forced_off": req.thinking_forced_off,
     }
     obs = req.cache_obs or {}
     for k in CACHE_OBS_KEYS:

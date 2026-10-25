@@ -242,6 +242,12 @@ export const MODEL_HINTS: Record<string, FieldHint> = {
     short: 'In-flight requests before new conversations move to the least-loaded replica. Blank = auto (max_num_seqs ÷ 4).',
     restart: 'none',
   },
+  thinking_policy: {
+    label: 'Thinking policy',
+    hint: 'Off: no request to this model thinks, whatever the client or key asks. A key set to "always off" stays off even when this says "client decides". Takes effect on the next request, no reload.',
+    short: 'Off stops every request to this model from thinking. Takes effect on the next request.',
+    restart: 'none',
+  },
   gpu_memory_utilization: {
     label: 'GPU memory utilization',
     hint: 'vLLM only. Fraction of VRAM vLLM may consume per GPU (0.0–1.0, default 0.9). Lower if you hit OOM during paged-attention warmup. llama.cpp has no equivalent — it sizes its own allocation — so this field is hidden for that backend.',

@@ -101,6 +101,9 @@ class ModelRow:
     # Migration 0039: outcome of the boot-time parallel-layout reconcile (#286).
     layout_notice_level: str | None = None
     layout_notice: str | None = None
+    # Migration 0051: "client" = the request decides, "off" = the proxy forces
+    # thinking off. Read per request, so editable while loaded.
+    thinking_policy: str = "client"
 
 
 # Column list shared by insert + every SELECT so we can't drift them.
@@ -117,7 +120,7 @@ _MODEL_COLS = (
     "supports_tools, supports_vision, supports_reasoning, backend, "
     "mmproj_filename, n_gpu_layers, "
     "data_parallel_size, dp_affinity_enabled, dp_spill_threshold, "
-    "layout_notice_level, layout_notice"
+    "layout_notice_level, layout_notice, thinking_policy"
 )
 
 
@@ -165,6 +168,7 @@ def _decode_row(row: tuple) -> ModelRow:
         dp_spill_threshold=row[34],
         layout_notice_level=row[35],
         layout_notice=row[36],
+        thinking_policy=row[37] if row[37] is not None else "client",
     )
 
 
@@ -190,8 +194,8 @@ class ModelRepo:
                 hf_config_repo, tokenizer_repo,
                 engine_channel, engine_vllm_version, engine_image,
                 backend, mmproj_filename, n_gpu_layers,
-                data_parallel_size, dp_affinity_enabled, dp_spill_threshold
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                data_parallel_size, dp_affinity_enabled, dp_spill_threshold, thinking_policy
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 row.id,
                 row.served_model_name,
@@ -223,6 +227,7 @@ class ModelRepo:
                 row.data_parallel_size,
                 int(row.dp_affinity_enabled),
                 row.dp_spill_threshold,
+                row.thinking_policy,
             ),
         )
         await self._commit()

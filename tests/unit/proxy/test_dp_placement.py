@@ -274,3 +274,16 @@ def test_get_refetches_when_the_epoch_changed_within_the_ttl():
 
     _aio.run(go())
     assert len(fetched) == 2
+
+
+def test_a_spilled_session_is_rehomed():
+    st = DpRoutingState()
+    homes = [route(st, "a", threshold=8) for _ in range(8)]  # fill home, no release
+    home = homes[0][0]
+    assert all(r == home for r, _ in homes)
+    r2, decision = route(st, "a", threshold=8)  # 9th: home saturated, spills
+    assert decision == "spilled" and r2 != home
+    for _ in range(8):
+        st.release("m", home)
+    st.release("m", r2)
+    assert route(st, "a", threshold=8) == (r2, "sticky")
