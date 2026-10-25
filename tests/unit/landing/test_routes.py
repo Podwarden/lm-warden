@@ -910,6 +910,31 @@ def test_download_mac_redirects_to_github(
     assert "set-cookie" not in r.headers
 
 
+def test_download_mac_targets_the_v2026_10_24_2_beta(client: TestClient) -> None:
+    """The /download/mac redirect names the v2026.10.24.2-macos-beta
+    pre-release, and the module's size / bytes / checksum constants describe
+    that DMG, not the previous beta's."""
+    from app.landing import downloads
+
+    assert downloads.MAC_BETA_TAG == "v2026.10.24.2-macos-beta"
+    assert downloads.MAC_BETA_VERSION == "v2026.10.24.2"
+    assert downloads.MAC_DMG_BYTES == 110_539_890
+    assert downloads.MAC_DMG_SIZE_TEXT == "about 110 MB"
+    assert (
+        downloads.MAC_DMG_SHA256
+        == "a355a36ba6d75985e45d48193b2ac366d359c0de76fb1ad02fa35bb0aff89a98"
+    )
+    r = client.get("/download/mac", follow_redirects=False)
+    assert r.status_code == 307
+    assert "/v2026.10.24.2-macos-beta/" in r.headers["location"]
+    assert r.headers["location"].endswith("LM-Warden-v2026.10.24.2-beta.dmg")
+    assert (
+        client.get("/download/mac.sha256", follow_redirects=False)
+        .headers["location"]
+        .endswith("LM-Warden-v2026.10.24.2-beta.dmg.sha256")
+    )
+
+
 def test_download_urls_come_from_one_module() -> None:
     from app.landing import downloads
 

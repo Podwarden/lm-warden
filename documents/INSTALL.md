@@ -1310,7 +1310,7 @@ What sets it apart from a normal release:
 - It is ad-hoc signed only: no Developer ID signature, no notarization by
   Apple. macOS therefore blocks it the first time you open it (below).
 - It does not update itself. A newer beta is a new download from the releases
-  page. The download is about 360 MB.
+  page. The download is about 110 MB.
 - It is the same app as a build from source: the same requirements (an Apple
   silicon Mac on macOS 14 or later) and the same server inside.
 

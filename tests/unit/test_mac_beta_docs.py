@@ -124,18 +124,43 @@ def test_readme_mac_beta_explains_the_keychain_password_prompt() -> None:
         )
 
 
+def test_mac_beta_size_text_says_110_mb() -> None:
+    """The download is about 110 MB (LZMA-compressed since v2026.10.24.2),
+    not about 360 MB: every doc that sizes the download must say the new
+    size. Red today: the docs still say about 360 MB."""
+    files_and_sections = (
+        ("README.md", None),
+        ("documents/INSTALL.md", "## Beta builds"),
+        ("app/landing/llms.txt", None),
+        ("app/landing/llms-full.txt", None),
+    )
+    for rel, heading in files_and_sections:
+        text = _read(rel)
+        section = _section(text, heading) if heading else text
+        assert "about 110 MB" in section, (
+            f"{rel}{' ' + heading + ' ' if heading else ''}must say 'about 110 MB': "
+            "the Mac beta DMG is about 110 MB, not 360"
+        )
+        assert "360 MB" not in section, (
+            f"{rel}{' ' + heading + ' ' if heading else ''}still says '360 MB': "
+            "the Mac beta DMG is about 110 MB"
+        )
+
+
 def test_readme_mac_beta_pins_the_current_beta_from_downloads() -> None:
-    """Leg 6 (guard): the README hard-codes the current beta's tag, version and
-    DMG name by hand (it renders on GitHub, not from this app), so the names in
-    app/landing/downloads.py must still appear in it. Catches the next beta
-    bump forgetting the README. Green today."""
+    """Leg 6 (guard): the README hard-codes the current beta's tag, version,
+    DMG name and size text by hand (it renders on GitHub, not from this
+    app), so the names in app/landing/downloads.py must still appear in it.
+    Catches the next beta bump forgetting the README. Green today."""
     from app.landing import downloads
 
     section = _section(_read("README.md"), "## Mac app (beta)")
     for phrase in (
         downloads.MAC_BETA_TAG,
         downloads.MAC_BETA_VERSION,
+        downloads.MAC_DMG_NAME,
         downloads.MAC_DMG_NAME + ".sha256",
+        downloads.MAC_DMG_SIZE_TEXT,
     ):
         assert phrase in section, (
             f"README.md '## Mac app (beta)' no longer carries {phrase!r} from "

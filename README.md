@@ -29,7 +29,7 @@ install are under [Quick start](#quick-start) and in
 
 **On macOS**: an Apple silicon Mac (M1 or later) runs a native menu-bar app,
 in beta, with MLX and a Metal build of llama.cpp and the same dashboard and
-API. [Download it](https://lmwarden.com/download/mac) (about 360 MB), then read
+API. [Download it](https://lmwarden.com/download/mac) (about 110 MB), then read
 [Mac app (beta)](#mac-app-beta) before the first launch.
 
 **Windows is next.** We are working on it; there is no date yet.
@@ -184,9 +184,9 @@ None of these are solvable by configuration today.
 A native menu-bar app for Apple silicon, in beta. Linux with NVIDIA GPUs is
 still the main way to run LM Warden; this is the way to run it on a Mac.
 
-**[Download the beta](https://lmwarden.com/download/mac)** (about 360 MB, release
-v2026.10.21.2) · [SHA-256 checksum](https://lmwarden.com/download/mac.sha256) ·
-[release notes](https://github.com/Podwarden/lm-warden/releases/tag/v2026.10.21.2-macos-beta)
+**[Download the beta](https://lmwarden.com/download/mac)** (about 110 MB, release
+v2026.10.24.2) · [SHA-256 checksum](https://lmwarden.com/download/mac.sha256) ·
+[release notes](https://github.com/Podwarden/lm-warden/releases/tag/v2026.10.24.2-macos-beta)
 
 <table>
 <tr>
@@ -242,7 +242,7 @@ update itself: a newer beta is a new download.
 1. Check the download. With the DMG and its checksum file in one folder:
 
    ```sh
-   shasum -a 256 -c LM-Warden-v2026.10.21.2-beta.dmg.sha256
+   shasum -a 256 -c LM-Warden-v2026.10.24.2-beta.dmg.sha256
    ```
 
    It prints `OK` for an intact file.

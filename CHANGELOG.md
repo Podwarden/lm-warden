@@ -7,6 +7,12 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.25.1] — 2026-10-25
+
+### Changed
+
+- **The Mac beta download points at the v2026.10.24.2-macos-beta pre-release.** lmwarden.com/download/mac (and /download/mac.sha256), the README, INSTALL.md and llms.txt now target the v2026.10.24.2-macos-beta DMG: about 110 MB instead of about 360 MB. The beta is still ad-hoc signed and not notarized.
+
 ## [v2026.10.24.2] — 2026-10-24
 
 ### Changed
