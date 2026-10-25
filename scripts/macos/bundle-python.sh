@@ -7,6 +7,7 @@
 #   scripts/macos/bundle-python.sh --relocate-scripts <bin_dir> <old_prefix>     (test hook)
 #   scripts/macos/bundle-python.sh --copy-app <dest_dir>                          (test hook)
 #   scripts/macos/bundle-python.sh --rename-interpreter <bin_dir>                 (test hook)
+#   scripts/macos/bundle-python.sh --prune <python_root> [--list <file>]          (test hook)
 #
 # Lays a python-build-standalone CPython into <app>/Contents/Resources/python
 # (the path ShellAppDelegate.bundledPythonPath() launches:
@@ -38,6 +39,20 @@
 #      .pyc never names a build path and are never rewritten inside the signed
 #      bundle (the build interpreter itself always runs -B, and the stdlib is
 #      compiled the same way); clears extended attributes (codesign refuses Finder detritus).
+#   5a. Prunes the staged tree by the explicit, tested exclude list
+#      scripts/macos/python-prune.txt (after the pip uninstall, before
+#      compileall): one rule per line -- `path <glob>` removes every glob
+#      match, `tree <dir> <name-glob>` removes every file or dir named
+#      <name-glob> anywhere under <dir>. The list's rules are validated
+#      before anything is deleted and the run refuses (exit 1) on a rule
+#      that matches nothing (a stale list -- re-running the prune over an
+#      already-pruned tree fails loudly, so a re-run starts from a fresh
+#      stage), a malformed line, or a rule that would remove or cover a
+#      protected path (the bin/ interpreter and llama-server pair,
+#      libpython3.12.dylib, site-packages/app, the mlx and mlx_lm trees,
+#      every transformers family's __init__/configuration_*/tokenization_*
+#      and transformers' models/auto/ -- the modules bundle-import-guard.py
+#      must be able to import).
 #   5b. Renames the interpreter (Metal design s3): bin/python3.12 becomes
 #      bin/"LM Warden Server" -- the Mach-O itself, not a symlink and not a
 #      second 18 MB copy, so it carries its own signature and Activity Monitor,
@@ -56,8 +71,10 @@
 #   6. Refuses (exit 1) if any file under the tree still contains the staging
 #      dir, the cache dir, the repo root or the app's absolute path.
 #   7. Moves the tree into <app>/Contents/Resources/python (replacing an old
-#      one) and imports `ssl, sqlite3, app` with the moved, renamed
-#      interpreter (-I -B).
+#      one), imports `ssl, sqlite3, app` with the moved, renamed
+#      interpreter (-I -B) and then runs scripts/macos/bundle-import-guard.py
+#      under it: the import net (the P11 prune is gated on it) makes the
+#      build fail closed when the prune removed a module the server imports.
 #
 # It does NOT sign: run scripts/macos/sign-bundle.sh <app> afterwards (it finds
 # every embedded .so/.dylib/python by `file`, inside-out), then
@@ -66,6 +83,8 @@
 # --print-plan prints the resolved plan as key=value lines and touches nothing.
 # --copy-app runs step 4 alone (dirty-tree gate + git archive) into <dest_dir>.
 # --rename-interpreter runs step 5b alone on <bin_dir>.
+# --prune runs step 5a alone on <python_root> (default list:
+# scripts/macos/python-prune.txt, override with --list).
 # --relocate-scripts rewrites, in <bin_dir>, every non-Mach-O file whose first
 # two lines name <old_prefix> to the relocatable header (step 5 alone).
 #
@@ -165,6 +184,199 @@ rename_interpreter() {
     echo "bundle-python.sh: interpreter renamed to bin/$SERVER_EXE"
 }
 
+# --- step 5a: the prune --------------------------------------------------------
+#
+# The list is scripts/macos/python-prune.txt: one rule per line, `#` and blank
+# lines ignored, each rule:
+#   path <glob>       remove every <python_root>/<glob> match
+#                     (a bash glob; `*` spans one path segment)
+#   tree <dir> <name> remove every file or dir named <name> under
+#                     <python_root>/<dir> (find -name, -prune)
+# A rule's operands must be relative (no leading /) and hold no `..` segment.
+#
+# Every rule is validated before the first removal, and a refusal (exit 1)
+# removes nothing:
+#   - a rule that matches nothing: the list is stale. A re-run of the build
+#     stages a fresh tree, so this fails loudly instead of silently no-oping.
+#   - a rule whose match is, or contains, a PROTECTED path: the interpreter
+#     and the llama-server pair in bin/, the libpython dylib, site-packages/app
+#     and the mlx / mlx_lm trees, and every transformers family's __init__.py,
+#     configuration_*.py and tokenization_*.py (the modules
+#     bundle-import-guard.py imports; step 7 is the backstop that turns the
+#     build red if the net ever misses one).
+
+# rel_is_protected <relpath>: the protected-path table, one entry per case.
+# The `*/` branches cover a match that IS a protected dir (its children are
+# all protected); the bare-name branches cover a match that IS a protected
+# file.
+rel_is_protected() {
+    case $1 in
+        bin | "bin/$SERVER_EXE" | bin/llama-server | bin/llama-server.build) return 0 ;;
+        lib/libpython* | lib/libpython*/*) return 0 ;;
+        lib/python*/site-packages/app | lib/python*/site-packages/app/*) return 0 ;;
+        lib/python*/site-packages/mlx | lib/python*/site-packages/mlx/*) return 0 ;;
+        lib/python*/site-packages/mlx_lm | lib/python*/site-packages/mlx_lm/*) return 0 ;;
+        # transformers' models/auto/: every family's configuration_* and the
+        # kept processing_auto import its modeling_auto / image_processing_auto
+        # / video_processing_auto at module level. The tree rules skip it
+        # (`! -path '*/models/auto/*'`); a rule that names it refuses.
+        lib/python*/site-packages/transformers/models/auto | lib/python*/site-packages/transformers/models/auto/*) return 0 ;;
+        lib/python*/site-packages/transformers/models/*/__init__.py) return 0 ;;
+        lib/python*/site-packages/transformers/models/*/configuration_*.py) return 0 ;;
+        lib/python*/site-packages/transformers/models/*/tokenization_*.py) return 0 ;;
+    esac
+    return 1
+}
+
+# match_hits_protected <python_root> <abs_match>: 0 if the match is, or
+# CONTAINS, a protected path. A rule removes the whole match, so the check
+# walks the match's descendants, not just its top: `path bin` covers the
+# interpreter and the llama-server pair, and `path lib/python3.12` covers
+# site-packages/app, the mlx / mlx_lm trees and every transformers family's
+# __init__/configuration_*/tokenization_* files several levels deep.
+match_hits_protected() {
+    _root=$1
+    _m=$2
+    [ -e "$_m" ] || return 1
+    # The descent is through an external file, not a pipe: a subshell could
+    # not report a hit back (bash 3.2 has no lastpipe). For a file match,
+    # find prints the file itself; for a dir match the whole subtree is
+    # walked -- the protected table has file-level entries (a family's
+    # __init__.py sits one level down, a site-packages package several), so a
+    # shallow scan would miss a match that merely CONTAINS one.
+    _hits=$(mktemp) || return 1
+    # -print0 / read -d '' keep spaced paths intact. The top is always
+    # checked; for a dir, every descendant is checked too.
+    printf '%s\0' "$_m" >"$_hits"
+    if [ -d "$_m" ]; then
+        find "$_m" -mindepth 1 -print0 2>/dev/null >>"$_hits"
+    fi
+    while IFS= read -r -d '' _f; do
+        [ -n "$_f" ] || continue
+        _r=${_f#$_root}
+        _r=${_r#/}
+        rel_is_protected "$_r" && { rm -f "$_hits"; return 0; }
+    done <"$_hits"
+    rm -f "$_hits"
+    return 1
+}
+
+# prune_python <python_root> <list_file>: validate the whole list (malformed
+# line, stale rule, protected match), then remove. Prints `pruned: <relpath>`
+# per removal and a final `pruned <n> paths (<KiB> KiB)` line. The list file
+# is opened here and only here: the main flow (step 5a) and the --prune test
+# hook both call this, so a throwaway repo that copies only bundle-python.sh
+# keeps the two in sync.
+prune_python() {
+    root=$1
+    listf=$2
+    [ -d "$root" ] || die "python root not found: $root"
+    [ -f "$listf" ] || die "prune list file not found: $listf"
+    # --- validate: collect every match, refuse before the first removal ------
+    # all_matches / stale_rules are fed through newlines, so an absolute
+    # operand (which would survive as a path to an ancestor's sibling) is
+    # checked here, once, before any find runs.
+    all_matches=""
+    stale_rules=""
+    while IFS= read -r line || [ -n "$line" ]; do
+        case $line in
+            ''|\#*) continue ;;
+        esac
+        kind=${line%% *}
+        rest=${line#* }
+        [ "$kind" = "$line" ] && die "malformed prune rule (missing operand): '$line'"
+        [ -n "$rest" ] || die "malformed prune rule (empty operand): '$line'"
+        case $kind in
+            path)
+                [ "$rest" = "$line" ] && die "malformed prune rule (missing glob): '$line'"
+                p=$rest
+                case $p in /*) die "prune rule: absolute path not allowed: $p" ;; esac
+                case /$p/ in *../*) die "prune rule: '..' segment not allowed: $p" ;; esac
+                # find -path lets `*` span `/`, which would let `path lib/*.dylib`
+                # also remove lib/<sub>/x.dylib; a bash glob's `*` spans one
+                # segment, so keep only the matches at the pattern's own depth.
+                # The match is <root>/<p>: its `/`-segment count is the pattern's
+                # segments plus root's segments (the join adds no slash, it is
+                # already counted on both sides). Count with split on "/" -- the
+                # reliable form on this host's awk.
+                n=$(printf '%s' "$p" | awk '{ print split($0, _a, "/") }')
+                rseg=$(printf '%s' "$root" | awk '{ print split($0, _a, "/") }')
+                out=$(find "$root" -path "$root/$p" -print -prune 2>/dev/null \
+                    | awk -v want="$((n + rseg))" '{ if (split($0, _b, "/") == want) print }')
+                [ -n "$out" ] || { stale_rules="$stale_rules$line
+"; continue; }
+                while IFS= read -r f; do
+                    [ -n "$f" ] || continue
+                    match_hits_protected "$root" "$f" && {
+                        r=${f#"$root"/}
+                        die "prune rule hits a protected path: $r ($line)"
+                    }
+                    all_matches="$all_matches$f
+"
+                done <<EOF
+$out
+EOF
+                ;;
+            tree)
+                # dir is the first token; name is the rest (may contain a
+                # space only if it is a wildcard; a plain name is one token).
+                [ "$rest" = "$line" ] && die "malformed prune rule (missing operands): '$line'"
+                dir=${rest%% *}
+                name=${rest#* }
+                [ "$name" = "$dir" ] && die "malformed prune rule (missing name glob): '$line'"
+                case $dir in /*) die "prune rule: absolute path not allowed: $dir" ;; esac
+                case /$dir/ in *../*) die "prune rule: '..' segment not allowed: $dir" ;; esac
+                case $name in /*) die "prune rule: absolute name not allowed: $name" ;; esac
+                [ -d "$root/$dir" ] || { stale_rules="$stale_rules$line
+"; continue; }
+                # `! -path '*/models/auto/*'` keeps transformers' models/auto/
+                # dir: its modeling_auto.py / image_processing_auto.py /
+                # video_processing_auto.py (and configuration_auto /
+                # tokenization_auto) are what every family's configuration_*
+                # module imports at module level, and the import guard imports
+                # all of them. Without the exclusion a `tree .../models
+                # modeling_*` rule would remove auto/ and the guard would fail
+                # the build.
+                out=$(find "$root/$dir" -name "$name" ! -path '*/models/auto/*' -print -prune 2>/dev/null)
+                [ -n "$out" ] || { stale_rules="$stale_rules$line
+"; continue; }
+                while IFS= read -r f; do
+                    [ -n "$f" ] || continue
+                    match_hits_protected "$root" "$f" && {
+                        r=${f#"$root"/}
+                        die "prune rule hits a protected path: $r ($line)"
+                    }
+                    all_matches="$all_matches$f
+"
+                done <<EOF
+$out
+EOF
+                ;;
+            *) die "malformed prune rule (unknown kind '$kind'): '$line'" ;;
+        esac
+    done <"$listf"
+    [ -z "$stale_rules" ] || {
+        echo "bundle-python.sh: prune rule matched nothing (stale list; a rule no match):" >&2
+        printf '%s' "$stale_rules" | sed 's/^/  /' >&2
+        exit 1
+    }
+    [ -n "$all_matches" ] || die "prune list removed nothing (stale list)"
+    # --- remove ----------------------------------------------------------------
+    n=0
+    kbytes=0
+    while IFS= read -r f; do
+        [ -n "$f" ] || continue
+        sz=$(du -sk "$f" 2>/dev/null | awk '{print $1}')
+        [ -n "$sz" ] && kbytes=$((kbytes + sz))
+        rm -rf "$f"
+        echo "pruned: ${f#"$root"/}"
+        n=$((n + 1))
+    done <<EOF
+$all_matches
+EOF
+    echo "bundle-python.sh: pruned $n paths ($kbytes KiB)"
+}
+
 in_git() { git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; }
 
 # require_clean_app: exit 1 if app/ differs from HEAD in any way git reports
@@ -242,6 +454,34 @@ if [ "${1:-}" = "--copy-app" ]; then
         exit 2
     }
     copy_app "$2"
+    exit 0
+fi
+if [ "${1:-}" = "--prune" ]; then
+    # step 5a alone: <python_root>, optional --list <file> (default: the
+    # committed exclude list, opened by prune_python, not here).
+    prune_root=""
+    prune_list=""
+    shift
+    while [ $# -gt 0 ]; do
+        case $1 in
+            --list) [ $# -ge 2 ] || {
+                echo "usage: bundle-python.sh --prune <python_root> [--list <file>]" >&2
+                exit 2
+            }; prune_list=$2; shift 2 ;;
+            -*) usage_p="usage: bundle-python.sh --prune <python_root> [--list <file>]";
+               echo "$usage_p" >&2; exit 2 ;;
+            *) [ -z "$prune_root" ] || {
+                echo "usage: bundle-python.sh --prune <python_root> [--list <file>]" >&2
+                exit 2
+            }; prune_root=$1; shift ;;
+        esac
+    done
+    [ -n "$prune_root" ] && [ -d "$prune_root" ] || {
+        echo "usage: bundle-python.sh --prune <python_root> [--list <file>]" >&2
+        exit 2
+    }
+    [ -n "$prune_list" ] || prune_list="$ROOT/scripts/macos/python-prune.txt"
+    prune_python "$prune_root" "$prune_list"
     exit 0
 fi
 
@@ -347,6 +587,8 @@ copy_app "$site"
 # --- 5. relocatability --------------------------------------------------------
 relocate_scripts "$spy/bin" "$stage"
 "$spy/bin/python$PY_MINOR" -I -B -m pip uninstall --isolated -y -q pip || die "pip uninstall failed"
+# --- 5a. the prune (explicit list, validated before any removal) -------------
+prune_python "$spy" "$ROOT/scripts/macos/python-prune.txt"
 # The build interpreter runs with -B throughout, so nothing it imports leaves a
 # .pyc naming the staging dir. compileall then writes every .pyc on purpose:
 # site-packages must compile cleanly; the stdlib is best-effort because it
@@ -384,4 +626,8 @@ mkdir -p "$app_abs/Contents/Resources"
 rm -rf "$dest"
 mv "$spy" "$dest"
 "$dest/bin/$SERVER_EXE" -I -B -c 'import ssl, sqlite3, app' || die "import check failed: $dest/bin/$SERVER_EXE"
+# The import net: every module the server needs on the Mac, imported by the
+# bundled interpreter. The P11 prune is gated on this -- a pruned file the
+# server still imports turns the build red, naming the module.
+"$dest/bin/$SERVER_EXE" -I -B "$ROOT/scripts/macos/bundle-import-guard.py" || die "import guard failed: $dest/bin/$SERVER_EXE"
 echo "bundle-python.sh: embedded python $PBS_PYVER at ${dest#"$(dirname "$app_abs")"/}"

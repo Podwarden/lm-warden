@@ -118,8 +118,21 @@ export function versionPinControlApplies(
   return code !== "backend" && code !== "engine";
 }
 
+/**
+ * Wire value -> UI name for the engines this build knows. The Stats page's
+ * ENGINE_LABELS is the house spelling; a backend that is missing from here
+ * gets a new entry rather than a special case, so the table and the wire
+ * values cannot drift apart again (the Mac backend was the one this ternary
+ * never learned).
+ */
+export const BACKEND_LABELS: Record<string, string> = {
+  vllm: "vLLM",
+  llamacpp: "llama.cpp",
+  mlx: "MLX",
+};
+
 /** How to name a backend in the UI. `llamacpp` is a wire value, not a label. */
 export function backendDisplayName(backend: string | null | undefined): string {
   const effective = backend || "vllm";
-  return effective === "llamacpp" ? "llama.cpp" : effective === "vllm" ? "vLLM" : effective;
+  return Object.hasOwn(BACKEND_LABELS, effective) ? BACKEND_LABELS[effective] : effective;
 }

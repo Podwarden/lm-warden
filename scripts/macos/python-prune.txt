@@ -1,0 +1,110 @@
+# python-prune.txt — the P11 exclude list bundle-python.sh applies (step 5a)
+# to the staged python tree, after the pip uninstall and before compileall.
+#
+# One rule per line; `#` comments and blank lines are ignored. A rule:
+#   path <glob>       remove every <python-root>/<glob> match
+#                     (a bash glob; `*` spans one path segment)
+#   tree <dir> <name> remove every file or dir named <name> anywhere under
+#                     <python-root>/<dir> (find -name, -prune). The tree rules
+#                     for transformers/models also keep models/auto/ (see the
+#                     note on those rows).
+#
+# bundle-python.sh validates the whole list before deleting anything and
+# refuses (exit 1) on a rule that matches nothing (a stale list — re-run the
+# build from a fresh stage), a malformed line, or a rule that would remove or
+# cover a protected path (the interpreter and the llama-server pair in bin/,
+# libpython3.12.dylib, site-packages/app, the mlx / mlx_lm trees, every
+# transformers family's __init__.py / configuration_*.py / tokenization_*.py,
+# and transformers' models/auto/).
+#
+# The rows below are the safe trims from
+# docs/superpowers/specs/2026-10-21-macos-python-footprint-plan.md §1 ("Dead
+# weight a trim can remove safely", and the measured table's per-component
+# rows), matched against the REAL python-build-standalone 3.12 macOS
+# (aarch64, install_only) layout that the finished bundle ships: headers at
+# include/ in the python ROOT, the C extensions under
+# lib/python3.12/lib-dynload/, the Tcl/Tk dylibs and data under lib/
+# (libtcl9.0.dylib, libtcl9tk9.0.dylib, lib/tk9.0, lib/tcl9.0, lib/tcl9,
+# lib/itcl4.3.8, lib/thread3.0.6), and NO lib/python3.12/test (PBS install_only does not ship
+# the stdlib test suite).
+#
+# The plan's riskier trims are deliberately NOT here: the CLI-only
+# libraries (rich, pygments, typer, click, markdown-it), the
+# .py-without-.pyc pair, and transformers' processing_*.py files (they can
+# import without torch).
+#
+# No rule here names a protected path, and none is a blanket
+# `tree <site-packages> tests` (only numpy's tests dirs: the plan measures
+# them as safe, the blanket rule is not).
+
+# --- stdlib: dead top-level packages ----------------------------------------
+# idlelib is the IDLE editor; the plan's "Tcl/Tk, idlelib, turtledemo and
+# tkinter (~11 MiB)" row.
+path lib/python3.12/idlelib
+# tkinter: the Tk bindings; same row.
+path lib/python3.12/tkinter
+# turtledemo: the Tk-based turtle demos; same row.
+path lib/python3.12/turtledemo
+# turtle.py: the turtle module (built on tkinter, so GUI); same row.
+path lib/python3.12/turtle.py
+# ensurepip: bootstrap pip into a fresh env; pip is uninstalled before the
+# prune and never reinstalled at runtime (§3).
+path lib/python3.12/ensurepip
+# lib2to3: the py2->py3 rewriter; no Python 2 in the bundle.
+path lib/python3.12/lib2to3
+# pydoc_data: data for pydoc, which is removed from bin/ by the rename step.
+path lib/python3.12/pydoc_data
+
+# --- stdlib: build/config detritus ------------------------------------------
+# PBS's per-config dir (config-3.12-x86_64, config-3.12-arm64, ...): the
+# plan's "the config dir" (~6 MiB row with headers, ensurepip, lib2to3,
+# pydoc_data).
+path lib/python3.12/config-3.12-*
+# Headers: dead, the plan's "Headers (include/) 1.7 MiB" row. In the real
+# PBS macOS layout the headers live in include/ at the python ROOT, not under
+# lib/python3.12/.
+path include
+
+# --- Tcl/Tk: no GUI Python ----------------------------------------------------
+# The plan's "Tcl/Tk 9 dylibs and data 7.9 MiB — Dead: there is no GUI
+# Python" row. The real PBS macOS layout ships the dylibs and the data dirs
+# directly under lib/ (not share/): libtcl9.0.dylib, libtcl9tk9.0.dylib and
+# lib/tk9.0, lib/tcl9.0, lib/tcl9 (the Tcl 9 .tm modules), lib/itcl4.3.8,
+# lib/thread3.0.6.
+path lib/libtcl9.0.dylib
+path lib/libtcl9tk9.0.dylib
+path lib/tk9.0
+path lib/tcl9.0
+path lib/tcl9
+path lib/itcl4.3.8
+path lib/thread3.0.6
+# The Tk C extension module under lib-dynload/ (_tkinter.cpython-312-darwin.so):
+# same row.
+path lib/python3.12/lib-dynload/_tkinter*
+
+# --- site-packages: dead test suites ------------------------------------------
+# PyObjCTest: the plan's "PyObjCTest alone is 15.6 MiB" row (pyobjc's own test
+# suite; the frameworks the Metal probe imports are not tests).
+tree lib/python3.12/site-packages PyObjCTest
+# numpy's test suites: the plan's "numpy ... About 15 MiB of it is test
+# suites" row. tree reaches every nested tests/ dir under numpy/.
+tree lib/python3.12/site-packages/numpy tests
+
+# --- transformers: model code that cannot run without torch --------------------
+# The plan's "transformers 113.3 MiB ... about 81 MiB of it modeling_*/
+# modular_*/image/video/processing files that are dead without torch" row.
+# The server loads families through AutoTokenizer/AutoConfig (tokenizers, not
+# the torch model classes), so the per-family __init__.py, configuration_*.py
+# and tokenization_*.py are protected (the import guard enforces it); the
+# modeling/modular and image/video processing modules are the dead weight.
+#
+# models/auto/ is kept: its modeling_auto.py / image_processing_auto.py /
+# video_processing_auto.py (and configuration_auto / tokenization_auto) are
+# imported at module level by the families' configuration_* modules and by the
+# kept processing_auto.py, and the import guard imports every one of them.
+# bundle-python.sh's tree rule carries `! -path '*/models/auto/*'` so these
+# rules skip the dir instead of removing it.
+tree lib/python3.12/site-packages/transformers/models modeling_*
+tree lib/python3.12/site-packages/transformers/models modular_*
+tree lib/python3.12/site-packages/transformers/models image_processing_*
+tree lib/python3.12/site-packages/transformers/models video_processing_*

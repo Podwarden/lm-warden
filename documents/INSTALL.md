@@ -1265,10 +1265,11 @@ Two things were broken in earlier published releases and are fixed from
 
 LM Warden on a Mac is in beta. A DMG is published from
 [lmwarden.com/download/mac](https://lmwarden.com/download/mac); it is ad-hoc
-signed and not notarized, and [Beta builds](#beta-builds) covers it. Path A, Path B and the NVIDIA, Docker and
-Compose steps in the rest of this manual do not apply to a Mac. What exists
-today is a build from source on an Apple silicon Mac. Unlike the paths above,
-this section is not a recorded install, so it has no transcripts.
+signed and not notarized, and [Beta builds](#beta-builds) covers it. Path A,
+Path B and the NVIDIA, Docker and Compose steps in the rest of this manual do
+not apply to a Mac. The alternative to the beta DMG is a build from source,
+covered below. Unlike the paths above, this section is not a recorded install,
+so it has no transcripts.
 
 ## What it needs
 
@@ -1297,11 +1298,13 @@ same app into a DMG, no more signed than the app.
 ## Beta builds
 
 A beta is a DMG of one release, built by the project's CI, published before
-the app can be notarized. The current one is at
-[lmwarden.com/download/mac](https://lmwarden.com/download/mac), which redirects
-to the [GitHub releases page](https://github.com/Podwarden/lm-warden/releases),
-where it is a pre-release whose name ends in "(beta)", with two files:
-`LM-Warden-<version>-beta.dmg` and `LM-Warden-<version>-beta.dmg.sha256`.
+the app can be notarized. The current one downloads directly from
+[lmwarden.com/download/mac](https://lmwarden.com/download/mac), and its
+checksum is at
+[lmwarden.com/download/mac.sha256](https://lmwarden.com/download/mac.sha256).
+The pre-release (its name ends in "(beta)"), with both files —
+`LM-Warden-<version>-beta.dmg` and `LM-Warden-<version>-beta.dmg.sha256` — is
+listed on the [GitHub releases page](https://github.com/Podwarden/lm-warden/releases).
 What sets it apart from a normal release:
 
 - It is ad-hoc signed only: no Developer ID signature, no notarization by
@@ -1339,7 +1342,17 @@ quarantined app that Apple has not notarized. Do one of these, once:
 What either step means: you are telling macOS to trust this copy and skip the
 check Apple would otherwise make for you. Nothing else on the Mac changes, and
 it applies to this copy only, so a newer beta needs it again. Do it only for a
-DMG you downloaded from the releases page whose checksum matched.
+DMG from lmwarden.com/download/mac or the releases page whose checksum matched.
+
+**The Keychain asks for your password.** The app keeps its sign-in (session)
+secret in the login Keychain under the item `com.podwarden.lmwarden` and reads
+it every time it starts the server. A beta is ad-hoc signed, and each ad-hoc
+build is a new signing identity to the Keychain, so macOS asks for your login
+password to let LM Warden read that item. On the beta this was observed on
+every launch (on an M1 Mac, 2026-10-21). Type your login password and allow
+it, and the app starts: it is LM Warden reading its own item, nothing else.
+The prompt can still come back at the next launch. A Developer ID-signed
+release, when one is available, is expected to stop it.
 
 ## What runs in it
 

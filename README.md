@@ -250,6 +250,11 @@ update itself: a newer beta is a new download.
 3. Double-click LM Warden. macOS refuses it: open **System Settings** ›
    **Privacy & Security** and click **Open Anyway** next to LM Warden. (On
    macOS 14, right-click LM Warden and choose **Open** also works.)
+4. Launch it. On a beta, macOS asks for your login password at launch so LM
+   Warden can read its sign-in secret from the Keychain. Because a beta is
+   ad-hoc signed, this can happen at every launch until a Developer
+   ID-signed release. The [Beta builds](documents/INSTALL.md#beta-builds)
+   section of INSTALL.md has the detail.
 
 Do this only for a download whose checksum matched. The
 [Beta builds](documents/INSTALL.md#beta-builds) section of INSTALL.md has the

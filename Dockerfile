@@ -335,6 +335,30 @@ COPY requirements.txt /app/
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     pip install -r requirements.txt
 
+# requirements.txt is installed over vLLM's own dependencies, so a pin there
+# can silently downgrade a package the engine needs. Pillow==11.0.0 did exactly
+# that on the v0.32.0 base: vLLM opens every image with
+# Image.open(fp, formats=ALLOWED_IMAGE_FORMATS), the list names AVIF, and
+# Pillow 11.0 has no AVIF plugin, so PIL raised KeyError: 'AVIF' and every
+# image chat completion returned HTTP 500 while text chat worked. Two checks,
+# in the image's own Python so they see exactly what the engine imports:
+# the installed Pillow satisfies vLLM's declared pillow requirement, and after
+# plugin init every format vLLM allows has an opener registered.
+RUN python3 - <<'PY'
+import importlib.metadata as m
+from packaging.requirements import Requirement
+from PIL import Image
+from vllm.multimodal.image import ALLOWED_IMAGE_FORMATS
+pillow = m.version("pillow")
+spec = [r.specifier for r in map(Requirement, m.requires("vllm") or []) if r.name.lower() == "pillow"]
+assert spec, "vllm declares no pillow requirement any more; re-check this guard"
+assert all(s.contains(pillow, prereleases=True) for s in spec), f"Pillow {pillow} does not satisfy vllm's pillow{spec[0]}: fix the pin in requirements.txt"
+Image.init()
+missing = [f for f in ALLOWED_IMAGE_FORMATS if f not in Image.OPEN]
+assert not missing, f"Pillow {pillow} has no opener for vllm ALLOWED_IMAGE_FORMATS {missing}: every image request would fail"
+print("pillow", pillow, "satisfies vllm pillow" + str(spec[0]) + "; all", len(ALLOWED_IMAGE_FORMATS), "vllm image formats registered")
+PY
+
 # llama.cpp, from the build stage above. On PATH because the backend's argv[0]
 # is the bare name `llama-server` (app/runtime/backends/llamacpp/__init__.py),
 # and the subprocess env's PATH is /usr/local/bin:/usr/bin:/bin.

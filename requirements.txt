@@ -14,4 +14,11 @@ PyJWT[crypto]==2.9.0
 docker==7.1.0
 # Chat2 image attachments (#chat2 T5) — server-side re-encode strips EXIF/
 # ancillary chunks and rejects polyglots before anything touches disk.
-Pillow==11.0.0
+# This file is installed ON TOP of the vLLM base image, so this pin also
+# decides the Pillow the engine runs with. vLLM 0.32.0 requires
+# pillow>=12.3.0 and lists AVIF in vllm/multimodal/image.py
+# ALLOWED_IMAGE_FORMATS; the old 11.0.0 pin downgraded the base's Pillow to
+# one with no AVIF plugin, so every image request to the engine failed with
+# HTTP 500 KeyError: 'AVIF'. Bump together with the vLLM base; the Dockerfile
+# asserts this pin still satisfies vLLM's own requirement.
+Pillow==12.3.0

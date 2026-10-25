@@ -20,7 +20,7 @@ aiofiles==24.1.0
 httpx==0.28.1
 python-multipart==0.0.20
 PyJWT[crypto]==2.9.0
-Pillow==11.0.0
+Pillow==12.3.0
 
 # --- macOS-only ---
 # MLX engine (app/runtime/backends/mlx/): the server runs `mlx_lm.server`

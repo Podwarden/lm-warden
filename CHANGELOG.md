@@ -7,6 +7,24 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.10.24.2] — 2026-10-24
+
+### Changed
+
+- **The Mac app is smaller on disk.** The build now strips about 125 MB of dead weight from the embedded Python before packaging (Tcl/Tk, IDLE, 2to3 and other unused stdlib tooling, the numpy and pyobjc test suites, and transformers model code that cannot run without PyTorch), and every build fails closed if the import check finds a module the server needs missing.
+- **The Mac DMG is 70% smaller.** It is now LZMA-compressed (ULMO), and the embedded Python is trimmed: 110.5 MB instead of 373.1 MB. The installed app is about 526 MiB, down from 653 MiB.
+- **The Mac beta docs explain the Keychain password prompt.** A beta is ad-hoc signed, so each build is a new signing identity to the login Keychain, and macOS asks for the login password to let LM Warden read its sign-in secret (the item `com.podwarden.lmwarden`) — on the beta, observed at every launch. README and INSTALL.md now say this, and INSTALL.md now states that lmwarden.com/download/mac downloads the current beta DMG directly instead of redirecting to the GitHub releases page.
+
+### Fixed
+
+- **The model page names the Mac engine MLX.** A model served by MLX showed its engine as "mlx"; it now reads "MLX", like the Stats page.
+
+## [v2026.10.24.1] — 2026-10-24
+
+### Fixed
+
+- **Images sent to a vLLM model work again.** Every chat request with an image (PNG, JPEG or any other format) failed with HTTP 500 and the error `'AVIF'`, while text-only chat worked. The image installed Pillow 11.0.0 over the newer Pillow that vLLM 0.32.0 requires; vLLM's list of accepted image formats includes AVIF, and Pillow 11.0 cannot open AVIF, so the check failed on every image. Pillow is now 12.3.0, and the image build fails if the Pillow it installs does not meet vLLM's requirement or cannot open a format vLLM accepts.
+
 ## [v2026.10.23.1] — 2026-10-23
 
 ### Added

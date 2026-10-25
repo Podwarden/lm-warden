@@ -22,7 +22,13 @@
 #      staging dir as "LM Warden.app", and verify-bundle.sh checks THAT copy --
 #      the bytes the DMG is made from. A bundle that no longer verifies never
 #      reaches the image.
-#   4. `hdiutil create` makes a UDZO DMG with volume name "LM Warden".
+#   4. `hdiutil create` makes a read-write (UDRW) image with volume name
+#      "LM Warden" in a scratch dir, and `hdiutil convert` turns it into the
+#      shipped ULMO (LZMA) DMG, which is moved into place only once complete.
+#      LZMA, not zlib: the same app measured ~134 MB as ULMO vs ~373 MB as UDZO
+#      on the M1 (footprint plan: 128.3 vs 341.4 MB), and ULMO is read-only and
+#      opens on macOS 14, the app's minimum. Two steps, not `create -format
+#      ULMO`: the one-step create packs the same app to ~255 MB.
 #
 # Exit codes: 0 ok, 1 a gate or step failed (no DMG is written), 2 usage.
 #
@@ -60,7 +66,10 @@ got=$(plutil -extract CFBundleShortVersionString raw -o - "$plist" 2>/dev/null) 
 
 # Stage in a temp dir so the DMG srcfolder is exactly the app.
 staging=$(mktemp -d -t lmwarden-dmg)
-trap 'rm -rf "$staging"' EXIT
+# Scratch for the read-write image and the converted DMG: outside $staging (the
+# srcfolder must hold only the app) and removed on any exit.
+rw_dir=$(mktemp -d -t lmwarden-dmg-rw)
+trap 'rm -rf "$staging" "$rw_dir"' EXIT
 app_root="$staging/LM Warden.app"
 
 ditto "$app_abs" "$app_root"
@@ -69,13 +78,22 @@ ditto "$app_abs" "$app_root"
 # DMG is produced.
 "$verify_bundle" "$app_root"
 
-# UDZO = compressed, read-only, single partition. -ov overwrites a stale
-# output file. The volume name "LM Warden" is what appears in Finder.
+# ULMO = LZMA-compressed, read-only, single partition: ~60% smaller than the old
+# UDZO (zlib), and it opens on macOS 14, the app's minimum. It is made in two
+# steps -- create a UDRW image, then convert it to ULMO -- because a one-step
+# `hdiutil create -format ULMO -srcfolder` compresses far worse (measured on the
+# M1, same app: ~255 MB one-step vs ~134 MB two-step). The converted image is
+# moved over <out.dmg> only once it is complete, so a failed step leaves no
+# DMG. The volume name "LM Warden" is what appears in Finder.
 hdiutil create \
     -volname "LM Warden" \
     -srcfolder "$staging" \
     -ov \
-    -format UDZO \
-    "$out_dmg_abs"
+    -format UDRW \
+    "$rw_dir/rw.dmg"
+hdiutil convert "$rw_dir/rw.dmg" -format ULMO -o "$rw_dir/ulmo.dmg"
+mv -f "$rw_dir/ulmo.dmg" "$out_dmg_abs"
 
-echo "make-dmg.sh: wrote $out_dmg_abs"
+# Report the bytes actually written (BSD stat: %z = size in bytes) so a CI log
+# shows the shipped DMG's footprint.
+echo "make-dmg.sh: wrote $out_dmg_abs ($(stat -f %z "$out_dmg_abs") bytes)"

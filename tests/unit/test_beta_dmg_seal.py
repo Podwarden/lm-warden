@@ -51,6 +51,8 @@ def _dmg(
         env=env,
     )
     out = tmp_path / (name or f"LM-Warden-{TAG}-beta.dmg")
+    # ULMO, the format make-dmg.sh ships: the seal mounts read-only, which is
+    # format-agnostic, so proving it here is proving it on the shipped image.
     subprocess.run(
         [
             "hdiutil",
@@ -61,7 +63,7 @@ def _dmg(
             str(src),
             "-ov",
             "-format",
-            "UDZO",
+            "ULMO",
             str(out),
         ],
         check=True,

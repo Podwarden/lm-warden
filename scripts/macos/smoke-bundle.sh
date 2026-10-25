@@ -20,16 +20,25 @@
 #   2. Seeds the smoke defaults domain so first run is done, then launches the
 #      app with NO arguments (GUI mode) through `open`.
 #   3. Waits for the menu-bar process and its server child. The child's pid,
-#      argv and VW_SHELL_TOKEN are recorded by the wrapper into the smoke
-#      state dir (the token file is 0600 and never printed); the port is the
-#      value after `--port` in that argv, so nothing is guessed. Then GET
-#      /healthz (200, "ok": true) and GET /api/shell/status (401 without the
-#      token, 200 with it).
+#      argv, VW_SHELL_TOKEN and VW_DATA_DIR (the data dir it was launched with)
+#      are recorded by the wrapper into the smoke state dir (the token and
+#      data-dir files are 0600 and never printed); the port is the value after
+#      `--port` in that argv, so nothing is guessed. Then GET /healthz (200,
+#      "ok": true) and GET /api/shell/status (401 without the token, 200 with
+#      it).
 #   4. Quits through osascript (`tell application id ... to quit`), asserts the
 #      app exits within 20 s, nothing is left in the child's process group and
 #      /healthz stops answering; launches again and does the same with SIGTERM.
 #   5. Asserts isolation: the real `com.podwarden.lmwarden` Keychain item's
-#      attributes (never its secret) and the real app data dir are unchanged.
+#      attributes are unchanged (never its secret), the smoke used its own data
+#      dir, and the smoke's own processes never touched the real data dir. The
+#      server child records the data dir it was launched with (VW_DATA_DIR) and
+#      the smoke checks it is the smoke dir, not the real one (smoke-isolation.sh
+#      child-data-dir); it also checks the app and server child hold no file
+#      open in the real dir (smoke-isolation.sh open-under). A whole-dir
+#      before/after snapshot is not used: an installed app (or a git checkout of
+#      the repo under the real dir) may write vllm-warden.db there at any moment,
+#      which would fail the gate on the environment, not the code.
 #   Teardown (an EXIT trap, also on failure) kills any smoke process left,
 #   deletes the smoke Keychain items, the smoke defaults domain, the smoke data
 #   dir and the temp dir. If the lock was lost (the holder died) it still kills
@@ -253,16 +262,12 @@ fi
 # A previous run that died hard may have left state: start from clean.
 cleanup_smoke_state
 
-# Isolation baselines: attributes only (never -w), so no secret and no prompt.
+# Isolation baseline: attributes only (never -w), so no secret and no prompt.
+# The real data dir is not snapshotted before/after: it may be written by an
+# installed app (or a git checkout of the repo that lives under it) at any
+# moment, and the isolation checks in launch_and_probe prove the smoke's own
+# processes never use it instead.
 real_keychain_before=$(security find-generic-password -s "$REAL_ID" 2>&1 || true)
-snapshot_real_data() {
-    if [ -d "$real_data" ]; then
-        find "$real_data" -maxdepth 3 -exec stat -f '%m %z %N' {} + 2>/dev/null | LC_ALL=C sort
-    else
-        echo absent
-    fi
-}
-real_data_before=$(snapshot_real_data)
 
 # --- 1. build and assemble -------------------------------------------------
 log "swift build -c release"
@@ -291,6 +296,7 @@ wrapper="$app/Contents/Resources/python/bin/LM Warden Server"
     printf 'umask 077\n'
     printf 'state=%q\n' "$state"
     printf 'printf %%s "${VW_SHELL_TOKEN:-}" > "$state/child.token"\n'
+    printf 'printf %%s "${VW_DATA_DIR:-}" > "$state/child.datadir"\n'
     printf 'for a in "$@"; do printf "%%s\\n" "$a"; done > "$state/child.args"\n'
     printf 'echo $$ > "$state/child.pid.tmp" && mv "$state/child.pid.tmp" "$state/child.pid"\n'
     printf 'exec %q "$@"\n' "$python"
@@ -306,7 +312,7 @@ child_pid=""
 port=""
 
 launch_and_probe() {
-    rm -f "$state/child.pid" "$state/child.args" "$state/child.token"
+    rm -f "$state/child.pid" "$state/child.args" "$state/child.token" "$state/child.datadir"
     open -n -g "$app"
     app_pid=""
     i=0
@@ -346,6 +352,14 @@ launch_and_probe() {
         *) fail "/healthz body has no \"ok\": true" ;;
     esac
     log "/healthz 200 after ~${i} s"
+
+    # Isolation: the child must run against the smoke data dir, not the real
+    # one, and the smoke's own processes must hold nothing open in the real dir.
+    # Each failure goes through fail with the helper's one-line reason.
+    "$repo/scripts/macos/smoke-isolation.sh" child-data-dir "$state/child.datadir" "$smoke_data/LM Warden" "$real_data" ||
+        fail "child-data-dir: server child is not isolated from the real data dir"
+    "$repo/scripts/macos/smoke-isolation.sh" open-under "$real_data" "$app_pid" "$child_pid" ||
+        fail "open-under: a smoke process has a file open in the real data dir"
 
     code=$(curl -sS -m 5 -o /dev/null -w '%{http_code}' "http://127.0.0.1:$port/api/shell/status")
     [ "$code" = 401 ] || fail "/api/shell/status without the token: $code, want 401"
@@ -402,6 +416,5 @@ assert_clean_exit "SIGTERM"
 # --- 5. isolation ------------------------------------------------------------
 real_keychain_after=$(security find-generic-password -s "$REAL_ID" 2>&1 || true)
 [ "$real_keychain_before" = "$real_keychain_after" ] || fail "the real $REAL_ID Keychain item changed"
-[ "$real_data_before" = "$(snapshot_real_data)" ] || fail "the real data dir $real_data changed"
 [ -d "$smoke_data/LM Warden" ] || fail "the smoke data dir $smoke_data/LM Warden was not used"
-log "isolation: real Keychain item and real data dir unchanged"
+log "isolation: real Keychain item unchanged, the smoke's processes never used the real data dir $real_data"

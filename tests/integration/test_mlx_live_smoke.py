@@ -13,15 +13,32 @@ Point the smoke at a small model with a local directory of MLX weights:
 
     export LMW_MLX_SMOKE_MODEL=/path/to/mlx-community/....-4bit
 
+By default the engine runs from the warden's OWN venv (dev mode). To exercise
+the BUNDLED interpreter instead -- so a trimmed bundle is what the smoke proves
+-- point the smoke at the bundle's renamed interpreter:
+
+    export LMW_MLX_SMOKE_PYTHON="/path/LM Warden.app/Contents/Resources/python/bin/LM Warden Server"
+
+In that mode the plan's hard-set PATH is recomputed as
+``engine_path(<that interpreter>)`` -- the same value the app computes -- so the
+bare ``mlx_lm.server`` argv[0] resolves to the bundle's own console script, and
+the ``import mlx_lm`` presence skip is not applied (the bundle carries mlx_lm;
+the test venv may not). A value that is not an executable file is a REFUSAL,
+not a skip: an empty value is treated as unset (dev mode), but a set value that
+is missing or not executable is a pytest.fail naming the variable -- a
+mis-pointed bundle must never be silently read as "skip".
+
 A run that SKIPS is not green: mlx_lm missing, not darwin/arm64, or the env
 var unset all skip with a reason, and the lane reports them as blocked.
 """
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 import platform
+import shutil
 import socket
 import subprocess
 import sys
@@ -31,6 +48,7 @@ import urllib.request
 from dataclasses import dataclass, field
 
 import pytest
+from _pytest.outcomes import Failed
 
 pytestmark = [pytest.mark.macos, pytest.mark.live]
 
@@ -55,21 +73,63 @@ class _SmokeModel:
     extra_env: dict[str, str] = field(default_factory=dict)
 
 
-def _skip_if_no_mlx() -> None:
-    """Skip with a clear reason when the prerequisites are absent.
+def _skip_platform() -> None:
+    """The whole file is the macos+live gate; refuse on any other machine.
 
-    ``import mlx_lm`` is imported inside this function, not at module level,
-    so that a base without it skips (collects and skips) rather than turning
-    this whole file into a collection ImportError that runs nothing.
+    Shared by the live legs and the non-live plan legs so the platform
+    contract is pinned in ONE place, and so the refusal-arm legs can assume
+    they are on the machine the smoke targets.
     """
     if sys.platform != "darwin" or platform.machine() != "arm64":
         pytest.skip(
             f"MLX live smoke needs darwin/arm64; this is " f"{sys.platform}/{platform.machine()}"
         )
-    try:
-        import mlx_lm  # noqa: F401 -- presence is the whole check
-    except ImportError:
-        pytest.skip("mlx_lm is not importable in the warden's venv")
+
+
+def _smoke_python() -> str | None:
+    """The bundled interpreter the smoke should serve from, or None for dev.
+
+    Dev mode (the variable unset or EMPTY) keeps today's behaviour exactly:
+    the plan's own venv PATH, the ``import mlx_lm`` presence check, same skips.
+    A non-empty value names a BUNDLED interpreter -- ``<app>/Contents/
+    Resources/python/bin/LM Warden Server`` -- and must be an executable file:
+    a value that is missing, not a file, or not executable is a REFUSAL
+    (pytest.fail naming the variable and the reason), never a skip, so a
+    mis-pointed bundle is caught instead of silently read as "skip".
+    """
+    override = os.environ.get("LMW_MLX_SMOKE_PYTHON", "").strip()
+    if not override:
+        return None
+    if not os.path.isfile(override):
+        pytest.fail(
+            f"LMW_MLX_SMOKE_PYTHON={override!r} does not name an executable file "
+            "(no such file); point it at a bundle's "
+            "Contents/Resources/python/bin/LM Warden Server"
+        )
+    if not os.access(override, os.X_OK):
+        pytest.fail(
+            f"LMW_MLX_SMOKE_PYTHON={override!r} is not executable; point it at a "
+            "bundle's Contents/Resources/python/bin/LM Warden Server"
+        )
+    return override
+
+
+def _skip_if_no_mlx(bundle: bool = False) -> None:
+    """Skip with a clear reason when the prerequisites are absent.
+
+    In bundled mode (``bundle=True``) the ``import mlx_lm`` presence check is
+    skipped: the engine is the BUNDLE's interpreter, which carries mlx_lm, and
+    the test venv need not import it. In dev mode it is the whole check -- and
+    it is imported inside this function, not at module level, so that a base
+    without it skips (collects and skips) rather than turning this whole file
+    into a collection ImportError that runs nothing.
+    """
+    _skip_platform()
+    if not bundle:
+        try:
+            import mlx_lm  # noqa: F401 -- presence is the whole check
+        except ImportError:
+            pytest.skip("mlx_lm is not importable in the warden's venv")
     model = os.environ.get("LMW_MLX_SMOKE_MODEL")
     if not model:
         pytest.skip(
@@ -164,11 +224,43 @@ def _plan():
     )
 
 
-def test_mlx_server_serves_one_completion(tmp_path):
-    _skip_if_no_mlx()
+def _plan_bundled(interpreter: str):
+    """plan() re-pointed at the BUNDLED interpreter's PATH.
+
+    The plan's argv stays EXACTLY what the supervisor would emit (bare
+    ``mlx_lm.server``); only the hard-set PATH is replaced with the one the app
+    computes for the bundle's interpreter. The smoke then asserts the bare name
+    resolves, through THAT PATH, to the bundle's own console script -- the whole
+    point of serving from the bundle.
+    """
+    from app.runtime.backends.mlx import engine_path
+
     plan, port, health, model_id = _plan()
+    # LaunchPlan is a frozen dataclass: build a copy, never assign to it.
+    bundled = dataclasses.replace(plan, env={**plan.env, "PATH": engine_path(interpreter)})
+    return bundled, port, health, model_id
+
+
+def test_mlx_server_serves_one_completion(tmp_path):
+    override = _smoke_python()
+    bundle = override is not None
+    _skip_if_no_mlx(bundle=bundle)
+    if bundle:
+        plan, port, health, model_id = _plan_bundled(override)
+    else:
+        plan, port, health, model_id = _plan()
     # The proxy forwards engine_model_id; it must be the very --model value.
     assert model_id == plan.argv[plan.argv.index("--model") + 1]
+    if bundle:
+        # The engine runs from the BUNDLE: the bare argv[0] must resolve, through
+        # the re-pointed PATH, to a script INSIDE the bundle's bin -- never a
+        # copy the smoke host has on its own PATH.
+        resolved = shutil.which("mlx_lm.server", path=plan.env["PATH"])
+        assert resolved, f"mlx_lm.server not found on PATH={plan.env['PATH']!r}"
+        assert os.path.dirname(os.path.realpath(resolved)) == os.path.dirname(
+            os.path.realpath(override)
+        ), f"mlx_lm.server resolves to {resolved!r}, not the bundle's own copy"
+        assert plan.argv[0] == "mlx_lm.server"  # argv stays the bare console-script name
 
     log = tmp_path / "engine.log"
     t0 = time.monotonic()
@@ -208,8 +300,13 @@ def test_mlx_server_serves_one_completion(tmp_path):
 
 
 def test_bad_port_argv_is_caught(tmp_path):
-    _skip_if_no_mlx()
-    plan, planned_port, health, _ = _plan()
+    override = _smoke_python()
+    bundle = override is not None
+    _skip_if_no_mlx(bundle=bundle)
+    if bundle:
+        plan, planned_port, health, _ = _plan_bundled(override)
+    else:
+        plan, planned_port, health, _ = _plan()
     other = _free_port()
     while other == planned_port:
         other = _free_port()
@@ -236,3 +333,110 @@ def test_bad_port_argv_is_caught(tmp_path):
         )
     finally:
         _terminate(proc)
+
+
+# ---------------------------------------------------------------------------
+# Non-live legs: LMW_MLX_SMOKE_PYTHON. No model load, no engine process, no
+# live-model lock needed -- so they collect and run in this macos+live file
+# under -k smoke_python, and they pin the three refusal arms of the override
+# plus the PATH the bundled engine actually resolves through.
+# ---------------------------------------------------------------------------
+
+
+def test_smoke_python_missing_refuses(tmp_path, monkeypatch):
+    # A value that names no file is a REFUSAL (fail), never a skip: on the base
+    # the variable does not exist, so a missing path is silently ignored and
+    # this leg passes -- which is the red-first signal that the override is
+    # being read at all.
+    _skip_platform()
+    monkeypatch.setenv("LMW_MLX_SMOKE_PYTHON", str(tmp_path / "LM Warden Server"))
+    with pytest.raises(Failed) as excinfo:  # pytest.fail raises _pytest.outcomes.Failed
+        _smoke_python()
+    assert "LMW_MLX_SMOKE_PYTHON" in str(excinfo.value)
+
+
+def test_smoke_python_not_executable_refuses(tmp_path, monkeypatch):
+    _skip_platform()
+    script = tmp_path / "LM Warden Server"
+    script.write_text("# a file, but not executable\n")
+    monkeypatch.setenv("LMW_MLX_SMOKE_PYTHON", str(script))
+    with pytest.raises(Failed) as excinfo:
+        _smoke_python()
+    assert "LMW_MLX_SMOKE_PYTHON" in str(excinfo.value)
+    assert "not executable" in str(excinfo.value)
+
+
+def test_smoke_python_empty_is_unset(tmp_path, monkeypatch):
+    # An EMPTY value is the arm that means "unset": dev mode, no refusal.
+    _skip_platform()
+    for empty in ("", "   "):
+        monkeypatch.setenv("LMW_MLX_SMOKE_PYTHON", empty)
+        assert _smoke_python() is None
+
+
+def test_smoke_python_resolution(tmp_path, monkeypatch):
+    # The positive leg: a real executable makes the bare console-script name
+    # resolve, through the re-pointed PATH, to a copy INSIDE that executable's
+    # own directory -- and argv stays the bare name. No model, no lock.
+    _skip_platform()
+    monkeypatch.delenv("LMW_MLX_SMOKE_MODEL", raising=False)
+
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    interpreter = bin_dir / "LM Warden Server"
+    # A minimal "interpreter": an executable shell script (os.access X_OK).
+    interpreter.write_text("#!/bin/sh\nexit 0\n")
+    interpreter.chmod(0o755)
+    monkeypatch.setenv("LMW_MLX_SMOKE_PYTHON", str(interpreter))
+    override = _smoke_python()
+    assert override == str(interpreter)
+
+    from app.runtime.backends.mlx import engine_path  # in-test: red import on base
+
+    # engine_path puts the interpreter's own dir first, then the fixed fallbacks.
+    path = engine_path(str(interpreter))
+    assert path.split(":")[0] == str(bin_dir)
+    assert path.endswith("/usr/bin:/bin")
+    # The bare name resolves through that PATH to a script in the SAME dir.
+    server = bin_dir / "mlx_lm.server"
+    server.write_text("#!/bin/sh\nexit 0\n")
+    server.chmod(0o755)
+    found = shutil.which("mlx_lm.server", path=path)
+    assert found is not None, f"mlx_lm.server not resolvable on PATH={path!r}"
+    assert os.path.dirname(os.path.realpath(found)) == os.path.dirname(
+        os.path.realpath(str(interpreter))
+    )
+    # argv[0] stays the bare console-script name; only the PATH carries it.
+    assert "mlx_lm.server" in os.listdir(bin_dir)
+
+
+def test_smoke_python_plan_bundled_repoints_path(tmp_path, monkeypatch):
+    # The live legs' bundled plan, built without a model load: _plan_bundled
+    # must hand back a LaunchPlan (not a nested tuple) whose PATH is
+    # engine_path(<override>) and whose argv, port and other env are exactly
+    # plan()'s. plan() is pure, so a tmp dir stands in for the weights.
+    _skip_platform()
+    model_dir = tmp_path / "weights"
+    model_dir.mkdir()
+    monkeypatch.setenv("LMW_MLX_SMOKE_MODEL", str(model_dir))
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    interpreter = bin_dir / "LM Warden Server"
+    interpreter.write_text("#!/bin/sh\nexit 0\n")
+    interpreter.chmod(0o755)
+
+    from app.runtime.backends import LaunchPlan
+    from app.runtime.backends.mlx import engine_path
+
+    dev, _, _, _ = _plan()
+    plan, port, health, model_id = _plan_bundled(str(interpreter))
+    assert isinstance(plan, LaunchPlan)
+    assert plan.env["PATH"] == engine_path(str(interpreter))
+    assert plan.env["PATH"].split(":")[0] == str(bin_dir)
+    assert {k: v for k, v in plan.env.items() if k != "PATH"} == {
+        k: v for k, v in dev.env.items() if k != "PATH"
+    }
+    assert plan.argv[0] == "mlx_lm.server"
+    assert plan.port == port and str(port) in plan.argv
+    assert str(port) in health
+    assert model_id == plan.argv[plan.argv.index("--model") + 1] == str(model_dir)
