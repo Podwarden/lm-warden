@@ -34,6 +34,7 @@ import threading
 import time
 from collections.abc import Awaitable, Callable
 from pathlib import Path
+from typing import Any
 
 # Hermetic Hugging Face: ``TokenizerCache.get`` calls
 # ``AutoTokenizer.from_pretrained(hf_repo)`` for whatever repo a test seeded
@@ -588,3 +589,41 @@ async def live_app(tmp_data_dir: Path, migrated_db_template: Path):
     async with app.router.lifespan_context(app):
         seed_admin_user(tmp_data_dir / "vllm-warden.db")
         yield app
+
+
+class FakeEntryPoint:
+    """Stands in for importlib.metadata.EntryPoint in loader tests."""
+
+    def __init__(self, name: str, register: Any) -> None:
+        self.name = name
+        self._register = register
+
+    def load(self) -> Any:
+        if isinstance(self._register, BaseException):
+            raise self._register
+        return self._register
+
+
+@pytest.fixture
+def ext_registry(monkeypatch: pytest.MonkeyPatch) -> Any:
+    """Call the returned function with FakeEntryPoints BEFORE the ``client``
+    fixture builds the app (list ``ext_registry`` first in the test args)."""
+
+    def install(*eps: FakeEntryPoint) -> None:
+        monkeypatch.setattr("app.ext.loader._entry_points", lambda: list(eps))
+
+    install()
+    return install
+
+
+@pytest.fixture
+def client_factory(tmp_data_dir: Path, migrated_db_template: Path) -> Any:
+    """Build the app on demand (after a test installed fake entry points)."""
+
+    def make() -> TestClient:
+        from app.main import build_app
+
+        shutil.copyfile(migrated_db_template, tmp_data_dir / "vllm-warden.db")
+        return TestClient(build_app())
+
+    return make

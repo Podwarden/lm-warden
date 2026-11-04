@@ -20,7 +20,19 @@ export default defineConfig({
     // `tests/conformance/**` needs a live backend and node's fetch; it runs
     // only via `npm run test:conformance` (vitest.conformance.config.ts),
     // which `make conformance` drives after booting the server.
-    exclude: ['node_modules/**', 'tests/e2e/**', 'tests/conformance/**'],
+    //
+    // `tests/ee/**` tests the Enterprise tree through the `@ee` alias, so it
+    // runs only in an Enterprise run: `LM_EDITION=enterprise npx vitest run tests/ee`.
+    // The default (community) run excludes it; src/ee is absent there.
+    exclude: [
+      'node_modules/**',
+      'tests/e2e/**',
+      'tests/conformance/**',
+      // A local standalone build copies node_modules (with their own *.test.*)
+      // under .next/standalone; never collect those.
+      '.next/**',
+      ...(process.env.LM_EDITION === 'enterprise' ? [] : ['tests/ee/**']),
+    ],
     server: {
       deps: {
         // `@podwarden/chat-ui` imports `katex/dist/katex.min.css` for math
@@ -37,6 +49,17 @@ export default defineConfig({
   },
   esbuild: { jsx: 'automatic' },
   resolve: {
-    alias: { '@': path.resolve(__dirname, './src') },
+    // `@ee` mirrors next.config.ts: the enterprise tree under LM_EDITION=enterprise,
+    // else the empty community stub. 
+    alias: [
+      {
+        find: /^@ee$/,
+        replacement: path.resolve(
+          __dirname,
+          process.env.LM_EDITION === 'enterprise' ? './src/ee/index.ts' : './src/ee-stub/index.ts',
+        ),
+      },
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+    ],
   },
 });

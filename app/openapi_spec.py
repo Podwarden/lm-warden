@@ -12,7 +12,7 @@ a session or an admin token.
 * ``components.securitySchemes.bearerAuth`` (HTTP bearer) and a top-level
   ``security: [{bearerAuth: []}]``;
 * ``security: []`` on every operation that takes no control-plane credential:
-  app/auth/policy.py::PUBLIC_ROUTES and every /v1 route (an inference token is
+  app/auth/public_routes.py and every /v1 route (an inference token is
   a different credential; documents/API.md describes it).
 
 CI (typecheck:api-types) and ``make generate-api-types`` still build the
@@ -26,15 +26,12 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
 from app.auth.deps import require_jwt
-from app.auth.policy import PUBLIC_ROUTES, is_inference
+from app.auth.policy import is_inference
+from app.auth.public_routes import is_public
 
 BEARER_SCHEME = "bearerAuth"
 
 router = APIRouter(tags=["meta"])
-
-
-def _is_public(method: str, path: str) -> bool:
-    return is_inference(method, path) or (method, path) in PUBLIC_ROUTES
 
 
 def add_security(schema: dict[str, Any], app: FastAPI) -> None:
@@ -54,7 +51,7 @@ def add_security(schema: dict[str, Any], app: FastAPI) -> None:
         if not isinstance(route, APIRoute) or not route.include_in_schema:
             continue
         for method in sorted(route.methods):
-            if not _is_public(method, route.path):
+            if not (is_inference(method, route.path) or is_public(app, method, route.path)):
                 continue
             operation = paths.get(route.path_format, {}).get(method.lower())
             if operation is not None:

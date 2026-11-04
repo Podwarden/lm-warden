@@ -534,6 +534,14 @@ async def lifespan(app: FastAPI):
 
 
 def build_app() -> FastAPI:
+    # Extensions (the Enterprise and website packages) plug in through entry points;
+    # core only ever sees the registry. Empty when none is installed.
+    from app.ext import Registry
+    from app.ext.loader import load_extensions
+
+    reg = Registry()
+    load_extensions(reg)
+
     app = FastAPI(
         title="LM Warden",
         lifespan=lifespan,
@@ -544,6 +552,12 @@ def build_app() -> FastAPI:
         redoc_url=None,
         openapi_url=None,
     )
+
+    app.state.ext = reg
+
+    from app.editions import routes_api as editions_routes_api
+
+    app.include_router(editions_routes_api.router)
 
     from app.setup import routes_api as setup_routes_api
 
@@ -725,19 +739,27 @@ def build_app() -> FastAPI:
 
     app.include_router(chat_routes_api.router)
 
-    # #155 — Unified-port architecture: public landing page at /_landing
-    # served behind Caddy's `handle /` rewrite. Route is intentionally
-    # NOT JWT-gated (the whole point is that an anonymous browser hitting
-    # the unified-port root sees a useful page). Opt-out via the
-    # `landing_page_enabled` runtime setting → route returns 404.
-    # The same router carries the page's assets (/_landing/assets/*) and the
-    # crawler / LLM text routes (/robots.txt, /sitemap.xml, /llms*.txt).
-    from app.landing import routes as landing_routes
+    # Home page (spec 2026-11-04): core's dispatcher owns /, /_landing and
+    # /robots.txt and asks the registered home providers. Core's welcome page
+    # is the lowest-priority `builtin` one; an extension's (the vendor build's
+    # website) outranks it and brings its own routes through reg.routers.
+    from app.ext import PublicRoute
+    from app.home import routes as home_routes
+    from app.home.provider import WelcomePage
 
-    app.include_router(landing_routes.router)
+    app.include_router(home_routes.router)
+    reg.home_providers.append(WelcomePage())
+    # Public, and a cacheable document whatever answers: no CSRF cookie.
+    reg.public_routes.extend(
+        PublicRoute("GET", p, mint_csrf=False) for p in ("/", "/_landing", "/robots.txt")
+    )
 
-    # Unknown website paths get the site's own HTML 404 (when the website is
-    # on); everything else, the API included, keeps FastAPI's JSON body.
+    from app.help import routes as help_routes
+
+    app.include_router(help_routes.router)
+
+    # Unknown paths get the active home provider's HTML 404 (when the mode is
+    # not off); everything else, the API included, keeps FastAPI's JSON body.
     from fastapi.exception_handlers import http_exception_handler
     from starlette.exceptions import HTTPException as StarletteHTTPException
     from starlette.responses import Response
@@ -745,7 +767,7 @@ def build_app() -> FastAPI:
     async def _site_404(request: Request, exc: Exception) -> Response:
         assert isinstance(exc, StarletteHTTPException)
         if exc.status_code == 404:
-            page = await landing_routes.not_found_response(request)
+            page = await home_routes.not_found_response(request)
             if page is not None:
                 return page
         return await http_exception_handler(request, exc)
@@ -891,6 +913,10 @@ def build_app() -> FastAPI:
     # After every route exists: the bearer scheme and the public exemptions are
     # computed from the mounted routes.
     openapi_spec.install_openapi(app)
+
+    # Extension routers go in before the /v1 catch-all check below.
+    for ext_router in reg.routers:
+        app.include_router(ext_router)
 
     # #287: the /v1 catch-all must stay the last /v1 route. Cheap guard, logs only.
     shadowed = proxy_routes_messages.find_routes_after_catch_all(app)

@@ -79,8 +79,9 @@ describe('settings tab membership — restart-kind contracts', () => {
     expect(RUNTIME_HINTS.public_url.restart).toBe('none');
   });
 
-  it('landing_page_enabled restart kind is "none"', () => {
-    expect(RUNTIME_HINTS.landing_page_enabled.restart).toBe('none');
+  it('home_page_mode and home_page_off_action restart kind is "none"', () => {
+    expect(RUNTIME_HINTS.home_page_mode.restart).toBe('none');
+    expect(RUNTIME_HINTS.home_page_off_action.restart).toBe('none');
   });
 
   it('session_access_ttl_minutes restart kind is "warden-restart"', () => {

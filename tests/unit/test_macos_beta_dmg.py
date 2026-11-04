@@ -104,6 +104,10 @@ def _recipe(target: str) -> str:
 
 
 def _ci() -> dict:
+    if not CI_FILE.is_file():
+        # The public (GitHub) tree carries no CI config (publish/exclude.txt):
+        # the job checks below are about the internal pipeline only.
+        pytest.skip(".gitlab-ci.yml is not in this tree (public snapshot)")
     doc = yaml.safe_load(CI_FILE.read_text(encoding="utf-8"))
     assert isinstance(doc, dict)
     return doc
@@ -318,6 +322,8 @@ def test_stable_jobs_never_touch_the_beta() -> None:
 
 
 def test_beta_surfaces_never_mention_the_feed_outside_comments() -> None:
+    if not PUBLISH.is_file():
+        pytest.skip("publish/ is not in this tree (public snapshot)")
     surfaces = {
         "make macos-beta-dmg": _recipe("macos-beta-dmg"),
         "beta-dmg-seal.sh": SEAL.read_text(encoding="utf-8"),

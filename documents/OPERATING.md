@@ -86,32 +86,19 @@ this Mac only until you turn on **Share on Local Network**.
 [MACOS-REMOTE-ACCESS.md](MACOS-REMOTE-ACCESS.md) covers what it listens on, what
 sharing changes, and putting Caddy or Tailscale HTTPS in front of it.
 
-**The page at `/`.** A new install opens the console at `/`: the public
-website (LM Warden's own product site: home, coding agents, agent tuning,
-features, FAQ, with its assets under `/_landing/assets/` and a `/robots.txt`,
-`/llms.txt`, `/llms-full.txt` and `/agent-guide.md`) is **off by default**.
-Turn it on with **Settings → Networking → Public website** only on an
-instance that should promote LM Warden. Installs that had it on before this
-default changed keep it on. While it is off, `/` redirects to `/ui/`, every
-website route 404s except `robots.txt`, which stays disallow-all. Even when
-on, the site is private by default: every page is marked `noindex` and
-`robots.txt` disallows everything. Only if this instance should be found by
-search engines, set
-`VW_LANDING_CANONICAL_URL` in `.env` to its public origin, e.g.
-`VW_LANDING_CANONICAL_URL=https://llm.example.com`, and re-run `./install.sh`
-or `make restart`: the page then carries a canonical link and `index,follow`,
-and `robots.txt` points at a `/sitemap.xml`. A value with a path, query or
-credentials is ignored rather than half-applied.
+**The page at `/`.** **Settings → Networking → Home page** decides what the
+address of the warden shows. **Built-in** (where a new install starts) is a
+short welcome page that links to the console: no scripts, nothing loaded from
+elsewhere, marked `noindex`. **Off** shows no page, and `/` answers with the
+option below it: open the console (a redirect to `/ui/`) or a plain 404.
+Existing installs keep what they showed before. `robots.txt` disallows
+everything either way, and `/agent-guide.md` is served regardless.
 
-**Website analytics.** **Settings → Networking → Website analytics** takes a
-Google Analytics 4 measurement ID (`G-…`), an optional Google Ads tag ID
-(`AW-…`) and a Search Console verification token. With an analytics or Ads ID
-set, every website page loads Google's tag with Consent Mode v2 (everything
-denied until the visitor accepts the cookie banner), a `/privacy` page
-appears, and the page's Content-Security-Policy allows exactly Google's
-origins. With none set, nothing loads from Google. Only a signed-in session
-can change these IDs, not an admin token. The console itself never loads
-Google's tag.
+LM Warden's own product website (home, coding agents, FAQ, the Mac download
+link, `llms.txt`) is not part of the app: it lives at
+[lmwarden.com](https://lmwarden.com). An install that used to have
+**Public website** switched on now shows the built-in welcome page, and the
+website's paths answer 404.
 
 ---
 

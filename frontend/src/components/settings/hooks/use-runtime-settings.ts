@@ -66,7 +66,8 @@ export type RuntimeKey =
   | "sse_ticket_ttl_seconds"
   | "vllm_version"
   | "log_retention_lines"
-  | "landing_page_enabled"
+  | "home_page_mode"
+  | "home_page_off_action"
   | "public_url"
   | "analytics_ga4_id"
   | "analytics_google_ads_id"
@@ -100,7 +101,8 @@ export interface Draft {
   sse_ticket_ttl_seconds: number | null;
   vllm_version: string;
   log_retention_lines: number | null;
-  landing_page_enabled: boolean;
+  home_page_mode: string;
+  home_page_off_action: string;
   public_url: string;
   analytics_ga4_id: string;
   analytics_google_ads_id: string;
@@ -165,7 +167,9 @@ function snapshotToDraft(s: RuntimeResponse): Draft {
     sse_ticket_ttl_seconds: parseNumber(s.sse_ticket_ttl_seconds),
     vllm_version: s.vllm_version ?? "",
     log_retention_lines: parseNumber(s.log_retention_lines),
-    landing_page_enabled: parseBool(s.landing_page_enabled, false),
+    // A missing row is the conservative one, like the backend's.
+    home_page_mode: s.home_page_mode ?? "off",
+    home_page_off_action: s.home_page_off_action ?? "console",
     public_url: s.public_url ?? "",
     analytics_ga4_id: s.analytics_ga4_id ?? "",
     analytics_google_ads_id: s.analytics_google_ads_id ?? "",

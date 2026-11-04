@@ -1,3 +1,22 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["@/ee", "@/ee/*", "**/ee", "**/ee/*", "@ee", "@ee/*"],
+            "message": "Only src/lib/extensions.ts may import the enterprise tree (@ee)."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/lib/extensions.ts", "src/ee/**/*"],
+      "rules": { "no-restricted-imports": "off" }
+    }
+  ]
 }

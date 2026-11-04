@@ -4,7 +4,7 @@ One published port. Caddy fans out to internal-only `api` and `ui` containers:
 
 | Path | Backend | Notes |
 |---|---|---|
-| `/` | FastAPI `/_landing` | Public website home when enabled (off by default); otherwise a redirect to `/ui/` |
+| `/` | FastAPI `/_landing` | The home page setting: the built-in welcome page, or (Off) a redirect to `/ui/` or a 404 |
 | `/ui/*` | Next.js | Browser UI |
 | `/api/*` | FastAPI | JWT-gated control plane |
 | `/v1/*` | FastAPI | OpenAI-compatible proxy (token-gated) |

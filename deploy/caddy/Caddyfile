@@ -6,17 +6,17 @@
 # and ui:3000 separately to the host.
 #
 # Routing map (see docs/superpowers/specs/2026-05-23-unified-port-architecture-design.md):
-#   GET /            → api:8080 /_landing   (public website home, gated by setting;
-#                                            redirects to /ui/ when the website is off)
-#   /_landing/*      → api:8080             (the landing page's video, images, fonts)
+#   GET /            → api:8080 /_landing   (the home page setting: welcome page, or
+#                                            a redirect to /ui/ or a 404 when off)
+#   /_landing/*      → api:8080             (home page assets; 404 in Community)
 #   /robots.txt, /sitemap.xml, /llms.txt, /llms-full.txt → api:8080
 #   /ui/*            → ui:3000              (Next.js basePath '/ui')
 #   /_next/*         → ui:3000              (safety net — Next emits /ui/_next under basePath)
 #   /api/*           → api:8080
 #   /v1/*            → api:8080             (OpenAI-compatible proxy, flush_interval -1 for SSE)
 #   /healthz         → api:8080
-#   anything else    → api:8080             (website pages such as /faq and
-#                                            /coding-agents/*, gated by setting; 404 otherwise)
+#   anything else    → api:8080             (404 in Community; builds that carry
+#                                            lmwarden.com's website serve its pages)
 #
 # Caddy auto-detects WebSocket Upgrade headers, so HMR (`/ui/_next/webpack-hmr`)
 # and the warden's SSE streams work without per-handler websocket directives.
@@ -53,9 +53,9 @@
 :8080 {
     encode gzip
 
-    # Static landing page — FastAPI gates by the `landing_page_enabled`
-    # setting. When opted out the warden returns 404, which Caddy propagates
-    # verbatim. Both the bare `/` and the canonical `/_landing` are public;
+    # Home page — FastAPI decides by the `home_page_mode` setting (welcome
+    # page, the website, or off: a redirect to /ui/ or a 404, which Caddy
+    # propagates verbatim). Both the bare `/` and the canonical `/_landing` are public;
     # the spec requires the smoke probe to hit both directly.
     handle / {
         reverse_proxy api:8080 {
@@ -67,16 +67,16 @@
         reverse_proxy api:8080
     }
 
-    # The landing page's own assets (video, screenshots, fonts). Served from
-    # a filename allowlist by the api with Range support and year-long
-    # immutable caching (URLs carry a content hash). Same setting gate.
+    # Home page assets. Nothing in the Community build serves this path (the
+    # welcome page is self-contained), so it answers 404 there; kept so a
+    # build whose home page has assets needs no Caddy change.
     handle /_landing/* {
         reverse_proxy api:8080
     }
 
-    # Crawler and language-model entry points. robots.txt is disallow-all
-    # unless VW_LANDING_CANONICAL_URL makes this instance indexable; the
-    # sitemap exists only then. See app/landing/routes.py.
+    # Crawler and language-model entry points. robots.txt is disallow-all in
+    # the Community build (app/home/routes.py); the other three answer 404
+    # there and exist only in the build that serves lmwarden.com's website.
     @landing_text path /robots.txt /sitemap.xml /llms.txt /llms-full.txt
     handle @landing_text {
         reverse_proxy api:8080
@@ -153,7 +153,7 @@
 
     # Everything no handler above claims goes to the api: the public
     # website's pages (/faq, /coding-agents/..., gated by
-    # landing_page_enabled) and its 404. New pages need no Caddy change.
+    # the home page mode) and its 404. New pages need no Caddy change.
     # /api/*, /v1/*, /ui* and the v1 bookmark redirects above keep priority.
     handle {
         reverse_proxy api:8080

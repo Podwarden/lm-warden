@@ -34,9 +34,11 @@ tar -xzf "$WORK/bundle.tgz" -C "$WORK/b" --strip-components=1 || { echo "could n
 # are excluded on both sides: a Hub install is not driven by this repo's
 # compose file and has no reason to carry them, so their absence is not drift.
 # scripts/check-env-contract.sh skips the same two for the same reason.
+# VW_LANDING_CANONICAL_URL is the vendor website package's setting (site/);
+# Hub installs are Community and never read it, so the Hub keeping it is not drift.
 names() {
   sed -n 's/^\(# \)\{0,1\}\([A-Z_][A-Z0-9_]*\)=.*/\2/p' "$1" \
-    | grep -vxE 'COMPOSE_PROJECT_NAME|COMPOSE_FILE' | sort -u
+    | grep -vxE 'COMPOSE_PROJECT_NAME|COMPOSE_FILE|VW_LANDING_CANONICAL_URL' | sort -u
 }
 value() { sed -n "s/^\(# \)\{0,1\}$2=\(.*\)$/\2/p" "$1" | head -1 | sed 's/[[:space:]]*#.*$//; s/[[:space:]]*$//'; }
 

@@ -3,3 +3,9 @@ node_modules
 .git
 README.md
 .env*.local
+# The Enterprise UI and its tests never enter the Community build context.
+# The Enterprise build (-f Dockerfile.ee) uses Dockerfile.ee.dockerignore,
+# which is this list without src/ee/. Keep the two in step
+# (tests/unit/test_publish_excludes.py checks it).
+src/ee/
+tests/ee/

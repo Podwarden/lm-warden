@@ -191,7 +191,40 @@ ENV NEXT_PUBLIC_VW_BUILD_VERSION=${VW_BUILD_VERSION} \
 # and #67 exist to prevent. Making the UI read its identity at runtime instead
 # would recover the 53-70 s, but that is a product change to how the version
 # banner works, not a build optimisation, and it belongs in its own MR.
-RUN mkdir -p public && npm run build
+# Editions split: community (default) builds against the empty src/ee-stub;
+# LM_EDITION=enterprise builds against src/ee. next.config.ts reads it.
+#
+# Which files are in the build context differs too. The Community build uses
+# this Dockerfile and frontend/.dockerignore, which drops src/ee/: the paid UI
+# is not even sent to the builder. The Enterprise build names
+# frontend/Dockerfile.ee, a symlink to this file, so BuildKit applies
+# Dockerfile.ee.dockerignore instead (the same list without src/ee/):
+#
+#   docker buildx build -f frontend/Dockerfile.ee \
+#     --build-arg LM_EDITION=enterprise frontend/
+#
+# Not a named build context over an empty `FROM scratch` stage: measured on
+# BuildKit (Docker 29), a build WITHOUT the named context reused the cached
+# COPY of a previous build WITH it -- the "empty" stage came back holding the
+# Enterprise files. Two ignore files keep both builds on the main context,
+# whose cache is keyed by content.
+#
+# The canary (src/ee/canary.ts) proves which tree was built, so it is checked
+# in the image build itself rather than trusted: a Community build that
+# carries it fails (the paid UI leaked in), and so does an Enterprise build
+# that lacks it (@ee silently resolved to the stub, or the build used the
+# Community ignore list). Any other LM_EDITION value is refused.
+ARG LM_EDITION=community
+ENV LM_EDITION=${LM_EDITION}
+RUN set -eu; \
+    case "$LM_EDITION" in \
+      community) mode= ;; \
+      enterprise) mode=--present ;; \
+      *) echo "FATAL: LM_EDITION must be community or enterprise, not '$LM_EDITION'" >&2; exit 1 ;; \
+    esac; \
+    mkdir -p public; \
+    npm run build; \
+    node scripts/check-ee-canary.mjs $mode .next
 
 FROM node:20-alpine AS runtime
 WORKDIR /app

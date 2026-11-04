@@ -87,7 +87,8 @@ async def test_migrations_idempotent(tmp_data_dir):
         # (sessions pages: session/conversation/shape/toolset/relay columns, toolsets, tool names) + 0054
         # (prompt diet: api_tokens.prompt_diet, request_history.prompt_diet) + 0055 (guard: api_tokens.guard,
         # request_history.guard, guard_events) + 0056 (auth_sessions: sign-ins that can end).
-        assert count == 55
+        # + 0057 (home_page_mode, home_page_off_action).
+        assert count == 56
 
 
 async def test_migrations_create_all_v2_tables(tmp_data_dir):

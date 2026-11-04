@@ -71,11 +71,8 @@ def test_an_all_https_origin_allowlist_means_https(client):
 
 
 def test_a_routes_own_header_wins(client, tmp_data_dir):
-    # The landing page ships its own CSP; the api default must not replace it.
-    # The website is off on a new install (spec 2026-10-07 §9): turn it on.
-    from tests.unit.landing.conftest import enable_site
-
-    enable_site(tmp_data_dir)
+    # Core's welcome page (the home page of a new install, home_page_mode
+    # builtin) ships its own CSP; the api default must not replace it.
     r = client.get("/_landing")
     assert r.status_code == 200
     assert r.headers["content-security-policy"] != API_CSP

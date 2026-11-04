@@ -9,7 +9,7 @@ Reads assets/bench/dp-affinity-ab.json (the A/B data file, `null` until measured
              D2 (the mechanism drawing) and T2 (the issue #286 table) need no A/B data
              and are always written.
   --fill     render, then substitute `{{SLOT:<path>}}` in the shipped surfaces (README.md,
-             documents/ROUTING.md, app/landing/*); refuses, touching nothing, while any
+             documents/ROUTING.md, and the website package's copy when site/ is present); refuses, touching nothing, while any
              value is null or any slot is unknown.
 
 Filling the numbers after the live A/B is one command. Pass the two load-test run
@@ -56,14 +56,25 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_DATA = "assets/bench/dp-affinity-ab.json"
-SURFACES = (
-    "README.md",
-    "documents/ROUTING.md",
-    "app/landing/landing.html",
-    "app/landing/faq.json",
-    "app/landing/llms.txt",
-    "app/landing/llms-full.txt",
-)
+CORE_SURFACES = ("README.md", "documents/ROUTING.md")
+# The website (site/, vendor build only) is not in the public tree, so its
+# copies are optional and found by shape (the one package under site/ with a
+# figures/ directory) rather than by name: the script runs the same with or
+# without it.
+SITE_SURFACES = ("landing.html", "faq.json", "llms.txt", "llms-full.txt")
+
+
+def site_pkg(root: Path) -> str | None:
+    """`site/<package>` relative to root, or None when the website is absent."""
+    found = sorted(p.parent for p in root.glob("site/*/figures") if p.is_dir())
+    return found[0].relative_to(root).as_posix() if found else None
+
+
+def surfaces(root: Path) -> tuple[str, ...]:
+    pkg = site_pkg(root)
+    return CORE_SURFACES + (tuple(f"{pkg}/{n}" for n in SITE_SURFACES) if pkg else ())
+
+
 SLOT_RE = re.compile(r"\{\{SLOT:([^}]+)\}\}")
 ARROW = " → "
 STATIC_FIELDS = {"route", "status"}  # fixed by the schema; a smoke case must agree
@@ -864,14 +875,17 @@ def render(root: Path, data: dict, complete: bool) -> list[str]:
     written: list[str] = []
     for t in FILE_THEMES:
         written.append(_w(root, f"assets/diagrams/replica-affinity-{t.name}.svg", diagram_d2(t)))
-    written.append(_w(root, "app/landing/figures/d2.svg", diagram_d2(TOKENS)))
-    written.append(_w(root, "app/landing/figures/d2-narrow.svg", diagram_d2(TOKENS, NARROW)))
+    pkg = site_pkg(root)
+    fig = f"{pkg}/figures" if pkg else None
+    if fig:
+        written.append(_w(root, f"{fig}/d2.svg", diagram_d2(TOKENS)))
+        written.append(_w(root, f"{fig}/d2-narrow.svg", diagram_d2(TOKENS, NARROW)))
     h, rows = t2_rows(data)
     written.append(_w(root, "assets/bench/t2-before-7gpu.md", md_table(h, rows)))
     charts = (
-        ("c1-ttfb", "app/landing/figures/c1.svg", chart_c1, "Time to first byte"),
-        ("c2-busy", "app/landing/figures/c2.svg", chart_c2, "Replicas busy"),
-        ("c3-hits", "app/landing/figures/c3.svg", chart_c3, "Prefix-cache hit rate"),
+        ("c1-ttfb", fig and f"{fig}/c1.svg", chart_c1, "Time to first byte"),
+        ("c2-busy", fig and f"{fig}/c2.svg", chart_c2, "Replicas busy"),
+        ("c3-hits", fig and f"{fig}/c3.svg", chart_c3, "Prefix-cache hit rate"),
         ("c4-tasks", None, chart_c4, "Completed agent tasks per hour"),
     )
     for name, landing, fn, title in charts:
@@ -892,9 +906,8 @@ def render(root: Path, data: dict, complete: bool) -> list[str]:
             )
     if complete:
         written.append(_w(root, "assets/bench/t1-ramp.md", md_table(T1_HEAD, t1_rows(data))))
-        written.append(
-            _w(root, "app/landing/figures/t1-ramp.html", html_table(T1_HEAD, t1_rows(data)))
-        )
+        if fig:
+            written.append(_w(root, f"{fig}/t1-ramp.html", html_table(T1_HEAD, t1_rows(data))))
         written.append(
             _w(root, "assets/bench/t3-router-smoke.md", md_table(T3_HEAD, t3_rows(data)))
         )
@@ -904,7 +917,7 @@ def render(root: Path, data: dict, complete: bool) -> list[str]:
 def fill(root: Path, data: dict) -> list[str]:
     """Resolve every slot first; write only if all resolve (all or nothing)."""
     new: dict[str, str] = {}
-    for rel in SURFACES:
+    for rel in surfaces(root):
         p = root / rel
         if not p.exists():
             continue
@@ -917,7 +930,9 @@ def fill(root: Path, data: dict) -> list[str]:
 
 
 def surfaces_with_slots(root: Path) -> list[str]:
-    return [r for r in SURFACES if (root / r).exists() and SLOT_RE.search((root / r).read_text())]
+    return [
+        r for r in surfaces(root) if (root / r).exists() and SLOT_RE.search((root / r).read_text())
+    ]
 
 
 def main(argv: list[str] | None = None) -> int:

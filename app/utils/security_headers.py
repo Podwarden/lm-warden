@@ -15,9 +15,9 @@ frontend/next.config.ts (frontend/src/lib/security-headers.ts).
 * ``Permissions-Policy`` -- none of the powerful browser features is used.
 * ``Content-Security-Policy: default-src 'none'; frame-ancestors 'none';
   sandbox`` -- api responses are JSON, SSE, text or media, never a page that
-  should run anything, so a response opened directly in a tab is inert. The
-  landing page sets its own, real policy (app/landing/routes.py) and a route's
-  own header always wins over these defaults.
+  should run anything, so a response opened directly in a tab is inert. A
+  page that runs (core's welcome page, an extension's website) sets its own,
+  real policy, and a route's own header always wins over these defaults.
 * ``Strict-Transport-Security: max-age=31536000`` -- only when the request
   reached us over HTTPS as the browser saw it, derived exactly like the
   session cookie's Secure flag (app/auth/cookies.py::cookie_secure). A

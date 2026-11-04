@@ -8,7 +8,7 @@ import { setAccessToken, setCsrfToken } from '@/lib/auth-fetch';
 // NetworkingTab tests — pin the #154-new behaviours that are specific to
 // this tab and not covered by the page-level settings.test.tsx wiring tests:
 //
-//   1. Both Public-access fields render (public_url + landing_page_enabled).
+//   1. Both Public-access fields render (public_url + the home page control).
 //   2. Submitting a valid public_url with a trailing slash strips the slash
 //      in the rendered value after the backend echoes back its canonical
 //      form (round-trip; the helper itself is unit-tested separately).
@@ -39,7 +39,8 @@ function fakeRuntime(overrides: Record<string, string | null> = {}): Record<stri
     sse_ticket_ttl_seconds: '60',
     vllm_version: '0.9.2',
     log_retention_lines: '5000',
-    landing_page_enabled: 'true',
+    home_page_mode: 'builtin',
+    home_page_off_action: 'console',
     public_url: '',
     analytics_ga4_id: '',
     analytics_google_ads_id: '',
@@ -71,7 +72,7 @@ describe('NetworkingTab', () => {
     vi.unstubAllGlobals();
   });
 
-  it('renders Public-access section with public_url + landing_page_enabled', async () => {
+  it('renders Public-access section with public_url + the home page control', async () => {
     const fetchMock = mockFetch({
       'GET /api/settings/runtime': () =>
         new Response(JSON.stringify(fakeRuntime()), { status: 200 }),
@@ -85,7 +86,7 @@ describe('NetworkingTab', () => {
 
     expect(await screen.findByText(/^Public access$/)).toBeInTheDocument();
     expect(screen.getByText('Public URL')).toBeInTheDocument();
-    expect(screen.getByText('Public website')).toBeInTheDocument();
+    expect(screen.getByText('Home page')).toBeInTheDocument();
   });
 
   it('sends the entered URL (server canonicalises) in the PATCH body', async () => {
@@ -175,7 +176,10 @@ describe('NetworkingTab: Website analytics section', () => {
   });
 
   it('renders the three tracking fields under their own heading', async () => {
+    // Gated on the site.analytics feature (GET /api/edition); see extensions.test.tsx.
     vi.stubGlobal('fetch', mockFetch({
+      'GET /api/edition': () =>
+        new Response(JSON.stringify({ edition: 'enterprise', features: ['site.analytics'], load_errors: [] }), { status: 200 }),
       'GET /api/settings/runtime': () =>
         new Response(JSON.stringify(fakeRuntime()), { status: 200 }),
     }));

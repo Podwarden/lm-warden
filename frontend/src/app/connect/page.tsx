@@ -50,6 +50,13 @@ const HEAD_LINK = cn(
   FOCUS,
 );
 
+const HELP_BASE = "https://github.com/Podwarden/lm-warden/blob/main/documents";
+const HELP_LINKS = [
+  { file: "CODING-AGENTS.md", label: "Help: coding agents" },
+  { file: "API-KEYS.md", label: "Help: API keys" },
+  { file: "AGENT-TUNING.md", label: "Help: agent tuning" },
+] as const;
+
 function hrefFor(tool: string, mode?: string | null): string {
   const q = new URLSearchParams({ tool });
   if (mode) q.set("mode", mode);
@@ -264,6 +271,11 @@ function ConnectView() {
           <Link href="/router" className={HEAD_LINK}>
             Router →
           </Link>
+          {HELP_LINKS.map((h) => (
+            <a key={h.file} href={`${HELP_BASE}/${h.file}`} target="_blank" rel="noopener noreferrer" className={HEAD_LINK}>
+              {h.label} ↗
+            </a>
+          ))}
         </div>
       </div>
 

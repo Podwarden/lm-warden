@@ -123,6 +123,22 @@ describe('Connect page', () => {
     expect(within(panel).getByRole('heading', { level: 2 })).toHaveTextContent('Claude Code');
   });
 
+  it('links the three help documents on GitHub', async () => {
+    stubFetch(routes());
+    renderPage();
+    await ready();
+    const base = 'https://github.com/Podwarden/lm-warden/blob/main/documents';
+    for (const [name, file] of [
+      [/coding agents/i, 'CODING-AGENTS.md'],
+      [/API keys/i, 'API-KEYS.md'],
+      [/agent tuning/i, 'AGENT-TUNING.md'],
+    ] as const) {
+      const a = screen.getByRole('link', { name: new RegExp(`^Help: ${name.source}`, 'i') });
+      expect(a).toHaveAttribute('href', `${base}/${file}`);
+      expect(a).toHaveAttribute('rel', expect.stringContaining('noopener'));
+    }
+  });
+
   it('?tool=opencode selects it; arrow keys move the selection and mirror the URL with replace', async () => {
     nav.params = new URLSearchParams('tool=opencode');
     stubFetch(routes());

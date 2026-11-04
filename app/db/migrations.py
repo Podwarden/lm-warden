@@ -148,6 +148,16 @@ async def apply_migrations(db: aiosqlite.Connection) -> None:
     cur = await db.execute("SELECT filename FROM schema_migrations")
     applied = {row[0] for row in await cur.fetchall()}
 
+    # Tell the migrations whether this is a brand-new database: no row was
+    # recorded before this call. A fresh DB runs every file in one batch, so SQL
+    # alone cannot tell "fresh" from "upgraded" once the earlier files have
+    # inserted their rows. Files may read ``temp.migration_context.fresh``
+    # (0057 seeds a different home page mode for each).
+    await db.execute("DROP TABLE IF EXISTS temp.migration_context")
+    await db.execute("CREATE TEMP TABLE migration_context (fresh INTEGER NOT NULL)")
+    await db.execute("INSERT INTO temp.migration_context(fresh) VALUES (?)", (0 if applied else 1,))
+    await db.commit()
+
     files = sorted(p for p in SQL_DIR.glob("*.sql"))
     for path in files:
         if path.name in applied:

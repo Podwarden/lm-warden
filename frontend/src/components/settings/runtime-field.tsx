@@ -159,16 +159,6 @@ export function RuntimeField({
           disabled={disabled}
         />
       );
-    case "landing_page_enabled":
-      return (
-        <SettingField
-          kind="boolean"
-          field={hint}
-          value={draft.landing_page_enabled}
-          onChange={(v) => setField("landing_page_enabled", v)}
-          disabled={disabled}
-        />
-      );
     case "watchdog_enabled":
       return (
         <SettingField

@@ -9,6 +9,8 @@ import { MaintenanceTab } from "@/components/settings/maintenance-tab";
 import { ModelTab } from "@/components/settings/model-tab";
 import { AdminTokensTab } from "@/components/settings/admin-tokens-tab";
 import { GuardPlatformTab } from "@/components/settings/guard-tab";
+import ee from "@/lib/extensions";
+import { useEdition, hasFeature } from "@/lib/edition";
 
 // ---------------------------------------------------------------------------
 // Settings — six-tab shell (#154)
@@ -27,16 +29,7 @@ import { GuardPlatformTab } from "@/components/settings/guard-tab";
 // one /api/settings/runtime fetch per page load.
 // ---------------------------------------------------------------------------
 
-type TabId =
-  | "general"
-  | "networking"
-  | "sessions"
-  | "maintenance"
-  | "model"
-  | "admin-tokens"
-  | "guard";
-
-const TABS: { id: TabId; label: string }[] = [
+const CORE_TABS: { id: string; label: string }[] = [
   { id: "general", label: "General" },
   { id: "networking", label: "Networking" },
   { id: "sessions", label: "Sessions & Tokens" },
@@ -49,15 +42,19 @@ const TABS: { id: TabId; label: string }[] = [
 export default function SettingsPage() {
   // Default to General — first port of call for fresh installs
   // (admin credentials, HF token, default GPU indices).
-  const [activeTab, setActiveTab] = useState<TabId>("general");
+  const [activeTab, setActiveTab] = useState<string>("general");
+  const edition = useEdition();
+  const eeTabs = ee.settingsTabs.filter((t) => hasFeature(edition, t.feature));
+  const tabs = [...CORE_TABS, ...eeTabs];
+  const EeTab = eeTabs.find((t) => t.id === activeTab)?.Component;
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">Settings</h1>
       <Tabs
-        tabs={TABS}
+        tabs={tabs}
         activeTab={activeTab}
-        onTabChange={(id) => setActiveTab(id as TabId)}
+        onTabChange={(id) => setActiveTab(id)}
       >
         {activeTab === "general" && <GeneralTab />}
         {activeTab === "networking" && <NetworkingTab />}
@@ -66,6 +63,7 @@ export default function SettingsPage() {
         {activeTab === "model" && <ModelTab />}
         {activeTab === "admin-tokens" && <AdminTokensTab />}
         {activeTab === "guard" && <GuardPlatformTab />}
+        {EeTab && <EeTab />}
       </Tabs>
     </div>
   );

@@ -397,8 +397,9 @@ GET /healthz        -> 200
 smoke OK
 ```
 
-With the public website off (the default on a new install), `/` and
-`/_landing` redirect to the console, so they also end in 200.
+A new install shows the built-in welcome page at `/` and `/_landing`. With
+the home page set to Off they redirect to the console, so they end in 200
+too (unless Off is set to answer 404).
 
 and
 

@@ -8,7 +8,7 @@ from starlette.responses import Response
 
 from app.auth.bearer import ADMIN_TOKEN_PREFIX, parse_bearer_header
 from app.auth.cookies import cookie_secure
-from app.landing.pages import PUBLIC_PAGE_PATHS
+from app.auth.public_routes import mints_csrf
 
 
 def generate_csrf_token(session_id: str, *, secret: str) -> str:
@@ -29,31 +29,14 @@ def verify_csrf_token(token: str, session_id: str, *, secret: str) -> bool:
 _CSRF_COOKIE = "vw_csrf_id"
 _SESSION_COOKIE = "vw_session"
 
-# The public landing page and its companions (app/landing/routes.py) never
-# carry a form or a mutating call, so an anonymous visitor there gets no
-# cookie. Minting one made every response -- including the year-long
-# immutable video and image assets -- carry Set-Cookie, which a CDN in front
-# of a public instance treats as "do not cache", and handed a cookie to every
-# ad click that never goes near the console. The UI mints its own through
-# /api/csrf.
-_NO_MINT_PATHS = frozenset(
-    {
-        "/_landing",
-        "/robots.txt",
-        "/sitemap.xml",
-        "/llms.txt",
-        "/llms-full.txt",
-        "/agent-guide.md",
-        "/download/mac",
-        "/download/mac.sha256",
-    }
-    | PUBLIC_PAGE_PATHS
-)
-_NO_MINT_PREFIXES = ("/_landing/", "/coding-agents/")
-
-
-def _mints_cookie(path: str) -> bool:
-    return path not in _NO_MINT_PATHS and not path.startswith(_NO_MINT_PREFIXES)
+# Public pages and static documents (the website, /agent-guide.md) never carry
+# a form or a mutating call, so an anonymous visitor there gets no cookie.
+# Minting one made every response -- including the year-long immutable video
+# and image assets -- carry Set-Cookie, which a CDN in front of a public
+# instance treats as "do not cache", and handed a cookie to every ad click
+# that never goes near the console. The UI mints its own through /api/csrf.
+# Which paths those are is registered (app/auth/public_routes.py: PublicRoute
+# with mint_csrf=False), not listed here.
 
 
 async def ensure_csrf_id(request: Request, call_next) -> Response:
@@ -78,7 +61,7 @@ async def ensure_csrf_id(request: Request, call_next) -> Response:
 
     response: Response = await call_next(request)
 
-    if minted_new and _mints_cookie(request.url.path):
+    if minted_new and mints_csrf(request.app, request.url.path):
         # Same derivation as the refresh cookie (app/auth/cookies.py). These
         # two used to disagree -- refresh hardcoded Secure, this one hardcoded
         # not-Secure -- so on the documented plain-HTTP quick start the

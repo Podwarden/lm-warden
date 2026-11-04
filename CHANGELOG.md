@@ -7,6 +7,25 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.11.04.4] — 2026-11-04
+
+### Added
+
+- **API (additive):** `GET /api/edition` (admin) reports the edition and its feature ids, and any extension that failed to load.
+
+### Changed
+
+- **New installs open a welcome page.** The address of a fresh install now shows a short LM Warden welcome page that links to the console; Settings, Networking has a Home page choice (Off or Built-in) and what Off answers (the console, or a plain 404). Existing installs keep exactly what they showed before.
+- **The product website is no longer part of the app.** LM Warden's own website (home, coding-agent pages, FAQ, `llms.txt`, the sitemap, the Mac download link, website analytics) now lives only at https://lmwarden.com. An install that had Public website switched on shows the built-in welcome page at `/`, and the website's paths answer 404. `VW_LANDING_CANONICAL_URL` is gone from `.env.example` and the generated compose file; the app no longer reads it.
+- **API (changed):** runtime settings `landing_page_enabled` and the three website tracking keys (`analytics_ga4_id`, `analytics_google_ads_id`, `search_console_verification`) are gone (PATCH /api/settings/runtime answers 400 `unknown keys`); `home_page_mode` (`off`|`builtin`) and `home_page_off_action` (`console`|`404`) replace the first.
+- **Agent help now ships with the app.** `/agent-guide.md` is served by every install in every home page mode, and the coding-agent, API-key and agent-tuning help lives in `documents/` with Help links on the Connect page.
+
+## [v2026.11.04.3] — 2026-11-04
+
+### Fixed
+
+- **The home page numbers all eight problems.** The ladder showed four of the eight the heading promises; the other four sections are now marked 5 to 8 of 8 and linked from under the ladder. The use-case carousel already links to all eight, coding agents included.
+
 ## [v2026.11.04.2] — 2026-11-04
 
 ### Fixed

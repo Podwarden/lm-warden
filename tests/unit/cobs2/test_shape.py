@@ -3,6 +3,8 @@
 import json
 from typing import Any
 
+import pytest
+
 from app.cobs2.canonical import canonicalize
 from app.cobs2.lineage import Observation
 from app.cobs2.shape import SHAPE_MAX_BYTES, break_index, shape_json, shape_of, toolset_of
@@ -199,6 +201,7 @@ def _big_body(n):
     return {"messages": msgs}
 
 
+@pytest.mark.perf
 def test_dead_weight_hot_path_cost():
     c, ids = _dw(_big_body(400))
     t0 = time.perf_counter()

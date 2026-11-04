@@ -768,8 +768,6 @@ write_override() {
     echo "      VW_TRUST_PROXY_ORIGIN: \"\${VW_TRUST_PROXY_ORIGIN:-0}\""
     # Blank = trust loopback + private-range peers' X-Forwarded-For.
     echo "      VW_TRUSTED_PROXIES: \"\${VW_TRUSTED_PROXIES:-}\""
-    # Blank = the landing page stays noindex (the default for every install).
-    echo "      VW_LANDING_CANONICAL_URL: \"\${VW_LANDING_CANONICAL_URL:-}\""
     echo "      VW_CONTAINER_GPU_COUNT: \"\${VW_CONTAINER_GPU_COUNT:-$_sel}\""
     echo "      VW_LOAD_TIMEOUT_S: \"\${VW_LOAD_TIMEOUT_S:-600.0}\""
     echo "      VW_WARMUP_PROBE_TIMEOUT_S: \"\${VW_WARMUP_PROBE_TIMEOUT_S:-600.0}\""

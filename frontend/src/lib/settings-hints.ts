@@ -76,9 +76,14 @@ export const RUNTIME_HINTS: Record<string, FieldHint> = {
     hint: 'Per-model log buffer size kept in memory + on disk. Applied to new lines after change.',
     restart: 'none',
   },
-  landing_page_enabled: {
-    label: 'Public website',
-    hint: 'Serves the LM Warden product website (home, coding agents, FAQ and the rest) at the root of this warden. Off by default: a private install opens the console at `/`. Turn it on only for a public instance that should promote LM Warden; set VW_LANDING_CANONICAL_URL as well to let search engines index it.',
+  home_page_mode: {
+    label: 'Home page',
+    hint: 'What the address of this warden (`/`) shows. Built-in: a short welcome page that links to the console. Off: no page; the root follows the option below. New installs start on Built-in; existing installs keep what they had.',
+    restart: 'none',
+  },
+  home_page_off_action: {
+    label: 'When the home page is off',
+    hint: 'What `/` answers while the home page is Off: open the console, or a plain 404.',
     restart: 'none',
   },
   watchdog_enabled: {
@@ -158,7 +163,9 @@ export const RUNTIME_GENERAL_KEYS = [
 export const RUNTIME_NETWORKING_KEYS = [
   // Public access
   'public_url',
-  'landing_page_enabled',
+  // Home page (spec 2026-11-04): rendered by HomePageField, not RuntimeField.
+  'home_page_mode',
+  'home_page_off_action',
 ] as const;
 
 // Website analytics (spec 2026-10-07 §8): rendered as a second section of

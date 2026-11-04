@@ -12,7 +12,7 @@ a live view of what the hardware is doing.**
 [![Engines](https://img.shields.io/badge/engines-vLLM%200.32.0%20%C2%B7%20llama.cpp%20b11719%20%C2%B7%20MLX-4b8bbe.svg)](#two-engines-and-the-model-that-made-us-add-the-second)
 [![Deploy](https://img.shields.io/badge/deploy-Docker%20Compose%20%C2%B7%20Mac%20app-2496ed.svg)](documents/INSTALL.md)
 
-![LM Warden's Stats page under load, stepping through its 1 h, 6 h and 24 h windows: host VRAM, GPU utilisation, power draw and tokens per minute (23 September capture, before the panel switched to tokens per second)](app/landing/assets/demo-stats.gif)
+![LM Warden's Stats page under load, stepping through its 1 h, 6 h and 24 h windows: host VRAM, GPU utilisation, power draw and tokens per minute (23 September capture, before the panel switched to tokens per second)](assets/screenshots/demo-stats.gif)
 
 **Install it on Linux**: an x86_64 host with Docker, an NVIDIA GPU and the
 NVIDIA Container Toolkit:
@@ -393,7 +393,7 @@ line on someone's invoice.
   model-cache tarball are the entire transport, and `HF_HUB_OFFLINE=1` stops
   the stack contacting huggingface.co at all.
 
-![LM Warden requests chart: a week of requests plotted by duration, coloured by API key, sized by generated tokens and shaped by how each one finished](app/landing/assets/shot-requests-7d.webp)
+![LM Warden requests chart: a week of requests plotted by duration, coloured by API key, sized by generated tokens and shaped by how each one finished](assets/screenshots/shot-requests-7d.webp)
 
 <table>
 <tr>
@@ -485,7 +485,7 @@ and a model; the page writes the setup and checks the requirements it can see
 you create it here, since the warden keeps only hashes.</td>
 </tr>
 <tr>
-<td colspan="2"><img src="app/landing/assets/demo-token-poster.webp" alt="The god-mode dock open at the bottom of a key's page, live, replaying that key's recent requests and streaming a response as it is generated"><br>
+<td colspan="2"><img src="assets/screenshots/demo-token-poster.webp" alt="The god-mode dock open at the bottom of a key's page, live, replaying that key's recent requests and streaming a response as it is generated"><br>
 <b>God mode, one key at a time.</b> Open the dock at the bottom of a key's page to
 watch that key's prompts and responses as they happen, earlier keys included.
 Close it and the stream stops; nothing is watched in the background. Off by

@@ -121,6 +121,8 @@ def pending_data() -> dict:
 def repo(tmp_path, bf):
     """A scratch repo root: the shipped (null) data file plus one surface with slots."""
     (tmp_path / "assets" / "bench").mkdir(parents=True)
+    # The website package, found by shape (site/<pkg>/figures), not by name.
+    (tmp_path / "site" / "pkg" / "figures").mkdir(parents=True)
     (tmp_path / "assets" / "bench" / "dp-affinity-ab.json").write_text(json.dumps(pending_data()))
     (tmp_path / "README.md").write_text(
         "p95 {{SLOT:peak.off.ttfb_p95_s}} s to {{SLOT:peak.on.ttfb_p95_s}} s at {{SLOT:peak.workers}} workers; "
@@ -319,13 +321,13 @@ def test_fill_one_command_ingests_renders_and_resolves_every_slot(bf, repo, tmp_
             assert "pending" not in svg
             ET.fromstring(svg)
             assert "var(--" not in svg  # GitHub files carry literal colours
-    landing = (repo / "app/landing/figures/c1.svg").read_text()
+    landing = (repo / "site/pkg/figures/c1.svg").read_text()
     ET.fromstring(landing)
     assert "var(--ink)" in landing and "var(--ink-2)" in landing
     assert "4 → " not in landing
     t1 = (repo / "assets/bench/t1-ramp.md").read_text()
     assert "| 4 | 100" in t1 and "→" in t1
-    assert 'class="n"' in (repo / "app/landing/figures/t1-ramp.html").read_text()
+    assert 'class="n"' in (repo / "site/pkg/figures/t1-ramp.html").read_text()
 
 
 def test_filled_chart_uses_only_the_inks_and_the_two_validated_series(bf, tmp_path):
@@ -375,3 +377,13 @@ def test_fill_all_or_nothing_on_unknown_slot(bf, repo, tmp_path):
     with pytest.raises(bf.BenchError):
         bf.fill(repo, data)
     assert (repo / "README.md").read_text() == "{{SLOT:peak.workers}} {{SLOT:bogus.path}}\n"
+
+
+def test_render_without_the_website_writes_nothing_under_site(bf, repo):
+    """The public tree has no site/: the figures for it are skipped, not invented."""
+    import shutil
+
+    shutil.rmtree(repo / "site")
+    bf.main(["--root", str(repo), "--render"])
+    assert not (repo / "site").exists()
+    assert (repo / "assets/diagrams/replica-affinity-light.svg").is_file()

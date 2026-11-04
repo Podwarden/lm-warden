@@ -16,3 +16,8 @@ Dockerfile
 .gitlab-ci.yml
 README.md
 Makefile
+# The paid editions never enter the core (Community) image's context. They
+# are built as their own layers on top of it, each from its own directory:
+# ee/Dockerfile and site/Dockerfile.
+ee/
+site/

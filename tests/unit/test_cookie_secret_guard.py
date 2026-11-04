@@ -152,7 +152,11 @@ def test_no_compose_file_uses_colon_question_interpolation():
     then fails loudly — but a file in the repo must never carry one.
     """
     files = _candidate_files()
-    assert "docker-compose.yml" in files and ".gitlab-ci.yml" in files, (
+    # .gitlab-ci.yml only where it exists: the public snapshot carries none.
+    expected = {"docker-compose.yml"} | (
+        {".gitlab-ci.yml"} if (REPO_ROOT / ".gitlab-ci.yml").is_file() else set()
+    )
+    assert expected <= set(files), (
         "expected the repo's own compose/CI files among the working-tree "
         f"*.yml/*.yaml/compose files; got: {sorted(files)}"
     )

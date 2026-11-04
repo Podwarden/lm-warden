@@ -52,7 +52,8 @@ function fakeRuntime(overrides: Record<string, string | null> = {}): Record<stri
     sse_ticket_ttl_seconds: '60',
     vllm_version: '0.9.2',
     log_retention_lines: '5000',
-    landing_page_enabled: 'true',
+    home_page_mode: 'builtin',
+    home_page_off_action: 'console',
     public_url: '',
     ...overrides,
   };

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>LM Warden</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      /* podwarden.com retro-dark palette */
+      --bg: #020617;         /* slate-950 */
+      --fg: #f1f5f9;         /* slate-100 */
+      --muted: #94a3b8;      /* slate-400 */
+      --accent: #34d399;     /* emerald-400 */
+      --accent-hover: #6ee7b7; /* emerald-300 */
+      --border: #1e293b;     /* slate-800 */
+      --card-bg: #0b1220;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    a { color: inherit; }
+    header {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 1.5rem 1.5rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .wordmark {
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      font-size: 1rem;
+    }
+    .shield {
+      color: var(--accent);
+      width: 1.25rem;
+      height: 1.25rem;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: clamp(2.5rem, 8vh, 5.5rem) 1.5rem 4rem;
+    }
+    .hero { margin-bottom: 4rem; }
+    h1 {
+      margin: 0 0 1.25rem;
+      font-size: clamp(1.85rem, 4.5vw, 2.75rem);
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+      font-weight: 700;
+      max-width: 28ch;
+    }
+    .subtitle {
+      color: var(--muted);
+      margin: 0 0 2rem;
+      font-size: 1.0625rem;
+      max-width: 62ch;
+    }
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    a.btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.1rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: background-color 120ms ease, border-color 120ms ease,
+                  color 120ms ease, transform 120ms ease;
+      border: 1px solid transparent;
+    }
+    a.btn-primary {
+      background: var(--accent);
+      color: #022c22;
+    }
+    a.btn-primary:hover,
+    a.btn-primary:focus {
+      background: var(--accent-hover);
+      outline: none;
+      transform: translateY(-1px);
+    }
+    a.btn-secondary {
+      border-color: var(--border);
+      color: var(--fg);
+    }
+    a.btn-secondary:hover,
+    a.btn-secondary:focus {
+      border-color: var(--accent);
+      color: var(--accent);
+      outline: none;
+    }
+    .btn-icon {
+      width: 1.05rem;
+      height: 1.05rem;
+      display: inline-block;
+    }
+    section.features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      border-radius: 0.75rem;
+      padding: 1.25rem 1.25rem 1.4rem;
+      transition: border-color 160ms ease;
+    }
+    .card:hover { border-color: var(--accent); }
+    .card h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+    }
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+    footer {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer .spacer { flex: 1; }
+    footer a.icon-link {
+      display: inline-flex;
+      align-items: center;
+      color: var(--muted);
+      transition: color 120ms ease;
+    }
+    footer a.icon-link:hover,
+    footer a.icon-link:focus {
+      color: var(--accent);
+      outline: none;
+    }
+    footer .icon-link svg {
+      width: 1.1rem;
+      height: 1.1rem;
+    }
+    @media (max-width: 480px) {
+      .cta-row { flex-direction: column; align-items: stretch; }
+      a.btn { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <svg class="shield" aria-hidden="true" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round"
+         stroke-linejoin="round">
+      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+    </svg>
+    <span class="wordmark">LM Warden</span>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Self-host your own LLM API, with the operator surface you actually wanted.</h1>
+      <p class="subtitle">
+        LM Warden is the operator console for serving large language models
+        from a single GPU host. It manages model lifecycle, exposes an
+        OpenAI-compatible API at /v1, schedules across multiple GPUs, and
+        gives you per-consumer API tokens with priorities — all from one
+        self-hosted appliance, no external control plane.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/ui/">Open console</a>
+        <a class="btn btn-secondary"
+           href="https://github.com/Podwarden/lm-warden"
+           rel="noopener noreferrer">
+          <svg class="btn-icon" aria-hidden="true" viewBox="0 0 24 24"
+               fill="currentColor">
+            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+          </svg>
+          View on GitHub
+        </a>
+      </div>
+    </section>
+
+    <section class="features" aria-label="Capabilities">
+      <article class="card">
+        <h3>OpenAI-compatible /v1</h3>
+        <p>Drop-in for any client that already talks to OpenAI.</p>
+      </article>
+      <article class="card">
+        <h3>Multi-GPU scheduling</h3>
+        <p>Let LM Warden pick the right GPU for each model.</p>
+      </article>
+      <article class="card">
+        <h3>Per-consumer API tokens</h3>
+        <p>Per-consumer keys, scheduling priority, usage telemetry.</p>
+      </article>
+      <article class="card">
+        <h3>Single-node appliance</h3>
+        <p>One Docker compose stack, no external control plane.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    <a href="https://github.com/Podwarden/lm-warden/blob/main/LICENSE" rel="noopener noreferrer">Apache-2.0</a>
+    <span class="spacer"></span>
+    <a class="icon-link" href="https://github.com/Podwarden/lm-warden"
+       rel="noopener noreferrer" aria-label="GitHub repository">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+      </svg>
+    </a>
+    <a class="icon-link" href="https://podwarden.com"
+       rel="noopener noreferrer" aria-label="PodWarden">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round"
+           stroke-linejoin="round">
+        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+      </svg>
+    </a>
+  </footer>
+</body>
+</html>

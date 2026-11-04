@@ -40,12 +40,12 @@ from app.auth import deps
 from app.auth.policy import (
     FOREST_ROUTES,
     KEY_HOLDER_ROUTES,
-    PUBLIC_ROUTES,
     SESSION_ONLY_PREFIXES,
     SESSION_ONLY_ROUTES,
     is_inference,
     is_session_only,
 )
+from app.auth.public_routes import public_routes
 from app.models.routes_logs import require_sse_ticket
 from app.proxy.auth import require_bearer
 from app.stats.routes_forest import forest_viewer
@@ -88,14 +88,14 @@ def _guards(route: APIRoute) -> set[Callable[..., Any]]:
     return found
 
 
-def _bucket(method: str, path: str) -> str:
+def _bucket(app: FastAPI, method: str, path: str) -> str:
     if is_inference(method, path):
         return "inference"
     if (method, path) in KEY_HOLDER_ROUTES:
         return "key_holder"
     if is_session_only(method, path):
         return "session"
-    if (method, path) in PUBLIC_ROUTES:
+    if (method, path) in public_routes(app):
         return "public"
     return "admin"
 
@@ -168,7 +168,7 @@ def _misguarded(app: FastAPI) -> list[str]:
     wrong: list[str] = []
     for method, path, route in _endpoints(app):
         guards = _guards(route)
-        bucket = _bucket(method, path)
+        bucket = _bucket(app, method, path)
         if bucket == "inference":
             ok = guards == {require_bearer}
         elif bucket == "session":
@@ -190,7 +190,7 @@ def test_every_route_carries_the_guard_of_its_bucket(client: TestClient) -> None
     assert _misguarded(client.app) == []
     mounted = {(method, path) for method, path, _ in _endpoints(client.app)}
     assert SESSION_ONLY_ROUTES - mounted == set(), "SESSION_ONLY_ROUTES names unmounted routes"
-    assert PUBLIC_ROUTES - mounted == set(), "PUBLIC_ROUTES names unmounted routes"
+    assert public_routes(client.app) - mounted == set(), "a public route names an unmounted route"
 
 
 @pytest.mark.parametrize("prefix", SESSION_ONLY_PREFIXES)
@@ -225,7 +225,7 @@ def test_an_admin_token_opens_every_control_route_but_the_session_only_ones(
 ) -> None:
     wrong: list[str] = []
     for method, path, _ in _endpoints(client.app):
-        bucket = _bucket(method, path)
+        bucket = _bucket(client.app, method, path)
         if bucket == "public":
             continue
         r = _call(client, method, path, creds["admin"])
@@ -245,7 +245,7 @@ def test_an_admin_token_opens_every_control_route_but_the_session_only_ones(
 def test_a_session_opens_every_control_route(client: TestClient, creds) -> None:
     wrong: list[str] = []
     for method, path, route in _endpoints(client.app):
-        bucket = _bucket(method, path)
+        bucket = _bucket(client.app, method, path)
         if bucket == "public":
             continue
         r = _call(client, method, path, creds["session"])
@@ -267,7 +267,7 @@ def test_an_inference_token_is_refused_on_every_control_route(client: TestClient
     wrong: list[str] = []
     operator_routes = 0
     for method, path, route in _endpoints(client.app):
-        if _bucket(method, path) not in ("admin", "session", "key_holder"):
+        if _bucket(client.app, method, path) not in ("admin", "session", "key_holder"):
             continue
         r = _call(client, method, path, creds["inference"])
         if require_operator in _guards(route):
@@ -287,7 +287,7 @@ def test_no_credential_is_refused_everywhere_but_the_public_routes(
     wrong = [
         _line(method, path, r)
         for method, path, _ in _endpoints(client.app)
-        if _bucket(method, path) != "public"
+        if _bucket(client.app, method, path) != "public"
         for r in [_call(client, method, path, creds["none"])]
         if r.status_code != 401
     ]
@@ -298,7 +298,7 @@ def test_the_connect_catalogue_is_an_admin_route(client: TestClient) -> None:
     """GET /api/connect/clients (connect-clients plan §2): a session or an
     admin token, never an inference key and never anonymous -- it renders
     this warden's origin and rules, though never a key."""
-    assert _bucket("GET", "/api/connect/clients") == "admin"
+    assert _bucket(client.app, "GET", "/api/connect/clients") == "admin"
     route = next(
         r for m, p, r in _endpoints(client.app) if (m, p) == ("GET", "/api/connect/clients")
     )
@@ -311,7 +311,7 @@ def test_a_forest_token_opens_only_the_forest_routes(client: TestClient, creds) 
     wrong: list[str] = []
     forest_seen = set()
     for method, path, _ in _endpoints(client.app):
-        if _bucket(method, path) == "public":
+        if _bucket(client.app, method, path) == "public":
             continue
         r = _call(client, method, path, creds["forest"])
         if (method, path) in FOREST_ROUTES:

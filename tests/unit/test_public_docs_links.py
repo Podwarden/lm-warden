@@ -46,7 +46,7 @@ PUBLISHED_FILES: tuple[str, ...] = tuple(
     dict.fromkeys(
         ["README.md", "macos/README.md", ".github/CONTRIBUTING.md"]
         + _GLOBBED
-        + ["SECURITY.md", "CODE_OF_CONDUCT.md", "app/landing/agent-guide.md"]
+        + ["SECURITY.md", "CODE_OF_CONDUCT.md"]
     )
 )
 
@@ -118,4 +118,121 @@ def test_no_reference_to_internal_docs(rel: str) -> None:
     assert not offenders, (
         "published file references the internal docs/ tree (stripped from the "
         "public snapshot by publish/exclude.txt):\n  " + "\n  ".join(offenders)
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pages only the vendor build serves.
+#
+# The product website (home, feature pages, FAQ, /coding-agents/..., the Mac
+# download redirect, llms.txt, the sitemap) is served by the vendor build of
+# lmwarden.com, not by an LM Warden instance: the Community build answers 404
+# on every one of these paths (spec 2026-11-04). A published document may link
+# to them on https://lmwarden.com/..., never as a path on the reader's own
+# instance (a bare /download/mac, or http://localhost:8080/llms.txt).
+# ---------------------------------------------------------------------------
+
+#: First path segment of every page the vendor website serves.
+WEBSITE_ONLY_SEGMENTS = (
+    "coding-agents",
+    "agent-tuning",
+    "gpu-monitoring",
+    "cache-aware-routing",
+    "api-keys",
+    "features",
+    "faq",
+    "privacy",
+    "download",
+    "llms.txt",
+    "llms-full.txt",
+    "sitemap.xml",
+    "_landing",
+)
+_WEBSITE_ONLY = "|".join(re.escape(s) for s in WEBSITE_ONLY_SEGMENTS)
+
+#: A link target (Markdown ``](...)``, HTML ``href=``/``src=``) or a bare
+#: ``http(s)://`` URL whose path starts with a website-only segment, on any
+#: host but lmwarden.com, or with no host at all (instance-relative).
+WEBSITE_LINK = re.compile(
+    r"(?:\]\(|(?:href|src)=[\"']|(?<![\w/])(?=https?://))"
+    r"(?:https?://(?!(?:www\.)?lmwarden\.com[/:\"')\s])[^/\s\"')]+)?"
+    rf"/(?:(?:{_WEBSITE_ONLY})(?=[/\"')#?\s]|$))",
+    re.IGNORECASE,
+)
+
+WEBSITE_MATCHES = (
+    "[Mac](/download/mac)",
+    "[agents](/coding-agents/aider)",
+    '<a href="/llms.txt">',
+    "see http://localhost:8080/llms.txt for the index",
+    "[faq](https://my-instance.example/faq)",
+    "[x](/sitemap.xml)",
+)
+WEBSITE_NO_MATCH = (
+    "[Mac](https://lmwarden.com/download/mac)",
+    "[agents](https://lmwarden.com/coding-agents)",
+    "https://www.lmwarden.com/llms.txt",
+    "[install](documents/INSTALL.md#download)",
+    "[repo](https://github.com/Podwarden/lm-warden/releases/download/v1/x.dmg)",
+    "[api](/documents/API.md)",
+    "[anchor](#claude-code-and-coding-agents-on-your-gpus)",
+    "GET /api/keys returns",
+    "[ui](/ui/api-keys)",
+)
+
+#: README.md and the public documents, the files a reader follows links from.
+WEBSITE_GUARDED: tuple[str, ...] = ("README.md",) + tuple(
+    sorted(p.relative_to(REPO_ROOT).as_posix() for p in (REPO_ROOT / "documents").glob("*.md"))
+)
+
+
+def test_website_rule_separates_match_from_no_match() -> None:
+    for line in WEBSITE_MATCHES:
+        assert WEBSITE_LINK.search(line), f"should match the website-only rule: {line!r}"
+    for line in WEBSITE_NO_MATCH:
+        assert not WEBSITE_LINK.search(line), f"should NOT match the website-only rule: {line!r}"
+
+
+@pytest.mark.parametrize("rel", WEBSITE_GUARDED)
+def test_no_link_to_a_page_only_the_vendor_build_serves(rel: str) -> None:
+    text = (REPO_ROOT / rel).read_text(encoding="utf-8")
+    offenders = [
+        f"{rel}:{n}: {line.strip()}"
+        for n, line in enumerate(text.splitlines(), start=1)
+        if WEBSITE_LINK.search(line)
+    ]
+    assert not offenders, (
+        "published file links to a website page as a path on the reader's own "
+        "instance; the Community build does not serve it. Link to "
+        "https://lmwarden.com/... instead:\n  " + "\n  ".join(offenders)
+    )
+
+
+# Relative image and link targets in the README must resolve inside the public
+# tree. The README's screenshots used to live under the website's assets
+# (app/landing/assets/), which left core with the site split and is not in the
+# GitHub snapshot: a broken image on the repo's front page.
+_RELATIVE_TARGET = re.compile(r"(?:\]\(|(?:href|src)=\")(?!https?://|mailto:|#|/)([^)\"\s#?]+)")
+_NOT_PUBLIC = ("site/", "ee/", "docs/", "app/landing/", "frontend/src/ee/")
+
+
+# publish/stage.sh renames these on the way to GitHub. Compare against the
+# repo spelling: a case-insensitive macOS checkout would hide the mismatch,
+# Linux CI does not.
+_PUBLISH_RENAMES = {"CHANGELOG.md": "changelog.md"}
+
+
+def test_readme_relative_targets_exist_in_the_public_tree() -> None:
+    text = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    bad = []
+    for target in _RELATIVE_TARGET.findall(text):
+        target = target.removeprefix("./")
+        # Either spelling: the repo has the source name, a published stage the target.
+        exists = (REPO_ROOT / target).exists() or (
+            REPO_ROOT / _PUBLISH_RENAMES.get(target, target)
+        ).exists()
+        if target.startswith(_NOT_PUBLIC) or not exists:
+            bad.append(target)
+    assert not bad, "README.md points at files missing from the public tree:\n  " + "\n  ".join(
+        sorted(set(bad))
     )

@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { NextConfig } from 'next';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 import { securityHeaders } from './src/lib/security-headers';
@@ -9,6 +10,13 @@ import { securityHeaders } from './src/lib/security-headers';
 // leaves the keys out entirely; FastAPI's /ui mount sets the same security
 // headers there.
 const isExport = process.env.LMW_UI_EXPORT === '1';
+
+// Editions split: `@ee` resolves to src/ee/index.ts in an Enterprise build
+// (LM_EDITION=enterprise) and to the all-empty src/ee-stub/index.ts otherwise.
+// Only src/lib/extensions.ts imports it. Anything but exactly 'enterprise' is
+// community, so a typo can never pull the (possibly absent) ee tree in.
+const eeEntry =
+  process.env.LM_EDITION === 'enterprise' ? './src/ee/index.ts' : './src/ee-stub/index.ts';
 
 // An id segment that is not the literal `detail` page segment.
 const ID = ':id((?!detail/|detail$)[^/]+)';
@@ -40,6 +48,11 @@ const config: NextConfig = {
   experimental: {
     proxyTimeout: 600_000,
   },
+  webpack: (c) => {
+    c.resolve.alias['@ee'] = path.resolve(__dirname, eeEntry);
+    return c;
+  },
+  turbopack: { resolveAlias: { '@ee': eeEntry } },
   ...(isExport
     ? {
         output: 'export' as const,

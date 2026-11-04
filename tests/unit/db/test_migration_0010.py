@@ -28,6 +28,9 @@ EXPECTED_DEFAULTS = {
     # Seeded by 0020 for the #155 unified-port landing page; off on a new
     # install since 2026-10-07 (the public website is opt-in).
     "landing_page_enabled": "false",
+    # Seeded by 0057 (spec 2026-11-04): a fresh database opens the welcome page.
+    "home_page_mode": "builtin",
+    "home_page_off_action": "console",
 }
 
 

@@ -8,7 +8,7 @@ import sqlite3
 import pytest
 
 from app.settings.routes_api import SESSION_ONLY_RUNTIME_KEYS
-from tests.conftest import bearer, csrf_header, jwt_login, seed_admin_token
+from tests.conftest import FakeEntryPoint, bearer, csrf_header, jwt_login, seed_admin_token
 
 URL = "/api/settings/runtime"
 CHANGES = {
@@ -22,11 +22,8 @@ CHANGES = {
     # controls. https://proxy.example is a documented placeholder, not a
     # real attacker-controlled host.
     "public_url": "https://proxy.example",
-    # The website tracking IDs: a leaked token could send the public site's
-    # visitor data to a property its holder controls.
-    "analytics_ga4_id": "G-AB12CD34EF",
-    "analytics_google_ads_id": "AW-123456789",
-    "search_console_verification": "abcDEF123_-abcDEF123_-xyz",
+    # The website's tracking IDs are session-only too, as extension keys
+    # (SettingKey.session_only): the website package's own tests.
 }
 
 
@@ -72,3 +69,44 @@ def test_a_session_still_changes_the_password(client, seeded_db):
     r = client.patch(URL, json={"admin_password": "new-password"}, headers=session)
     assert r.status_code == 200, r.text
     assert "Authorization" in jwt_login(client, password="new-password")
+
+
+# --- Extension keys (SettingKey.session_only, spec 2026-11-04) ------------------
+
+
+def _register_ext_keys(reg) -> None:
+    from app.ext import SettingKey
+
+    reg.settings_keys.append(SettingKey("x_ext", "none", str, session_only=True))
+    reg.settings_keys.append(SettingKey("x_ext_open", "none", str))
+
+
+@pytest.fixture
+def ext_keys(ext_registry) -> None:
+    """Install a fake extension with one session-only key and one ordinary key
+    BEFORE the app is built (list this fixture before ``client``)."""
+    ext_registry(FakeEntryPoint("x", _register_ext_keys))
+
+
+def test_an_extensions_session_only_key_refuses_an_admin_token(ext_keys, client, seeded_db):
+    _, secret = seed_admin_token(seeded_db)
+    kv = _kv(seeded_db)
+    r = client.patch(URL, json={"x_ext": "v", "log_retention_lines": 777}, headers=bearer(secret))
+    assert r.status_code == 403, r.text
+    assert r.json()["detail"]["error_code"] == "session_only"
+    assert r.json()["detail"]["keys"] == ["x_ext"]
+    assert _kv(seeded_db) == kv
+
+
+def test_an_extensions_ordinary_key_is_open_to_an_admin_token(ext_keys, client, seeded_db):
+    _, secret = seed_admin_token(seeded_db)
+    r = client.patch(URL, json={"x_ext_open": "v"}, headers=bearer(secret))
+    assert r.status_code == 200, r.text
+    assert _kv(seeded_db)["x_ext_open"] == "v"
+
+
+def test_a_session_may_set_an_extensions_session_only_key(ext_keys, client, seeded_db):
+    session = {**jwt_login(client), **csrf_header(client)}
+    r = client.patch(URL, json={"x_ext": "v"}, headers=session)
+    assert r.status_code == 200, r.text
+    assert _kv(seeded_db)["x_ext"] == "v"

@@ -32,6 +32,7 @@ mounted under `/api/models/{model_id}/settings`.
 """
 
 import json
+import logging
 import re
 from collections.abc import Callable
 from dataclasses import asdict
@@ -47,16 +48,20 @@ from app.auth.principal import principal_of
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo
 from app.db.repos.settings import SettingsRepo
+from app.home import current_mode
 from app.models.policy import OPERATOR_FIELDS, TRISTATE_FIELDS
 from app.models.serialisation import thinking_policy_supported_for
 from app.models.writer import apply_model_change, refuse_session_to_set
-from app.settings.tracking_ids import ADS_ID_RE, GA4_ID_RE, GSC_TOKEN_RE
 from app.system.hf import validate_hf_token
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
 
-# (key, kind) where kind is one of "none" | "model-reload" | "warden-restart".
+# Core's keys; extensions add theirs through Registry.settings_keys, merged in
+# by _runtime_keys() / _coercers(). (key, kind) where kind is one of
+# "none" | "model-reload" | "warden-restart".
 # Drives both PATCH validation (unknown keys → 400) and the
 # requires_restart_kinds echo.
 RUNTIME_KEYS: dict[str, str] = {
@@ -71,18 +76,13 @@ RUNTIME_KEYS: dict[str, str] = {
     "sse_ticket_ttl_seconds": "none",
     "vllm_version": "warden-restart",
     "log_retention_lines": "none",
-    # #155 unified-port: public landing-page opt-out. Read on every
-    # /_landing request, so a flip takes effect immediately — no restart.
-    "landing_page_enabled": "none",
     # #154 settings redesign (subsumes #151): canonical externally-reachable
     # base URL. Read on every snippet render in the FE — no restart needed.
     # Absent row = "use window.location.origin" (FE-side fallback).
     "public_url": "none",
-    # Website tracking (spec 2026-10-07 §8). Read per request by
-    # app/landing/site.py, so a change shows on the next page view.
-    "analytics_ga4_id": "none",
-    "analytics_google_ads_id": "none",
-    "search_console_verification": "none",
+    # What the address shows (spec 2026-11-04): read per request, no restart.
+    "home_page_mode": "none",
+    "home_page_off_action": "none",
     # Engine watchdog (2026-08-17). Read from the KV on every tick, so a change
     # takes effect on the next pass -- no restart kind.
     "watchdog_enabled": "none",
@@ -91,6 +91,29 @@ RUNTIME_KEYS: dict[str, str] = {
     "watchdog_failure_threshold": "none",
     "watchdog_max_restarts": "none",
 }
+
+
+def _runtime_keys(request: Request) -> dict[str, str]:
+    """Core's keys plus the ones extensions registered (name -> restart kind)."""
+    reg = getattr(request.app.state, "ext", None)
+    extra = {k.name: k.restart_kind for k in reg.settings_keys} if reg else {}
+    return {**RUNTIME_KEYS, **extra}
+
+
+def _home_modes(request: Request) -> tuple[str, ...]:
+    """The home page modes this instance can serve: core always offers off and
+    builtin; ``custom`` only when a registered provider declares it (an edition
+    package). Built per request so the 422 text names only these."""
+    reg = getattr(request.app.state, "ext", None)
+    has_custom = bool(reg and any(p.mode == "custom" for p in reg.home_providers))
+    return ("off", "builtin", "custom") if has_custom else ("off", "builtin")
+
+
+def _coercers(request: Request) -> dict[str, Any]:
+    reg = getattr(request.app.state, "ext", None)
+    extra = {k.name: k.coerce for k in reg.settings_keys} if reg else {}
+    return {**_COERCERS, "home_page_mode": _choice(*_home_modes(request)), **extra}
+
 
 # Keys that should never be returned to the client in plaintext.
 _SECRET_KEYS = frozenset({"hf_token", "admin_password"})
@@ -188,6 +211,17 @@ def _bool(v: Any) -> str:
     )
 
 
+def _choice(*allowed: str) -> Callable[[Any], str]:
+    """Coercer for an enum-like string setting."""
+
+    def coerce(v: Any) -> str:
+        if not isinstance(v, str) or v.strip().lower() not in allowed:
+            raise ValueError("must be one of " + ", ".join(repr(a) for a in allowed))
+        return v.strip().lower()
+
+    return coerce
+
+
 # #154 settings redesign (subsumes #151).
 #
 # Coerces a `public_url` setting payload. Accepts an absolute http(s) URL
@@ -208,7 +242,7 @@ def _bool(v: Any) -> str:
 # What we deliberately DO NOT validate:
 #   * Reachability — we don't fetch the URL. Operators may configure the
 #     warden's public URL before DNS / cert is live; warden auth doesn't
-#     depend on it. This matches `landing_page_enabled`, which also
+#     depend on it. This matches the former `landing_page_enabled`, which also
 #     accepts arbitrary values without round-tripping.
 #   * Same-origin to the warden — by design, this setting EXISTS for the
 #     case where the public URL is different from `window.location.origin`.
@@ -232,26 +266,6 @@ def _url(v: Any) -> str:
     return s.rstrip("/")
 
 
-def _tracking_id(pattern: re.Pattern[str], example: str, *, upper: bool) -> Callable[[Any], str]:
-    """Coercer for an optional Google ID: "" clears it; anything else must
-    match `pattern` after trimming (and upper-casing, for G-/AW- IDs, which
-    Google prints in capitals but people paste in any case)."""
-
-    def coerce(v: Any) -> str:
-        if not isinstance(v, str):
-            raise ValueError("must be a string")
-        s = v.strip()
-        if s == "":
-            return ""
-        if upper:
-            s = s.upper()
-        if not pattern.match(s):
-            raise ValueError(f"must look like {example}, or be empty to turn it off")
-        return s
-
-    return coerce
-
-
 # Per-spec, lines 350–363 of docs/superpowers/specs/2026-05-11-vllm-warden-ui-redesign-design.md:
 #   default_token_expiration_days: matches TokenCreate Field(ge=0, le=3650)
 #   rotation_grace_hours:          matches TokenRotate Field(ge=0, le=720)
@@ -268,17 +282,11 @@ _COERCERS = {
     "sse_ticket_ttl_seconds": _pos_int,
     "vllm_version": _nonempty_str,
     "log_retention_lines": _pos_int,
-    # #155 unified-port: public landing-page opt-out.
-    "landing_page_enabled": _bool,
     # #154 settings redesign (subsumes #151): canonical externally-reachable
     # base URL for user-facing snippets.
     "public_url": _url,
-    # Website tracking IDs (spec 2026-10-07 §8); "" clears.
-    "analytics_ga4_id": _tracking_id(GA4_ID_RE, "G-XXXXXXXXXX", upper=True),
-    "analytics_google_ads_id": _tracking_id(ADS_ID_RE, "AW-123456789", upper=True),
-    "search_console_verification": _tracking_id(
-        GSC_TOKEN_RE, "the content value of Google's verification meta tag", upper=False
-    ),
+    # home_page_mode's allowed set depends on the edition: _coercers() builds it.
+    "home_page_off_action": _choice("console", "404"),
     # Engine watchdog. Bounds are deliberately tight: an interval under 5s would
     # hammer the engine, and a threshold of 1 would restart on a single GC pause.
     "watchdog_enabled": _bool,
@@ -304,9 +312,8 @@ _COERCERS = {
 #: controls. (The admin-token reveal screen uses the page origin instead, so
 #: no stored setting can redirect a freshly revealed secret.)
 #:
-#: The website tracking IDs joined on 2026-10-07 for the same reason: a
-#: leaked admin token must not be able to send the public site's visitor data
-#: to a property its holder controls.
+#: An extension marks its own keys session-only (``SettingKey.session_only``;
+#: the website's tracking IDs, 2026-10-07); _session_only_keys() adds them.
 SESSION_ONLY_RUNTIME_KEYS: frozenset[str] = frozenset(
     {
         "admin_username",
@@ -315,20 +322,55 @@ SESSION_ONLY_RUNTIME_KEYS: frozenset[str] = frozenset(
         "session_refresh_ttl_days",
         "sse_ticket_ttl_seconds",
         "public_url",
-        "analytics_ga4_id",
-        "analytics_google_ads_id",
-        "search_console_verification",
     }
 )
 
 
+def _session_only_keys(request: Request) -> frozenset[str]:
+    reg = getattr(request.app.state, "ext", None)
+    extra = {k.name for k in reg.settings_keys if k.session_only} if reg else set()
+    return SESSION_ONLY_RUNTIME_KEYS | extra
+
+
+#: Home page modes every edition has. Any other mode in app.home.MODES
+#: puts an edition's own page live on the public address, which (like the
+#: upload behind it) only a signed-in session may do; an admin token may still
+#: switch between these two.
+_TOKEN_HOME_MODES = ("off", "builtin")
+
+
+def _session_only_home_mode(request: Request, body: dict[str, Any]) -> bool:
+    """True when the body asks for a home page mode this edition SERVES beyond
+    off/builtin (today ``custom``, where an edition package provides it). A
+    mode the edition does not serve is not refused here: it falls through to
+    the coercer's 422, which lists only the modes on offer, so a Community
+    install never hears of uploaded pages."""
+    v = body.get("home_page_mode")
+    if not isinstance(v, str):
+        return False
+    mode = v.strip().lower()
+    return mode in _home_modes(request) and mode not in _TOKEN_HOME_MODES
+
+
 def _refuse_session_only_keys(request: Request, body: dict[str, Any]) -> None:
     """403 ``session_only`` when a non-session credential (an admin token)
-    sends any SESSION_ONLY_RUNTIME_KEYS key. Runs before any validation or
+    sends any session-only key (core's or an extension's), or a
+    ``home_page_mode`` this edition serves beyond off/builtin. Runs before any validation or
     write, so a refused PATCH changes nothing at all. Delegates the
     "is this a session?" check and the 403 shape to app/auth/deps.py::
     refuse_session_only, shared with the trust_remote_code refusals (#256)."""
-    keys = sorted(SESSION_ONLY_RUNTIME_KEYS.intersection(body))
+    if _session_only_home_mode(request, body):
+        refuse_session_only(
+            request,
+            message=(
+                f"home_page_mode {body['home_page_mode'].strip().lower()!r} can only be set "
+                "from a signed-in session: it puts an uploaded page live on the public "
+                "address. Admin tokens may set 'off' or 'builtin'. Nothing in this request "
+                "was applied."
+            ),
+            keys=["home_page_mode"],
+        )
+    keys = sorted(_session_only_keys(request).intersection(body))
     if keys:
         refuse_session_only(
             request,
@@ -360,15 +402,16 @@ async def get_runtime(request: Request, _user: str = Depends(require_jwt)) -> di
         has not yet been written
     """
     settings = request.app.state.settings
+    keys = _runtime_keys(request)
     async with open_db(settings.db_path) as db:
         kv = await SettingsRepo(db).get_many(
-            [k for k in RUNTIME_KEYS if k not in ("admin_username", "admin_password")]
+            [k for k in keys if k not in ("admin_username", "admin_password")]
         )
         # Single-admin model — first row.
         cur = await db.execute("SELECT username FROM users ORDER BY id LIMIT 1")
         admin_row = await cur.fetchone()
 
-    out: dict[str, Any] = {k: kv.get(k) for k in RUNTIME_KEYS}
+    out: dict[str, Any] = {k: kv.get(k) for k in keys}
     out["admin_username"] = admin_row[0] if admin_row else None
     # admin_password — sentinel when an admin exists, else None.
     out["admin_password"] = _MASKED if admin_row else None
@@ -406,7 +449,9 @@ async def patch_runtime(
     `requires_restart` is retained for the FE that the plan author wrote
     against; `requires_restart_kinds` is the spec name.
     """
-    bad = [k for k in body if k not in RUNTIME_KEYS]
+    keys = _runtime_keys(request)
+    coercers = _coercers(request)
+    bad = [k for k in body if k not in keys]
     if bad:
         raise HTTPException(status_code=400, detail=f"unknown keys: {sorted(bad)}")
     # Credentials and session lifetimes are session-only -- refused whole,
@@ -452,7 +497,7 @@ async def patch_runtime(
     for k, v in body.items():
         if k in ("admin_username", "admin_password", "hf_token"):
             continue  # handled above / out-of-band
-        coercer = _COERCERS.get(k)
+        coercer = coercers.get(k)
         if coercer is None:
             # Defensive: a key in RUNTIME_KEYS but missing from _COERCERS would
             # silently bypass validation. Today that set is empty, but keep the
@@ -465,6 +510,10 @@ async def patch_runtime(
             to_write[k] = coercer(v)
         except (ValueError, TypeError) as e:
             raise HTTPException(status_code=422, detail=f"{k}: {e}") from e
+
+    # `custom` needs a provider that declares it (an edition package); core alone
+    # has none, so Community's coercer (_home_modes) refuses it with a 422 that
+    # lists only off / builtin (_session_only_home_mode lets it through to that).
 
     # hf_token is written as-is (already validated), but only after the rest.
     if "hf_token" in body:
@@ -515,17 +564,31 @@ async def patch_runtime(
             # picked up by the loop above.
             for k in ("admin_username", "admin_password"):
                 if k in body:
-                    kind = RUNTIME_KEYS[k]
+                    kind = keys[k]
                     if kind != "none":
                         kinds.add(kind)
 
         # Everything else → settings KV.
         repo = SettingsRepo(db)
+        mode_before = (await current_mode(db))[0] if "home_page_mode" in to_write else None
         for k, stored in to_write.items():
             await repo.set(k, stored)
-            kind = RUNTIME_KEYS[k]
+            kind = keys[k]
             if kind != "none":
                 kinds.add(kind)
+
+    # What `/` serves changed: say who did it (a session's username, or the
+    # admin token id it acted through) in the application log.
+    if mode_before is not None and mode_before != to_write["home_page_mode"]:
+        principal = principal_of(request)
+        via = "session" if principal.is_session else f"admin token {principal.id}"
+        log.info(
+            "home page mode %s -> %s by %s (%s)",
+            mode_before,
+            to_write["home_page_mode"],
+            _user,
+            via,
+        )
 
     out_kinds = sorted(kinds)
     return {
