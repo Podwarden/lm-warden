@@ -44,4 +44,37 @@ describe('PullProgress', () => {
     render(<PullProgress status="registered" pulledBytes={0} pulledTotal={null} />);
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
+
+  // lmwarden.com, 2026-11-04: a restart killed a pull and the row went back to
+  // `registered` with total 0. The bar kept pulsing at "0 B" and read as a
+  // live download that had stalled. A `registered` row is NOT downloading.
+  it('does not animate the bar for a registered row', () => {
+    const { container } = render(
+      <PullProgress status="registered" pulledBytes={0} pulledTotal={0} />,
+    );
+    expect(container.querySelector('.animate-pulse')).toBeNull();
+    expect(screen.getByText(/not downloading/i)).toBeInTheDocument();
+  });
+
+  it('shows why a registered row is not downloading', () => {
+    render(
+      <PullProgress
+        status="registered"
+        pulledBytes={1288490188}
+        pulledTotal={55579322990}
+        lastError="pull interrupted by a restart; resuming"
+      />,
+    );
+    expect(screen.getByText(/interrupted by a restart/)).toBeInTheDocument();
+    // Bytes already finished stay visible.
+    expect(screen.getByText(/1\.2 GiB/)).toBeInTheDocument();
+  });
+
+  it('still pulses while pulling with no total yet', () => {
+    const { container } = render(
+      <PullProgress status="pulling" pulledBytes={0} pulledTotal={null} />,
+    );
+    expect(container.querySelector('.animate-pulse')).not.toBeNull();
+    expect(screen.queryByText(/not downloading/i)).toBeNull();
+  });
 });

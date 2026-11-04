@@ -12,6 +12,8 @@ KEYS = {
     "diverged_at_own",
     "cached_source",
     "cached_ttft_est_tokens",
+    "cobs2_divergence_cause",
+    "cobs2_divergence_cause_own",
 }
 
 

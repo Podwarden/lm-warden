@@ -82,8 +82,12 @@ async def test_migrations_idempotent(tmp_data_dir):
         # (request_history.diverged_at_own) + 0049
         # (model_load_history: per-step load durations for "usual" bars) + 0050
         # (models.backend: historical NULL or empty made explicit vllm, Metal design s10). + 0051
-        # (thinking_policy on api_tokens and models, request_history.thinking_forced_off).
-        assert count == 50
+        # (thinking_policy on api_tokens and models, request_history.thinking_forced_off) + 0052
+        # (request_history cobs2 L1 ids and divergence causes) + 0053
+        # (sessions pages: session/conversation/shape/toolset/relay columns, toolsets, tool names) + 0054
+        # (prompt diet: api_tokens.prompt_diet, request_history.prompt_diet) + 0055 (guard: api_tokens.guard,
+        # request_history.guard, guard_events) + 0056 (auth_sessions: sign-ins that can end).
+        assert count == 55
 
 
 async def test_migrations_create_all_v2_tables(tmp_data_dir):

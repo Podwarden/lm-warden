@@ -139,7 +139,7 @@ export const HISTORY_ROWS = [
     model: "model-a-8b", model_id: "id-model-a-8b",
     prompt_tokens: 41200, completion_tokens: 812,
     duration_s: 23.1, ttft_s: 0.4, finish_reason: "stop",
-    orphan: false, started_iso: "2026-09-05T18:59:00Z",
+    orphan: false, started_iso: "2026-09-05T18:59:00Z", session_ref: "r_f1",
   },
   {
     // No token_id: an older row recorded before the column existed.

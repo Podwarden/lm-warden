@@ -154,6 +154,12 @@ ALLOWED_ENV_EXACT: frozenset[str] = frozenset(
 )
 
 
+# Directory under the HF cache root that holds the engines' compile caches
+# (see build_subprocess_env). A dot-dir so the cache scanner, which only
+# reads ``models--*`` entries, never lists it as a model.
+ENGINE_CACHE_DIRNAME = ".lmw-engine-cache"
+
+
 def filter_extra_env(
     extra_env: dict[str, str],
     *,
@@ -336,6 +342,20 @@ def build_subprocess_env(
     # filtered VLLM_ENGINE_READY_TIMEOUT_S in extra_env overrides it.
     if load_max_s is not None:
         env["VLLM_ENGINE_READY_TIMEOUT_S"] = str(int(load_max_s))
+    # Compile caches (torch.compile/inductor, FlashInfer JIT, Triton kernels)
+    # default to the engine user's home, which is the container's own
+    # filesystem: every deploy, restart and reboot threw them away (1.1 GB of
+    # torch.compile output on lmwarden.com) and the next load compiled from
+    # scratch. hf_cache_dir is the one directory every install keeps (compose
+    # volume, k8s PVC, the docker driver's engine mount), so they live under
+    # it. The entries are keyed by vLLM version and model config, so an
+    # upgrade never reuses a stale one. Set before the extra_env merge: an
+    # operator can still point a model elsewhere.
+    if hf_cache_dir:
+        cache_base = f"{hf_cache_dir.rstrip('/')}/{ENGINE_CACHE_DIRNAME}"
+        env["VLLM_CACHE_ROOT"] = f"{cache_base}/vllm"
+        env["FLASHINFER_WORKSPACE_BASE"] = f"{cache_base}/flashinfer"
+        env["TRITON_CACHE_DIR"] = f"{cache_base}/triton"
     # Apply allowed extra_env first so hard-locked keys below always win.
     env.update(filtered)
 

@@ -77,3 +77,42 @@ async def test_get_host_cleared_on_unload(tmp_path):
     await sup.load(_M(), port=8001)
     await sup.unload("qwen", force=True)
     assert sup.get_host("qwen") is None
+
+
+# -- engine ports are returned to the pool on every way an engine goes away (verified finding #3)
+
+import asyncio  # noqa: E402
+
+from app.runtime.port_alloc import PortAllocator  # noqa: E402
+
+
+@pytest.mark.asyncio
+async def test_unload_returns_the_engines_port(tmp_path):
+    ports = PortAllocator(start=10000, end=10000)
+    sup = Supervisor(_Settings(tmp_path), driver=FakeDriver(), ports=ports)
+    p = ports.allocate()
+    await sup.load(_M(), port=p)
+    await sup.unload("qwen", force=True)
+    assert ports.allocate() == p
+
+
+@pytest.mark.asyncio
+async def test_an_engine_that_exits_returns_its_port(tmp_path):
+    ports = PortAllocator(start=10000, end=10000)
+    drv = FakeDriver()
+    sup = Supervisor(_Settings(tmp_path), driver=drv, ports=ports)
+    p = ports.allocate()
+    await sup.load(_M(), port=p)
+    drv.handles["qwen"]._finish(1)
+    for _ in range(20):
+        await asyncio.sleep(0)
+    assert ports.allocate() == p
+
+
+@pytest.mark.asyncio
+async def test_many_load_unload_cycles_never_exhaust_a_one_port_pool(tmp_path):
+    ports = PortAllocator(start=10000, end=10000)
+    sup = Supervisor(_Settings(tmp_path), driver=FakeDriver(), ports=ports)
+    for _ in range(50):
+        await sup.load(_M(), port=ports.allocate())
+        await sup.unload("qwen", force=True)

@@ -22,7 +22,9 @@ shell on the container does not have.
 
 So on boot we demote every such row to a status an operator can act on:
 ``pulled`` when the weights are in the HF cache, ``registered`` when they
-are not, with ``last_error`` saying why the status moved.
+are not, with ``last_error`` saying why the status moved. An interrupted
+``pulling`` row is the exception: it always goes to ``registered``, keeps
+the bytes it finished, and is handed back to the lifespan to be resumed.
 
 WHAT IS DELIBERATELY LEFT ALONE
 -------------------------------
@@ -53,6 +55,7 @@ there would be nothing left for us to see.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -117,11 +120,23 @@ def _is_held(supervisor: Any, model_id: str) -> bool:
     return get_state is not None and get_state(model_id) is not None
 
 
-async def reconcile_stranded_models(settings: Any, supervisor: Any = None) -> list[tuple[str, str]]:
+async def reconcile_stranded_models(
+    settings: Any,
+    supervisor: Any = None,
+    *,
+    on_interrupted_pull: Callable[[str], None] | None = None,
+) -> list[tuple[str, str]]:
     """Demote transient rows with no backing process. Returns [(id, new)].
 
     See the module docstring for the full rationale and the two
     deliberate exemptions.
+
+    An interrupted ``pulling`` row always goes to ``registered`` — a cache
+    with no ``*.incomplete`` blob can still be missing whole shards when the
+    pull died between two files — and keeps the bytes it already finished.
+    ``on_interrupted_pull(model_id)`` is then called so the caller can start
+    the pull again (the lifespan does, once the app can run background tasks):
+    the operator asked for that download, and a restart is not a cancel.
     """
     async with open_db(settings.db_path) as db:
         repo = ModelRepo(db)
@@ -136,6 +151,10 @@ async def reconcile_stranded_models(settings: Any, supervisor: Any = None) -> li
                 # Watchdog restore of a model that was serving — leave the
                 # was-serving path to mark_runtime_dead_on_startup. Same set
                 # watchdog.wants_restart keys on, deliberately.
+                continue
+            if row.status == "pulling":
+                await _reconcile_interrupted_pull(repo, settings, row, on_interrupted_pull)
+                moved.append((row.id, "registered"))
                 continue
             new_status = (
                 "pulled" if weights_present(settings.hf_cache_dir, row.hf_repo) else "registered"
@@ -155,13 +174,49 @@ async def reconcile_stranded_models(settings: Any, supervisor: Any = None) -> li
                     f"restart: no engine was running for this model"
                 ),
             )
-            if row.status == "pulling":
-                # Same reasoning as mark_runtime_dead_on_startup: the pull
-                # does not resume, it re-fetches, so stale progress on a
-                # task that no longer exists would lie to the UI.
-                await repo.update_pull_progress(row.id, 0, 0)
             moved.append((row.id, new_status))
     return moved
+
+
+async def _reconcile_interrupted_pull(
+    repo: ModelRepo,
+    settings: Any,
+    row: Any,
+    on_interrupted_pull: Callable[[str], None] | None,
+) -> None:
+    """A pull the restart killed: keep what finished, hand it back to resume.
+
+    lmwarden.com, 2026-11-04: this used to zero ``pulled_bytes`` and
+    ``pulled_total`` and leave the row ``registered`` with nothing running,
+    so the page showed a busy bar at "0 B" while 1.2 GB sat on disk.
+    """
+    from app.models.pull_task import _snapshot_dir_size  # noqa: PLC0415 -- avoid an import cycle
+
+    try:
+        done = _snapshot_dir_size(Path(settings.hf_cache_dir), row.hf_repo, complete_only=True)
+    except OSError:
+        done = 0
+    resuming = on_interrupted_pull is not None
+    logger.warning(
+        "boot reconcile: pull of %s (%s) was interrupted by a restart "
+        "with %d bytes finished — %s",
+        row.id,
+        row.hf_repo,
+        done,
+        "resuming it" if resuming else "it must be pulled again",
+    )
+    await repo.update_status(
+        row.id,
+        "registered",
+        last_error=(
+            "pull interrupted by a restart; resuming"
+            if resuming
+            else "pull interrupted by a restart. Pull again to resume; finished files are kept"
+        ),
+    )
+    await repo.update_pull_progress(row.id, done, row.pulled_total)
+    if on_interrupted_pull is not None:
+        on_interrupted_pull(row.id)
 
 
 # ---------------------------------------------------------------------------

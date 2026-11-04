@@ -177,6 +177,12 @@ def _session_subject(request: Request, token: str) -> str:
     sub = claims.get("sub")
     if not sub:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "missing subject")
+    sessions = getattr(request.app.state, "auth_sessions", None)
+    if sessions is not None and not sessions.is_active(
+        claims.get("sid"), kind="admin", subject=str(sub)
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "session ended")
+    request.state.session_id = claims.get("sid")
     request.state.principal = SESSION_PRINCIPAL
     request.state.stream_key = session_stream_key(str(sub))
     return str(sub)

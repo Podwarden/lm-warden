@@ -25,6 +25,7 @@ import { UsageSection } from "@/components/tokens/detail/usage-section";
 import { UsageCharts } from "@/components/tokens/detail/usage-charts";
 import { ModelUsageCard } from "@/components/tokens/detail/model-usage-card";
 import { CacheCard } from "@/components/tokens/detail/cache-card";
+import { GuardCard } from "@/components/tokens/detail/guard-card";
 import type { StripWindow } from "@/components/tokens/detail/history-strip";
 import { GodModeDock, useDockHeight, useDockOpen, useGodModeEnabled } from "@/components/tokens/detail/godmode-dock";
 import { useWindowSelection } from "@/components/tokens/detail/use-window-selection";
@@ -494,6 +495,10 @@ export function TokenDetailPage({ id }: { id: string }) {
             </>
           )}
         </UsageSection>
+      </div>
+
+      <div className="mt-5">
+        <GuardCard key={token.id} token={token} onSaved={refresh} />
       </div>
 
       <RotateTokenDialog

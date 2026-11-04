@@ -96,8 +96,14 @@ class Supervisor:
         driver: Any = None,
         on_wrapper_spawn: Callable[[str, int], None] | None = None,
         admission: Any = None,
+        ports: Any = None,
     ) -> None:
         self.settings = settings
+        # The engine port pool (verified finding #3). Once load() registers an engine, the
+        # supervisor owns its port and returns it on every way the engine goes away: unload
+        # (including a force-unload mid-spawn) and exit. Callers release only a port that never
+        # reached a registered engine (a failed spawn).
+        self._port_pool = ports
         # Load admission (Metal design s10): GpuOwnership (one model per
         # discrete GPU) unless the caller injects another collaborator with the
         # same claim/release shape -- UnifiedMemoryAdmission on a Mac, where
@@ -180,7 +186,7 @@ class Supervisor:
             if model_id not in self._handles:
                 return  # unload() got there first
             self._handles.pop(model_id, None)
-            self._ports.pop(model_id, None)
+            self._release_port(self._ports.pop(model_id, None))
             self._hosts.pop(model_id, None)
             self._overrides.pop(model_id, None)
             self._variants.pop(model_id, None)
@@ -332,6 +338,10 @@ class Supervisor:
             except Exception:
                 self.gpus.release(model.id)
                 raise
+
+    def _release_port(self, port: int | None) -> None:
+        if port is not None and self._port_pool is not None:
+            self._port_pool.release(port)
 
     def get_port(self, model_id: str) -> int | None:
         return self._ports.get(model_id)
@@ -561,7 +571,7 @@ class Supervisor:
                     await self._driver.terminate(handle, grace_s=UNLOAD_GRACE_SECONDS)
             finally:
                 self._handles.pop(model_id, None)
-                self._ports.pop(model_id, None)
+                self._release_port(self._ports.pop(model_id, None))
                 self._hosts.pop(model_id, None)
                 self._overrides.pop(model_id, None)
                 self._variants.pop(model_id, None)

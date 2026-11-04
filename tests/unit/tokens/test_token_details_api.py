@@ -57,8 +57,11 @@ def test_get_returns_the_list_item_plus_pause_and_lineage(tmp_data_dir, client):
     assert r.status_code == 200, r.text
     detail = r.json()
     items = {it["id"]: it for it in client.get("/api/tokens", headers=hdrs).json()["items"]}
-    # One shape: everything but lineage is exactly what the list says.
-    assert {k: v for k, v in detail.items() if k != "lineage"} == items[tid]
+    # One shape: everything but lineage and the resolved guard settings is exactly what the list says.
+    assert {k: v for k, v in detail.items() if k not in ("lineage", "guard_effective")} == items[
+        tid
+    ]
+    assert detail["guard_effective"] is None  # no platform guard, no key override
     assert detail["paused_at"] is None
     assert detail["is_paused"] is False
     assert detail["lineage"] == [

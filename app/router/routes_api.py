@@ -11,7 +11,7 @@ import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.auth.deps import require_jwt
+from app.auth.deps import refuse_session_only, require_jwt
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo
 from app.db.repos.router_rules import RouterRuleRepo, RouterRuleRow
@@ -106,6 +106,14 @@ async def patch_settings(
     body: RouterSettingsPatch, request: Request, _user: str = Depends(require_jwt)
 ) -> RouterSettingsOut:
     changes = body.model_dump(exclude_none=True)
+    if "upstream_url" in changes:
+        # Verified finding #19: where relayed prompts and the clients' own Anthropic keys go is a
+        # signed-in admin's decision, never an admin token's.
+        refuse_session_only(
+            request,
+            message="Only a signed-in admin can change where relayed requests are sent.",
+            keys=["upstream_url"],
+        )
     field_to_key = {f: k for k, f in ROUTER_KEYS.items()}
     async with open_db(request.app.state.settings.db_path) as db:
         repo = SettingsRepo(db)

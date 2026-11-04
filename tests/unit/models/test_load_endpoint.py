@@ -219,8 +219,8 @@ def test_on_exit_callback_flips_status_to_failed_and_releases_port(tmp_data_dir,
       ``watchdog.wants_restart`` keys on. The 2026-08-18 11.5-hour outage was
       this write missing in effect: on_exit wrote a diagnosed last_error, the
       old string sentinel was displaced, and nothing ever restarted the model;
-    * the ``model_runtime`` row cleared and the port handed back, or the next
-      load finds the port taken and the UI keeps showing a dead pid.
+    * the ``model_runtime`` row cleared, or the UI keeps showing a dead pid. (The port goes back
+      to the pool from the supervisor itself: tests/unit/runtime/test_supervisor_driver.py.)
 
     Until now only ``wants_restart(prior_status=...)`` was tested -- the
     consumer -- which passes whether or not anything ever sets the flag.
@@ -242,9 +242,9 @@ def test_on_exit_callback_flips_status_to_failed_and_releases_port(tmp_data_dir,
     )
     assert seen["runtime_rows"] == 0, "model_runtime must not keep advertising a dead pid"
     assert seen["released_before"] == [], "sanity: nothing released before on_exit"
-    assert seen["released_after"] == [
-        seen["port"]
-    ], "on_exit must hand the port back to the allocator"
+    # Verified finding #3: the supervisor returns the port when the engine exits (before on_exit);
+    # on_exit releasing it again could free a port a newer engine already holds.
+    assert seen["released_after"] == [], "on_exit must not release the port a second time"
 
 
 def test_on_exit_during_a_first_load_does_not_flag_the_row_for_restart(tmp_data_dir, client):
@@ -268,7 +268,7 @@ def test_on_exit_during_a_first_load_does_not_flag_the_row_for_restart(tmp_data_
         prior_status is None
     ), "a load that never reached 'loaded' must not be marked as having served"
     assert seen["runtime_rows"] == 0
-    assert seen["released_after"] == [seen["port"]]
+    assert seen["released_after"] == []  # the supervisor owns the release (verified finding #3)
 
 
 def test_load_writes_health_ok_after_warmup_probe_succeeds(tmp_data_dir, client):

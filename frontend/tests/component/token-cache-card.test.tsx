@@ -10,7 +10,7 @@ const payload = {
   token_id: "t1", range: "24h", since_epoch: 0, models: [{
     model_id: "m", model: "qwen", backend: "vllm", requests: 10, prompt_tokens: 10_000,
     cached_tokens: 2_000, measured_requests: 10, estimated_requests: 0, reusable_tokens: 8_000,
-    outcomes: { hit: 2, partial: 0, lost: 0, misrouted: 3, diverged: 5, cold: 0 },
+    outcomes: { hit: 2, partial: 0, lost: 0, misrouted: 3, diverged: 5, cold: 0, compacted: 0, harness_rewrite: 0 },
     top_diverging: [{ token_id: "other-id", token_name: "other-key", requests: 5 }],
     by_rank: [], prefill_saved_s: 1, rate_source: "hint" }],
 };

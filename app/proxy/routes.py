@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import json
 import logging
 import secrets
@@ -13,18 +14,30 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from starlette.background import BackgroundTask
 
+from app.cache_obs import canonical as _cobs_canonical
+from app.cobs2.canonical import _HEAD_ROLES, Canon, canonicalize, loose_message, loose_text
+from app.cobs2.ids import Ids, conv_id, ids_for, scope_salt
+from app.cobs2.keys import NetworkKey
+from app.cobs2.lineage import Lineage, Observation
+from app.cobs2.reply import ReplyCapture
+from app.cobs2.shape import Toolset, break_index, dead_weight_of, shape_json, shape_of, toolset_of
 from app.db.database import open_db
 from app.db.repos.models import ModelRow
 from app.db.repos.tokens import TokenRow
+from app.guard import proxy as guard_proxy
+from app.guard.placeholders import RestoreMap
 from app.models.context_window import effective_context_window
 from app.models.parallelism import spill_threshold_for
 from app.proxy import content_log, forest_fields
 from app.proxy.auth import require_bearer, token_allows
+from app.proxy.capture import capturing
 from app.proxy.dp_affinity import KV_MAX_AGE_S, RANK_HEADER, client_rank
 from app.proxy.dp_affinity import conversation_key as _dp_affinity_key
 from app.proxy.envelope_hint import enrich_5xx_from_db
 from app.proxy.model_cache import all_models, model_by_served_name
+from app.proxy.prompt_diet import apply_diet, parse_diet
 from app.proxy.reaggregate import StreamAggregator, parse_sse_event
+from app.proxy.request_id import REQUEST_ID_HEADER, with_request_id
 from app.proxy.request_registry import LiveRequest, finished_record
 from app.proxy.runaway import RunawayDetector
 from app.proxy.scheduler import model_admission_cap
@@ -39,6 +52,7 @@ from app.runtime.variants import (
     Variant,
     running_variant,
 )
+from app.sessions.refs import sess_ref
 from app.utils.client_ip import client_ip as _client_ip
 from app.utils.sse import delta_reasoning
 
@@ -685,6 +699,374 @@ def _cached_reporting(model: Any) -> str:
         return "usage"
 
 
+#: cobs2 hot-path bounds (task 5 fix round 1). Huge contexts are the product:
+#: the cap stays MAX_CHAIN_BYTES (2 MiB), and the costs that scale with one big
+#: message are bounded instead.
+#: Bodies over this are canonicalised and hashed in a worker thread.
+_COBS2_THREAD_BYTES = 256 * 1024
+#: The compaction-fingerprint scan reads this much of each end of the last
+#: user message (the summarize prompt is short and sits at one end).
+_COBS2_SCAN_CHARS = 32 * 1024
+#: Sketch input prefix: the sketch reads the first 2000 shingles (~2000 words).
+_COBS2_SKETCH_CHARS = 64 * 1024
+#: The reply's prefix, roomier: a leading <analysis> block is stripped first.
+_COBS2_REPLY_SKETCH_CHARS = 256 * 1024
+
+
+def _cobs2_raw_text(msg: dict[str, Any]) -> str:
+    return " ".join(p["v"] for p in msg["parts"] if p.get("t") == "text")
+
+
+def _cobs2_text(msg: dict[str, Any], limit: int | None = None) -> str:
+    """The text parts of a canonical message, loose-transformed, without
+    reasoning. With ``limit``, a message longer than that is cut to its first
+    ``limit`` characters BEFORE the (linear-time) loose transform."""
+    if limit is not None:
+        raw = _cobs2_raw_text(msg)
+        if len(raw) > limit:
+            return loose_text(raw[:limit])
+    return " ".join(p["v"] for p in loose_message(msg)["parts"] if p.get("t") == "text")
+
+
+def _cobs2_scan_text(msg: dict[str, Any]) -> str:
+    """Loose text for the compaction-fingerprint scan: the whole message when
+    short, else only its first and last ``_COBS2_SCAN_CHARS`` characters."""
+    raw = _cobs2_raw_text(msg)
+    if len(raw) <= 2 * _COBS2_SCAN_CHARS:
+        return _cobs2_text(msg)
+    return loose_text(raw[:_COBS2_SCAN_CHARS]) + " " + loose_text(raw[-_COBS2_SCAN_CHARS:])
+
+
+def _cobs2_size_over(canon: Canon, limit: int) -> bool:
+    """True when the canonical form's strings exceed ``limit`` UTF-8 bytes.
+
+    Characters first (a lower bound on bytes, and a UTF-8 character is at most
+    4 bytes): only a form between ``limit / 4`` and ``limit`` characters is
+    encoded to count its bytes."""
+    strs: list[str] = [t for t in canon.tools if isinstance(t, str)]
+    media = 0
+
+    def walk(ps: list[dict[str, Any]]) -> None:
+        nonlocal media
+        for p in ps:
+            t = p.get("t")
+            if t in ("text", "reasoning"):
+                strs.append(p["v"])
+            elif t == "tool_call":
+                strs.append(p["name"])
+                strs.append(p["args"])
+            elif t == "tool_result":
+                walk(p["parts"])
+            else:
+                media += 64
+
+    for m in (*canon.head, *canon.messages):
+        walk(m["parts"])
+    chars = media + sum(len(x) for x in strs)
+    if chars > limit:
+        return True
+    if chars * 4 <= limit:
+        return False
+    return media + sum(len(x.encode("utf-8", "surrogatepass")) for x in strs) > limit
+
+
+class _Cobs2Pre:
+    """The pure part of the cobs2 pass (safe in a worker thread)."""
+
+    __slots__ = ("ids", "salt", "scan_text", "first", "conv", "shape", "toolset")
+
+    def __init__(
+        self,
+        ids: Ids,
+        salt: bytes,
+        scan_text: str,
+        first: dict[str, Any] | None,
+        conv: str | None = None,
+        shape: dict[str, Any] | None = None,
+        toolset: Toolset | None = None,
+    ) -> None:
+        self.ids = ids
+        self.salt = salt
+        self.scan_text = scan_text
+        self.first = first
+        # Sessions pages: conversation id, sizes/counts, offered toolset.
+        self.conv = conv
+        self.shape = shape
+        self.toolset = toolset
+
+
+class _Cobs2Seen:
+    """What ``_forward`` keeps from the cobs2 pass for the finish."""
+
+    __slots__ = ("ids", "obs", "salt", "compaction")
+
+    def __init__(self, ids: Ids, obs: Observation | None, salt: bytes, compaction: bool) -> None:
+        self.ids = ids
+        self.obs = obs
+        self.salt = salt
+        self.compaction = compaction
+
+
+def _cobs2_compute(
+    body_json: Any, key: NetworkKey | None, secret: str | None = None
+) -> _Cobs2Pre | None:
+    """Canonical form, size cap, ids and the bounded fingerprint text. Pure;
+    runs in a worker thread for a big body (the id memo is locked).
+
+    None when there is nothing to hash, no key, or the canonical form is over
+    ``MAX_CHAIN_BYTES`` UTF-8 bytes (ids_for is then never run). Raises on a
+    bug; the caller fails open."""
+    if key is None or not isinstance(body_json, dict):
+        return None
+    canon = canonicalize(body_json)
+    if canon is None or _cobs2_size_over(canon, _cobs_canonical.MAX_CHAIN_BYTES):
+        return None
+    salt = scope_salt(body_json)
+    ids = ids_for(canon, key, salt)
+    msgs = canon.messages
+    # Only a request whose LAST message is the user's can be the summarize
+    # call: in a tool loop the last user message is an earlier human prompt.
+    last_user = msgs[-1] if msgs and msgs[-1]["role"] == "user" else None
+    scan = _cobs2_scan_text(last_user) if last_user is not None else ""
+    # Sessions pages: each field fails alone (None), never the ids.
+    conv: str | None = None
+    shape: dict[str, Any] | None = None
+    toolset: Toolset | None = None
+    try:
+        conv = conv_id(ids, key, salt)
+    except Exception:  # noqa: BLE001
+        logger.debug("cobs2: conv id failed", exc_info=True)
+    try:
+        shape = shape_of(canon)
+    except Exception:  # noqa: BLE001
+        logger.debug("cobs2: shape failed", exc_info=True)
+    if shape is not None:
+        # Dead weight (sessions pages): its own field; a failure drops only it.
+        try:
+            shape["dw"] = dead_weight_of(canon, ids)
+        except Exception:  # noqa: BLE001
+            logger.debug("cobs2: dead weight failed", exc_info=True)
+    if secret is not None:
+        try:
+            toolset = toolset_of(body_json.get("tools"), canon.tools, secret)
+        except Exception:  # noqa: BLE001
+            logger.debug("cobs2: toolset failed", exc_info=True)
+    return _Cobs2Pre(ids, salt, scan, msgs[0] if msgs else None, conv, shape, toolset)
+
+
+def _cobs2_key_ids(body_json: Any, key: NetworkKey | None) -> Ids | None:
+    """Ids over the head, the tools and the FIRST body message only: what the
+    replica key reads (``loose_head``, ``loose_nodes[0]``), whatever the body's
+    size. Equal to the full compute's values: the head is every system /
+    developer message, and nothing before the first body message sets a
+    tool-call reference. Pure; None when there is nothing to hash."""
+    if key is None or not isinstance(body_json, dict):
+        return None
+    msgs = body_json.get("messages")
+    if not isinstance(msgs, list):
+        return None
+    keep: list[Any] = []
+    have_first = False
+    for m in msgs:
+        if not isinstance(m, dict):
+            continue
+        if m.get("role") in _HEAD_ROLES:
+            keep.append(m)
+        elif not have_first:
+            keep.append(m)
+            have_first = True
+    prefix: dict[str, Any] = {"messages": keep}
+    if "tools" in body_json:
+        prefix["tools"] = body_json["tools"]
+    canon = canonicalize(prefix)
+    if canon is None:
+        return None
+    return ids_for(canon, key, scope_salt(body_json))
+
+
+def _cobs2_link(
+    pre: _Cobs2Pre,
+    *,
+    lineage: Lineage | None,
+    model_id: str,
+    session_key: str | None,
+    parent_session_key: str | None,
+    token_scope: str | None,
+    inflight_heads: Any,
+    request_id: str | None = None,
+) -> _Cobs2Seen:
+    """The lineage step, on the event loop. The first message's sketch text is
+    built lazily, only when the body collapsed."""
+    compaction = Lineage.is_compaction_request(pre.scan_text)
+    obs = None
+    if lineage is not None:
+        first = pre.first
+        obs = lineage.observe(
+            model_id=model_id,
+            scope=pre.salt,
+            session_key=session_key,
+            parent_session_key=parent_session_key,
+            ids=pre.ids,
+            last_user_text_loose=pre.scan_text,
+            first_body_text_loose=(
+                (lambda: _cobs2_text(first, _COBS2_SKETCH_CHARS)) if first is not None else ""
+            ),
+            token_scope=token_scope,
+            inflight_heads=inflight_heads,
+            request_id=request_id,
+            conv=pre.conv,
+        )
+    return _Cobs2Seen(pre.ids, obs, pre.salt, compaction)
+
+
+def _cobs2_observe(
+    body_json: Any,
+    *,
+    key: NetworkKey | None,
+    lineage: Lineage | None,
+    model_id: str,
+    session_key: str | None,
+    parent_session_key: str | None,
+    token_scope: str | None,
+    inflight_heads: Any,
+) -> _Cobs2Seen | None:
+    """``_cobs2_compute`` then ``_cobs2_link``, in the calling thread."""
+    pre = _cobs2_compute(body_json, key)
+    if pre is None:
+        return None
+    return _cobs2_link(
+        pre,
+        lineage=lineage,
+        model_id=model_id,
+        session_key=session_key,
+        parent_session_key=parent_session_key,
+        token_scope=token_scope,
+        inflight_heads=inflight_heads,
+    )
+
+
+async def _idle_bounded(it: Any, idle_s: float, live_req: Any) -> Any:
+    """``it``'s chunks, ending when the upstream sends nothing for ``idle_s`` (verified finding
+    #4): the caller's ``finally`` then closes the upstream (the engine aborts and frees its KV
+    blocks) and releases the slot, as the wall-clock reaper does."""
+    ait = it.__aiter__()
+    while True:
+        try:
+            chunk = await asyncio.wait_for(ait.__anext__(), timeout=idle_s)
+        except StopAsyncIteration:
+            return
+        except TimeoutError:
+            logger.warning("upstream sent nothing for %.0f s; ending the stream", idle_s)
+            if live_req is not None:
+                try:
+                    live_req.orphan = True
+                except Exception:  # noqa: BLE001
+                    pass
+            return
+        yield chunk
+
+
+async def _guard_inspect(
+    request: Request,
+    guard: Any,
+    token: TokenRow,
+    body_json: dict[str, Any],
+    raw_len: int,
+    affinity_key: str | None,
+) -> guard_proxy.Outcome:
+    """Run the key's guard on the client's body (off the loop for big bodies, like cobs2)."""
+    state = request.app.state
+    secret = guard_proxy.shared_secret(state)
+    seen = guard_proxy.shared_seen(state)
+    try:
+        session = extract_session(body_json, request.headers, affinity_key).id
+    except Exception:  # noqa: BLE001 -- no session id: the key is the session
+        session = None
+    run = functools.partial(
+        guard_proxy.run_guard,
+        body_json,
+        "openai",
+        guard,
+        token_id=token.id,
+        secret=secret,
+        session=session or token.id,
+        seen=seen,
+        raw_len=raw_len,
+    )
+    # Big bodies, and any custom pattern (an admin's regex is not ours to trust with the event
+    # loop), are scanned on a worker thread.
+    if raw_len > 256 * 1024 or any(r.pack == "custom" for r in guard.rules):
+        return await asyncio.to_thread(run)
+    return run()
+
+
+def _guard_log(request: Request, events: list[Any], request_id: str) -> None:
+    guard_proxy.log_events(request.app.state, events, request_id)
+
+
+async def _record_blocked(
+    request: Request,
+    model: ModelRow,
+    token: TokenRow,
+    path: str,
+    body_json: dict[str, Any],
+    outcome: guard_proxy.Outcome,
+    request_id: str,
+) -> None:
+    """A history row for a request the guard answered itself: no slot, no live row, no counters
+    as served, the prompt counted, no completion."""
+    try:
+        history = getattr(request.app.state, "request_history", None)
+        if history is None:
+            return
+        prompt_tokens = await request.app.state.tokenizers.count(
+            model.hf_repo,
+            _extract_prompt(body_json),
+            fallback_repo=getattr(model, "tokenizer_repo", None),
+        )
+        now = _monotonic()
+        variant = running_variant(request.app.state, model)
+        req = LiveRequest(
+            id=request_id,
+            token_id=token.id,
+            token_name=token.name,
+            client_ip=_client_ip(request),
+            model=model.served_model_name,
+            model_row_id=model.id,
+            variant_id=variant.id,
+            path=path,
+            prompt_tokens=prompt_tokens,
+            max_model_len=model.max_model_len,
+            started_monotonic=now,
+            started_iso=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            phase="blocked",
+            is_stream=bool(body_json.get("stream")),
+        )
+        req.finish_reason = "guard_blocked"
+        req.completion_tokens = 0
+        req.guard = outcome.history_json
+        history.record(finished_record(req, now=now))
+    except Exception:  # noqa: BLE001 -- bookkeeping must never fail the block reply
+        logger.debug("guard: could not record the blocked request", exc_info=True)
+
+
+async def _guard_frames(it: Any, trailer: str | None) -> Any:
+    """The engine's SSE with the guard's trailer put before the finish chunk (engine view: no
+    value restored). Without a trailer the chunks pass through untouched."""
+    if not trailer:
+        async for c in it:
+            yield c
+        return
+    r = guard_proxy.ChatStreamRestorer(RestoreMap(), trailer=trailer)
+    async for c in it:
+        out = r.feed(c)
+        if out:
+            yield out
+    tail = r.flush()
+    if tail:
+        yield tail
+
+
 async def _forward(
     request: Request,
     model: ModelRow,
@@ -709,7 +1091,48 @@ async def _forward(
     is what the live row shows. Both default to None: no behaviour change.
     """
     body = await request.body()
+    client_body = body  # debug capture records what the client (or the translator) sent
     body_json = json.loads(body) if body else {}
+    # Sensitive data guard (app/guard/proxy.py), before anything reads the body: everything below
+    # (god-mode, cobs2, capture, history, the engine) sees the sanitized body. Off for this key:
+    # one attribute read, and the path is byte-identical.
+    g_out: guard_proxy.Outcome | None = None
+    # The router (app/router/data_plane.py) already scanned and sanitized a /v1/messages body:
+    # its outcome comes with the request, and scanning the translation again would find nothing.
+    g_handed = getattr(request.state, "guard", None)
+    g_guard = (
+        None
+        if g_handed is not None
+        else guard_proxy.guard_for(getattr(request.app.state, "guard_platform", None), token)
+    )
+    if g_handed is not None:
+        g_out = g_handed
+    elif g_guard is not None:
+        try:
+            g_out = await _guard_inspect(
+                request, g_guard, token, body_json, len(body), affinity_key
+            )
+        except guard_proxy.GuardFailed as e:
+            return guard_proxy.failed_reply(e.reason)
+        if g_out.action == "block":
+            blocked_id = uuid4().hex
+            _guard_log(request, g_out.events, blocked_id)
+            await _record_blocked(request, model, token, path, body_json, g_out, blocked_id)
+            return with_request_id(
+                guard_proxy.block_reply(g_out, stream=bool(body_json.get("stream")), path=path),
+                blocked_id,
+            )
+        if g_out.action == "sanitize":
+            body_json = g_out.body
+            body = json.dumps(body_json).encode()
+            client_body = body
+        else:
+            g_out = None
+    # Restoring (client side) and the trailer (engine side, so reply ids, capture and the content
+    # log see what the model's next turn will carry back). Both None without findings.
+    g_restore: RestoreMap | None = g_out.restore if g_out is not None and g_out.restore else None
+    g_trailer: str | None = g_out.trailer if g_out is not None else None
+    g_restored = [0]
     # The id the engine serves (applied to the body after the #173 priority
     # block below). Resolved HERE, before any live row or admission slot is
     # taken, so a raise cannot leak either. The supervisor's launch-time record
@@ -869,10 +1292,14 @@ async def _forward(
         }
     except Exception:  # noqa: BLE001 -- display metadata must never fail a request
         logger.debug("forest: could not derive fields", exc_info=True)
+    # One id for the live row, the history row and the response header.
+    request_id = uuid4().hex
+    if g_out is not None and g_out.events and g_handed is None:
+        _guard_log(request, g_out.events, request_id)
     try:
         if registry is not None:
             live_req = LiveRequest(
-                id=uuid4().hex,
+                id=request_id,
                 token_id=token.id,
                 token_name=token.name,
                 client_ip=_client_ip(request),
@@ -932,6 +1359,89 @@ async def _forward(
         raise
     queued_s = _monotonic() - _queue_start
     slot_released = False
+
+    # cobs2 L1 (spec section 6): content ids over the body as the client sent
+    # it (the runaway mutation above only touches stream fields; the ones below
+    # touch none of these). Hashed HERE, after admission and before the replica
+    # routing below, so the conversation key can come from the ids (spec 8.1).
+    # A big body is hashed in a worker thread. FAIL-OPEN: any error means no
+    # ids. A cancellation while waiting on the thread releases the slot and
+    # the queued row (no rank is held yet). Ids and digests only.
+    cobs2_pre: _Cobs2Pre | None = None
+    # The ids the replica key reads. The full compute's when it ran, else
+    # (size cap, or an error) the same values from the head, the tools and
+    # message 0 alone, so the key never flips with the body's size.
+    cobs2_key_ids: Ids | None = None
+    try:
+        try:
+            cobs2_key = getattr(request.app.state, "cobs2_key", None)
+            if (
+                cobs2_key is not None
+                and isinstance(body_json, dict)
+                and isinstance(body_json.get("messages"), list)
+            ):
+                cobs2_snap = {
+                    k: body_json[k] for k in ("messages", "tools", "cache_salt") if k in body_json
+                }
+                cobs2_secret = request.app.state.settings.cookie_secret
+                # Message 0 alone can only be over the thread bound if the body is.
+                cobs2_off_loop = len(body) > _COBS2_THREAD_BYTES
+                try:
+                    if cobs2_off_loop:
+                        cobs2_pre = await asyncio.to_thread(
+                            _cobs2_compute, cobs2_snap, cobs2_key, cobs2_secret
+                        )
+                    else:
+                        cobs2_pre = _cobs2_compute(cobs2_snap, cobs2_key, cobs2_secret)
+                except Exception:  # noqa: BLE001 — identity must never fail a request
+                    cobs2_pre = None
+                    logger.debug("cobs2: ids failed", exc_info=True)
+                if cobs2_pre is not None:
+                    cobs2_key_ids = cobs2_pre.ids
+                elif (
+                    affinity_source is not None
+                    or (getattr(model, "data_parallel_size", 1) or 1) <= 1
+                ):
+                    pass  # no replica key to derive: never hash a capped body
+                elif cobs2_off_loop:
+                    cobs2_key_ids = await asyncio.to_thread(_cobs2_key_ids, cobs2_snap, cobs2_key)
+                else:
+                    cobs2_key_ids = _cobs2_key_ids(cobs2_snap, cobs2_key)
+        except Exception:  # noqa: BLE001 — routing must never fail a request
+            cobs2_key_ids = None
+            logger.debug("cobs2: key ids failed; today's key", exc_info=True)
+    except BaseException:
+        # Cancelled while waiting on the hashing thread. Accepted: the request
+        # never reaches request history (it was not served), only the slot and
+        # the queued live row are released.
+
+        async def _abort_ids() -> None:
+            try:
+                await slot_cm.__aexit__(None, None, None)
+            finally:
+                if live_req is not None and registry is not None:
+                    await registry.deregister(live_req.id)
+
+        slot_released = True
+        try:
+            await asyncio.shield(_abort_ids())
+        except Exception:  # noqa: BLE001
+            pass
+        raise
+    # The replica key from the ids: the conversation keeps its rank when a
+    # reminder or date changes in the head or first message. Only when the
+    # key was derived here (a route-supplied key is used verbatim).
+    if cobs2_key_ids is not None and affinity_source is None:
+        try:
+            dp_key, dp_key_source = _dp_affinity_key(
+                body_json,
+                request.headers,
+                token.id,
+                explicit=affinity_key,
+                cobs2_ids=cobs2_key_ids,
+            )
+        except Exception:  # noqa: BLE001 — routing must never fail a request
+            logger.debug("dp-routing: could not derive an ids affinity key", exc_info=True)
 
     # #286 — cache-affine replica routing. After admission, so the in-flight
     # count only ever covers requests that hold a slot. FAIL-OPEN: any error
@@ -1053,6 +1563,9 @@ async def _forward(
     except Exception:  # noqa: BLE001 — observation must never fail a request
         obs_chain = obs_all = obs_own = None
         logger.debug("cache-obs: match failed", exc_info=True)
+    cobs2_seen: _Cobs2Seen | None = None
+    cobs2_kw: dict[str, Any] = {}
+    cobs2_lineage = getattr(request.app.state, "cobs2_lineage", None)
     # Set once the engine has actually processed the prompt (a 2xx, and either
     # a finished non-stream body or a first streamed frame). Anything earlier --
     # refused connection, 4xx/5xx, cancelled before the engine ran -- leaves the
@@ -1125,6 +1638,64 @@ async def _forward(
     except Exception:
         logger.debug("thinking policy: could not apply, forwarding unchanged", exc_info=True)
 
+    # Prompt diet (2026-10-28): the key's opt-in cut of unused tools and carried
+    # reasoning, on the final chat body. Lineage and the recorded shape were
+    # computed on the client's body above. Fail open: the body as it was.
+    diet_cut: str | None = None
+    try:
+        diet = parse_diet(getattr(token, "prompt_diet", None))
+        if diet is not None:
+            trial = json.loads(body)
+            cut = apply_diet(trial, diet)
+            if cut is not None:
+                body_json = trial
+                body = json.dumps(body_json).encode()
+                diet_cut = cut.json()
+    except Exception:
+        logger.debug("prompt diet: could not apply, forwarding unchanged", exc_info=True)
+
+    # Debug capture (app/proxy/capture.py): only while the key's window is open.
+    cap_store = getattr(request.app.state, "capture_store", None)
+    cap_on = False
+    try:
+        cap_on = cap_store is not None and capturing(
+            getattr(token, "capture_until", None), time.time()
+        )
+    except Exception:  # noqa: BLE001
+        cap_on = False
+    cap_max = int(getattr(request.app.state.settings, "capture_resp_max_bytes", 8 * 1024**2))
+    cap_resp = bytearray()
+    cap_done = False
+
+    def _cap_feed(chunk: bytes) -> None:
+        if cap_on and len(cap_resp) < cap_max:
+            cap_resp.extend(chunk[: cap_max - len(cap_resp)])
+
+    async def _capture_done(content: bytes | None = None) -> None:
+        nonlocal cap_done
+        if not cap_on or cap_done or cap_store is None:
+            return
+        cap_done = True
+        try:
+            resp_b = bytes(content[:cap_max]) if content is not None else bytes(cap_resp)
+            await cap_store.put(
+                {
+                    "id": live_req.id if live_req is not None else secrets.token_hex(16),
+                    "ts": time.time(),
+                    "token_id": getattr(token, "id", None),
+                    "model_id": model.id,
+                    "path": path,
+                    "request_body": client_body.decode("utf-8", "replace"),
+                    "engine_body": None if body == client_body else body.decode("utf-8", "replace"),
+                    "response": resp_b.decode("utf-8", "replace"),
+                    "response_truncated": (len(content) if content is not None else len(cap_resp))
+                    >= cap_max,
+                    "prompt_diet": diet_cut,
+                }
+            )
+        except Exception:  # noqa: BLE001 — capture must never fail a request
+            logger.debug("capture: failed", exc_info=True)
+
     async def _release_slot() -> None:
         nonlocal slot_released
         if slot_released:
@@ -1180,10 +1751,64 @@ async def _forward(
         except Exception:  # noqa: BLE001
             logger.debug("forest: tools_out failed", exc_info=True)
 
+    reply_cap = (
+        ReplyCapture() if is_chat_path and isinstance(body_json.get("messages"), list) else None
+    )
+
+    def _set_cobs2_reply() -> None:
+        # Fail-open: hashing the generated reply must never affect the response.
+        if reply_cap is None or live_req is None or live_req.cobs2_reply_msg is not None:
+            return
+        # A truncated reply (reaped, disconnected, upstream error, engine error
+        # frame) must not get an id: it was not the message the client keeps.
+        if live_req.orphan or live_req.finish_reason == "error" or not reply_cap.complete:
+            return
+        try:
+            key = getattr(request.app.state, "cobs2_key", None)
+            msg = reply_cap.message()
+            if key is None or msg is None:
+                return
+            canon = canonicalize({"messages": [msg]})
+            if canon is None:
+                return
+            ids = ids_for(canon, key, scope_salt(body_json))
+            if ids.msgs:
+                live_req.cobs2_reply_msg = ids.msgs[0]
+                live_req.cobs2_reply_loose_msg = ids.loose_msgs[0]
+        except Exception:  # noqa: BLE001
+            logger.debug("cobs2: reply ids failed", exc_info=True)
+            return
+        # Link the reply to the request's last node, in the request's session,
+        # with its loose text sketched in memory (never stored). Fail-open.
+        try:
+            seen = cobs2_seen
+            if (
+                ids.msgs
+                and seen is not None
+                and seen.obs is not None
+                and seen.ids.nodes
+                and cobs2_lineage is not None
+            ):
+                cobs2_lineage.remember_reply(
+                    model_id=model.id,
+                    scope=seen.salt,
+                    session=seen.obs.session,
+                    node=seen.ids.nodes[-1],
+                    reply_ids=ids,
+                    reply_text_loose=_cobs2_text(canon.messages[0], _COBS2_REPLY_SKETCH_CHARS),
+                )
+        except Exception:  # noqa: BLE001
+            logger.debug("cobs2: remember reply failed", exc_info=True)
+
     async def _deregister() -> None:
+        _set_cobs2_reply()
         _release_dp_rank()
         if live_req is not None:
             live_req.cached_tokens = _acct_cached()
+            if g_out is not None:
+                live_req.guard = guard_proxy.with_restored(g_out.history_json, g_restored[0])
+                if g_out.restore.restored:
+                    _guard_log(request, g_out.restored_events(now=time.time()), request_id)
         if live_req is None or registry is None:
             return
         # Record it BEFORE the registry forgets it. Duration, TTFT and finish
@@ -1259,6 +1884,8 @@ async def _forward(
                     rank=dp_rank,
                     rank_known=rank_known,
                     block_size=sizes.get(model.id, obs_epoch) if sizes is not None else None,
+                    cobs2_edge=live_req.cobs2_edge,
+                    loose_match_beyond_exact=live_req.cobs2_loose_beyond_exact,
                 )
         except Exception:  # noqa: BLE001 — bookkeeping must never fail a request
             logger.debug("cache-obs: observe failed", exc_info=True)
@@ -1274,6 +1901,70 @@ async def _forward(
             pass
 
     try:
+        # cobs2: the lineage step on the loop, over the ids hashed right after
+        # admission. FAIL-OPEN: any error leaves every cobs2 field None.
+        try:
+            if cobs2_pre is not None:
+                cobs2_seen = _cobs2_link(
+                    cobs2_pre,
+                    lineage=cobs2_lineage,
+                    model_id=model.id,
+                    session_key=forest_kw.get("session_key"),
+                    parent_session_key=forest_kw.get("parent_session_key"),
+                    token_scope=forest_fields.hkey(
+                        request.app.state.settings.cookie_secret, token.id
+                    ),
+                    inflight_heads=[
+                        o.cobs2_head
+                        for o in (registry.snapshot() if registry is not None else ())
+                        if o is not live_req
+                        and o.token_id == token.id
+                        and o.model_row_id == model.id
+                        and o.cobs2_head
+                    ],
+                    request_id=request_id,
+                )
+                c_ids, c_obs = cobs2_seen.ids, cobs2_seen.obs
+                cobs2_kw = {
+                    "cobs2_head": c_ids.head,
+                    "cobs2_node": c_ids.nodes[-1] if c_ids.nodes else None,
+                    "cobs2_parent_node": c_obs.parent if c_obs is not None else None,
+                    "cobs2_edge": c_obs.edge if c_obs is not None else None,
+                    "cobs2_compaction_request": cobs2_seen.compaction,
+                    "cobs2_loose_beyond_exact": bool(
+                        c_obs is not None and c_obs.loose_match_beyond_exact
+                    ),
+                    # The lane's conv: inherited from the parent when this
+                    # continues one (a harness may rewrite the first message).
+                    "cobs2_conv": (
+                        c_obs.conv if c_obs is not None and c_obs.conv else cobs2_pre.conv
+                    ),
+                    "cobs2_toolset": cobs2_pre.toolset,
+                    "cobs2_parent_req": c_obs.parent_req if c_obs is not None else None,
+                }
+                if c_obs is not None:
+                    cobs2_kw["cobs2_session"] = c_obs.session
+                if cobs2_pre.shape is not None:
+                    try:
+                        cobs2_kw["cobs2_shape"] = shape_json(cobs2_pre.shape, break_index(c_obs))
+                    except Exception:  # noqa: BLE001 -- one field, never the row
+                        logger.debug("cobs2: shape json failed", exc_info=True)
+            # R7: no cobs2 lineage (over the cap, an error, a non-chat path):
+            # the row still joins its harness session, as a lineage-unknown turn.
+            if not cobs2_kw.get("cobs2_session") and forest_kw.get("session_key"):
+                cobs2_kw["cobs2_session"] = forest_kw["session_key"]
+            if cobs2_kw.get("cobs2_session"):
+                cobs2_kw["cobs2_sess_ref"] = sess_ref(
+                    request.app.state.settings.cookie_secret, token.id, cobs2_kw["cobs2_session"]
+                )
+            if cobs2_kw:
+                if live_req is not None:
+                    for _k, _v in cobs2_kw.items():
+                        setattr(live_req, _k, _v)
+        except Exception:  # noqa: BLE001 — identity must never fail a request
+            cobs2_seen = None
+            cobs2_kw = {}
+            logger.debug("cobs2: ids or lineage failed", exc_info=True)
         if live_req is not None:
             # Admitted: the clock for elapsed / TTFT starts now.
             live_req.started_monotonic = _monotonic()
@@ -1282,6 +1973,7 @@ async def _forward(
             live_req.started_iso = datetime.now(UTC).isoformat().replace("+00:00", "Z")
             live_req.queued_s = queued_s
             live_req.thinking_forced_off = thinking_forced_off
+            live_req.prompt_diet = diet_cut
             live_req.cache_est_tokens = cache_est_tokens
             live_req.cache_est_raw_tokens = cache_est_raw_tokens
             live_req.est_decayed = est_decayed
@@ -1307,7 +1999,7 @@ async def _forward(
             live_req.phase = "prefill" if client_wants_stream else "waiting"
         elif registry is not None:
             live_req = LiveRequest(
-                id=uuid4().hex,
+                id=request_id,
                 token_id=token.id,
                 token_name=token.name,
                 client_ip=_client_ip(request),
@@ -1330,6 +2022,8 @@ async def _forward(
                 gap_s=est_gap_s,
                 dp_rank=dp_rank,
                 thinking_forced_off=thinking_forced_off,
+                prompt_diet=diet_cut,
+                **cobs2_kw,
                 phase="prefill" if client_wants_stream else "waiting",
                 is_stream=client_wants_stream,
             )
@@ -1380,6 +2074,16 @@ async def _forward(
             content=body,
             headers=up_headers,
         )
+        # How long to wait for the engine's response to start (verified finding #4): a stream's
+        # headers come at once, so the idle limit applies; a non-stream answer starts only when
+        # generation ends, so the whole request deadline applies.
+        _idle = float(getattr(request.app.state.settings, "upstream_idle_s", 300.0) or 300.0)
+        _wall = float(getattr(request.app.state.settings, "request_max_wall_s", 0.0) or 0.0)
+        _nonstream = _wall or float(
+            getattr(request.app.state.settings, "nonstream_max_s", 1800.0) or 1800.0
+        )
+        send_deadline = _idle if client_wants_stream else _nonstream
+        idle_s = _idle
         # Always send with stream=True, even for non-streaming clients. With
         # stream=False httpx reads the ENTIRE upstream body inside send() — and
         # send() here runs under the client's timeout=None, so a runaway
@@ -1393,7 +2097,7 @@ async def _forward(
         # one Response, so downstream clients are byte-for-byte unchanged.
         send_start = _monotonic()
         try:
-            resp = await client.send(upstream, stream=True)
+            resp = await asyncio.wait_for(client.send(upstream, stream=True), timeout=send_deadline)
         except (httpx.RemoteProtocolError, httpx.ReadError):
             # #279: the pooled keep-alive connection was closed by the engine
             # while idle (uvicorn drops idle ones after 5 s; the pool expires
@@ -1414,8 +2118,13 @@ async def _forward(
                 content=body,
                 headers=up_headers,
             )
-            resp = await client.send(upstream, stream=True)
+            resp = await asyncio.wait_for(client.send(upstream, stream=True), timeout=send_deadline)
         upstream_ok = 200 <= resp.status_code < 300
+    except TimeoutError as exc:
+        # Verified finding #4: the engine accepted the request and then never answered.
+        await _deregister()
+        await _release_slot()
+        raise HTTPException(status_code=504, detail="upstream engine stalled") from exc
     except httpx.ConnectError as exc:
         # The engine's port refused the connection (crashed, or not yet
         # restarted after a crash). That is an UPSTREAM availability fault,
@@ -1544,6 +2253,7 @@ async def _forward(
                 # drained — otherwise we'd hand the slot to the next waiter
                 # while still hammering vLLM with our SSE chunks.
                 await _release_slot()
+                await _capture_done()
                 # Content logging (diagnostic): write AFTER the slot is released
                 # so file I/O never holds the priority slot. Best-effort inside.
                 # On a runaway trip the record carries the runaway finish_reason
@@ -1584,10 +2294,26 @@ async def _forward(
                         )
 
             tools_acc = forest_fields.ToolsOutAccumulator()
+            client_r = (
+                guard_proxy.ChatStreamRestorer(
+                    g_restore, trailer=None, restore_mode=g_out.restore_mode
+                )
+                if g_restore is not None and g_out is not None
+                else None
+            )
             try:
-                async for chunk in resp.aiter_bytes():
-                    yield chunk
+                async for chunk in _guard_frames(
+                    _idle_bounded(resp.aiter_bytes(), idle_s, live_req), g_trailer
+                ):
+                    if client_r is None:
+                        yield chunk
+                    else:
+                        out_chunk = client_r.feed(chunk)
+                        g_restored[0] = client_r.restored
+                        if out_chunk:
+                            yield out_chunk
                     buf += chunk
+                    _cap_feed(chunk)
 
                     # --- Reaper + disconnect propagation --------------------
                     # Run EVERY iteration, independent of whether this chunk
@@ -1650,6 +2376,7 @@ async def _forward(
                                 pass
                         # Forest tool names: feed() has its own byte gate.
                         tools_acc.feed(line)
+                        reply_parsed = False
                         # Cheap substring gate first: the hot path must not
                         # parse JSON on every frame to learn something that
                         # appears once, in the last one.
@@ -1666,6 +2393,10 @@ async def _forward(
                                 sse_finish_reason = fr
                         if detector is not None and not detector.tripped:
                             ev = parse_sse_event(line)
+                            if reply_cap is not None:
+                                reply_parsed = True
+                                if ev is not None:
+                                    reply_cap.feed_event(ev, len(line))
                             if ev is not None:
                                 if not first_meta:
                                     for _k in ("id", "model", "created"):
@@ -1675,6 +2406,8 @@ async def _forward(
                                 if detector.tripped and enforce:
                                     enforce_trip = True
                                     break
+                        if reply_cap is not None and not reply_parsed:
+                            reply_cap.feed_sse(line)
                         # Legacy /v1/completions frames carry choices[0].text,
                         # not delta.content (R13): parse that channel instead
                         # so the streamed text reaches accumulated (content
@@ -1750,6 +2483,11 @@ async def _forward(
                         # stream. The finally tears down the upstream socket so
                         # vLLM aborts and frees its KV blocks.
                         break
+                if client_r is not None:
+                    tail = client_r.flush()
+                    g_restored[0] = client_r.restored
+                    if tail:
+                        yield tail
                 # Enforce trip: append a schema-valid terminal chunk carrying the
                 # runaway finish_reason + [DONE] so the client sees a clean end.
                 if enforce_trip and detector is not None:
@@ -1784,7 +2522,10 @@ async def _forward(
             guard,
             background=BackgroundTask(guard.abandon),
             status_code=resp.status_code,
-            headers={"content-type": resp.headers.get("content-type", "text/event-stream")},
+            headers={
+                "content-type": resp.headers.get("content-type", "text/event-stream"),
+                REQUEST_ID_HEADER: request_id,
+            },
         )
 
     if runaway_active and _is_sse_stream(resp):
@@ -1807,8 +2548,11 @@ async def _forward(
         runaway_cached: int | None = None
         buf = b""
         try:
-            async for chunk in resp.aiter_bytes():
+            async for chunk in _guard_frames(
+                _idle_bounded(resp.aiter_bytes(), idle_s, live_req), g_trailer
+            ):
                 buf += chunk
+                _cap_feed(chunk)
                 while b"\n\n" in buf:
                     line, buf = buf.split(b"\n\n", 1)
                     ev = parse_sse_event(line)
@@ -1830,6 +2574,8 @@ async def _forward(
             override = detector.finish_reason if (detector.tripped and enforce) else None
             out = agg.build(finish_reason_override=override)
             _set_tools_out(out)
+            if reply_cap is not None:
+                reply_cap.set_json(out)
             completion = _completion_text(out, is_chat_path)
             usage = out.get("usage") or {}
             prefix_processed = True
@@ -1865,6 +2611,7 @@ async def _forward(
             await _deregister()
             await resp.aclose()
             await _release_slot()
+            await _capture_done()
             if do_content_log:
                 if detector.tripped:
                     await content_log.write_entry(
@@ -1902,7 +2649,17 @@ async def _forward(
                         prompt=prompt_text,
                         completion=completion,
                     )
-        return JSONResponse(out, status_code=resp.status_code)
+        if g_restore is not None and g_out is not None:
+            raw_out, g_restored[0] = guard_proxy.restore_json(
+                json.dumps(out).encode(), g_restore, trailer=None, restore_mode=g_out.restore_mode
+            )
+            out = json.loads(raw_out)
+            # The history row was written before this restore; the action log still records it.
+            if g_restore.restored:
+                _guard_log(request, g_out.restored_events(now=time.time()), request_id)
+        return JSONResponse(
+            out, status_code=resp.status_code, headers={REQUEST_ID_HEADER: request_id}
+        )
 
     try:
         # Server-side wall-clock backstop for the non-stream path too (the
@@ -1913,11 +2670,13 @@ async def _forward(
         # unwinds into the `finally` below, which aclose()s the upstream socket
         # (vLLM aborts + frees KV) and releases the slot. 0.0 = disabled.
         max_wall = getattr(request.app.state.settings, "request_max_wall_s", 0.0) or 0.0
-        if max_wall > 0.0:
-            remaining = max_wall - (_monotonic() - request_start)
-            content = await asyncio.wait_for(resp.aread(), timeout=max(remaining, 0.0))
-        else:
-            content = await resp.aread()
+        max_wall = max_wall or float(
+            getattr(request.app.state.settings, "nonstream_max_s", 1800.0) or 1800.0
+        )
+        remaining = max_wall - (_monotonic() - request_start)
+        content = await asyncio.wait_for(resp.aread(), timeout=max(remaining, 0.0))
+        if g_trailer and resp.status_code < 300:
+            content, _ = guard_proxy.restore_json(content, RestoreMap(), trailer=g_trailer)
         # The engine's usage block wins when it carries a count; some engines
         # answer 200 without one, in which case the served completion is still
         # billed via the tokenizer — the same fallback the two streaming paths
@@ -1946,6 +2705,8 @@ async def _forward(
         if live_req is not None and isinstance(body_obj, dict):
             live_req.cached_tokens = _cached_tokens_of(body_obj)
             _set_tools_out(body_obj)
+            if reply_cap is not None:
+                reply_cap.set_json(body_obj)
         if engine_completion is None:
             completion_tokens = await tok_cache.count(
                 model.hf_repo,
@@ -2065,6 +2826,7 @@ async def _forward(
         except Exception:
             pass
 
+    await _capture_done(content)
     # Content logging (diagnostic, disabled by default; see content_log.py).
     # Runs after the slot is released (finally above) so file I/O never holds
     # the priority slot; best-effort inside write_entry.
@@ -2086,10 +2848,20 @@ async def _forward(
             completion=completion,
         )
 
+    if g_restore is not None and g_out is not None and resp.status_code < 300:
+        content, g_restored[0] = guard_proxy.restore_json(
+            content, g_restore, trailer=None, restore_mode=g_out.restore_mode
+        )
+        # The history row was written before this restore; the action log still records it.
+        if g_restore.restored:
+            _guard_log(request, g_out.restored_events(now=time.time()), request_id)
     return Response(
         content=content,
         status_code=resp.status_code,
-        headers={"content-type": resp.headers.get("content-type", "application/json")},
+        headers={
+            "content-type": resp.headers.get("content-type", "application/json"),
+            REQUEST_ID_HEADER: request_id,
+        },
     )
 
 

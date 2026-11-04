@@ -404,7 +404,13 @@ async def test_query_last_ignores_time(tmp_path):
 
 async def test_v2_readers_skip_the_forest_columns(tmp_path):
     """The forest's JSON columns are written but not read back by the v2 readers."""
-    assert rh._COLUMNS == rh._READ_COLUMNS + rh._FOREST_COLUMNS
+    assert rh._COLUMNS == (
+        rh._READ_COLUMNS
+        + rh._FOREST_COLUMNS
+        + rh._COBS2_COLUMNS
+        + rh._SESSIONS_COLUMNS
+        + rh._DIET_COLUMNS
+    )
     db_path = await _migrated(tmp_path)
     store = RequestHistoryStore(db_path)
     store.record(_record(1, tools_in=[["shell", 1, False]], session_key="k"), finished_at=1000.0)

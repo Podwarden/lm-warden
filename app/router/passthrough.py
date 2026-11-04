@@ -126,6 +126,25 @@ def request_headers_for_upstream(headers: Mapping[str, str]) -> dict[str, str]:
     return out
 
 
+#: The encodings the relay recorder can decode (relay_record.assemble_reply).
+_DECODABLE = ("gzip", "deflate")
+
+
+def narrow_accept_encoding(value: str) -> str:
+    """The client's Accept-Encoding cut down to what the recorder can decode:
+    the client still gets an encoding it asked for, and the recorder can read
+    the reply (Claude Code also accepts br and zstd, which the image cannot
+    decode). ``identity`` when nothing decodable is left."""
+    asked = []
+    for part in value.split(","):
+        name, _, params = part.strip().partition(";")
+        name = name.strip().lower()
+        refused = params.replace(" ", "").lower() in ("q=0", "q=0.0", "q=0.00", "q=0.000")
+        if name in _DECODABLE and not refused:
+            asked.append(name)
+    return ", ".join(dict.fromkeys(asked)) or "identity"
+
+
 def _client_header_items(items: Iterable[tuple[str, str]]) -> list[tuple[str, str]]:
     items = [(k.lower(), v) for k, v in items]
     named = _connection_tokens(items)
@@ -252,6 +271,10 @@ async def relay(
     on_usage: Callable[[int | None, int | None], None] | None = None,
     on_ttfb: Callable[[], None] | None = None,
     on_close: Callable[[Response], None] | None = None,
+    on_chunk: Callable[[bytes], None] | None = None,
+    extra_headers: Mapping[str, str] | None = None,
+    narrow_encoding: bool = False,
+    identity_encoding: bool = False,
 ) -> Response:
     """Send ``request`` to Anthropic and stream the answer back.
 
@@ -263,6 +286,11 @@ async def relay(
     url = _upstream_url(request, upstream_base)
     headers = request_headers_for_upstream(_combined_request_headers(request))
     headers.update({k.lower(): v for k, v in credentials.items()})
+    if narrow_encoding:
+        headers["accept-encoding"] = narrow_accept_encoding(headers.get("accept-encoding", ""))
+    if identity_encoding:
+        # The guard rewrites the answer, so it must arrive as plain bytes.
+        headers["accept-encoding"] = "identity"
     content: Any = None
     if body is not None:
         content = body
@@ -332,6 +360,11 @@ async def relay(
                             on_ttfb()
                         except Exception:  # noqa: BLE001
                             pass
+                if on_chunk is not None:
+                    try:
+                        on_chunk(chunk)
+                    except Exception:  # noqa: BLE001 - recording never fails a relay
+                        pass
                 if sniffer is not None:
                     if is_sse:
                         sniffer.feed_sse(chunk)
@@ -353,6 +386,8 @@ async def relay(
         (k.encode("latin-1"), _encode_value(v))
         for k, v in _client_header_items(resp.headers.multi_items())
     ]
+    for k, v in (extra_headers or {}).items():
+        out.raw_headers.append((k.encode("latin-1"), _encode_value(v)))
     holder["r"] = out
     return out
 

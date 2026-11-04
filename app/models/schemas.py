@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Annotated, Any, Literal, cast
 
 from pydantic import (
+    AfterValidator,
     BaseModel,
     ConfigDict,
     Field,
@@ -33,6 +34,20 @@ HfRepoId = Annotated[str, Field(pattern=HF_REPO_PATTERN)]
 RepoFilename = Annotated[str, Field(min_length=1, max_length=512)]
 MaxModelLen = Annotated[int, Field(gt=0)]
 GpuMemoryUtilisation = Annotated[float, Field(gt=0, le=1.0)]
+
+
+def _safe_revision(v: str) -> str:
+    if v.startswith("/") or ".." in v:
+        raise ValueError("a revision is a branch, tag or commit, not a path")
+    return v
+
+
+#: A branch, tag or commit: never an absolute path or ``..`` (verified finding #13).
+HfRevision = Annotated[
+    str,
+    Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9._/-]+$"),
+    AfterValidator(_safe_revision),
+]
 
 
 def validate_extra_env_for_backend(extra_env: dict[str, str], backend: str | None) -> None:
@@ -177,7 +192,7 @@ class ModelSpec(BaseModel):
     # -- identity and source -------------------------------------------------
     served_model_name: str = Field(..., min_length=1, max_length=100)
     hf_repo: HfRepoId
-    hf_revision: str = "main"
+    hf_revision: HfRevision = "main"
     # ``filename`` narrows the pull to one weights file + tokenizer/config;
     # unset (None) preserves the legacy "pull the whole repo" path (#85).
     filename: RepoFilename | None = None
@@ -469,7 +484,7 @@ class TemplateCreate(BaseModel):
     id: str = Field(..., min_length=1, max_length=64, pattern=r"^[a-zA-Z0-9._-]+$")
     label: str = Field(..., min_length=1, max_length=200)
     hf_repo: HfRepoId
-    hf_revision: str = "main"
+    hf_revision: HfRevision = "main"
     dtype: str = "auto"
     # Defaults let a try-stack "save working combo" POST omit these — that flow
     # only captures the engine axis + repo. The UI sends the model's actual

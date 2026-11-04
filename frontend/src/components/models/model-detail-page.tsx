@@ -654,6 +654,7 @@ export function ModelDetailPage({ id }: { id: string }) {
                 status={data.status}
                 pulledBytes={data.pulled_bytes}
                 pulledTotal={data.pulled_total}
+                lastError={data.last_error}
               />
             </CardContent>
           </Card>

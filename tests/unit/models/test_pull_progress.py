@@ -161,7 +161,7 @@ async def test_run_pull_persists_total_and_final_bytes(tmp_data_dir, monkeypatch
     monkeypatch.setattr(pt, "insufficient_disk", fake_disk_check)
     monkeypatch.setattr(pt, "_snapshot_download", fake_download)
     # Simulate an in-flight download size at completion.
-    monkeypatch.setattr(pt, "_snapshot_dir_size", lambda cache, repo: 4096)
+    monkeypatch.setattr(pt, "_snapshot_dir_size", lambda cache, repo, **kw: 4096)
 
     await pt.run_pull("m1", settings)
 

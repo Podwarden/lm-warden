@@ -47,7 +47,7 @@ from app.models.fit import (
 from app.models.gpu_capability import capability_warnings
 from app.models.load_preflight import decide_preflight
 from app.models.parallelism import PARALLEL_FLAGS_REFUSAL, parallel_flag_values
-from app.models.pull_task import _snapshot_dir_size, run_pull
+from app.models.pull_task import _snapshot_dir_size, pull_is_running, run_pull
 from app.models.schemas import (
     LoadProgressOut,
     ModelCreate,
@@ -1551,6 +1551,11 @@ async def trigger_pull(
             raise HTTPException(404, "not found")
         if row.status not in ("registered", "failed", "pulled"):
             raise HTTPException(409, f"cannot pull from status '{row.status}'")
+    if pull_is_running(model_id):
+        # The row can still read 'registered' for a moment after a pull
+        # starts (a double-click, or the boot-time resume of an interrupted
+        # pull); run_pull would ignore a second run, so say so.
+        raise HTTPException(409, "a pull of this model is already running")
     _spawn_background(request, run_pull(model_id, settings, force=force))
     return {"status": "pulling", "force": force}
 
@@ -1908,7 +1913,8 @@ async def start_engine(
                 if was == "loaded":
                     await ModelRepo(db).set_prior_status(model_id, "loaded")
                 await RuntimeRepo(db).clear(model_id)
-        port_alloc.release(port)
+        # The supervisor returned the port before calling on_exit (verified finding #3); releasing
+        # it again here could free a port a newer engine already holds.
 
     async def _run_load():
         # #278 — the generation this attempt started from, read before the spawn.
@@ -2486,19 +2492,14 @@ async def unload_model(
 ):
     settings = request.app.state.settings
     sup = request.app.state.supervisor
-    port_alloc = request.app.state.port_allocator
     async with open_db(settings.db_path) as db:
         model = await ModelRepo(db).get(model_id)
         if not model:
             raise HTTPException(404, "not found")
         if model.status not in _unloadable_statuses(force):
             raise HTTPException(409, f"cannot unload from status '{model.status}'")
-        rt = await RuntimeRepo(db).get(model_id)
-        # The runtime row only exists once a load reached 'loaded'. Forcing a
-        # model out of 'loading' therefore finds nothing there, while the
-        # allocator DOES hold the port this process handed the spawn — ask the
-        # supervisor before giving up on releasing it (#236).
-        port = (rt.port if rt else None) or sup.get_port(model_id)
+        # The engine's port is returned by sup.unload() itself (verified finding #3; #236's
+        # force-unload-from-'loading' case included).
     # #166 — surface the refusal SYNCHRONOUSLY (the state check is instant),
     # but run the engine teardown itself in a background task. A large
     # multi-GPU engine can take many seconds to terminate; doing that inline
@@ -2540,15 +2541,7 @@ async def unload_model(
                 "unload teardown for %s raised; forcing terminal state",
                 model_id,
             )
-        if port:
-            try:
-                port_alloc.release(port)
-            except Exception:
-                logger.warning(
-                    "port release for %s during unload failed",
-                    model_id,
-                    exc_info=True,
-                )
+        # sup.unload() returned the engine's port (verified finding #3).
         async with open_db(settings.db_path) as db:
             await RuntimeRepo(db).clear(model_id)
             await ModelRepo(db).update_status(model_id, "pulled")

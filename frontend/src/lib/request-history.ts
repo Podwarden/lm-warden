@@ -19,6 +19,8 @@ import type { StatsRange } from "./stats-v2";
 /** One completed request, as the proxy recorded it. */
 export interface RequestHistoryRow {
   id: string;
+  /** Sessions pages: `r_<id>` when the row joined a session, else null. */
+  session_ref?: string | null;
   /** Epoch SECONDS when the proxy saw the request end. */
   finished_at: number;
   /** models table ROW id — what `?models=` filters on. */

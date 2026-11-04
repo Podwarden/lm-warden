@@ -128,6 +128,11 @@ class Settings:
     # body iterator — so nothing else can reclaim the slot. Set to a real
     # value (e.g. 600) in the deployment env to bound worst-case slot pinning.
     request_max_wall_s: float = 0.0
+    # Verified finding #4: a stream that sends nothing for this long (headers or the next chunk)
+    # is a stalled engine and is ended; a non-stream request with no request_max_wall_s gets
+    # nonstream_max_s as its deadline (engines answer non-stream requests only when done).
+    upstream_idle_s: float = 300.0
+    nonstream_max_s: float = 1800.0
     # Heuristic prefill speed (tokens/s) behind the in-flight table's "slow"
     # flag: a prefilling request is slow past max(3 s, 4 x fresh tokens / this).
     # Deliberately conservative; it is a hint, not a measurement.
@@ -200,6 +205,15 @@ class Settings:
     content_log_path: Path = Path("/data/logs/content.jsonl")
     content_log_max_chars: int = 40000
     content_log_max_bytes: int = 512 * 1024 * 1024
+    # Debug capture (app/proxy/capture.py): a key's opt-in, time-limited record of
+    # exact request bodies and raw responses, for replay. One directory on the
+    # data volume; oldest deleted past capture_max_bytes. Off unless a key's
+    # capture_until is in the future.
+    capture_dir: Path = Path("/data/capture")
+    capture_max_bytes: int = 120 * 1024**3
+    # Largest /v1 request body (verified finding #5); app/utils/body_cap.py.
+    max_request_body_mb: int = 64
+    capture_resp_max_bytes: int = 8 * 1024**2
     # Runaway-generation detector (app/proxy/runaway.py) — see
     # docs/superpowers/specs/2026-07-21-runaway-detector-design.md. Off by
     # default: when runaway_mode == "off" the proxy forward path is
@@ -366,6 +380,8 @@ def load_settings() -> Settings:
     godmode_max_image_chars = int(os.environ.get("VW_GODMODE_MAX_IMAGE_CHARS", "14000000"))
     godmode_max_images_per_req = int(os.environ.get("VW_GODMODE_MAX_IMAGES_PER_REQ", "16"))
     request_max_wall_s = float(os.environ.get("VW_REQUEST_MAX_WALL_S", "0.0"))
+    upstream_idle_s = max(1.0, float(os.environ.get("VW_UPSTREAM_IDLE_S", "300")))
+    nonstream_max_s = max(1.0, float(os.environ.get("VW_NONSTREAM_MAX_S", "1800")))
     try:
         prefill_tok_s_hint = float(os.environ.get("VW_PREFILL_TOK_S_HINT", "2000"))
     except ValueError:
@@ -413,6 +429,10 @@ def load_settings() -> Settings:
     # warns once on reaching this -- no rotation, no deletion. Same shape and
     # same <= 0 = off convention as VW_ENGINE_LOG_MAX_BYTES.
     content_log_max_bytes = int(os.environ.get("VW_CONTENT_LOG_MAX_BYTES", str(512 * 1024 * 1024)))
+    _capture_dir_raw = os.environ.get("VW_CAPTURE_DIR", "").strip()
+    capture_dir = Path(_capture_dir_raw) if _capture_dir_raw else data_dir / "capture"
+    capture_max_bytes = int(float(os.environ.get("VW_CAPTURE_MAX_GB", "120")) * 1024**3)
+    max_request_body_mb = max(1, int(os.environ.get("VW_MAX_REQUEST_BODY_MB", "64")))
     # Unknown / typo'd modes fall back to "off" so the forward path stays
     # byte-identical rather than silently arming enforcement on shared prod.
     runaway_mode = os.environ.get("VW_RUNAWAY_MODE", "off").strip().lower()
@@ -467,12 +487,17 @@ def load_settings() -> Settings:
         godmode_max_image_chars=godmode_max_image_chars,
         godmode_max_images_per_req=godmode_max_images_per_req,
         request_max_wall_s=request_max_wall_s,
+        upstream_idle_s=upstream_idle_s,
+        nonstream_max_s=nonstream_max_s,
         prefill_tok_s_hint=prefill_tok_s_hint,
         content_log_enabled=content_log_enabled,
         content_log_tokens=content_log_tokens,
         content_log_path=content_log_path,
         content_log_max_chars=content_log_max_chars,
         content_log_max_bytes=content_log_max_bytes,
+        capture_dir=capture_dir,
+        capture_max_bytes=capture_max_bytes,
+        max_request_body_mb=max_request_body_mb,
         runaway_mode=runaway_mode,
         runaway_think_budget=runaway_think_budget,
         runaway_repeat_max=runaway_repeat_max,

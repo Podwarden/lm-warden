@@ -2,8 +2,13 @@
 // (GET /api/stats/v2/cache, GET /api/tokens/{id}/cache; spec 2026-10-07 §5).
 // Null means unknown and renders "—", never 0. DOM-free so it is testable alone.
 
-export type CacheOutcome = "hit" | "partial" | "lost" | "misrouted" | "diverged" | "cold";
-export const OUTCOMES: CacheOutcome[] = ["hit", "partial", "lost", "misrouted", "diverged", "cold"];
+// The last two are cobs2 miss causes (app/cache_obs/classify.py), appended in the server's order.
+export type CacheOutcome =
+  | "hit" | "partial" | "lost" | "misrouted" | "diverged" | "cold" | "compacted" | "harness_rewrite";
+export type DivergenceCause = "compacted" | "harness_rewrite";
+export const OUTCOMES: CacheOutcome[] = [
+  "hit", "partial", "lost", "misrouted", "diverged", "cold", "compacted", "harness_rewrite",
+];
 
 export interface CacheSummary {
   model_id: string;
@@ -25,6 +30,9 @@ export interface CacheSummary {
   /** Hit or partial requests whose prefix still broke deep inside the prompt
    *  (own lens: matched against this key's prompts only). */
   deep_diverged?: number;
+  /** cobs2: rows whose broken prefix lineage explains -- relabelled misses and
+   *  deep-diverged hits/partials alike. Absent from an older server. */
+  divergence_causes?: Record<DivergenceCause, number>;
   by_rank: {
     dp_rank: number;
     requests: number;
@@ -85,7 +93,10 @@ export function fmtPct(x: number | null, estimated: boolean): string {
 }
 
 export function outcomeLabel(o: CacheOutcome): string {
-  return { hit: "hit", partial: "partial", lost: "lost", misrouted: "other replica", diverged: "prefix changed", cold: "nothing to reuse" }[o];
+  return {
+    hit: "hit", partial: "partial", lost: "lost", misrouted: "other replica", diverged: "prefix changed",
+    cold: "nothing to reuse", compacted: "compacted", harness_rewrite: "harness rewrote history",
+  }[o];
 }
 
 function lostText(backend: string | null): string {
@@ -95,13 +106,47 @@ function lostText(backend: string | null): string {
   return "Cache lost to LRU eviction: the KV pool needed the space. Watch KV usage on this model.";
 }
 
+const CAUSE_TEXT: Record<DivergenceCause, string> = {
+  harness_rewrite: "most of these follow the harness rewriting earlier messages",
+  compacted: "most of these follow a compaction",
+};
+
+/** The cause behind most broken prefixes (prefix changed, deep-diverged hits, and the
+ *  relabelled ones), or null when unknown, tied or not a majority. The server counts
+ *  divergence_causes over that same population, so the share is like for like. */
+export function dominantCause(s: CacheSummary): DivergenceCause | null {
+  const c = s.divergence_causes;
+  if (!c) return null;
+  const o = s.outcomes;
+  const broke = (s.deep_diverged ?? 0) + (o.diverged ?? 0) + (o.compacted ?? 0) + (o.harness_rewrite ?? 0);
+  const h = c.harness_rewrite ?? 0;
+  const k = c.compacted ?? 0;
+  // A tie names no cause: neither is "most".
+  if (h === k) return null;
+  const top: DivergenceCause = h > k ? "harness_rewrite" : "compacted";
+  const n = Math.max(h, k);
+  return n * 2 > broke ? top : null;
+}
+
+/** ";"-joined suffix for a line about broken prefixes, or "" when no cause dominates. */
+export function causeSuffix(s: CacheSummary): string {
+  const c = dominantCause(s);
+  return c ? `; ${CAUSE_TEXT[c]}` : "";
+}
+
+const HARNESS_TEXT =
+  "The client rewrote earlier messages (reminders, dates, dropped reasoning); the cache can't reuse past that point.";
+
 export function topProblem(s: CacheSummary, opts: { lens: "operator" | "own" }): Hint | null {
-  const total = OUTCOMES.reduce((a, o) => a + s.outcomes[o], 0);
+  const total = OUTCOMES.reduce((a, o) => a + (s.outcomes[o] ?? 0), 0);
   if (total === 0) return null;
-  const order: CacheOutcome[] = opts.lens === "own" ? ["diverged", "lost"] : ["lost", "diverged", "misrouted"];
+  // "compacted" is informational (expected after a compaction), never a problem.
+  const order: CacheOutcome[] = opts.lens === "own"
+    ? ["diverged", "harness_rewrite", "lost"]
+    : ["lost", "diverged", "harness_rewrite", "misrouted"];
   let best: Hint | null = null;
   for (const o of order) {
-    const share = s.outcomes[o] / total;
+    const share = (s.outcomes[o] ?? 0) / total;
     if (share < HINT_SHARE || (best && share <= best.share)) continue;
     let text: string;
     if (o === "lost") text = opts.lens === "own"
@@ -116,7 +161,10 @@ export function topProblem(s: CacheSummary, opts: { lens: "operator" | "own" }):
           ? `Key "${who.token_name ?? who.token_id}" rewrites the start of its prompt in ${who.requests} requests. Move changing data (time, ids) to the end.`
           : "A client rewrites the start of its prompt. Move changing data (time, ids) to the end.";
       }
-    } else text = "The prefix was cached on another replica.";
+      const cause = dominantCause(s);
+      if (cause) text += ` ${CAUSE_TEXT[cause][0].toUpperCase()}${CAUSE_TEXT[cause].slice(1)}.`;
+    } else if (o === "harness_rewrite") text = HARNESS_TEXT;
+    else text = "The prefix was cached on another replica.";
     best = { outcome: o, share, text };
   }
   return best;

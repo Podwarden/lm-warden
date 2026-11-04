@@ -7,6 +7,151 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.11.04.2] — 2026-11-04
+
+### Fixed
+
+- **The first model load after a restart no longer compiles from scratch.** The engine's compile caches (torch.compile, FlashInfer and Triton kernels) used to sit in the container's own filesystem, so every update, restart or reboot threw them away. They now live in the model cache volume (`.lmw-engine-cache/`), which every install keeps. A model's settings can still point `VLLM_CACHE_ROOT` elsewhere.
+
+## [v2026.11.04.1] — 2026-11-04
+
+### Fixed
+
+- **A restart no longer strands a model download at "0 B".** If the warden restarts during a pull, the pull starts again by itself and keeps the files it already finished. The model page used to show a busy bar at 0 bytes with nothing downloading.
+- **A crash in the downloader no longer takes the warden down.** Model downloads run in their own process. If that process dies, the pull is marked failed with the reason (for example, killed by the out-of-memory killer), and the API and running models keep serving.
+- Partial files left behind by an interrupted download are deleted when the next pull of that model starts, so they no longer waste disk or inflate the progress count.
+- A second Pull click while a pull is starting is refused (409) instead of starting a second download.
+- A model that is registered but not downloading shows a still bar with "Not downloading" and the reason, instead of a pulsing bar.
+
+## [v2026.10.30.4] — 2026-10-30
+
+### Added
+
+- **Set a new key's sensitive data guard while creating it.** The Create API token dialog has a Sensitive data section with the same choice as the key's page: use the platform setting (it shows what that is), off for this key, or own settings (mode, packs and their actions, your rules, restore, note, failure), starting from the platform's. A setting the server refuses shows the reason and creates no key.
+- **API (additive):** `POST /api/tokens` accepts `guard` (as on `PATCH`: omitted or `null`, `{"off": true}`, or `{"override": {...}}`) and answers with `guard` and `guard_effective`.
+
+## [v2026.10.30.3] — 2026-10-30
+
+### Fixed
+
+- **Code words are no longer mistaken for passwords, and a mistaken word never spreads.**
+  - The previous release caught letters-only passwords in YAML and quoted values, but also took words like `Optional`, `required`, `Kubernetes` or `active` (in `password: Optional[str]`, or an `host:port:…:active` line) for passwords.
+  - Session matching then replaced that word everywhere in the session, so a coding agent reading a Pydantic model saw placeholders for `Optional` in later code.
+  - Letters-only values now count only when they look random (lowercase, 10+ characters, not a known type or keyword). The unquoted rule no longer starts inside a quoted string, and `.pgpass` lines need a password-like last field.
+  - Session memory never learns a letters-only value shorter than 16 characters.
+  - On 240 MB of third-party JavaScript the default packs now flag 0.6 values per 10 MB.
+- The admin Try it box masks values the same way as the note: public prefix or length only.
+
+## [v2026.10.30.2] — 2026-10-30
+
+### Added
+
+- **Each built-in pack can have its own action** on the Sensitive data settings (platform and per key), for example block on private keys while sanitizing everything else. Each pack also lists the rules it holds.
+
+### Changed
+
+- **The custom-pattern check is fairer both ways.** A repeated group pinned by a separator, such as `(?:[a-z]+\.)+internal` or `[a-z]+(?:-[a-z0-9]+)*`, is accepted. A pattern that is slow on some inputs, such as `\s*\s*\s*$` or `a*a*a*b`, is refused after a short timed test when you save it. Custom patterns are scanned in bounded chunks.
+- **More passwords and tokens are caught:**
+  - a letters-only password in YAML (`password: …`) or in quotes;
+  - `.pgpass` lines;
+  - `AWS_SECURITY_TOKEN` and other keys that only contain `uri`, `url` or `endpoint` inside a longer word;
+  - keys with an environment suffix (`INTERNAL_TOKEN_PROD`);
+  - phone numbers written with spaces (opt-in pack).
+- **Masks show a key's public prefix or only its length**, never other characters.
+- `GET /api/guard/packs` lists each rule once.
+
+### Fixed
+
+- **A value said twice in the same first request is caught both times** (in prose before the `.env` that names it), not only where its rule's context is.
+- **A value found earlier in a session is caught again even next to delimiters or with spaces** (`app/<pw>@ORCL`, a passphrase in prose, a key ending in `=`).
+- **base64 right after `=`** (`ENV_B64=<blob>`) is decoded and checked.
+- **A block from the router (`/v1/messages` relayed or matched by a rule) carries `X-LMW-Request-Id`.**
+- **`restored` events are logged for non-streamed answers** too.
+
+## [v2026.10.30.1] — 2026-10-30
+
+### Changed
+
+- **The sensitive data guard catches more and wrongly catches less.**
+  - Base64 that decodes to text is checked, and a hit replaces the whole run (a kubeconfig's `client-key-data`, an encoded `.env`). Docker `config.json` logins and PEM keys written with `\n` escapes (GCP service-account files) are caught.
+  - Passwords are judged by what a password looks like rather than by randomness: `SMTP_PASS=`, `Summer2024!!`, a letters-only password in a `.env`, and a quoted passphrase with spaces are caught. Identifiers, UI labels, templates and paths are not.
+  - New: passwords on command lines (`curl -u`, `mysql -p`, `--password`, `.netrc`), Google OAuth `ya29.` tokens, Vault `hvs.` tokens, Stripe test keys, and US phone formats (opt-in pack).
+  - Fewer false alarms: vendors' `EXAMPLE` keys, paging cursors, `*Endpoint` URLs, `PWD`, function calls and minified code are left alone. On 240 MB of third-party JavaScript the default packs now flag 1.6 values per 10 MB.
+  - A specific rule wins over a general one on the same text, so a GitHub token inside a git URL is replaced on its own and the URL stays readable.
+  - **Rule id change:** secrets, tokens and API keys in config are now `secret-assignment`; `password-assignment` is passwords only. An override set on `password-assignment` for tokens must move to `secret-assignment`.
+- **Custom pattern rules are checked properly.** Any repeat that holds another repeat or alternatives is refused (`((a+))+`, `(a|aa)+`, `(a{1,30}){1,30}`), not only the obvious forms. Scans that run custom patterns never run on the server's event loop. A rule's keyword now works anywhere in the match, not only at its start. An override naming a pack or rule that does not exist is refused instead of saved.
+- **The note and the block reply mask passwords and other general findings by length only.** The first and last characters went back into the next prompt.
+- **Placeholders put back in an answer are logged** as `restored` events.
+
+### Fixed
+
+- **`/v1/completions` with `prompt` as a list was not checked.** A list of texts is checked now. Token ids cannot be read and are refused (`422 failed;reason=unscannable`) unless the key fails open.
+- **A value found once is caught again later in the session** without the context its rule needed: in a restored answer sent back, in prose, or after the agent compacts the conversation. Matching uses the value's keyed fingerprint and length, never the value.
+- **The streamed note no longer lands inside the answer** when the model's last chunk carries text, which split the last token of code or JSON.
+- **A block on `/v1/messages` and `/v1/responses` served by a local model is recognisable:** model `lm-warden-guard` and the `X-LMWarden-Guard` header. Every block reply carries `X-LMW-Request-Id`.
+
+## [v2026.10.29.3] — 2026-10-29
+
+### Added
+
+- **Screens for the sensitive data guard.** **Settings → Sensitive data** sets the platform default: off, sanitize, or block then sanitize; which built-in rule packs run; your own patterns and fixed words (a pattern that could take exponential time is refused with the reason); where values are put back; the note at the end of answers; and what happens if the guard cannot check a request. Each key's page has a **Sensitive data** card: use the platform setting (it shows what is in effect), switch the guard off for this key, or give the key its own settings. Both have a **Try it** box that shows text as the model would see it, with masked findings and nothing stored, and the guard's log (per key on the key's page): when, action, rule, where, and the value's length and fingerprint, never the value.
+
+### Changed
+
+- **A request the guard blocks now appears in request history** (phase `blocked`, the guard's summary, the prompt counted, no completion), not only in the guard's action log. It still takes no engine slot.
+- **A value inside a signed `thinking` block blocks the request in any mode.** Anthropic signs thinking blocks, so the guard cannot replace a value there without breaking the conversation; it stops the request instead and says where the value is.
+
+## [v2026.10.29.2] — 2026-10-29
+
+### Added
+
+- **The sensitive data guard now acts on local requests.** For a key with the guard on (a platform setting or the key's own), values it finds in a chat or completions request (`/v1/chat/completions`, `/v1/completions`, and `/v1/messages` and `/v1/responses` when served by a local model) are replaced by placeholders such as `⟦LMW-SECRET-3a9f1c2e7b⟧` before the model sees them, with a short note telling the model to copy them as they are. Placeholders in the answer are put back to the real values before the client gets it, in streamed and non-streamed answers, text and tool-call arguments. A line from LM Warden at the end of the answer lists what was replaced, masked (by default only when something new was replaced; `trailer: always | new_only | off`). In **block** mode, the first request in a session carrying a new value is answered by LM Warden instead of the model (header `X-LMWarden-Guard: blocked`), saying what was found; the same conversation sent again goes through sanitized. A value in the system prompt or tool definitions is never blocked, only replaced. If the guard cannot check a request it is refused with 422 (`X-LMWarden-Guard: failed`) unless the key fails open. The engine, the debug capture, god mode, the content log and request history only ever see the placeholders; the action log records each value's kind, place, length and keyed id, never the value.
+- **The guard also covers requests relayed to Anthropic.** With the router on, a guarded key's `/v1/messages` body is checked once, before any rule: the local model, a fallback to Anthropic and a passthrough all receive only placeholders. Anthropic's answer is fetched unencoded and its text and tool input are restored before the client gets it, with LM Warden's line added as a last text block. A block is answered as an Anthropic message. `count_tokens` is sanitized and never blocked. Unparsed passthrough paths (the router's catch-all, such as message batches) are refused for a guarded key (`guard_no_passthrough`).
+
+## [v2026.10.29.1] — 2026-10-29
+
+### Added
+
+- **LM Warden now recognises conversations by what they say.** Each chat request gets content ids: keyed hashes of the system prompt and tools, of each message, and of the chain of messages so far. The warden uses them to link a request to the turn it continues, and to tell a fork, a compaction or a sub-agent from a new conversation. A second, looser set of ids ignores what harnesses rewrite between turns (system reminders, date lines, dropped reasoning, whitespace), so a rewrite is not mistaken for a new conversation. No text is stored: request history keeps hex ids and the kind of link only. The ids are keyed with a per-install secret kept in `cobs2_network_key` in the data directory (back it up with the database; deleting it changes every id). The links are kept in memory and forgotten on restart. See documents/ARCHITECTURE.md, "Conversation identity".
+- **Two new cache-miss causes on the Prompt cache panel.** A miss that follows a compaction now reads **compacted** instead of "prefix changed" or "nothing to reuse", and a miss caused by the client resending earlier messages with small changes reads **harness rewrote history**. A "lost" request keeps its label, so eviction stays visible. The same causes are also counted for hit and partial requests whose prefix broke mid-prompt, and the dim line and the "prefix changed" hint name the cause when one accounts for most of the broken prefixes.
+- **Replica placement keys on the conversation's content.** On a data-parallel model, a harness session is split into conversations by the content ids of its system prompt and first message, ignoring reminders and dates, so a changed `<system-reminder>` or date no longer moves a conversation to another replica and loses its cache. The key stays the same however large the conversation grows. `/v1/responses` keeps its current key for now.
+- **Sessions pages.** A new Sessions page lists harness sessions (Claude Code, OpenCode, Codex) with their duration, requests, conversations, prefill and the share served from cache. A session opens on a timeline with one lane per conversation (the main agent, each subagent, the continuation after a compaction), coloured by how much of each turn came from cache and striped by why it broke, with a tree of conversations and a turn table showing each request's message structure (sizes only), timings and replica. Subagents of Claude Code, which sends no parent id, are linked to the turn that dispatched them and marked **inferred**. The session cell in the in-flight table and in request history links to the session.
+- **Unused tools.** The session page lists the tools a harness offered and which it called, with the size of the unused ones per turn, as KV memory and context they take on every turn. Plain tool names (never descriptions or schemas) are kept per key and shown only to that key and the admin.
+- **One login page, two ways in, and an area for key holders.** `/login` has two tabs: **Login** for admins and **API key** for anyone who was given a key. A key holder lands on their key's own pages: an overview (requests, prompt tokens and the share from cache, generated tokens, values the guard hid), their sessions, the sensitive data log, the key's settings (read-only, except its name) and **Manage key**: rotate it, keeping the old key working for 1 hour, 24 hours or not at all, with the new key shown once; or revoke it after typing its name. The key is exchanged once for a 12-hour sign-in and never stored; **Sign out** ends the sign-in on the server. `/sessions/login` forwards to the API key tab.
+- **Relayed requests are recorded.** In router mode, requests relayed to Anthropic now get a history row (ids, lineage, tools, the upstream's usage and timings), recorded off the stream path, so a Claude Code session whose main agent runs on Anthropic still shows its full tree.
+- **`X-LMW-Request-Id` on every response.** Each proxied response names its history row, so a client or test agent can read its turn back.
+- **A sessions overview you can navigate.** The Sessions page opens on a chart of sessions started per hour (drag to narrow the time), ready views with counts (running now, biggest, most dead weight, cache trouble, long-running, evicted after a pause), Group by key, harness or day, a Where filter (local, relayed, hybrid), search and sort. Each group shows its sessions, total duration, prompt tokens and a prompt-anatomy bar; a key holder sees their own group, opened.
+- **Dead weight in prompts.** Each request now records how much of its prompt is unused tools, repeated messages, harness boilerplate (system reminders, date lines) and carried reasoning, in sizes only. The session page shows the share, the tokens per kind and a prompt-anatomy bar (from cache, dead weight, recomputed, new), per session, conversation and turn, so you can trim a harness's settings.
+- **Saved vs plain vLLM, and recomputed time.** The session page now shows ≈ how much prefill LM Warden's cache-aware replica placement spared, against plain vLLM's load-based routing of the same turns, next to the time served from cache and the time spent recomputing.
+- **The same traffic on other engines.** A session page replays its turns through plain vLLM's, llama.cpp server's, mlx-lm's and oMLX's cache rules and shows the prefill each would have recomputed, next to LM Warden's measured figure. It is an estimate for this session alone; oMLX's disk load time is not included.
+- **Pauses and evictions.** The session page and the list count resumes after a pause of a minute or more, how many found their cache evicted, the prefill time lost, by pause length, and what a disk tier keeping prefixes longer would have recovered.
+- **Harness labels.** Sessions are labelled Claude Code, OpenCode, Codex, OpenAI SDK or Other, from how the harness sends its session id.
+- **API (additive):** `GET /api/sessions` gains `group`, `group_key`, `view`, `where`, `sort`, `since`, `until`, `offset`, `per_group` and `tz_offset_min`, and answers `total`, `views`, `histogram`, `groups` and `pause_summary`; without `group`, `sort` or `offset` it pages as before. Session items, sessions, conversations and turns gain `harness`, `where`, `anatomy`, dead weight, the time estimates, `engine_replay` and `pauses` (see documents/API.md, "Sessions").
+- **API (additive):** `GET /api/sessions`, `GET /api/sessions/{session_id}` and `GET /api/requests/{request_id}?wait_ms=` (see documents/API.md, "Sessions"); live and history request rows gain `session_ref`.
+- **API (additive):** in `GET /api/stats/v2/cache` and `GET /api/tokens/{id}/cache`, each model's `outcomes` gains `compacted` and `harness_rewrite`, and each model gains `divergence_causes: {"compacted": n, "harness_rewrite": n}`. A request's `cache_outcome` can also be one of the two new values. A client that treats the outcome names as a closed list should accept them.
+
+- **Prompt diet per key (off by default).** An admin can have the warden drop the tools a harness never calls and, optionally, carried reasoning (all of it, or only before the last user message) from a key's requests before they reach the engine. Measured on a review harness: dropping unused tools changed nothing in the answers; dropping carried reasoning made the model think about three times longer, so leave that off unless you have measured it on your own traffic.
+- **Debug capture per key.** An admin can record a key's full requests and answers for a set number of hours, gzip-compressed under `/data/capture` with a size cap, to debug a harness. It stops by itself when the time is up.
+- **Sensitive data guard: settings and log (detection only for now).** A platform setting with per-key overrides (inherit, off, or own settings) chooses packs of detectors (cloud and API keys, private keys, passwords in config, payment cards, IBANs, contact details, crypto keys and addresses) and custom rules, with a try-it endpoint and an action log that never stores a value, only its kind, place, length and a keyed id. Requests are not sanitized or blocked yet; that ships in a later release.
+- **API (additive):** `/api/me/key` (GET, PATCH name), `/api/me/key/rotate`, `/api/me/key/revoke`, `/api/me/usage`, `/api/me/cache`, `/api/me/guard/events` for the signed-in key; `POST /api/forest/logout`; `/api/guard/settings`, `/api/guard/packs`, `/api/guard/test`, `/api/guard/events`; tokens gain `prompt_diet`, `capture_hours`/`capture_until`, `guard` and `guard_effective`.
+
+### Changed
+
+- **`saved_vs_vanilla_s` is computed.** It was always null; it is now ≈ seconds when the model has a measured cold rate, 0 on one replica or with affinity off, and null for relayed sessions.
+- **The recorded request shape may be up to 256 bytes** (was 200), to hold the dead-weight sizes; over the cap they are dropped first.
+- **Relayed traffic is not in the local stats panels.** Requests relayed to Anthropic in router mode are recorded for the sessions pages only; the cache panel, latency and throughput charts and the forest keep showing the local engines alone.
+
+### Fixed
+
+- **Signing out, changing a password or rotating a key now ends the sign-ins it should.** Admin and key-holder sign-ins are recorded server-side; logout ends that sign-in, a password change ends the user's other sign-ins, and rotating or revoking a key ends every sign-in made with it.
+- **The setup wizard creates exactly one admin.** Two simultaneous first-run requests could both create one; the second is now refused.
+- **Rotating a key keeps all its settings** (models, priority, thinking, relay, diet, guard) and a revoked or expired key can no longer be rotated back to life. During the grace period the old key stops at the earlier of its own end and the grace end.
+- **A model's `hf_revision` cannot point outside the Hugging Face cache.** Only branch or tag names and 40-character commit ids are accepted.
+- **Only a signed-in admin can change the relay target.** An admin API token could move where relayed traffic goes.
+- **Request bodies are bounded before anything reads them** (`VW_MAX_REQUEST_BODY_MB`), including form posts and uploads; an over-size body gets 413.
+- **Engine ports go back to the pool** however an engine goes away (unload, crash, failed start), so repeated restarts no longer run out of ports.
+- **A stalled engine cannot hold a request slot forever.** A stream that sends nothing for 5 minutes (`VW_UPSTREAM_IDLE_S`), or a non-streamed request that runs past 30 minutes (`VW_NONSTREAM_MAX_S`), ends with 504 "upstream engine stalled".
+
 ## [v2026.10.25.3] — 2026-10-25
 
 ### Changed

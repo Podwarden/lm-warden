@@ -99,8 +99,9 @@ async def login(body: LoginBody, request: Request, response: Response):
     secret = request.app.state.jwt_secret
     access_ttl = settings.session_access_ttl_minutes
     refresh_ttl = settings.session_refresh_ttl_days
-    access = mint_access(user.username, secret, ttl_minutes=access_ttl)
-    refresh = mint_refresh(user.username, secret, ttl_days=refresh_ttl)
+    sid = await request.app.state.auth_sessions.create("admin", user.username)
+    access = mint_access(user.username, secret, ttl_minutes=access_ttl, sid=sid)
+    refresh = mint_refresh(user.username, secret, ttl_days=refresh_ttl, sid=sid)
     # `secure` is derived, never hardcoded: a Secure cookie is discarded by
     # the browser on a plain-http:// origin, which is the documented quick
     # start. See app/auth/cookies.py for the derivation and the bug it fixes.
@@ -123,6 +124,7 @@ async def logout(request: Request, response: Response, user: str = Depends(requi
     # This session's streams (keyed session:<username>); an admin token's
     # streams are keyed by the token and outlive a browser logout.
     request.app.state.stream_registry.cancel_user(session_stream_key(user))
+    await request.app.state.auth_sessions.end(getattr(request.state, "session_id", None))
     # Match every attribute the cookie was SET with. A browser keys a cookie
     # on (name, domain, path), so the expiry alone does the deletion -- but a
     # deletion that disagrees on `secure`/`samesite` is rejected outright by
@@ -154,8 +156,11 @@ async def refresh(
     sub = claims.get("sub")
     if not sub:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "missing subject")
+    sid = claims.get("sid")
+    if not request.app.state.auth_sessions.is_active(sid, kind="admin", subject=str(sub)):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "session ended")
     access_ttl = request.app.state.settings.session_access_ttl_minutes
-    access = mint_access(sub, secret, ttl_minutes=access_ttl)
+    access = mint_access(sub, secret, ttl_minutes=access_ttl, sid=sid)
     return {"access_token": access, "expires_in": access_ttl * 60}
 
 

@@ -11,6 +11,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { screen, cleanup, waitFor, fireEvent, within } from "@testing-library/react";
 import { setAccessToken, setCsrfToken } from "@/lib/auth-fetch";
 
+import { S } from "@/lib/sessions/strings";
 vi.mock("@/lib/live-stats-stream", async (orig) => {
   const actual = await orig<typeof import("@/lib/live-stats-stream")>();
   const { mockStream } = await import("./stats-merged-stream");
@@ -229,6 +230,17 @@ describe("merged stats — requests chart and its table", () => {
     const link = within(first).getByRole("link", { name: "key-a" });
     expect(link).toHaveAttribute("href", "/tokens/detail?id=tok-a");
     expect(link.className).toContain("hover:underline");
+  });
+
+  it("adds a linked Session column to the history table", async () => {
+    installFetchStub();
+    renderPage();
+    await waitFor(() => expect(screen.getAllByTestId("finished-row")).toHaveLength(2));
+    const [first, second] = screen.getAllByTestId("finished-row");
+    const table = first.closest("table") as HTMLElement;
+    expect(within(table).getByRole("columnheader", { name: "Session" })).toBeTruthy();
+    expect(within(first).getByRole("link", { name: S.links.open })).toHaveAttribute("href", "/sessions/detail?id=r_f1");
+    expect(within(second).queryByRole("link", { name: S.links.open })).toBeNull();
   });
 
   it("does not link a finished row recorded before token_id existed", async () => {

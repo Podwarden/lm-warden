@@ -218,11 +218,17 @@ def resolve_hf_commit(
     slug = f"models--{hf_repo.replace('/', '--')}"
     root = Path(hf_cache_dir)
     for base in (root, root / "hub"):
+        refs = (base / slug / "refs").resolve()
+        target = (refs / revision).resolve()
+        # Never outside refs/, and only a commit comes back: an absolute or ``..`` revision
+        # used to read any file, the JWT secret included (verified finding #13).
+        if not target.is_relative_to(refs):
+            return revision
         try:
-            sha = (base / slug / "refs" / revision).read_text().strip()
+            sha = target.read_text().strip()
         except (OSError, ValueError):
             continue
-        if sha:
+        if _HEX_SHA.match(sha):
             return sha
     return revision
 

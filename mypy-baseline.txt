@@ -127,8 +127,6 @@ app/main.py: error: Function is missing a type annotation  [no-untyped-def]
     def _build_engine_driver(settings):
 app/main.py: error: Missing type parameters for generic type "dict"  [type-arg]
     async def get_csrf_token(request: Request) -> dict:
-app/models/pull_task.py: error: Returning Any from function declared to return "str"  [no-any-return]
-    return snapshot_download(**kwargs)
 app/models/pull_task.py: error: Function is missing a return type annotation  [no-untyped-def]
     def _sync():
 app/models/pull_task.py: error: Missing type parameters for generic type "Task"  [type-arg]

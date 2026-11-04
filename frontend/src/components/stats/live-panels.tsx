@@ -58,7 +58,8 @@ import {
   quantileFromBuckets,
   type TimelinePoint,
 } from "@/lib/live-history";
-import { tokenHref } from "@/lib/routes";
+import { sessionHref, tokenHref } from "@/lib/routes";
+import { S as SessionStrings } from "@/lib/sessions/strings";
 
 // Display names for the frame's `backend` field, so an empty state can say
 // WHICH engine is silent rather than "this engine build". Falls back to a
@@ -78,6 +79,17 @@ export function metricsUnsupportedNote(backend: string | null): string {
 // ===========================================================================
 // Shared primitives
 // ===========================================================================
+
+/** The session cell's text (first 8 chars, or —), linked to the session page when the request joined one. */
+function SessionRefText({ sessionId, sessionRef }: { sessionId: string | null; sessionRef?: string | null }) {
+  const text = sessionId ? sessionId.slice(0, 8) : "—";
+  if (!sessionRef) return <>{text}</>;
+  return (
+    <Link href={sessionHref(sessionRef)} className="hover:underline underline-offset-2" aria-label={SessionStrings.links.title}>
+      {text}
+    </Link>
+  );
+}
 
 export function Panel({
   title,
@@ -1071,7 +1083,7 @@ function RequestCards({
                   )}
                   title={sessionTitle(r)}
                 >
-                  {r.session_id ? r.session_id.slice(0, 8) : "—"}
+                  <SessionRefText sessionId={r.session_id} sessionRef={r.session_ref} />
                 </span>
                 <span className="min-w-0 truncate font-mono">
                   {r.token_id ? (
@@ -1250,7 +1262,7 @@ export function LiveRequestsPanel({
                       title={sessionTitle(r)}
                     >
                       <RowCell collapsed={collapsed} exiting={exiting}>
-                        {r.session_id ? r.session_id.slice(0, 8) : "—"}
+                        <SessionRefText sessionId={r.session_id} sessionRef={r.session_ref} />
                       </RowCell>
                     </td>
                     <td

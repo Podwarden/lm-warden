@@ -250,7 +250,8 @@ describe('CreateTokenDialog', () => {
   afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
   it('shows plaintext once after successful create', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(
+    // A fresh Response per call: the dialog also reads the guard packs and platform setting.
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async () => new Response(
       '{"id":"new","name":"ci-bot","plaintext":"vw_freshtoken","prefix":"vw_fresh","preview":"vw_fresh","expires_at":null}',
       { status: 201 },
     )));
@@ -262,7 +263,7 @@ describe('CreateTokenDialog', () => {
   });
 
   it('has no rate limit field and never sends rate_limit_tps', async () => {
-    const f = vi.fn().mockResolvedValue(new Response(
+    const f = vi.fn().mockImplementation(async () => new Response(
       '{"id":"new","name":"ci-bot","plaintext":"vw_freshtoken","prefix":"vw_fresh","preview":"vw_fresh","expires_at":null}',
       { status: 201 },
     ));
@@ -272,7 +273,8 @@ describe('CreateTokenDialog', () => {
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'ci-bot' } });
     fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
     await waitFor(() => expect(screen.getByText('vw_freshtoken')).toBeInTheDocument());
-    const body = JSON.parse(String((f.mock.calls[0][1] as RequestInit).body));
+    const post = f.mock.calls.find((c) => (c[1] as RequestInit | undefined)?.method === 'POST')!;
+    const body = JSON.parse(String((post[1] as RequestInit).body));
     expect(body).toEqual({ name: 'ci-bot', expires_in_days: 365, priority: 5, anthropic_relay: false, thinking_policy: 'client' });
   });
 

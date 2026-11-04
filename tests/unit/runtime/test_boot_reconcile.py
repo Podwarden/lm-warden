@@ -116,10 +116,11 @@ async def test_unloading_and_pulling_are_reconciled_too(tmp_path):
     await reconcile_stranded_models(_settings(tmp_path), _FakeSupervisor())
 
     assert (await _status(tmp_path, "half_unloaded")).status == "pulled"
-    # This pull left a complete snapshot behind (nothing incomplete in the
-    # cache), so 'pulled' is the truthful demotion. The incomplete case is
-    # covered by the next test.
-    assert (await _status(tmp_path, "half_pulled")).status == "pulled"
+    # An interrupted pull is never guessed to be complete: a snapshot dir
+    # with no *.incomplete blob can still be missing whole shards (the pull
+    # died between two files). It goes back to 'registered' so it is pulled
+    # again; snapshot_download skips every file that is already there.
+    assert (await _status(tmp_path, "half_pulled")).status == "registered"
 
 
 async def test_interrupted_pull_with_incomplete_blobs_is_not_called_pulled(tmp_path):
@@ -135,9 +136,49 @@ async def test_interrupted_pull_with_incomplete_blobs_is_not_called_pulled(tmp_p
 
     row = await _status(tmp_path, "half_pulled")
     assert row.status == "registered"
-    # Progress counters for a task that no longer exists would lie to the UI.
-    assert row.pulled_bytes == 0
-    assert row.pulled_total == 0
+
+
+async def test_interrupted_pull_keeps_the_bytes_already_on_disk(tmp_path):
+    """lmwarden.com, 2026-11-04: a restart 1.2 GB into a pull reset the row
+    to 0 bytes / 0 total, and the page showed a busy bar at "0 B" while the
+    bytes sat on disk. Finished blobs count; partial files do not (they are
+    never resumed and the next pull deletes them). The total is kept."""
+    await _seed(tmp_path, half_pulled="pulling")
+    async with open_db(tmp_path / "vllm-warden.db") as db:
+        await ModelRepo(db).update_pull_progress("half_pulled", 999, 5000)
+    blobs = tmp_path / "hf-cache" / "models--org--model" / "blobs"
+    blobs.mkdir(parents=True)
+    (blobs / "aaaa").write_bytes(b"x" * 300)
+    (blobs / "bbbb.3c1d9d34.incomplete").write_bytes(b"y" * 50)
+
+    await reconcile_stranded_models(_settings(tmp_path), _FakeSupervisor())
+
+    row = await _status(tmp_path, "half_pulled")
+    assert row.pulled_bytes == 300
+    assert row.pulled_total == 5000
+    assert "interrupted" in (row.last_error or "")
+
+
+async def test_interrupted_pull_is_handed_back_for_resume(tmp_path):
+    """The operator asked for this pull; a restart is not a cancel. Each
+    interrupted pull is reported to the caller, which starts it again."""
+    await _seed(tmp_path, half_pulled="pulling", stranded="loading")
+    resumed: list[str] = []
+
+    await reconcile_stranded_models(
+        _settings(tmp_path), _FakeSupervisor(), on_interrupted_pull=resumed.append
+    )
+
+    assert resumed == ["half_pulled"]
+    assert "resuming" in ((await _status(tmp_path, "half_pulled")).last_error or "")
+
+
+async def test_without_a_resumer_the_operator_is_told_to_pull_again(tmp_path):
+    await _seed(tmp_path, half_pulled="pulling")
+
+    await reconcile_stranded_models(_settings(tmp_path), _FakeSupervisor())
+
+    assert "Pull again" in ((await _status(tmp_path, "half_pulled")).last_error or "")
 
 
 async def test_terminal_rows_are_left_untouched(tmp_path):

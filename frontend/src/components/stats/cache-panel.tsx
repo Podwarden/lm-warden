@@ -4,7 +4,7 @@
 // for both lenses: the operator's Stats panel and the token page's card.
 
 import {
-  coveredRequests, efficiency, fmtPct, fromCache, isEstimated, OUTCOMES, outcomeLabel, prefillSaved,
+  causeSuffix, coveredRequests, efficiency, fmtPct, fromCache, isEstimated, OUTCOMES, outcomeLabel, prefillSaved,
   topProblem, type CacheResponse, type CacheSummary,
 } from "@/lib/cache-obs";
 
@@ -14,6 +14,8 @@ const HINT_RATE_TITLE =
 const OUTCOME_CLASS: Record<string, string> = {
   hit: "bg-sky-500", partial: "bg-sky-300", lost: "bg-rose-500",
   misrouted: "bg-amber-500", diverged: "bg-violet-500", cold: "bg-slate-400",
+  // Warm hues of their own, clear of hit (sky) and diverged (violet); mid tones read on both themes.
+  compacted: "bg-yellow-400", harness_rewrite: "bg-orange-600",
 };
 
 function fmtDuration(s: number | null, estimated = false): string {
@@ -37,7 +39,7 @@ function Row({ s, lens }: { s: CacheSummary; lens: "operator" | "own" }) {
   // Own lens never shows "other replica": that outcome is derived from
   // prefixes cached by other keys' traffic.
   const shown = OUTCOMES.filter((o) => lens === "operator" || o !== "misrouted");
-  const total = shown.reduce((a, o) => a + s.outcomes[o], 0);
+  const total = shown.reduce((a, o) => a + (s.outcomes[o] ?? 0), 0);
   const hint = topProblem(s, { lens });
   // Prefill saved = C / prefill rate; an unlearned (hint) rate is an assumption.
   const hintRate = s.rate_source === "hint";
@@ -62,8 +64,8 @@ function Row({ s, lens }: { s: CacheSummary; lens: "operator" | "own" }) {
       )}
       {total > 0 && (
         <div className="mt-2 flex h-2 w-full overflow-hidden rounded" role="img"
-             aria-label={shown.map((o) => `${outcomeLabel(o)} ${s.outcomes[o]}`).join(", ")}>
-          {shown.map((o) => s.outcomes[o] > 0 && (
+             aria-label={shown.map((o) => `${outcomeLabel(o)} ${s.outcomes[o] ?? 0}`).join(", ")}>
+          {shown.map((o) => (s.outcomes[o] ?? 0) > 0 && (
             <div key={o} className={OUTCOME_CLASS[o]} style={{ width: `${(s.outcomes[o] / total) * 100}%` }}
                  title={`${outcomeLabel(o)}: ${s.outcomes[o]}`} />
           ))}
@@ -71,7 +73,7 @@ function Row({ s, lens }: { s: CacheSummary; lens: "operator" | "own" }) {
       )}
       {total > 0 && (
         <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-chat-dim" data-testid="cache-legend">
-          {shown.map((o) => s.outcomes[o] > 0 && (
+          {shown.map((o) => (s.outcomes[o] ?? 0) > 0 && (
             <li key={o} className="flex items-center gap-1">
               <span className={`inline-block h-2 w-2 rounded-full ${OUTCOME_CLASS[o]}`} aria-hidden="true" />
               {outcomeLabel(o)} {s.outcomes[o]}
@@ -82,7 +84,7 @@ function Row({ s, lens }: { s: CacheSummary; lens: "operator" | "own" }) {
       {(s.deep_diverged ?? 0) > 0 && (
         <p data-testid="cache-deep-diverged" className="mt-1 text-[11px] text-chat-dim"
            title="The client rewrote a message after a long unchanged start: the start was reused, everything after the break was recomputed.">
-          {s.deep_diverged} hit or partial request{s.deep_diverged === 1 ? "" : "s"} broke their prefix mid-prompt
+          {s.deep_diverged} hit or partial request{s.deep_diverged === 1 ? "" : "s"} broke their prefix mid-prompt{causeSuffix(s)}
         </p>
       )}
       {hint && <p data-testid="cache-hint" className="mt-2 text-xs text-chat-muted">{hint.text}</p>}

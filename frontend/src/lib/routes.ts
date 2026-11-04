@@ -25,6 +25,8 @@
 export const MODEL_DETAIL_PATH = "/models/detail";
 export const MODEL_SETTINGS_PATH = "/models/detail/settings";
 export const TOKEN_DETAIL_PATH = "/tokens/detail";
+/** Session detail (sessions pages): `/sessions/detail?id=<s_… or r_…>`. */
+export const SESSION_DETAIL_PATH = "/sessions/detail";
 
 const q = (id: string) => `?id=${encodeURIComponent(id)}`;
 
@@ -40,6 +42,10 @@ export function tokenHref(id: string): string {
   return TOKEN_DETAIL_PATH + q(id);
 }
 
+export function sessionHref(ref: string): string {
+  return SESSION_DETAIL_PATH + q(ref);
+}
+
 /** Strip one trailing slash (the export builds with `trailingSlash: true`). */
 function trimSlash(pathname: string): string {
   return pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
@@ -48,7 +54,12 @@ function trimSlash(pathname: string): string {
 /** True when the page at `pathname` takes its id from the query string. */
 export function isQueryDetailPath(pathname: string): boolean {
   const p = trimSlash(pathname);
-  return p === MODEL_DETAIL_PATH || p === MODEL_SETTINGS_PATH || p === TOKEN_DETAIL_PATH;
+  return (
+    p === MODEL_DETAIL_PATH ||
+    p === MODEL_SETTINGS_PATH ||
+    p === TOKEN_DETAIL_PATH ||
+    p === SESSION_DETAIL_PATH
+  );
 }
 
 /**
@@ -65,6 +76,8 @@ export function logicalPath(pathname: string, search: string | URLSearchParams):
       return `/models/${seg}`;
     case MODEL_SETTINGS_PATH:
       return `/models/${seg}/settings`;
+    case SESSION_DETAIL_PATH:
+      return `/sessions/${seg}`;
     default:
       return `/tokens/${seg}`;
   }
@@ -90,5 +103,6 @@ export function detailHref(path: string): string {
   if (segs[0] === "models" && segs.length === 2) return modelHref(id);
   if (segs[0] === "models" && segs.length === 3 && segs[2] === "settings") return modelSettingsHref(id);
   if (segs[0] === "tokens" && segs.length === 2) return tokenHref(id);
+  if (segs[0] === "sessions" && segs.length === 2 && segs[1] !== "login") return sessionHref(id);
   return path;
 }

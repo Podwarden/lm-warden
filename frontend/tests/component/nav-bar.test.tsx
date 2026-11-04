@@ -229,4 +229,30 @@ describe('NavBar', () => {
     const { container } = renderNav();
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('shows Sessions in the menu', () => {
+    stubVersionFetch({ version: '2026.05.13.1', sha: 'abcdef1' });
+    renderNav();
+    fireEvent.click(screen.getByRole('button', { name: /open menu/i }));
+    expect(screen.getByRole('menuitem', { name: /^sessions$/i })).toHaveAttribute('href', '/sessions');
+  });
+
+  it('renders nothing and fetches nothing on /sessions/login', () => {
+    mockPath = '/sessions/login';
+    const fetchMock = stubVersionFetch({ version: '2026.05.13.1', sha: 'abcdef1' });
+    const { container } = renderNav();
+    expect(container).toBeEmptyDOMElement();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('renders nothing and fetches nothing in key mode on /sessions', () => {
+    mockPath = '/sessions';
+    sessionStorage.setItem('vw-sessions-token', 'jwt');
+    sessionStorage.setItem('vw-sessions-exp', String(Date.now() + 60_000));
+    const fetchMock = stubVersionFetch({ version: '2026.05.13.1', sha: 'abcdef1' });
+    const { container } = renderNav();
+    expect(container).toBeEmptyDOMElement();
+    expect(fetchMock).not.toHaveBeenCalled();
+    sessionStorage.clear();
+  });
 });

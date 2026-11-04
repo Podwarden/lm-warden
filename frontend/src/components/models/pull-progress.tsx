@@ -6,6 +6,9 @@ interface PullProgressProps {
   status: string;
   pulledBytes: number | null;
   pulledTotal: number | null;
+  /** The row's ``last_error``: on a ``registered`` row it says why nothing
+   * is downloading (e.g. "pull interrupted by a restart; resuming"). */
+  lastError?: string | null;
   className?: string;
 }
 
@@ -40,9 +43,14 @@ export function PullProgress({
   status,
   pulledBytes,
   pulledTotal,
+  lastError,
   className,
 }: PullProgressProps) {
   if (status !== "pulling" && status !== "registered") return null;
+  // Only `pulling` means a download is running. A `registered` row may hold
+  // bytes from an earlier attempt, but nothing is moving: a pulsing bar there
+  // reads as a live download that stalled (lmwarden.com, 2026-11-04).
+  const active = status === "pulling";
 
   const bytes = pulledBytes ?? 0;
   const hasTotal = pulledTotal !== null && pulledTotal > 0;
@@ -77,11 +85,19 @@ export function PullProgress({
         <div
           className={cn(
             "h-full bg-emerald-500 transition-[width]",
-            pct === null && "animate-pulse",
+            active && pct === null && "animate-pulse",
+            !active && "bg-slate-500",
           )}
-          style={pct !== null ? { width: `${pct}%` } : { width: "100%" }}
+          style={
+            pct !== null ? { width: `${pct}%` } : { width: active ? "100%" : "0%" }
+          }
         />
       </div>
+      {!active && (
+        <p className="text-xs text-slate-400">
+          Not downloading{lastError ? ` (${lastError})` : ""}.
+        </p>
+      )}
     </div>
   );
 }

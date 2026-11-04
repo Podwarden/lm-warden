@@ -486,6 +486,8 @@ async def patch_runtime(
                     status_code=409,
                     detail="no admin user exists yet; complete setup first",
                 )
+            cur = await db.execute("SELECT username FROM users WHERE id = ?", (admin_id,))
+            old_name = (await cur.fetchone() or [None])[0]
             if "admin_username" in body:
                 await db.execute(
                     "UPDATE users SET username = ? WHERE id = ?",
@@ -500,6 +502,14 @@ async def patch_runtime(
                     (pw_hash, admin_id),
                 )
             await db.commit()
+            # Verified finding #2: a new password or name ends every other sign-in of this user. The
+            # session making a password change carries on; a rename ends it too (its tokens name the
+            # old user), so the admin signs in again under the new name.
+            if old_name is not None:
+                current = getattr(request.state, "session_id", None)
+                await request.app.state.auth_sessions.end_subject_except(
+                    "admin", old_name, keep=None if "admin_username" in body else current
+                )
             # admin_* are classified "none" in RUNTIME_KEYS — no kind to add.
             # Keep the lookup centralised so a future re-classification is
             # picked up by the loop above.

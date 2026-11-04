@@ -237,3 +237,36 @@ def test_lifespan_prevents_a_wrong_shaped_row_from_500ing_the_models_list(tmp_da
     assert resp.status_code == 200, resp.text
     by_id = {m["id"]: m for m in resp.json()["models"]}
     assert by_id["shapeless"]["extra_args"] == []
+
+
+def test_lifespan_resumes_a_pull_the_restart_interrupted(tmp_data_dir, client, monkeypatch):
+    """lmwarden.com, 2026-11-04: the api restarted 1.2 GB into a pull and the
+    row sat at 'registered' / "0 B" with nothing running. Boot must start the
+    pull again; the operator asked for it and a restart is not a cancel."""
+    client.get("/healthz")  # first boot: migrated DB
+    db_path = tmp_data_dir / "vllm-warden.db"
+    with sqlite3.connect(db_path) as db:
+        db.execute(
+            "INSERT INTO models(id, served_model_name, hf_repo, hf_revision, gpu_indices, "
+            "tensor_parallel_size, gpu_memory_utilization, trust_remote_code, extra_args, status, "
+            "pulled_bytes) VALUES "
+            "('halfway','halfway','o/r','main','[0]',1,0.9,0,'[]','pulling',0)"
+        )
+        db.commit()
+
+    from fastapi.testclient import TestClient
+
+    from app.main import build_app
+    from app.models import pull_task
+
+    resumed: list[str] = []
+
+    async def fake_run_pull(model_id, settings, force=False):
+        resumed.append(model_id)
+
+    monkeypatch.setattr(pull_task, "run_pull", fake_run_pull)
+
+    with TestClient(build_app()) as c2:
+        c2.get("/healthz")
+
+    assert resumed == ["halfway"]

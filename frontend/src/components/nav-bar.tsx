@@ -21,6 +21,7 @@ import useSWR from 'swr';
 import {
   Activity,
   Box,
+  GitBranch,
   HardDrive,
   KeyRound,
   Layers,
@@ -33,6 +34,8 @@ import {
   Shield,
 } from 'lucide-react';
 import { authFetch, authFetchJSON } from '@/lib/auth-fetch';
+import { isKeyAreaPath, keyMode } from '@/lib/sessions/key-token';
+
 import { HeaderMetrics } from './header-metrics';
 import { ThemeSwitcher } from './theme-switcher';
 
@@ -53,6 +56,8 @@ const UNAUTH_EXACT_PATHS: ReadonlySet<string> = new Set([
   '/login/',
   '/setup',
   '/setup/',
+  '/sessions/login',
+  '/sessions/login/',
 ]);
 
 function isUnauthRoute(path: string): boolean {
@@ -61,9 +66,16 @@ function isUnauthRoute(path: string): boolean {
   // treatment. If we ever add /login/2fa or similar we'll bring it
   // under the same prefix carve-out — for now the tighter check
   // closes #39 by rejecting /login-help, /login.json, etc.
+  //
+  // A sessions page opened with a key holder's token (keyMode) is chromeless
+  // too: neither the nav nor its admin-only requests (/api/version, the
+  // header-metrics stream) may appear there. The key area (/key/*) is never
+  // an admin page, token or not.
   return (
     UNAUTH_EXACT_PATHS.has(path) ||
-    path.startsWith('/setup/')
+    path.startsWith('/setup/') ||
+    keyMode(path) ||
+    isKeyAreaPath(path)
   );
 }
 
@@ -81,6 +93,7 @@ const MENU_ITEMS: readonly MenuItem[] = [
   { href: '/router', label: 'Router', Icon: Route },
   { href: '/connect', label: 'Connect', Icon: Plug },
   { href: '/stats', label: 'Stats', Icon: Activity },
+  { href: '/sessions', label: 'Sessions', Icon: GitBranch },
   { href: '/cache', label: 'Cache', Icon: HardDrive },
   { href: '/settings', label: 'Settings', Icon: Settings },
 ];

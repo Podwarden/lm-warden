@@ -477,3 +477,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .vw-live-dot, .vw-caret { animation: none; }
 }
+
+/* Sessions prompt anatomy: the dead-weight segment is hatched, so it reads apart from the solid ones without colour. */
+.anat-dead {
+  background: repeating-linear-gradient(135deg, #e0a96d 0 3px, #8a6236 3px 6px);
+}

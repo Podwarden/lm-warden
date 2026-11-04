@@ -64,13 +64,39 @@ class TokenRow:
     # Thinking policy (0051): "client" = the request decides, "off" = the proxy
     # forces thinking off. Appended last, per the rule above.
     thinking_policy: str = "client"
+    # Prompt diet (0054): JSON {"strip_tools": [...], "strip_reasoning": bool};
+    # None = off. Appended last, per the rule above.
+    prompt_diet: str | None = None
+    # Debug capture (0054): epoch seconds until which this key's bodies and
+    # responses are recorded; None = off. Appended last, per the rule above.
+    capture_until: float | None = None
+    # Sensitive data guard (0055): JSON, None = inherit the platform setting.
+    # Appended last, per the rule above.
+    guard: str | None = None
 
 
 _SELECT_COLS = (
     "id, name, prefix, scope, allowed_models, rate_limit_rpm, rate_limit_tpm, "
     "revoked_at, last_used_at, created_at, expires_at, rotated_at, rotated_from, "
     "rate_limit_tps, priority, paused_at, created_by, anthropic_relay, "
-    "thinking_policy"
+    "thinking_policy, prompt_diet, capture_until, guard"
+)
+
+
+#: Columns a rotation copies from the predecessor: everything that decides what the key may do.
+#: tests/unit/tokens/test_rotate_policy.py walks TokenRow so a new column cannot be missed. The
+#: rate_limit_* columns are legacy (per-key rate limits were removed; nothing enforces them) and
+#: are deliberately not carried to a successor.
+_POLICY_COLS = (
+    "scope",
+    "allowed_models",
+    "priority",
+    "created_by",
+    "anthropic_relay",
+    "thinking_policy",
+    "prompt_diet",
+    "capture_until",
+    "guard",
 )
 
 
@@ -128,6 +154,7 @@ class TokenRepo:
         created_by: str | None = None,
         anthropic_relay: bool = False,
         thinking_policy: str = "client",
+        guard: str | None = None,
     ) -> None:
         """Insert a new API token row and commit.
 
@@ -144,8 +171,8 @@ class TokenRepo:
         await self.db.execute(
             "INSERT INTO api_tokens"
             "(id, name, prefix, hash, scope, allowed_models, expires_at, "
-            " priority, created_by, anthropic_relay, thinking_policy) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " priority, created_by, anthropic_relay, thinking_policy, guard) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 token_id,
                 name,
@@ -158,6 +185,7 @@ class TokenRepo:
                 created_by,
                 int(anthropic_relay),
                 thinking_policy,
+                guard,
             ),
         )
         await self.db.commit()
@@ -242,7 +270,8 @@ class TokenRepo:
         # Look up predecessor for inheritable fields + the current name.
         cur = await self.db.execute(
             "SELECT name, expires_at, priority, rotated_at, scope, created_by, anthropic_relay, "
-            "thinking_policy FROM api_tokens WHERE id = ?",
+            "thinking_policy, revoked_at <= datetime('now'), expires_at <= datetime('now') "
+            "FROM api_tokens WHERE id = ?",
             (old_id,),
         )
         row = await cur.fetchone()
@@ -259,7 +288,15 @@ class TokenRepo:
             pred_owner,
             pred_relay,
             pred_thinking,
+            pred_revoked,
+            pred_expired,
         ) = row
+        # A dead key stays dead (verified finding #15): rotating a revoked key used to schedule its
+        # revocation 24 h into the future, and an expired one gave a successor born expired.
+        if pred_revoked:
+            raise ValueError("revoked")
+        if pred_expired:
+            raise ValueError("expired")
 
         if pred_rotated_at is not None:
             # Predecessor was already rotated. Rotating again would chain
@@ -293,24 +330,21 @@ class TokenRepo:
             (renamed_to, old_id),
         )
 
-        # 2) Insert successor with the ORIGINAL name + rotated_from pointer.
+        # 2) Insert successor with the ORIGINAL name + rotated_from pointer, and every policy
+        # column copied from the predecessor's row (verified finding #14: models, rate limits,
+        # diet, capture and guard used to be dropped, widening a restricted key).
+        policy = ", ".join(_POLICY_COLS)
         await self.db.execute(
-            "INSERT INTO api_tokens"
-            "(id, name, prefix, hash, scope, rotated_from, expires_at, "
-            " priority, created_by, anthropic_relay, thinking_policy) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            f"INSERT INTO api_tokens(id, name, prefix, hash, rotated_from, expires_at, {policy}) "
+            f"SELECT ?, ?, ?, ?, ?, ?, {policy} FROM api_tokens WHERE id = ?",
             (
                 new_id,
                 pred_name,
                 new_prefix,
                 hash_token(new_plaintext),
-                pred_scope,
                 old_id,
                 new_expires_at,
-                pred_priority,
-                pred_owner,
-                pred_relay,
-                pred_thinking,
+                old_id,
             ),
         )
 
@@ -328,9 +362,10 @@ class TokenRepo:
         rotated_at = sqlite_utc_now()
         revoked_at = sqlite_utc_in(timedelta(hours=grace_hours))
         cur = await self.db.execute(
-            "UPDATE api_tokens SET rotated_at = ?, revoked_at = ? "
+            "UPDATE api_tokens SET rotated_at = ?, "
+            "revoked_at = CASE WHEN revoked_at IS NOT NULL AND revoked_at < ? THEN revoked_at ELSE ? END "
             "WHERE id = ? AND rotated_at IS NULL",
-            (rotated_at, revoked_at, old_id),
+            (rotated_at, revoked_at, revoked_at, old_id),
         )
         if cur.rowcount != 1:
             await self.db.rollback()
@@ -429,6 +464,9 @@ class TokenRepo:
         paused: "bool | _Unset" = _UNSET,
         anthropic_relay: "bool | _Unset" = _UNSET,
         thinking_policy: "str | _Unset" = _UNSET,
+        prompt_diet: "str | None | _Unset" = _UNSET,
+        capture_until: "float | None | _Unset" = _UNSET,
+        guard: "str | None | _Unset" = _UNSET,
     ) -> bool:
         """PATCH-style update for the operator-editable fields.
 
@@ -464,6 +502,15 @@ class TokenRepo:
         if not isinstance(thinking_policy, _Unset):
             sets.append("thinking_policy = ?")
             params.append(thinking_policy)
+        if not isinstance(prompt_diet, _Unset):
+            sets.append("prompt_diet = ?")
+            params.append(prompt_diet)
+        if not isinstance(capture_until, _Unset):
+            sets.append("capture_until = ?")
+            params.append(capture_until)
+        if not isinstance(guard, _Unset):
+            sets.append("guard = ?")
+            params.append(guard)
         if not sets:
             return True  # noop PATCH — treat as success (idempotent)
         params.append(token_id)

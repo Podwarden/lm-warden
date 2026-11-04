@@ -134,7 +134,9 @@ async def test_a_session_playground_stream_registers_under_the_session(
     from app.auth.csrf import generate_csrf_token
     from app.auth.jwt import mint_access
 
-    jwt = mint_access("admin", live_app.state.jwt_secret, ttl_minutes=5)
+    # A session token must name a live sign-in session (verified finding #2).
+    sid = await live_app.state.auth_sessions.create("admin", "admin")
+    jwt = mint_access("admin", live_app.state.jwt_secret, ttl_minutes=5, sid=sid)
     # A session POST keeps the CSRF check an admin bearer skips: bind a known
     # csrf id through the cookie and send the token derived from it.
     csrf_id = "playground-guard-test"

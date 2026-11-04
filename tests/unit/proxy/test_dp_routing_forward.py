@@ -286,7 +286,7 @@ def test_inflight_released_after_upstream_error_midstream(tmp_data_dir, client):
     assert snap["totals"]["placed"] == 1 and snap["totals"]["in_flight"] == 0
 
 
-def _direct_forward(client, body, resp):
+def _direct_forward(client, body, resp, **fwd_kw):
     """Run ``_forward`` on the app's own loop and hand back the response object."""
     raw = json.dumps(body).encode()
     app = client.app
@@ -327,7 +327,9 @@ def _direct_forward(client, body, resp):
         )
         send, _ = _sender(resp)
         with patch("httpx.AsyncClient.send", new=send):
-            return await _forward(request, model, "127.0.0.1", 19099, "/v1/chat/completions", token)
+            return await _forward(
+                request, model, "127.0.0.1", 19099, "/v1/chat/completions", token, **fwd_kw
+            )
 
     return go
 

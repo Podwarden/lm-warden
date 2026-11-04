@@ -111,3 +111,27 @@ def test_pull_endpoint_409_when_already_loaded(tmp_data_dir, client):
         db.commit()
     r = client.post(f"/api/models/{mid}/pull", headers={**auth, **h})
     assert r.status_code == 409
+
+
+def test_pull_endpoint_409_while_a_pull_of_the_model_is_running(tmp_data_dir, client, monkeypatch):
+    """The row can still read 'registered' for a moment after a pull starts
+    (a double-click, or the boot-time resume of an interrupted pull). A
+    second POST must not start a second download."""
+    from app.models import pull_task as pt
+
+    client.get("/healthz")
+    _seed_login(client, tmp_data_dir)
+    auth = _jwt_login(client)
+    h = csrf_header(client)
+    create = client.post(
+        "/api/models",
+        json={"served_model_name": "x", "hf_repo": "o/r", "gpu_indices": [0]},
+        headers={**auth, **h},
+    )
+    mid = create.json()["id"]
+    monkeypatch.setattr(pt, "_ACTIVE_MODELS", {mid})
+
+    r = client.post(f"/api/models/{mid}/pull", headers={**auth, **h})
+
+    assert r.status_code == 409
+    assert "already running" in r.json()["detail"]

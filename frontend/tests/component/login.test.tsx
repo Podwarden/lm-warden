@@ -45,7 +45,7 @@ describe('LoginPage', () => {
     render(<LoginPage />);
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/setup/welcome'));
     // Sign-in form must NOT render for a fresh install.
-    expect(screen.queryByRole('button', { name: /log in/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^sign in$/i })).not.toBeInTheDocument();
   });
 
   it('redirects to the CURRENT wizard step mid-setup (step past welcome, not done)', async () => {
@@ -55,7 +55,7 @@ describe('LoginPage', () => {
     vi.stubGlobal('fetch', fetchMockFor({ setup: { body: { step: 'gpus', done: false } } }));
     render(<LoginPage />);
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/setup/gpus'));
-    expect(screen.queryByRole('button', { name: /log in/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^sign in$/i })).not.toBeInTheDocument();
   });
 
   it('funnels a malformed setup-state body to /setup/welcome', async () => {
@@ -75,7 +75,7 @@ describe('LoginPage', () => {
       }),
     );
     render(<LoginPage />);
-    const btn = await screen.findByRole('button', { name: /log in/i });
+    const btn = await screen.findByRole('button', { name: /^sign in$/i });
     fireEvent.click(btn);
     await waitFor(() =>
       expect(screen.getByText('Too many failed attempts. Try again in 60 seconds.')).toBeInTheDocument(),
@@ -87,7 +87,7 @@ describe('LoginPage', () => {
     vi.stubGlobal('fetch', fetchMockFor({ setup: { body: { step: 'done', done: true } } }));
     render(<LoginPage />);
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument(),
+      expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument(),
     );
     expect(replaceMock).not.toHaveBeenCalledWith('/setup/welcome');
   });
@@ -96,7 +96,7 @@ describe('LoginPage', () => {
     vi.stubGlobal('fetch', fetchMockFor({ setup: { status: 503, body: {} } }));
     render(<LoginPage />);
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument(),
+      expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument(),
     );
     expect(replaceMock).not.toHaveBeenCalledWith('/setup/welcome');
   });
@@ -106,11 +106,11 @@ describe('LoginPage', () => {
     vi.stubGlobal('fetch', fetchMock);
     render(<LoginPage />);
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument(),
+      expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument(),
     );
     fireEvent.change(screen.getByLabelText(/username/i), { target: { value: 'admin' } });
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'pw' } });
-    fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
         '/api/auth/login',

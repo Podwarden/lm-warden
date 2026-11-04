@@ -7,7 +7,7 @@ const s: CacheSummary = {
   model_id: "m", model: "qwen", backend: "llamacpp", requests: 100, prompt_tokens: 100_000,
   cached_tokens: 40_000, known_prompt_tokens: 100_000, measured_requests: 100, estimated_requests: 0,
   reused_tokens: 40_000, reusable_tokens: 50_000,
-  outcomes: { hit: 60, partial: 0, lost: 30, misrouted: 0, diverged: 0, cold: 10 },
+  outcomes: { hit: 60, partial: 0, lost: 30, misrouted: 0, diverged: 0, cold: 10, compacted: 0, harness_rewrite: 0 },
   by_rank: [], prefill_saved_s: 125, rate_source: "learned", top_diverging: [],
 };
 const data = (x: Partial<CacheSummary> = {}): CacheResponse => ({ range: "1h", since_epoch: 0, models: [{ ...s, ...x }] });
@@ -50,6 +50,28 @@ describe("CachePanel", () => {
     expect(lg).toHaveTextContent("lost 30");
     expect(lg).not.toHaveTextContent("partial");
   });
+  it("labels the cobs2 miss causes in plain English", () => {
+    const d = data();
+    d.models[0].outcomes = { ...d.models[0].outcomes, compacted: 4, harness_rewrite: 2 };
+    render(<CachePanel data={d} />);
+    const lg = screen.getByTestId("cache-legend");
+    expect(lg).toHaveTextContent("compacted 4");
+    expect(lg).toHaveTextContent("harness rewrote history 2");
+    // warm hues of their own: not the hit (sky), diverged (violet) or any other legend colour
+    const used = ["sky", "violet", "rose", "amber", "slate"];
+    const dots = Array.from(lg.querySelectorAll("li span")).map((e) => e.className);
+    const mine = dots.slice(-2);
+    for (const c of mine) for (const u of used) expect(c).not.toMatch(new RegExp(`bg-${u}-`));
+    expect(mine[0]).not.toBe(mine[1]);
+  });
+  it("tolerates a summary without the cobs2 outcome keys", () => {
+    const d = data();
+    const { compacted: _c, harness_rewrite: _h, ...older } = d.models[0].outcomes;
+    d.models[0].outcomes = older as CacheSummary["outcomes"];
+    render(<CachePanel data={d} />);
+    expect(screen.getByTestId("cache-legend")).toHaveTextContent("hit 60");
+    expect(screen.getByTestId("cache-legend")).not.toHaveTextContent("NaN");
+  });
   it("marks prefill saved as assumed while the rate is only the configured hint", () => {
     render(<CachePanel data={data({ rate_source: "hint" })} />);
     const el = screen.getByTestId("cache-saved");
@@ -75,6 +97,20 @@ describe("CachePanel", () => {
   it("notes requests whose prefix broke deep inside the prompt", () => {
     render(<CachePanel data={data({ deep_diverged: 7 })} />);
     expect(screen.getByTestId("cache-deep-diverged")).toHaveTextContent("7 hit or partial requests broke their prefix mid-prompt");
+  });
+  it("the deep-divergence line names the dominant cause when it is known", () => {
+    render(<CachePanel data={data({ deep_diverged: 7, divergence_causes: { compacted: 0, harness_rewrite: 6 } })} />);
+    expect(screen.getByTestId("cache-deep-diverged")).toHaveTextContent(
+      "7 hit or partial requests broke their prefix mid-prompt; most of these follow the harness rewriting earlier messages",
+    );
+  });
+  it("names a compaction when that dominates", () => {
+    render(<CachePanel data={data({ deep_diverged: 2, divergence_causes: { compacted: 3, harness_rewrite: 0 } })} />);
+    expect(screen.getByTestId("cache-deep-diverged")).toHaveTextContent(/; most of these follow a compaction$/);
+  });
+  it("names no cause on a tie", () => {
+    render(<CachePanel data={data({ deep_diverged: 4, divergence_causes: { compacted: 3, harness_rewrite: 3 } })} />);
+    expect(screen.getByTestId("cache-deep-diverged")).toHaveTextContent(/broke their prefix mid-prompt$/);
   });
   it("no deep-divergence line at 0 or when absent", () => {
     render(<CachePanel data={data({ deep_diverged: 0 })} />);

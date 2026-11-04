@@ -293,3 +293,16 @@ def test_admin_token_ok_and_inference_token_refused(api):
     assert c.get("/api/router/stats", headers=bearer(admin)).status_code == 200
     assert c.get(S, headers=bearer(inf)).status_code == 401
     assert c.get(R, headers=bearer(inf)).status_code == 401
+
+
+def test_only_a_signed_in_admin_can_move_the_relay_target(api):
+    """Verified finding #19: a leaked admin token must not redirect relayed prompts and the
+    clients' Anthropic keys to another host."""
+    c, h, db_path = api
+    _, admin = seed_admin_token(db_path)
+    r = c.patch(S, json={"upstream_url": "https://evil.example"}, headers=bearer(admin))
+    assert r.status_code == 403 and r.json()["detail"]["error_code"] == "session_only", r.text
+    assert c.patch(S, json={"breaker_threshold": 5}, headers=bearer(admin)).status_code == 200
+    assert (
+        c.patch(S, json={"upstream_url": "https://api.anthropic.com"}, headers=h).status_code == 200
+    )

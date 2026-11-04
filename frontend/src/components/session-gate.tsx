@@ -31,11 +31,28 @@
 // first run. The route list mirrors `isUnauthRoute` in nav-bar.tsx — the same
 // question ("is this page for someone not signed in?") asked by the two
 // components that both have to know the answer.
+//
+// Key holders have their own door:
+//   - /sessions/login is public (it forwards to /login?key=1, the API key tab).
+//   - /sessions, /sessions/detail and the key area (/key/*) open without an
+//     admin session when this tab holds an unexpired key token (no admin
+//     session check is made at all). An expired token, or `?key=1` with none,
+//     goes straight to the API key sign-in with no request. With neither token
+//     nor session, a sessions page goes there too, never to the admin form.
+//   - The key area never opens on an admin session: without a key token it
+//     goes to the API key sign-in.
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { ensureSession, getAccessToken, redirectToLogin } from '@/lib/auth-fetch';
+import {
+  isKeyAreaPath,
+  isKeyTokenPath,
+  keyRequested,
+  keyTokenState,
+  SESSIONS_LOGIN,
+} from '@/lib/sessions/key-token';
 
 // Exact match, not `startsWith('/login')` — see nav-bar.tsx's #39 note: a
 // hypothetical /login-help page must NOT inherit the unauthenticated
@@ -45,6 +62,8 @@ const UNAUTH_EXACT_PATHS: ReadonlySet<string> = new Set([
   '/login/',
   '/setup',
   '/setup/',
+  '/sessions/login',
+  '/sessions/login/',
 ]);
 
 export function isUnauthRoute(path: string): boolean {
@@ -55,18 +74,44 @@ export function SessionGate({ children }: { children: React.ReactNode }) {
   // `usePathname` reports the path WITHOUT the '/ui' basePath, so these
   // compare against '/login', not '/ui/login'.
   const path = usePathname() ?? '';
+  const router = useRouter();
   const openToEveryone = isUnauthRoute(path);
-  // An admin session opens the gate for every page, for the life of the
-  // layout. Once opened it stays opened — a client-side navigation does not
-  // re-check the session.
-  const [opened, setOpened] = useState(false);
+  const sessionsPage = isKeyTokenPath(path);
+  const keyAreaPage = isKeyAreaPath(path);
+  // What opened the gate. An admin session opens it for every page, for the
+  // life of the layout. A key token opens it for the one sessions path it was
+  // checked on, and only until the path changes: any client navigation (to an
+  // admin page, or out to /sessions/login and back) checks again, so a key
+  // holder's token never paints an admin page and a cleared token never
+  // reopens a sessions page.
+  const [opened, setOpened] = useState<
+    { by: 'session' } | { by: 'key-token'; path: string } | null
+  >(null);
+  const resolved =
+    opened !== null && (opened.by === 'session' || (sessionsPage && opened.path === path));
 
   useEffect(() => {
-    if (openToEveryone || opened) return;
+    if (opened?.by === 'key-token' && opened.path !== path) setOpened(null);
+  }, [opened, path]);
+
+  useEffect(() => {
+    if (openToEveryone || resolved) return;
+    if (sessionsPage) {
+      // keyTokenState() clears an expired token as it reads it.
+      const held = keyTokenState();
+      if (held === 'valid') {
+        setOpened({ by: 'key-token', path });
+        return;
+      }
+      if (held === 'expired' || keyRequested() || keyAreaPage) {
+        router.replace(SESSIONS_LOGIN);
+        return;
+      }
+    }
     // A token already in memory means a client-side navigation, not a fresh
     // load; there is nothing to wait for.
     if (getAccessToken() !== null) {
-      setOpened(true);
+      setOpened({ by: 'session' });
       return;
     }
     let cancelled = false;
@@ -74,17 +119,18 @@ export function SessionGate({ children }: { children: React.ReactNode }) {
       if (cancelled) return;
       if (check === 'invalid') {
         // Stay closed. The navigation is what ends this render.
-        redirectToLogin();
+        if (sessionsPage) router.replace(SESSIONS_LOGIN);
+        else redirectToLogin();
         return;
       }
-      setOpened(true);
+      setOpened({ by: 'session' });
     });
     return () => {
       cancelled = true;
     };
-  }, [openToEveryone, opened, path]);
+  }, [openToEveryone, sessionsPage, keyAreaPage, resolved, path, router]);
 
-  if (openToEveryone || opened) return <>{children}</>;
+  if (openToEveryone || resolved) return <>{children}</>;
 
   return (
     <div

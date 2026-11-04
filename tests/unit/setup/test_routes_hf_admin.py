@@ -108,3 +108,49 @@ def test_post_admin_password_bounds(tmp_data_dir, client, password, ok):
     assert (r.status_code == 200) is ok, r.text
     if not ok:
         assert r.status_code == 400
+
+
+def test_admin_step_refuses_when_any_admin_exists(tmp_data_dir, client):
+    """Verified finding #1: the wizard must never add a second admin."""
+    client.get("/healthz")
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_to_step(db_path, "admin", {"allowed_gpu_indices": [0]})
+    with sqlite3.connect(db_path) as db:
+        db.execute("INSERT INTO users(username, password_hash) VALUES ('first', 'x')")
+        db.commit()
+    r = client.post(
+        "/api/setup/admin",
+        json={"username": "intruder", "password": "a-long-password-1"},
+        headers=csrf_header(client),
+    )
+    assert r.status_code == 409, r.text
+    with sqlite3.connect(db_path) as db:
+        assert db.execute("SELECT username FROM users").fetchall() == [("first",)]
+
+
+async def test_two_simultaneous_admin_submits_make_one_admin(live_app, tmp_data_dir):
+    """Verified finding #1: two submits racing at the admin step create exactly one admin."""
+    import asyncio
+
+    import httpx
+
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _seed_to_step(db_path, "admin", {"allowed_gpu_indices": [0]})
+    with sqlite3.connect(db_path) as db:  # a fresh install: no admin yet
+        db.execute("DELETE FROM users")
+        db.commit()
+    transport = httpx.ASGITransport(app=live_app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as c:
+        rs = await asyncio.gather(
+            *[
+                c.post(
+                    "/api/setup/admin",
+                    json={"username": f"admin{i}", "password": "a-long-password-1"},
+                )
+                for i in range(2)
+            ]
+        )
+    codes = sorted(r.status_code for r in rs)
+    assert codes[0] == 200 and codes[1] in (400, 409), [r.text for r in rs]
+    with sqlite3.connect(db_path) as db:
+        assert db.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 1

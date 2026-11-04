@@ -171,3 +171,31 @@ async def test_env_builder_roundtrips_through_db(tmp_data_dir):
     assert loaded.gpu_indices == [1, 2]
     env = build_subprocess_env(loaded, hf_token="hf_x", hf_cache_dir="/hfcache")
     assert env["CUDA_VISIBLE_DEVICES"] == "1,2"
+
+
+def test_engine_compile_caches_live_on_the_model_cache_volume(model):
+    """The engine's compile caches used to land in the container's own
+    filesystem (~/.cache/vllm, ~/.cache/flashinfer, ~/.triton): 1.1 GB of
+    torch.compile output on lmwarden.com, thrown away by every deploy, restart
+    and reboot, so every first load after one compiled from scratch. The HF
+    cache dir is the one place every install already keeps (compose volume,
+    k8s PVC, the docker driver's engine mount), so the caches go under it."""
+    env = build_subprocess_env(model, hf_token="hf_xxx", hf_cache_dir="/hfcache/")
+
+    assert env["VLLM_CACHE_ROOT"] == "/hfcache/.lmw-engine-cache/vllm"
+    assert env["FLASHINFER_WORKSPACE_BASE"] == "/hfcache/.lmw-engine-cache/flashinfer"
+    assert env["TRITON_CACHE_DIR"] == "/hfcache/.lmw-engine-cache/triton"
+
+
+def test_engine_cache_dirs_can_be_overridden_per_model(model):
+    model.extra_env = {"VLLM_CACHE_ROOT": "/elsewhere/vllm"}
+
+    env = build_subprocess_env(model, hf_token="hf_xxx", hf_cache_dir="/hfcache")
+
+    assert env["VLLM_CACHE_ROOT"] == "/elsewhere/vllm"
+
+
+def test_no_cache_dir_leaves_the_engine_defaults(model):
+    env = build_subprocess_env(model, hf_token="hf_xxx", hf_cache_dir="")
+
+    assert "VLLM_CACHE_ROOT" not in env

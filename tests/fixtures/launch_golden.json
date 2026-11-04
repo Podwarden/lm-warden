@@ -24,12 +24,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -55,12 +58,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -88,12 +94,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -122,12 +131,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -153,6 +165,7 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
@@ -160,6 +173,8 @@
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "0",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "DEBUG"
     }
@@ -185,12 +200,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -216,12 +234,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -247,12 +268,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -278,12 +302,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -309,12 +336,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "3,1",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -344,12 +374,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -381,12 +414,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "1",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -419,12 +455,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -462,12 +501,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0,1,2,3",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -495,12 +537,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -528,12 +573,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -559,12 +607,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -590,12 +641,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -627,12 +681,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0,1",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -658,12 +715,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -689,12 +749,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0,1",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -722,12 +785,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -755,12 +821,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -786,12 +855,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "0,1",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }
@@ -817,12 +889,15 @@
     "env": {
       "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
       "CUDA_VISIBLE_DEVICES": "2,3",
+      "FLASHINFER_WORKSPACE_BASE": "/cache/.lmw-engine-cache/flashinfer",
       "HF_HUB_CACHE": "/cache",
       "HF_TOKEN": "hf_tok",
       "HUGGING_FACE_HUB_TOKEN": "hf_tok",
       "PATH": "/usr/local/bin:/usr/bin:/bin",
       "PYTHONFAULTHANDLER": "1",
       "PYTHONUNBUFFERED": "1",
+      "TRITON_CACHE_DIR": "/cache/.lmw-engine-cache/triton",
+      "VLLM_CACHE_ROOT": "/cache/.lmw-engine-cache/vllm",
       "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
       "VLLM_LOGGING_LEVEL": "INFO"
     }

@@ -277,3 +277,18 @@ def test_the_requests_row_carries_the_admission_queue_wait(tmp_data_dir, client)
     assert rows["r-q"]["queued_s"] == 3.25
     assert rows["r-q"]["ttft_s"] == 0.5  # untouched by the queue figure
     assert rows["r-old"]["queued_s"] is None
+
+
+# ---- sessions pages: session_ref -------------------------------------------
+
+
+def test_v2_requests_rows_carry_session_ref(tmp_data_dir, client):
+    db_path, h = _ready(client, tmp_data_dir)
+    now = time.time()
+    _insert(db_path, [_row(1, at=now - 10), _row(2, at=now - 5)])
+    with sqlite3.connect(db_path) as db:
+        db.execute("UPDATE request_history SET cobs2_session='S' WHERE id='r1'")
+        db.commit()
+    body = client.get("/api/stats/v2/requests?range=1h", headers=h).json()
+    refs = {r["id"]: r["session_ref"] for r in body["requests"]}
+    assert refs == {"r1": "r_r1", "r2": None}

@@ -42,6 +42,7 @@ import logging
 import math
 import sqlite3
 import time
+from collections import OrderedDict, deque
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -49,6 +50,7 @@ from typing import Any
 
 import aiosqlite
 
+from app.cache_obs.classify import DIVERGENCE_CAUSES, OUTCOMES
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo
 
@@ -111,10 +113,34 @@ _COLUMNS = (
     "batch_id",
     "tools_out",
     "tools_in",
+    "cobs2_head",
+    "cobs2_node",
+    "cobs2_parent_node",
+    "cobs2_edge",
+    "cobs2_reply_msg",
+    "cobs2_compaction_request",
+    "cobs2_divergence_cause",
+    "cobs2_divergence_cause_own",
+    "cobs2_session",
+    "cobs2_conv",
+    "cobs2_shape",
+    "cobs2_parent_req",
+    "cobs2_sess_ref",
+    "cobs2_toolset",
+    "relayed",
+    "upstream",
+    "served_gpu_tokens",
+    "served_ram_tokens",
+    "served_nvme_tokens",
+    "served_remote_tokens",
+    "load_s",
+    "node_id",
+    "prompt_diet",
+    "guard",
 )
-# The forest's six columns (session_key .. tools_in, the tail of _COLUMNS) are written with every
-# row but read only by the forest route, which selects them itself: the v2 readers below would
-# otherwise drag two JSON blobs per row through every stats query.
+# The forest's six columns (session_key .. tools_in, just before the cobs2 tail of _COLUMNS) are
+# written with every row but read only by the forest route, which selects them itself: the v2
+# readers below would otherwise drag two JSON blobs per row through every stats query.
 _FOREST_COLUMNS = (
     "session_key",
     "parent_session_key",
@@ -123,7 +149,43 @@ _FOREST_COLUMNS = (
     "tools_out",
     "tools_in",
 )
-_READ_COLUMNS = _COLUMNS[: -len(_FOREST_COLUMNS)]
+# cobs2 L1 ids (migration 0052): written with every row, internal, never read by
+# the v2 readers (no /api change). Hex ids only, never text.
+_COBS2_COLUMNS = (
+    "cobs2_head",
+    "cobs2_node",
+    "cobs2_parent_node",
+    "cobs2_edge",
+    "cobs2_reply_msg",
+    "cobs2_compaction_request",
+    "cobs2_divergence_cause",
+    "cobs2_divergence_cause_own",
+)
+# Sessions pages (migration 0053): read only by app/sessions, never by the v2
+# readers. Ids, sizes and counts only.
+_SESSIONS_COLUMNS = (
+    "cobs2_session",
+    "cobs2_conv",
+    "cobs2_shape",
+    "cobs2_parent_req",
+    "cobs2_sess_ref",
+    "cobs2_toolset",
+    "relayed",
+    "upstream",
+    "served_gpu_tokens",
+    "served_ram_tokens",
+    "served_nvme_tokens",
+    "served_remote_tokens",
+    "load_s",
+    "node_id",
+)
+# Prompt diet (migration 0054): what a key's diet cut; written with every row,
+# read only by ad hoc analysis.
+_DIET_COLUMNS = ("prompt_diet", "guard")
+_COBS2_EDGES = frozenset({"new", "continue", "fork", "compacted_from", "subagent"})
+_READ_COLUMNS = _COLUMNS[
+    : -len(_FOREST_COLUMNS) - len(_COBS2_COLUMNS) - len(_SESSIONS_COLUMNS) - len(_DIET_COLUMNS)
+]
 _SELECT = "SELECT " + ", ".join(_READ_COLUMNS) + " FROM request_history"
 # INSERT OR IGNORE: the id is the registry's uuid, and a record that somehow
 # reaches the writer twice must not turn into an IntegrityError that costs the
@@ -171,6 +233,9 @@ def _row_params(record: dict[str, Any], finished_at: float) -> tuple[Any, ...]:
         except (TypeError, ValueError):
             return None
 
+    def _opt_bool(v: Any) -> int | None:
+        return None if v is None else (1 if v else 0)
+
     def _opt_int(v: Any) -> int | None:
         try:
             return None if v is None else int(v)
@@ -217,7 +282,54 @@ def _row_params(record: dict[str, Any], finished_at: float) -> tuple[Any, ...]:
         _opt_str(record.get("batch_id")),
         _json_text(record.get("tools_out")),
         _json_text(record.get("tools_in")),
+        _opt_str(record.get("cobs2_head")),
+        _opt_str(record.get("cobs2_node")),
+        _opt_str(record.get("cobs2_parent_node")),
+        edge
+        if isinstance(edge := record.get("cobs2_edge"), str) and edge in _COBS2_EDGES
+        else None,
+        _opt_str(record.get("cobs2_reply_msg")),
+        _opt_bool(record.get("cobs2_compaction_request")),
+        _cause(record.get("cobs2_divergence_cause")),
+        _cause(record.get("cobs2_divergence_cause_own")),
+        _opt_str(record.get("cobs2_session")),
+        _opt_str(record.get("cobs2_conv")),
+        _opt_str(record.get("cobs2_shape")),
+        _opt_str(record.get("cobs2_parent_req")),
+        _opt_str(record.get("cobs2_sess_ref")),
+        _opt_str(record.get("cobs2_toolset")),
+        1 if record.get("relayed") else None,
+        _opt_str(record.get("upstream")),
+        _opt_int(record.get("served_gpu_tokens")),
+        _opt_int(record.get("served_ram_tokens")),
+        _opt_int(record.get("served_nvme_tokens")),
+        _opt_int(record.get("served_remote_tokens")),
+        _float(record.get("load_s")),
+        _opt_str(record.get("node_id")),
+        _opt_str(record.get("prompt_diet")),
+        _opt_str(record.get("guard")),
     )
+
+
+#: A key's tool name is re-upserted at most this often (keeps ``last_seen``
+#: within a day of the truth for retention at ~one write per tool per day).
+TOOL_NAME_REFRESH_S = 86_400.0
+_TOOL_SEEN_MAX = 65_536
+_PENDING_TOOLSETS_MAX = 4096
+_COMMITTED_MAX = 20_000
+_UPSERT_TOOLSET = (
+    "INSERT INTO cobs2_toolsets(digest, tools, last_seen) VALUES (?,?,?) "
+    "ON CONFLICT(digest) DO UPDATE SET last_seen=max(last_seen, excluded.last_seen)"
+)
+_UPSERT_TOOL = (
+    "INSERT INTO session_tools(token_id, tool_hmac, name, family, size, first_seen, last_seen) "
+    "VALUES (?,?,?,?,?,?,?) ON CONFLICT(token_id, tool_hmac) DO UPDATE SET name=excluded.name, "
+    "family=excluded.family, size=excluded.size, last_seen=max(last_seen, excluded.last_seen)"
+)
+
+
+def _cause(v: Any) -> str | None:
+    return v if isinstance(v, str) and v in DIVERGENCE_CAUSES else None
 
 
 def _row_dict(row: Iterable[Any]) -> dict[str, Any]:
@@ -252,6 +364,15 @@ class RequestHistoryStore:
         self.written = 0
         self._last_drop_log = 0.0
         self._last_busy_log = float("-inf")
+        #: digest -> (tools JSON, last_seen): upserted with the next batch.
+        self._pending_toolsets: dict[str, tuple[str, float]] = {}
+        #: (token_id, tool_hmac) -> (name, family, size, first_seen, last_seen).
+        self._pending_tools: dict[tuple[str, str], tuple[str, str, int, float, float]] = {}
+        #: (token_id, tool_hmac) -> (size, refreshed_at): what was last queued.
+        self._tool_seen: OrderedDict[tuple[str, str], tuple[int, float]] = OrderedDict()
+        self._committed: deque[str] = deque()
+        self._committed_set: set[str] = set()
+        self._commit_cond = asyncio.Condition()
 
     # -- write side ---------------------------------------------------------
 
@@ -267,6 +388,7 @@ class RequestHistoryStore:
             if not params[0]:
                 return False
             self._q.put_nowait(params)
+            self._note_toolset(record, params[1])
             return True
         except asyncio.QueueFull:
             self.dropped += 1
@@ -285,6 +407,90 @@ class RequestHistoryStore:
 
     def pending(self) -> int:
         return self._q.qsize()
+
+    def _note_toolset(self, record: dict[str, Any], finished_at: float) -> None:
+        """Queue the toolset and any due tool-name upserts; a bad value costs
+        only these side rows, never the history row."""
+        try:
+            digest = record.get("cobs2_toolset")
+            tools = record.get("cobs2_toolset_tools")
+            if not isinstance(digest, str) or not isinstance(tools, list):
+                return
+            entries = [
+                (str(e[0]), str(e[1]), int(e[2]))
+                for e in tools
+                if isinstance(e, list | tuple) and len(e) == 3
+            ]
+            if (
+                digest in self._pending_toolsets
+                or len(self._pending_toolsets) < _PENDING_TOOLSETS_MAX
+            ):
+                self._pending_toolsets[digest] = (
+                    json.dumps([list(e) for e in entries], separators=(",", ":")),
+                    finished_at,
+                )
+            token_id = record.get("token_id")
+            names = record.get("cobs2_toolset_names")
+            if not isinstance(token_id, str) or not token_id or not isinstance(names, list):
+                return
+            for row in self._tool_upserts_due(token_id, entries, names, finished_at):
+                key = (row[0], row[1])
+                old = self._pending_tools.get(key)
+                first = min(old[3], row[5]) if old is not None else row[5]
+                self._pending_tools[key] = (row[2], row[3], row[4], first, row[6])
+        except Exception:  # noqa: BLE001 -- bookkeeping must never fail a request
+            logger.debug("request history: could not queue a toolset", exc_info=True)
+
+    def _tool_upserts_due(
+        self,
+        token_id: str,
+        entries: list[tuple[str, str, int]],
+        names: list[Any],
+        finished_at: float,
+    ) -> list[tuple[str, str, str, str, int, float, float]]:
+        """The (token, tool) name rows to write: unseen, resized, or not
+        refreshed for ``TOOL_NAME_REFRESH_S``."""
+        out: list[tuple[str, str, str, str, int, float, float]] = []
+        seen = self._tool_seen
+        for (h, fam, size), name in zip(entries, names, strict=False):
+            if not isinstance(name, str) or not name:
+                continue
+            key = (token_id, h)
+            prev = seen.get(key)
+            if prev is not None and prev[0] == size and finished_at - prev[1] < TOOL_NAME_REFRESH_S:
+                seen.move_to_end(key)
+                continue
+            seen[key] = (size, finished_at)
+            seen.move_to_end(key)
+            while len(seen) > _TOOL_SEEN_MAX:
+                seen.popitem(last=False)
+            out.append((token_id, h, name, fam, size, finished_at, finished_at))
+        return out
+
+    async def wait_for(self, request_id: str, timeout_s: float) -> bool:
+        """True once a batch holding ``request_id`` has committed (in this
+        process), waiting up to ``timeout_s``."""
+        if request_id in self._committed_set:
+            return True
+        try:
+            async with asyncio.timeout(max(0.0, timeout_s)):
+                async with self._commit_cond:
+                    await self._commit_cond.wait_for(lambda: request_id in self._committed_set)
+        except TimeoutError:
+            pass
+        return request_id in self._committed_set
+
+    async def _mark_committed(self, batch: list[tuple[Any, ...]]) -> None:
+        for params in batch:
+            rid = params[0]
+            if rid in self._committed_set:
+                continue
+            self._committed.append(rid)
+            self._committed_set.add(rid)
+            while len(self._committed) > _COMMITTED_MAX:
+                self._committed_set.discard(self._committed.popleft())
+        async with self._commit_cond:
+            self._commit_cond.notify_all()
 
     def _drain(self) -> list[tuple[Any, ...]]:
         batch: list[tuple[Any, ...]] = []
@@ -311,11 +517,26 @@ class RequestHistoryStore:
             logger.warning("request history: write deferred, database busy; retrying")
 
     async def _write(self, batch: list[tuple[Any, ...]]) -> None:
+        toolsets = dict(self._pending_toolsets)
+        tools = dict(self._pending_tools)
         async with open_db(self.db_path) as db:
             await db.execute(f"PRAGMA busy_timeout = {int(HISTORY_BUSY_TIMEOUT_MS)}")
             await db.executemany(_INSERT, batch)
+            if toolsets:
+                await db.executemany(
+                    _UPSERT_TOOLSET, [(d, t, ls) for d, (t, ls) in toolsets.items()]
+                )
+            if tools:
+                await db.executemany(_UPSERT_TOOL, [(k[0], k[1], *v) for k, v in tools.items()])
             await db.commit()
         self.written += len(batch)
+        for d, v in toolsets.items():
+            if self._pending_toolsets.get(d) == v:
+                del self._pending_toolsets[d]
+        for k, tv in tools.items():
+            if self._pending_tools.get(k) == tv:
+                del self._pending_tools[k]
+        await self._mark_committed(batch)
 
     async def _write_or_requeue(self, batch: list[tuple[Any, ...]]) -> int:
         """One write. Lock contention re-queues the batch; any other failure
@@ -393,20 +614,28 @@ class RequestHistoryStore:
 # ---------------------------------------------------------------------------
 
 
-def _model_clause(model_ids: Sequence[str] | None) -> tuple[str, tuple[str, ...]]:
-    """`` AND model_id IN (...)`` for a selection, or nothing when unfiltered.
+#: Every local stats reader sees local rows only: a relayed (router
+#: passthrough) row's timings and cache are the upstream's (sessions pages, R4).
+LOCAL_ONLY = " AND relayed IS NULL"
 
-    Empty when unfiltered so the unfiltered path executes exactly the SQL it
-    always would rather than a filter that happens to match everything.
+
+def _model_clause(model_ids: Sequence[str] | None) -> tuple[str, tuple[str, ...]]:
+    """``LOCAL_ONLY`` plus `` AND model_id IN (...)`` for a selection.
+
+    No model filter when unfiltered, rather than one that happens to match
+    every model.
     """
     if model_ids is None:
-        return "", ()
+        return LOCAL_ONLY, ()
     if not model_ids:
         # `IN ()` is a syntax error in SQLite and a bare 1=1 would silently
         # widen to every model -- the substitution every stats route exists to
         # prevent.
-        return " AND 0", ()
-    return f" AND model_id IN ({','.join('?' for _ in model_ids)})", tuple(model_ids)
+        return LOCAL_ONLY + " AND 0", ()
+    return (
+        LOCAL_ONLY + f" AND model_id IN ({','.join('?' for _ in model_ids)})",
+        tuple(model_ids),
+    )
 
 
 @dataclass(frozen=True)
@@ -461,7 +690,7 @@ async def query_window(
     return WindowRows(rows=[_row_dict(r) for r in rows], total=total, stride=stride)
 
 
-_OUTCOMES = ("hit", "partial", "lost", "misrouted", "diverged", "cold")
+_OUTCOMES = OUTCOMES
 
 
 async def query_cache_summary(
@@ -542,6 +771,25 @@ async def query_cache_summary(
     for mid, oc, n in await cur.fetchall():
         if mid in out and oc in out[mid]["outcomes"]:
             out[mid]["outcomes"][oc] = n
+    # cobs2: why prefixes broke, where lineage explains it. Counted over the
+    # broken-prefix population only -- the rows the UI's share is taken of
+    # (prefix changed, the relabelled misses, deep-diverged hits/partials). A
+    # compacted hit with no divergence keeps its row label but is
+    # informational, not a broken prefix, so it is left out here.
+    cause_col = "cobs2_divergence_cause_own" if token_id else "cobs2_divergence_cause"
+    for mid in out:
+        out[mid]["divergence_causes"] = dict.fromkeys(DIVERGENCE_CAUSES, 0)
+    cur = await db.execute(
+        f"SELECT model_id, {cause_col}, COUNT(*) FROM request_history{where} "
+        f"AND {cause_col} IS NOT NULL AND ("
+        f"{outcome_col} IN ('diverged','compacted','harness_rewrite') "
+        f"OR ({outcome_col} IN ('hit','partial') AND {div_col} IS NOT NULL)"
+        f") GROUP BY model_id, {cause_col}",
+        args,
+    )
+    for mid, cause, n in await cur.fetchall():
+        if mid in out and cause in out[mid]["divergence_causes"]:
+            out[mid]["divergence_causes"][cause] = n
     cur = await db.execute(
         f"SELECT model_id, dp_rank, COUNT(*), COALESCE(SUM({fact}),0), {eff} "
         f"FROM request_history{where} "
@@ -564,7 +812,8 @@ async def query_cache_summary(
             out[mid]["top_diverging"] = []
         cur = await db.execute(
             "SELECT model_id, token_id, MAX(token_name), COUNT(*) AS n FROM request_history"
-            f"{where} AND cache_outcome='diverged' AND token_id IS NOT NULL "
+            f"{where} AND (cache_outcome IN ('diverged','harness_rewrite') "
+            "OR cobs2_divergence_cause='harness_rewrite') AND token_id IS NOT NULL "
             "GROUP BY model_id, token_id ORDER BY n DESC",
             args,
         )
@@ -654,6 +903,23 @@ async def query_last(
     return [_row_dict(r) for r in await cur.fetchall()]
 
 
+async def session_linkable(db: aiosqlite.Connection, ids: Sequence[str]) -> set[str]:
+    """The ids among ``ids`` whose row joined a session (sessions pages): one
+    primary-key query per 500 ids."""
+    out: set[str] = set()
+    ids = list(ids)
+    for i in range(0, len(ids), 500):
+        chunk = ids[i : i + 500]
+        cur = await db.execute(
+            "SELECT id FROM request_history WHERE id IN ("
+            + ",".join("?" for _ in chunk)
+            + ") AND cobs2_session IS NOT NULL",
+            chunk,
+        )
+        out.update(r[0] for r in await cur.fetchall())
+    return out
+
+
 async def earliest_finished_at(db: aiosqlite.Connection) -> float | None:
     """When history begins, across the whole store. None when empty.
 
@@ -703,7 +969,7 @@ async def query_token_timings(
     if not token_ids:
         return TokenTimings(rows=[], total=0, stride=1)
     marks = ",".join("?" for _ in token_ids)
-    where = f" WHERE token_id IN ({marks}) AND finished_at >= ? AND finished_at < ?"
+    where = f" WHERE token_id IN ({marks}) AND finished_at >= ? AND finished_at < ?" + LOCAL_ONLY
     args = (*token_ids, since, until)
     cur = await db.execute("SELECT COUNT(*) FROM request_history" + where, args)
     total = int((await cur.fetchone() or (0,))[0] or 0)
@@ -795,6 +1061,11 @@ async def prune(db: aiosqlite.Connection, *, cutoff: float, max_rows: int) -> di
             (int(max_rows),),
         )
         by_count = cur.rowcount or 0
+    # Toolsets and tool names: a day of slack covers the name refresh
+    # interval, so a tool still in use is never pruned.
+    side_cutoff = cutoff - TOOL_NAME_REFRESH_S
+    await db.execute("DELETE FROM cobs2_toolsets WHERE last_seen < ?", (side_cutoff,))
+    await db.execute("DELETE FROM session_tools WHERE last_seen < ?", (side_cutoff,))
     return {"by_age": by_age, "by_count": by_count, "newest_deleted": newest}
 
 

@@ -1,7 +1,12 @@
 "use client";
 
 import { useId, useState } from "react";
+import useSWR from "swr";
 import { Modal } from "@/components/ui/modal";
+import { type GuardChoice, KeyGuardChoice, keyGuardBody } from "@/components/guard/key-guard-choice";
+import { authFetchJSON } from "@/lib/auth-fetch";
+import { G } from "@/lib/guard/strings";
+import { type GuardSettings, normalise, type PacksResponse } from "@/lib/guard/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { authFetch } from "@/lib/auth-fetch";
@@ -57,6 +62,14 @@ export function CreateTokenDialog({
   const [priority, setPriority] = useState(String(PRIORITY_DEFAULT));
   const [anthropicRelay, setAnthropicRelay] = useState(initialRelay);
   const [thinkingPolicy, setThinkingPolicy] = useState<"client" | "off">("client");
+  // Sensitive data guard for the new key: the platform setting unless chosen otherwise. Own
+  // settings start from the platform's, so an admin edits rather than starts from nothing.
+  const packs = useSWR<PacksResponse>(open ? "/api/guard/packs" : null, authFetchJSON);
+  const platform = useSWR<{ guard: Partial<GuardSettings> | null }>(open ? "/api/guard/settings" : null, authFetchJSON);
+  const [guardChoice, setGuardChoice] = useState<GuardChoice>("inherit");
+  const [guardOwn, setGuardOwn] = useState<GuardSettings | null>(null);
+  const platformGuard = platform.data && typeof platform.data === "object" ? platform.data.guard ?? null : null;
+  const guardValue = guardOwn ?? normalise(platformGuard ?? {}, packs.data);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // Holds the freshly-minted plaintext token. We deliberately keep this in
@@ -81,6 +94,8 @@ export function CreateTokenDialog({
     setPriority(String(PRIORITY_DEFAULT));
     setAnthropicRelay(initialRelay);
     setThinkingPolicy("client");
+    setGuardChoice("inherit");
+    setGuardOwn(null);
     setError(null);
     setCreated(null);
     setCopied(false);
@@ -131,6 +146,8 @@ export function CreateTokenDialog({
           priority: parsedPrio,
           anthropic_relay: anthropicRelay,
           thinking_policy: thinkingPolicy,
+          // Omitted when the key uses the platform setting, as before this section existed.
+          ...(guardChoice === "inherit" ? {} : { guard: keyGuardBody(guardChoice, guardValue) }),
         }),
       });
       if (!r.ok) {
@@ -304,6 +321,21 @@ export function CreateTokenDialog({
             <span className="block text-xs text-slate-500">
               Use &quot;always off&quot; for agent fleets and batch jobs that should never spend
               tokens on reasoning. Changeable later, takes effect on the next request.
+            </span>
+          </fieldset>
+
+          <fieldset className="space-y-2 rounded-md border border-slate-700 px-3 py-2.5">
+            <legend className="px-1 text-xs text-slate-400">{G.title}</legend>
+            <KeyGuardChoice
+              choice={guardChoice}
+              onChoice={setGuardChoice}
+              own={guardValue}
+              onOwn={setGuardOwn}
+              inherited={platformGuard}
+              packs={packs.data}
+            />
+            <span className="block text-xs text-slate-500">
+              Changeable later on the key&apos;s page, which also has a Try it box and the key&apos;s log.
             </span>
           </fieldset>
 

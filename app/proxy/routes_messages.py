@@ -44,6 +44,7 @@ from app.proxy.messages_translate import (
     to_openai_request,
     upstream_error_message,
 )
+from app.proxy.request_id import GUARD_MODEL, copy_request_id, guard_blocked
 from app.proxy.routes import _forward, _resolve_target
 from app.router.data_plane import catch_all_entry, messages_entry
 from app.utils.sse import sse_headers
@@ -191,43 +192,59 @@ async def _serve_local(
         affinity_key=anthropic_affinity_key(req),
     )
     emit_thinking = thinking_requested(req)
+    if guard_blocked(resp):
+        response_model_name = GUARD_MODEL
 
     if isinstance(resp, StreamingResponse):
         if resp.status_code != 200:
             # An engine error on a streamed request is one JSON body, not SSE.
             # Draining it runs _forward's own end-of-stream bookkeeping.
             raw = b"".join([_as_bytes(c) async for c in resp.body_iterator])
-            return anthropic_error(resp.status_code, upstream_error_message(raw))
+            return copy_request_id(
+                resp, anthropic_error(resp.status_code, upstream_error_message(raw))
+            )
         translator = AnthropicStreamTranslator(
             model=response_model_name,
             stop_sequences=req.stop_sequences,
             emit_thinking=emit_thinking,
         )
-        return StreamingResponse(
-            _anthropic_sse(resp.body_iterator, translator),
-            status_code=200,
-            media_type="text/event-stream",
-            headers=sse_headers(),
-            # _forward's unstarted-stream guard releases the rank and the
-            # admission slot from this task when the client leaves early.
-            background=resp.background,
+        return copy_request_id(
+            resp,
+            StreamingResponse(
+                _anthropic_sse(resp.body_iterator, translator),
+                status_code=200,
+                media_type="text/event-stream",
+                headers=sse_headers(),
+                # _forward's unstarted-stream guard releases the rank and the
+                # admission slot from this task when the client leaves early.
+                background=resp.background,
+            ),
         )
 
     if resp.status_code != 200:
-        return anthropic_error(resp.status_code, upstream_error_message(bytes(resp.body)))
+        return copy_request_id(
+            resp, anthropic_error(resp.status_code, upstream_error_message(bytes(resp.body)))
+        )
     try:
         completion = json.loads(resp.body)
     except ValueError:
-        return anthropic_error(502, "upstream engine returned a non-JSON body")
-    if not isinstance(completion, dict):
-        return anthropic_error(502, "upstream engine returned an unexpected body")
-    return JSONResponse(
-        to_anthropic_message(
-            completion,
-            model=response_model_name,
-            stop_sequences=req.stop_sequences,
-            emit_thinking=emit_thinking,
+        return copy_request_id(
+            resp, anthropic_error(502, "upstream engine returned a non-JSON body")
         )
+    if not isinstance(completion, dict):
+        return copy_request_id(
+            resp, anthropic_error(502, "upstream engine returned an unexpected body")
+        )
+    return copy_request_id(
+        resp,
+        JSONResponse(
+            to_anthropic_message(
+                completion,
+                model=response_model_name,
+                stop_sequences=req.stop_sequences,
+                emit_thinking=emit_thinking,
+            )
+        ),
     )
 
 

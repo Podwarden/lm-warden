@@ -629,7 +629,10 @@ async def stats_v2_requests(
         window = await request_history.query_window(
             db, since=since, model_ids=selected, limit=limit
         )
+        linkable = await request_history.session_linkable(db, [r["id"] for r in window.rows])
         earliest = await request_history.earliest_finished_at(db)
+    for r in window.rows:
+        r["session_ref"] = ("r_" + r["id"]) if r["id"] in linkable else None
     return {
         "range": range,
         "since_epoch": since,

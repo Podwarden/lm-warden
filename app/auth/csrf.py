@@ -112,11 +112,15 @@ _BYPASS_PREFIXES = (
     "/static",
     "/api/auth",
     "/api/setup",
+    # The key holder's area: a bearer key-holder token only (app/tokens/routes_me.py), never a cookie.
+    "/api/me/",
 )
-# Exact paths (not prefixes). Key-holder login: the credential is an explicit
-# `Authorization: Bearer vw_...` header, not a cookie, so there is nothing for
-# CSRF to defend.
-_BYPASS_PATHS = frozenset({"/api/forest/login"})
+# Exact paths (not prefixes). Key-holder login and sign-out: the credential is an
+# explicit `Authorization: Bearer ...` header (the key, then the key holder's
+# JWT), not a cookie, so there is nothing for CSRF to defend.
+_BYPASS_PATHS = frozenset({"/api/forest/login", "/api/forest/logout"})
+#: The largest form body read to find a hidden _csrf field.
+_FORM_CSRF_MAX_BYTES = 64 * 1024
 
 
 def _admin_bearer(request: Request) -> bool:
@@ -147,10 +151,15 @@ async def csrf_check(request: Request, call_next) -> Response:
 
     token = request.headers.get("X-CSRF-Token")
     if not token:
-        # Fallback: plain HTML form posts may use a hidden _csrf field.
-        # Read the raw body and cache it on request._body so FastAPI can re-read it.
+        # Fallback: plain HTML form posts may use a hidden _csrf field. Only a small,
+        # url-encoded body with a declared length is read for it (verified finding #6): a
+        # multipart or chunked body was read whole into memory, before any auth, to be refused.
         ct = request.headers.get("content-type", "")
-        if "application/x-www-form-urlencoded" in ct or "multipart/form-data" in ct:
+        try:
+            declared = int(request.headers.get("content-length", ""))
+        except ValueError:
+            declared = -1
+        if "application/x-www-form-urlencoded" in ct and 0 <= declared <= _FORM_CSRF_MAX_BYTES:
             body = await request.body()  # reads + caches bytes in request._body
             # For url-encoded forms, parse _csrf directly from raw bytes.
             if "application/x-www-form-urlencoded" in ct:

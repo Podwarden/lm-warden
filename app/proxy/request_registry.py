@@ -20,7 +20,10 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from app.cobs2.shape import Toolset
 
 
 @dataclass
@@ -108,6 +111,35 @@ class LiveRequest:
     batch_id: str | None = None
     tools_in: list[Any] = field(default_factory=list)
     tools_out: list[Any] = field(default_factory=list)
+    #: cobs2: content ids (exact / loose) of the assistant message this request
+    #: generated; None = not a chat request or not captured.
+    cobs2_reply_msg: str | None = None
+    cobs2_reply_loose_msg: str | None = None
+    #: cobs2 L1 (plan 3 task 5): the request's head id, last body node (exact),
+    #: the lineage edge and the node it continued / forked / was compacted from,
+    #: and whether it asked for a summary. None = not computed (fail-open).
+    cobs2_head: str | None = None
+    cobs2_node: str | None = None
+    cobs2_parent_node: str | None = None
+    cobs2_edge: str | None = None
+    cobs2_compaction_request: bool | None = None
+    #: The loose chain matched deeper than the exact one (Lineage._find): the
+    #: harness rewrote history. In memory only, no column; feeds the
+    #: harness_rewrite miss cause (app/cache_obs/classify.py).
+    cobs2_loose_beyond_exact: bool = False
+    #: Sessions pages (migration 0053): the lineage session used, the
+    #: conversation id, the shape JSON (sizes/counts), the request that produced
+    #: the parent node, the keyed (token, session) lookup ref, the offered
+    #: toolset (hashes, families, sizes; names in memory only, for
+    #: ``session_tools``), and whether the request was relayed upstream.
+    cobs2_session: str | None = None
+    cobs2_conv: str | None = None
+    cobs2_shape: str | None = None
+    cobs2_parent_req: str | None = None
+    cobs2_sess_ref: str | None = None
+    cobs2_toolset: Toolset | None = None
+    relayed: bool = False
+    upstream: str | None = None
     #: Filled at deregister by app/cache_obs (spec section 3); None = not observed.
     cache_obs: dict[str, Any] | None = None
     #: The replica the request was routed to (None: unrouted / single replica).
@@ -126,6 +158,10 @@ class LiveRequest:
     #: True when the thinking policy (token or model "off") forced
     #: enable_thinking=false on this request.
     thinking_forced_off: bool = False
+    #: What the key's prompt diet cut from this request (JSON), or None.
+    prompt_diet: str | None = None
+    #: What the sensitive data guard did (JSON, no values: app/guard/proxy.py), or None.
+    guard: str | None = None
 
 
 class RequestRegistry:
@@ -174,6 +210,8 @@ CACHE_OBS_KEYS: tuple[str, ...] = (
     "diverged_at_own",
     "cached_source",
     "cached_ttft_est_tokens",
+    "cobs2_divergence_cause",
+    "cobs2_divergence_cause_own",
 )
 
 
@@ -227,10 +265,32 @@ def finished_record(req: LiveRequest, *, now: float) -> dict[str, Any]:
         "batch_id": req.batch_id,
         "tools_in": list(req.tools_in),
         "tools_out": list(req.tools_out),
+        "cobs2_reply_msg": req.cobs2_reply_msg,
+        "cobs2_reply_loose_msg": req.cobs2_reply_loose_msg,
+        "cobs2_head": req.cobs2_head,
+        "cobs2_node": req.cobs2_node,
+        "cobs2_parent_node": req.cobs2_parent_node,
+        "cobs2_edge": req.cobs2_edge,
+        "cobs2_compaction_request": req.cobs2_compaction_request,
+        "cobs2_loose_beyond_exact": req.cobs2_loose_beyond_exact,
+        "cobs2_session": req.cobs2_session,
+        "cobs2_conv": req.cobs2_conv,
+        "cobs2_shape": req.cobs2_shape,
+        "cobs2_parent_req": req.cobs2_parent_req,
+        "cobs2_sess_ref": req.cobs2_sess_ref,
+        "cobs2_toolset": req.cobs2_toolset.digest if req.cobs2_toolset else None,
+        "cobs2_toolset_tools": (
+            [list(e) for e in req.cobs2_toolset.entries] if req.cobs2_toolset else None
+        ),
+        "cobs2_toolset_names": list(req.cobs2_toolset.names) if req.cobs2_toolset else None,
+        "relayed": req.relayed,
+        "upstream": req.upstream,
         "dp_rank": req.dp_rank,
         "inflight_same_rank_at_start": req.inflight_same_rank_at_start,
         "gap_s": round(req.gap_s, 3) if req.gap_s is not None else None,
         "thinking_forced_off": req.thinking_forced_off,
+        "prompt_diet": req.prompt_diet,
+        "guard": req.guard,
     }
     obs = req.cache_obs or {}
     for k in CACHE_OBS_KEYS:

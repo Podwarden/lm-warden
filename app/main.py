@@ -105,6 +105,15 @@ async def lifespan(app: FastAPI):
 
     app.state.jwt_secret = load_jwt_secret(settings.db_path)
 
+    from app.cobs2.keys import load_or_create_network_key
+
+    app.state.cobs2_key = load_or_create_network_key(settings.db_path)
+
+    from app.cobs2.lineage import Lineage
+
+    # In-process session lineage (ids and digests only), like PrefixMemory.
+    app.state.cobs2_lineage = Lineage()
+
     from app.auth.sse_tickets import TicketStore
 
     app.state.sse_tickets = TicketStore(
@@ -137,15 +146,16 @@ async def lifespan(app: FastAPI):
     from app.runtime.unified_admission import admission_for_profile
     from app.runtime.watchdog import record_wrapper_pid
 
+    app.state.port_allocator = PortAllocator(start=10000, end=10999)
     app.state.supervisor = Supervisor(
         app.state.settings,
+        ports=app.state.port_allocator,
         driver=_build_engine_driver(app.state.settings),
         on_wrapper_spawn=record_wrapper_pid,
         admission=await admission_for_profile(
             platform_profile.PROFILE, hf_cache_dir=app.state.settings.hf_cache_dir
         ),
     )
-    app.state.port_allocator = PortAllocator(start=10000, end=10999)
 
     # Model load-progress registry (2026-10-18).  In-memory per-load tracker
     # and verdict, keyed by model id.  Lives on app.state so the API/UI
@@ -172,7 +182,13 @@ async def lifespan(app: FastAPI):
     # Rows that were genuinely SERVING ('loaded', or a watchdog restore in
     # flight) are deliberately left to the call below, which records
     # prior_status so the watchdog restores them.
-    await reconcile_stranded_models(settings, app.state.supervisor)
+    # A pull the restart killed is started again further down, once
+    # model_bg_tasks exists (lmwarden.com, 2026-11-04: a restart used to
+    # strand it at "0 B" with nothing running).
+    interrupted_pulls: list[str] = []
+    await reconcile_stranded_models(
+        settings, app.state.supervisor, on_interrupted_pull=interrupted_pulls.append
+    )
 
     # #266 — a settings PATCH could, before tonight's fix, write an
     # extra_env/extra_args value POST /api/models would have refused (a
@@ -324,6 +340,18 @@ async def lifespan(app: FastAPI):
 
     request_history = RequestHistoryStore(settings.db_path)
     app.state.request_history = request_history
+    from app.auth.sessions import AuthSessions
+
+    app.state.auth_sessions = AuthSessions(settings.db_path)
+    await asyncio.to_thread(app.state.auth_sessions.load)
+    from app.guard.routes_api import load_platform
+
+    app.state.guard_platform = await load_platform(app.state)
+    from app.proxy.capture import CaptureStore
+
+    app.state.capture_store = CaptureStore(
+        app.state.settings.capture_dir, max_bytes=app.state.settings.capture_max_bytes
+    )
 
     # #279 stage 3 -- request/usage counters and token last-used accumulate in
     # memory and are written once a second (and at shutdown, below).
@@ -393,6 +421,13 @@ async def lifespan(app: FastAPI):
     # themselves here. A bare asyncio.create_task is only weakly referenced,
     # so without this set the finally below could not reach them.
     app.state.model_bg_tasks = set()
+    if interrupted_pulls:
+        from app.models.pull_task import run_pull
+
+        for model_id in interrupted_pulls:
+            task = asyncio.create_task(run_pull(model_id, settings))
+            app.state.model_bg_tasks.add(task)
+            task.add_done_callback(app.state.model_bg_tasks.discard)
 
     try:
         yield
@@ -579,6 +614,15 @@ def build_app() -> FastAPI:
     from app.stats import routes_forest as stats_routes_forest
 
     app.include_router(stats_routes_forest.router)
+    from app.sessions import routes as sessions_routes
+
+    app.include_router(sessions_routes.router)
+    from app.guard import routes_api as guard_routes
+    from app.tokens import routes_me
+
+    app.include_router(routes_me.router)
+
+    app.include_router(guard_routes.router)
 
     # Live realtime stats dashboard (feature/live-stats-dashboard). Two
     # independent planes behind a fixed API contract (docs/live-stats-spec.md):
@@ -814,6 +858,12 @@ def build_app() -> FastAPI:
     # disk/into memory. This raw-ASGI middleware runs ahead of FastAPI's
     # routing entirely, so it can reject on the header alone.
     app.add_middleware(Chat2BodyLimitMiddleware)
+
+    # Every request body is bounded before anything reads it, CSRF included (verified findings #5,
+    # #6): a declared size over the cap is 413 at once, and a chunked body is counted as it arrives.
+    from app.utils.body_cap import BodyCapMiddleware
+
+    app.add_middleware(BodyCapMiddleware)
 
     # Security headers (nosniff, Referrer-Policy, framing, Permissions-Policy,
     # a default CSP, HSTS over HTTPS only) on every response -- including the

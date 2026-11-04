@@ -13,10 +13,12 @@ and an upstream credential that is not itself a warden key.
 import asyncio
 import base64
 import binascii
+import dataclasses
 import json
 import logging
 import re
 import time
+import uuid
 from dataclasses import dataclass
 from typing import Any
 
@@ -26,11 +28,16 @@ from starlette.exceptions import HTTPException
 
 from app.db.repos.models import ModelRow
 from app.db.repos.tokens import TokenRow
+from app.guard import anthropic as guard_anthropic
+from app.guard import proxy as guard_proxy
 from app.proxy.auth import token_allows, upstream_credential_headers
 from app.proxy.messages_clamp import clamp_max_tokens
 from app.proxy.messages_translate import error_body
 from app.proxy.model_cache import model_by_id, model_by_served_name
+from app.proxy.request_id import REQUEST_ID_HEADER, copy_request_id
+from app.proxy.session_id import extract_session
 from app.router.passthrough import RelayError, relay
+from app.router.relay_record import RelayRecorder
 from app.router.rules import RuleSet, RuleSpec, match_rule
 from app.router.state import Decision, Route
 from app.utils.sse import sse_headers
@@ -218,15 +225,49 @@ async def _relay_to_anthropic(
         rec.status = resp.status_code
         rec.finish()
 
+    # Sessions pages: a relayed /v1/messages request gets a history row,
+    # recorded off the stream path (relay_record). Fail-open.
+    recorder: RelayRecorder | None = None
+    if body is not None and rec.path == "/v1/messages":
+        try:
+            recorder = RelayRecorder(request, token, body, upstream=cfg_upstream)
+            recorder.start()
+        except Exception:  # noqa: BLE001
+            recorder = None
+
+    def on_usage(i: int | None, o: int | None) -> None:
+        state.add_passthrough_tokens(i, o)
+        if recorder is not None:
+            recorder.note_usage(i, o)
+
+    def on_ttfb() -> None:
+        rec.mark_ttfb()
+        if recorder is not None:
+            recorder.on_ttfb()
+
+    def on_close_all(resp: Response) -> None:
+        on_close(resp)
+        if recorder is not None:
+            recorder.on_close(resp)
+
+    guarded = getattr(request.state, "guard", None)
     try:
         resp = await relay(
             request,
             upstream_base=cfg_upstream,
             body=body,
             credentials=upstream_credential_headers(request),
-            on_usage=state.add_passthrough_tokens,
-            on_ttfb=rec.mark_ttfb,
-            on_close=on_close,
+            on_usage=on_usage,
+            on_ttfb=on_ttfb,
+            on_close=on_close_all,
+            # Guarded: the recorder is fed the engine view (trailer added) by the wrapper below.
+            on_chunk=recorder.on_chunk if recorder is not None and guarded is None else None,
+            extra_headers=(
+                {REQUEST_ID_HEADER: recorder.request_id} if recorder is not None else None
+            ),
+            # Only for recorded relays: the recorder must be able to read the reply.
+            narrow_encoding=recorder is not None,
+            identity_encoding=guarded is not None,
         )
     except RelayError as exc:
         if exc.reason is not None:  # the request itself was refused; Anthropic was not tried
@@ -236,6 +277,10 @@ async def _relay_to_anthropic(
         return _err(exc.status, exc.message)
     rec.status = resp.status_code
     rec.stream = resp.headers.get("content-type", "").startswith("text/event-stream")
+    if guarded is not None and isinstance(resp, StreamingResponse):
+        resp = guard_anthropic.wrap_relay(
+            resp, guarded, on_engine_chunk=recorder.on_chunk if recorder is not None else None
+        )
     return resp
 
 
@@ -299,6 +344,14 @@ async def messages_entry(request: Request, token: TokenRow, *, count_tokens: boo
     rec = _Rec(request, token, path, model_in if isinstance(model_in, str) else None)
     rec.stream = bool(data.get("stream")) and not count_tokens
 
+    # Sensitive data guard: one scan for both legs, before any rule is matched, so the local
+    # leg, a fallback and a passthrough all only ever see the sanitized body.
+    guarded = await _guard_entry(request, token, data, rec, count_tokens=count_tokens)
+    if isinstance(guarded, Response):
+        return guarded
+    if guarded is not None:
+        raw = guarded
+
     rule = match_rule(model_in, rs.rules)
     if rule is not None:
         rec.rule = rule
@@ -325,6 +378,13 @@ async def catch_all_entry(request: Request, token: TokenRow, rest: str) -> Respo
     state = request.app.state.router
     rs: RuleSet = await state.ruleset(request.app.state.settings.db_path)
     rec = _Rec(request, token, request.url.path[:200], None)
+    if guard_proxy.guard_for(getattr(request.app.state, "guard_platform", None), token):
+        return _refuse(
+            rec,
+            403,
+            "guard_no_passthrough",
+            "router: this key's sensitive data guard does not cover unparsed passthrough",
+        )
     if not rs.config.passthrough_unmatched:
         return _refuse(rec, 404, "passthrough_disabled", "router: passthrough is off")
     if token.allowed_models is not None:
@@ -337,6 +397,59 @@ async def catch_all_entry(request: Request, token: TokenRow, rest: str) -> Respo
     return await _relay_to_anthropic(
         request, token, rec, rs.config.upstream_url, body=None, route="passthrough", reason=None
     )
+
+
+async def _guard_entry(
+    request: Request, token: TokenRow, data: dict[str, Any], rec: _Rec, *, count_tokens: bool
+) -> Response | bytes | None:
+    """The key's guard on an Anthropic body: None (nothing to do), the sanitized body (also put
+    on the request for the local leg, with the outcome on ``request.state.guard``), or LM
+    Warden's own answer (blocked, or the guard could not check it)."""
+    app_state = request.app.state
+    guard = guard_proxy.guard_for(getattr(app_state, "guard_platform", None), token)
+    if guard is None:
+        return None
+    seen = guard_proxy.shared_seen(app_state)
+    if count_tokens:
+        # A count is never answered by the model: replace, never block, and leave the
+        # session's block-once state to the real request.
+        guard = dataclasses.replace(guard, mode="sanitize", overrides=())
+        seen = guard_proxy.SeenSet()
+    try:
+        session = extract_session(data, request.headers, None).id
+    except Exception:  # noqa: BLE001 -- no session id: the key is the session
+        session = None
+    try:
+        out = await asyncio.to_thread(
+            guard_proxy.run_guard,
+            data,
+            "anthropic",
+            guard,
+            token_id=token.id,
+            secret=guard_proxy.shared_secret(app_state),
+            session=session or token.id,
+            seen=seen,
+        )
+    except guard_proxy.GuardFailed as e:
+        rec.set("refused", "guard_failed", 422)
+        rec.finish()
+        return guard_anthropic.failed_reply(e.reason)
+    if out.action == "pass":
+        return None
+    blocked_id = uuid.uuid4().hex if out.action == "block" else None
+    guard_proxy.log_events(app_state, out.events, blocked_id)
+    if out.action == "block":
+        rec.set("refused", "guard_blocked", 200)
+        rec.finish()
+        reply = guard_anthropic.block_reply(out, stream=rec.stream)
+        reply.headers[REQUEST_ID_HEADER] = blocked_id or ""
+        return reply
+    if count_tokens:
+        out.trailer = None
+    new_raw = json.dumps(out.body, ensure_ascii=False).encode()
+    request._body = new_raw
+    request.state.guard = out
+    return new_raw
 
 
 async def _is_served_name(request: Request, name: str) -> bool:
@@ -609,12 +722,15 @@ async def _local_leg(
     # The first frame proves the engine generates: close the breaker now (this
     # also frees a probe claim). A later break still counts as a failure.
     state.record_success(target.id)
-    return StreamingResponse(
-        _chain(first, it, on_end),
-        status_code=200,
-        media_type="text/event-stream",
-        headers=sse_headers(),
-        background=resp.background,
+    return copy_request_id(
+        resp,
+        StreamingResponse(
+            _chain(first, it, on_end),
+            status_code=200,
+            media_type="text/event-stream",
+            headers=sse_headers(),
+            background=resp.background,
+        ),
     )
 
 

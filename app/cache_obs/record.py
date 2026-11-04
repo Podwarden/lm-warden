@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.cache_obs.classify import bytes_to_tokens, classify
+from app.cache_obs.classify import bytes_to_tokens, classify, divergence_cause
 from app.cache_obs.index import Match
 
 #: an estimate under this share of the prompt is prefill-speed noise, read as 0
@@ -50,7 +50,11 @@ def observe_fields(
     rank: int | None,
     rank_known: bool,
     block_size: int | None = None,
+    cobs2_edge: str | None = None,
+    loose_match_beyond_exact: bool = False,
 ) -> dict[str, Any]:
+    """``cobs2_edge`` / ``loose_match_beyond_exact``: the request's lineage
+    observation (app/cobs2/lineage.py), which names the cause of a miss."""
     est = None
     if reporting == "none":
         est = ttft_estimate(prompt, ttft_s, cold_rate)
@@ -59,7 +63,7 @@ def observe_fields(
         fact, source = cached, ("engine" if cached is not None else None)
     r, fleet = _tokens(match_all, prompt, rank, rank_known)
     r_own, _ = _tokens(match_own, prompt, rank, rank_known)
-    return {
+    out: dict[str, Any] = {
         "reusable_tokens": r,
         "reusable_tokens_fleet": fleet,
         "reusable_tokens_own": r_own,
@@ -70,6 +74,8 @@ def observe_fields(
             diverged_at=match_all.diverged_at if match_all else None,
             cached_is_estimate=source == "estimated",
             block_size=block_size,
+            cobs2_edge=cobs2_edge,
+            loose_match_beyond_exact=loose_match_beyond_exact,
         ),
         "cache_outcome_own": classify(
             cached=fact,
@@ -79,9 +85,19 @@ def observe_fields(
             allow_misrouted=False,
             cached_is_estimate=source == "estimated",
             block_size=block_size,
+            cobs2_edge=cobs2_edge,
+            loose_match_beyond_exact=loose_match_beyond_exact,
         ),
         "diverged_at": match_all.diverged_at if match_all else None,
         "diverged_at_own": match_own.diverged_at if match_own else None,
         "cached_source": source,
         "cached_ttft_est_tokens": est,
     }
+    for lens in ("", "_own"):
+        out["cobs2_divergence_cause" + lens] = divergence_cause(
+            out["cache_outcome" + lens],
+            out["diverged_at" + lens],
+            cobs2_edge,
+            loose_match_beyond_exact,
+        )
+    return out

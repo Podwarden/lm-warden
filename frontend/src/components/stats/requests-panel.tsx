@@ -27,7 +27,8 @@ import {
 import type { StatsRange } from "@/lib/stats-v2";
 import { ColourLegend, RequestsChart, toPoints } from "./requests-chart";
 import { Panel, ScopeNote } from "./live-panels";
-import { tokenHref } from "@/lib/routes";
+import { sessionHref, tokenHref } from "@/lib/routes";
+import { S as SessionStrings } from "@/lib/sessions/strings";
 
 /** Rows the detail table shows before "show all". */
 export const TABLE_ROWS_COLLAPSED = 25;
@@ -149,6 +150,7 @@ export function RequestsPanel({
                   <tr>
                     <th className="px-3 py-2 font-medium">Finished</th>
                     <th className="px-3 py-2 font-medium">Token</th>
+                    <th className="px-3 py-2 font-medium">Session</th>
                     <th className="px-3 py-2 font-medium">Client IP</th>
                     <th className="px-3 py-2 font-medium">Model</th>
                     <th className="px-3 py-2 font-medium">Finish</th>
@@ -184,6 +186,18 @@ export function RequestsPanel({
                           >
                             orphan
                           </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 font-mono text-xs">
+                        {r.session_ref ? (
+                          <Link
+                            href={sessionHref(r.session_ref)}
+                            className="hover:underline underline-offset-2"
+                          >
+                            {SessionStrings.links.open}
+                          </Link>
+                        ) : (
+                          <span className="text-chat-dim">—</span>
                         )}
                       </td>
                       <td className="px-3 py-2 font-mono text-xs text-chat-muted">

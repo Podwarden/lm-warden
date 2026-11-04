@@ -86,6 +86,8 @@ async def test_sums_outcomes_and_sources(tmp_path):
         "misrouted": 0,
         "diverged": 0,
         "cold": 0,
+        "compacted": 0,
+        "harness_rewrite": 0,
     }
 
 
@@ -299,3 +301,90 @@ async def test_deep_diverged_own_lens_uses_own_columns_only(tmp_path):
         await db.commit()
         [s] = await query_cache_summary(db, since=0, model_ids=None, token_id="tA")
     assert s["deep_diverged"] == 1
+
+
+async def test_divergence_causes_counted_per_lens(tmp_path):
+    p = await _db(tmp_path)
+    async with open_db(p) as db:
+        # relabelled miss, deep-diverged hit, and a compacted hit
+        await _ins(db, 1, cache_outcome="harness_rewrite", cobs2_divergence_cause="harness_rewrite")
+        await _ins(
+            db,
+            2,
+            cache_outcome="hit",
+            diverged_at=3,
+            cobs2_divergence_cause="harness_rewrite",
+            cache_outcome_own="hit",
+            diverged_at_own=3,
+            cobs2_divergence_cause_own="harness_rewrite",
+        )
+        await _ins(db, 3, cache_outcome="hit", cobs2_divergence_cause="compacted")
+        await _ins(db, 4, cache_outcome="lost")
+        await db.commit()
+        [s] = await query_cache_summary(db, since=0, model_ids=None)
+        [own] = await query_cache_summary(db, since=0, model_ids=None, token_id="tA")
+    # the compacted hit without diverged_at is informational, not a broken prefix
+    assert s["divergence_causes"] == {"compacted": 0, "harness_rewrite": 2}
+    assert own["divergence_causes"] == {"compacted": 0, "harness_rewrite": 1}
+    assert s["outcomes"]["harness_rewrite"] == 1 and s["outcomes"]["lost"] == 1
+
+
+async def test_top_diverging_counts_harness_rewrites(tmp_path):
+    p = await _db(tmp_path)
+    async with open_db(p) as db:
+        common = dict(token_id="tB", token_name="b", cached_tokens=0, cached_source="engine")
+        await _ins(db, 1, cache_outcome="diverged", **common)
+        await _ins(db, 2, cache_outcome="harness_rewrite", **common)
+        # a hit whose deep divergence the harness's rewrite explains
+        await _ins(
+            db,
+            3,
+            cache_outcome="hit",
+            diverged_at=4,
+            cobs2_divergence_cause="harness_rewrite",
+            **common,
+        )
+        # a compaction is not "rewrites the start of its prompt"
+        await _ins(db, 4, cache_outcome="compacted", cobs2_divergence_cause="compacted", **common)
+        await db.commit()
+        [s] = await query_cache_summary(db, since=0, model_ids=None)
+    assert s["top_diverging"] == [{"token_id": "tB", "token_name": "b", "requests": 3}]
+
+
+async def test_divergence_causes_count_only_broken_prefixes(tmp_path):
+    """80 hits (15 of them compacted, no diverged_at), 20 diverged rows with no
+    cause, one deep-diverged hit: none of the 21 broken rows is a compaction."""
+    p = await _db(tmp_path)
+    async with open_db(p) as db:
+        i = 0
+        for k in range(80):
+            i += 1
+            kw = {"cobs2_divergence_cause": "compacted"} if k < 15 else {}
+            if k == 15:
+                kw = {"diverged_at": 4}
+            await _ins(db, i, cache_outcome="hit", **kw)
+        for _ in range(20):
+            i += 1
+            await _ins(db, i, cache_outcome="diverged")
+        # own lens: the same rule on the own columns
+        i += 1
+        await _ins(
+            db,
+            i,
+            cache_outcome_own="partial",
+            cobs2_divergence_cause_own="compacted",
+        )
+        i += 1
+        await _ins(
+            db,
+            i,
+            cache_outcome_own="hit",
+            diverged_at_own=2,
+            cobs2_divergence_cause_own="harness_rewrite",
+        )
+        await db.commit()
+        [s] = await query_cache_summary(db, since=0, model_ids=None)
+        [own] = await query_cache_summary(db, since=0, model_ids=None, token_id="tA")
+    assert s["deep_diverged"] == 1 and s["outcomes"]["diverged"] == 20
+    assert s["divergence_causes"] == {"compacted": 0, "harness_rewrite": 0}
+    assert own["divergence_causes"] == {"compacted": 0, "harness_rewrite": 1}

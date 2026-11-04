@@ -6,6 +6,7 @@
 // reload or a shared link reopens the same period (spec §4.3).
 
 import { authFetch } from "@/lib/auth-fetch";
+import type { GuardSettings, KeyGuard } from "@/lib/guard/types";
 import type { TokenItem } from "@/components/tokens/token-row";
 
 export interface TokenLineageEntry {
@@ -21,6 +22,9 @@ export interface TokenLineageEntry {
 export interface TokenDetail extends TokenItem {
   paused_at: string | null;
   is_paused: boolean;
+  /** Sensitive data guard: the key's own choice and what is in effect (app/guard/resolve.py). */
+  guard?: KeyGuard;
+  guard_effective?: (Partial<GuardSettings> & { source?: unknown }) | null;
   /** Rotation chain, oldest first; includes this token (`is_self`) and its
    *  successor if one exists. */
   lineage: TokenLineageEntry[];

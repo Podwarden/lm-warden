@@ -8,6 +8,7 @@ import { SessionsTab } from "@/components/settings/sessions-tab";
 import { MaintenanceTab } from "@/components/settings/maintenance-tab";
 import { ModelTab } from "@/components/settings/model-tab";
 import { AdminTokensTab } from "@/components/settings/admin-tokens-tab";
+import { GuardPlatformTab } from "@/components/settings/guard-tab";
 
 // ---------------------------------------------------------------------------
 // Settings — six-tab shell (#154)
@@ -19,6 +20,7 @@ import { AdminTokensTab } from "@/components/settings/admin-tokens-tab";
 //
 // Tab order is the spec's:
 //   General → Networking → Sessions & Tokens → Maintenance → Model → Access Tokens
+//   → Sensitive data (the guard's platform default)
 //
 // Each of the four runtime sub-tabs owns its own useRuntimeSettings()
 // instance — SWR dedupes the GET across tabs, so we still issue exactly
@@ -31,7 +33,8 @@ type TabId =
   | "sessions"
   | "maintenance"
   | "model"
-  | "admin-tokens";
+  | "admin-tokens"
+  | "guard";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "general", label: "General" },
@@ -40,6 +43,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "maintenance", label: "Maintenance" },
   { id: "model", label: "Model" },
   { id: "admin-tokens", label: "Access Tokens" },
+  { id: "guard", label: "Sensitive data" },
 ];
 
 export default function SettingsPage() {
@@ -61,6 +65,7 @@ export default function SettingsPage() {
         {activeTab === "maintenance" && <MaintenanceTab />}
         {activeTab === "model" && <ModelTab />}
         {activeTab === "admin-tokens" && <AdminTokensTab />}
+        {activeTab === "guard" && <GuardPlatformTab />}
       </Tabs>
     </div>
   );

@@ -39,6 +39,7 @@ from fastapi.testclient import TestClient
 from app.auth import deps
 from app.auth.policy import (
     FOREST_ROUTES,
+    KEY_HOLDER_ROUTES,
     PUBLIC_ROUTES,
     SESSION_ONLY_PREFIXES,
     SESSION_ONLY_ROUTES,
@@ -90,6 +91,8 @@ def _guards(route: APIRoute) -> set[Callable[..., Any]]:
 def _bucket(method: str, path: str) -> str:
     if is_inference(method, path):
         return "inference"
+    if (method, path) in KEY_HOLDER_ROUTES:
+        return "key_holder"
     if is_session_only(method, path):
         return "session"
     if (method, path) in PUBLIC_ROUTES:
@@ -226,7 +229,9 @@ def test_an_admin_token_opens_every_control_route_but_the_session_only_ones(
         if bucket == "public":
             continue
         r = _call(client, method, path, creds["admin"])
-        if bucket == "admin":
+        if bucket == "key_holder":
+            ok = r.status_code == 403
+        elif bucket == "admin":
             ok = _reached(r)
         elif bucket == "session":
             ok = r.status_code == 403 and _error_code(r) == "session_only"
@@ -244,9 +249,13 @@ def test_a_session_opens_every_control_route(client: TestClient, creds) -> None:
         if bucket == "public":
             continue
         r = _call(client, method, path, creds["session"])
-        # /v1 wants an inference key; a stream wants a ticket, not the header.
+        # /v1 wants an inference key; a stream wants a ticket, not the header; the key holder's
+        # area wants a key holder's sign-in (403 for an admin).
         refused = bucket == "inference" or require_sse_ticket in _guards(route)
-        ok = r.status_code == 401 if refused else _reached(r)
+        if bucket == "key_holder":
+            ok = r.status_code == 403
+        else:
+            ok = r.status_code == 401 if refused else _reached(r)
         if not ok:
             wrong.append(_line(method, path, r))
     assert wrong == []
@@ -258,7 +267,7 @@ def test_an_inference_token_is_refused_on_every_control_route(client: TestClient
     wrong: list[str] = []
     operator_routes = 0
     for method, path, route in _endpoints(client.app):
-        if _bucket(method, path) not in ("admin", "session"):
+        if _bucket(method, path) not in ("admin", "session", "key_holder"):
             continue
         r = _call(client, method, path, creds["inference"])
         if require_operator in _guards(route):

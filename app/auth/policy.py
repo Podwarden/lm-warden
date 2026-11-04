@@ -39,7 +39,31 @@ def is_inference(method: str, path: str) -> bool:
 #: other route refuses it (tests/unit/auth/test_auth_matrix.py enforces both
 #: directions).
 FOREST_ROUTES: frozenset[tuple[str, str]] = frozenset(
-    {("GET", "/api/stats/forest"), ("GET", "/api/stats/requests")}
+    {
+        ("GET", "/api/stats/forest"),
+        ("GET", "/api/stats/requests"),
+        # Sessions pages: read-only, scoped to the key's own token.
+        ("GET", "/api/sessions"),
+        ("GET", "/api/sessions/{session_id}"),
+        ("GET", "/api/requests/{request_id}"),
+        ("POST", "/api/forest/logout"),
+    }
+    | {
+        # The key holder's own area (app/tokens/routes_me.py): see KEY_HOLDER_ROUTES.
+        ("GET", "/api/me/key"),
+        ("PATCH", "/api/me/key"),
+        ("POST", "/api/me/key/rotate"),
+        ("POST", "/api/me/key/revoke"),
+        ("GET", "/api/me/usage"),
+        ("GET", "/api/me/cache"),
+        ("GET", "/api/me/guard/events"),
+    }
+)
+
+#: Routes ONLY a key holder's sign-in opens: the key's own area. An admin session or admin token
+#: gets 403 there (the admin manages keys under /api/tokens).
+KEY_HOLDER_ROUTES: frozenset[tuple[str, str]] = frozenset(
+    r for r in FOREST_ROUTES if r[1].startswith("/api/me/")
 )
 
 #: Session-only (decision 3): an admin token gets 403 `session_only`. It must

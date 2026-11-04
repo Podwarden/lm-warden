@@ -128,6 +128,12 @@ async def forest_viewer(request: Request) -> ForestViewer:
             refusal = token_refusal(row, now)
             if refusal is not None:
                 raise refusal
+            sessions = getattr(request.app.state, "auth_sessions", None)
+            if sessions is not None and not sessions.is_active(
+                claims.get("sid"), kind="key", subject=row.id
+            ):
+                raise HTTPException(401, "session ended")
+            request.state.session_id = claims.get("sid")
             return ForestViewer(token_id=row.id)
     await require_jwt(request)
     return ForestViewer(token_id=None)
@@ -136,10 +142,22 @@ async def forest_viewer(request: Request) -> ForestViewer:
 @router.post("/api/forest/login")
 async def forest_login(request: Request, row: TokenRow = Depends(require_bearer)) -> dict[str, Any]:
     """Exchange an inference API key for a forest-only JWT (see ``mint_forest``)."""
+    sid = await request.app.state.auth_sessions.create("key", row.id)
     return {
-        "token": mint_forest(row.id, request.app.state.jwt_secret, FOREST_TTL_MIN),
+        "token": mint_forest(row.id, request.app.state.jwt_secret, FOREST_TTL_MIN, sid=sid),
         "expires_in": FOREST_TTL_MIN * 60,
     }
+
+
+@router.post("/api/forest/logout", status_code=204, response_class=Response)
+async def forest_logout(
+    request: Request, viewer: ForestViewer = Depends(forest_viewer)
+) -> Response:
+    """A key holder signs out: this sign-in ends at once (other sign-ins of the key stay)."""
+    if viewer.token_id is None:
+        raise HTTPException(403, "only a key holder's sign-in can be ended here")
+    await request.app.state.auth_sessions.end(getattr(request.state, "session_id", None))
+    return Response(status_code=204)
 
 
 def _now() -> float:
@@ -209,7 +227,10 @@ def _load(
 ) -> list[forest._Row]:
     """Rows of the window, decoded into held (slim) rows; only ``tokens``' rows when given, and only
     rows committed up to ``upto_rowid`` when given. Streamed: no list of full dict rows is built."""
-    sql = f"SELECT {', '.join(_FIELDS)} FROM request_history WHERE finished_at >= ?"
+    sql = (
+        f"SELECT {', '.join(_FIELDS)} FROM request_history"
+        " WHERE finished_at >= ? AND relayed IS NULL"
+    )
     args: list[Any] = [ws]
     if upto_rowid is not None:
         sql += " AND rowid <= ?"
@@ -238,7 +259,7 @@ def _counts(db: sqlite3.Connection, ws: float, upto_rowid: int) -> dict[str, int
     out: dict[str, int] = {}
     for tok, n in db.execute(
         "SELECT token_id, COUNT(*) FROM request_history"
-        " WHERE finished_at >= ? AND rowid <= ? GROUP BY token_id",
+        " WHERE finished_at >= ? AND rowid <= ? AND relayed IS NULL GROUP BY token_id",
         [ws, upto_rowid],
     ):
         k = forest.token_of({"token_id": tok})
@@ -278,7 +299,7 @@ def _load_new(
     """
     sql = (
         f"SELECT {', '.join(_FIELDS)} FROM request_history"
-        " WHERE rowid > ? AND rowid <= ? AND finished_at >= ?"
+        " WHERE rowid > ? AND rowid <= ? AND finished_at >= ? AND relayed IS NULL"
     )
     args: list[Any] = [after_rowid, upto_rowid, ws]
     if token_id is not None:
@@ -291,7 +312,8 @@ def _throughput_sync(db_path: Path, now: float) -> dict[str, dict[str, Any]]:
     """7-day per-variant throughput, global (not per viewer)."""
     with closing(_connect(db_path)) as db:
         cur = db.execute(
-            f"SELECT {', '.join(_TPUT_FIELDS)} FROM request_history WHERE finished_at >= ?",
+            f"SELECT {', '.join(_TPUT_FIELDS)} FROM request_history"
+            " WHERE finished_at >= ? AND relayed IS NULL",
             [now - 7 * 86400],
         )
         rows = [dict(zip(_TPUT_FIELDS, row, strict=True)) for row in cur]

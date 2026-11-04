@@ -11,6 +11,8 @@ describe("cacheLine", () => {
     expect(cacheLine(row({ cache_outcome: "misrouted", cached_tokens: 0, cached_source: "engine" }))).toBe("other replica · 0 / 10.2k");
     expect(cacheLine(row({ cache_outcome: "diverged", cached_tokens: 0, cached_source: "engine" }))).toBe("prefix changed · 0 / 10.2k");
     expect(cacheLine(row({ cache_outcome: "cold", cached_tokens: 0, cached_source: "engine" }))).toBe("nothing to reuse · 0 / 10.2k");
+    expect(cacheLine(row({ cache_outcome: "compacted", cached_tokens: 0, cached_source: "engine" }))).toBe("compacted · 0 / 10.2k");
+    expect(cacheLine(row({ cache_outcome: "harness_rewrite", cached_tokens: 0, cached_source: "engine" }))).toBe("harness rewrote history · 0 / 10.2k");
   });
 });
 

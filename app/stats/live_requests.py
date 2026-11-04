@@ -163,6 +163,9 @@ def _serialize(
         # The forest's id for this session: HMAC(cookie_secret, raw)[:16], the session_key its
         # history row gets (session forest spec §6.4). Hashed, so safe for a key holder too.
         "forest_session": req.session_key,
+        # Sessions pages: a link to this request's session page (resolved by the
+        # API once its first turn is recorded); null without a session.
+        "session_ref": ("r_" + req.id) if getattr(req, "cobs2_session", None) else None,
         # An ESTIMATE (vLLM reports the real hit only after the request ends).
         "cache_est_tokens": req.cache_est_tokens,
         "cache_est_pct": cache_est_pct,

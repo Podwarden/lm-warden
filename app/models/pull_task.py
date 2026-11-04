@@ -1,10 +1,14 @@
 import asyncio
 import fnmatch
+import json
 import logging
+import re
+import signal
+import sys
 from pathlib import Path
 from typing import Any
 
-from huggingface_hub import HfApi, snapshot_download
+from huggingface_hub import HfApi
 
 from app.config import Settings
 from app.db.database import open_db
@@ -28,6 +32,44 @@ PULL_AUTH_REQUIRED_HINT = (
     "HuggingFace Hub requires authentication for this repo "
     "(gated or private). Set the HF token via /setup/hf-token and retry."
 )
+
+
+class PullWorkerError(Exception):
+    """The downloader child process failed; the message says how (#pull-iso)."""
+
+
+# The line prefix ``app/models/pull_worker.py`` puts before its JSON verdict.
+WORKER_RESULT_MARKER = "@@VW_PULL_RESULT@@ "
+_APP_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _worker_argv() -> list[str]:
+    """argv for the downloader child. A function so tests can swap it.
+
+    Carries the parent's ``-I`` / ``-B``: the macOS bundle runs the server as
+    ``python -I -B -m uvicorn`` so user site-packages cannot shadow the bundled
+    huggingface_hub, and no ``__pycache__`` is written inside the signed .app
+    (which would break its seal). The child must keep both.
+    """
+    flags = []
+    if sys.flags.isolated:
+        flags.append("-I")
+    if sys.flags.dont_write_bytecode:
+        flags.append("-B")
+    return [sys.executable, *flags, "-m", "app.models.pull_worker"]
+
+
+# Pulls running in THIS process: model ids, and repo -> number of running
+# pulls. The DB status cannot answer "is a download live right now?" — a row
+# can read 'pulling' after a crash, and two POSTs can both pass a status check
+# before either flips it. Only this process runs downloads, so this is exact.
+_ACTIVE_MODELS: set[str] = set()
+_ACTIVE_REPOS: dict[str, int] = {}
+
+
+def pull_is_running(model_id: str) -> bool:
+    """True while ``run_pull`` for ``model_id`` is in flight in this process."""
+    return model_id in _ACTIVE_MODELS
 
 
 class PullAuthRequired(Exception):
@@ -182,21 +224,28 @@ async def _read_hf_token(settings: Settings) -> str | None:
     return None
 
 
-def _snapshot_dir_size(cache_dir: Path, repo: str) -> int:
+def _blobs_dir(cache_dir: Path, repo: str) -> Path:
+    return Path(cache_dir) / ("models--" + repo.replace("/", "--")) / "blobs"
+
+
+def _snapshot_dir_size(cache_dir: Path, repo: str, *, complete_only: bool = False) -> int:
     """Sum byte sizes under {cache_dir}/models--{org}--{name}/blobs/.
 
     huggingface_hub writes downloads to that blobs/ directory before linking
-    them into snapshots/. Counting blob bytes gives a faithful in-flight
-    progress signal across resumed downloads. Returns 0 if the dir doesn't
-    exist yet (download hasn't started).
+    them into snapshots/. Counting blob bytes, in-flight ``*.incomplete``
+    files included, is the live progress signal while a pull runs.
+    ``complete_only`` drops the ``*.incomplete`` files: after a pull died,
+    only finished blobs are bytes the next attempt will not fetch again.
+    Returns 0 if the dir doesn't exist yet (download hasn't started).
     """
-    safe = "models--" + repo.replace("/", "--")
-    blobs = cache_dir / safe / "blobs"
+    blobs = _blobs_dir(cache_dir, repo)
     if not blobs.exists():
         return 0
     total = 0
     try:
         for entry in blobs.iterdir():
+            if complete_only and entry.name.endswith(".incomplete"):
+                continue
             try:
                 total += entry.stat().st_size
             except FileNotFoundError:
@@ -204,6 +253,37 @@ def _snapshot_dir_size(cache_dir: Path, repo: str) -> int:
     except FileNotFoundError:
         return 0
     return total
+
+
+# ``<etag>.<uuid4 hex[:8]>.incomplete``: huggingface_hub >= 1.x gives every
+# download attempt its own temp file and never resumes one, so after an
+# interrupted attempt these are dead weight. ``<etag>.incomplete`` (no uuid)
+# is the older, resumable naming and is left alone.
+_ORPHAN_INCOMPLETE = re.compile(r"^[0-9a-f]{40,64}\.[0-9a-f]{8}\.incomplete$")
+
+
+def purge_orphan_incompletes(cache_dir: Path, repo: str) -> int:
+    """Delete partial files left by earlier, dead attempts. Returns bytes freed.
+
+    Only safe while no pull of ``repo`` is running: a live attempt's temp file
+    has the same shape. ``run_pull`` checks that before calling.
+    On lmwarden.com (2026-11-04) an interrupted pull left 1.2 GB of these; they
+    also inflated the progress counter of the next attempt.
+    """
+    blobs = _blobs_dir(cache_dir, repo)
+    if not blobs.is_dir():
+        return 0
+    freed = 0
+    for entry in blobs.iterdir():
+        if not _ORPHAN_INCOMPLETE.match(entry.name):
+            continue
+        try:
+            size = entry.stat().st_size
+            entry.unlink()
+            freed += size
+        except FileNotFoundError:
+            continue
+    return freed
 
 
 async def _poll_progress(
@@ -234,29 +314,114 @@ async def _snapshot_download(
     token: str | None,
     allow_patterns: list[str] | None = None,
 ) -> str:
-    def _sync() -> str:
-        kwargs: dict[str, Any] = {
-            "repo_id": repo,
-            "revision": revision,
-            "cache_dir": str(settings.hf_cache_dir),
-            "token": token,
-        }
-        if allow_patterns is not None:
-            kwargs["allow_patterns"] = allow_patterns
-        return snapshot_download(**kwargs)
+    """Run ``snapshot_download`` in a child process; see app/models/pull_worker.py.
 
-    return await asyncio.to_thread(_sync)
+    A native crash or OOM kill in the downloader ends the child, not the
+    api process. Raises ``PullAuthRequired`` for an HF auth refusal and
+    ``PullWorkerError`` for anything else, including a child that died
+    without a verdict.
+    """
+    request = {
+        "repo_id": repo,
+        "revision": revision,
+        "cache_dir": str(settings.hf_cache_dir),
+        "token": token,
+        "allow_patterns": allow_patterns,
+    }
+    proc = await asyncio.create_subprocess_exec(
+        *_worker_argv(),
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=None,
+        cwd=str(_APP_ROOT),
+    )
+    try:
+        out, _ = await proc.communicate(json.dumps(request).encode())
+    except asyncio.CancelledError:
+        # Shutdown or a cancelled task: do not leave a downloader behind.
+        if proc.returncode is None:
+            proc.kill()
+            await proc.wait()
+        raise
+
+    verdict: dict[str, Any] | None = None
+    for line in out.decode(errors="replace").splitlines():
+        if line.startswith(WORKER_RESULT_MARKER):
+            try:
+                verdict = json.loads(line[len(WORKER_RESULT_MARKER) :])
+            except json.JSONDecodeError:
+                verdict = None
+    if verdict is None:
+        rc = proc.returncode
+        if rc is not None and rc < 0:
+            try:
+                name = signal.Signals(-rc).name
+            except ValueError:
+                name = str(-rc)
+            how = f"was killed by signal {name}"
+            if -rc == signal.SIGKILL:
+                how += " (often the out-of-memory killer)"
+        else:
+            how = f"exited with code {rc}"
+        raise PullWorkerError(f"downloader process {how} before finishing {repo}")
+    if verdict.get("ok"):
+        return str(verdict.get("path", ""))
+    error = str(verdict.get("error") or "unknown error")
+    if verdict.get("auth"):
+        raise PullAuthRequired(error)
+    raise PullWorkerError(error)
 
 
 async def run_pull(model_id: str, settings: Settings, force: bool = False) -> None:
-    # Phase 1: read row + flip status to pulling
-    async with open_db(settings.db_path) as db:
-        repo = ModelRepo(db)
-        row = await repo.get(model_id)
-        if not row:
-            logger.warning("run_pull: model %s missing", model_id)
-            return
-        await repo.update_status(model_id, "pulling")
+    # A second run of a pull already in flight (double-click, or an operator
+    # POST racing the boot-time resume) leaves it to the first. The check and
+    # the add have no await between them, so in one event loop they are atomic.
+    if model_id in _ACTIVE_MODELS:
+        logger.info("pull %s is already running; not starting a second one", model_id)
+        return
+    _ACTIVE_MODELS.add(model_id)
+    try:
+        # Phase 1: read row + flip status to pulling
+        async with open_db(settings.db_path) as db:
+            repo = ModelRepo(db)
+            row = await repo.get(model_id)
+            if not row:
+                logger.warning("run_pull: model %s missing", model_id)
+                return
+            await repo.update_status(model_id, "pulling")
+        repo_busy = _ACTIVE_REPOS.get(row.hf_repo, 0) > 0
+        _ACTIVE_REPOS[row.hf_repo] = _ACTIVE_REPOS.get(row.hf_repo, 0) + 1
+        try:
+            await _run_pull_claimed(model_id, settings, row, force=force, repo_busy=repo_busy)
+        finally:
+            left = _ACTIVE_REPOS.get(row.hf_repo, 1) - 1
+            if left > 0:
+                _ACTIVE_REPOS[row.hf_repo] = left
+            else:
+                _ACTIVE_REPOS.pop(row.hf_repo, None)
+    finally:
+        _ACTIVE_MODELS.discard(model_id)
+
+
+async def _run_pull_claimed(
+    model_id: str, settings: Settings, row: Any, *, force: bool, repo_busy: bool
+) -> None:
+    # Dead partial files from earlier attempts: delete them, unless another
+    # pull of the same repo is running in this process right now (its live
+    # temp file looks exactly like an orphan).
+    if not repo_busy:
+        try:
+            freed = await asyncio.to_thread(
+                purge_orphan_incompletes, settings.hf_cache_dir, row.hf_repo
+            )
+            if freed:
+                logger.info(
+                    "pull %s: removed %d bytes of partial files from earlier attempts",
+                    model_id,
+                    freed,
+                )
+        except OSError:
+            logger.warning("pull %s: could not clear old partial files", model_id, exc_info=True)
 
     token = await _read_hf_token(settings)
 
@@ -292,8 +457,13 @@ async def run_pull(model_id: str, settings: Settings, force: bool = False) -> No
                 raise auth from e
             logger.warning("repo_info failed for %s: %s", row.hf_repo, e)
             total = None
+        # Start from the bytes already finished (a resumed pull keeps them),
+        # not 0: the bar must not jump back to empty and climb again.
+        done = await asyncio.to_thread(
+            _snapshot_dir_size, settings.hf_cache_dir, row.hf_repo, complete_only=True
+        )
         async with open_db(settings.db_path) as db:
-            await ModelRepo(db).update_pull_progress(model_id, 0, total)
+            await ModelRepo(db).update_pull_progress(model_id, done, total)
 
         if not force:
             await insufficient_disk(

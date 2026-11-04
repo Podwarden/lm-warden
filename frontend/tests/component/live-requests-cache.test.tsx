@@ -46,6 +46,16 @@ describe("in-flight table: session + cache estimate", () => {
     expect(cell.getAttribute("title")).toBe(id);
   });
 
+  it("links the in-flight session cell when session_ref is set and keeps — otherwise", () => {
+    show([row({ id: "a", session_id: "0b1c2d3e-aaaa", session_ref: "r_" + "a".repeat(32) }), row({ id: "b", session_id: null })]);
+    const cells = screen.getAllByTestId("live-session");
+    const link = cells[0].querySelector("a");
+    expect(link?.getAttribute("href")).toBe("/sessions/detail?id=r_" + "a".repeat(32));
+    expect(cells[0].textContent).toBe("0b1c2d3e");
+    expect(cells[1].querySelector("a")).toBeNull();
+    expect(cells[1].textContent).toBe("—");
+  });
+
   it("names the signal in the tooltip, and the parent of a subagent", () => {
     show([
       row({

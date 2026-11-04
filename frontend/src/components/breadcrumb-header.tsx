@@ -33,6 +33,7 @@ import {
   type BreadcrumbEntry,
 } from "@/lib/breadcrumbs";
 import { cn } from "@/lib/utils";
+import { keyMode } from '@/lib/sessions/key-token';
 
 /** Total height of the strip, rule included; `h-[30px]` below and chat2's
  *  `100vh` calc spell it out (Tailwind needs literal class names). */
@@ -54,7 +55,8 @@ export function BreadcrumbHeader() {
   // The provider's logical pathname (/models/abc on /models/detail?id=abc;
   // see lib/routes.ts) — the registry and the back stack both speak it.
   const { pathname, canGoBack, topOfStack, goBack, captureScroll, overrides } = useNavStack();
-  const hidden = shouldHideBreadcrumb(pathname);
+  // A key holder's sessions view has no admin chrome (sessions/key-token.ts).
+  const hidden = shouldHideBreadcrumb(pathname) || keyMode(pathname);
 
   const chain = useMemo(
     () => (hidden ? [] : buildBreadcrumbs(pathname, overrides)),

@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Literal
 
+from app.cobs2.ids import Ids
 from app.proxy.session_id import (
     CONV_HASH_BYTES as CONV_HASH_BYTES,  # re-export; defined in session_id (import cycle)
 )
@@ -86,13 +87,21 @@ def conversation_key(
     token_id: str | None,
     *,
     explicit: str | None = None,
+    cobs2_ids: Ids | None = None,
 ) -> tuple[str | None, KeySource]:
     """``affinity_key``, but a harness session id is narrowed to the conversation
-    (session id + digest of system text and first user message), so parallel
-    agents sharing one session id are placed independently."""
+    (session id + discriminator), so parallel agents sharing one session id are
+    placed independently.
+
+    The discriminator is the cobs2 LOOSE head and first node ids when
+    ``cobs2_ids`` has a first node (a reminder or date change in the head or the
+    first message keeps the key, so the conversation keeps its rank and KV);
+    else a digest of the system text and first user message."""
     key, source = affinity_key(body_json, headers, token_id, explicit=explicit)
     if key is None or source in ("prompt_hash", "none"):
         return key, source
+    if cobs2_ids is not None and cobs2_ids.loose_nodes:
+        return f"{key}\x00{cobs2_ids.loose_head}:{cobs2_ids.loose_nodes[0]}", source
     disc = conversation_discriminator(body_json)
     return (f"{key}\x00{disc}" if disc is not None else key), source
 

@@ -121,6 +121,7 @@ const STATIC_ROUTES: StaticRoute[] = [
   { pattern: "/connect", label: "Connect" },
   { pattern: "/cache", label: "Cache" },
   { pattern: "/settings", label: "Settings" },
+  { pattern: "/sessions", label: "Sessions" },
 
   // Dynamic detail pages — the label is a placeholder; the real name comes
   // from the page via `useBreadcrumb`. Model served names and token names
@@ -128,6 +129,7 @@ const STATIC_ROUTES: StaticRoute[] = [
   { pattern: "/models/[id]", label: "Model", maxChars: 40 },
   { pattern: "/models/[id]/settings", label: "Settings" },
   { pattern: "/tokens/[id]", label: "Token", maxChars: 40 },
+  { pattern: "/sessions/[id]", label: "Session", maxChars: 40 },
   { pattern: "/router/stats", label: "Activity" },
 ];
 
@@ -139,9 +141,10 @@ const STATIC_ROUTES: StaticRoute[] = [
  * of the auth-fetch import chain.
  */
 const HIDE_EXACT_PATHS: ReadonlySet<string> = new Set([
-  "/login", "/login/", "/setup", "/setup/",
+  "/login", "/login/", "/setup", "/setup/", "/sessions/login", "/sessions/login/", "/key", "/key/",
 ]);
-const HIDE_PREFIXES = ["/setup/"];
+// /key/* is the key holder's area: its own shell, never the admin one.
+const HIDE_PREFIXES = ["/setup/", "/key/"];
 
 export function shouldHideBreadcrumb(pathname: string): boolean {
   if (HIDE_EXACT_PATHS.has(pathname)) return true;

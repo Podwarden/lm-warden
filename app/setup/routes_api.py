@@ -8,7 +8,6 @@ from pydantic import BaseModel
 from app.auth.passwords import new_password_problem
 from app.db.database import open_db
 from app.db.repos.setup import SetupRepo
-from app.db.repos.users import UserRepo
 from app.setup.state_machine import next_step
 from app.system import gpu as gpu_mod
 from app.system import hf as hf_mod
@@ -141,15 +140,28 @@ async def post_admin(body: AdminBody, request: Request):
         raise HTTPException(400, "username required")
 
     settings = request.app.state.settings
+    pw_hash = _hash_password(body.password)
     async with open_db(settings.db_path) as db:
-        repo = SetupRepo(db)
-        state = await repo.get()
-        if state.step != "admin":
-            raise HTTPException(400, f"not at admin step (current: {state.step})")
-        users = UserRepo(db)
-        if await users.get_by_username(body.username):
-            raise HTTPException(400, "username already exists")
-        await users.create(body.username, _hash_password(body.password))
+        # One write transaction from the check to the commit (verified finding #1): a second,
+        # simultaneous submit waits here, then sees the admin and is refused. The wizard never
+        # adds an admin to a database that already has one.
+        await db.execute("BEGIN IMMEDIATE")
+        try:
+            repo = SetupRepo(db)
+            state = await repo.get()
+            if state.step != "admin":
+                raise HTTPException(400, f"not at admin step (current: {state.step})")
+            cur = await db.execute("SELECT COUNT(*) FROM users")
+            existing = await cur.fetchone()
+            if existing and existing[0]:
+                raise HTTPException(409, "an admin already exists; sign in instead")
+            await db.execute(
+                "INSERT INTO users(username, password_hash) VALUES (?, ?)",
+                (body.username, pw_hash),
+            )
+        except BaseException:
+            await db.rollback()
+            raise
 
         # Replace plaintext token in draft with a flag
         draft = state.draft.copy()

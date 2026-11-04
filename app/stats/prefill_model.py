@@ -264,7 +264,7 @@ async def refresh(state: PrefillModelState, db_path: Any, *, now: float | None =
         cur = await db.execute(
             "SELECT model_id, prompt_tokens, cached_tokens, cache_est_tokens, ttft_s, "
             "inflight_same_rank_at_start, gap_s, reusable_tokens FROM request_history "
-            "WHERE finished_at >= ? ORDER BY finished_at DESC LIMIT 50000",
+            "WHERE finished_at >= ? AND relayed IS NULL ORDER BY finished_at DESC LIMIT 50000",
             (since,),
         )
         names = [d[0] for d in cur.description]

@@ -44,7 +44,7 @@ for _fam, _names in {
     ),
     "shell": ("bash", "bashoutput", "killshell", "shell", "exec", "run", "terminal", "local_shell"),
     "web": ("webfetch", "websearch", "fetch", "web_search", "browser"),
-    "agent": ("task", "agent", "spawn_agent", "subagent"),
+    "agent": ("task", "agent", "spawn_agent", "subagent", "dispatch_agent"),
 }.items():
     for _n in _names:
         _FAMILY_OF[_n] = _fam

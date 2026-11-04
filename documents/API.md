@@ -593,6 +593,203 @@ way: it connects when you open it and disconnects when you close it.
 
 ---
 
+## Sensitive data guard
+
+The guard keeps secrets in a request from reaching a model. It matches cloud
+and API keys, private keys, passwords and secrets in config and on command
+lines, crypto keys, and, if you turn them on, cards, IBANs, e-mail and phone
+numbers and crypto addresses. Base64 that decodes to text is checked too (a
+kubeconfig's `client-key-data`). Your own patterns and fixed words match too.
+A value found once is caught again later in the same session even without the
+context its rule needed (in prose, or after the agent compacts the
+conversation); that match uses the value's keyed fingerprint, never the value.
+
+In **sanitize** mode each match is replaced with a placeholder such as
+`⟦LMW-SECRET-3a9f1c2e7b⟧` before the model sees it. Placeholders the model
+writes in its answer are put back to the real value before the client gets
+it. A line from LM Warden at the end of the answer lists what was replaced,
+masked. **block** mode answers the first request in a session that carries a
+new value itself, instead of the model, and says what it found. The same
+conversation sent again goes through sanitized. A value in the system prompt
+or tool definitions is never blocked, only replaced.
+
+The guard covers local requests and, with the router on, requests relayed to
+Anthropic. It is off until you turn it on. The UI is **Settings → Sensitive
+data** for the platform default and the **Sensitive data** card on a key's
+page. These calls drive both. `$W`, `AUTH` and `T` are as in the sections
+above; an admin token works the same way (see [Admin API](#admin-api)).
+
+**Nothing stores a value.** Request history, the debug capture, god mode and
+the content log see placeholders only. The action log keeps the rule, where
+the value was, its length and a keyed fingerprint (`ph`). The same
+fingerprint means the same value for that key, nothing more.
+
+### The settings object
+
+The platform default and a key's own settings have the same shape. Every
+field is optional; the defaults are shown.
+
+```json
+{
+  "mode": "sanitize",
+  "packs": ["cloud-api-keys", "private-keys", "generic-credentials", "crypto-keys"],
+  "rules": [],
+  "overrides": {},
+  "restore": "all",
+  "trailer": "new_only",
+  "fail": "closed"
+}
+```
+
+| Field | Values |
+|---|---|
+| `mode` | `sanitize`, or `block` (block once per session, then sanitize) |
+| `packs` | built-in rule packs, from `GET /api/guard/packs`: `cloud-api-keys`, `private-keys`, `generic-credentials`, `crypto-keys`, `payment-cards`, `iban`, `pii-contact`, `crypto-addresses` |
+| `rules` | your own rules, at most 100 (below) |
+| `overrides` | `{"<pack or rule id>": "sanitize" \| "block"}`, the action for one pack or rule |
+| `restore` | `all` (text and tool-call arguments), `text_only`, `off` |
+| `trailer` | the line at the end of the answer: `new_only` (when something new was replaced), `always`, `off` |
+| `fail` | `closed` refuses a request the guard cannot check; `open` sends it unchecked |
+
+A custom rule is a pattern or a list of fixed words:
+
+```json
+{"id": "corp-hostnames", "type": "regex", "regex": "corp-[a-z0-9]{8}\\.internal",
+ "keywords": ["corp-"]}
+{"id": "codenames", "type": "fixed", "values": ["Project Halcyon", "HALCYON-7"]}
+```
+
+- **`id`:** 1–48 lowercase letters, digits or dashes.
+- **Pattern:** at most 512 characters, with no back-references or look-arounds. A repeated group may not hold another repeat or alternatives (`(a+)+`, `(a|aa)+`, `(a{1,30}){1,30}`): those can take exponential time, so the rule is refused when you save it. Write flat patterns, one repeat per character class.
+- **`keywords`:** optional and lowercase, anywhere in the match. The pattern only runs near them, which keeps long requests fast.
+- **Fixed words:** 1–1000 values, matched case-insensitively.
+- **`overrides`** must name a pack, a built-in rule or one of your rules; a typo is refused.
+
+### Platform default
+
+```bash
+# What is set now. null = the guard is off unless a key turns it on for itself.
+curl -s $W/api/guard/settings "${AUTH[@]}"
+# {"guard": null}
+
+# Turn it on for every key. The answer is the stored, normalised settings.
+curl -s -X PUT $W/api/guard/settings "${AUTH[@]}" \
+     -d '{"guard": {"mode": "sanitize"}}'
+# {"guard": {"mode":"sanitize","packs":["cloud-api-keys","private-keys",
+#            "generic-credentials","crypto-keys"],"rules":[],"overrides":{},
+#            "restore":"all","trailer":"new_only","fail":"closed"}}
+
+# Turn it off again.
+curl -s -X PUT $W/api/guard/settings "${AUTH[@]}" -d '{"guard": null}'
+```
+
+A setting the server cannot use is a **422** whose `detail` says why, for
+example `unknown pack 'cloud'` or `nested repetition can take exponential time`.
+Nothing is saved in that case.
+
+### One key
+
+The same `guard` value can be given when the key is created
+(`POST /api/tokens` with `"guard": {...}` next to `name`); a setting the
+server refuses is a **422** and no key is created.
+
+Each key does one of three things: uses the platform default, switches the
+guard off for itself, or has its own settings. The key's own settings start
+from the platform default and replace only the fields they name.
+
+```bash
+# Use the platform default (what every key does until told otherwise).
+curl -s -X PATCH $W/api/tokens/$T "${AUTH[@]}" -d '{"guard": null}'
+
+# Off for this key, whatever the platform says.
+curl -s -X PATCH $W/api/tokens/$T "${AUTH[@]}" -d '{"guard": {"off": true}}'
+
+# Own settings: block on this key, everything else as the platform has it.
+curl -s -X PATCH $W/api/tokens/$T "${AUTH[@]}" \
+     -d '{"guard": {"override": {"mode": "block"}}}'
+
+# What the key stores, and what is in effect for it.
+curl -s $W/api/tokens/$T "${AUTH[@]}" | jq '{guard, guard_effective}'
+# {"guard": {"override": {"mode": "block"}},
+#  "guard_effective": {"mode": "block", "packs": [...], "rules": [], ...,
+#                      "source": {"mode": "key", "packs": "platform",
+#                                 "trailer": "default", ...}}}
+```
+
+`guard_effective` is every setting in force for the key, defaults included,
+or `null` when the guard is off for it. `source` says for each field whether
+it came from the key, the platform, or the default.
+
+### Try a setting
+
+`POST /api/guard/test` runs a setting over some text and shows what a model
+would see. Nothing is stored. Leave out `guard` to test the platform default.
+
+```bash
+curl -s -X POST $W/api/guard/test "${AUTH[@]}" -d '{
+  "text": "export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE",
+  "guard": {"mode": "sanitize", "packs": ["cloud-api-keys"]}}'
+# {"ms": 0.4,
+#  "preview": "export AWS_ACCESS_KEY_ID=⟦LMW-SECRET-7c41e09b2a⟧",
+#  "findings": [{"rule_id": "aws-access-key", "label": "AWS access key",
+#                "start": 25, "end": 45, "length": 20,
+#                "masked": "AKIA… (20 chars)", "action": "sanitize"}]}
+```
+
+`GET /api/guard/packs` lists every pack with its rules (`id`, `label`, and the
+public prefix shown when masking, such as `AKIA`) and which packs are on by
+default.
+
+### The action log
+
+```bash
+# Last 7 days for one key; every parameter is optional.
+curl -s "$W/api/guard/events?token=$T&action=blocked&limit=200" "${AUTH[@]}"
+# {"events": [{"ts": 1793300000.1, "token_id": "53e7011c…", "request_id": "…",
+#              "sess_ref": null, "action": "blocked", "rule_id": "aws-secret-key",
+#              "role": "tool", "msg_index": 14, "kind": "tool result",
+#              "length": 40, "ph": "0d93aa51fe", "relayed": false}],
+#  "totals": {"sanitized": 312, "blocked": 3, "restored": 0, "error": 0,
+#             "distinct_values": 17}}
+```
+
+- **Parameters:**
+  - `token`: a key id;
+  - `action`: `sanitized`, `blocked`, `restored` or `error`, anything else is a **400**;
+  - `rule`: a rule id;
+  - `since`: epoch seconds, default 7 days ago;
+  - `limit`: 1–2000, default 200.
+- **`msg_index`:** counts from 1; `0` is the system prompt or the tool definitions.
+- **Key holders:** someone signed in with their own key reads that key's log at `GET /api/me/guard/events`, with `since` and `limit`. They cannot change the key's guard.
+
+### What a client sees
+
+- **Sanitized:** the model's answer with values put back, then the trailer when
+  one is due. The trailer names each value by rule and a mask: a key's public
+  prefix (`AKIA…`), or only its length for passwords and other general
+  findings. A relayed answer also carries the header
+  `X-LMWarden-Guard: sanitized;n=2`.
+- **Blocked:** a normal `200` answer in the request's own format: chat,
+  completions, or an Anthropic message, streamed if the request asked for a
+  stream. It comes from the model `lm-warden-guard`, with
+  `X-LMWarden-Guard: blocked;n=1`, `X-LMW-Request-Id`, and a text naming each
+  value, masked, and where it was. A blocked request still gets a
+  request-history row, with phase `blocked` and no completion. It never takes
+  an engine slot.
+- **Not checked** (fail closed): **422** with `X-LMWarden-Guard: failed;reason=…`.
+  The reason is `too_large` (over 8 MiB of text), `too_many_findings` (over 2,000),
+  `unscannable` (a legacy `prompt` given as token ids), or `scanner_error`.
+- **A value inside a signed Anthropic `thinking` block** blocks the request in
+  any mode: it cannot be replaced without breaking the signature.
+- **With the router on**, unparsed passthrough paths (the catch-all, for example
+  message batches) answer a guarded key **403** `guard_no_passthrough`.
+  `count_tokens` is sanitized and never blocked.
+
+Block once per session is remembered in memory. After a restart, the first
+request that still carries a value blocks once more.
+
+---
+
 ## Claude Code and the Anthropic Messages API
 
 `POST /v1/messages` speaks the Anthropic Messages API, so Claude Code and the
@@ -1132,6 +1329,153 @@ the same batch id grow one tree. Claude Code: `ANTHROPIC_CUSTOM_HEADERS="X-Batch
 Privacy: session ids and tool names are stored only as keyed hashes.
 
 ---
+
+## Sessions
+
+Sessions group requests the way a harness works: one harness session (Claude Code's session id, OpenCode's,
+Codex's), its conversations (the main agent, each subagent, the continuation after a compaction), and each
+conversation's turns. Ids, sizes, counts and timings only: no prompt or reply text is stored or returned.
+
+Every route takes the admin session, or a key holder's read token from `POST /api/forest/login` (send your API
+key once as `Authorization: Bearer <key>`; the answer is a 12-hour token). A key holder sees only their own key's
+sessions and gets 404 for anyone else's. A raw `vw_` key is not accepted on these routes. Any read failure answers
+`503 {"detail": "sessions unavailable"}`; the rest of the dashboard keeps working.
+
+**Refs.** A session is addressed as `s_<32 hex>` (a keyed lookup of key + session; for traffic that sends no
+harness session id, plus 12 hex of the segment's first request, since such traffic is split at 30-minute idle
+gaps), or as `r_<request id>`, which resolves to the session that request belongs to. Raw harness session ids never
+appear in a URL or a response.
+
+**`X-LMW-Request-Id`.** Every proxied response (`/v1/chat/completions`, `/v1/completions`, `/v1/messages`,
+`/v1/responses`, and `/v1/messages` relayed in router mode) carries the id of its history row in this header.
+
+### `GET /api/sessions`
+
+`?range=24h&group=key&view=all&where=all&sort=newest&q=&model=&since=&until=&offset=&limit=50&per_group=3&tz_offset_min=0`
+— the sessions overview: sessions that started in the window, filtered, counted per ready view, and grouped.
+
+- `range`: `1h`, `6h`, `24h`, `7d` or `30d`. `limit`: 1–100. Any other value of an enum below is a 400.
+- `model`: a served model name. `token`: a key id (admin only; a key holder is always scoped to their own key).
+  `q`: a `session_id` prefix, or part of a key's name.
+- `where`: `all`, `local`, `relayed` or `hybrid` (some turns local, some relayed).
+- `since`, `until`: epoch seconds, a narrower span inside the range (the chart's selection); clamped to it.
+- `view`: `all`, `running` (a request in the last 120 s), `biggest` (top 50 by prompt tokens), `dead_weight` (over
+  20% of prompt tokens, measured sessions only), `cache_trouble` (under 60% from cache, where the cache is known),
+  `long_running` (over 1 h) or `evicted` (at least one resume found its cache evicted).
+- `group`: `key`, `harness`, `day` (in the browser's time zone: pass `tz_offset_min`, −840 to 840) or `none`.
+  Each group carries its first `per_group` (1–100, default 3) sessions; `group_key` + `offset` pages through one
+  group, `limit` at a time. With `group=none`, `offset` pages the flat list.
+- `sort`: `newest`, `prompt_tokens`, `dead_weight`, `duration` or `evicted_lost`; unknown values sort last.
+- Answer: `{total, views, histogram, pause_summary, groups, sessions, next_cursor, truncated_before,
+  oldest_data_at}`.
+  - `total`: sessions after the filters and the view. `views`: the count of each view after the filters, so a
+    view's chip shows what it would list.
+  - `histogram: {bin_s: 3600, start, bins: [{t, sessions, over_dw}]}`: sessions started per hour over the whole
+    range (filters applied, `since`/`until` not), and how many of them carry over 10% dead weight.
+  - `pause_summary`: the resumes after a pause across the listed sessions, as in a session's `pauses` below.
+  - `groups[]` (null with `group=none`): `key`, `label`, `harnesses`, `where: {local, relayed, hybrid}` (counts),
+    `sessions`, `duration_s` (summed), `prompt_tokens`, `cached_share`, `anatomy`, `dead_weight_share`,
+    `saved_vs_vanilla_s`, `evicted_resumes`, `evicted_lost_s`, `items` (sessions) and `more` (how many are left).
+  - `sessions`: the flat list with `group=none`; empty otherwise.
+- Without `group`, `sort` and `offset`, the answer is the older paged list (newest activity first; pass
+  `next_cursor` back as `cursor`), with the keys above added. `truncated_before` is set when the window held more
+  rows than one scan reads (200,000): sessions older than it may be missing. The scan is cached for 5 s per key and
+  range, so changing a filter or a view does not rescan.
+- Each session: `session_id`, `token_id`, `token_name`, `models`, `started_at`, `last_at`, `duration_s`,
+  `requests`, `conversations` (side calls not counted), `prefill_tokens`, `cached_tokens`, `cached_share` (local
+  requests only), `relayed_requests`, `generated_tokens`, `compactions`, `active`, plus:
+  - `harness`: `claude_code`, `opencode`, `codex`, `openai_sdk` or `other`, from how the harness sent its session id;
+  - `where`, `prompt_tokens` (every request, relayed included), `anatomy` (below), `cache_known`, and
+    `cache_share`: cached over prompt tokens of the requests whose cache is known (relayed: the upstream's), null
+    when none is; this, not the anatomy, is the "% from cache" and what `cache_trouble` tests. `cached_share`
+    (local only) is null too when no local request reported cached tokens;
+  - `dead_weight_share`, `dead_weight_tokens`, `dead_weight_measured` (≈; null when no turn was measured);
+  - `saved_vs_vanilla_s`, `recomputed_s`, `cache_served_s` (≈ seconds, below), `replicas`;
+  - `evicted_resumes`, `evicted_lost_s` (≈). For traffic with no harness session id, a resume across a gap of
+    more than 30 minutes belongs to no single listed session (each side is its own session), so it counts only
+    in `pause_summary`.
+
+### `GET /api/sessions/{session_id}`
+
+One session, by `s_…` or `r_…`; the answer's `session_id` is always the canonical `s_…`. 404 `session not found`,
+or 404 `not recorded yet` for an `r_` ref whose request is still running and whose session has no recorded turn
+yet. At most the newest 5,000 turns are returned (`truncated: true` beyond that).
+
+- `totals`: `started_at`, `last_at`, `wall_s`, `requests`, `conversations`, `side_calls`, `compactions`,
+  `prefill_tokens`, `cached_tokens`, `cached_share`, `generated_tokens` (local requests), `prompt_tokens` (every
+  request), `cache_share` (as in the list), `replicas` (the data-parallel size most of the local turns ran on; null for a model no longer
+  configured), `where`, and `relayed: {requests, prefill_tokens, cached_tokens, upstream}` (the upstream's own
+  prompt cache) or null. Three ≈ times, each null when the model has no measured cold rate, its cache is unknown,
+  or the turns were relayed:
+  - `cache_served_s`: the prefill time the cached tokens would have taken at the model's measured cold rate.
+  - `saved_vs_vanilla_s`: prefill time LM Warden's placement spared against plain vLLM, which routes data-parallel
+    turns by load. Plain vLLM lands a turn on the replica holding its prefix 1 time in N, so the figure is the
+    expected value `cached × (N − 1) / N ÷ cold rate` per local turn. It is 0 on a model with one replica or with
+    affinity turned off.
+  - `recomputed_s`: prefill time spent on the part of each prompt the cache did not have.
+- `harness`, as in the list.
+- `anatomy: {cached, dead, recomputed, new, unknown}` (≈ tokens; summed over turns, and the parts add up to the
+  prompt). Dead weight comes first. The rest is split, in proportion, into what came from cache, what the previous
+  prompt already held but had to be prefilled again (`recomputed`), and what is new this turn. A turn whose cache is
+  unknown (an engine that reports no cached tokens) counts as `unknown`, never as a miss. A relayed turn's cached
+  part is the upstream's.
+- `dead_weight` (≈): `total_tokens`, `share`, `per_turn` and `prompt_tokens` (the base of `share`), all over the
+  measured turns; `turns`, `turns_measured` (a turn is measured when it recorded duplicates, boilerplate and
+  reasoning; turns recorded before dead weight was tracked are left out, never counted as 0), and `kinds`
+  (each over the turns that know it): `unused_tools` (tools offered
+  but never called in this session), `dup` (a message sent again within one prompt), `boil` (harness boilerplate:
+  `<system-reminder>` and `<environment_context>` blocks and date-only lines), `reason` (reasoning sent back), each
+  `{tokens, share, per_turn}` or nulls when unknown.
+- `engine_replay` (≈, or null with no local turn): `{scope: "session", turns, skipped_time, slots, replicas,
+  disk_load_excluded: true, engines: [{engine, recompute_tokens, recompute_s, measured}]}` for `lm_warden` (what
+  happened: `measured: true`), `vllm`, `llamacpp`, `mlx_lm` and `omlx`. It replays this session's local turns alone
+  through each engine's cache rules. oMLX's disk load time is not included. `skipped_time` counts turns without a
+  cold rate, whose time is left out.
+- `pauses`: `{resumes, evicted, unassessed, lost_tokens, lost_s, buckets, disk_tier_hint}`.
+  - A resume is a local turn starting at least 60 s after its conversation's previous turn ended.
+  - It is evicted when the prompt it could reuse was at least 256 tokens and either the cache outcome was `lost`, or
+    at least half of the reusable prompt had to be prefilled again.
+  - A resume with no cache data is `unassessed`.
+  - `buckets`: `1-5m`, `5-15m`, `15-60m`, `1-4h`, `4h+`, each `{label, min_s, max_s, resumes, evicted,
+    lost_tokens, lost_s}`.
+  - `disk_tier_hint: {keep_s, recovered_s}` (≈, or null): a disk tier keeping prefixes for `keep_s` would have
+    recovered `recovered_s` of prefill, disk load time not included.
+- `conversations[]`: `id`, `label` (`main`, `subagent #k`, `conversation N`, `main after compaction`, …), `kind`
+  (`main`, `subagent`, `compaction`, `conversation`, `unlinked`), `parent: {conversation_id, request_id, link}`
+  where `link` is `known` (the harness sent a parent session id), `inferred` (LM Warden's guess, below) or
+  `compaction`; plus `first_at`, `last_at`, `turns`, token sums, `relayed`, `lineage_unknown` and `tools`.
+- `side_calls[]`: a harness's one-shot calls (title, topic, …): `request_id`, `started_at`, `model`,
+  `prompt_tokens`.
+- `turns[]`: `request_id`, `conversation_id`, `turn`, `started_at`, `finished_at`, `edge`, `node`, `parent_node`,
+  `parent_request_id`, `prompt_tokens`, `cached_tokens`, `generated_tokens`, `reusable_tokens`, `cache_outcome`,
+  `cache_outcome_own`, `divergence_cause`, `divergence_cause_own`, `dp_rank`, `queued_s`, `ttft_s`, `prefill_s`,
+  `gen_s`, `finish_reason`, `shape` (sizes in characters: `chars`, `sys`, `tools`, `tools_chars`, `msgs` by role,
+  `last_user`, `brk`, the first body message the session had not seen, on a fork or a rewrite, and `dw`, dead
+  weight in characters, when measured), `tiers`
+  (`gpu`, `ram`, `nvme`, `remote`, `load_s`: reserved for the cache tiers, null for now), `node_id`, `relayed`,
+  `upstream`, `model`, `lineage_unknown`, `side_call`, plus `dead_weight` (≈ tokens per kind, `total`, `share`;
+  null when not measured), `anatomy`, `cache_known`, `pause_s` (since the conversation's previous turn ended),
+  `evicted_on_resume`, `lost_tokens` and `lost_s` (≈).
+- Each conversation also carries `dead_weight`, `anatomy` and `saved_vs_vanilla_s`. Its unused tools are counted
+  against what that conversation called; the session's against what the session called.
+- `tools` (session-wide; also per conversation): `offered`, `called`, `unused`, `unused_tokens_per_turn`,
+  `unused_tokens_total`, `unused_share` (estimates: `estimated: true`), `truncated` (a harness offered more than
+  128 tools), and `rows[]`: `id` (8-hex keyed hash of the tool name), `name`, `family`, `chars`, `tokens`,
+  `called`, `offered_turns`. `name` is the plain tool name, kept per key: it is shown only to that key's holder
+  and the admin, and a tool's description or schema is never stored.
+
+### `GET /api/requests/{request_id}?wait_ms=0`
+
+One turn by its `X-LMW-Request-Id`: the turn fields above plus `session_id`. History rows commit in batches about
+a second after a request ends; `wait_ms` (0–5000) waits for the commit before answering 404.
+
+### Test-agent recipe
+
+1. `POST /api/forest/login` with `Authorization: Bearer <key>` → `token`.
+2. Send requests as usual, with the harness's session header (e.g. `X-Claude-Code-Session-Id`).
+3. Read `X-LMW-Request-Id` from each response.
+4. `GET /api/requests/<id>?wait_ms=5000` with `Authorization: Bearer <token>` → `session_id`.
+5. `GET /api/sessions/<session_id>` → the tree: edges, inferred links, cache per turn, replica, tools.
 
 ## Admin API
 

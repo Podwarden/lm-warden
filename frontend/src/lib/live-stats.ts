@@ -320,6 +320,8 @@ export interface LiveRequestRow {
    *  history store it. Null = no session. No view reads it today; kept so the
    *  type matches the wire. */
   forest_session?: string | null;
+  /** Sessions pages: `r_<request id>` when the request joined a session, else null. */
+  session_ref?: string | null;
   /** ESTIMATED prompt tokens in the replica's prefix cache, from this session's
    *  previous request on the same replica. The engine reports the real figure
    *  only after the request ends. Null = no basis for an estimate. */

@@ -17,8 +17,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 
 let mockPath = '/models';
+const mockRouterReplace = vi.fn();
 vi.mock('next/navigation', () => ({
   usePathname: () => mockPath,
+  useRouter: () => ({ replace: mockRouterReplace }),
 }));
 
 import { SessionGate } from '@/components/session-gate';

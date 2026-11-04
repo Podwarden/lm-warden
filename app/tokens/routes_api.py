@@ -1,3 +1,4 @@
+import json
 import secrets
 import time
 from datetime import timedelta
@@ -22,6 +23,8 @@ from app.db.repos.tokens import (
     sqlite_utc_in,
     sqlite_utc_now,
 )
+from app.guard.resolve import effective, validate_key
+from app.proxy.prompt_diet import Diet, diet_json, parse_diet
 from app.proxy.thinking_policy import ThinkingPolicy
 from app.stats import request_history
 from app.tokens import series
@@ -47,6 +50,37 @@ def _reject_rate_limit_tps(data: object) -> object:
     return data
 
 
+class PromptDiet(BaseModel):
+    """A key's opt-in cut of dead weight before the engine (app/proxy/prompt_diet.py)."""
+
+    strip_tools: list[str] = Field(default_factory=list, max_length=256)
+    #: true = every earlier turn; "before_last_user" = only turns before the last real user message.
+    strip_reasoning: bool | Literal["before_last_user"] = False
+
+
+def _json_or_none(raw: str | None) -> Any:
+    try:
+        return json.loads(raw) if raw else None
+    except ValueError:
+        return None
+
+
+def _with_effective(detail: dict[str, Any], request: Request) -> dict[str, Any]:
+    detail["guard_effective"] = effective(
+        getattr(request.app.state, "guard_platform", None), detail.get("guard")
+    )
+    return detail
+
+
+def _diet_out(raw: str | None) -> dict[str, Any] | None:
+    d = parse_diet(raw)
+    return (
+        None
+        if d is None
+        else {"strip_tools": sorted(d.strip_tools), "strip_reasoning": d.strip_reasoning}
+    )
+
+
 class TokenCreate(BaseModel):
     name: str = Field(min_length=1, max_length=64)
     expires_in_days: int = Field(default=365, ge=0, le=3650)
@@ -58,6 +92,9 @@ class TokenCreate(BaseModel):
     anthropic_relay: bool = False
     # "off" makes the proxy force thinking off for every request on this key.
     thinking_policy: ThinkingPolicy = "client"
+    #: Sensitive data guard, as on PATCH: null = use the platform setting, {"off": true}, or
+    #: {"override": {...}}. Checked before the key exists, so a bad value creates nothing.
+    guard: dict[str, Any] | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -84,6 +121,12 @@ class TokenUpdate(BaseModel):
     paused: bool | None = None
     anthropic_relay: bool | None = None
     thinking_policy: ThinkingPolicy | None = None
+    #: null turns the diet off.
+    prompt_diet: PromptDiet | None = None
+    #: Sensitive data guard: null = inherit the platform, {"off": true}, or {"override": {...}}.
+    guard: dict[str, Any] | None = None
+    #: Debug capture for the next N hours (bodies and responses, admin-only); 0 turns it off.
+    capture_hours: float | None = Field(default=None, ge=0, le=720)
 
     @model_validator(mode="before")
     @classmethod
@@ -181,6 +224,9 @@ def _enrich(
         "priority": r.priority,
         "anthropic_relay": bool(r.anthropic_relay),
         "thinking_policy": r.thinking_policy,
+        "prompt_diet": _diet_out(r.prompt_diet),
+        "capture_until": r.capture_until,
+        "guard": _json_or_none(r.guard),
         "usage_24h": {
             "requests": usage_requests,
             "prompt_tokens": usage_prompt,
@@ -240,6 +286,10 @@ async def _token_detail(db: aiosqlite.Connection, token_id: str) -> dict[str, An
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_token(body: TokenCreate, request: Request, _user: str = Depends(require_jwt)):
+    try:
+        guard = validate_key(body.guard)
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from None
     plaintext = generate_bearer_token()
     tid = secrets.token_hex(16)
     async with open_db(request.app.state.settings.db_path) as db:
@@ -252,6 +302,7 @@ async def create_token(body: TokenCreate, request: Request, _user: str = Depends
             priority=body.priority,
             anthropic_relay=body.anthropic_relay,
             thinking_policy=body.thinking_policy,
+            guard=json.dumps(guard) if guard is not None else None,
         )
         created = await repo.get(tid)
     if created is None:  # defensive — race between insert and read is impossible
@@ -267,6 +318,8 @@ async def create_token(body: TokenCreate, request: Request, _user: str = Depends
         "priority": created.priority,
         "anthropic_relay": bool(created.anthropic_relay),
         "thinking_policy": created.thinking_policy,
+        "guard": guard,
+        "guard_effective": effective(getattr(request.app.state, "guard_platform", None), guard),
     }
 
 
@@ -300,6 +353,13 @@ async def update_token(
         row = await _inference_row(repo, token_id)
         if row is None:
             raise HTTPException(404)
+        guard_value: Any = _UNSET
+        if "guard" in raw:
+            try:
+                g = validate_key(raw["guard"])
+            except ValueError as e:
+                raise HTTPException(422, str(e)) from None
+            guard_value = json.dumps(g) if g is not None else None
         if raw.get("paused") is True:
             dead = _dead_state(row, sqlite_utc_now())
             if dead is not None:
@@ -314,13 +374,33 @@ async def update_token(
             paused=raw.get("paused", _UNSET),
             anthropic_relay=raw.get("anthropic_relay", _UNSET),
             thinking_policy=raw.get("thinking_policy", _UNSET),
+            guard=guard_value,
+            capture_until=(
+                _UNSET
+                if raw.get("capture_hours") is None
+                else (
+                    time.time() + raw["capture_hours"] * 3600 if raw["capture_hours"] > 0 else None
+                )
+            ),
+            prompt_diet=(
+                _UNSET
+                if "prompt_diet" not in raw
+                else None
+                if raw["prompt_diet"] is None
+                else diet_json(
+                    Diet(
+                        frozenset(raw["prompt_diet"]["strip_tools"]),
+                        raw["prompt_diet"]["strip_reasoning"],
+                    )
+                )
+            ),
         )
         detail = await _token_detail(db, token_id)
     # get() found the row above and sqlite serialises the write, so the row
     # MUST still exist; the assert narrows the Optional and guards a race
     # with a concurrent DELETE.
     assert detail is not None, f"token {token_id} disappeared mid-PATCH"
-    return detail
+    return _with_effective(detail, request)
 
 
 @router.post("/{token_id}/rotate", status_code=status.HTTP_201_CREATED)
@@ -370,8 +450,15 @@ async def rotate_token(
             # SQLite serialises writes so this is theoretical, but free.
             if "already rotated" in str(exc):
                 raise HTTPException(status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+            if str(exc) in ("revoked", "expired"):
+                raise HTTPException(
+                    status.HTTP_409_CONFLICT,
+                    detail=f"Token '{old.name}' is {exc}; a dead key cannot be rotated. Issue a new key instead.",
+                ) from exc
             raise
     prefix = new_plaintext[:8]
+    # Verified finding #2: rotating a key ends its holders' sign-ins (the new key signs in afresh).
+    await request.app.state.auth_sessions.end_subject("key", token_id)
     return {
         "id": new_id,
         "name": old.name,  # The active token keeps the ORIGINAL name.
@@ -418,6 +505,9 @@ class TokenListItem(BaseModel):
     priority: int
     anthropic_relay: bool
     thinking_policy: ThinkingPolicy
+    prompt_diet: PromptDiet | None = None
+    capture_until: float | None = None
+    guard: dict[str, Any] | None = None
     usage_24h: TokenUsage24h
     paused_at: str | None
     is_paused: bool
@@ -541,7 +631,7 @@ async def get_token(
         detail = await _token_detail(db, token_id)
     if detail is None:
         raise HTTPException(404)
-    return detail
+    return _with_effective(detail, request)
 
 
 @router.get("/{token_id}/usage")
@@ -835,4 +925,6 @@ async def delete_token(token_id: str, request: Request, _user: str = Depends(req
         deleted = await repo.delete(token_id)
     if not deleted:
         raise HTTPException(404)
+    # Verified finding #2: revoking a key ends its holders' sign-ins.
+    await request.app.state.auth_sessions.end_subject("key", token_id)
     return None
