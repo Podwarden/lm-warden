@@ -24,17 +24,21 @@
 #   3. Links the checkout's frontend/node_modules into it (it must exist: run
 #      `npm ci` in frontend/, or scripts/farm/frontend-deps.sh on a farm
 #      tree; this script never runs npm and never needs the registry token)
-#      and runs `next build` with LMW_UI_EXPORT=1 and telemetry off.
+#      and runs `next build` with LMW_UI_EXPORT=1 and telemetry off, then
+#      adds each page's script Content-Security-Policy <meta> tag
+#      (`node scripts/patch-csp-meta.mjs out`).
 #   4. Checks the export with verify-export-layout.sh (what the /ui mount
-#      serves), refuses a symlink in it (a link in the signed bundle could
-#      point outside it) and any file naming the build dir, the checkout or
-#      the app's absolute path.
+#      serves), refuses a page without the CSP meta tag, a symlink in it (a
+#      link in the signed bundle could point outside it) and any file naming
+#      the build dir, the checkout or the app's absolute path.
 #   5. Replaces <app>/Contents/Resources/webui with it (staged next to it,
 #      then moved), clears extended attributes, and checks index.html.
 #
 # --export-dir <dir> skips 1-3 and bundles an export built elsewhere (CI's
-# Linux lane, a developer's frontend/out); steps 4-5 still apply. Its
-# provenance is the caller's: nothing ties it to HEAD.
+# Linux lane, a developer's frontend/out); steps 4-5 still apply, and step 4
+# refuses a page without the CSP meta tag (build it with
+# `LMW_UI_EXPORT=1 npm run build`). Its provenance is the caller's: nothing
+# ties it to HEAD.
 #
 # It does NOT sign: `make macos-bundle-python` runs it after bundle-python.sh
 # and before sign-bundle.sh, whose final bundle signature seals Resources/
@@ -119,6 +123,7 @@ if [ $plan = 1 ]; then
         echo "work_dir=$work_root"
         echo "node_modules=$ROOT/frontend/node_modules"
         echo "build=LMW_UI_EXPORT=1 NEXT_TELEMETRY_DISABLED=1 next build"
+        echo "csp=node scripts/patch-csp-meta.mjs out"
     fi
     echo "check=scripts/macos/verify-export-layout.sh"
     exit 0
@@ -168,12 +173,22 @@ else
         # ANALYZE would wrap the config in the bundle analyzer: never for a ship build.
         env -u ANALYZE LMW_UI_EXPORT=1 NEXT_TELEMETRY_DISABLED=1 ./node_modules/.bin/next build
     ) || die "next build (LMW_UI_EXPORT=1) failed"
+    # The console's script CSP: a <meta> tag with the sha256 of each page's
+    # inline scripts, added after the build (frontend/scripts/patch-csp-meta.mjs;
+    # `npm run build` does the same for the Linux image).
+    echo "==> node scripts/patch-csp-meta.mjs out"
+    (cd "$build/frontend" && node scripts/patch-csp-meta.mjs out) \
+        || die "adding the CSP meta tag to the export failed"
     out="$build/frontend/out"
     [ -d "$out" ] || die "next build left no out/ (is output: 'export' gated on LMW_UI_EXPORT=1?)"
 fi
 
 # --- 4. checks ----------------------------------------------------------------
 bash "$ROOT/scripts/macos/verify-export-layout.sh" "$out" || die "the export fails verify-export-layout.sh"
+# Every page must carry the script CSP meta tag; an --export-dir built with a
+# bare `next build` (not `LMW_UI_EXPORT=1 npm run build`) has none.
+nocsp=$(find "$out" -type f -name '*.html' -exec grep -L 'http-equiv="Content-Security-Policy"' {} + | head -n 20)
+[ -z "$nocsp" ] || die "pages without the CSP meta tag (run frontend/scripts/patch-csp-meta.mjs on the export): $(printf '%s' "$nocsp" | tr '\n' ' ')"
 links=$(find "$out" -type l | head -n 20)
 [ -z "$links" ] || die "symlinks in the export: $(printf '%s' "$links" | tr '\n' ' ')"
 leaks=""

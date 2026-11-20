@@ -36,7 +36,12 @@ from app.ext import Registry
 from tests.conftest import FakeEntryPoint, jwt_login, seed_admin_user
 
 BASELINE = Path(__file__).parent / "route_table_baseline.json"
-EXPECTED_ADDED = {("GET", "/api/edition")}
+EXPECTED_ADDED = {
+    ("GET", "/api/edition"),
+    # Update check (spec 2026-11-20).
+    ("GET", "/api/system/update-status"),
+    ("POST", "/api/system/update-status/dismiss"),
+}
 
 NONDETERMINISTIC_HEADERS = {"date", "set-cookie", "x-request-id", "content-length"}
 # path regex -> why the body is not byte-comparable

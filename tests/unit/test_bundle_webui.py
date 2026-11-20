@@ -20,6 +20,7 @@ import pytest
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "macos" / "bundle-webui.sh"
 LAYOUT = REPO / "scripts" / "macos" / "verify-export-layout.sh"
+PATCHER = REPO / "frontend" / "scripts" / "patch-csp-meta.mjs"
 # ShellAppDelegate.bundledWebUIPath(): the dir the launcher hands as VW_WEBUI_DIR.
 WEBUI_REL = Path("Contents") / "Resources" / "webui"
 
@@ -33,7 +34,7 @@ needs_make = pytest.mark.skipif(
 )
 needs_node = pytest.mark.skipif(
     shutil.which("node") is None,
-    reason="the build path checks for node on PATH (the fake next never runs it)",
+    reason="the build path runs node (frontend/scripts/patch-csp-meta.mjs on the fake export)",
 )
 
 
@@ -55,15 +56,22 @@ def _app(tmp_path: Path) -> Path:
     return app
 
 
+# What frontend/scripts/patch-csp-meta.mjs adds at the top of every page's <head>.
+CSP_META = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self'\"/>"
+
+
 def _export(out: Path, marker: str = "exported") -> Path:
     """A minimal export verify-export-layout.sh accepts."""
     (out / "_next" / "static").mkdir(parents=True)
     (out / "_next" / "static" / "main.js").write_text("// main\n")
     (out / "index.html").write_text(
-        f'<html><head><script src="/ui/_next/static/main.js"></script></head><body>{marker}</body></html>\n'
+        f"<html><head>{CSP_META}"
+        f'<script src="/ui/_next/static/main.js"></script></head><body>{marker}</body></html>\n'
     )
     (out / "models").mkdir()
-    (out / "models" / "index.html").write_text("<html><body>models</body></html>\n")
+    (out / "models" / "index.html").write_text(
+        f"<html><head>{CSP_META}</head><body>models</body></html>\n"
+    )
     return out
 
 
@@ -107,6 +115,7 @@ def test_plan_dest_is_the_launchers_webui_dir(tmp_path: Path) -> None:
     assert plan["dest"] == dest
     assert plan["env"] == f"VW_WEBUI_DIR={dest}"
     assert plan["build"] == "LMW_UI_EXPORT=1 NEXT_TELEMETRY_DISABLED=1 next build"
+    assert plan["csp"] == "node scripts/patch-csp-meta.mjs out"
     assert plan["node_modules"] == str(REPO / "frontend" / "node_modules")
     assert plan["work_dir"] == str(REPO / ".cache" / "macos-webui")
     assert plan["check"] == "scripts/macos/verify-export-layout.sh"
@@ -150,6 +159,19 @@ def test_plan_relative_work_dir_is_made_absolute(tmp_path: Path) -> None:
 
 
 # --- --export-dir: checks and copy ----------------------------------------------------
+
+
+def test_export_page_without_the_csp_meta_tag_is_refused(tmp_path: Path) -> None:
+    # A bare `next build` export (not patched) would ship the console with no
+    # script Content-Security-Policy.
+    app = _app(tmp_path)
+    out = _export(tmp_path / "out")
+    (out / "models" / "index.html").write_text("<html><head></head><body>models</body></html>\n")
+    proc = _run(str(app), "--export-dir", str(out))
+    assert proc.returncode == 1
+    assert "pages without the CSP meta tag" in proc.stderr
+    assert "models/index.html" in proc.stderr
+    assert not (app / WEBUI_REL).exists()
 
 
 def test_export_dir_is_copied_into_resources_webui(tmp_path: Path) -> None:
@@ -227,7 +249,7 @@ set -eu
 mkdir -p out/_next/static
 echo '// main' > out/_next/static/main.js
 [ -z "${FAKE_LEAK_PWD:-}" ] || echo "// $PWD" > out/_next/static/leak.js
-printf '<html><script src="/ui/_next/static/main.js"></script><body>%s</body></html>\\n' "$(cat src/page.txt)" > out/index.html
+printf '<html><head><script src="/ui/_next/static/main.js"></script></head><body>%s<script>self.x=1</script></body></html>\\n' "$(cat src/page.txt)" > out/index.html
 """
 
 
@@ -254,6 +276,8 @@ def _repo(tmp_path: Path, node_modules: bool = True) -> Path:
         (repo / "scripts" / "macos" / s.name).write_bytes(s.read_bytes())
     fe = repo / "frontend"
     (fe / "src").mkdir(parents=True)
+    (fe / "scripts").mkdir()
+    (fe / "scripts" / PATCHER.name).write_bytes(PATCHER.read_bytes())
     (fe / "package.json").write_text("{}\n")
     (fe / "src" / "page.txt").write_text("COMMITTED\n")
     (repo / ".gitignore").write_text("node_modules/\n.env.local\nout/\n")
@@ -289,7 +313,11 @@ def test_build_ships_heads_frontend_as_an_export(tmp_path: Path) -> None:
     proc = _build(repo, app, work)
     assert proc.returncode == 0, (proc.stdout, proc.stderr)
     assert "git archive" in proc.stdout
-    assert "COMMITTED" in (app / WEBUI_REL / "index.html").read_text()
+    index = (app / WEBUI_REL / "index.html").read_text()
+    assert "COMMITTED" in index
+    # The build patched the export's script CSP in, with the inline script's hash.
+    assert '<head><meta http-equiv="Content-Security-Policy"' in index
+    assert "'sha256-" in index
     assert list(work.iterdir()) == [], "the build dir is removed afterwards"
 
 

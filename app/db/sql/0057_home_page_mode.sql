@@ -15,6 +15,10 @@
 -- apply_migrations() records whether `schema_migrations` was empty before the
 -- call in temp.migration_context.fresh, and this file reads it.
 --
+-- An interrupted first boot (a fresh DB that crashed mid-migration) leaves
+-- schema_migrations non-empty, so the next boot reads it as an upgrade and
+-- gets `off` -- conservative by design.
+--
 -- `landing_page_enabled` is left in place, inert: nothing reads it after this.
 --
 -- Rollback: DELETE FROM settings WHERE key IN ('home_page_mode', 'home_page_off_action');

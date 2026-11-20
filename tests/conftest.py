@@ -22,6 +22,7 @@ scheduling, token-cache warm-up, etc.) without papering over real bugs
 
 import asyncio
 import faulthandler
+import gc
 import inspect
 import json
 import os
@@ -51,6 +52,8 @@ from typing import Any
 # they must be set here, before anything imports transformers, not in a
 # fixture. ``setdefault`` so an operator can still opt back in explicitly.
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
+# No test run reports to lmwarden.com (the daily update check, app/updates).
+os.environ.setdefault("VW_UPDATE_CHECK", "0")
 os.environ.setdefault("HF_HOME", str(Path(tempfile.gettempdir()) / "vllm-warden-tests-hf-home"))
 Path(os.environ["HF_HOME"]).mkdir(parents=True, exist_ok=True)
 
@@ -217,6 +220,31 @@ async def wait_until_async(
         await asyncio.sleep(interval)
 
 
+def cpu_seconds(
+    fn: Callable[[], object], *, rounds: int = 3, reset: Callable[[], object] | None = None
+) -> float:
+    """Best-of-``rounds`` CPU time of ``fn()`` in the calling thread, collector paused.
+
+    For budgets on CPU-bound work: CI runners are oversubscribed (more runnable
+    jobs than vCPUs), so wall time (``perf_counter``) stretches 3-7x while the
+    thread's CPU time (``time.thread_time``) does not. ``reset()`` runs before
+    each round, untimed (e.g. to empty a memo so every round is cold).
+    """
+    best = float("inf")
+    for _ in range(rounds):
+        if reset is not None:
+            reset()
+        gc.collect()
+        gc.disable()
+        try:
+            t0 = time.thread_time()
+            fn()
+            best = min(best, time.thread_time() - t0)
+        finally:
+            gc.enable()
+    return best
+
+
 # ---------------------------------------------------------------------------
 # Suite-wide speed fixtures (perf/test-suite-speed)
 # ---------------------------------------------------------------------------
@@ -363,6 +391,19 @@ def csrf_header(client: TestClient) -> dict[str, str]:
     """Mint a CSRF token via /api/csrf and return a header dict."""
     r = client.get("/api/csrf")
     return {"X-CSRF-Token": r.json()["csrf"]}
+
+
+def setup_code_header(client_or_app: Any) -> dict[str, str]:
+    """The fresh install's one-time setup code as an ``X-Setup-Code`` header
+    (app/setup/bootstrap.py), or {} when the wizard is not locked."""
+    app = getattr(client_or_app, "app", client_or_app)
+    code = app.state.setup_lock.code
+    return {"X-Setup-Code": code} if code else {}
+
+
+def setup_headers(client: TestClient) -> dict[str, str]:
+    """CSRF token + setup code: what the wizard sends on a setup POST."""
+    return {**csrf_header(client), **setup_code_header(client)}
 
 
 # ---------------------------------------------------------------------------

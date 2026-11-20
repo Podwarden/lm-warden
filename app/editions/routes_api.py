@@ -16,4 +16,5 @@ async def get_edition(request: Request, _user: str = Depends(require_jwt)) -> di
         "edition": reg.edition,
         "features": sorted(reg.features),
         "load_errors": list(reg.load_errors),
+        "console_links": [{"label": c.label, "href": c.href} for c in reg.console_links],
     }

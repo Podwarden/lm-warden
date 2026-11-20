@@ -114,7 +114,15 @@ async def login(body: LoginBody, request: Request, response: Response):
         samesite="strict",
         path="/api/auth",
     )
-    return {"access_token": access, "expires_in": access_ttl * 60}
+    # lifecycle.retire-bootstrap: an admin made from LM_BOOTSTRAP_ADMIN_* is
+    # temporary until a person sets a new password on it; the UI can say so.
+    from app.setup.bootstrap import is_temporary_admin
+
+    return {
+        "access_token": access,
+        "expires_in": access_ttl * 60,
+        "temporary_admin": await is_temporary_admin(settings.db_path),
+    }
 
 
 @router.post(

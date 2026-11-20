@@ -3,6 +3,7 @@
 import {
   RUNTIME_NETWORKING_KEYS,
   RUNTIME_ANALYTICS_KEYS,
+  RUNTIME_UPDATE_KEYS,
   RUNTIME_HINTS,
   type FieldHint,
 } from "@/lib/settings-hints";
@@ -26,7 +27,11 @@ import { useEdition, hasFeature } from "@/lib/edition";
 // One useRuntimeSettings scope covers both, so a single Save writes both.
 // ---------------------------------------------------------------------------
 
-const SCOPE = [...RUNTIME_NETWORKING_KEYS, ...RUNTIME_ANALYTICS_KEYS] as const;
+const SCOPE = [
+  ...RUNTIME_NETWORKING_KEYS,
+  ...RUNTIME_UPDATE_KEYS,
+  ...RUNTIME_ANALYTICS_KEYS,
+] as const;
 const HOME_KEYS: readonly string[] = ["home_page_mode", "home_page_off_action"];
 type ScopeKey = (typeof SCOPE)[number];
 
@@ -66,17 +71,21 @@ export function NetworkingTab() {
             subtitle="How clients outside the host see this warden."
           >
             {fields(RUNTIME_NETWORKING_KEYS.filter((k) => !HOME_KEYS.includes(k)))}
-            {!customHome && (
-              <HomePageField draft={draft} setField={setField} disabled={disabled} />
-            )}
+            {!customHome && <HomePageField draft={draft} setField={setField} disabled={disabled} />}
+          </SettingSection>
+          <SettingSection
+            title="Updates"
+            subtitle="Daily check of lmwarden.com for new releases and security advisories."
+          >
+            {fields(RUNTIME_UPDATE_KEYS)}
           </SettingSection>
           {showAnalytics && (
-          <SettingSection
-            title="Website analytics"
-            subtitle="Google tag for the public website. Nothing loads unless an ID is set."
-          >
-            {fields(RUNTIME_ANALYTICS_KEYS)}
-          </SettingSection>
+            <SettingSection
+              title="Website analytics"
+              subtitle="Google tag for the public website. Nothing loads unless an ID is set."
+            >
+              {fields(RUNTIME_ANALYTICS_KEYS)}
+            </SettingSection>
           )}
         </>
       )}

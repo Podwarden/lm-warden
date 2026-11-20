@@ -128,6 +128,13 @@ async def lifespan(app: FastAPI):
     async with open_db(settings.db_path) as db:
         await apply_migrations(db)
 
+    # lifecycle.bootstrap-admin: LM_BOOTSTRAP_ADMIN_* create the first admin,
+    # else the wizard is locked by a one-time setup code. A half-set or weak
+    # configuration raises here and the app does not start.
+    from app.setup.bootstrap import prepare_first_run
+
+    app.state.setup_lock = await prepare_first_run(settings.db_path, settings.data_dir, os.environ)
+
     # #210 — under the local-subprocess driver the vLLM engine inherits this
     # process's /dev/shm. On Kubernetes that is 64 MiB unless the pod spec asks
     # for more, which is far too little for tensor-parallel workers and shows
@@ -398,6 +405,13 @@ async def lifespan(app: FastAPI):
         _prefill_model.run_forever(app.state.prefill_model, settings.db_path)
     )
     audit_task = asyncio.create_task(admin_audit.run_forever())
+    # Daily update check (spec 2026-11-20). Decides per pass whether it is on.
+    from app.updates.client import run_forever as run_update_check
+    from app.updates.version import release_version
+
+    update_task = asyncio.create_task(
+        run_update_check(settings.db_path, app.state.ext.edition, release_version())
+    )
 
     # Metal design s2 — on the macOS launcher, a force-quit must not leave a
     # headless uvicorn behind: when VW_PARENT_PID is set, watch the launcher
@@ -477,6 +491,7 @@ async def lifespan(app: FastAPI):
         rank_scraper_task.cancel()
         block_size_task.cancel()
         audit_task.cancel()
+        update_task.cancel()
         # Metal design s2 — the parent watcher only ever SIGTERMs itself (the
         # normal graceful shutdown, which runs this finally), so on a clean
         # exit it is still polling and must be cancelled and awaited with the
@@ -494,6 +509,7 @@ async def lifespan(app: FastAPI):
             rank_scraper_task,
             block_size_task,
             audit_task,
+            update_task,
             *((parent_watch_task,) if parent_watch_task is not None else ()),
             return_exceptions=True,
         )
@@ -684,6 +700,10 @@ def build_app() -> FastAPI:
     from app.system import routes_version as system_routes_version
 
     app.include_router(system_routes_version.router)
+
+    from app.updates import routes_api as updates_routes_api
+
+    app.include_router(updates_routes_api.router)
 
     from app.system import routes_gpus as system_routes_gpus
 

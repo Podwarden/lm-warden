@@ -8,8 +8,13 @@
 // exit 1 when absent. frontend/Dockerfile runs one mode or the other.
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 export const EE_CANARY = 'LMW-EE-CANARY';
+
+// Files of 20 MB or more are skipped: emitted JS/CSS/HTML never gets near that,
+// and a huge binary or source map is not worth reading whole.
+const MAX_BYTES = 20_000_000;
 
 export function findCanary(dir) {
   const hits = [];
@@ -18,16 +23,18 @@ export function findCanary(dir) {
       const p = path.join(d, n);
       const st = statSync(p);
       if (st.isDirectory()) {
-        if (n === 'cache') continue; // webpack cache can hold stale prior builds
+        // Skip `cache` dirs: the webpack/Next build cache can hold stale output
+        // of an earlier (e.g. Enterprise) build and would raise a false hit.
+        if (n === 'cache') continue;
         walk(p);
-      } else if (st.size < 20_000_000 && readFileSync(p).includes(EE_CANARY)) hits.push(p);
+      } else if (st.size < MAX_BYTES && readFileSync(p).includes(EE_CANARY)) hits.push(p);
     }
   };
   if (existsSync(dir)) walk(dir);
   return hits;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
   const present = args.includes('--present');
   const dirs = args.filter((a) => a !== '--present');

@@ -39,8 +39,18 @@ def core_public_routes() -> list[PublicRoute]:
 
 
 def _registered(app: FastAPI) -> list[PublicRoute]:
+    """Core's routes plus the extensions', merged once per app on first use
+    (``mints_csrf`` runs per request). Built lazily so it sees what extensions
+    registered at load; the entry count in the key rebuilds it if one is added
+    later."""
     reg: Registry | None = getattr(app.state, "ext", None)
-    return core_public_routes() + (list(reg.public_routes) if reg else [])
+    ext = list(reg.public_routes) if reg else []
+    cached: tuple[int, list[PublicRoute]] | None = getattr(app.state, "_public_routes_cache", None)
+    if cached is not None and cached[0] == len(ext):
+        return cached[1]
+    merged = core_public_routes() + ext
+    app.state._public_routes_cache = (len(ext), merged)
+    return merged
 
 
 def public_routes(app: FastAPI) -> frozenset[tuple[str, str]]:

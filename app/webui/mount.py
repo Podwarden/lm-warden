@@ -38,7 +38,8 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 #: UI's Content-Security-Policy -- ports frontend/src/lib/security-headers.ts
 #: (UI_CSP) verbatim. Directives only, nothing that breaks a page: no
-#: framing, no <base> hijack, no plugins.
+#: framing, no <base> hijack, no plugins. The script policy is a <meta> tag
+#: in each exported page (frontend/scripts/patch-csp-meta.mjs), not a header.
 UI_CSP = "frame-ancestors 'none'; base-uri 'self'; object-src 'none'"
 
 #: UI's Permissions-Policy -- ports frontend/src/lib/security-headers.ts

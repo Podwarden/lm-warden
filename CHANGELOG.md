@@ -7,6 +7,28 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.11.20.1] — 2026-11-20
+
+### Added
+
+- **Update and security-advisory banner.** Once a day LM Warden asks lmwarden.com whether a newer release or a security advisory (CVE) for your version exists, and shows it at the top of the console. A new release can be dismissed; an advisory stays until you upgrade. The check sends only the version, edition, platform and a random install ID, nothing about your models, prompts or traffic. Turn it off with `VW_UPDATE_CHECK=0` or the "Check for updates" switch in Settings > Networking; offline installs (`HF_HUB_OFFLINE=1`) never make it.
+
+## [v2026.11.05.1] — 2026-11-05
+
+### Security
+
+- **The console no longer loads its font from Google.** DM Sans now ships with LM Warden, so opening the console sends nothing to Google Fonts (your IP address stays private) and the retro themes show the right font on installs without internet access.
+- **The console now only runs its own scripts.** Every console page carries a Content-Security-Policy that allows the app's own script files and the exact inline scripts it was built with, and nothing else, so a script injected into a page (for example through model output) is blocked by the browser. The console also loads images only from itself: a god-mode request that linked an image on another site shows no thumbnail for it, so viewing a request no longer sends your IP address to that site. Images sent inside the request still show.
+- **Every change made from a browser is checked against the address it came from.** Any POST, PUT, PATCH or DELETE that carries LM Warden's cookies must now come from the address the console is served on (`VW_FRONTEND_ORIGIN`, or the address the request arrived at when that is blank), on every route — before, only sign-in renewal and sign-out checked it. Another site can no longer start a change using your signed-in browser. A request with no LM Warden cookie (scripts, SDKs, `curl`) skips the check and is decided by its own key or token, so API keys, admin tokens and key-holder sign-in work exactly as before, from anywhere. If you set `VW_FRONTEND_ORIGIN`, it must match your address bar exactly, or changes in the UI are refused with `403 origin mismatch`; the repository's `docker-compose.yml` no longer pins it to `http://localhost:8080`.
+- **A new install can no longer be claimed by whoever opens it first.** Until now the first visitor to a fresh install's setup wizard became its administrator, which on a public address could be a stranger. The wizard now starts by asking for a one-time **setup code**, and every setup call needs it (`X-Setup-Code`). `install.sh` generates it into `.env` as `LM_SETUP_CODE` and prints it when it finishes; without one, the server makes its own, prints it in its log (`make logs`, look for "Setup code") and keeps it in `/data/setup-code`. The code stops working the moment the admin exists; wrong codes are slowed down and, from a public address, locked out for a while. A code you choose yourself needs at least 16 characters. **Installing new:** have the code at hand when you open the wizard. Scripts that drive `/api/setup/*` must send the header (see API.md, "First run without a browser"). **Already set up:** nothing changes. **macOS app:** nothing changes in the app's own window; setting it up from another machine over Share on Local Network, or from a web page in a browser, needs the code.
+- **Unattended first admin.** `LM_BOOTSTRAP_ADMIN_USERNAME` and `LM_BOOTSTRAP_ADMIN_PASSWORD` (12+ characters) create the admin at first start and skip the wizard. Setting only one, or a short password, stops the API from starting with a message naming the problem; once an admin exists they create nothing and the log asks you to remove them. Until you set a new password on that admin, the log warns at every start and sign-in reports `temporary_admin: true` (**API (additive)**: `POST /api/auth/login` answers `temporary_admin`; `GET /api/setup/state` answers `code_required` and `code_source`).
+
+## [v2026.11.04.5] — 2026-11-04
+
+### Changed
+
+- Release pipeline only: no change to the product or its images.
+
 ## [v2026.11.04.4] — 2026-11-04
 
 ### Added

@@ -213,11 +213,14 @@ def test_ui_csp_on_ui_pages_only_api_csp_on_api(webui_app):
 
 
 def test_ui_unsafe_methods_refused(webui_app):
-    # GET /ui/ needs no session; an unsafe method on /ui is refused: 403 from
-    # the CSRF check without a token, 405 from the static mount with one.
+    # GET /ui/ needs no session; an unsafe method on /ui is refused: 405 from
+    # the static mount when it carries no cookie (security.csrf: nothing
+    # ambient, so the CSRF layer stands aside), 403 from the CSRF check with
+    # the cookie and no token, 405 again with the token.
     with TestClient(webui_app) as client:
-        assert client.post("/ui/").status_code == 403
+        assert client.post("/ui/").status_code == 405
         token = client.get("/api/csrf").json()["csrf"]
+        assert client.post("/ui/").status_code == 403
         for method in ("POST", "PUT", "DELETE", "PATCH"):
             r = client.request(method, "/ui/", headers={"X-CSRF-Token": token})
             assert r.status_code == 405, (method, r.status_code)

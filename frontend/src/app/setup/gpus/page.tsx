@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { Button } from '@/components/ui/button';
+import { setupPost } from '../setup-code';
 
 interface GpuInfo {
   index: number;
@@ -44,12 +45,7 @@ export default function GpusPage() {
     setBusy(true);
     try {
       const indices = Array.from(selected).sort((a, b) => a - b);
-      const r = await fetch('/api/setup/gpus', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ allowed_gpu_indices: indices }),
-      });
+      const r = await setupPost('/api/setup/gpus', { allowed_gpu_indices: indices });
       if (!r.ok) {
         const body = await r.json().catch(() => ({}));
         setError(body.detail ?? 'Failed to save GPU selection');

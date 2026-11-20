@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { pathForStep } from '@/lib/setup-steps';
+import { setupPost } from '../setup-code';
 
 export default function WelcomePage() {
   const router = useRouter();
@@ -13,11 +14,7 @@ export default function WelcomePage() {
     setError(null);
     setBusy(true);
     try {
-      const r = await fetch('/api/setup/welcome', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const r = await setupPost('/api/setup/welcome');
       if (!r.ok) {
         const body = await r.json().catch(() => ({}));
         setError(body.detail ?? 'Failed to start setup');

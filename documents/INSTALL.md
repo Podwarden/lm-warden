@@ -327,7 +327,7 @@ level=info msg="It is recommended that docker daemon be restarted."
 [lm-warden] Restarting Docker so it picks up the nvidia runtime...
 [lm-warden] NVIDIA Container Toolkit is ready; Docker can now use the GPUs.
 [lm-warden] Created .env from .env.example.
-[lm-warden] Generated 1 secret(s) in .env.
+[lm-warden] Generated 2 secret(s) in .env.
 [lm-warden] Pinned VERSION=v2026.09.06.4, the release this source tree documents (override with --version).
 [lm-warden] Wrote docker-compose.override.yml (release v2026.09.06.4, GPUs: 2 (indices 0,1), port 8080).
 [lm-warden] Compose configuration validates.
@@ -341,10 +341,12 @@ level=info msg="It is recommended that docker daemon be restarted."
 
 LM Warden is installed in /home/you/lm-warden
 
-  UI:      http://localhost:8080/ui/    (first run opens the setup wizard)
+  UI:      http://localhost:8080/ui/    (first run opens the setup wizard; it asks for the setup code below)
   API:     http://localhost:8080/v1/chat/completions
   Logs:    cd /home/you/lm-warden && make logs
   Config:  /home/you/lm-warden/.env   (release: v2026.09.06.4, port: 8080, GPUs: 2 (indices 0,1))
+  Setup code: 3f9c0e…   (first run only: the setup wizard asks for it;
+              it is LM_SETUP_CODE in .env)
   Help:    make help
 
 ### EXIT=0
@@ -513,6 +515,10 @@ Then add the model in the UI by its HuggingFace name
 seeded cache. `make export-hf-cache` does the reverse on a running install, so a
 cache warmed on one host can seed the next.
 
+`HF_HUB_OFFLINE=1` also turns off the daily update check (the call to
+lmwarden.com for new releases and security advisories); on a connected host
+`VW_UPDATE_CHECK=0` in `.env` does the same.
+
 `make smoke` is the right check after this route too: it asserts that the
 front door is really serving, whichever way the images arrived.
 
@@ -527,26 +533,38 @@ equivalent, which was run verbatim on the trial host and produced exactly these
 answers. [API.md](API.md#first-run-without-a-browser) is the same sequence in
 compact form, followed by the model-lifecycle calls.
 
+A new install cannot be claimed by whoever reaches it first: every
+`POST /api/setup/*` needs the install's one-time **setup code** in an
+`X-Setup-Code` header, and is refused with `403 setup code required` without
+it. `install.sh` generates the code into `.env` as `LM_SETUP_CODE` and prints
+it when it finishes. Left blank, the server makes one, prints it in its log
+(`make logs`, look for `Setup code`) and keeps it in `/data/setup-code`. It
+works until the admin exists, then never again. To skip the wizard, set
+`LM_BOOTSTRAP_ADMIN_USERNAME` and `LM_BOOTSTRAP_ADMIN_PASSWORD` in `.env`
+before the first start: the admin is created at boot. Sign in, set a new
+password in Settings, and remove both.
+
 Setup is a strict state machine. Posting out of order returns
-`400 not at <x> step (current: <y>)`. `/api/setup/*` is exempt from the CSRF
-check, so no token is needed for these six calls — that changes at
+`400 not at <x> step (current: <y>)`. These calls send no cookie, so no CSRF
+token is needed for them — that changes at
 [Minting a key](#minting-an-api-key).
 
 ```bash
 W=http://127.0.0.1:8080
+S="X-Setup-Code: $(grep '^LM_SETUP_CODE=' .env | cut -d= -f2)"
 ```
 
 **1. Where are we?**
 
 ```
 $ curl -s $W/api/setup/state
-{"step":"welcome","done":false}
+{"step":"welcome","done":false,"code_required":true,"code_source":"env"}
 ```
 
 **2. Acknowledge the welcome step.**
 
 ```
-$ curl -s -X POST $W/api/setup/welcome
+$ curl -s -X POST $W/api/setup/welcome -H "$S"
 {"step":"gpus"}
 ```
 
@@ -561,7 +579,7 @@ $ curl -s $W/api/setup/gpus
 **4. Choose which of those indices the engine may use.**
 
 ```
-$ curl -s -X POST $W/api/setup/gpus -H 'Content-Type: application/json' \
+$ curl -s -X POST $W/api/setup/gpus -H "$S" -H 'Content-Type: application/json' \
     -d '{"allowed_gpu_indices":[0,1]}'
 {"step":"hf_token"}
 ```
@@ -570,7 +588,7 @@ $ curl -s -X POST $W/api/setup/gpus -H 'Content-Type: application/json' \
 need gated models — Llama, Mistral, gpt-oss.
 
 ```
-$ curl -s -X POST $W/api/setup/hf_token -H 'Content-Type: application/json' \
+$ curl -s -X POST $W/api/setup/hf_token -H "$S" -H 'Content-Type: application/json' \
     -d '{"hf_token":null}'
 {"step":"admin","whoami":null}
 ```
@@ -578,7 +596,7 @@ $ curl -s -X POST $W/api/setup/hf_token -H 'Content-Type: application/json' \
 **6. Create the admin account.**
 
 ```
-$ curl -s -X POST $W/api/setup/admin -H 'Content-Type: application/json' \
+$ curl -s -X POST $W/api/setup/admin -H "$S" -H 'Content-Type: application/json' \
     -d '{"username":"admin","password":"…"}'
 {"step":"done"}
 ```
@@ -591,7 +609,7 @@ than silently truncated — worth knowing before you generate a long passphrase.
 
 ```
 $ curl -s $W/api/setup/state
-{"step":"done","done":true}
+{"step":"done","done":true,"code_required":false,"code_source":null}
 ```
 
 `GET /api/setup/gpus` returns `404` from this point on. That is deliberate — it
@@ -602,7 +620,7 @@ anything broke.
 
 # Minting an API key
 
-Everything past `/api/setup` enforces CSRF, and the bootstrap is a two-part dance
+With a cookie jar, everything past `/api/setup` enforces CSRF, and the bootstrap is a two-part dance
 that is easy to get subtly wrong. Both mistakes produce the *same* opaque error.
 
 ```bash

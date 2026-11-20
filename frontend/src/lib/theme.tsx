@@ -68,17 +68,6 @@ function applyTheme(theme: Theme) {
   } else {
     html.classList.add("dark");
   }
-
-  // Dynamically load DM Sans when switching to retro themes
-  const needsFont = true; // Both retro themes use DM Sans
-  const fontLinkId = "dm-sans-font";
-  const existing = document.getElementById(fontLinkId);
-  if (needsFont && !existing) {
-    const link = document.createElement("link");
-    link.id = fontLinkId;
-    link.rel = "stylesheet";
-    link.href =
-      "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap";
-    document.head.appendChild(link);
-  }
+  // DM Sans (both retro themes) is self-hosted: app/layout.tsx imports
+  // fonts/dm-sans.css, so no font is ever fetched from a third-party host.
 }

@@ -39,4 +39,5 @@ def load_extensions(reg: Registry) -> None:
         reg.public_routes.extend(scratch.public_routes)
         reg.settings_keys.extend(scratch.settings_keys)
         reg.home_providers.extend(scratch.home_providers)
+        reg.console_links.extend(scratch.console_links)
         reg.load_errors.extend(scratch.load_errors)

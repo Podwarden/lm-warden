@@ -22,6 +22,11 @@ own licence:
   unmodified. Copyright 2020 The JetBrains Mono Project Authors.
   Both fonts are licensed under the SIL Open Font License, Version 1.1; the
   licence texts are beside them, in mona-sans-ofl.txt and jetbrains-mono-ofl.txt.
+* frontend/src/fonts/dm-sans/*.woff2 -- DM Sans (Google Fonts v17), the
+  variable (opsz, wght) latin and latin-ext webfonts as published in
+  @fontsource-variable/dm-sans 5.3.0, unmodified. Copyright 2014 The DM Sans
+  Project Authors (https://github.com/googlefonts/dm-fonts). Licensed under the
+  SIL Open Font License, Version 1.1; the licence text is beside them, in OFL.txt.
 
 The container images built from this repository additionally contain, unmodified:
 

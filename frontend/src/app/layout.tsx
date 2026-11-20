@@ -1,8 +1,11 @@
+// DM Sans ships with the console (ui.typeface): no font CDN request.
+import '@/fonts/dm-sans.css';
 import './globals.css';
 import { ThemeProvider } from '@/lib/theme';
 import { NavBar } from '@/components/nav-bar';
 import { SessionGate } from '@/components/session-gate';
 import { BreadcrumbHeader } from '@/components/breadcrumb-header';
+import { UpdateBanner } from '@/components/update-banner';
 import { NavStackProvider } from '@/lib/nav-stack';
 
 export const metadata = { title: 'LM Warden', description: 'LLM operator UI' };
@@ -18,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               + back button under the nav (hidden with it on /login, /setup). */}
           <NavStackProvider>
             <NavBar />
+            <UpdateBanner />
             <BreadcrumbHeader />
             {/* id="app-root" is the target of @podwarden/chat-ui's Modal
                 rootInertId — chat2/page.tsx passes rootInertId="app-root" so

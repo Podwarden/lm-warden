@@ -1,3 +1,5 @@
+from urllib.parse import urlsplit
+
 from fastapi import HTTPException, Request, status
 
 
@@ -25,19 +27,22 @@ def _derived_origin(request: Request) -> str | None:
     return _normalize(f"{proto}://{host}")
 
 
-def require_matching_origin(
+def origin_allowed(
     request: Request,
+    origin: str,
     allowed_origins: tuple[str, ...],
     trust_proxy_origin: bool = False,
     derive_from_request: bool = False,
-) -> None:
-    got = request.headers.get("origin")
-    if got is None:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "origin missing")
+) -> bool:
+    """Whether ``origin`` is one this app is served on.
 
-    got_norm = _normalize(got)
+    The one allow-list every origin check uses: the configured origins
+    (VW_FRONTEND_ORIGIN), then -- only when the operator trusts the proxy, or
+    configured nothing -- the origin this request was addressed to.
+    """
+    got_norm = _normalize(origin)
     if any(got_norm == _normalize(a) for a in allowed_origins):
-        return
+        return True
 
     # Derive the origin this request was addressed to and compare. Two callers
     # want this: an operator who opted into trusting the proxy, and a
@@ -51,9 +56,58 @@ def require_matching_origin(
     if trust_proxy_origin or derive_from_request:
         derived = _derived_origin(request)
         if derived is not None and got_norm == derived:
-            return
+            return True
+    return False
 
-    raise HTTPException(status.HTTP_403_FORBIDDEN, "origin mismatch")
+
+def settings_origin_allowed(request: Request, origin: str) -> bool:
+    """``origin_allowed`` with the app's own settings."""
+    settings = request.app.state.settings
+    return origin_allowed(
+        request,
+        origin,
+        settings.allowed_origins,
+        trust_proxy_origin=settings.trust_proxy_origin,
+        derive_from_request=settings.derive_origin_from_request,
+    )
+
+
+def browser_origin(request: Request) -> str | None:
+    """The origin the browser says the request came from: ``Origin``, else the
+    scheme://host of ``Referer``. None when it sent neither.
+
+    ``Origin: null`` (a sandboxed frame, a file:// page, some redirects) is
+    returned as "null": present, and never an allowed origin.
+    """
+    origin = request.headers.get("origin")
+    if origin is not None:
+        return origin.strip() or "null"
+    referer = request.headers.get("referer")
+    if not referer:
+        return None
+    parts = urlsplit(referer)
+    if not parts.scheme or not parts.netloc:
+        return "null"
+    return f"{parts.scheme}://{parts.netloc}"
+
+
+def require_matching_origin(
+    request: Request,
+    allowed_origins: tuple[str, ...],
+    trust_proxy_origin: bool = False,
+    derive_from_request: bool = False,
+) -> None:
+    got = request.headers.get("origin")
+    if got is None:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "origin missing")
+    if not origin_allowed(
+        request,
+        got,
+        allowed_origins,
+        trust_proxy_origin=trust_proxy_origin,
+        derive_from_request=derive_from_request,
+    ):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "origin mismatch")
 
 
 def origin_check_dep(request: Request) -> None:

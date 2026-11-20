@@ -15,7 +15,15 @@ import { useConnectData } from "@/components/connect/use-connect-data";
 import { ToolList } from "@/components/connect/tool-list";
 import { PickerBar, CREATE_KEY, NEW_KEY } from "@/components/connect/picker-bar";
 import { ClientPanel } from "@/components/connect/client-panel";
-import { FOCUS, SEC, SMALL_BTN, STRIP_ICON, STRIP_TEXT, STRIP_TITLE, strip as stripClass } from "@/components/connect/styles";
+import {
+  FOCUS,
+  SEC,
+  SMALL_BTN,
+  STRIP_ICON,
+  STRIP_TEXT,
+  STRIP_TITLE,
+  strip as stripClass,
+} from "@/components/connect/styles";
 import { getPublicBaseUrl } from "@/lib/public-url";
 import { cn } from "@/lib/utils";
 import {
@@ -67,21 +75,40 @@ function StripIcon({ tone }: { tone: ConnectStrip["tone"] }) {
   const cls = STRIP_ICON[tone];
   if (tone === "neutral") {
     return (
-      <svg className={cls} viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+      <svg
+        className={cls}
+        viewBox="0 0 18 18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        aria-hidden="true"
+      >
         <circle cx="9" cy="9" r="7" />
         <path d="M9 8v4.5M9 5.6v.1" />
       </svg>
     );
   }
   return (
-    <svg className={cls} viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+    <svg
+      className={cls}
+      viewBox="0 0 18 18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
       <path d="M9 2 1.8 15h14.4L9 2Z" />
       <path d="M9 7v4M9 13.2v.1" />
     </svg>
   );
 }
 
-function Strip({ s, onRetry, onRetryTokens, onCreateKey }: {
+function Strip({
+  s,
+  onRetry,
+  onRetryTokens,
+  onCreateKey,
+}: {
   s: ConnectStrip | null;
   onRetry: () => void;
   onRetryTokens: () => void;
@@ -129,14 +156,23 @@ function Strip({ s, onRetry, onRetryTokens, onCreateKey }: {
 
 function Skeleton() {
   return (
-    <div className="mt-4 flex flex-col gap-6 min-[1100px]:grid min-[1100px]:grid-cols-[280px_minmax(0,1fr)]" aria-busy="true">
+    <div
+      className="mt-4 flex flex-col gap-6 min-[1100px]:grid min-[1100px]:grid-cols-[280px_minmax(0,1fr)]"
+      aria-busy="true"
+    >
       <span className="sr-only">Loading the client catalogue…</span>
       <div aria-hidden="true" className={cn(SEC, "grid gap-2 p-4")}>
         {[0, 1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="h-5 animate-pulse rounded bg-chat-surface-2/70 motion-reduce:animate-none" />
+          <div
+            key={i}
+            className="h-5 animate-pulse rounded bg-chat-surface-2/70 motion-reduce:animate-none"
+          />
         ))}
       </div>
-      <div aria-hidden="true" className={cn(SEC, "h-80 animate-pulse motion-reduce:animate-none")} />
+      <div
+        aria-hidden="true"
+        className={cn(SEC, "h-80 animate-pulse motion-reduce:animate-none")}
+      />
     </div>
   );
 }
@@ -160,7 +196,10 @@ function ConnectView() {
   const keySelectRef = useRef<HTMLSelectElement | null>(null);
 
   const search = params.toString();
-  const parsed = useMemo(() => parseConnectParams(new URLSearchParams(search), clients), [search, clients]);
+  const parsed = useMemo(
+    () => parseConnectParams(new URLSearchParams(search), clients),
+    [search, clients],
+  );
 
   // An unknown ?tool= / ?mode= is corrected once, without a history step.
   const corrected = useRef(false);
@@ -172,7 +211,9 @@ function ConnectView() {
 
   const client = clients.find((c) => c.id === (toolPick ?? parsed.tool)) ?? clients[0] ?? null;
   const wantMode = toolPick ? modePick : (modePick ?? parsed.mode);
-  const mode = client ? (client.modes.find((m) => m.id === wantMode) ?? client.modes[0] ?? null) : null;
+  const mode = client
+    ? (client.modes.find((m) => m.id === wantMode) ?? client.modes[0] ?? null)
+    : null;
 
   const selectTool = useCallback(
     (id: string) => {
@@ -203,7 +244,10 @@ function ConnectView() {
     null;
 
   const tokens = data.tokens;
-  const pickedToken = keyValue && keyValue !== NEW_KEY ? tokens?.items.find((t) => t.id === keyValue && isLiveKey(t)) : undefined;
+  const pickedToken =
+    keyValue && keyValue !== NEW_KEY
+      ? tokens?.items.find((t) => t.id === keyValue && isLiveKey(t))
+      : undefined;
 
   const router = out?.router ?? null;
   const routerMode = !!mode && isRouterMode(mode);
@@ -216,7 +260,8 @@ function ConnectView() {
     model: model?.served_name ?? null,
     header,
     context: model?.context_window ?? null,
-    verify_model: client && mode ? verifyModelFor(client, mode, router, model?.served_name ?? null) : null,
+    verify_model:
+      client && mode ? verifyModelFor(client, mode, router, model?.served_name ?? null) : null,
   };
 
   const renderFile = (f: ConnectFile): string => {
@@ -258,10 +303,12 @@ function ConnectView() {
     <div className="mx-auto w-full max-w-[1232px] pb-12">
       <div className="flex flex-wrap items-start justify-between gap-4 max-[759px]:flex-col max-[759px]:gap-2">
         <div className="min-w-0">
-          <h1 className="m-0 text-2xl font-semibold leading-tight tracking-[-0.01em]">Connect a client</h1>
+          <h1 className="m-0 text-2xl font-semibold leading-tight tracking-[-0.01em]">
+            Connect a client
+          </h1>
           <p className="mb-0 mt-1.5 max-w-[62ch] text-[13.5px] text-chat-muted">
-            Point a coding tool or SDK at this warden: pick the tool, a key and a model, copy the setup, then
-            send a test request to prove it works.
+            Point a coding tool or SDK at this warden: pick the tool, a key and a model, copy the
+            setup, then send a test request to prove it works.
           </p>
         </div>
         <div className="flex items-center gap-4 pt-1.5">
@@ -272,7 +319,13 @@ function ConnectView() {
             Router →
           </Link>
           {HELP_LINKS.map((h) => (
-            <a key={h.file} href={`${HELP_BASE}/${h.file}`} target="_blank" rel="noopener noreferrer" className={HEAD_LINK}>
+            <a
+              key={h.file}
+              href={`${HELP_BASE}/${h.file}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={HEAD_LINK}
+            >
               {h.label} ↗
             </a>
           ))}
@@ -332,8 +385,8 @@ function ConnectView() {
           </div>
 
           <p className="mb-0 mt-6 max-w-[90ch] text-[12.5px] text-chat-muted">
-            Not here yet: Gemini CLI, GitHub Copilot CLI, Roo Code, Kilo Code, Zed and JetBrains AI. Any client with
-            an OpenAI-compatible base URL setting works like the OpenAI SDK recipe.
+            Not here yet: Gemini CLI, GitHub Copilot CLI, Roo Code, Kilo Code, Zed and JetBrains AI.
+            Any client with an OpenAI-compatible base URL setting works like the OpenAI SDK recipe.
           </p>
         </>
       )}

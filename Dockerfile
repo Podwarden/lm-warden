@@ -385,6 +385,10 @@ ENV VW_LLAMACPP_BUILD=${LLAMACPP_BUILD}
 # /app/app, and nothing below writes into it -- it only changes which layers a
 # source edit has to rebuild.
 COPY app /app/app
+# The changelog (changelog.md here, CHANGELOG.md in the public tree): an
+# image built from source without VW_BUILD_VERSION takes its release from the
+# changelog's newest heading (app/updates/version.py).
+COPY [cC][hH][aA][nN][gG][eE][lL][oO][gG].md /app/meta/
 
 # Build-time identity (spec 2026-05-13 §Version surfacing, P1-9). The CI
 # build job passes these via --build-arg from $CI_COMMIT_TAG /

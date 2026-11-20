@@ -5,7 +5,10 @@
 # with at least 4 NVIDIA GPUs of >=16GiB each. Does not run in CI.
 #
 # Usage:
-#   HF_TOKEN=hf_xxx VW_BASE=http://localhost:8080 ./tests/e2e/test_smoke_qwen3.5-9b.sh
+#   HF_TOKEN=hf_xxx VW_BASE=http://localhost:8080 LM_SETUP_CODE=<code> ./tests/e2e/test_smoke_qwen3.5-9b.sh
+#
+# LM_SETUP_CODE: the fresh install's one-time setup code (LM_SETUP_CODE in its
+# .env, or `docker compose exec api cat /data/setup-code`).
 #
 # Exit codes: 0 = pass, non-zero = fail.
 
@@ -14,6 +17,7 @@ trap 'echo "FAILED at line $LINENO" >&2' ERR
 
 : "${HF_TOKEN:?HF_TOKEN must be set}"
 : "${VW_BASE:?VW_BASE must be set, e.g. http://localhost:8080}"
+: "${LM_SETUP_CODE:?LM_SETUP_CODE must be set to the setup code of the fresh install}"
 
 ADMIN_USER="admin"
 ADMIN_PASS="e2e-password-$$"
@@ -26,15 +30,15 @@ curl_json() {
 
 echo "==> 1. Run setup wizard"
 # welcome → gpus
-curl_json -X POST "$VW_BASE/api/setup/welcome" -d '{}' >/dev/null
+curl_json -X POST -H "X-Setup-Code: $LM_SETUP_CODE" "$VW_BASE/api/setup/welcome" -d '{}' >/dev/null
 # pick GPUs 0-3
-curl_json -X POST "$VW_BASE/api/setup/gpus" \
+curl_json -X POST -H "X-Setup-Code: $LM_SETUP_CODE" "$VW_BASE/api/setup/gpus" \
   -d '{"allowed_gpu_indices":[0,1,2,3]}' >/dev/null
 # hf_token
-curl_json -X POST "$VW_BASE/api/setup/hf_token" \
+curl_json -X POST -H "X-Setup-Code: $LM_SETUP_CODE" "$VW_BASE/api/setup/hf_token" \
   -d "{\"hf_token\":\"$HF_TOKEN\"}" >/dev/null
 # admin (creates user + flips step=done)
-curl_json -X POST "$VW_BASE/api/setup/admin" \
+curl_json -X POST -H "X-Setup-Code: $LM_SETUP_CODE" "$VW_BASE/api/setup/admin" \
   -d "{\"username\":\"$ADMIN_USER\",\"password\":\"$ADMIN_PASS\"}" >/dev/null
 
 echo "==> 2. Log in as admin"

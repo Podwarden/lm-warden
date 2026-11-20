@@ -47,8 +47,11 @@ describe('session timeline layout', () => {
   it('lays out 5,000 turns in under 50 ms', () => {
     const s: SessionResponse = fixture();
     s.turns = Array.from({ length: 5000 }, (_, i) => turn(`x${i}`, 'c-main', i + 1, i * 3));
-    const t0 = performance.now();
+    // Process CPU time (user + system), not wall: a loaded CI runner stretches wall time, not
+    // the layout. Node has no per-thread CPU clock; the layout is synchronous on this thread.
+    const t0 = process.cpuUsage();
     layoutTimeline(s, O);
-    expect(performance.now() - t0).toBeLessThan(50);
+    const { user, system } = process.cpuUsage(t0);
+    expect((user + system) / 1000).toBeLessThan(50);
   });
 });

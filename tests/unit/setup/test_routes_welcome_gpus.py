@@ -1,6 +1,6 @@
 import sqlite3
 
-from tests.conftest import csrf_header, seed_admin_user
+from tests.conftest import seed_admin_user, setup_headers
 
 
 def _setup_state(db_path):
@@ -14,7 +14,12 @@ def test_get_state_fresh_db_reports_welcome(tmp_data_dir, client):
     client.get("/healthz")
     r = client.get("/api/setup/state")
     assert r.status_code == 200, r.text
-    assert r.json() == {"step": "welcome", "done": False}
+    assert r.json() == {
+        "step": "welcome",
+        "done": False,
+        "code_required": True,
+        "code_source": "file",
+    }
 
 
 def test_get_state_after_setup_complete_reports_done(tmp_data_dir, client):
@@ -22,12 +27,12 @@ def test_get_state_after_setup_complete_reports_done(tmp_data_dir, client):
     seed_admin_user(tmp_data_dir / "vllm-warden.db")
     r = client.get("/api/setup/state")
     assert r.status_code == 200, r.text
-    assert r.json() == {"step": "done", "done": True}
+    assert r.json() == {"step": "done", "done": True, "code_required": False, "code_source": None}
 
 
 def test_post_welcome_advances_to_gpus(tmp_data_dir, client):
     client.get("/healthz")
-    r = client.post("/api/setup/welcome", follow_redirects=False, headers=csrf_header(client))
+    r = client.post("/api/setup/welcome", follow_redirects=False, headers=setup_headers(client))
     assert r.status_code == 200
     assert r.json() == {"step": "gpus"}
     step, _ = _setup_state(tmp_data_dir / "vllm-warden.db")
@@ -40,7 +45,7 @@ def test_post_welcome_is_idempotent_mid_wizard(tmp_data_dir, client):
     # first-run setup) — it reports the real current step so the client
     # can resume there, and leaves state untouched.
     client.get("/healthz")
-    h = csrf_header(client)
+    h = setup_headers(client)
     client.post("/api/setup/welcome", headers=h)  # welcome -> gpus
 
     r = client.post("/api/setup/welcome", headers=h)
@@ -65,7 +70,7 @@ def test_post_gpus_validates_subset_and_persists(tmp_data_dir, client, monkeypat
     monkeypatch.setattr(gpu_mod, "query_gpus", fake_query)
 
     client.get("/healthz")
-    h = csrf_header(client)
+    h = setup_headers(client)
     client.post("/api/setup/welcome", headers=h)
     r = client.post("/api/setup/gpus", json={"allowed_gpu_indices": [1, 2]}, headers=h)
     assert r.status_code == 200, r.text
@@ -87,7 +92,7 @@ def test_post_gpus_rejects_indices_out_of_range(tmp_data_dir, client, monkeypatc
     monkeypatch.setattr(gpu_mod, "query_gpus", fake_query)
 
     client.get("/healthz")
-    h = csrf_header(client)
+    h = setup_headers(client)
     client.post("/api/setup/welcome", headers=h)
     r = client.post("/api/setup/gpus", json={"allowed_gpu_indices": [0, 5]}, headers=h)
     assert r.status_code == 400

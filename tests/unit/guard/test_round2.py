@@ -8,6 +8,7 @@ import pytest
 from app.guard.config import compile_guard, validate
 from app.guard.proxy import mask_for
 from app.guard.scanner import scan_text
+from tests.conftest import cpu_seconds
 
 DEFAULT = compile_guard({"mode": "sanitize"})
 PII = compile_guard({"mode": "sanitize", "packs": ["pii-contact"]})
@@ -84,13 +85,12 @@ def test_masks_show_a_public_prefix_or_only_the_length():
 
 
 def test_a_quadratic_custom_pattern_stays_fast_on_a_megabyte_line():
-    import time
-
     g = compile_guard(
         {"rules": [{"id": "host", "type": "regex", "regex": "(?:[a-z]+\\.)+internal"}]}
     )
     text = "a" * 1_000_000 + " db.corp.internal"
-    t = time.perf_counter()
-    found = scan_text(text, g.rules)
-    assert time.perf_counter() - t < 10
+    found: list = []
+    # thread CPU time, not wall: a loaded CI runner stretches wall time, not the scan
+    cpu = cpu_seconds(lambda: found.extend(scan_text(text, g.rules)), rounds=1)
+    assert cpu < 10, cpu
     assert [f.value for f in found][-1:] == ["db.corp.internal"]

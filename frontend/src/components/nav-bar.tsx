@@ -21,6 +21,7 @@ import useSWR from 'swr';
 import {
   Activity,
   Box,
+  ExternalLink,
   GitBranch,
   HardDrive,
   KeyRound,
@@ -34,6 +35,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { authFetch, authFetchJSON } from '@/lib/auth-fetch';
+import { useEdition } from '@/lib/edition';
 import { isKeyAreaPath, keyMode } from '@/lib/sessions/key-token';
 
 import { HeaderMetrics } from './header-metrics';
@@ -60,7 +62,22 @@ const UNAUTH_EXACT_PATHS: ReadonlySet<string> = new Set([
   '/sessions/login/',
 ]);
 
-function isUnauthRoute(path: string): boolean {
+/** POST an extension's console-link endpoint and open the one-time URL it
+ *  returns ({"url": "/..."}). Same-origin paths only. */
+export async function openExtensionPage(href: string): Promise<void> {
+  try {
+    const r = await authFetch(href, { method: 'POST' });
+    if (!r.ok) return;
+    const { url } = (await r.json()) as { url?: unknown };
+    if (typeof url === 'string' && url.startsWith('/') && !url.startsWith('//')) {
+      window.location.assign(url);
+    }
+  } catch {
+    /* the menu stays as it was */
+  }
+}
+
+export function isUnauthRoute(path: string): boolean {
   // The wizard owns the entire /setup/* subtree (multiple steps).
   // /login has no subroutes today, so it gets the exact-match
   // treatment. If we ever add /login/2fa or similar we'll bring it
@@ -150,6 +167,8 @@ export function NavBar() {
   // `defense in depth` companion fix in auth-fetch.ts handles any peer
   // component that regresses similarly.
   const versionKey = isUnauthRoute(path) ? null : '/api/version';
+  // Extension console links ride on /api/edition; never fetched off the console.
+  const edition = useEdition(!isUnauthRoute(path));
 
   // Version footer — single fetch on mount, no polling. The endpoint reads
   // build-time env vars baked into the image, so the value is immutable
@@ -210,6 +229,7 @@ export function NavBar() {
   if (isUnauthRoute(path)) return null;
 
   const versionText = formatVersion(versionData, versionError);
+  const consoleLinks = edition?.console_links ?? [];
 
   return (
     <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur relative z-20">
@@ -277,6 +297,25 @@ export function NavBar() {
                       </li>
                     );
                   })}
+                  {/* Extension pages (spec 2026-11-20). An extension serves its own
+                      page; core only asks it (as the signed-in admin) for a
+                      one-time URL and opens it -- a navigation cannot carry the
+                      console's in-memory token. */}
+                  {consoleLinks.map(({ href, label }) => (
+                    <li key={href}>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          void openExtensionPage(href);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800 hover:text-emerald-300 transition-colors"
+                      >
+                        <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                        <span>{label}</span>
+                      </button>
+                    </li>
+                  ))}
                   <li role="separator" aria-hidden="true">
                     <hr className="my-1 border-slate-700" />
                   </li>

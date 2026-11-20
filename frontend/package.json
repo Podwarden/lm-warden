@@ -15,7 +15,7 @@
   },
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "next build",
+    "build": "next build && node scripts/patch-csp-meta.mjs",
     "start": "next start -p 3000",
     "lint": "next lint",
     "check:canary": "node scripts/check-ee-canary.mjs",

@@ -69,6 +69,19 @@ describe('Settings tabs', () => {
     expect(tabs).toEqual(TODAY);
   });
 
+  it('skips (and warns about) an ee tab whose id duplicates a core tab', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    hoisted.ee.settingsTabs = [
+      { id: 'general', label: 'Imposter', feature: 'x.feat', Component: () => <div>imposter body</div> },
+    ];
+    mockApi({ features: ['x.feat'] });
+    wrap(<SettingsPage />);
+    expect(await screen.findByRole('button', { name: 'General' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Imposter' })).toBeNull();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"general"'));
+    warn.mockRestore();
+  });
+
   it('adds an ee tab whose feature is listed', async () => {
     hoisted.ee.settingsTabs = [{ id: 'x', label: 'Extra', feature: 'x.feat', Component: () => <div>extra body</div> }];
     mockApi({ features: ['x.feat'] });

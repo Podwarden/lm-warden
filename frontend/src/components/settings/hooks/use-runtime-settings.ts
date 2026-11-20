@@ -76,7 +76,8 @@ export type RuntimeKey =
   | "watchdog_restore_on_boot"
   | "watchdog_interval_s"
   | "watchdog_failure_threshold"
-  | "watchdog_max_restarts";
+  | "watchdog_max_restarts"
+  | "update_check_enabled";
 
 // Sentinel the backend echoes for secret fields when a value exists.
 // We never round-trip this to the server (PATCH body strips keys whose
@@ -112,6 +113,7 @@ export interface Draft {
   watchdog_interval_s: number | null;
   watchdog_failure_threshold: number | null;
   watchdog_max_restarts: number | null;
+  update_check_enabled: boolean;
 }
 
 function parseNumber(raw: string | null | undefined): number | null {
@@ -181,6 +183,8 @@ function snapshotToDraft(s: RuntimeResponse): Draft {
     watchdog_interval_s: parseNumber(s.watchdog_interval_s) ?? 30,
     watchdog_failure_threshold: parseNumber(s.watchdog_failure_threshold) ?? 3,
     watchdog_max_restarts: parseNumber(s.watchdog_max_restarts) ?? 3,
+    // Update check (spec 2026-11-20): on unless turned off.
+    update_check_enabled: parseBool(s.update_check_enabled, true),
   };
 }
 

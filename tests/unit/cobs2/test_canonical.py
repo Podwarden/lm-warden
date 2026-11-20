@@ -3,7 +3,6 @@
 import base64
 import hashlib
 import json
-import time
 from typing import Any
 
 from app.cobs2.canonical import LOOSE_TABLE_VERSION, Canon, canon_json, canonicalize, loose
@@ -11,6 +10,7 @@ from app.proxy.messages_schemas import MessagesRequest
 from app.proxy.messages_translate import to_openai_request as messages_to_oai
 from app.proxy.responses_schemas import ResponsesRequest
 from app.proxy.responses_translate import to_openai_request as responses_to_oai
+from tests.conftest import cpu_seconds
 
 # key order as the Anthropic and Responses translators emit it
 TOOL = {
@@ -398,9 +398,10 @@ def test_preamble_part_does_not_swallow_the_next_part():
 def test_unclosed_tags_are_linear():
     text = "<system-reminder>x" * 16000 + " tail"
     body = {"messages": [{"role": "user", "content": text}]}
-    t0 = time.perf_counter()
+    # thread CPU time, not wall: a loaded CI runner stretches wall time, not the work
+    cpu = cpu_seconds(lambda: loose(_canon(body)))
+    assert cpu < 0.5, cpu
     lo = loose(_canon(body))
-    assert time.perf_counter() - t0 < 0.5
     assert lo.messages[0]["parts"][0]["v"].endswith("tail")
 
 
@@ -505,6 +506,6 @@ def test_boilerplate_chars_zero_without_tags_or_dates():
 
 
 def test_boilerplate_chars_unclosed_tag_is_linear():
-    t0 = time.perf_counter()
     assert boilerplate_chars("<system-reminder>x" * 16000) == 0
-    assert time.perf_counter() - t0 < 0.5
+    cpu = cpu_seconds(lambda: boilerplate_chars("<system-reminder>x" * 16000))
+    assert cpu < 0.5, cpu

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { setupPost } from '../setup-code';
 
 interface Whoami {
   username: string;
@@ -21,12 +22,7 @@ export default function HfTokenPage() {
     setWhoami(null);
     setBusy(kind);
     try {
-      const r = await fetch('/api/setup/hf_token', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const r = await setupPost('/api/setup/hf_token', payload);
       if (!r.ok) {
         const body = await r.json().catch(() => ({}));
         setError(body.detail ?? 'Failed to save HF token');

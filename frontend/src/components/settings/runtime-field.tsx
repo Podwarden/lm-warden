@@ -169,6 +169,16 @@ export function RuntimeField({
           disabled={disabled}
         />
       );
+    case "update_check_enabled":
+      return (
+        <SettingField
+          kind="boolean"
+          field={hint}
+          value={draft.update_check_enabled}
+          onChange={(v) => setField("update_check_enabled", v)}
+          disabled={disabled}
+        />
+      );
     case "watchdog_restore_on_boot":
       return (
         <SettingField

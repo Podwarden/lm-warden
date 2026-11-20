@@ -26,20 +26,35 @@ The wizard is a browser flow, but it is only a client of `/api/setup/*` — so a
 first run can be scripted end to end. Everything below runs against a freshly
 started stack on `http://127.0.0.1:8080` and needs nothing but `curl` and `jq`.
 
-`/api/setup/*` is exempt from the CSRF check, so these six calls need no token
-and no cookie jar. They are a strict state machine: posting out of order returns
+A fresh install cannot be claimed by whoever reaches it first: every
+`POST /api/setup/*` needs the install's one-time **setup code** in an
+`X-Setup-Code` header. It is `LM_SETUP_CODE` in `.env` when that is set
+(`install.sh` generates one and prints it at the end), otherwise the server
+generates one, keeps it in `/data/setup-code` and prints it in its log (on
+PodWarden Hub, it is `LM_SETUP_CODE` in the deployment's settings). It works
+until the admin exists, then never again. To skip the wizard entirely,
+set `LM_BOOTSTRAP_ADMIN_USERNAME` and `LM_BOOTSTRAP_ADMIN_PASSWORD` instead:
+the admin is created at first boot.
+
+These calls send no cookie, so they need no CSRF token and no cookie jar.
+They are a strict state machine: posting out of order returns
 `400 not at <step> step (current: <where you are>)`, and `GET /api/setup/state`
 always tells you where that is — so an interrupted run resumes rather than
 restarts.
 
 ```bash
 W=http://127.0.0.1:8080
+# The setup code: from .env, or from the container.
+CODE=$(grep '^LM_SETUP_CODE=' .env | cut -d= -f2)
+[ -n "$CODE" ] || CODE=$(docker compose exec -T api cat /data/setup-code)
+S="X-Setup-Code: $CODE"
 
-# 1. Where are we? A fresh install answers {"step":"welcome","done":false}.
+# 1. Where are we? A fresh install answers
+#    {"step":"welcome","done":false,"code_required":true,"code_source":"env"}.
 curl -s $W/api/setup/state
 
 # 2. Acknowledge the welcome step.                    -> {"step":"gpus"}
-curl -s -X POST $W/api/setup/welcome
+curl -s -X POST $W/api/setup/welcome -H "$S"
 
 # 3. List the GPUs the container can see, with their indices.
 curl -s $W/api/setup/gpus
@@ -47,28 +62,29 @@ curl -s $W/api/setup/gpus
 #   "memory_used_mib":0,"utilization_pct":0}, ...]
 
 # 4. Choose which of those indices the engine may use.  -> {"step":"hf_token"}
-curl -s -X POST $W/api/setup/gpus -H 'Content-Type: application/json' \
+curl -s -X POST $W/api/setup/gpus -H "$S" -H 'Content-Type: application/json' \
      -d '{"allowed_gpu_indices":[0,1]}'
 
 # 5. HuggingFace token. JSON null is valid and is the right answer unless you
 #    need gated models (Llama, Mistral, gpt-oss).      -> {"step":"admin"}
-curl -s -X POST $W/api/setup/hf_token -H 'Content-Type: application/json' \
+curl -s -X POST $W/api/setup/hf_token -H "$S" -H 'Content-Type: application/json' \
      -d '{"hf_token":null}'
 
 # 6. Create the admin account.                          -> {"step":"done"}
 #    Password rules: at least 12 characters and at most 72 BYTES. The upper
 #    bound is bcrypt's, and it is rejected rather than silently truncated —
 #    worth knowing before you generate a long passphrase.
-curl -s -X POST $W/api/setup/admin -H 'Content-Type: application/json' \
+curl -s -X POST $W/api/setup/admin -H "$S" -H 'Content-Type: application/json' \
      -d '{"username":"admin","password":"CHANGE-ME-to-12-plus-chars"}'
 ```
 
 `GET /api/setup/gpus` returns `404` once setup is done — deliberate, so a
 completed install does not report its hardware to anonymous callers.
 
-**Then mint an API key.** Unlike `/api/setup`, the rest of the control API does
-enforce CSRF, so this is a two-header call: the CSRF token from `/api/csrf`
-plus the JWT from the login.
+**Then mint an API key.** With a cookie jar, the rest of the control API
+enforces CSRF, so this is a two-header call: the CSRF token from `/api/csrf`
+plus the JWT from the login. (Without a cookie jar the JWT alone is enough: a
+request carrying no LM Warden cookie skips the CSRF check.)
 
 ```bash
 # The response key is `csrf`, NOT `csrf_token`. Reading the wrong field sends

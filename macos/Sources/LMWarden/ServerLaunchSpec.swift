@@ -66,7 +66,8 @@ struct ServerLaunchSpec: Equatable {
         hfCacheDir: String? = nil,
         baseEnvironment: [String: String] = [:],
         shellToken: String? = nil,
-        webuiDir: String? = nil
+        webuiDir: String? = nil,
+        buildVersion: String? = nil
     ) throws -> ServerLaunchSpec {
         if pythonPath.isEmpty {
             throw LaunchSpecError.emptyPythonPath
@@ -93,6 +94,11 @@ struct ServerLaunchSpec: Equatable {
         environment["VW_PARENT_PID"] = String(parentPID)
         environment["VW_COOKIE_SECRET"] = cookieSecret
         environment["PYTHONUNBUFFERED"] = "1"
+        // The app's release, for the backend's daily update check
+        // (app/updates); a value the caller's environment already pins wins.
+        if let buildVersion, !buildVersion.isEmpty, environment["VW_BUILD_VERSION"] == nil {
+            environment["VW_BUILD_VERSION"] = buildVersion
+        }
         if let hfCacheDir {
             environment["VW_HF_CACHE_DIR"] = hfCacheDir
         }

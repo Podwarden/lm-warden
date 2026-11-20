@@ -44,7 +44,15 @@ export default function SettingsPage() {
   // (admin credentials, HF token, default GPU indices).
   const [activeTab, setActiveTab] = useState<string>("general");
   const edition = useEdition();
-  const eeTabs = ee.settingsTabs.filter((t) => hasFeature(edition, t.feature));
+  const coreIds = new Set(CORE_TABS.map((t) => t.id));
+  const eeTabs = ee.settingsTabs.filter((t) => {
+    if (!hasFeature(edition, t.feature)) return false;
+    if (coreIds.has(t.id)) {
+      console.warn(`Settings: skipping extension tab "${t.id}": id collides with a core tab`);
+      return false;
+    }
+    return true;
+  });
   const tabs = [...CORE_TABS, ...eeTabs];
   const EeTab = eeTabs.find((t) => t.id === activeTab)?.Component;
 

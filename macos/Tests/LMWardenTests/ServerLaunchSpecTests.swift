@@ -267,6 +267,28 @@ final class ServerLaunchSpecTests: XCTestCase {
         XCTAssertEqual(spec.environment["PYTHONUNBUFFERED"], "1")
     }
 
+    /// The app's release reaches the backend as VW_BUILD_VERSION, so the daily
+    /// update check (app/updates) knows which release this Mac runs; a value
+    /// already in the base environment wins, and nil or "" leaves it out.
+    func testBuildVersionPassedThrough() throws {
+        let spec = try ServerLaunchSpec.make(
+            pythonPath: "/opt/python/bin/python3", port: 8000, dataDir: "/data",
+            parentPID: 1, cookieSecret: validSecret, buildVersion: "v2026.11.20.1"
+        )
+        XCTAssertEqual(spec.environment["VW_BUILD_VERSION"], "v2026.11.20.1")
+        let pinned = try ServerLaunchSpec.make(
+            pythonPath: "/opt/python/bin/python3", port: 8000, dataDir: "/data",
+            parentPID: 1, cookieSecret: validSecret,
+            baseEnvironment: ["VW_BUILD_VERSION": "v2026.01.01.1"], buildVersion: "v2026.11.20.1"
+        )
+        XCTAssertEqual(pinned.environment["VW_BUILD_VERSION"], "v2026.01.01.1")
+        let none = try ServerLaunchSpec.make(
+            pythonPath: "/opt/python/bin/python3", port: 8000, dataDir: "/data",
+            parentPID: 1, cookieSecret: validSecret, buildVersion: ""
+        )
+        XCTAssertNil(none.environment["VW_BUILD_VERSION"])
+    }
+
     /// `VW_HF_CACHE_DIR` is set only when `hfCacheDir` is non-nil; with it
     /// nil a base `VW_HF_CACHE_DIR` survives untouched.
     func testHfCacheDirOptional() throws {

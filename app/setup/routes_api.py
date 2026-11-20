@@ -2,12 +2,13 @@ import json
 from dataclasses import asdict
 
 import bcrypt
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from app.auth.passwords import new_password_problem
 from app.db.database import open_db
 from app.db.repos.setup import SetupRepo
+from app.setup.bootstrap import close_setup, code_required, require_setup_code
 from app.setup.state_machine import next_step
 from app.system import gpu as gpu_mod
 from app.system import hf as hf_mod
@@ -18,23 +19,35 @@ def _hash_password(plaintext: str) -> str:
 
 
 router = APIRouter(prefix="/api/setup")
+#: Every state-changing setup call needs the one-time setup code (or comes from
+#: the macOS app's own window). See app/setup/bootstrap.py.
+_LOCKED = [Depends(require_setup_code)]
 
 
 @router.get("/state")
 async def get_state(request: Request):
-    # Unauthenticated entry-gate probe. The /api/setup prefix is CSRF-exempt
-    # (see app/auth/csrf.py _BYPASS_PREFIXES); GET is a safe method anyway.
-    # A fresh install reports {"step": "welcome", "done": false}; the frontend
-    # uses this to funnel first-run visitors to /setup/welcome instead of the
-    # sign-in form.
+    # Unauthenticated entry-gate probe; GET is a safe method. A fresh install
+    # reports {"step": "welcome", "done": false, ...}; the frontend uses this
+    # to funnel first-run visitors to /setup/welcome instead of the sign-in
+    # form. code_required says whether the wizard must ask for the setup code,
+    # code_source where the operator finds it ("env": LM_SETUP_CODE, "file":
+    # <data dir>/setup-code and the log).
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
         repo = SetupRepo(db)
         state = await repo.get()
-    return {"step": state.step, "done": state.step == "done"}
+    done = state.step == "done"
+    required = not done and code_required(request)
+    lock = getattr(request.app.state, "setup_lock", None)
+    return {
+        "step": state.step,
+        "done": done,
+        "code_required": required,
+        "code_source": lock.source if required and lock is not None else None,
+    }
 
 
-@router.post("/welcome")
+@router.post("/welcome", dependencies=_LOCKED)
 async def post_welcome(request: Request):
     settings = request.app.state.settings
     async with open_db(settings.db_path) as db:
@@ -76,7 +89,7 @@ async def get_gpus(request: Request):
     return [asdict(g) for g in gpus]
 
 
-@router.post("/gpus")
+@router.post("/gpus", dependencies=_LOCKED)
 async def post_gpus(body: GpusBody, request: Request):
     settings = request.app.state.settings
     detected = await gpu_mod.query_gpus()
@@ -103,7 +116,7 @@ class HfTokenBody(BaseModel):
     hf_token: str | None
 
 
-@router.post("/hf_token")
+@router.post("/hf_token", dependencies=_LOCKED)
 async def post_hf_token(body: HfTokenBody, request: Request):
     settings = request.app.state.settings
     whoami_dict = None
@@ -129,7 +142,7 @@ class AdminBody(BaseModel):
     password: str
 
 
-@router.post("/admin")
+@router.post("/admin", dependencies=_LOCKED)
 async def post_admin(body: AdminBody, request: Request):
     # >= 12 characters, <= 72 bytes (bcrypt's limit; refused, not truncated).
     # See app/auth/passwords.py.
@@ -180,4 +193,5 @@ async def post_admin(body: AdminBody, request: Request):
             (json.dumps(draft),),
         )
         await db.commit()
+    close_setup(request)
     return {"step": "done"}

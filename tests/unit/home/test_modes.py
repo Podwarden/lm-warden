@@ -9,24 +9,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from tests.conftest import csrf_header, jwt_login, seed_admin_user
-
-
-def _put(tmp_data_dir: Path, key: str, value: str) -> None:
-    with sqlite3.connect(tmp_data_dir / "vllm-warden.db", isolation_level=None) as db:
-        db.execute("PRAGMA journal_mode = WAL")
-        db.execute("BEGIN IMMEDIATE")
-        db.execute(
-            "INSERT INTO settings(key, value) VALUES (?, ?) "
-            "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-            (key, value),
-        )
-        db.execute("COMMIT")
-        db.execute("PRAGMA wal_checkpoint(FULL)")
+from tests.unit.home.helpers import put_setting
 
 
 @pytest.fixture
 def set_setting(client: TestClient, tmp_data_dir: Path):
-    return lambda key, value: _put(tmp_data_dir, key, value)
+    return lambda key, value: put_setting(tmp_data_dir, key, value)
 
 
 @pytest.fixture

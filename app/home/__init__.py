@@ -52,6 +52,17 @@ def pick_provider(request: Request, mode: str) -> HomeProvider | None:
 
 async def active_provider(request: Request) -> tuple[str, str, HomeProvider | None]:
     """(mode, off_action, provider answering for the mode, or None)."""
-    async with open_db(request.app.state.settings.db_path) as db:
-        mode, action = await current_mode(db)
+    mode, action = await request_mode(request)
     return mode, action, pick_provider(request, mode)
+
+
+async def request_mode(request: Request) -> tuple[str, str]:
+    """``current_mode`` read once per request: the dispatcher caches it on
+    ``request.state`` and a provider's own state read reuses it."""
+    cached: tuple[str, str] | None = getattr(request.state, "home_mode", None)
+    if cached is not None:
+        return cached
+    async with open_db(request.app.state.settings.db_path) as db:
+        mode = await current_mode(db)
+    request.state.home_mode = mode
+    return mode

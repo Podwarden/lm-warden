@@ -13,13 +13,14 @@
 // received over plain HTTP, so a forged header on an http request is inert,
 // while an https request can only have come through a TLS front door.
 //
-// No Content-Security-Policy restricting scripts yet. Next.js inlines its
-// bootstrap and RSC payload scripts, so a useful script-src needs a per-request
-// nonce from middleware (which also forces dynamic rendering of every page),
-// and nobody has verified that SSE streams, chat2 and god-mode media survive
-// it. Until then the UI's CSP carries only the directives that cannot break a
-// page: no framing, no <base> hijack, no plugins. The static landing page,
-// served by the api, does have a strict hash-based policy.
+// The script Content-Security-Policy is NOT a header. Next.js inlines its
+// bootstrap and RSC payload scripts, so a header script-src would block them.
+// Each prerendered page instead carries a <meta http-equiv=CSP> with the
+// sha256 of its own inline scripts, added after the build by
+// scripts/patch-csp-meta.mjs (conventions security.headers@2; `npm run build`
+// runs it). The header keeps only the directives that cannot break a page and
+// that a meta tag cannot carry: no framing (frame-ancestors is header-only),
+// no <base> hijack, no plugins. Both policies apply; the browser enforces each.
 
 export interface HeaderRule {
   source: string;

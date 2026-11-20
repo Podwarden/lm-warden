@@ -123,7 +123,8 @@ final class AppController {
             hfCacheDir: paths.modelsDir,
             baseEnvironment: environment.baseEnvironment,
             shellToken: shellToken,
-            webuiDir: environment.webuiDir
+            webuiDir: environment.webuiDir,
+            buildVersion: AppVersion.current
         )
 
         let newSupervisor = environment.makeSupervisor(spec)

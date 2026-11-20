@@ -100,12 +100,12 @@ def test_dispatch_agent_is_agent_family() -> None:
 
 # -- sessions redesign: dead weight -----------------------------------------
 
-import time  # noqa: E402
-
 from app.cobs2 import canonical as _canonical  # noqa: E402
+from app.cobs2 import shape as _shape  # noqa: E402
 from app.cobs2.ids import ids_for  # noqa: E402
 from app.cobs2.keys import NetworkKey  # noqa: E402
 from app.cobs2.shape import dead_weight_of  # noqa: E402
+from tests.conftest import cpu_seconds  # noqa: E402
 
 _K = NetworkKey(epoch=1, key=b"d" * 32)
 
@@ -204,18 +204,17 @@ def _big_body(n):
 @pytest.mark.perf
 def test_dead_weight_hot_path_cost():
     c, ids = _dw(_big_body(400))
-    t0 = time.perf_counter()
-    dead_weight_of(c, ids)
-    cold = time.perf_counter() - t0
+    # thread CPU time, not wall: a loaded CI runner stretches wall time, not the work.
+    # Each cold round starts from an empty memo; the last one leaves it filled for the warm pass.
+    cold = cpu_seconds(lambda: dead_weight_of(c, ids), reset=_shape._DW_MEMO.clear)
     body2 = _big_body(400)
     body2["messages"].append(_u("one more"))
     c2, ids2 = _dw(body2)
-    t0 = time.perf_counter()
-    ids_for(c2, _K, b"")
-    warm_ids = time.perf_counter() - t0
-    t0 = time.perf_counter()
-    dead_weight_of(c2, ids2)
-    warm = time.perf_counter() - t0
+    # One round each: a second round would hit the memo the first one filled and
+    # time the fully cached path, hiding a slow incremental (one new message) path.
+    # CPU time already ignores a busy runner, so best-of-N buys nothing here.
+    warm_ids = cpu_seconds(lambda: ids_for(c2, _K, b""), rounds=1)
+    warm = cpu_seconds(lambda: dead_weight_of(c2, ids2), rounds=1)
     assert cold < 0.1, cold
     assert warm < 0.005, warm
     assert warm <= 0.25 * warm_ids or warm < 0.0005, (warm, warm_ids)

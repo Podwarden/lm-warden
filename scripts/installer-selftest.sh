@@ -300,6 +300,11 @@ assert_grep "log lines carry the product tag" '^\[lm-warden\] ' "$OUT"
 secret=$(env_val VW_COOKIE_SECRET "$D/.env")
 [ "${#secret}" -eq 64 ] && pass "VW_COOKIE_SECRET generated (64 hex chars)" || fail "VW_COOKIE_SECRET is '$secret'"
 echo "$secret" | grep -qE '^[0-9a-f]{64}$' && pass "VW_COOKIE_SECRET is hex" || fail "VW_COOKIE_SECRET not hex"
+code=$(env_val LM_SETUP_CODE "$D/.env")
+echo "$code" | grep -qE '^[0-9a-f]{32}$' && pass "LM_SETUP_CODE generated (32 hex chars)" || fail "LM_SETUP_CODE is '$code'"
+assert_grep "summary prints the setup code" "Setup code: .*$code" "$OUT"
+assert_grep "override passes the setup code to the api" 'LM_SETUP_CODE: "\$\{LM_SETUP_CODE:-\}"' "$D/docker-compose.override.yml"
+assert_grep "override passes the bootstrap admin to the api" 'LM_BOOTSTRAP_ADMIN_PASSWORD: "\$\{LM_BOOTSTRAP_ADMIN_PASSWORD:-\}"' "$D/docker-compose.override.yml"
 [ "$(env_val VW_CONTAINER_GPU_COUNT "$D/.env")" = 0 ] && pass "VW_CONTAINER_GPU_COUNT=0 for --gpus none" || fail "VW_CONTAINER_GPU_COUNT=$(env_val VW_CONTAINER_GPU_COUNT "$D/.env")"
 [ "$(env_val VERSION "$D/.env")" = v2026.01.02.3 ] && pass "VERSION pinned to the changelog release" || fail "VERSION=$(env_val VERSION "$D/.env")"
 assert_grep "override clears the GPU reservation" 'devices: !override \[\]' "$D/docker-compose.override.yml"
@@ -409,6 +414,7 @@ run nosecrets STUB_GPUS=0 -- --gpus none --yes --no-generate-secrets
 assert_rc "--no-generate-secrets exits 2 (written, not startable)" 2 "$RC" "$OUT"
 [ -z "$(env_val VW_COOKIE_SECRET "$D/.env")" ] && pass "secret left blank" || fail "secret was generated anyway"
 assert_grep "says which variable to fill" 'VW_COOKIE_SECRET is empty' "$OUT"
+[ -z "$(env_val LM_SETUP_CODE "$D/.env")" ] && pass "setup code left blank (the server makes one)" || fail "setup code was generated anyway"
 assert_grep "config still validated with a placeholder" '^docker compose config -q' "$CALLS"
 
 # re-run keeps .env

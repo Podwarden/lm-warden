@@ -31,6 +31,7 @@ Per-model settings (Task 3.3) live on a sibling router `model_settings_router`
 mounted under `/api/models/{model_id}/settings`.
 """
 
+import asyncio
 import json
 import logging
 import re
@@ -90,6 +91,8 @@ RUNTIME_KEYS: dict[str, str] = {
     "watchdog_interval_s": "none",
     "watchdog_failure_threshold": "none",
     "watchdog_max_restarts": "none",
+    # Daily update check (spec 2026-11-20): read on every pass, no restart.
+    "update_check_enabled": "none",
 }
 
 
@@ -294,6 +297,7 @@ _COERCERS = {
     "watchdog_interval_s": _bounded_int(5, 3600),
     "watchdog_failure_threshold": _bounded_int(2, 20),
     "watchdog_max_restarts": _bounded_int(0, 20),
+    "update_check_enabled": _bool,
     # hf_token, admin_username, admin_password are handled out-of-band below.
 }
 
@@ -322,6 +326,9 @@ SESSION_ONLY_RUNTIME_KEYS: frozenset[str] = frozenset(
         "session_refresh_ttl_days",
         "sse_ticket_ttl_seconds",
         "public_url",
+        # Whether the install reports to lmwarden.com is the owner's call,
+        # not something a leaked admin token may switch back on.
+        "update_check_enabled",
     }
 )
 
@@ -542,7 +549,19 @@ async def patch_runtime(
                     "UPDATE users SET username = ? WHERE id = ?",
                     (body["admin_username"], admin_id),
                 )
+            same_password = False
             if "admin_password" in body:
+                # lifecycle.retire-bootstrap: re-entering the password the admin
+                # already has (the one from LM_BOOTSTRAP_ADMIN_PASSWORD) is not a
+                # take-over, so it must not retire the temporary flag.
+                cur = await db.execute("SELECT password_hash FROM users WHERE id = ?", (admin_id,))
+                old_hash = (await cur.fetchone() or [None])[0]
+                if old_hash:
+                    same_password = await asyncio.to_thread(
+                        bcrypt.checkpw,
+                        body["admin_password"].encode("utf-8"),
+                        old_hash.encode("utf-8"),
+                    )
                 pw_hash = bcrypt.hashpw(
                     body["admin_password"].encode("utf-8"), bcrypt.gensalt()
                 ).decode("utf-8")
@@ -551,6 +570,12 @@ async def patch_runtime(
                     (pw_hash, admin_id),
                 )
             await db.commit()
+            if "admin_password" in body and not same_password:
+                # lifecycle.retire-bootstrap: a person has taken the admin over
+                # from the LM_BOOTSTRAP_ADMIN_PASSWORD it was created with.
+                from app.setup.bootstrap import retire_temporary_admin
+
+                await retire_temporary_admin(settings.db_path, _user)
             # Verified finding #2: a new password or name ends every other sign-in of this user. The
             # session making a password change carries on; a rename ends it too (its tokens name the
             # old user), so the admin signs in again under the new name.

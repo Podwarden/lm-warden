@@ -4,14 +4,14 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from tests.unit.home.test_modes import _put
+from tests.unit.home.helpers import put_setting
 
 REPO = Path(__file__).resolve().parents[3]
 PKG = REPO / "app" / "help"
 
 
 def test_agent_guide_served_when_site_off(client: TestClient, tmp_data_dir: Path) -> None:
-    _put(tmp_data_dir, "home_page_mode", "off")
+    put_setting(tmp_data_dir, "home_page_mode", "off")
     r = client.get("/agent-guide.md")
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("text/markdown")

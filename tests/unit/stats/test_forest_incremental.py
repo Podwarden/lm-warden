@@ -16,6 +16,7 @@ import pytest
 
 from app.stats import forest as fo
 from app.stats import routes_forest as rf
+from tests.conftest import cpu_seconds
 
 
 def _row(
@@ -410,10 +411,9 @@ def test_over_budget_a_token_is_truncated_stable_and_never_rebuilt_per_request(
     took = []
     for i in range(20):
         _insert(db_path, [_hrow(f"n{i}", now + 1 + i, "A", f"A-{14_000 // 150}")])
-        t = time.perf_counter()
-        _state(db_path, store, now + 2 + i)
-        took.append(time.perf_counter() - t)
-    # the median, not every run: a loaded CI box can stall one refresh (GC, scheduler); the load count below is the
+        # thread CPU time, not wall: a loaded CI runner stretches wall time, not the refresh
+        took.append(cpu_seconds(lambda i=i: _state(db_path, store, now + 2 + i), rounds=1))
+    # the median, not every run: one refresh can still be an outlier; the load count below is the
     # deterministic guard that no refresh reloads the window
     assert sorted(took)[len(took) // 2] < 0.05
     assert len(loads) == n_full  # not one window or token load: only the new rows

@@ -152,8 +152,10 @@ each one as a trusted root.
 ### Headers: leave Caddy's defaults alone
 
 The dashboard signs you in with a short-lived token and renews it through a
-call that checks the browser's `Origin` header. The renewal is accepted only
-when that origin matches the address the browser actually used. Behind a
+call that checks the browser's `Origin` header, and every change it makes
+(saving a setting, loading a model, minting a key) is checked the same way.
+They are accepted only when that origin matches the address the browser
+actually used. Behind a
 proxy, the warden learns that address from the request:
 
 - the scheme from `X-Forwarded-Proto` (`https`)
@@ -163,8 +165,8 @@ Caddy's `reverse_proxy` already sends both and passes the original `Host`
 through, so the recipes above need no `header_up` lines. Do not remove or
 overwrite `X-Forwarded-Proto` or `X-Forwarded-Host`. Without
 `X-Forwarded-Proto` the warden sees `http://llm.example.com`, the browser
-sends `https://llm.example.com`, and every page reload signs you out with
-`403 origin mismatch`. If you also rewrite `Host` (for example
+sends `https://llm.example.com`, and every page reload signs you out and
+every change is refused with `403 origin mismatch`. If you also rewrite `Host` (for example
 `header_up Host {upstream_hostport}`) and drop `X-Forwarded-Host`, it sees
 `http://127.0.0.1:8080` instead, with the same result.
 

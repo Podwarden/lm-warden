@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import copy
 import json
-import time
 
 import pytest
 
@@ -12,6 +11,7 @@ from app.guard.config import compile_guard
 from app.guard.placeholders import RestoreMap, placeholder_hex, render
 from app.guard.scanner import scan_text
 from app.guard.walk import apply_findings, inspect_body
+from tests.conftest import cpu_seconds
 from tests.unit.guard.corpus import NEGATIVES, positives
 
 DEFAULT = compile_guard(
@@ -172,6 +172,7 @@ def test_no_findings_means_no_change():
     assert out.findings == [] and apply_findings(body, out, note=True) is body
 
 
+@pytest.mark.perf
 def test_redos_shaped_inputs_stay_fast():
     for s in (
         "a" * 262144,
@@ -181,9 +182,9 @@ def test_redos_shaped_inputs_stay_fast():
         "-----BEGIN " * 20000,
         "password=" * 20000,
     ):
-        t0 = time.perf_counter()
-        scan_text(s, DEFAULT.rules)
-        assert time.perf_counter() - t0 < 0.5, s[:12]
+        # thread CPU time, not wall: a loaded CI runner stretches wall time, not the scan
+        cpu = cpu_seconds(lambda s=s: scan_text(s, DEFAULT.rules))
+        assert cpu < 0.5, (s[:12], cpu)
 
 
 def test_custom_rules_fixed_words_and_lint():

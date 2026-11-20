@@ -51,7 +51,8 @@ long its requests waited, and watch what the card is doing. One published port,
 so your own TLS terminator, ingress, SSO or network policy sits in front of it
 unchanged. The engines are upstream and unmodified; that is a hard rule, and
 [the second engine exists because of it](#two-engines-and-the-model-that-made-us-add-the-second).
-Nothing reports home: no account, no licence check, no analytics, and an
+No account, no licence check and no usage data: the only call home is a daily
+[update check](#where-data-goes) you can turn off, and an
 [offline install](documents/INSTALL.md#a7-offline--air-gapped-install) for
 hosts with no route out.
 
@@ -703,10 +704,18 @@ rest: [What the second engine costs](documents/ARCHITECTURE.md#what-the-second-e
 
 ## Where data goes
 
-**Nothing reports to us.** No account, no licence check, no analytics, no
-callback: [`install.sh`](install.sh) and
+**One daily update check, and nothing else reports to us.** LM Warden checks
+lmwarden.com once a day for new releases and security advisories (CVEs). The
+check sends only the version, edition, platform and a random install ID —
+nothing about your models, prompts or traffic. Turn it off with
+`VW_UPDATE_CHECK=0` or in Settings; an offline install (`HF_HUB_OFFLINE=1`)
+never makes it. lmwarden.com keeps the country and a one-way hash of the
+address the check came from, not the address, for up to 400 days.
+
+No account, no licence check, no analytics: [`install.sh`](install.sh) and
 [`docker-compose.yml`](docker-compose.yml) are the entire deployment and you
-can read both. The stack makes outbound calls only when you ask it to:
+can read both. Apart from the update check, the stack makes outbound calls
+only when you ask it to:
 huggingface.co to pull weights (`HF_HUB_OFFLINE=1` stops even that), Docker
 Hub to list published vLLM tags when you open the engine-version picker, and
 the release registry for the images, which `docker load` replaces entirely

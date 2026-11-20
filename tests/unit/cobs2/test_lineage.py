@@ -514,21 +514,17 @@ def test_collapsed_observe_with_signature_is_fast() -> None:
     assert _best_of_3_mean(run) < _strict(3e-3, 15e-3)
 
 
+@pytest.mark.perf
 def test_observe_is_fast() -> None:
     lin = Lineage()
     texts = [f"message number {i}" for i in range(50)]
     ids = _ids(*texts)
     _obs(lin, ids)
-    t0 = time.perf_counter()
-    for _ in range(200):
-        _obs(lin, ids)
-    assert (time.perf_counter() - t0) / 200 < 1e-3
-    # unknown 50-message chain (full backward scan, then insert)
-    chains = [_ids(*[f"r{r} {t}" for t in texts]) for r in range(200)]
-    t0 = time.perf_counter()
-    for r, c in enumerate(chains):
-        _obs(lin, c, sk=f"s{r}")
-    assert (time.perf_counter() - t0) / 200 < 1e-3
+    # thread CPU time, not wall: a loaded CI runner stretches wall time, not the work
+    assert _best_of_3_mean(lambda _i: _obs(lin, ids), n=200) < 1e-3
+    # unknown 50-message chain (full backward scan, then insert); every round observes new chains
+    chains = [_ids(*[f"r{r} {t}" for t in texts]) for r in range(3 * 200)]
+    assert _best_of_3_mean(lambda r: _obs(lin, chains[r], sk=f"s{r}"), n=200) < 1e-3
 
 
 def test_remember_reply_strips_analysis_block() -> None:

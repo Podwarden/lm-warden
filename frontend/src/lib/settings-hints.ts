@@ -86,6 +86,11 @@ export const RUNTIME_HINTS: Record<string, FieldHint> = {
     hint: 'What `/` answers while the home page is Off: open the console, or a plain 404.',
     restart: 'none',
   },
+  update_check_enabled: {
+    label: 'Check for updates',
+    hint: 'Once a day, ask lmwarden.com for new releases and security advisories (CVEs). The check sends only the version, edition, platform and a random install ID — nothing about your models, prompts or traffic. VW_UPDATE_CHECK=0 turns it off for good, whatever this says.',
+    restart: 'none',
+  },
   watchdog_enabled: {
     label: 'Engine watchdog',
     hint: 'Probes each loaded engine\'s own /health and restarts it when it stops answering. The warden\'s exit watcher only sees the `vllm serve` wrapper, which can outlive a dead EngineCore — when that happens the model still reads "loaded", /v1/models still returns 200, and every generation fails until someone notices. Leave on unless you are debugging a live crash and want the scene preserved.',
@@ -167,6 +172,9 @@ export const RUNTIME_NETWORKING_KEYS = [
   'home_page_mode',
   'home_page_off_action',
 ] as const;
+
+// Update check (spec 2026-11-20): its own section of the Networking tab.
+export const RUNTIME_UPDATE_KEYS = ['update_check_enabled'] as const;
 
 // Website analytics (spec 2026-10-07 §8): rendered as a second section of
 // the Networking tab, saved by the same Save button.

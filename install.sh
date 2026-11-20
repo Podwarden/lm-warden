@@ -766,6 +766,11 @@ write_override() {
     echo "      VW_JWT_SECRET: \"\${VW_JWT_SECRET:-}\""
     echo "      VW_FRONTEND_ORIGIN: \"\${VW_FRONTEND_ORIGIN:-}\""
     echo "      VW_TRUST_PROXY_ORIGIN: \"\${VW_TRUST_PROXY_ORIGIN:-0}\""
+    # First run (app/setup/bootstrap.py): the wizard's one-time setup code,
+    # or an unattended admin. Blank = the server generates the code itself.
+    echo "      LM_SETUP_CODE: \"\${LM_SETUP_CODE:-}\""
+    echo "      LM_BOOTSTRAP_ADMIN_USERNAME: \"\${LM_BOOTSTRAP_ADMIN_USERNAME:-}\""
+    echo "      LM_BOOTSTRAP_ADMIN_PASSWORD: \"\${LM_BOOTSTRAP_ADMIN_PASSWORD:-}\""
     # Blank = trust loopback + private-range peers' X-Forwarded-For.
     echo "      VW_TRUSTED_PROXIES: \"\${VW_TRUSTED_PROXIES:-}\""
     echo "      VW_CONTAINER_GPU_COUNT: \"\${VW_CONTAINER_GPU_COUNT:-$_sel}\""
@@ -1028,7 +1033,7 @@ fi
 
 printf '%s%sLM Warden is installed in %s%s\n\n' "$C_BOLD" "$C_GREEN" "$DIR" "$C_OFF" >&2
 if [ "$STARTED" -eq 1 ]; then
-  printf '  UI:      http://localhost:%s/ui/    (first run opens the setup wizard)\n' "$WARDEN_PORT" >&2
+  printf '  UI:      http://localhost:%s/ui/    (first run opens the setup wizard; it asks for the setup code below)\n' "$WARDEN_PORT" >&2
   printf '  API:     http://localhost:%s/v1/chat/completions\n' "$WARDEN_PORT" >&2
   printf '  Logs:    cd %s && make logs\n' "$DIR" >&2
 else
@@ -1036,5 +1041,16 @@ else
   printf '  Then:    http://localhost:%s/ui/\n' "$WARDEN_PORT" >&2
 fi
 printf '  Config:  %s/.env   (release: %s, port: %s, GPUs: %s)\n' "$DIR" "$VERSION" "$WARDEN_PORT" "$(gpu_describe)" >&2
+# The setup wizard asks for this once, before the first admin exists; a
+# stranger who finds the new install first cannot get past it.
+SETUP_CODE=$(env_get LM_SETUP_CODE)
+if [ -n "$(env_get LM_BOOTSTRAP_ADMIN_USERNAME)" ]; then
+  printf '  Admin:   created at first start from LM_BOOTSTRAP_ADMIN_* in .env\n' >&2
+elif [ -n "$SETUP_CODE" ]; then
+  printf '  Setup code: %s%s%s   (first run only: the setup wizard asks for it;\n' "$C_BOLD" "$SETUP_CODE" "$C_OFF" >&2
+  printf '              it is LM_SETUP_CODE in .env)\n' >&2
+else
+  printf '  Setup code: in the log once started (make logs), or: docker compose exec api cat /data/setup-code\n' >&2
+fi
 printf '  Help:    make help\n\n' >&2
 exit 0

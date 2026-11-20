@@ -76,16 +76,19 @@ def test_sanitize_hides_the_value_from_the_engine_and_restores_it_in_the_json_an
     assert content.startswith(f"export TOKEN={VALUE}")
     assert "[LM Warden]" in content and VALUE not in content.split("\n\n", 1)[1]
 
+    # The action log is written off the request path, one background write per log call: the
+    # first request's `sanitized` and the second's `restored` race, so neither the row order nor
+    # "some event is there" says the `sanitized` one landed. Wait for both, pick by action.
     def _rows():
         with sqlite3.connect(db) as c:
             rows = c.execute("SELECT guard FROM request_history WHERE guard IS NOT NULL").fetchall()
             ev = c.execute("SELECT action, rule_id, length FROM guard_events").fetchall()
-        return (rows, ev) if rows and ev else None
+        return (rows, ev) if rows and {e[0] for e in ev} >= {"sanitized", "restored"} else None
 
-    rows, ev = wait_until(_rows, what="guard history and events")
+    rows, ev = wait_until(_rows, what="guard history and sanitized + restored events")
     dump = json.dumps(rows) + json.dumps(ev)
     assert VALUE not in dump
-    assert ev[0][0] == "sanitized" and ev[0][2] == len(VALUE)
+    assert [e[2] for e in ev if e[0] == "sanitized"] == [len(VALUE)]
 
 
 def test_sanitize_restores_a_stream_and_puts_the_trailer_before_finish(tmp_data_dir, client):

@@ -15,16 +15,26 @@ services:
     pid: host
     environment:
       VW_JWT_SECRET: ""
-      # #155 unified-port: browser hits Caddy on :8080, so the frontend
-      # origin for the CSRF check is now the same :8080 URL the operator
-      # types into their address bar (not the ui container's :3000).
-      # Accepts a comma-separated allow-list of exact origins.
-      VW_FRONTEND_ORIGIN: http://localhost:8080
+      # The origin(s) every state-changing browser request must come from
+      # (app/auth/csrf.py). Blank = the address the request arrived at, which
+      # serves localhost, a LAN IP and a hostname alike; pinning one here
+      # (e.g. http://localhost:8080) refuses every UI change made from any
+      # other address. Accepts a comma-separated allow-list of exact origins.
+      VW_FRONTEND_ORIGIN: "${VW_FRONTEND_ORIGIN:-}"
       # Behind a trusted reverse proxy that sets X-Forwarded-Proto/-Host,
       # set this to 1 to also accept the proxy-derived origin (so a reload
       # doesn't log the user out when the public URL isn't pinned above).
       # Off by default — only enable when a trusted proxy fronts the warden.
       # VW_TRUST_PROXY_ORIGIN: "1"
+      # First run (app/setup/bootstrap.py): the setup wizard's one-time
+      # code, or an unattended first admin. Blank code = the server makes one
+      # and prints it in its log (and /data/setup-code).
+      LM_SETUP_CODE: "${LM_SETUP_CODE:-}"
+      LM_BOOTSTRAP_ADMIN_USERNAME: "${LM_BOOTSTRAP_ADMIN_USERNAME:-}"
+      LM_BOOTSTRAP_ADMIN_PASSWORD: "${LM_BOOTSTRAP_ADMIN_PASSWORD:-}"
+      # Daily check of lmwarden.com for new releases and security advisories
+      # (sends version, edition, platform, random install ID). 0 = off.
+      VW_UPDATE_CHECK: "${VW_UPDATE_CHECK:-}"
     volumes:
       - vw-data:/data
       - vw-hfcache:/root/.cache/huggingface

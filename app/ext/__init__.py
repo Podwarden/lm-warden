@@ -39,6 +39,21 @@ class SettingKey:
     session_only: bool = False
 
 
+@dataclass
+class ConsoleLink:
+    """An entry an extension adds to the console menu (spec 2026-11-20).
+
+    ``href`` is a same-origin endpoint the console POSTs to as the signed-in
+    admin; it answers ``{"url": "/..."}``, a short-lived URL of a page the
+    extension serves itself, and the console navigates there. (A plain link
+    cannot work: the console's access token lives in memory and the refresh
+    cookie is scoped to /api/auth, so a navigation carries no credential.)
+    Core draws the entry and nothing else."""
+
+    label: str
+    href: str
+
+
 class HomeProvider(Protocol):
     mode: Literal["builtin", "custom"]
     priority: int
@@ -58,6 +73,7 @@ class Registry:
     public_routes: list[PublicRoute] = field(default_factory=list)
     settings_keys: list[SettingKey] = field(default_factory=list)
     home_providers: list[HomeProvider] = field(default_factory=list)
+    console_links: list[ConsoleLink] = field(default_factory=list)
     load_errors: list[str] = field(default_factory=list)
 
     def set_edition(self, name: str) -> None:
@@ -78,6 +94,7 @@ class Registry:
 
 
 __all__ = [
+    "ConsoleLink",
     "EDITIONS",
     "HomeProvider",
     "PublicRoute",

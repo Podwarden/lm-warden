@@ -1,4 +1,5 @@
 from app.stats import forest as fo
+from tests.conftest import cpu_seconds
 
 
 def _row(
@@ -170,12 +171,12 @@ def test_traits_include_child_rows():
 
 
 def test_chaining_is_bounded_and_correct():
-    import time
-
     rows = [_row(i * 0.1 + 1, p=1000 + (i * 7919) % 500_000) for i in range(5000)]
-    t = time.perf_counter()
-    f = fo.build_forest(rows, t0=0)
-    assert time.perf_counter() - t < 2.0
+    # thread CPU time, not wall: a loaded CI runner stretches wall time, not the build
+    built: list = []
+    cpu = cpu_seconds(lambda: built.append(fo.build_forest(rows, t0=0)), rounds=1)
+    assert cpu < 2.0, cpu
+    f = built[0]
     assert sum(len(tr["sessions"]) for tr in f["trees"]) + len(f["flowers"]) > 0
     mixed = [_row(10, p=1000), _row(20, p=1400), _row(25, p=300), _row(40, p=1800)]
     sess = fo.build_forest(mixed, t0=0)["trees"][0]["sessions"]

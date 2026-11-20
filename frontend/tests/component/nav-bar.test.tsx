@@ -256,3 +256,41 @@ describe('NavBar', () => {
     sessionStorage.clear();
   });
 });
+
+describe('NavBar extension links (spec 2026-11-20)', () => {
+  afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+
+  it('opens the one-time URL an extension link returns', async () => {
+    mockPath = '/models';
+    const posted: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (url: RequestInfo, init?: RequestInit) => {
+      const u = typeof url === 'string' ? url : (url as Request).url;
+      if (u.endsWith('/api/edition')) {
+        return new Response(JSON.stringify({ edition: 'x', features: [], load_errors: [],
+          console_links: [{ label: 'Installs', href: '/api/x/open' }] }), { status: 200 });
+      }
+      if (u === '/api/x/open' && init?.method === 'POST') {
+        posted.push(u);
+        return new Response(JSON.stringify({ url: '/_x/page/abc' }), { status: 200 });
+      }
+      return new Response('{}', { status: 200 });
+    }));
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign });
+    renderNav();
+    fireEvent.click(screen.getByRole('button', { name: /open menu/i }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Installs' }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/_x/page/abc'));
+    expect(posted).toEqual(['/api/x/open']);
+  });
+
+  it('refuses an off-site URL', async () => {
+    const { openExtensionPage } = await import('@/components/nav-bar');
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(JSON.stringify({ url: '//evil.example/x' }), { status: 200 })));
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign });
+    await openExtensionPage('/api/x/open');
+    expect(assign).not.toHaveBeenCalled();
+  });
+});

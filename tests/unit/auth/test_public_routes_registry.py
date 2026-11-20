@@ -85,3 +85,21 @@ def test_auth_and_openapi_do_not_import_the_website():
     pat = re.compile(r"^\s*(from|import)\s+app\.landing\b", re.M)
     offenders = [str(f.relative_to(ROOT)) for f in files if pat.search(f.read_text())]
     assert offenders == []
+
+
+def test_merged_public_routes_are_built_once_per_app(client, monkeypatch):
+    import app.auth.public_routes as pr
+
+    client.app.state.__dict__.pop("_public_routes_cache", None)
+    calls = []
+    real = pr.core_public_routes
+
+    def counting():
+        calls.append(1)
+        return real()
+
+    monkeypatch.setattr(pr, "core_public_routes", counting)
+    assert pr.mints_csrf(client.app, "/api/csrf") is True
+    assert pr.mints_csrf(client.app, "/agent-guide.md") is False
+    pr.public_routes(client.app)
+    assert len(calls) == 1

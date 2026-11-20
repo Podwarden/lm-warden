@@ -23,6 +23,7 @@ def test_no_extensions_means_community(ext_registry, client, tmp_data_dir):
         "edition": "community",
         "features": [],
         "load_errors": [],
+        "console_links": [],
     }
 
 
@@ -116,4 +117,5 @@ def test_failing_extension_leaves_nothing_behind(ext_registry, client_factory, t
             "edition": "community",
             "features": [],
             "load_errors": ["half: RuntimeError('late')"],
+            "console_links": [],
         }

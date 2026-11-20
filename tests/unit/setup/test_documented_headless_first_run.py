@@ -15,8 +15,10 @@ section, and the comment says which one.
 
 The claims under test:
   1. Six calls, in this order, with these bodies.
-  2. /api/setup/* needs NO CSRF token (it is in `_BYPASS_PREFIXES`), which is
-     what makes an unattended first run possible at all.
+  2. /api/setup/* needs NO CSRF token (a cookie-less request skips the CSRF
+     check, and /api/setup is token-exempt), which is what makes an
+     unattended first run possible at all -- but every POST needs the
+     install's one-time setup code in `X-Setup-Code`, and is refused without.
   3. GET /api/setup/state reports the current step, so a partly-finished
      wizard can be resumed rather than restarted.
   4. Posting out of order returns 400 "not at <x> step (current: <y>)".
@@ -33,6 +35,7 @@ import sqlite3
 import pytest
 
 from app.system.gpu import GpuInfo
+from tests.conftest import setup_code_header
 
 
 @pytest.fixture
@@ -55,10 +58,23 @@ def test_documented_setup_sequence_completes_without_csrf(tmp_data_dir, client, 
     # 1. GET /api/setup/state
     r = client.get("/api/setup/state")
     assert r.status_code == 200, r.text
-    assert r.json() == {"step": "welcome", "done": False}
+    assert r.json() == {
+        "step": "welcome",
+        "done": False,
+        "code_required": True,
+        "code_source": "file",
+    }
+    S = setup_code_header(client)
+    # The code is the one in the data dir, as the doc says to read it.
+    assert S["X-Setup-Code"] == (tmp_data_dir / "setup-code").read_text().strip()
+
+    # Without the code, nothing moves.
+    r = client.post("/api/setup/welcome")
+    assert r.status_code == 403, r.text
+    assert r.json() == {"detail": "setup code required"}
 
     # 2. POST /api/setup/welcome -- no body, and deliberately NO CSRF header.
-    r = client.post("/api/setup/welcome")
+    r = client.post("/api/setup/welcome", headers=S)
     assert r.status_code == 200, r.text
     assert r.json() == {"step": "gpus"}
 
@@ -70,33 +86,43 @@ def test_documented_setup_sequence_completes_without_csrf(tmp_data_dir, client, 
 
     # Claim 3: the state endpoint tracks progress, so an interrupted run can
     # be resumed from wherever it stopped.
-    assert client.get("/api/setup/state").json() == {"step": "gpus", "done": False}
+    assert client.get("/api/setup/state").json()["step"] == "gpus"
 
     # 4. POST /api/setup/gpus
-    r = client.post("/api/setup/gpus", json={"allowed_gpu_indices": [0, 1]})
+    r = client.post("/api/setup/gpus", json={"allowed_gpu_indices": [0, 1]}, headers=S)
     assert r.status_code == 200, r.text
     assert r.json() == {"step": "hf_token"}
 
     # 5. POST /api/setup/hf_token -- claim 5: JSON null is accepted, and is
     # the right answer unless you need gated models.
-    r = client.post("/api/setup/hf_token", json={"hf_token": None})
+    r = client.post("/api/setup/hf_token", json={"hf_token": None}, headers=S)
     assert r.status_code == 200, r.text
     assert r.json() == {"step": "admin", "whoami": None}
 
     # 6. POST /api/setup/admin
-    r = client.post("/api/setup/admin", json={"username": "admin", "password": "s3cret-passphrase"})
+    r = client.post(
+        "/api/setup/admin", json={"username": "admin", "password": "s3cret-passphrase"}, headers=S
+    )
     assert r.status_code == 200, r.text
     assert r.json() == {"step": "done"}
 
-    # Final state.
-    assert client.get("/api/setup/state").json() == {"step": "done", "done": True}
+    # Final state: the code is gone with the wizard.
+    assert client.get("/api/setup/state").json() == {
+        "step": "done",
+        "done": True,
+        "code_required": False,
+        "code_source": None,
+    }
+    assert not (tmp_data_dir / "setup-code").exists()
 
 
 def test_out_of_order_step_reports_where_you_actually_are(tmp_data_dir, client):
     """Claim 4. The message names the current step, which is what makes the
     README's advice ("ask /api/setup/state") actionable."""
     client.get("/healthz")
-    r = client.post("/api/setup/hf_token", json={"hf_token": None})
+    r = client.post(
+        "/api/setup/hf_token", json={"hf_token": None}, headers=setup_code_header(client)
+    )
     assert r.status_code == 400, r.text
     assert r.json()["detail"] == "not at hf_token step (current: welcome)"
 
@@ -113,11 +139,12 @@ def test_documented_password_rules(tmp_data_dir, client, two_gpus, password, det
     """Claim 6. Undocumented before this section existed; a generated
     passphrase longer than 72 bytes fails at the LAST step of the wizard."""
     client.get("/healthz")
-    client.post("/api/setup/welcome")
-    client.post("/api/setup/gpus", json={"allowed_gpu_indices": [0]})
-    client.post("/api/setup/hf_token", json={"hf_token": None})
+    S = setup_code_header(client)
+    client.post("/api/setup/welcome", headers=S)
+    client.post("/api/setup/gpus", json={"allowed_gpu_indices": [0]}, headers=S)
+    client.post("/api/setup/hf_token", json={"hf_token": None}, headers=S)
 
-    r = client.post("/api/setup/admin", json={"username": "admin", "password": password})
+    r = client.post("/api/setup/admin", json={"username": "admin", "password": password}, headers=S)
     assert r.status_code == 400, r.text
     assert r.json()["detail"] == detail
 
@@ -145,15 +172,18 @@ def test_documented_csrf_key_is_csrf_not_csrf_token(tmp_data_dir, client):
 def test_documented_token_mint_bootstrap(tmp_data_dir, client, two_gpus):
     """Claims 7 and 8 end to end: CSRF -> login -> mint, exactly as printed.
 
-    The control API (unlike /api/setup) DOES enforce CSRF, so this is the
-    two-header dance a reader has to get right: `X-CSRF-Token` from
+    With a cookie jar the control API (unlike /api/setup) DOES enforce CSRF,
+    so this is the two-header dance a reader has to get right: `X-CSRF-Token` from
     /api/csrf plus `Authorization: Bearer <access_token>` from the login.
     """
     client.get("/healthz")
-    client.post("/api/setup/welcome")
-    client.post("/api/setup/gpus", json={"allowed_gpu_indices": [0]})
-    client.post("/api/setup/hf_token", json={"hf_token": None})
-    client.post("/api/setup/admin", json={"username": "admin", "password": "s3cret-passphrase"})
+    S = setup_code_header(client)
+    client.post("/api/setup/welcome", headers=S)
+    client.post("/api/setup/gpus", json={"allowed_gpu_indices": [0]}, headers=S)
+    client.post("/api/setup/hf_token", json={"hf_token": None}, headers=S)
+    client.post(
+        "/api/setup/admin", json={"username": "admin", "password": "s3cret-passphrase"}, headers=S
+    )
 
     csrf = client.get("/api/csrf").json()["csrf"]
 
@@ -191,10 +221,13 @@ def test_documented_token_mint_bootstrap(tmp_data_dir, client, two_gpus):
 def test_minted_token_gates_the_openai_endpoint(tmp_data_dir, client, two_gpus):
     """The point of the whole sequence: a key that opens /v1."""
     client.get("/healthz")
-    client.post("/api/setup/welcome")
-    client.post("/api/setup/gpus", json={"allowed_gpu_indices": [0]})
-    client.post("/api/setup/hf_token", json={"hf_token": None})
-    client.post("/api/setup/admin", json={"username": "admin", "password": "s3cret-passphrase"})
+    S = setup_code_header(client)
+    client.post("/api/setup/welcome", headers=S)
+    client.post("/api/setup/gpus", json={"allowed_gpu_indices": [0]}, headers=S)
+    client.post("/api/setup/hf_token", json={"hf_token": None}, headers=S)
+    client.post(
+        "/api/setup/admin", json={"username": "admin", "password": "s3cret-passphrase"}, headers=S
+    )
 
     csrf = client.get("/api/csrf").json()["csrf"]
     jwt = client.post(

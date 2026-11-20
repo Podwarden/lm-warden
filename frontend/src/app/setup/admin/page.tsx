@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PASSWORD_RULE_HINT, newPasswordProblem } from '@/lib/password-policy';
+import { clearSetupCode, setupPost } from '../setup-code';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -25,17 +26,14 @@ export default function AdminPage() {
 
     setBusy(true);
     try {
-      const r = await fetch('/api/setup/admin', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), password }),
-      });
+      const r = await setupPost('/api/setup/admin', { username: username.trim(), password });
       if (!r.ok) {
         const body = await r.json().catch(() => ({}));
         setError(body.detail ?? 'Failed to create admin');
         return;
       }
+      // The code dies with the wizard (the server discards it too).
+      clearSetupCode();
       router.push('/setup/done');
     } finally {
       setBusy(false);

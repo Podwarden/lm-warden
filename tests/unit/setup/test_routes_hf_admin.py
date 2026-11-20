@@ -3,7 +3,7 @@ import sqlite3
 
 import pytest
 
-from tests.conftest import csrf_header
+from tests.conftest import setup_code_header, setup_headers
 
 
 def _seed_to_step(db_path, step, draft):
@@ -28,7 +28,9 @@ def test_post_hf_token_validates_and_advances(tmp_data_dir, client, monkeypatch)
     client.get("/healthz")
     _seed_to_step(tmp_data_dir / "vllm-warden.db", "hf_token", {"allowed_gpu_indices": [0]})
 
-    r = client.post("/api/setup/hf_token", json={"hf_token": "hf_xxx"}, headers=csrf_header(client))
+    r = client.post(
+        "/api/setup/hf_token", json={"hf_token": "hf_xxx"}, headers=setup_headers(client)
+    )
     assert r.status_code == 200
     assert r.json()["whoami"]["username"] == "alice"
 
@@ -43,7 +45,7 @@ def test_post_hf_token_can_be_skipped(tmp_data_dir, client):
     client.get("/healthz")
     _seed_to_step(tmp_data_dir / "vllm-warden.db", "hf_token", {"allowed_gpu_indices": [0]})
 
-    r = client.post("/api/setup/hf_token", json={"hf_token": None}, headers=csrf_header(client))
+    r = client.post("/api/setup/hf_token", json={"hf_token": None}, headers=setup_headers(client))
     assert r.status_code == 200
 
     with sqlite3.connect(tmp_data_dir / "vllm-warden.db") as db:
@@ -62,7 +64,7 @@ def test_post_admin_creates_user_and_finalizes(tmp_data_dir, client):
     r = client.post(
         "/api/setup/admin",
         json={"username": "admin", "password": "hunter2-hunter2"},
-        headers=csrf_header(client),
+        headers=setup_headers(client),
     )
     assert r.status_code == 200
 
@@ -82,7 +84,7 @@ def test_post_admin_rejects_short_password(tmp_data_dir, client):
     r = client.post(
         "/api/setup/admin",
         json={"username": "admin", "password": "abc"},
-        headers=csrf_header(client),
+        headers=setup_headers(client),
     )
     assert r.status_code == 400
 
@@ -103,7 +105,7 @@ def test_post_admin_password_bounds(tmp_data_dir, client, password, ok):
     r = client.post(
         "/api/setup/admin",
         json={"username": "admin", "password": password},
-        headers=csrf_header(client),
+        headers=setup_headers(client),
     )
     assert (r.status_code == 200) is ok, r.text
     if not ok:
@@ -121,7 +123,7 @@ def test_admin_step_refuses_when_any_admin_exists(tmp_data_dir, client):
     r = client.post(
         "/api/setup/admin",
         json={"username": "intruder", "password": "a-long-password-1"},
-        headers=csrf_header(client),
+        headers=setup_headers(client),
     )
     assert r.status_code == 409, r.text
     with sqlite3.connect(db_path) as db:
@@ -146,6 +148,7 @@ async def test_two_simultaneous_admin_submits_make_one_admin(live_app, tmp_data_
                 c.post(
                     "/api/setup/admin",
                     json={"username": f"admin{i}", "password": "a-long-password-1"},
+                    headers=setup_code_header(live_app),
                 )
                 for i in range(2)
             ]
