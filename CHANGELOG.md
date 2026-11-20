@@ -7,6 +7,18 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.11.20.4] — 2026-11-20
+
+### Changed
+
+- **What lmwarden.com keeps from the daily update check.** It now keeps the IP address the check came from, with its country, for up to 400 days after an install's last check (it kept only the country and a hash of the address before). What the check sends is unchanged: the version, edition, platform and a random install ID. `VW_UPDATE_CHECK=0` still turns it off.
+
+## [v2026.11.20.3] — 2026-11-20
+
+### Fixed
+
+- No change to LM Warden itself: this release only fixes the lmwarden.com website (vendor build).
+
 ## [v2026.11.20.1] — 2026-11-20
 
 ### Added

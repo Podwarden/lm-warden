@@ -709,8 +709,8 @@ lmwarden.com once a day for new releases and security advisories (CVEs). The
 check sends only the version, edition, platform and a random install ID —
 nothing about your models, prompts or traffic. Turn it off with
 `VW_UPDATE_CHECK=0` or in Settings; an offline install (`HF_HUB_OFFLINE=1`)
-never makes it. lmwarden.com keeps the country and a one-way hash of the
-address the check came from, not the address, for up to 400 days.
+never makes it. lmwarden.com keeps the IP address the check came from and its
+country for up to 400 days after an install's last check.
 
 No account, no licence check, no analytics: [`install.sh`](install.sh) and
 [`docker-compose.yml`](docker-compose.yml) are the entire deployment and you

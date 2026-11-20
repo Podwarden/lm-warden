@@ -44,7 +44,7 @@ class ConsoleLink:
     """An entry an extension adds to the console menu (spec 2026-11-20).
 
     ``href`` is a same-origin endpoint the console POSTs to as the signed-in
-    admin; it answers ``{"url": "/..."}``, a short-lived URL of a page the
+    admin; it answers ``{"url": "/..."}`` (and may set a cookie scoped to it), a page the
     extension serves itself, and the console navigates there. (A plain link
     cannot work: the console's access token lives in memory and the refresh
     cookie is scoped to /api/auth, so a navigation carries no credential.)
