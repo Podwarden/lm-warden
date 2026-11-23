@@ -23,6 +23,8 @@ NOT_POLICY = {
     "rate_limit_rpm",
     "rate_limit_tpm",
     "rate_limit_tps",
+    # inert since 2026-11-22 (owner decision): nothing reads it, not carried
+    "godmode_self_view",
 }
 
 
@@ -49,7 +51,8 @@ def test_rotation_copies_every_policy_column(tmp_data_dir, client):
         db.execute(
             "UPDATE api_tokens SET allowed_models = 'qwen', rate_limit_rpm = 10, rate_limit_tpm = 1000, rate_limit_tps = 5,"
             ' anthropic_relay = 1, prompt_diet = \'{"strip_tools":["x"],"strip_reasoning":false}\','
-            " capture_until = 9999999999, guard = '{\"off\": true}' WHERE id = ?",
+            " capture_until = 9999999999, guard = '{\"off\": true}', keep_captures = 1"
+            " WHERE id = ?",
             (tid,),
         )
         db.commit()
@@ -59,6 +62,7 @@ def test_rotation_copies_every_policy_column(tmp_data_dir, client):
     differ = {k for k in old if k not in NOT_POLICY and old[k] != new[k]}
     assert differ == set(), {k: (old[k], new[k]) for k in differ}
     assert new["allowed_models"] == "qwen" and new["guard"] == '{"off": true}'
+    assert new["keep_captures"] == 1
 
 
 def test_a_revoked_key_cannot_be_rotated_back_to_life(tmp_data_dir, client):

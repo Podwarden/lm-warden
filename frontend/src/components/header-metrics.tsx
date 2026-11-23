@@ -32,6 +32,7 @@ import {
   type HeaderModelStatus,
 } from '@/lib/header-models';
 import { modelHref } from '@/lib/routes';
+import { LiveNumber } from '@/components/ui/live-number';
 
 // Format a percentage 0–100 (or null) into a fixed-width readout. We use
 // figure-tab-numerals via Tailwind's `tabular-nums` so the digit grid
@@ -199,9 +200,9 @@ export function HeaderMetrics() {
       >
         <MemoryStick className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
         <span className="text-slate-400">VRAM</span>
-        <span data-testid="header-metrics-vram-pct" className="text-slate-100">
+        <LiveNumber data-testid="header-metrics-vram-pct" reserve={3} className="text-slate-100">
           {pct(vramPct)}
-        </span>
+        </LiveNumber>
         <span className="text-slate-500">%</span>
       </Link>
 
@@ -216,9 +217,9 @@ export function HeaderMetrics() {
       >
         <Cpu className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
         <span className="text-slate-400">GPU</span>
-        <span data-testid="header-metrics-gpu-pct" className="text-slate-100">
+        <LiveNumber data-testid="header-metrics-gpu-pct" reserve={3} className="text-slate-100">
           {pct(gpuPct)}
-        </span>
+        </LiveNumber>
         <span className="text-slate-500">%</span>
       </Link>
 

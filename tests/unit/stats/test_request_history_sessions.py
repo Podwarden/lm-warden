@@ -60,9 +60,11 @@ def _q(db_path, sql, args=()):
 def test_read_columns_are_unchanged() -> None:
     assert rh._READ_COLUMNS[-1] == "thinking_forced_off"
     assert "cobs2_session" not in rh._READ_COLUMNS
-    tail = rh._COLUMNS[: -len(rh._DIET_COLUMNS)]
+    tail = rh._COLUMNS[: -len(rh._KV_ISO_COLUMNS)]
+    assert tail[-len(rh._DIET_COLUMNS) :] == rh._DIET_COLUMNS
+    tail = tail[: -len(rh._DIET_COLUMNS)]
     assert tail[-len(rh._SESSIONS_COLUMNS) :] == rh._SESSIONS_COLUMNS
-    assert rh._COLUMNS[-len(rh._DIET_COLUMNS) :] == rh._DIET_COLUMNS
+    assert rh._COLUMNS[-len(rh._KV_ISO_COLUMNS) :] == rh._KV_ISO_COLUMNS
 
 
 async def test_new_fields_round_trip_and_toolset_upserts(tmp_path) -> None:

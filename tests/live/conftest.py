@@ -75,6 +75,10 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         if "/tests/live/" not in f"/{path}":
             continue
         item.add_marker(pytest.mark.live)
+        # tests/live/kv has its own env contract (tests/live/kv/conftest.py) and
+        # never pauses tokens, so the VW_LIVE_* contract does not gate it.
+        if "/tests/live/kv/" in f"/{path}":
+            continue
         if skip_marker is not None:
             item.add_marker(skip_marker)
 

@@ -44,6 +44,33 @@ RETRY_LOG_EVERY_S = 60.0
 LEDGER_COMMIT_WAIT_S = 10.0
 
 
+def spread_over_minutes(total: int, *, start: float, end: float) -> dict[int, int]:
+    """``total`` tokens spread over the epoch minutes ``start``..``end`` (wall
+    seconds), in proportion to the seconds spent in each. Exact: the parts sum
+    to ``total`` (largest remainder). A zero span books all in ``end``'s minute.
+
+    Stats redesign B7 / owner decision D3: a long generation is booked to the
+    minutes it was produced in, not as one spike in the minute it finished.
+    """
+    if total <= 0:
+        return {}
+    end_min = int(end // 60)
+    start = min(start, end)
+    start_min = int(start // 60)
+    span = end - start
+    if span <= 0 or start_min == end_min:
+        return {end_min: total}
+    shares: list[tuple[int, float]] = []
+    for m in range(start_min, end_min + 1):
+        lo, hi = max(start, m * 60.0), min(end, (m + 1) * 60.0)
+        shares.append((m, max(0.0, hi - lo) / span * total))
+    out = {m: int(v) for m, v in shares}
+    left = total - sum(out.values())
+    for m, _v in sorted(shares, key=lambda x: (x[1] - int(x[1])), reverse=True)[:left]:
+        out[m] += 1
+    return {m: n for m, n in out.items() if n}
+
+
 @dataclass
 class _Batch:
     # (model_id, token_id) -> [requests, prompt, completion]
@@ -121,7 +148,16 @@ class Ledger:
         cached_tokens: int | None,
         variant_id: str | None,
         variant: Any = None,
+        produced_s: float | None = None,
     ) -> None:
+        """Accumulate one finished request.
+
+        ``produced_s`` is the time from the request's first token to now (its
+        generation span). When given, the per-minute rollups book the prompt
+        (and its cached part) to the first-token minute and spread the
+        completion over the span; the request itself counts in the finish
+        minute. Without it everything books at the finish minute, as before.
+        """
         try:
             # Validate and coerce EVERYTHING before touching a dict, so a bad
             # input records nothing rather than half a request.
@@ -134,31 +170,48 @@ class Ledger:
                 raise TypeError("model_id/token_id must be str")
             if variant_id is not None and not isinstance(variant_id, str):
                 raise TypeError("variant_id must be str")
-            minute = int(self._clock() // 60)
+            now = self._clock()
+            minute = int(now // 60)
+            span = float(produced_s) if produced_s is not None else 0.0
+            if not span >= 0.0:  # NaN or negative: book at finish
+                span = 0.0
+            first_minute = int((now - span) // 60)
+            # minute -> [requests, prompt, completion, cached, measured]
+            per_min: dict[int, list[int]] = defaultdict(lambda: [0, 0, 0, 0, 0])
+            per_min[minute][0] += 1
+            pm = per_min[first_minute]
+            pm[1] += prompt
+            if cached is not None:
+                pm[3] += cached
+                pm[4] += 1
+            for m, n in spread_over_minutes(completion, start=now - span, end=now).items():
+                per_min[m][2] += n
             b = self._batch
             c = b.counters[(model_id, token_id)]
             c[0] += 1
             c[1] += prompt
             c[2] += completion
-            s = b.samples[(model_id, minute)]
-            s[0] += 1
-            s[1] += prompt
-            s[2] += completion
-            if cached is not None:
-                s[3] += cached
-                s[4] += 1
-            if token_id is not None:
-                u = b.usage[(token_id, minute)]
-                u[0] += 1
-                u[1] += prompt
-                u[2] += completion
-                if variant_id is not None:
-                    vu = b.variant_usage[(token_id, variant_id, model_id, minute)]
-                    vu[0] += 1
-                    vu[1] += prompt
-                    vu[2] += completion
-                    if variant is not None:
-                        b.variants.setdefault(variant_id, variant)
+            for m, (n, p, comp, cach, meas) in per_min.items():
+                if not (n or p or comp or cach or meas):
+                    continue
+                s = b.samples[(model_id, m)]
+                s[0] += n
+                s[1] += p
+                s[2] += comp
+                s[3] += cach
+                s[4] += meas
+                if token_id is not None:
+                    u = b.usage[(token_id, m)]
+                    u[0] += n
+                    u[1] += p
+                    u[2] += comp
+                    if variant_id is not None:
+                        vu = b.variant_usage[(token_id, variant_id, model_id, m)]
+                        vu[0] += n
+                        vu[1] += p
+                        vu[2] += comp
+            if token_id is not None and variant_id is not None and variant is not None:
+                b.variants.setdefault(variant_id, variant)
         except Exception:  # noqa: BLE001 -- accounting must never fail a request
             logger.debug("ledger: could not record request", exc_info=True)
 

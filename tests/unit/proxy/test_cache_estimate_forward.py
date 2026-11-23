@@ -408,7 +408,8 @@ def test_request_is_visible_as_queued_during_the_admission_wait(tmp_data_dir, cl
     assert r.status_code == 200
     assert seen == [[("queued", None)]]
     row = _live_rows(client)[0]  # same object, now admitted
-    assert row.phase == "waiting" and row.queued_s is not None  # non-stream request
+    # non-stream request, forwarded: the engine holds it (stats redesign)
+    assert row.phase == "running_no_stream" and row.queued_s is not None
 
 
 def test_a_cancelled_admission_wait_leaves_no_row(tmp_data_dir, client):
@@ -485,7 +486,7 @@ def test_prefill_slow_math():
     assert _serialize(_live(queued_s=1.234), 1.0)["queued_s"] == 1.234
 
 
-# ---- non-stream "waiting", construction inside the cleanup try, started_iso ----
+# ---- non-stream "waiting" then "running_no_stream", construction inside the cleanup try, started_iso ----
 
 
 def test_non_stream_request_is_waiting_and_never_slow(tmp_data_dir, client):
@@ -496,7 +497,7 @@ def test_non_stream_request_is_waiting_and_never_slow(tmp_data_dir, client):
     r, _ = _post(client, _body(5))  # no "stream": true
     assert r.status_code == 200
     live = _live_rows(client)[0]
-    assert live.phase == "waiting" and live.is_stream is False
+    assert live.phase == "running_no_stream" and live.is_stream is False
     row = _serialize(live, live.started_monotonic + 9999)
     assert row["prefill_slow"] is False and row["is_stream"] is False
 

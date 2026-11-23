@@ -138,6 +138,15 @@ export function TokenHeader({
               </>
             )}
             <span className={badge(status.tone)}>{status.label}</span>
+            {token.kv_isolation === "isolated" ? (
+              <span data-testid="token-kv-chip" className="whitespace-nowrap rounded-full border border-vw-info-fg/40 bg-vw-info-bg/50 px-2.5 py-0.5 text-[12px] font-medium leading-[1.5] text-vw-info-fg">
+                Cache isolated
+              </span>
+            ) : (
+              <span data-testid="token-kv-chip" className="whitespace-nowrap rounded-full bg-chat-surface-2 px-2.5 py-0.5 text-[12px] font-medium leading-[1.5] text-chat-muted">
+                Cache shared
+              </span>
+            )}
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-3.5 text-[13px] text-chat-muted">
             <span className="!font-mono text-[13px] text-chat-muted">{token.prefix}…</span>

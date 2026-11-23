@@ -4,7 +4,7 @@ Lets Claude Code and the Anthropic SDKs use a warden as their base URL. The
 route owns no forwarding of its own: it validates the Anthropic body, turns
 it into an OpenAI chat body (messages_translate.py), and runs it through the
 same ``_forward`` as ``/v1/chat/completions`` -- so admission, priority,
-accounting, the live registry, god mode, the runaway detector and the reaper
+accounting, the live registry, Prompt Lens, the runaway detector and the reaper
 behave exactly as they do for OpenAI traffic. Auth is ``require_bearer``
 (it also reads ``x-api-key`` on these routes, see auth.py) and routing is
 ``_resolve_target``, both unchanged.
@@ -173,6 +173,7 @@ async def _serve_local(
     # _forward reads the body from the request: hand it the translated one.
     # `_body` is Starlette's cache of an already-read body; `_receive` covers
     # a reader that goes to the stream (the same re-set chat_completions does).
+    wire = await request.body()  # the client's bytes (cached by _parse); capture records them
     body = json.dumps(oai).encode()
     request._body = body
 
@@ -190,6 +191,8 @@ async def _serve_local(
         token,
         variant=variant,
         affinity_key=anthropic_affinity_key(req),
+        wire_body=wire,
+        wire_path="/v1/messages",
     )
     emit_thinking = thinking_requested(req)
     if guard_blocked(resp):

@@ -1,13 +1,13 @@
-0.00.002.325 I srv  llama_server: initializing ...
-0.00.006.525 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
-0.00.008.699 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
-0.00.011.133 I srv    load_model: loading model '/models/broken.gguf'
-0.00.012.167 E llama_model_load: error loading model: unknown model architecture: 'notarealarch'
-0.00.012.183 E llama_model_load_from_file_impl: failed to load model
-0.00.012.244 E common_fit_params: encountered an error while trying to fit params to free device memory: failed to load model
-0.00.012.756 E llama_model_load: error loading model: unknown model architecture: 'notarealarch'
-0.00.012.761 E llama_model_load_from_file_impl: failed to load model
-0.00.012.763 E cmn  common_init_: failed to load model '/models/broken.gguf'
-0.00.012.770 E srv    load_model: failed to load model, '/models/broken.gguf'
-0.00.012.771 I srv    operator(): operator(): cleaning up before exit...
-0.00.013.163 E srv  llama_server: exiting due to model loading error
+0.00.002.137 I srv  llama_server: initializing ...
+0.00.004.494 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.006.966 W srv  server_setup: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.010.017 I srv    load_model: loading model '/models/broken.gguf'
+0.00.117.392 E llama_model_load: error loading model: unknown model architecture: 'notarealarch'
+0.00.117.437 E llama_model_load_from_file_impl: failed to load model
+0.00.164.638 E common_fit_params: encountered an error while trying to fit params to free device memory: failed to load model
+0.00.164.838 E llama_model_load: error loading model: unknown model architecture: 'notarealarch'
+0.00.164.844 E llama_model_load_from_file_impl: failed to load model
+0.00.164.851 E cmn  common_init_: failed to load model '/models/broken.gguf'
+0.00.164.861 E srv    load_model: failed to load model, '/models/broken.gguf'
+0.00.164.890 I srv    operator(): operator(): cleaning up before exit...
+0.00.168.178 E srv  server_run_i: exiting due to model loading error

@@ -14,7 +14,7 @@ edit, a different ruff version, a config change).
 The formatter is the one installed in the *running interpreter*
 (``sys.executable -m ruff`` — the requirements-dev.txt pin pip-installed into
 it, whose wheel ships ``python -m ruff``), not whatever ``ruff`` is first on
-PATH. Why this matters: on ollama.h, ``~/.local/bin/ruff`` 0.14.14 shadowed
+PATH. Why this matters: on a build host, ``~/.local/bin/ruff`` 0.14.14 shadowed
 the venv's 0.8.4 under ``scripts/farm/remote.sh run``, and the PATH-resolved
 ruff 0.14.14 reported 89 files would be reformatted while 0.8.4 reported
 819 files already formatted — a green pinned tree red under a newer PATH
@@ -62,7 +62,7 @@ def test_committed_tree_is_ruff_format_fixed_point():
 
 def test_the_formatter_is_the_pinned_one():
     """The running interpreter's ruff is the requirements-dev.txt pin: a newer
-    ruff first on PATH (ollama.h: ~/.local/bin/ruff 0.14.14 over the venv's
+    ruff first on PATH (on a build host: ~/.local/bin/ruff 0.14.14 over the venv's
     0.8.4) must not change which formatter runs, because the test invokes
     `sys.executable -m ruff`, never a bare PATH `ruff`."""
     import importlib.util

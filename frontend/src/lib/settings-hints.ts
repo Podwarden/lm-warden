@@ -86,6 +86,11 @@ export const RUNTIME_HINTS: Record<string, FieldHint> = {
     hint: 'What `/` answers while the home page is Off: open the console, or a plain 404.',
     restart: 'none',
   },
+  prompt_lens_enabled: {
+    label: 'Prompt Lens',
+    hint: 'Captures prompts and replies in memory so requests can be watched live: key holders see their own, admins see all. Nothing goes to disk unless a key keeps captures. Applies at once, no restart. Turning it off ends open Prompt Lens views and clears what memory holds; kept captures already on disk stay until that key\'s Keep captures switch is turned off. While it is off, admins can still open the captures kept on disk (read-only, on the key\'s page); key holders cannot.',
+    restart: 'none',
+  },
   update_check_enabled: {
     label: 'Check for updates',
     hint: 'Once a day, ask lmwarden.com for new releases and security advisories (CVEs). The check sends only the version, edition, platform and a random install ID — nothing about your models, prompts or traffic. VW_UPDATE_CHECK=0 turns it off for good, whatever this says.',
@@ -163,6 +168,8 @@ export const RUNTIME_GENERAL_KEYS = [
   'hf_token',
   // Defaults for new models
   'default_gpu_indices',
+  // Privacy
+  'prompt_lens_enabled',
 ] as const;
 
 export const RUNTIME_NETWORKING_KEYS = [

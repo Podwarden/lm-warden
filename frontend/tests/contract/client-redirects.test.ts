@@ -7,6 +7,8 @@
 //   /            -> /stats
 //   /chat        -> /chat2
 //   /setup       -> /setup/welcome
+//   /cache       -> /models?tab=files  (the weights cache page became the
+//                   "Model files" tab of /models, 2026-11-23)
 //
 // The render legs mock next/navigation's useRouter (vi.mock is hoisted above
 // the in-test page imports) and assert the exact replace target; the
@@ -27,6 +29,7 @@ describe('client-side redirect pages (export-safe)', () => {
     { file: 'app/page.tsx', target: '/stats' },
     { file: 'app/chat/page.tsx', target: '/chat2' },
     { file: 'app/setup/page.tsx', target: '/setup/welcome' },
+    { file: 'app/cache/page.tsx', target: '/models?tab=files' },
   ];
 
   beforeEach(() => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { dominantCause, efficiency, fmtPct, fromCache, isEstimated, outcomeLabel, topProblem, type CacheSummary } from "@/lib/cache-obs";
+import { dominantCause, efficiency, engineBlockNote, fmtPct, fromCache, isEstimated, outcomeLabel, topProblem, type CacheSummary } from "@/lib/cache-obs";
 
 const base: CacheSummary = {
   model_id: "m", model: "m", backend: "vllm", requests: 100, prompt_tokens: 100_000,
@@ -140,3 +140,32 @@ describe("cache-obs helpers", () => {
     expect(own.split("\n")).toHaveLength(1);
   });
 });
+
+describe("engine cache granularity note", () => {
+  it("names the block size in plain words, and the dropped block when there is one", () => {
+    const n = engineBlockNote({ ...base, engine_block_tokens: 1584, engine_drops_last_block: true });
+    expect(n?.short).toBe("engine caches in ~1.6k-token blocks");
+    expect(n?.long).toMatch(/1,584-token blocks/);
+    expect(n?.long).toMatch(/speculative decoding/);
+    const plain = engineBlockNote({ ...base, engine_block_tokens: 784, engine_drops_last_block: false });
+    expect(plain?.short).toBe("engine caches in 784-token blocks");
+    expect(plain?.long).not.toMatch(/speculative decoding/);
+  });
+  it("speaks in match steps when the engine matches finer than its block", () => {
+    const n = engineBlockNote({ ...base, engine_block_tokens: 1584, engine_match_unit_tokens: 16, engine_drops_last_block: true });
+    expect(n?.short).toBe("engine reuses in 16-token steps");
+    expect(n?.long).toMatch(/every 16 tokens/);
+    expect(n?.long).toMatch(/last 16 tokens it matched/);
+    const noMtp = engineBlockNote({ ...base, engine_block_tokens: 1584, engine_match_unit_tokens: 16, engine_drops_last_block: false });
+    expect(noMtp?.long).not.toMatch(/speculative decoding/);
+    // unit = block: today's block wording
+    const same = engineBlockNote({ ...base, engine_block_tokens: 1584, engine_match_unit_tokens: 1584, engine_drops_last_block: true });
+    expect(same?.short).toBe("engine caches in ~1.6k-token blocks");
+  });
+  it("says nothing when unknown, from an older server, or on small pages", () => {
+    expect(engineBlockNote(base)).toBeNull();
+    expect(engineBlockNote({ ...base, engine_block_tokens: null })).toBeNull();
+    expect(engineBlockNote(undefined)).toBeNull();
+  });
+});
+

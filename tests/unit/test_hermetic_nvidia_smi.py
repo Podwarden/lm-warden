@@ -1,6 +1,6 @@
 """The hermetic nvidia-smi autouse fixture (tests/conftest.py) makes the GPU
 probe look ABSENT in every unit test: a host with /usr/bin/nvidia-smi but no
-working driver (ollama.h: it exits 9, "Failed to initialize NVML") made the
+working driver (a CPU-only build host: it exits 9, "Failed to initialize NVML") made the
 probe report 'failing' and nulled vram/util/power in the stats tests.
 
 These tests pin the seam without trusting the autouse fixture itself: a
@@ -15,7 +15,7 @@ import stat
 
 
 def test_a_failing_nvidia_smi_on_path_does_not_reach_a_test(tmp_path, monkeypatch):
-    # A fake nvidia-smi that answers like ollama.h's: NVML error on stdout,
+    # A fake nvidia-smi that answers like a driverless host's: NVML error on stdout,
     # exit 9. Whatever PATH is, the probe must not run it: the fixture's
     # _absent stand-in is what a test's probe hits.
     import app.system.gpu as gpu

@@ -1,4 +1,5 @@
 import asyncio
+import re
 import weakref
 
 import bcrypt
@@ -178,21 +179,30 @@ class TicketBody(BaseModel):
 
 @router.post("/sse-ticket")
 async def mint_sse_ticket(body: TicketBody, request: Request, user: str = Depends(require_session)):
-    # God mode is the one stream that can be switched off at runtime. The
+    # Prompt Lens is the one stream that can be switched off at runtime. The
     # browser's EventSource can never read the stream endpoint's own 409
     # (`onerror` exposes no HTTP status), so the viewer classifies the
-    # disabled state from THIS mint response. Refuse a god-mode ticket up
-    # front when the feature is off. Scoped to the god-mode path only — every
+    # disabled state from THIS mint response. Refuse a Prompt Lens ticket up
+    # front when the feature is off. Scoped to the Prompt Lens path only — every
     # other stream (e.g. model logs) mints unconditionally as before.
-    from app.proxy.routes_godmode import STREAM_PATH as GODMODE_STREAM_PATH
+    from app.proxy.routes_prompt_lens import STREAM_PATH as PROMPT_LENS_STREAM_PATH
 
-    if body.path == GODMODE_STREAM_PATH:
-        settings = request.app.state.settings
-        hub = getattr(request.app.state, "godmode_hub", None)
-        if hub is None or not settings.godmode_enabled:
-            raise HTTPException(
-                status.HTTP_409_CONFLICT,
-                "god mode is disabled (VW_GODMODE_ENABLED)",
-            )
+    # The key holder's area (/api/me/...) is the key's own: its stream takes a
+    # ticket minted by the key's sign-in (POST /api/me/prompt-lens/ticket), never
+    # an admin's. Slashes collapsed, so "//api/me/..." is refused too.
+    collapsed = re.sub(r"/+", "/", body.path)
+    if collapsed == "/api/me" or collapsed.startswith("/api/me/"):
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, "a key holder's stream takes the key's own ticket"
+        )
+
+    from app.proxy.prompt_lens_legacy import LEGACY_STREAM_PATH
+
+    if body.path in (PROMPT_LENS_STREAM_PATH, LEGACY_STREAM_PATH):
+        from app.proxy import prompt_lens_switch
+        from app.proxy.routes_prompt_lens import DISABLED
+
+        if not prompt_lens_switch.enabled(request.app):
+            raise HTTPException(status.HTTP_409_CONFLICT, DISABLED)
 
     return {"ticket": request.app.state.sse_tickets.mint(user, body.path)}

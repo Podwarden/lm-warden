@@ -29,63 +29,6 @@ Object.defineProperty(globalThis, 'localStorage', {
   writable: true,
 });
 
-// v17.11 Bundle 2 — `react-virtuoso` uses ResizeObserver + getBoundingClientRect
-// for window measurement, neither of which work in jsdom. The library
-// silently renders zero items in this environment, breaking every test
-// that asserts on a row rendered through Virtuoso.
-//
-// We replace Virtuoso with a plain "render all items in order" shim that
-// passes through the props tests actually care about (style, data,
-// itemContent, computeItemKey, components.List).
-//
-// Still load-bearing after /chat2 moved to @podwarden/chat-ui (v2026.08.25):
-// `models/log-stream.tsx` and `godmode/godmode-viewer.tsx` both render their
-// rows through <Virtuoso>, and their suites assert on row TEXT
-// (`log-stream.test.tsx` → "hello world", "first output"). Without this shim
-// those rows never mount. `godmode-viewer.test.tsx` installs its own richer
-// local mock, which overrides this one for that file only.
-//
-// The chat2-era extras are gone with the feature that needed them: the
-// `__virtuosoTestHandle` escape hatch (published `atBottomStateChange` /
-// `followOutput` / a spy-able `scrollToIndex` so <Thread>'s "Jump to latest"
-// debounce could be driven from a test) and the `components.Footer` /
-// `EmptyPlaceholder` overrides. Nothing outside chat2 used either — the two
-// remaining callers pass `components={{ List }}` and nothing else.
-vi.mock('react-virtuoso', () => {
-  type Row = { kind?: string; row?: unknown; event?: unknown } | unknown;
-  function Virtuoso(props: {
-    data?: ReadonlyArray<Row>;
-    itemContent?: (index: number, item: Row) => React.ReactNode;
-    computeItemKey?: (index: number, item: Row) => React.Key;
-    style?: React.CSSProperties;
-    ref?: React.Ref<{ scrollToIndex: (o: unknown) => void }>;
-    components?: {
-      List?: React.ComponentType<React.HTMLAttributes<HTMLDivElement>>;
-    };
-  }) {
-    const { data = [], itemContent, computeItemKey, style, components } = props;
-    // React 19 passes `ref` as a plain prop to function components. The
-    // callers use it only for `scrollToIndex`, which has nothing to scroll
-    // here — but the handle must exist so `ref.current?.scrollToIndex(...)`
-    // is a real call rather than an optional-chain no-op.
-    React.useImperativeHandle(props.ref, () => ({ scrollToIndex: () => {} }), []);
-    const rows = data.map((item, idx) => {
-      const key = computeItemKey ? computeItemKey(idx, item) : idx;
-      return React.createElement(
-        'div',
-        { key, 'data-virtuoso-row-index': idx },
-        itemContent ? itemContent(idx, item) : null,
-      );
-    });
-    const ListComp = components?.List;
-    if (ListComp) {
-      return React.createElement('div', { style }, React.createElement(ListComp, {}, rows));
-    }
-    return React.createElement('div', { style }, rows);
-  }
-  return { Virtuoso };
-});
-
 // v2026.05.15.3 — `auth-fetch.ts` carries a module-level
 // `loginRedirectInFlight` flag that de-dupes parallel 401 redirects in a
 // real page. Module state persists across test files in vitest's worker,

@@ -8,11 +8,13 @@ flows. When `overrides=None`, behaviour matches the row defaults.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 from typing import Any
 
 from app.models.model_id_flags import model_id_flag_in, model_id_refusal
+from app.runtime.kv_store import check_kv_driver, kv_enabled
 
 # vLLM 0.20.0 requires GGUF models to be addressed as ``repo_id:quant_type``
 # (e.g. ``unsloth/Qwen3.6-27B-GGUF:Q5_K_M``). #85 (v17.13) started shipping
@@ -118,6 +120,8 @@ def build_vllm_args(
     overrides: dict | None = None,
     driver: str = "local",
     bind_host: str | None = None,
+    kv_socket: str | None = None,
+    kv_revisions: dict[str, str] | None = None,
 ) -> list[str]:
     """Construct the argv vector for `vllm serve <args>`.
 
@@ -214,7 +218,16 @@ def build_vllm_args(
         args += ["--quantization", str(quantization)]
     if max_num_seqs is not None:
         args += ["--max-num-seqs", str(max_num_seqs)]
-    if model.hf_revision:
+    if kv_enabled(model) and kv_revisions:
+        # The KV tier is keyed by these commits (kv_store.resolve_kv_revisions): start the
+        # engine at exactly them, so a re-pull that moves the branch cannot race the load.
+        args += [
+            "--revision",
+            kv_revisions["revision"],
+            "--tokenizer-revision",
+            kv_revisions["tokenizer_revision"],
+        ]
+    elif model.hf_revision:
         args += ["--revision", model.hf_revision]
     # #106: GGUF repos that omit ``config.json`` (common for unsloth republishes)
     # require ``--hf-config-path <original_repo>`` so vLLM can find a config to
@@ -234,6 +247,41 @@ def build_vllm_args(
     # who wants plain FCFS can override by putting ``--scheduling-policy fcfs``
     # in ``extra_args`` (appended last → wins in argparse).
     args += ["--scheduling-policy", "priority"]
+    # lmw_kv KV-cache tiers. The JSON is argv, never secret: the connector reads the
+    # network key from the file named by LMW_KV_KEY_FILE (see env.py). ``recompute``
+    # because vLLM's default ("fail") would fail a request whose KV load failed.
+    if kv_enabled(model):
+        kv_store = model.kv_store
+        # Only the in-container subprocess engine shares the daemon's socket and pool.
+        check_kv_driver(model, driver)
+        if not kv_socket:
+            raise ValueError("kv_store is enabled but no kv_socket was given")
+        # The commits the namespace is keyed by (kv_store.resolve_kv_revisions); the
+        # connector stays off without them, so a missing one is a caller bug.
+        if not kv_revisions or set(kv_revisions) != {"revision", "tokenizer_revision"}:
+            raise ValueError("kv_store is enabled but no kv_revisions were given")
+        args += [
+            "--kv-transfer-config",
+            json.dumps(
+                {
+                    "kv_connector": "LmwKVConnector",
+                    "kv_role": "kv_both",
+                    "kv_connector_module_path": "lmw_kv.connector",
+                    "kv_load_failure_policy": "recompute",
+                    "kv_connector_extra_config": {
+                        "socket": kv_socket,
+                        "tiers": kv_store,
+                        "min_tokens": 2048,
+                        "revision": kv_revisions["revision"],
+                        "tokenizer_revision": kv_revisions["tokenizer_revision"],
+                        # The daemon's owner of this engine's namespaces: the api releases
+                        # it when the engine goes away (app/kv/policy_sync.py).
+                        "owner": model.id,
+                    },
+                },
+                separators=(",", ":"),
+            ),
+        ]
     extra_args = list(getattr(model, "extra_args", []) or [])
     # Makes vLLM report usage.prompt_tokens_details.cached_tokens on the final
     # usage chunk, so finished requests record a MEASURED prefix-cache hit. A

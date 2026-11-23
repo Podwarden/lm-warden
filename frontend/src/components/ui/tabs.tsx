@@ -21,6 +21,8 @@ export function Tabs({ tabs, activeTab, onTabChange, children }: TabsProps) {
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            type="button"
+            aria-current={activeTab === tab.id ? "true" : undefined}
             onClick={() => onTabChange(tab.id)}
             className={cn(
               "shrink-0 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors",

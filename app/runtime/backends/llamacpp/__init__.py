@@ -45,7 +45,7 @@ CAPABILITIES = BackendCapabilities(
     supports_tensor_parallel=False,
     supports_data_parallel=False,
     cached_tokens_reporting="usage",
-    # llama.cpp never reads cache_salt (checked at b11719: no "salt" anywhere
+    # llama.cpp never reads cache_salt (checked at b12644: no "salt" anywhere
     # under tools/server or common): slots match on the
     # longest common prefix whatever the salt.
     honours_cache_salt=False,
@@ -82,7 +82,7 @@ CAPABILITIES = BackendCapabilities(
     env_prefixes=ALLOWED_ENV_PREFIXES,
     env_exact=ALLOWED_ENV_EXACT,
     # llama-server has no gpu_memory_utilization analogue -- verified against
-    # `llama-server --help` in the shipped image (checked at b11719), which offers only
+    # `llama-server --help` in the shipped image (checked at b12644), which offers only
     # `-ngl/--n-gpu-layers` (a layer count). Applying vLLM's 0.9 to a llama.cpp
     # row hid 10% of the card from the verdict and reported "won't fit" for
     # models that fit.
@@ -205,6 +205,10 @@ class LlamaCppBackend:
         # without branching on the backend's name (same reason every backend
         # takes hf_token/hf_cache_dir even if it ignores them).
         load_max_s: float | None = None,
+        # Accepted and IGNORED: the KV-cache tier connector is a vLLM feature.
+        kv_socket: str | None = None,
+        kv_key_file: str | None = None,
+        kv_revisions: dict[str, str] | None = None,
     ) -> LaunchPlan:
         argv = [BINARY] + build_llamacpp_args(
             model,

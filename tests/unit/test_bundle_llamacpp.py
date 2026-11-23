@@ -224,7 +224,7 @@ def _commit_fixture(tmp_path: Path) -> tuple[Path, dict[str, str], str]:
     ).stdout.strip()
     cache = tmp_path / "cache"
     cache.mkdir()
-    src = cache / "llama.cpp-b11719.tar.gz"
+    src = cache / "llama.cpp-b12644.tar.gz"
     subprocess.run(
         [
             "git",
@@ -232,7 +232,7 @@ def _commit_fixture(tmp_path: Path) -> tuple[Path, dict[str, str], str]:
             str(repo),
             "archive",
             "--format=tar.gz",
-            "--prefix=llama.cpp-b11719/",
+            "--prefix=llama.cpp-b12644/",
             "-o",
             str(src),
             "HEAD",
@@ -264,8 +264,8 @@ def test_a_source_tarball_with_the_wrong_commit_id_is_refused_before_extraction(
         timeout=120,
     )
     assert proc.returncode == 1, proc.stdout + proc.stderr
-    assert f"commit id mismatch in {cache}/llama.cpp-b11719.tar.gz" in proc.stderr
-    assert not (cache / "src-b11719").exists()
+    assert f"commit id mismatch in {cache}/llama.cpp-b12644.tar.gz" in proc.stderr
+    assert not (cache / "src-b12644").exists()
     # The control: the right commit passes the check and reaches configure.
     script = _pinned_copy(tmp_path, LLAMACPP_COMMIT=commit, **pins)
     proc = subprocess.run(

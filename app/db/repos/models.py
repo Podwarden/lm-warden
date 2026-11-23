@@ -104,6 +104,10 @@ class ModelRow:
     # Migration 0051: "client" = the request decides, "off" = the proxy forces
     # thinking off. Read per request, so editable while loaded.
     thinking_policy: str = "client"
+    # Migration 0058: KV-cache tiers, "off" | "ram" | "ram+nvme". Changes argv, so reload-only.
+    kv_store: str = "off"
+    # Migration 0060: the model's part of each KV tier under the fair eviction policy.
+    kv_store_weight: int = 1
 
 
 # Column list shared by insert + every SELECT so we can't drift them.
@@ -120,7 +124,7 @@ _MODEL_COLS = (
     "supports_tools, supports_vision, supports_reasoning, backend, "
     "mmproj_filename, n_gpu_layers, "
     "data_parallel_size, dp_affinity_enabled, dp_spill_threshold, "
-    "layout_notice_level, layout_notice, thinking_policy"
+    "layout_notice_level, layout_notice, thinking_policy, kv_store, kv_store_weight"
 )
 
 
@@ -169,6 +173,8 @@ def _decode_row(row: tuple) -> ModelRow:
         layout_notice_level=row[35],
         layout_notice=row[36],
         thinking_policy=row[37] if row[37] is not None else "client",
+        kv_store=row[38] if row[38] is not None else "off",
+        kv_store_weight=row[39] if row[39] is not None else 1,
     )
 
 
@@ -194,8 +200,9 @@ class ModelRepo:
                 hf_config_repo, tokenizer_repo,
                 engine_channel, engine_vllm_version, engine_image,
                 backend, mmproj_filename, n_gpu_layers,
-                data_parallel_size, dp_affinity_enabled, dp_spill_threshold, thinking_policy
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                data_parallel_size, dp_affinity_enabled, dp_spill_threshold, thinking_policy, kv_store,
+                kv_store_weight
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 row.id,
                 row.served_model_name,
@@ -228,6 +235,8 @@ class ModelRepo:
                 int(row.dp_affinity_enabled),
                 row.dp_spill_threshold,
                 row.thinking_policy,
+                row.kv_store,
+                row.kv_store_weight,
             ),
         )
         await self._commit()

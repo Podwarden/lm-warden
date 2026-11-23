@@ -99,7 +99,7 @@ describe('SessionGate — sessions key mode', () => {
     expect(screen.queryByTestId('page-body')).toBeNull();
   });
 
-  it.each(['/key', '/key/settings', '/key/manage', '/key/guard-log'])(
+  it.each(['/key', '/key/stats', '/key/prompt-lens', '/key/prompt-lens/', '/key/settings', '/key/manage', '/key/guard-log'])(
     'opens %s with a valid token and makes no session check',
     async (p) => {
       mockPath = p;

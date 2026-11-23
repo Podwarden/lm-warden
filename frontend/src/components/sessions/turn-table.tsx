@@ -8,6 +8,9 @@ import type { Selection } from "@/lib/sessions/layout";
 import { S } from "@/lib/sessions/strings";
 import type { Turn } from "@/lib/sessions/types";
 
+import { Mark } from "@/components/kv/parts";
+import { MARK } from "@/lib/kv";
+
 import { AnatomyBar } from "./anatomy-bar";
 import { fmtSecs, fmtShareCause } from "./format";
 import { TurnShape } from "./turn-shape";
@@ -53,14 +56,25 @@ export function TurnTable({
             </tr>
           </thead>
           <tbody>
-            {turns.map((t) => {
+            {turns.map((t, i) => {
               const sel = selection.requestId === t.request_id;
+              // The turn's own record says it ran isolated, so the mark stays right after the key
+              // switches back. The first isolated turn after a shared one gets a line saying why its
+              // cache figure dropped.
+              const switched = t.isolated === true && i > 0 && turns[i - 1].isolated === false;
               return (
                 <Fragment key={t.request_id}>
                   {t.lineage_unknown && (
                     <tr>
                       <td colSpan={span} className="px-1 pt-1 text-xs text-amber-400">
                         {S.turn.lineageUnknown}
+                      </td>
+                    </tr>
+                  )}
+                  {switched && (
+                    <tr>
+                      <td colSpan={span} className="px-1 pt-1 text-xs text-amber-400">
+                        {MARK.switchedHere}
                       </td>
                     </tr>
                   )}
@@ -77,7 +91,14 @@ export function TurnTable({
                     onClick={() => onSelect(t)}
                     className={`cursor-pointer border-t border-chat-rule ${sel ? "bg-slate-700/60" : "hover:bg-slate-800/60"}`}
                   >
-                    <td className="py-1 pr-2">{t.turn}</td>
+                    <td className="whitespace-nowrap py-1 pr-2">
+                      {t.turn}
+                      {t.isolated === true && (
+                        <Mark tone="info" className="ml-1.5">
+                          {MARK.isolated}
+                        </Mark>
+                      )}
+                    </td>
                     <td className="py-1 pr-2">{t.edge ?? "—"}</td>
                     <td className="py-1 pr-2 text-right">{formatCompact(t.prompt_tokens)}</td>
                     <td className="py-1 pr-2">{fmtShareCause(t)}</td>

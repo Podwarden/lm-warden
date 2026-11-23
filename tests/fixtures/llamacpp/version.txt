@@ -1,2 +1,2 @@
-version: 0.7.0-dev (build 11719, commit 5aeac37a3)
-built with GNU 13.3.0 for Linux aarch64
+version: 1.0.0-dev (build 12644, commit 94f3af3d0)
+built with GNU 13.3.0 for Linux x86_64

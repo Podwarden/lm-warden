@@ -281,8 +281,45 @@ export function throughputFor(url: string, models = MODELS) {
   };
 }
 
+/** /api/stats/v2/speed for a window volume: n requests of the scope's model. */
+export function speedFor(url: string, n = 30) {
+  const params = new URL(url, "http://x").searchParams;
+  const model = params.get("model");
+  const group = params.get("group");
+  const pts = Array.from({ length: n }, (_, i) => ({
+    id: `p${i}`, finished_at: NOW_EPOCH - 3000 + i * 60, model_id: model ?? "id-model-a-8b", model: "model-a-8b",
+    prompt_tokens: 4000, completion_tokens: 501, finish_reason: "stop", queued_s: 0.5,
+    ttft: 2 + (i % 3) * 0.1, decode: 50, duration: 11.5, token_id: i % 2 ? "tok-a" : "tok-b",
+    token_name: i % 2 ? "key-a" : "key-b", client_ip: "10.0.0.1", prefill: 2000, prefill_alone: true,
+  }));
+  const s = (v: number) =>
+    n === 0 ? { n: 0, mode: "none" } : n < 5 ? { n, mode: "list", values: Array(n).fill(v) } : n < 20 ? { n, mode: "max", p50: v, max: v } : { n, mode: "p95", p50: v, p95: v, p99: null };
+  return {
+    range: params.get("range") ?? "1h", model_id: model, last_finished_at: n ? NOW_EPOCH - 60 : NOW_EPOCH - 3 * 3600,
+    count: n, stride: 1,
+    summary: model ? { ttft: s(2), decode: s(50), duration: s(11.5), warden_queue: s(0.5), prefill: s(2000) } : null,
+    points: model ? pts : [],
+    groups: group
+      ? [{ key: "tok-a", label: "key-a", model_id: "id-model-a-8b", model: "model-a-8b", requests: 12, prompt_tokens: 48000, completion_tokens: 6000, n_ttft: 12, p50_ttft: 2, n_decode: 12, p50_decode: 50, n_prefill: 3, p50_prefill: null }]
+      : null,
+  };
+}
+
+export const CACHE = {
+  range: "1h", since_epoch: 0,
+  models: [{
+    model_id: "id-model-a-8b", model: "model-a-8b", backend: "vllm", requests: 10, prompt_tokens: 10000,
+    cached_tokens: 6000, known_prompt_tokens: 10000, measured_requests: 9, estimated_requests: 1,
+    measured_cached_tokens: 5400, measured_prompt_tokens: 9000, reused_tokens: 5000, reusable_tokens: 6000,
+    outcomes: { hit: 6, partial: 2, lost: 1, misrouted: 0, diverged: 0, cold: 1, compacted: 0, harness_rewrite: 0 },
+    by_rank: [], prefill_saved_s: 3, rate_source: "learned",
+  }],
+};
+
 export interface StubOptions {
   models?: typeof MODELS;
+  /** Requests in the window for /api/stats/v2/speed (default 30). */
+  speedN?: number;
   /** A fixed body for /api/stats/v2/requests, or a function of the URL. */
   history?: unknown | ((url: string) => unknown);
   /** A fixed body for /api/stats/v2/latency, or a function of the URL. */
@@ -290,6 +327,9 @@ export interface StubOptions {
   /** A fixed body for /api/stats/v2/throughput, or a function of the URL. */
   throughput?: unknown | ((url: string) => unknown);
   requests?: unknown;
+  /** The Prompt Lens platform switch (GET /api/admin/prompt-lens/status); off
+   *  (404, no dock) unless set. */
+  promptLens?: boolean;
 }
 
 export function installFetchStub(opts: StubOptions = {}): string[] {
@@ -299,6 +339,11 @@ export function installFetchStub(opts: StubOptions = {}): string[] {
     urls.push(url);
     if (url === "/api/auth/refresh") return json({ access_token: "t" });
     if (url === "/api/csrf") return json({ csrf: "c" });
+    if (opts.promptLens !== undefined) {
+      if (url === "/api/admin/prompt-lens/status") return json({ enabled: opts.promptLens });
+      if (url === "/api/auth/sse-ticket") return json({ ticket: "a1" });
+      if (url.startsWith("/api/admin/prompt-lens/kept")) return json({ kept: [] });
+    }
     if (url.startsWith("/api/stats/v2/overview")) {
       return json(overviewFor(url, opts.models ?? MODELS));
     }
@@ -318,6 +363,12 @@ export function installFetchStub(opts: StubOptions = {}): string[] {
       if (typeof t === "function") return json((t as (u: string) => unknown)(url));
       return json(t ?? throughputFor(url, opts.models ?? MODELS));
     }
+    if (url.startsWith("/api/stats/v2/speed")) return json(speedFor(url, opts.speedN ?? 30));
+    if (url.startsWith("/api/stats/v2/cache")) return json(CACHE);
+    if (url.startsWith("/api/stats/v2/prefill-model")) {
+      return json({ updated_at: 1, hint_tok_s: 2000, models: { "id-model-a-8b": { rate_tok_s: 1240, rate_source: "learned", samples: 30, estimate_accuracy: { samples: 0, hit_ratio: null }, gap_buckets: [] } } });
+    }
+    if (url.startsWith("/api/stats/v2/bookkeeping")) return json({ since_epoch: 0, sites: {}, total: { count: 0, requests_lost: 0 } });
     if (url.startsWith("/api/stats/v2/latency")) {
       const l = opts.latency;
       if (typeof l === "function") return json((l as (u: string) => unknown)(url));
@@ -352,12 +403,4 @@ export function renderPage() {
       <StatsPage />
     </SWRConfig>,
   );
-}
-
-export function boxFor(id: string): HTMLInputElement {
-  const opt = screen
-    .getAllByTestId("model-selector-option")
-    .find((o) => o.getAttribute("data-model-id") === id);
-  if (!opt) throw new Error(`no option for ${id}`);
-  return opt.querySelector("input") as HTMLInputElement;
 }

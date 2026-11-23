@@ -161,7 +161,7 @@ describe("In-flight panel on a phone", () => {
     expect(cards).toHaveLength(3);
     const gone = cards.find((c) => c.hasAttribute("data-exiting"))!;
     expect(gone.getAttribute("aria-hidden")).toBe("true");
-    expect(screen.getByText("2 active")).toBeInTheDocument();
+    expect(screen.getByTestId("live-requests")).toHaveTextContent("2 active");
     act(() => void vi.advanceTimersByTime(ROW_EXIT_MS + 5));
     expect(screen.getAllByTestId("live-card")).toHaveLength(2);
   });

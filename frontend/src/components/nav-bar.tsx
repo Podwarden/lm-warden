@@ -22,8 +22,8 @@ import {
   Activity,
   Box,
   ExternalLink,
+  Eye,
   GitBranch,
-  HardDrive,
   KeyRound,
   Layers,
   LogOut,
@@ -37,6 +37,8 @@ import {
 import { authFetch, authFetchJSON } from '@/lib/auth-fetch';
 import { useEdition } from '@/lib/edition';
 import { isKeyAreaPath, keyMode } from '@/lib/sessions/key-token';
+
+import { PROMPT_LENS_STATUS, usePromptLensStatus } from '@/components/prompt-lens/prompt-lens-view';
 
 import { HeaderMetrics } from './header-metrics';
 import { ThemeSwitcher } from './theme-switcher';
@@ -100,6 +102,8 @@ interface MenuItem {
   href: string;
   label: string;
   Icon: typeof Box;
+  /** Shown only while Prompt Lens is on (GET /api/admin/prompt-lens/status). */
+  lens?: boolean;
 }
 
 const MENU_ITEMS: readonly MenuItem[] = [
@@ -110,8 +114,8 @@ const MENU_ITEMS: readonly MenuItem[] = [
   { href: '/router', label: 'Router', Icon: Route },
   { href: '/connect', label: 'Connect', Icon: Plug },
   { href: '/stats', label: 'Stats', Icon: Activity },
+  { href: '/prompt-lens', label: 'Prompt Lens', Icon: Eye, lens: true },
   { href: '/sessions', label: 'Sessions', Icon: GitBranch },
-  { href: '/cache', label: 'Cache', Icon: HardDrive },
   { href: '/settings', label: 'Settings', Icon: Settings },
 ];
 
@@ -169,6 +173,8 @@ export function NavBar() {
   const versionKey = isUnauthRoute(path) ? null : '/api/version';
   // Extension console links ride on /api/edition; never fetched off the console.
   const edition = useEdition(!isUnauthRoute(path));
+  // The Prompt Lens entry follows the platform switch (same status the page reads).
+  const lensOn = usePromptLensStatus(isUnauthRoute(path) ? null : PROMPT_LENS_STATUS).enabled;
 
   // Version footer — single fetch on mount, no polling. The endpoint reads
   // build-time env vars baked into the image, so the value is immutable
@@ -272,7 +278,7 @@ export function NavBar() {
                 style={{ maxHeight: 'calc(100vh - 6rem)' }}
               >
                 <ul className="py-1">
-                  {MENU_ITEMS.map(({ href, label, Icon }) => {
+                  {MENU_ITEMS.filter((m) => !m.lens || lensOn).map(({ href, label, Icon }) => {
                     // Active highlighting — startsWith(href) catches sub-routes
                     // (e.g. /models/<id> still highlights "Models"). Use
                     // strict equality only for "/" to avoid every route

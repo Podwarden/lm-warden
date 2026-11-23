@@ -78,6 +78,47 @@ def _kv_block_size(m: Metrics) -> float | None:
     return float(block) if block > 0 else None
 
 
+#: vLLM's sleep_state label values and the sleep level each one means
+#: (vllm/v1/metrics/loggers.py::record_sleep_state, read at v0.32.0).
+_SLEEP_LEVELS = (("discard_all", 2.0), ("weights_offloaded", 1.0))
+
+
+def _sleep_level(m: Metrics) -> float | None:
+    """The engine's sleep level: 0 awake, 1 weights offloaded, 2 discard all.
+
+    vLLM 0.32 exports ``vllm:engine_sleep_state`` once per state, labelled
+    ``sleep_state="awake"|"weights_offloaded"|"discard_all"``, with 1 on the
+    current state (per engine rank). Summing them, as Metrics.value does,
+    reads 1 for an AWAKE engine. An exposition without the label is the older
+    single gauge, whose value already is the level.
+
+    A data-parallel engine is asleep only when every rank is (the sleep call
+    is engine-wide); a rank still awake means it serves, so the level is 0.
+    """
+    states = m.label_values("vllm:engine_sleep_state", "sleep_state")
+    if not states:
+        return m.value("vllm:engine_sleep_state")
+    awake = m.value("vllm:engine_sleep_state", sleep_state="awake")
+    if awake is not None and awake > 0:
+        return 0.0
+    for state, level in _SLEEP_LEVELS:
+        v = m.value("vllm:engine_sleep_state", sleep_state=state)
+        if v is not None and v > 0:
+            return level
+    # Labelled, yet no state is set: unknown, which is not "awake".
+    return None
+
+
+def _prefix_caching_enabled(m: Metrics) -> float | None:
+    info = m.info("vllm:cache_config_info")
+    flag = info.get("enable_prefix_caching") if info is not None else None
+    if flag == "True":
+        return 1.0
+    if flag == "False":
+        return 0.0
+    return None
+
+
 def read(body: str) -> EngineReading | None:
     """Parse vLLM exposition text into an EngineReading, or None if unusable."""
     if not body or not body.strip():
@@ -98,7 +139,7 @@ def read(body: str) -> EngineReading | None:
         kv_cache_usage_perc=kv_usage / engines if kv_usage is not None else None,
         kv_tokens_total=_kv_tokens_total(m, engines),
         kv_block_size=_kv_block_size(m),
-        engine_sleep_state=m.value("vllm:engine_sleep_state"),
+        engine_sleep_state=_sleep_level(m),
         prompt_tokens_total=m.value("vllm:prompt_tokens_total"),
         generation_tokens_total=m.value("vllm:generation_tokens_total"),
         preemptions_total=m.value("vllm:num_preemptions_total"),
@@ -115,6 +156,10 @@ def read(body: str) -> EngineReading | None:
             "vllm:external_prefix_cache_queries_total",
             "vllm:external_prefix_cache_queries",
         ),
+        prompt_tokens_cached=m.value_any(
+            "vllm:prompt_tokens_cached_total", "vllm:prompt_tokens_cached"
+        ),
+        prefix_caching_enabled=_prefix_caching_enabled(m),
         flops_per_gpu_total=m.value("vllm:estimated_flops_per_gpu_total"),
         finished_stop=m.value("vllm:request_success_total", finished_reason="stop"),
         finished_length=m.value("vllm:request_success_total", finished_reason="length"),

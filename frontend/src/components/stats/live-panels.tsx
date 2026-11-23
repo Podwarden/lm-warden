@@ -33,6 +33,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
+import { LiveNumber } from "@/components/ui/live-number";
 import { cn } from "@/lib/utils";
 import { useExitingRows } from "@/lib/use-exiting-rows";
 import { MOBILE_QUERY, useMediaQuery } from "@/lib/use-media-query";
@@ -316,7 +317,7 @@ export function LastUpdated({ ts }: { ts: string }) {
   const ago = Math.max(0, Math.round((Date.now() - ms) / 1000));
   return (
     <span className="text-xs tabular-nums text-chat-dim" title={ts}>
-      updated {ago}s ago
+      updated <LiveNumber reserve={2}>{String(ago)}</LiveNumber>s ago
     </span>
   );
 }
@@ -486,7 +487,7 @@ function LegendSwatch({ className, label }: { className: string; label: string }
 
 // ===========================================================================
 // Latency distribution (cumulative buckets in the engine-histogram shape;
-// served from the per-request store, see components/stats/latency-panels.tsx)
+// served from the per-request store, see app/stats/speed.py)
 // ===========================================================================
 
 /** Fractional bar-space position of a value inside the bucket edges. */
@@ -731,7 +732,9 @@ export function phaseSentence(r: PhaseRow): string {
   }
   if (life === "prefill") {
     const n = r.ahead_count ?? 0;
-    if (r.slow_cause === "queued") {
+    // A key holder's rows carry no queue count (ahead_count null, D6): never
+    // "queued behind 0 prompts"; the expected start below still shows.
+    if (r.slow_cause === "queued" && r.ahead_count != null) {
       const where = r.dp_rank != null ? ` on replica ${r.dp_rank}` : "";
       parts.push(
         `Queued behind ${n} prompt${n === 1 ? "" : "s"} (≈${formatCompact(r.ahead_fresh_tokens ?? 0)} tokens)${where}.`,
@@ -923,7 +926,7 @@ function ContextBar({
         )}
       </div>
       <span className="shrink-0 font-mono text-xs tabular-nums text-chat-muted">
-        {formatCompact(used)}/{formatCompact(total)}
+        <LiveNumber reserve={5}>{formatCompact(used)}</LiveNumber>/{formatCompact(total)}
       </span>
       <span
         className={cn(
@@ -1173,7 +1176,7 @@ export function LiveRequestsPanel({
       testid="live-requests"
       right={
         <span className="text-xs tabular-nums text-chat-dim">
-          {`${rows.length} active`}
+          <LiveNumber reserve={2}>{String(rows.length)}</LiveNumber> active
         </span>
       }
       bodyClassName="p-0"
@@ -1488,7 +1491,7 @@ export function CombinedFigure({
       <div className="mt-1 font-mono text-2xl tabular-nums text-chat-fg">
         {/* `format(null)` is an em dash. A metric no selected engine reports
             must NEVER render as 0 — 0 says "measured, and idle". */}
-        {format(metric.value)}
+        <LiveNumber reserve={5}>{format(metric.value)}</LiveNumber>
         {unit && metric.value !== null && (
           <span className="ml-1 text-xs text-chat-dim">{unit}</span>
         )}

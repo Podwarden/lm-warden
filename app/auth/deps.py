@@ -134,6 +134,18 @@ def session_stream_key(username: str) -> str:
     return f"session:{username}"
 
 
+#: Prefix of a key holder's stream-registry key (and of its SSE ticket's subject).
+KEY_STREAM_PREFIX = "key:"
+
+
+def key_stream_key(token_id: str) -> str:
+    """The stream-registry key of a key holder's Prompt Lens stream (G7), also its
+    SSE ticket's subject. Prefixed, so it collides with no session or admin
+    token key; revoking, rotating or pausing the key and a key sign-out call
+    ``cancel_user(key_stream_key(id))``."""
+    return f"{KEY_STREAM_PREFIX}{token_id}"
+
+
 def stream_key(request: Request) -> str:
     """The stream-registry key of an authenticated request (set by
     require_jwt / require_sse_ticket): ``admin_token:<id>`` for an admin

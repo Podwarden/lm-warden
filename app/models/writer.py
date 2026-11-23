@@ -50,6 +50,7 @@ from pydantic import TypeAdapter, ValidationError
 from app.auth.deps import TRUST_REMOTE_CODE_SET_MESSAGE
 from app.auth.principal import Principal
 from app.db.repos.models import ModelRepo, ModelRow
+from app.db.repos.settings import SettingsRepo
 from app.db.repos.setup import SetupRepo
 from app.models.parallelism import parallel_flag_values
 from app.models.policy import (
@@ -59,7 +60,20 @@ from app.models.policy import (
     TRISTATE_FIELDS,
 )
 from app.models.schemas import ModelSpec
+from app.runtime.kv_store import (
+    KV_ENGINE_DRIVER,
+    configured_engine_driver,
+    kv_driver_refusal,
+    kv_enabled,
+)
 from app.utils.validation_errors import redact_validation_errors
+
+#: The runtime setting naming the store's disk folder (empty: no disk tier).
+NVME_DIR_KEY = "kv_store_nvme_dir"
+NO_DISK_FOLDER = (
+    'kv_store "ram+nvme" needs a disk folder, and none is set: set kv_store_nvme_dir '
+    '(Settings, Prompt cache) and restart the warden, or choose "ram"'
+)
 
 
 class ModelChangeRefused(HTTPException):
@@ -328,6 +342,19 @@ async def _check_model_change(
         )
     except ValidationError as exc:
         raise ModelChangeRefused(status_code=422, detail=_validation_detail(exc)) from exc
+
+    # A docker-driver engine is a sibling container: it cannot reach the KV store
+    # daemon, so turning kv_store on there is refused up front (the load refuses too).
+    if "kv_store" in coerced and kv_enabled(spec):
+        driver = configured_engine_driver()
+        if driver != KV_ENGINE_DRIVER:
+            raise ModelChangeRefused(status_code=422, detail=kv_driver_refusal(driver))
+    # RAM + disk with no disk folder would run as RAM only, silently: refuse it (owner,
+    # 2026-11-22), saying where the folder is set.
+    if "kv_store" in coerced and spec.kv_store == "ram+nvme":
+        nvme_dir = (await SettingsRepo(db).get_many([NVME_DIR_KEY])).get(NVME_DIR_KEY) or ""
+        if not nvme_dir.strip():
+            raise ModelChangeRefused(status_code=400, detail=NO_DISK_FOLDER)
 
     # 6. cross-row checks
     if "gpu_indices" in coerced:

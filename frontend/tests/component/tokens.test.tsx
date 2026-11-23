@@ -36,7 +36,8 @@ function fakeItem(overrides: Partial<TokenItem> = {}): TokenItem {
     // defaults for a freshly minted token.
     priority: 5,
     anthropic_relay: false,
-    thinking_policy: 'client',
+    keep_captures: false,
+    thinking_policy: 'client', kv_isolation: 'sharing',
     usage_24h: {
       requests: 0,
       prompt_tokens: 0,

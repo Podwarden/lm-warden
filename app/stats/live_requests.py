@@ -11,6 +11,8 @@ details page — never emit token plaintext/hash/secret columns).
 
 from __future__ import annotations
 
+import asyncio
+import dataclasses
 import time
 from datetime import UTC, datetime
 from typing import Any
@@ -18,7 +20,9 @@ from typing import Any
 from fastapi import APIRouter, Depends, Request
 
 from app.auth.deps import require_jwt
-from app.proxy.request_registry import LiveRequest
+from app.proxy.live_tokens import decode_tps
+from app.proxy.request_registry import LiveRequest, engine_progress_tokens
+from app.stats.prefill_model import own_state as _own_learned
 from app.stats.routes_forest import ForestViewer, forest_viewer
 
 router = APIRouter(prefix="/api/stats", tags=["stats-live"])
@@ -87,6 +91,19 @@ def slow_cause(
     return None
 
 
+def _own_estimate(req: LiveRequest, learned: Any) -> LiveRequest:
+    """The in-flight cache estimate with the idle-gap decay learned from this
+    key's own requests (the proxy applied the fleet's)."""
+    raw = req.cache_est_raw_tokens
+    if raw is None:
+        return req
+    factor = learned.decay_for(req.model_row_id, req.gap_s) if learned is not None else None
+    est = int(raw * factor) if factor is not None and raw else raw
+    return dataclasses.replace(
+        req, cache_est_tokens=est, est_decayed=factor is not None and bool(raw)
+    )
+
+
 def _serialize(
     req: LiveRequest,
     now_monotonic: float,
@@ -128,6 +145,19 @@ def _serialize(
         if prefilling
         else None
     )
+    # B1: engine TTFT (slot held -> first frame, includes the engine's own
+    # queue) and the client's TTFT (the warden's admission queue added).
+    ttft_s = (
+        round(req.first_token_monotonic - req.started_monotonic, 3)
+        if req.first_token_monotonic is not None
+        else None
+    )
+    ttft_total_s = round(ttft_s + (req.queued_s or 0.0), 3) if ttft_s is not None else None
+    tps = decode_tps(
+        list(getattr(req, "out_samples", ()) or ()),
+        first_token=req.first_token_monotonic,
+        now=now_monotonic,
+    )
     return {
         "id": req.id,
         "token_id": req.token_id,
@@ -142,6 +172,12 @@ def _serialize(
         "context_pct": context_pct,
         "elapsed_s": round(now_monotonic - req.started_monotonic, 1),
         "queued_s": round(req.queued_s, 3) if req.queued_s is not None else None,
+        "ttft_s": ttft_s,
+        "ttft_total_s": ttft_total_s,
+        # Tokens of every generated channel so far (content, thinking, tool
+        # calls), and this request's decode speed over the last 5 s (B1).
+        "out_tokens": req.completion_tokens,
+        "decode_tps_5s": round(tps, 1) if tps is not None else None,
         "prefill_slow": slow,
         # Queue-ahead (live) and the model behind the numbers.
         "dp_rank": req.dp_rank,
@@ -155,6 +191,9 @@ def _serialize(
         "thinking_forced_off": req.thinking_forced_off,
         "est_accuracy": est_accuracy,
         "phase": req.phase,
+        # Generated tokens so far; null for a non-streaming request in flight
+        # (``running_no_stream``) -- the engine is working, the warden cannot see.
+        "engine_progress_tokens": engine_progress_tokens(req),
         "is_stream": req.is_stream,
         "orphan": req.orphan,
         "session_id": req.session_id,
@@ -211,6 +250,48 @@ def _aggregate(rows: list[dict]) -> tuple[list[dict], list[dict]]:
     return by_token_list, by_ip_list
 
 
+def _groups(rows: list[dict[str, Any]], group: str) -> list[dict[str, Any]]:
+    """The Requests table's live Group by (stats redesign B2).
+
+    ``group`` is ``key``, ``ip`` or ``model``. Each group carries how many of
+    its requests are in flight, how many wait at the warden's queue, their
+    context tokens, and ``live_tps``: the SUM of the running requests' 5 s
+    decode speeds (None when none is decoding: idle, not zero). A key group
+    never mixes models -- one group per key and model -- so a speed always
+    belongs to one model. An IP group carries no model.
+    """
+    acc: dict[tuple[Any, Any], dict[str, Any]] = {}
+    for r in rows:
+        if group == "key":
+            k: tuple[Any, Any] = (r["token_id"], r["model"])
+            label = r["token_name"]
+        elif group == "model":
+            k = (r["model"], r["model"])
+            label = r["model"]
+        else:
+            k = (r["client_ip"], None)
+            label = r["client_ip"]
+        g = acc.get(k)
+        if g is None:
+            g = acc[k] = {
+                "key": k[0],
+                "label": label,
+                "model": k[1],
+                "in_flight": 0,
+                "queued": 0,
+                "context_tokens": 0,
+                "live_tps": None,
+            }
+        g["in_flight"] += 1
+        if r.get("phase") == "queued":
+            g["queued"] += 1
+        g["context_tokens"] += r.get("context_tokens") or 0
+        tps = r.get("decode_tps_5s")
+        if tps is not None:
+            g["live_tps"] = round((g["live_tps"] or 0.0) + tps, 1)
+    return sorted(acc.values(), key=lambda g: (-g["in_flight"], str(g["label"])))
+
+
 @router.get("/requests")
 async def live_requests(
     request: Request, viewer: ForestViewer = Depends(forest_viewer)
@@ -227,22 +308,38 @@ async def live_requests(
     hint = getattr(getattr(request.app.state, "settings", None), "prefill_tok_s_hint", None)
     rate = hint if isinstance(hint, int | float) and hint > 0 else DEFAULT_PREFILL_TOK_S
     learned = getattr(request.app.state, "prefill_model", None)
+    tok = viewer.token_id
+    own = tok is not None
+    if tok is not None and live:
+        # A key holder: everything learned comes from its own requests only.
+        learned = await asyncio.to_thread(_own_learned, request.app.state.settings.db_path, tok)
     rows = []
     for r in live:
         r_rate, source = (
             learned.rate_for(r.model_row_id, rate) if learned is not None else (rate, "hint")
         )
         accuracy = learned.accuracy_for(r.model_row_id) if learned is not None else None
-        rows.append(
-            _serialize(
-                r,
-                now,
-                r_rate,
-                ahead=_ahead_of(r, live) if r.phase == "prefill" else (0, 0),
-                rate_source=source,
-                est_accuracy=accuracy,
-            )
+        ahead = _ahead_of(r, live) if r.phase == "prefill" else (0, 0)
+        row = _serialize(
+            _own_estimate(r, learned) if own else r,
+            now,
+            r_rate,
+            ahead=ahead,
+            rate_source=source,
+            est_accuracy=accuracy,
         )
+        if own:
+            # Never another key's queue; no learned rate is a null, not the hint.
+            row["ahead_count"] = None
+            row["ahead_fresh_tokens"] = None
+            # "queued" rests on the queue count (D6: never shown to a key
+            # holder); the expected start stays, the cause goes.
+            if row.get("slow_cause") == "queued":
+                row["slow_cause"] = None
+            if source != "learned":
+                row["prefill_tok_s"] = None
+                row["prefill_rate_source"] = None
+        rows.append(row)
     by_token, by_ip = _aggregate(rows)
     return {
         "ts": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
@@ -250,6 +347,8 @@ async def live_requests(
         "requests": rows,
         "by_token": by_token,
         "by_ip": by_ip,
+        # B2: the live columns of the Requests table's Group by.
+        "groups": {g: _groups(rows, g) for g in ("key", "ip", "model")},
     }
 
 

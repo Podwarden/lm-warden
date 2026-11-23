@@ -286,7 +286,7 @@ describe("TokensChart — cached vs computed prompt", { timeout: 20_000 }, () =>
   it("explains that tokens are credited when a request finishes", () => {
     const m = recentMinutes(1, 3);
     render(<TokensChart buckets={[cachedBucket(m[0])]} bucketMinutes={1} range="1h" reference={undefined} />);
-    expect(screen.getByTestId("tokens-credit-note").getAttribute("aria-label")).toMatch(/FINISHES/);
+    expect(screen.getByTestId("tokens-credit-note").getAttribute("aria-label")).toMatch(/minutes they were produced/);
   });
 });
 

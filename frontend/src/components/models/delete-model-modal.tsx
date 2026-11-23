@@ -5,7 +5,7 @@
  *
  * Closes #105: deleting a model row used to leave its HF cache blob
  * behind, and the only way to reclaim that disk was to remember the
- * repo name and go to /cache. This modal opt-in chains the cache
+ * repo name and go to Models > Model files. This modal opt-in chains the cache
  * delete onto the row delete so the operator never has to remember.
  *
  * Two-step chain — order matters:
@@ -15,7 +15,7 @@
  *
  * Step 2 is best-effort. If it fails (cache row already gone, GC
  * collision, FS error) we still report success on the row and ask
- * the operator to clean up at /cache. The opposite ordering would
+ * the operator to clean up at Models > Model files. The opposite ordering would
  * orphan the model row if cache delete fails — never do that.
  *
  * Closing the modal during an in-flight request is suppressed; the
@@ -25,6 +25,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { authFetch } from "@/lib/auth-fetch";
+import { MODEL_FILES_HREF } from "@/lib/routes";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 
@@ -114,12 +115,12 @@ export function DeleteModelModal({
             // status surfaces as a follow-up notice but does NOT
             // roll back the row delete.
             setCacheFailedNotice(
-              "Model removed; cache delete failed — visit /cache to retry.",
+              "Model removed; cache delete failed — retry from Models > Model files.",
             );
           }
         } catch {
           setCacheFailedNotice(
-            "Model removed; cache delete failed — visit /cache to retry.",
+            "Model removed; cache delete failed — retry from Models > Model files.",
           );
         }
       }
@@ -194,10 +195,10 @@ export function DeleteModelModal({
           >
             {cacheFailedNotice}{" "}
             <Link
-              href="/cache"
+              href={MODEL_FILES_HREF}
               className="font-semibold underline underline-offset-2 hover:text-amber-100"
             >
-              Open cache
+              Open model files
             </Link>
           </div>
         )}

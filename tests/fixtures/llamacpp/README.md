@@ -10,38 +10,47 @@ wrong and nothing else will say so.
 
 | | |
 |---|---|
-| Upstream build tag | **`b11719`** |
-| Upstream commit | `5aeac37a3` (`5aeac37a` — "ggml-cuda: fattn do not check oob if k_VKQ_max = (k_VKQ_max - nbatch_fa) (#30572)") |
-| Image | `llama-cpp-cpu-b11719` (locally built from `ubuntu:24.04` + llama.cpp git tag `b11719`; the upstream GHCR `server-bNNNNN` prebuilt tags are garbage-collected after a few builds, so b11719 was not available as a prebuilt image) |
-| Image digest | `sha256:bd977beaad8d932f59414c9b05944f4cdaa7e2317fc22557fbadf9d0db6aff22` (arm64 manifest; single-arch image) |
-| Platform captured | `linux/arm64` (CPU-only, no GPU) |
-| Reported version string | `version: 0.7.0-dev (build 11719, commit 5aeac37a3)` |
+| Upstream build tag | **`b12644`** |
+| Upstream commit | `94f3af3d0` (`94f3af3d09e74a0fb35f703194318d3b4037714a` — "mtmd: speed up shared audio FFT (#32815)", 2026-11-22) |
+| Image | `llama-cpp-cpu-b12644:capture` (locally built from `ubuntu:24.04` + a full clone of llama.cpp at git tag `b12644`, `cmake -DGGML_NATIVE=OFF --target llama-server`, CPU only; GHCR has no `server-b12644` prebuilt, same as for b11719) |
+| Image id | `sha256:dde2612280a3ba8c3df94685d66e98e7c5271583da1a8291e86362e7ede5f59e` (single-arch, linux/amd64) |
+| Platform captured | `linux/amd64` (CPU-only, no GPU) |
+| Reported version string | `version: 1.0.0-dev (build 12644, commit 94f3af3d0)` |
 | GGUF used | `TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF` → `tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf` (668,788,096 B) |
-| Host | Apple Silicon, Docker/colima `linux/aarch64`, **CPU-only, no GPU** |
-| Capture date | 2026-10-18 |
+| Host | an x86_64 Linux build host (Docker 29.7), **CPU-only, no GPU** |
+| Capture date | 2026-11-22 |
 
-Task 13 pins the same `b11719` tag in the `Dockerfile`, so the fixtures and the
-shipped binary cannot drift.
+The `Dockerfile` pins the same `b12644` tag (`ARG LLAMACPP_BUILD`) and
+`scripts/macos/bundle-llamacpp.sh` builds the Mac's Metal `llama-server` from
+the same tag, so the fixtures and both shipped binaries cannot drift
+(`tests/unit/system/test_llamacpp_version.py`,
+`tests/unit/test_bundle_llamacpp.py`).
 
-### History: previous capture at b10731
+### History: previous captures at b11719 and b10731
+
+The b11719 capture (commit `5aeac37a3`, 2026-10-18) was made the same way on
+Apple Silicon under Docker/colima (`linux/arm64`, image
+`llama-cpp-cpu-b11719`, digest
+`sha256:bd977beaad8d932f59414c9b05944f4cdaa7e2317fc22557fbadf9d0db6aff22`).
+The b12644 re-capture moved to `linux/amd64` (the Mac in use has no Docker);
+nothing in the corpus is architecture-dependent except the `built with ... for
+Linux x86_64` line of `version.txt` and the thread count in the logs.
 
 The fixtures were originally captured at `b10731` (commit `0eadefebd`,
 2026-09-01) from the upstream prebuilt image
 `ghcr.io/ggml-org/llama.cpp:server-b10731` (image index digest
 `sha256:bdce328e7152af01fc8724ef63ebefa1f39639fb6250731ca4fa6af04e1690b6`,
 arm64 manifest digest `sha256:0ab379e88348888e68a32d255b932eb9170661f0418afcec144a1ba4040621db`).
-That tag has since been garbage-collected from GHCR. The b11719 re-capture
-builds the same source locally because no prebuilt `server-b11719` image exists
-on GHCR either.
+That tag has since been garbage-collected from GHCR.
 
-### Why a CPU-only, arm64 capture
+### Why a CPU-only capture
 
-The plan's capture recipe asks for `server-cuda13-b11719` on a box with an
+The plan's capture recipe asks for a `server-cuda13-bNNNNN` image on a box with an
 NVIDIA GPU, and notes that "a CPU-only capture is acceptable for everything
 except `log_oom.txt`". The only NVIDIA host in scope is `bonus`, which this
 plan's Global Constraints make **read-only until Task 16**, and the one other
 GPU box in the inventory has an unloaded driver. So the whole corpus was
-captured from the *same upstream build tag*, on the CPU image, on arm64.
+captured from the *same upstream build tag*, on the CPU image (arm64 at b11719, amd64 at b12644).
 
 What this changes, and what it does not:
 
@@ -74,7 +83,7 @@ What this changes, and what it does not:
 ## Capture commands
 
 ```bash
-IMG=llama-cpp-cpu-b11719   # locally built: ubuntu:24.04 + llama.cpp git tag b11719, CPU-only
+IMG=llama-cpp-cpu-b12644:capture   # locally built: ubuntu:24.04 + llama.cpp git tag b12644, CPU-only
 MODELS=$PWD/models          # holds the tinyllama GGUF
 MODEL=/models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf
 
@@ -97,9 +106,15 @@ docker rm -f lcap
 
 R() { docker run --rm -v "$MODELS:/models" $IMG "$@" ; }
 R --model /models/broken.gguf                 --port 18080 > log_unknown_arch.txt 2>&1
-R --model $MODEL --ctx-size 8192              --port 18080 > log_ctx_capped.txt   2>&1
+R --model $MODEL --ctx-size 8192              --port 18080 > log_ctx_capped.txt   2>&1   # it serves: stop it after ~25 s
 R --model /models/shard-00002-of-00002.gguf   --port 18080 > log_wrong_shard.txt  2>&1
-R --model $MODEL --ctx-size 999999            --port 18080 > log_oom.txt          2>&1
+# log_oom.txt: the KV allocation must FAIL, not be overcommitted and later
+# OOM-killed. The build host runs vm.overcommit_memory=1, so the 21 GB malloc would
+# succeed there; cap the address space inside the container (docker --ulimit
+# has no `as`) and the cgroup so the host is never at risk:
+docker run --rm --memory=6g --entrypoint sh -v "$MODELS:/models:ro" $IMG -c \
+  "ulimit -v 8388608; exec /build/bin/llama-server --model $MODEL --ctx-size 999999 --port 18080" \
+  > log_oom.txt 2>&1
 ```
 
 `broken.gguf` and `shard-00002-of-00002.gguf` are 320-byte hand-written GGUF v3
@@ -117,11 +132,11 @@ metrics_second_scrape.txt` is two lines and only two lines:
 
 ```
 33c33
-< llamacpp:prompt_tokens_seconds 43.3623
+< llamacpp:prompt_tokens_seconds 0.284464
 ---
 > llamacpp:prompt_tokens_seconds 0
 36c36
-< llamacpp:predicted_tokens_seconds 44.7497
+< llamacpp:predicted_tokens_seconds 0.144504
 ---
 > llamacpp:predicted_tokens_seconds 0
 ```
@@ -132,7 +147,7 @@ Every counter (`prompt_tokens_total`, `prompt_tokens_cached_total`,
 `spec_decode_*` counters) is byte-identical between the two scrapes. **Task 10's
 rate math is therefore sound**, and the two gauges must never be read: they are
 averaged over the window since the last scrape and the bucket is reset by the
-act of scraping (`tools/server/server-context.cpp:4657-4659`), so two
+act of scraping (`tools/server/server-context.cpp`, the `metrics` task handler), so two
 concurrent scrapers would halve each other's numbers.
 
 ### 2. Does the log contain ANSI escape sequences when stdout is not a tty?
@@ -164,14 +179,46 @@ The remedy if this ever regresses is a documented llama.cpp logging flag
 ### 4. The exact `--version` output format
 
 ```
-version: 0.7.0-dev (build 11719, commit 5aeac37a3)
-built with GNU 13.3.0 for Linux aarch64
+version: 1.0.0-dev (build 12644, commit 94f3af3d0)
+built with GNU 13.3.0 for Linux x86_64
 ```
+
+(b11719 printed `0.7.0-dev`; the semantic part moved to `1.0.0-dev` and nothing
+here reads it.)
 
 Two lines. The build number is the `bNNNNN` tag without the `b`, and the commit
 is the abbreviated upstream SHA. Task 8's `/api/system/backends` `version` field
-and Task 13's baked build id are both derived from the `b11719` tag rather than
+and Task 13's baked build id are both derived from the pinned tag rather than
 by shelling out to the binary, so they agree by construction.
+
+## Changes from b11719 to b12644
+
+Re-captured 2026-11-22. None of these touch a parse anchor; they are listed so
+a future diff is interpretable.
+
+1. **Log prefixes (function names)**: `server_setup:` now prints the CORS
+   security warning (was `llama_server:`); `server_run_i: model loaded` and
+   `server_on_li: listening on http://...` replace `llama_server: model loaded`
+   / `llama_server: listening on ...`; the slot LRU line is `slot select:` (was
+   `slot get_availabl:`). The `model loaded` text the load-progress parser keys
+   on is unchanged.
+2. **OOM log**: the `common_fit_params: failed to fit params ...` warning no
+   longer precedes the allocation failure; the `ggml_aligned_malloc:
+   insufficient memory`, `failed to allocate CPU buffer`, `failed to allocate
+   buffer for kv cache` and `failed to create_context` lines are byte-identical
+   to b11719.
+3. **`--help`**: `-dt/--defrag-thold` is removed (it was marked DEPRECATED at
+   b11719; a row passing it in extra_args now fails to start). Added:
+   `--allow-unauthenticated-tools`, `--connect`, `--connect-code`,
+   `--media-allow-private-urls`, `--models-memory-margin`,
+   `--moe-cache-cpu-share`, `--ple/--shard`, `--tts-lang`, `--tts-voice`,
+   `--ui-mcp-proxy-allow-private-urls`; `--cache-type-k/-v` gain `f8_e4m3`.
+   Every flag `args.py` emits is still present with the same spelling.
+4. **props.json**: `chat_template_caps` gains `reasoning_effort_levels` and
+   `reasoning_effort_rejected`; `build_info` is `b12644-94f3af3d0`. No key was
+   removed.
+5. **models.json, health, metrics**: unchanged shape; the `llamacpp:` metric
+   names, HELP and TYPE lines are identical.
 
 ## Changes in log grammar from b10731 to b11719
 
@@ -223,6 +270,6 @@ and `ggml_cuda_host_malloc` instead of the CPU spellings, wrapping the same
 `failed to allocate buffer for kv cache` /
 `failed to create_context` lines. Task 9's grammar therefore matches on the
 **backend-neutral** anchors that this fixture does contain, and additionally on
-the CUDA spellings read from the pinned `b11719` source tree
+the CUDA spellings read from the pinned source tree (re-read at `b12644`)
 (`ggml/src/ggml-cuda/ggml-cuda.cu`). A real CUDA OOM capture from `bonus` should
 replace this file the first time one occurs after Task 16.

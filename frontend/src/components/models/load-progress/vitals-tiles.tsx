@@ -30,6 +30,7 @@ import {
 } from "recharts";
 import type { VitalsOut, VitalsPointOut } from "@/lib/load-progress";
 import { SERIES } from "@/components/tokens/detail/styles";
+import { LiveNumber } from "@/components/ui/live-number";
 
 export interface VitalsTilesProps {
   vitals: VitalsOut;
@@ -122,7 +123,13 @@ export function VitalsTiles({ vitals, stalled = false }: VitalsTilesProps) {
       <div className={tileClass} data-testid="vital-cpu">
         <div className="text-xs font-medium text-slate-400">CPU</div>
         <div className="mt-0.5 text-sm text-slate-300" data-testid="vital-cpu-headline">
-          {lastCpu != null ? `${lastCpu.toFixed(1)} cores busy` : "—"}
+          {lastCpu != null ? (
+            <>
+              <LiveNumber reserve={4}>{lastCpu.toFixed(1)}</LiveNumber> cores busy
+            </>
+          ) : (
+            "—"
+          )}
         </div>
         <div className="mt-1 h-[120px]">
           {points.length > 0 ? (
@@ -198,7 +205,7 @@ export function VitalsTiles({ vitals, stalled = false }: VitalsTilesProps) {
             </span>
           ) : lastGpu != null ? (
             <span>
-              {formatGiB(lastGpu)}
+              <LiveNumber reserve={9}>{formatGiB(lastGpu)}</LiveNumber>
               {gpuTotal != null && ` / ${formatGiB(gpuTotal)}`}
             </span>
           ) : (

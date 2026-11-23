@@ -43,7 +43,7 @@ def delta_reasoning(delta: dict[str, Any]) -> str | None:
     (prod finding 2026-09-27: qwen3.8-27b-fp8-model on v2026.09.27.1 emits
     ``{"delta": {"reasoning": "..."}}`` with no ``reasoning_content`` key).
     Every reader of the channel — the completion accounting, the runaway
-    detector, god mode, the non-stream re-aggregation, the stress probes and
+    detector, Prompt Lens, the non-stream re-aggregation, the stress probes and
     the chat normaliser — must go through this helper so neither name is ever
     missed.     When both are present (they are not in practice) the traditional
     ``reasoning_content`` wins. An empty string counts as absent: a delta

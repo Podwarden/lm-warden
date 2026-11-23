@@ -35,11 +35,12 @@
  *   /tokens                 — page.tsx  navigable
  *   /tokens/[id]            — tokens/detail/page.tsx (?id=)  navigable
  *   /stats                  — page.tsx  navigable
+ *   /prompt-lens            — page.tsx  navigable (2026-11-23)
  *   /router                 — page.tsx  navigable
  *   /connect                — page.tsx  navigable (Connect a client, 2026-10-04)
  *   /chat                   — page.tsx (redirects to /chat2)  navigable
  *   /chat2                  — page.tsx  navigable
- *   /cache                  — page.tsx  navigable
+ *   /cache                  — page.tsx (redirects to /models?tab=files)  navigable
  *   /settings               — page.tsx  navigable
  *   /templates              — page.tsx  navigable
  *   /login, /setup, /setup/* — no app shell → breadcrumb hidden
@@ -117,9 +118,11 @@ const STATIC_ROUTES: StaticRoute[] = [
   { pattern: "/chat2", label: "Chat" },
   { pattern: "/tokens", label: "API tokens" },
   { pattern: "/stats", label: "Stats" },
+  { pattern: "/prompt-lens", label: "Prompt Lens" },
   { pattern: "/router", label: "Router" },
   { pattern: "/connect", label: "Connect" },
-  { pattern: "/cache", label: "Cache" },
+  // Redirect only: the weights cache is the "Model files" tab of /models.
+  { pattern: "/cache", label: "Model files" },
   { pattern: "/settings", label: "Settings" },
   { pattern: "/sessions", label: "Sessions" },
 
@@ -145,6 +148,17 @@ const HIDE_EXACT_PATHS: ReadonlySet<string> = new Set([
 ]);
 // /key/* is the key holder's area: its own shell, never the admin one.
 const HIDE_PREFIXES = ["/setup/", "/key/"];
+
+/**
+ * Pages that only router.replace() somewhere else (/chat → /chat2,
+ * /cache → /models?tab=files). The back stack never records them: Back
+ * would land on the redirect and bounce straight back.
+ */
+const REDIRECT_ONLY_PATHS: ReadonlySet<string> = new Set(["/chat", "/chat/", "/cache", "/cache/"]);
+
+export function isRedirectOnlyPath(pathname: string): boolean {
+  return REDIRECT_ONLY_PATHS.has(pathname);
+}
 
 export function shouldHideBreadcrumb(pathname: string): boolean {
   if (HIDE_EXACT_PATHS.has(pathname)) return true;
@@ -211,6 +225,9 @@ export function buildBreadcrumbs(
 ): BreadcrumbEntry[] {
   const chain: BreadcrumbEntry[] = [];
   const visited = new Set<string>();
+  // The static export (trailingSlash) reports /stats/: one crumb per page,
+  // not "Stats › Stats".
+  if (pathname.length > 1) pathname = pathname.replace(/\/+$/, "") || "/";
 
   // Walk up the URL path one segment at a time, prepending each ancestor.
   function walk(path: string) {

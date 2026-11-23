@@ -106,8 +106,13 @@ describe('NavBar', () => {
     expect(screen.getByRole('menuitem', { name: /stats/i })).toBeInTheDocument();
     // Benchmarks entry removed in epic/overhaul S1.
     expect(screen.queryByRole('menuitem', { name: /benchmarks/i })).toBeNull();
-    // Cache entry added in epic/overhaul S6 (#105) — re-homed from /stats.
-    expect(screen.getByRole('menuitem', { name: /^cache$/i })).toBeInTheDocument();
+    // The weights cache page left the menu (2026-11-23): it is the "Model
+    // files" tab of /models now, and /cache only redirects there.
+    expect(screen.queryByRole('menuitem', { name: /cache/i })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: /model files/i })).toBeNull();
+    for (const el of screen.getAllByRole('menuitem')) {
+      expect(el.getAttribute('href') ?? '').not.toMatch(/^\/cache/);
+    }
     expect(screen.getByRole('menuitem', { name: /settings/i })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /sign out/i })).toBeInTheDocument();
     // Connect a client (plan 2026-10-04-connect-clients §3): right after Router.

@@ -160,7 +160,7 @@ describe("LoadProgressCompact", () => {
         progress={compactSnapshot({ usual_total_s: null, elapsed_s: 45 })}
       />,
     );
-    expect(screen.getByText(/45s elapsed/)).toBeInTheDocument();
+    expect(screen.getByTestId('load-progress-compact')).toHaveTextContent(/45s elapsed/);
   });
 });
 
@@ -194,7 +194,7 @@ describe("LoadProgressCompact — formatDuration (shared helper)", () => {
       />,
     );
     // 5.2s — one decimal, matching the checklist's behaviour.
-    expect(screen.getByText(/5\.2s elapsed/)).toBeInTheDocument();
+    expect(screen.getByTestId('load-progress-compact')).toHaveTextContent(/5\.2s elapsed/);
   });
 
   it("rounds to an integer for 10–60s", () => {
@@ -203,6 +203,6 @@ describe("LoadProgressCompact — formatDuration (shared helper)", () => {
         progress={compactSnapshot({ usual_total_s: null, elapsed_s: 45 })}
       />,
     );
-    expect(screen.getByText(/45s elapsed/)).toBeInTheDocument();
+    expect(screen.getByTestId('load-progress-compact')).toHaveTextContent(/45s elapsed/);
   });
 });

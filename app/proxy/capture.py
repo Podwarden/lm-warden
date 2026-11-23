@@ -2,6 +2,15 @@
 recording of the exact request bodies and the raw response, so requests can be
 replayed before and after a prompt change (the prompt diet experiment).
 
+A record holds ``path`` and ``request_body``: the path the client called and the exact
+bytes it sent (``/v1/messages`` and ``/v1/responses`` included, not their translation);
+``translated_body``: the OpenAI chat body the translator made from it, None when the route
+does not translate; ``engine_body``: what reached the engine, None when that equals the
+translated (or, untranslated, the request) body. When the sensitive data guard rewrites a
+translated request, ``request_body`` is None: the wire bytes still hold what it removed.
+Records from before 2026-11-21 have no ``translated_body``, and for the two translated
+routes their ``request_body`` is the translated body under ``/v1/chat/completions``.
+
 Unlike the rest of LM Warden this stores TEXT, so it is off unless a key's
 ``capture_until`` is in the future, readable by the admin only, and bounded:
 one gzip file per request (named by its history-row id) on the data volume,

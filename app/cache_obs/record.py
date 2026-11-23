@@ -50,11 +50,16 @@ def observe_fields(
     rank: int | None,
     rank_known: bool,
     block_size: int | None = None,
+    drops_last_block: bool = False,
+    match_unit: int | None = None,
     cobs2_edge: str | None = None,
     loose_match_beyond_exact: bool = False,
 ) -> dict[str, Any]:
     """``cobs2_edge`` / ``loose_match_beyond_exact``: the request's lineage
-    observation (app/cobs2/lineage.py), which names the cause of a miss."""
+    observation (app/cobs2/lineage.py), which names the cause of a miss.
+    ``drops_last_block``: the engine serves one whole block less than it
+    matched (app/cache_obs/block_size.py learns it with ``block_size``);
+    ``match_unit`` the engine's prefix-match step (None = the block)."""
     est = None
     if reporting == "none":
         est = ttft_estimate(prompt, ttft_s, cold_rate)
@@ -74,6 +79,8 @@ def observe_fields(
             diverged_at=match_all.diverged_at if match_all else None,
             cached_is_estimate=source == "estimated",
             block_size=block_size,
+            drops_last_block=drops_last_block,
+            match_unit=match_unit,
             cobs2_edge=cobs2_edge,
             loose_match_beyond_exact=loose_match_beyond_exact,
         ),
@@ -85,6 +92,8 @@ def observe_fields(
             allow_misrouted=False,
             cached_is_estimate=source == "estimated",
             block_size=block_size,
+            drops_last_block=drops_last_block,
+            match_unit=match_unit,
             cobs2_edge=cobs2_edge,
             loose_match_beyond_exact=loose_match_beyond_exact,
         ),

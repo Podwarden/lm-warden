@@ -87,8 +87,11 @@ async def test_migrations_idempotent(tmp_data_dir):
         # (sessions pages: session/conversation/shape/toolset/relay columns, toolsets, tool names) + 0054
         # (prompt diet: api_tokens.prompt_diet, request_history.prompt_diet) + 0055 (guard: api_tokens.guard,
         # request_history.guard, guard_events) + 0056 (auth_sessions: sign-ins that can end).
-        # + 0057 (home_page_mode, home_page_off_action).
-        assert count == 56
+        # + 0057 (home_page_mode, home_page_off_action) + 0058 (models.kv_store)
+        # + 0059 (api_tokens.godmode_self_view, stats redesign B11)
+        # + 0060 (per-key KV sharing columns, models.kv_store_weight, kv_retired_scopes)
+        # + 0061 (api_tokens.keep_captures, prompt_lens_kept).
+        assert count == 60
 
 
 async def test_migrations_create_all_v2_tables(tmp_data_dir):

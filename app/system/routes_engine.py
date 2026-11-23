@@ -22,6 +22,7 @@ frontend stops calling it.
 from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError, version
+from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 
@@ -158,6 +159,35 @@ async def get_engine(request: Request, _user: str = Depends(require_jwt)) -> dic
         "driver": "docker" if supports else "subprocess",
         "supports_version_select": supports,
         "vllm_version": _VLLM_VERSION,
+    }
+
+
+@router.get("/api/system/kv-store")
+async def get_kv_store(request: Request, _user: str = Depends(require_jwt)) -> dict[str, Any]:
+    """The KV-cache tier daemon and the tier of every running engine that has one.
+
+    ``daemon.generation`` counts the daemons that turned healthy since the api started.
+    ``daemon.ram_requested_bytes`` is the pool asked of the daemon (``kv_store_ram_gib``)
+    and ``daemon.ram_granted_bytes`` the pool it committed, smaller when ``/dev/shm`` or
+    free memory did not fit (0: no RAM tier); both null until a daemon has answered.
+    ``models`` maps a model id to its tier: ``state`` is ``on``, ``unavailable`` (the
+    daemon does not answer right now) or ``off_until_reload`` (the engine loaded before
+    the daemon was up, or the daemon restarted since; reload the model to get the tier
+    back), with ``reason`` saying why.
+    """
+    kv = getattr(request.app.state, "kv_store", None)
+    sup = getattr(request.app.state, "supervisor", None)
+    tiers = getattr(sup, "kv_tiers", None)
+    ram_fn = getattr(kv, "ram", None)
+    ram = ram_fn() if callable(ram_fn) else {}
+    return {
+        "daemon": {
+            "healthy": bool(kv.healthy()) if kv is not None else False,
+            "generation": int(kv.generation()) if kv is not None else 0,
+            "ram_requested_bytes": ram.get("requested_bytes"),
+            "ram_granted_bytes": ram.get("granted_bytes"),
+        },
+        "models": tiers() if callable(tiers) else {},
     }
 
 

@@ -31,6 +31,7 @@ from app.db.repos.models import ModelRepo, ModelRow
 from app.db.repos.runtime import RuntimeRepo
 from app.db.repos.setup import SetupRepo
 from app.db.repos.stack_attempts import StackAttemptRepo, StackAttemptRow
+from app.kv import policy_sync
 from app.models.discovery import (
     DiscoveryAuthRequired,
     DiscoveryNotFound,
@@ -67,6 +68,13 @@ from app.runtime.backends.paths import ModelFileNotFound, resolve_model_paths
 from app.runtime.backends.registry import DEFAULT_BACKEND
 from app.runtime.backends.vllm.images import UnsupportedChannelError, resolve_image
 from app.runtime.engine.run_marker import tail_since_last_run
+from app.runtime.kv_store import (
+    KvRevisionUnresolved,
+    KvTierUnsupported,
+    kv_enabled,
+    kv_launch_kwargs,
+    without_kv,
+)
 from app.runtime.load_progress.follow import LogFollower
 from app.runtime.load_progress.parse import Step
 from app.runtime.load_progress.policy import StallPolicy, Verdict
@@ -987,6 +995,8 @@ async def create_model(body: ModelCreate, request: Request, _user: str = Depends
                 "dp_affinity_enabled": body.dp_affinity_enabled,
                 "dp_spill_threshold": body.dp_spill_threshold,
                 "thinking_policy": body.thinking_policy,
+                "kv_store": body.kv_store,
+                "kv_store_weight": body.kv_store_weight,
                 "dtype": dtype,
                 "max_model_len": max_model_len,
                 "gpu_memory_utilization": gpu_mem,
@@ -1018,6 +1028,8 @@ async def create_model(body: ModelCreate, request: Request, _user: str = Depends
                 "supports_reasoning": body.supports_reasoning,
             },
         )
+    if body.kv_store != "off":
+        policy_sync.request_sync(request.app.state)  # a new owner and its weight
     return {"id": model_id, "served_model_name": body.served_model_name, "status": "registered"}
 
 
@@ -1527,12 +1539,21 @@ async def get_effective_argv(
             resolved = resolve_model_paths(row, hf_cache_dir=settings.hf_cache_dir)
         except ModelFileNotFound as exc:
             raise HTTPException(409, str(exc)) from None
+    plan_row = row
+    try:
+        kv_kwargs = await asyncio.to_thread(kv_launch_kwargs, settings, row)
+    except KvTierUnsupported as exc:
+        raise HTTPException(409, str(exc)) from None
+    except KvRevisionUnresolved:
+        # The load would run with the tier off; show that argv.
+        plan_row, kv_kwargs = without_kv(row), {}
     plan = backend.plan(
-        row,
+        plan_row,
         port=_EFFECTIVE_ARGV_PREVIEW_PORT,
         bind_host=backend.bind_host(driver_name),
         resolved=resolved,
         engine_driver=driver_name,
+        **kv_kwargs,
     )
     return EffectiveArgvResponse(argv=plan.argv)
 
@@ -1622,6 +1643,11 @@ async def delete_model(model_id: str, request: Request, _user: str = Depends(req
         # be shared across rows and revisions. Delete commits above, so this
         # sees exactly the survivors.
         remaining = await ModelRepo(db).list_by_repo(row.hf_repo)
+    if kv_enabled(row):
+        # The engine is gone already (an active row cannot be deleted); this drops any
+        # owner the daemon still holds for the row, and its weight.
+        await policy_sync.release_owner(getattr(request.app.state, "kv_store", None), model_id)
+        policy_sync.request_sync(request.app.state)
     if not remaining:
         # row.hf_repo was validated as HfRepoId (one slash, no path
         # separators) at write time, so _safe_dirname cannot build a

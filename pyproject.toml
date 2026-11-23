@@ -28,7 +28,7 @@ extend-immutable-calls = ["fastapi.Depends", "Depends", "fastapi.File", "File", 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-pythonpath = ["."]
+pythonpath = [".", "lmw_kv"]
 addopts = "-ra --strict-markers -m \"not live and not macos\""
 # #260: a test that hangs for 300 s (setup+call+teardown) dumps every thread's
 # stack, so a wedged run leaves a diagnosis behind instead of nothing at all.

@@ -7,10 +7,11 @@ from __future__ import annotations
 
 import bisect
 from collections import Counter
-from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
+from dataclasses import dataclass, replace
 from typing import Any, Protocol, TypeVar
 
+from app.cache_obs.classify import DIVERGENCE_CAUSES
 from app.sessions.costs import (
     Anatomy,
     DeadWeight,
@@ -65,6 +66,35 @@ def segment(rows: Sequence[_T], gap_s: float = SEGMENT_GAP_S) -> list[list[_T]]:
         out[-1].append(r)
         last_end = max(last_end, r.finished_at)
     return out
+
+
+_RowT = TypeVar("_RowT", Row, ListRow)
+
+
+def own_lens(row: _RowT, owned: Collection[str]) -> _RowT:
+    """A key holder's view of one of its rows (admins never pass through here).
+
+    The fleet-lens cache figures are matched against EVERY key's prompts, so
+    they would tell a key holder that another key sent the same prefix: they
+    go. Rows stored before the lineage was scoped per key (key_scope) can name
+    a parent that is not one of ``owned`` (another key's request with the same
+    client session id, or one whose owner is unknown): that parent goes too,
+    with everything it caused (the edge, the conversation id it handed down,
+    the shape's break depth, the own-lens compacted / harness_rewrite
+    relabel), so the row reads as a new body with a plain diverged / cold miss."""
+    ch: dict[str, Any] = {"reusable_tokens": None, "cache_outcome": None}
+    if isinstance(row, Row):
+        ch["divergence_cause"] = None
+    preq, pnode = row.cobs2_parent_req, row.cobs2_parent_node
+    if (preq is not None and preq not in owned) or (preq is None and pnode is not None):
+        ch.update(cobs2_edge="new", cobs2_parent_req=None, cobs2_parent_node=None, cobs2_conv=None)
+        if row.cache_outcome_own in DIVERGENCE_CAUSES:
+            ch["cache_outcome_own"] = "diverged" if row.diverged_at_own is not None else "cold"
+        if isinstance(row, Row):
+            ch["divergence_cause_own"] = None
+            if row.shape is not None and row.shape.get("brk") is not None:
+                ch["shape"] = {**row.shape, "brk": None}
+    return replace(row, **ch)
 
 
 def is_side_call(turns: int, has_tools: bool, first_edge: str | None) -> bool:
@@ -157,6 +187,7 @@ def turn_json(
         "cached_tokens": row.cached_tokens,
         "generated_tokens": row.completion_tokens,
         "reusable_tokens": row.reusable_tokens,
+        "reusable_tokens_own": row.reusable_tokens_own,
         "cache_outcome": row.cache_outcome,
         "cache_outcome_own": row.cache_outcome_own,
         "divergence_cause": row.divergence_cause,
@@ -175,6 +206,8 @@ def turn_json(
             "remote": row.served_remote_tokens,
             "load_s": row.load_s,
         },
+        # Recorded with the turn, so an old turn reads right after the key switches.
+        "isolated": row.kv_isolated,
         "node_id": row.node_id,
         "relayed": row.relayed,
         "upstream": row.upstream,

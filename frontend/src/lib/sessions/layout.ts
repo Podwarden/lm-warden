@@ -111,7 +111,7 @@ export function layoutTimeline(
       w: Math.max(MIN_BLOCK_W, x(t.finished_at) - bx),
       h,
       fill: shareClass(share),
-      stripe: causeClass(t.divergence_cause),
+      stripe: causeClass(t.divergence_cause ?? t.divergence_cause_own),
       relayed: t.relayed,
       evicted: t.evicted_on_resume ?? false,
     };

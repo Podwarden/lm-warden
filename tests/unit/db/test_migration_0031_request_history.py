@@ -128,6 +128,9 @@ async def test_request_history_table_exists_with_columns(tmp_data_dir):
         "node_id": "TEXT",
         "prompt_diet": "TEXT",
         "guard": "TEXT",
+        # Added by 0060 (per-key KV sharing), likewise.
+        "kv_isolated": "INTEGER",
+        "kv_iso_cost_tokens": "INTEGER",
     }
     assert set(cols) == set(expected)
     for name, typ in expected.items():
@@ -190,6 +193,8 @@ async def test_request_history_table_exists_with_columns(tmp_data_dir):
         "node_id",
         "prompt_diet",
         "guard",
+        "kv_isolated",
+        "kv_iso_cost_tokens",
     ):
         assert cols[optional][notnull_idx] == 0, optional
 

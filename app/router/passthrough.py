@@ -248,7 +248,8 @@ def _combined_request_headers(request: Request) -> dict[str, str]:
     return combined
 
 
-def _has_request_body(request: Request) -> bool:
+def has_request_body(request: Request) -> bool:
+    """Whether the request carries a body (a GET or HEAD only with a declared length)."""
     if request.method in ("GET", "HEAD"):
         return "content-length" in request.headers and request.headers["content-length"] != "0"
     cl = request.headers.get("content-length")
@@ -294,7 +295,7 @@ async def relay(
     content: Any = None
     if body is not None:
         content = body
-    elif _has_request_body(request):
+    elif has_request_body(request):
         content = request.stream()
         if "content-length" in request.headers:
             # known length: keep it rather than let httpx switch to chunked

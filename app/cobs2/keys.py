@@ -69,8 +69,13 @@ def _parse_retry(path: Path) -> NetworkKey:
     return _parse(path)
 
 
+def network_key_path(db_path: Path) -> Path:
+    """Where the network key lives: ``cobs2_network_key`` next to the DB."""
+    return db_path.parent / KEY_FILENAME
+
+
 def load_or_create_network_key(db_path: Path) -> NetworkKey:
-    path = db_path.parent / KEY_FILENAME
+    path = network_key_path(db_path)
     if path.exists():
         return _parse_retry(path)
     if not db_path.parent.exists():

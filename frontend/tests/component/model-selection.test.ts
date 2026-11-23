@@ -19,7 +19,7 @@ import {
 //
 // At least one model stays selected. An empty selection has two plausible
 // readings — "everything" and "nothing" — and every surface downstream (stats
-// numbers, live panels, god mode) would have to pick one. So the state can
+// numbers, live panels, Prompt Lens) would have to pick one. So the state can
 // never reach it.
 //
 // DISABLE, do not silently re-select. A checkbox that unticks and re-ticks

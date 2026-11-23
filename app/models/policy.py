@@ -138,6 +138,16 @@ MODEL_FIELD_POLICY: dict[str, FieldPolicy] = {
         editable_while_loaded=True,
         why="spec 2026-10-25 17.3; proxy-side knob read per request, no reload needed",
     ),
+    "kv_store": FieldPolicy(
+        Writer.OPERATOR,
+        editable_while_loaded=False,
+        why="migration 0058; adds --kv-transfer-config to the engine argv, so it needs a reload",
+    ),
+    "kv_store_weight": FieldPolicy(
+        Writer.OPERATOR,
+        editable_while_loaded=True,
+        why="migration 0060; the model's part of each KV tier, pushed to the store daemon live",
+    ),
     # -- engine axis ---------------------------------------------------------
     "backend": FieldPolicy(
         Writer.OPERATOR,

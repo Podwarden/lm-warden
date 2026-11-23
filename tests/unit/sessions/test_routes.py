@@ -456,3 +456,169 @@ def test_older_fallback_segment_beyond_the_newest_rows_opens(tmp_data_dir, clien
     r = client.get(f"/api/sessions/{old['session_id']}", headers=h)
     assert r.status_code == 200, r.text
     assert len(r.json()["turns"]) == 5
+
+
+_FLEET = ("reusable_tokens", "cache_outcome", "divergence_cause")
+
+
+def _lens_rows(db_path, s):
+    """tok1's two turns (the key holder), with fleet and own lenses that differ;
+    the second continues tok1's own first turn."""
+    now = time.time()
+    common = {"prompt_tokens": 4000, "cached_tokens": 0}
+    _put(
+        db_path,
+        RID + "1",
+        secret=s,
+        edge="new",
+        at=now - 60,
+        reusable_tokens=3900,
+        reusable_tokens_own=0,
+        cache_outcome="lost",
+        cache_outcome_own="cold",
+        cobs2_divergence_cause="harness_rewrite",
+        cobs2_divergence_cause_own=None,
+        **common,
+    )
+    _put(
+        db_path,
+        RID + "2",
+        secret=s,
+        at=now - 50,
+        cobs2_parent_req=RID + "1",
+        cobs2_parent_node="n-" + RID + "1",
+        reusable_tokens=3900,
+        reusable_tokens_own=3500,
+        cache_outcome="lost",
+        cache_outcome_own="lost",
+        cobs2_divergence_cause="compacted",
+        cobs2_divergence_cause_own=None,
+        **common,
+    )
+
+
+def test_key_holder_gets_own_lens_only_admin_keeps_fleet(tmp_data_dir, client):
+    db_path, plaintext, admin = _ready_key(client, tmp_data_dir)
+    s = _secret(client)
+    _lens_rows(db_path, s)
+    kh = _forest_login(client, plaintext)
+    sid = "s_" + sess_ref(s, "tok1", "S")
+
+    k = client.get(f"/api/sessions/{sid}", headers=kh).json()
+    kr = client.get(f"/api/requests/{RID}2", headers=kh).json()
+    for t in [*k["turns"], kr]:
+        assert all(t.get(f) is None for f in _FLEET), t
+    by = {t["request_id"]: t for t in k["turns"]}
+    assert by[RID + "1"]["cache_outcome_own"] == "cold"
+    assert by[RID + "1"]["reusable_tokens_own"] == 0
+    assert by[RID + "2"]["cache_outcome_own"] == "lost"
+    assert by[RID + "2"]["reusable_tokens_own"] == 3500
+    assert kr["reusable_tokens_own"] == 3500 and kr["cache_outcome_own"] == "lost"
+    # tok1's own lineage is kept.
+    assert by[RID + "2"]["parent_request_id"] == RID + "1"
+    assert by[RID + "2"]["edge"] == "continue"
+
+    a = client.get(f"/api/sessions/{sid}", headers=admin).json()
+    ar = client.get(f"/api/requests/{RID}2", headers=admin).json()
+    ab = {t["request_id"]: t for t in a["turns"]}
+    assert ab[RID + "1"]["cache_outcome"] == "lost"
+    assert ab[RID + "1"]["reusable_tokens"] == 3900
+    assert ab[RID + "1"]["divergence_cause"] == "harness_rewrite"
+    assert ar["cache_outcome"] == "lost" and ar["reusable_tokens"] == 3900
+    assert ar["divergence_cause"] == "compacted" and ar["reusable_tokens_own"] == 3500
+
+
+def test_key_holder_pause_eviction_uses_own_lens(tmp_data_dir, client):
+    """Fleet lens says a resume lost 3900 reusable tokens; own lens says nothing
+    of this key's was reusable: the key holder sees no eviction, the admin does."""
+    db_path, plaintext, admin = _ready_key(client, tmp_data_dir)
+    s = _secret(client)
+    now = time.time()
+    _put(db_path, RID + "1", secret=s, edge="new", at=now - 4000, prompt_tokens=4000)
+    _put(
+        db_path,
+        RID + "2",
+        secret=s,
+        at=now - 50,
+        prompt_tokens=4000,
+        cached_tokens=0,
+        cobs2_parent_req=RID + "1",
+        reusable_tokens=3900,
+        cache_outcome="lost",
+    )
+    kh = _forest_login(client, plaintext)
+    sid = "s_" + sess_ref(s, "tok1", "S")
+    kt = {
+        t["request_id"]: t for t in client.get(f"/api/sessions/{sid}", headers=kh).json()["turns"]
+    }
+    at = {
+        t["request_id"]: t
+        for t in client.get(f"/api/sessions/{sid}", headers=admin).json()["turns"]
+    }
+    assert at[RID + "2"]["evicted_on_resume"] is True
+    assert kt[RID + "2"]["evicted_on_resume"] is False and kt[RID + "2"]["lost_tokens"] is None
+    kl = client.get("/api/sessions?range=24h", headers=kh).json()
+    al = client.get("/api/sessions?range=24h&token=tok1", headers=admin).json()
+    assert kl["sessions"][0]["evicted_resumes"] == 0
+    assert al["sessions"][0]["evicted_resumes"] == 1
+
+
+def test_key_holder_never_sees_another_keys_lineage_parent(tmp_data_dir, client):
+    """Lineage is keyed on the client's session id, not the key: a tok1 turn whose
+    recorded parent is tok2's request reads as a new body, with the own-lens
+    relabel that parent caused undone; the admin still sees the link."""
+    db_path, plaintext, admin = _ready_key(client, tmp_data_dir)
+    s = _secret(client)
+    now = time.time()
+    _put(db_path, RID + "8", tok="tok2", sess="S", secret=s, edge="new", at=now - 70)
+    _put(
+        db_path,
+        RID + "1",
+        secret=s,
+        edge="compacted_from",
+        at=now - 50,
+        cobs2_parent_req=RID + "8",
+        cobs2_parent_node="n-" + RID + "8",
+        cache_outcome_own="compacted",
+        cobs2_divergence_cause_own="compacted",
+        reusable_tokens_own=0,
+        cobs2_conv="conv-of-tok2",
+        cobs2_shape=json.dumps({"chars": 400, "brk": 3}),
+    )
+    kh = _forest_login(client, plaintext)
+    for t in (
+        client.get(f"/api/requests/{RID}1", headers=kh).json(),
+        client.get(f"/api/sessions/r_{RID}1", headers=kh).json()["turns"][0],
+    ):
+        assert t["parent_request_id"] is None and t["parent_node"] is None
+        assert t["edge"] == "new"
+        assert t["cache_outcome_own"] == "cold" and t["divergence_cause_own"] is None
+        # Nothing the foreign parent handed down: its conversation id, the break depth.
+        assert t["conversation_id"] is None and t["shape"]["brk"] is None
+        assert RID + "8" not in json.dumps(t) and "conv-of-tok2" not in json.dumps(t)
+    a = client.get(f"/api/requests/{RID}1", headers=admin).json()
+    assert a["parent_request_id"] == RID + "8" and a["edge"] == "compacted_from"
+    assert a["cache_outcome_own"] == "compacted"
+    assert a["conversation_id"] == "conv-of-tok2" and a["shape"]["brk"] == 3
+
+
+def test_list_drops_another_keys_lineage_parent(tmp_data_dir, client):
+    """The list agrees with the detail: a compaction whose parent is another
+    key's request is not counted for the key holder; the admin still counts it."""
+    db_path, plaintext, admin = _ready_key(client, tmp_data_dir)
+    s = _secret(client)
+    now = time.time()
+    _put(db_path, RID + "8", tok="tok2", sess="S", secret=s, edge="new", at=now - 70)
+    _put(
+        db_path,
+        RID + "1",
+        secret=s,
+        edge="compacted_from",
+        at=now - 50,
+        cobs2_parent_req=RID + "8",
+        cobs2_parent_node="n-" + RID + "8",
+    )
+    kl = client.get("/api/sessions?range=24h", headers=_forest_login(client, plaintext)).json()
+    al = client.get("/api/sessions?range=24h&token=tok1", headers=admin).json()
+    assert [i["compactions"] for i in kl["sessions"]] == [0]
+    assert [i["compactions"] for i in al["sessions"]] == [1]

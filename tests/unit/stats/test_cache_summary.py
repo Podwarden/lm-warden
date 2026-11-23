@@ -388,3 +388,37 @@ async def test_divergence_causes_count_only_broken_prefixes(tmp_path):
     assert s["deep_diverged"] == 1 and s["outcomes"]["diverged"] == 20
     assert s["divergence_causes"] == {"compacted": 0, "harness_rewrite": 0}
     assert own["divergence_causes"] == {"compacted": 0, "harness_rewrite": 1}
+
+
+async def test_measured_only_sums_leave_estimates_out(tmp_path):
+    """B4: the page's one cache figure is engine-measured cached over the prompts
+    of those same requests; TTFT estimates are counted apart, never mixed in."""
+    p = await _db(tmp_path)
+    async with open_db(p) as db:
+        await _ins(db, 1, prompt_tokens=1000, cached_tokens=800, cached_source="engine")
+        await _ins(db, 2, prompt_tokens=1000, cached_tokens=200, cached_source="engine")
+        await _ins(
+            db, 3, prompt_tokens=4000, cached_ttft_est_tokens=4000, cached_source="estimated"
+        )
+        await _ins(db, 4, prompt_tokens=500)  # nothing known
+        await db.commit()
+        (m,) = await query_cache_summary(db, since=0.0, model_ids=None)
+    assert m["measured_cached_tokens"] == 1000
+    assert m["measured_prompt_tokens"] == 2000
+    assert m["measured_requests"] == 2
+    assert m["requests"] == 4
+
+
+async def test_own_lens_reuse_from_own_prompts(tmp_path):
+    """Key holder lens: reused = min(cached, reusable_own) over rows where both
+    are known; the prompts of those same rows are the denominator."""
+    p = await _db(tmp_path)
+    async with open_db(p) as db:
+        await _ins(db, 1, prompt_tokens=1000, cached_tokens=900, reusable_tokens_own=600)
+        await _ins(db, 2, prompt_tokens=1000, cached_tokens=100, reusable_tokens_own=800)
+        await _ins(db, 3, prompt_tokens=1000, cached_tokens=900, reusable_tokens_own=None)
+        await db.commit()
+        (m,) = await query_cache_summary(db, since=0.0, model_ids=None, token_id="tA")
+    assert m["own_reused_tokens"] == 700
+    assert m["own_known_prompt_tokens"] == 2000
+    assert m["own_known_requests"] == 2

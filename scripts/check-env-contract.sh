@@ -87,7 +87,7 @@ for pair in $(printf '%s\n' "$installer_defaults" | tr ' ' '='); do
   if [ -n "$cfg" ] && [ "$cfg" != "$d" ]; then
     case "$n" in
       # Truthy flags: the app default is "" (falsy); "false"/"0" mean the same.
-      VW_GODMODE_ENABLED|VW_TRUST_PROXY_ORIGIN) case "$d" in false|0|"") continue ;; esac ;;
+      VW_PROMPT_LENS_ENABLED|VW_TRUST_PROXY_ORIGIN) case "$d" in false|0|"") continue ;; esac ;;
     esac
     mismatch="$mismatch $n(app/config.py=$cfg,install.sh=$d)"
   fi

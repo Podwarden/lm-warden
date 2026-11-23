@@ -17,9 +17,24 @@ content-type: application/json
 {"detail":"token paused"}
 ```
 
-- **Watch** a key's requests and tokens per minute over the last hour, its whole history, and (opt-in, off by default) a live view of its prompts and replies in the god-mode dock.
+- **Watch** a key's requests and tokens per minute over the last hour, its whole history, and (opt-in, off by default) a live view of its prompts and replies in Prompt Lens (the page `/ui/prompt-lens`, opened from the key's page with this key and its earlier keys preset).
 
 The Stats page also draws every key's requests on one chart: a mark per request, coloured by key, sized by the tokens it generated, at the height of its duration.
+
+## What someone signed in with a key sees
+
+A colleague who signs in with their own key (API key tab on the sign-in page) gets their own area, with a **Stats** page for that key alone:
+
+- **Your speed**: time to first token, decode speed, prompt speed and duration over the window, and a chart with a dot per request. Prompt speed is prompt tokens divided by the time to first token, so it includes cache effects.
+- **Your tokens / second**, prompt and completion per minute.
+- **Your cache**: how much of their prompts was reused from their own earlier prompts.
+- **Your requests**: a chart of their finished requests and a table of the ones running now, with an estimated wait for a request that has not started.
+
+A key that has not been used lately does not get empty panels: when the chosen window (1h, 6h, 24h or 7d) holds none of its requests, the page shows the same length of time up to the key's last request instead, and the line under the model tabs says so ("No requests in the last hour · showing the hour up to your last request, 3 d ago"), with **Back to now**. A key that was never used shows the empty page.
+
+It shows nothing fleet-wide. No other key's requests, names, sessions or prompts, no client IP (the session identifies a request), no install, server load, engine or host figures, and no count of requests ahead of theirs. The wait estimate comes from their own requests only. No cache figure on the page can tell them that someone else sent the same text.
+
+**Prompt Lens for a key holder** (called god mode before 2026-11-22) follows the platform. When it is on (the switch in Settings, General, Privacy, or `VW_PROMPT_LENS_ENABLED`), everyone signed in with their own key gets a **Prompt Lens** page (`/ui/key/prompt-lens`, in their area's nav, full screen), and an eye on each of their own rows in the Stats Requests table opens that request there; when it is off, neither is there. The page lists their own requests, live and recent, and shows each one's prompt part by part (which parts match their own earlier requests), its thinking, reply and tool calls as they stream, the timing, the tokens and the finish reason. A section opens whole in a large view with search. Captures stay in server memory for a short time, not on disk, unless an admin set the key to keep its last 50 requests on disk, and the page tells them so and that admins can see the captures too. It shows nothing about other keys: no client IP, no other key's requests, and a prompt part another key made cached reads "new". Their stream follows their sign-in: it ends when they sign out, the sign-in expires, or the key is paused, rotated or revoked.
 
 ## Leaving is a `base_url` change
 

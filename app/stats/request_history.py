@@ -50,7 +50,7 @@ from typing import Any
 
 import aiosqlite
 
-from app.cache_obs.classify import DIVERGENCE_CAUSES, OUTCOMES
+from app.cache_obs.classify import BLOCK_AWARE_ABOVE, DIVERGENCE_CAUSES, OUTCOMES
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo
 
@@ -137,6 +137,8 @@ _COLUMNS = (
     "node_id",
     "prompt_diet",
     "guard",
+    "kv_isolated",
+    "kv_iso_cost_tokens",
 )
 # The forest's six columns (session_key .. tools_in, just before the cobs2 tail of _COLUMNS) are
 # written with every row but read only by the forest route, which selects them itself: the v2
@@ -182,9 +184,16 @@ _SESSIONS_COLUMNS = (
 # Prompt diet (migration 0054): what a key's diet cut; written with every row,
 # read only by ad hoc analysis.
 _DIET_COLUMNS = ("prompt_diet", "guard")
+# Per-key KV isolation (migration 0060): whether the turn ran isolated and what isolation cost
+# it in recomputed tokens. Read by the sessions and key cache pages, never by the v2 readers.
+_KV_ISO_COLUMNS = ("kv_isolated", "kv_iso_cost_tokens")
 _COBS2_EDGES = frozenset({"new", "continue", "fork", "compacted_from", "subagent"})
 _READ_COLUMNS = _COLUMNS[
-    : -len(_FOREST_COLUMNS) - len(_COBS2_COLUMNS) - len(_SESSIONS_COLUMNS) - len(_DIET_COLUMNS)
+    : -len(_FOREST_COLUMNS)
+    - len(_COBS2_COLUMNS)
+    - len(_SESSIONS_COLUMNS)
+    - len(_DIET_COLUMNS)
+    - len(_KV_ISO_COLUMNS)
 ]
 _SELECT = "SELECT " + ", ".join(_READ_COLUMNS) + " FROM request_history"
 # INSERT OR IGNORE: the id is the registry's uuid, and a record that somehow
@@ -308,6 +317,8 @@ def _row_params(record: dict[str, Any], finished_at: float) -> tuple[Any, ...]:
         _opt_str(record.get("node_id")),
         _opt_str(record.get("prompt_diet")),
         _opt_str(record.get("guard")),
+        _opt_bool(record.get("kv_isolated")),
+        _opt_int(record.get("kv_iso_cost_tokens")),
     )
 
 
@@ -699,8 +710,10 @@ async def query_cache_summary(
     since: float,
     model_ids: Sequence[str] | None,
     token_id: str | None = None,
+    until: float | None = None,
 ) -> list[dict[str, Any]]:
-    """Cache observation per model over a window (spec §5). ``token_id`` set =
+    """Cache observation per model over a window (spec §5). ``until`` ends the
+    window (default: now). ``token_id`` set =
     the OWN lens: own-scope columns, that token's rows only, no cross-token
     fields. Unknown values stay out of sums (NULL is not 0)."""
     reuse_col = "reusable_tokens_own" if token_id else "reusable_tokens"
@@ -711,6 +724,9 @@ async def query_cache_summary(
     clause, params = _model_clause(model_ids)
     where = " WHERE finished_at >= ?" + clause
     args: tuple[Any, ...] = (since, *params)
+    if until is not None:
+        where += " AND finished_at <= ?"
+        args += (until,)
     if token_id:
         where += " AND token_id = ?"
         args += (token_id,)
@@ -738,13 +754,40 @@ async def query_cache_summary(
         # The prefix broke mid-prompt yet enough came before the break to
         # read hit or partial: the rewrite's waste is otherwise invisible.
         f"SUM(CASE WHEN {div_col} IS NOT NULL AND {outcome_col} IN ('hit','partial') "
+        "THEN 1 ELSE 0 END), "
+        # B4: engine-measured only (no estimate mixed in), and the prompts of
+        # the same rows -- the page's one cache figure.
+        "COALESCE(SUM(cached_tokens),0), "
+        "COALESCE(SUM(CASE WHEN cached_tokens IS NOT NULL THEN prompt_tokens END),0), "
+        # Own lens: tokens reused from the key's OWN earlier prompts.
+        "COALESCE(SUM(CASE WHEN cached_tokens IS NOT NULL AND reusable_tokens_own IS NOT NULL "
+        "THEN MIN(cached_tokens, reusable_tokens_own) END),0), "
+        "COALESCE(SUM(CASE WHEN cached_tokens IS NOT NULL AND reusable_tokens_own IS NOT NULL "
+        "THEN prompt_tokens END),0), "
+        "SUM(CASE WHEN cached_tokens IS NOT NULL AND reusable_tokens_own IS NOT NULL "
         "THEN 1 ELSE 0 END) "
         f"FROM request_history{where} GROUP BY model_id",
         args,
     )
     out: dict[str, dict[str, Any]] = {}
     for row in await cur.fetchall():
-        mid, n, prompt, cached, known_prompt, meas, est, reused, reuse, deep = row
+        (
+            mid,
+            n,
+            prompt,
+            cached,
+            known_prompt,
+            meas,
+            est,
+            reused,
+            reuse,
+            deep,
+            m_cached,
+            m_prompt,
+            own_reused,
+            own_prompt,
+            own_n,
+        ) = row
         out[mid] = {
             "model_id": mid,
             "requests": n,
@@ -755,6 +798,9 @@ async def query_cache_summary(
             "known_prompt_tokens": known_prompt,
             "measured_requests": meas or 0,
             "estimated_requests": est or 0,
+            #: B4: engine-measured cached tokens and the prompts of those rows
+            "measured_cached_tokens": m_cached,
+            "measured_prompt_tokens": m_prompt,
             #: efficiency = reused_tokens / reusable_tokens (same rows)
             "reused_tokens": reused,
             "reusable_tokens": reuse,
@@ -763,6 +809,11 @@ async def query_cache_summary(
             "deep_diverged": deep or 0,
             "by_rank": [],
         }
+        if token_id:
+            #: Own lens only: min(cached, reusable_own) and its population.
+            out[mid]["own_reused_tokens"] = own_reused
+            out[mid]["own_known_prompt_tokens"] = own_prompt
+            out[mid]["own_known_requests"] = own_n or 0
     cur = await db.execute(
         f"SELECT model_id, {outcome_col}, COUNT(*) FROM request_history{where} "
         f"AND {outcome_col} IS NOT NULL GROUP BY model_id, {outcome_col}",
@@ -825,22 +876,48 @@ async def query_cache_summary(
     return list(out.values())
 
 
+def _engine_cache_block(state: Any, model: Any) -> tuple[int | None, bool, int | None]:
+    """(B, drops the last unit, match unit) of the engine run serving ``model`` now, the
+    values classify() used (app/cache_obs/block_size.py). B is None when
+    unknown or a classic small page (the rules ignore it there too), so the
+    page only explains a granularity that changes the outcomes."""
+    sizes = getattr(state, "engine_block_sizes", None) if state is not None else None
+    if sizes is None or model is None:
+        return None, False, None
+    from app.proxy.routes_dp import engine_epoch
+
+    epoch = engine_epoch(state, model)
+    block = sizes.get(model.id, epoch)
+    if block is None or block <= BLOCK_AWARE_ABOVE:
+        return None, False, None
+    unit = sizes.match_unit(model.id, epoch) or block
+    return block, sizes.drops_last_block(model.id, epoch), unit
+
+
 async def decorate_cache_rows(
     db: aiosqlite.Connection,
     rows: list[dict[str, Any]],
     *,
     learned: Any,
     hint: float,
+    state: Any = None,
 ) -> None:
-    """Add ``model``, ``backend``, ``prefill_saved_s`` and ``rate_source`` to
-    each cache-summary row in place. ``learned`` is the app's PrefillModelState
-    (or None before it exists); ``hint`` is ``settings.prefill_tok_s_hint``.
-    Shared by the operator and the per-token routes so they stay identical."""
+    """Add ``model``, ``backend``, ``prefill_saved_s``, ``rate_source`` and the
+    engine's cache granularity to each cache-summary row in place. ``learned``
+    is the app's PrefillModelState (or None before it exists); ``hint`` is
+    ``settings.prefill_tok_s_hint``; ``state`` is app.state, for the block size
+    learned for the engine run serving now. Shared by the operator and the
+    per-token routes so they stay identical."""
     repo = ModelRepo(db)
     for s in rows:
         m = await repo.get(s["model_id"])
         s["model"] = m.served_model_name if m else s["model_id"]
         s["backend"] = getattr(m, "backend", None) if m else None
+        (
+            s["engine_block_tokens"],
+            s["engine_drops_last_block"],
+            s["engine_match_unit_tokens"],
+        ) = _engine_cache_block(state, m)
         rate, src = learned.rate_for(s["model_id"], hint) if learned is not None else (hint, "hint")
         known = s["measured_requests"] + s["estimated_requests"] > 0
         # No row with a known C: prefill saved is unknown, not 0 seconds.

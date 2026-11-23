@@ -372,6 +372,105 @@ model is marked `failed` with the stall reason. There is no automatic retry.
 
 ---
 
+## Health and readiness
+
+Two public routes (no credential) for two different questions, and an admin
+route with the detail:
+
+| Route | Question | Status |
+|-------|----------|--------|
+| `GET /healthz` | Is the warden process up? (liveness) | Always `200` while the api answers |
+| `GET /readyz` | Can it serve a completion right now? (readiness) | `200` or `503` |
+| `GET /api/admin/readiness` | Same as `/readyz`, per model (admin credential) | `200`, `503`, `404` |
+
+`/healthz` never fails over models. A model load takes minutes, and a
+liveness probe that failed meanwhile would get the api restarted mid-load, so
+the load would never finish. It reports model state in its body instead:
+
+```
+{"ok": true,
+ "gpu": {"state": "ok", "error": null, "since": <epoch s>, "checked_at": <epoch s>},
+ "models": {"serving": false,
+            "counts": {"loading": 1, "ready": 0, "failed": 0,
+                       "unloading": 0, "unloaded": 2}}}
+```
+
+`serving` is `true` when at least one model passes the router's own check
+(status `loaded` and the engine is running), the check a `/v1` request meets
+before it is forwarded. `/healthz` makes no engine call to get it. If the
+models table cannot be read, `models` is `{"serving": null, "counts": null}`
+and the status is still `200`. The states:
+
+| State | Meaning |
+|-------|---------|
+| `loading` | Loading, or failed and about to be restored by the watchdog after a restart (only while the watchdog will do it: probing enabled, or the boot restore has not run yet) |
+| `ready` | The router forwards requests to it |
+| `failed` | The load failed or the engine is gone, and nothing will restore it by itself |
+| `unloading` | Being unloaded |
+| `unloaded` | Not meant to be serving (registered, pulling, pulled) |
+
+`/readyz` answers `200` only when at least one `ready` model's engine also
+answers its own health path now (2 s timeout). Otherwise `503`. The body is
+only a verdict and a reason code:
+
+```
+200 {"ready": true,  "reason": null}
+503 {"ready": false, "reason": "loading"}
+```
+
+| `reason` | When |
+|----------|------|
+| `loading` | A model is loading or being restored |
+| `engine_unhealthy` | A model is `ready` but its engine did not answer |
+| `failed` | Every model meant to serve has failed |
+| `unloading` | The only model meant to serve is being unloaded |
+| `no_models_configured` | No local model is loaded or loading, including on purpose |
+| `unavailable` | The models table could not be read |
+
+Both public routes are deliberately anonymous: they never name a model, say
+when it changed, or carry an error message. An admin (session or admin token)
+gets that on `GET /api/admin/readiness`, with the same status codes as
+`/readyz` and the same reason codes:
+
+```
+curl -s -H "Authorization: Bearer $VW_ADMIN_TOKEN" http://HOST:8080/api/admin/readiness
+503 {"ready": false, "reason": "loading",
+     "models": {"serving": false, "counts": {...},
+                "items": [{"id": "9895a1829559533c", "name": "qwen2.5-1.5b",
+                           "state": "loading", "since": "2026-11-22T12:24:10Z"}]}}
+```
+
+Each item may also carry `engine` (`ok` or `unhealthy`, for a `ready` model)
+and `error` (the model's `last_error`, for a `failed` one). Models that are not
+meant to serve are counted, not listed. `?model=<id or served name>` narrows
+the verdict to one model (`404` for an unknown one).
+
+Things to know:
+
+- **Ready means at least one model.** On a multi-model warden `/readyz` is
+  `200` as soon as any model can serve. To wait for a particular model, ask
+  `/api/admin/readiness?model=<name>`.
+- **Relayed models do not count.** A warden that serves only through router
+  rules relaying to an upstream (for example Claude names sent on to
+  Anthropic) and has no local model answers `503 no_models_configured`, even
+  though `/v1/messages` works. `/readyz` checks local engines only.
+- **The answer is shared for about 1 s.** Every caller gets the same result
+  for a second, and concurrent callers wait on one check; a model status
+  change starts a new one at once.
+- **Front door.** The repo's Caddyfile routes `/readyz` to the api. A
+  PodWarden Hub catalogue install carries its own Caddyfile, which (as of
+  2026-11-22) answers unknown paths with Caddy's own `404`, so `/readyz`
+  returns `404` there until that Caddyfile gains a `handle /readyz` route.
+  `/api/admin/readiness` works there already (it is under `/api/`).
+
+Wait on `/readyz` (or the admin route), not `/healthz`, before sending
+traffic after a deploy or a restart. Keep `/healthz` as the container's
+liveness probe. Do not make `/readyz` the api container's readiness probe
+either: a warden with no model loaded is correctly not ready, and the same
+container serves the UI and the API you would use to load one.
+
+---
+
 ## Managing a key from the API
 
 Each key's page in the UI (`/ui/tokens/{id}`) drives these calls. They are
@@ -570,27 +669,54 @@ have `from` before `to` and be no longer than 366 days, or the answer is
 The older `GET /api/tokens/{id}/usage?range=1h|24h|7d` is still there and
 unchanged: raw per-minute rows for one key, with no binning and no timings.
 
-### God mode for one key
+### Prompt Lens
 
-God mode is off unless `VW_GODMODE_ENABLED` is set (see
+**Prompt Lens** (called god mode before 2026-11-22) is a tool for seeing what a
+client really sent and what came back, prompt part by prompt part. It is off
+unless turned on: by the switch in Settings, General, Privacy (the runtime
+setting `prompt_lens_enabled`, applied at once), or, while that switch has never
+been saved, by `VW_PROMPT_LENS_ENABLED` (see
 [Where request content can end up](OPERATING.md#where-request-content-can-end-up)).
-The page asks first, and shows its dock only when the answer is yes:
+The console asks first, and shows the Prompt Lens menu entry and page only when the answer is yes; the answer
+also says where the value in effect comes from (`source`: `setting`, `env` or
+`default`, and which `env_var`):
 
 ```bash
-curl -s $W/api/admin/godmode/status -H "Authorization: Bearer $JWT"
-# {"enabled":true}
+curl -s $W/api/admin/prompt-lens/status -H "Authorization: Bearer $JWT"
+# {"enabled":true,"source":"env","setting":null,"env_var":"VW_PROMPT_LENS_ENABLED","env_value":true}
 ```
 
-The stream itself is a server-sent-event stream behind a single-use ticket,
+Only a signed-in session can change the switch (`PATCH /api/settings/runtime`
+`{"prompt_lens_enabled": false}`; `null` clears it, "Use server default", so
+the env variable decides again; an admin token gets 403 `session_only`). Every
+save is a row in `prompt_lens_switch_audit` (who, when, through what, value and
+source before and after); the status carries the newest as `last_change`.
+Turning it off stops capturing at once (a request already running captures
+nothing more, even after it is turned back on), ends every open Prompt Lens
+stream (admin and key holder) and clears the ring and the section store. A
+key's kept captures stay on disk, and while it is off the admin routes
+`/kept`, `/kept/{req_id}` and `/requests/{req_id}/section/{kind}` still serve
+them (read-only; nothing from memory); the key holder's routes answer 404.
+
+**Old names (deprecated, one release).** Every route below also answers under
+its old path, `/api/admin/godmode/...` and `/api/me/godmode/...`: the same
+handler and auth, marked deprecated in the schema, with `Deprecation: true` and
+`Link: <new path>; rel="successor-version"` on every answer, errors included. A ticket for the
+old admin stream is minted for the old path. `GET /api/me/key` carries
+`godmode_view_available` beside `prompt_lens_view_available`. `VW_GODMODE_ENABLED`
+and the other `VW_GODMODE_*` variables still work; the new name wins.
+
+**The admin stream.** A server-sent-event stream behind a single-use ticket,
 because a browser's `EventSource` cannot send an `Authorization` header. Mint
 the ticket for the **bare** path — no query string — then pass it, and
 `token_ids`, as query parameters:
 
 ```bash
 TICKET=$(curl -s -X POST $W/api/auth/sse-ticket "${AUTH[@]}" \
-           -d '{"path":"/api/admin/godmode/stream"}' | jq -r .ticket)
+           -d '{"path":"/api/admin/prompt-lens/stream"}' | jq -r .ticket)
 
-curl -sN "$W/api/admin/godmode/stream?token_ids=$T,0b91…&ticket=$TICKET"
+curl -sN "$W/api/admin/prompt-lens/stream?token_ids=$T,0b91…&ticket=$TICKET"
+# data: {"type":"ring","oldest_ts":…,"events":1840,"chars":3912007,"chars_max":4000000}
 # data: {"type":"request_start","req_id":"…","token_id":"53e7011c…", …}
 # data: {"type":"delta","req_id":"…","token_id":"53e7011c…", …}
 # data: {"type":"request_end","req_id":"…","token_id":"53e7011c…", …}
@@ -600,12 +726,142 @@ curl -sN "$W/api/admin/godmode/stream?token_ids=$T,0b91…&ticket=$TICKET"
 of recent requests and the live events are narrowed to those keys, and every
 event carries `token_id`, so a request is never split from its deltas. An
 empty list, or more than 20 ids, is a **422**. Leave the parameter out and the
-stream is every key's traffic, exactly as before it existed — scripts that
-already read it are unaffected. With god mode off, the ticket mint and the
-stream both answer **409** `god mode is disabled (VW_GODMODE_ENABLED)`.
+stream is every key's traffic. With Prompt Lens off, the ticket mint and the
+stream both answer **409** `Prompt Lens is disabled (Settings, or VW_PROMPT_LENS_ENABLED)`.
 
-The stream is open only as long as you hold it. The page's dock works the same
-way: it connects when you open it and disconnects when you close it.
+**Scripts: the admin stream now starts with a `ring` frame.** Right after the
+`: connected` comment comes `{"type":"ring",…}`: how many events and
+characters the replay ring holds (`events`, `chars`, `chars_max`) and the
+server time of the oldest one (`oldest_ts`, or null when the ring is empty).
+It repeats every 30 seconds.
+A script that reads only the request events should skip frames whose `type`
+it does not know. The key holder's stream never has it (those counts are
+every key's).
+
+The stream is open only as long as you hold it. The Prompt Lens page works the
+same way: it connects when you open it and disconnects when you leave it.
+
+**Events.** Every data frame is one JSON object with `type`:
+
+| `type` | Fields |
+|---|---|
+| `request_start` | `req_id`, `ts`, `seq`, `token_id`, `token_label`, `request_id` (the `X-LMW-Request-Id`), `model`, `served_name`, `client_ip`, `stream`, `prompt` and `prompt_elided` (the flat prompt, kept one more release for scripts), `prompt_parts` (the prompt by message: the newest messages whole, older ones counted in `older`/`omitted`), `session_id`, `turn`, `media` (inline images, by id) |
+| `kvsig` | `req_id`, `token_id`, `ts`, `seq`, `session_id`, `turn`, `queued_s` (sent at admission), `available` (`reason` when false), `profile`, `head8`, `conv8`, `edge`, `parent_request_id`, `exact_depth`, `loose_depth`, `n_nodes`, `reusable_own`, `reusable_any`, `parts` (each `p` = `sys`, `tools` or `nodes`, `from`, `to`, `chars`, `roles`, `exact8`, `loose8`, `state` = `exact`, `loose`, `new` or `other`) |
+| `delta` | `req_id`, `token_id`, `ts`, `seq`, `channel` (`reasoning`, `content` or `tool_call`), `text`; a `tool_call` fragment also has `index`, and `call_id`, `name` and `elided` when it carries them |
+| `progress` | `req_id`, `token_id`, `ts`, `seq`, `phase`, `frames` (`reasoning`, `content`, `tool_call`), `completion_tokens`. Live only: never replayed |
+| `request_end` | `req_id`, `token_id`, `ts`, `seq`, `finish_reason`, `prompt_tokens`, `completion_tokens`, `reasoning_tokens`, `cached_tokens`, `queued_s`, `ttft_s`, `duration_s`, `decode_tps`, `own_reused_tokens`, `cache` (the cache observation), and `tool_calls_dropped` / `tool_call_chars_dropped` only when tool-call text was cut |
+| `ring` | admin stream only, above |
+| `lagged` | the client fell behind its queue and the oldest events it had not read were dropped; sent once per gap |
+
+Every request that has a `request_start` gets exactly one `request_end`. A
+request the sensitive data guard blocks before it starts has neither: it is in
+the guard log, not in Prompt Lens. Requests relayed to Anthropic by the router
+do not appear in Prompt Lens yet.
+
+**What a key holder never receives.** The key holder's stream, sections and
+kept captures remove, from every event: `client_ip`, `token_label`, the hub's
+`seq` (their stream numbers its own frames instead), `reusable_any`,
+`cached_tokens`, `cache` and the names inside it (`reusable_tokens`,
+`reusable_tokens_fleet`, `cache_outcome`, `divergence_cause`,
+`other_key_label`). A prompt part another key made cached reads `new` for
+them (the admin sees `other`). They never get a `ring` frame.
+
+**Whole sections.** The stream carries a request's text as it streams; the
+Prompt Lens page keeps a bounded tail of it. The whole section comes from:
+
+```bash
+curl -s "$W/api/admin/prompt-lens/requests/$REQ_ID/section/thinking?from=0" -H "Authorization: Bearer $JWT"
+# {"kind":"thinking","seq":91822,"live":true,"dropped_chars":0,"offset":0,"text":"…","dropped_calls":0,"kept":false}
+```
+
+`kind` is `thinking`, `reply`, `tool_calls` (`calls`, by index), `tool_results`
+or `prompt` (`messages`, system and tools first, and `older`, the collapsed
+summary). `offset` is where `text` starts, so `offset` plus its length is the
+section's length: fetch again with `?from=` that number to get only what came
+since. `dropped_chars` counts the oldest text the store dropped. Bounds:
+[Where request content can end up](OPERATING.md#where-request-content-can-end-up).
+A key holder reads their own with `GET /api/me/prompt-lens/requests/{req_id}/section/{kind}`;
+`seq` is then `null`.
+
+**Keep captures.** An admin can set a key to keep its last finished requests
+on disk: `PATCH /api/tokens/{id}` with `{"keep_captures": true}` (off by
+default; the key's page has the switch). The key's last 50 finished requests,
+at most 32,000,000 characters in all, are written to the database, oldest
+dropped first, prompts included. They outlive the in-memory store and a
+restart. Turning it off deletes the rows of the key and of the keys it was
+rotated from; deleting the key deletes them too. While it is on, the key
+holder's capture note says the last 50 are kept on disk for this key. Lists
+and reads: `GET /api/admin/prompt-lens/kept?token_ids=…`,
+`GET /api/admin/prompt-lens/kept/{req_id}`, and for the key holder
+`GET /api/me/prompt-lens/kept` and `GET /api/me/prompt-lens/kept/{req_id}`. A key may
+make 60 kept reads a minute; past that the answer is **429** with
+`Retry-After`.
+
+**A key holder's live stream.** The key holder's sign-in mints a single-use,
+60-second ticket and opens the stream of its own key's requests:
+
+```bash
+TICKET=$(curl -s -X POST $W/api/me/prompt-lens/ticket -H "Authorization: Bearer $KEY_HOLDER_TOKEN" | jq -r .ticket)
+curl -sN "$W/api/me/prompt-lens/stream?ticket=$TICKET"
+```
+
+The stream takes no key parameter and answers **404** while Prompt Lens is off.
+It replays the key's own recent events, then streams new ones. Every frame
+carries `seq`, numbered from 1 on each connection, so a client that reconnects
+rebuilds its view from the replay and tells requests apart by `req_id`. The
+stream ends when the key is revoked, rotated or paused, when that sign-in ends
+or expires, and when Prompt Lens is switched off. A key may hold 4 open streams
+and mint 30 tickets a minute; past either, the mint (or the stream) answers
+**429** with `Retry-After`. Tickets never appear in the access log.
+
+**The replay window.** The admin stream replays the shared ring (2000 events
+and ~4,000,000 characters by default). A key holder replays a window of their
+own key's events only, so what they get back depends on their own traffic,
+never on how busy other keys are: at most 500 events and 400,000 characters,
+64 request starts, dropped after 30 minutes without an event of that key. The
+server keeps at most 128 such windows; past that, the least recently active
+key's window goes first. That is the one place where other keys' activity
+shows: only when more than 128 keys were active within a key's idle time.
+Text streams one delta per token, so a long reasoning stream fills a window
+fast, and a running request's `request_start` can leave the replay before you
+connect. The replay therefore opens with the `request_start` (and `kvsig`) of
+every request still running whose own start already left it, marked
+`"restored": true` and numbered like any replayed frame. For a key holder these
+come from the key's own window and are in the key holder's view (no client IP
+or key label, no other-key figure, the parts as if no other key had cached
+anything); they change no window size or eviction. A client merges a restored
+start into what it already holds and never resets text already received.
+
+**Deprecated: `GET /api/me/requests/{id}/capture`.** The key holder's old
+capture route still answers, the same as before, and is marked deprecated in
+the API schema. The UI no longer calls it (it reads the stream and the
+section routes); it goes in the next release.
+
+```bash
+curl -s $W/api/me/requests/$REQUEST_ID/capture -H "Authorization: Bearer $KEY_HOLDER_TOKEN"
+# {"id":"…","model":"qwen","live":false,"prompt":"…","reply":"…","reasoning":"",
+#  "finish_reason":"stop","timing":{"queued_s":0.2,"ttft_s":1.3,"duration_s":6.1,…},
+#  "note":"Captures are kept briefly in server memory, …"}
+```
+
+**What it cannot hide (accepted).**
+
+- `phase`, `queued_s` and `ttft_s` are the server's real timings, so they rise
+  when the server is busy with other keys' work. They show how loaded the
+  server is, not who loaded it.
+- The API's own `usage.cached_tokens` in a response is the engine's count. The
+  engine's prefix cache is shared by every key that is not isolated, so a
+  prompt another key sent recently can make it higher. That is a side channel
+  of the shared cache itself, not of Prompt Lens; a key that needs strict
+  separation gets its own isolated KV cache (KV-cache tiers, isolated keys).
+- With more than 128 key windows active, the least recently active key's
+  replay window goes (above).
+- The whole-section store evicts per key first: each key has its own budget
+  (a quarter of `VW_PROMPT_LENS_SECTION_CHARS`, 4,000,000 characters by default,
+  and 64 requests), and a key under it keeps its sections whatever the others
+  send. Past the store's total bounds the heaviest key's oldest request goes,
+  so the key with the most text kept can lose its oldest section to the
+  others' combined traffic. That tells it only that total traffic was high.
 
 ---
 
@@ -635,7 +891,7 @@ data** for the platform default and the **Sensitive data** card on a key's
 page. These calls drive both. `$W`, `AUTH` and `T` are as in the sections
 above; an admin token works the same way (see [Admin API](#admin-api)).
 
-**Nothing stores a value.** Request history, the debug capture, god mode and
+**Nothing stores a value.** Request history, the debug capture, Prompt Lens and
 the content log see placeholders only. The action log keeps the rule, where
 the value was, its length and a keyed fingerprint (`ph`). The same
 fingerprint means the same value for that key, nothing more.
@@ -812,7 +1068,7 @@ request that still carries a value blocks once more.
 Anthropic SDKs can use a warden as their base URL. It is not a second proxy:
 the request is translated into an OpenAI chat request and goes through the
 same path as `/v1/chat/completions`. Admission, key priority, usage
-accounting, live stats, god mode and the runaway detector all work the same
+accounting, live stats, Prompt Lens and the runaway detector all work the same
 way, and the engine sees an ordinary chat completion.
 
 ```bash
@@ -1167,7 +1423,7 @@ format OpenAI Codex CLI uses. Like `/v1/messages` it is not a second proxy: the
 request is translated into an OpenAI chat request for the served model and goes
 through the same path as `/v1/chat/completions`, so admission, key priority,
 usage accounting, live stats, the session column, replica affinity, the
-prefix-cache estimate, god mode and the runaway detector all apply. The
+prefix-cache estimate, Prompt Lens and the runaway detector all apply. The
 warden's own `/v1/responses` is used rather than the engine's because vLLM's
 streams tool calls of non-harmony models (Qwen) as text, and llama.cpp has none.
 
@@ -1493,13 +1749,61 @@ a second after a request ends; `wait_ms` (0–5000) waits for the commit before 
 4. `GET /api/requests/<id>?wait_ms=5000` with `Authorization: Bearer <token>` → `session_id`.
 5. `GET /api/sessions/<session_id>` → the tree: edges, inferred links, cache per turn, replica, tools.
 
+## Stats
+
+The Stats page reads these. All take the admin session or an admin token.
+
+`GET /api/stats/v2/speed?range=1h&model=<model id>` gives per-request latency
+and speed for one model over the window: `points` (one per request: `ttft`
+including the warden queue, `decode`, `prefill` from computed tokens with
+`prefill_alone`, `duration`, the key and client IP) and `summary` per figure.
+A summary follows the low-volume rules: `{"mode":"none"}` with no requests,
+`"list"` with the values for 1 to 4, `"max"` with `p50` and `max` for 5 to 19,
+`"p95"` with `p50`, `p95` (and `p99` from 100 requests) above that. Add
+`group=key`, `group=ip` or `group=model` (with or without `model`) for the
+window columns of the Requests table's Group by; key groups split by model.
+
+`GET /api/stats/requests` (in flight) rows carry `ttft_s`, `ttft_total_s`
+(warden queue included), `out_tokens` (every channel, thinking and tool calls
+included) and `decode_tps_5s`, and the response adds `groups.key`, `groups.ip`
+and `groups.model` with each group's in-flight count and summed live speed.
+
+The live stream's per-model block (`GET /api/stats/live`) adds `now`
+(`generation_tps_10s`, `prefill_computed_tps_10s`, `warden_queue`) and, on the
+first frame of a connection, `history_5m`.
+
+### Stats for a key holder
+
+Someone signed in with their own key (`POST /api/forest/login`) reads their own
+figures. Every route binds the key from the sign-in and takes no key id:
+
+| Route | Returns |
+|---|---|
+| `GET /api/me/stats/speed?range&model` | The same tiles and points as `/v2/speed`, from their requests only, with `prompt` speed (prompt / TTFT) in place of computed prefill; `models` lists the models the key used |
+| `GET /api/me/stats/tokens?range&model` | Prompt and completion tokens per minute, booked to the minutes they were produced |
+| `GET /api/me/stats/cache?range&model` | Tokens reused from the key's own earlier prompts, own-lens outcomes, prefill saved at the configured rate |
+| `GET /api/me/stats/requests` | Their requests in flight, with `expected_start_s` estimated from their own requests, and a `state` per model |
+
+`speed`, `tokens` and `cache` take an optional `until` (ISO 8601; a time in the
+future reads as now, an unreadable one is a **422**): the window then ends at
+that time instead of now. `speed` also returns `last_request_at`, when the
+key's newest request finished, whatever the window. The page uses both to
+show an idle key's last activity instead of an empty window.
+
+None of them carries anything fleet-wide: no other key's figures or names, no
+client IP, no install, engine or host figure, no queue count, and no measured
+cached token count (on a shared prefix cache it could reveal that someone else
+sent the same text).
+
+---
+
 ## Admin API
 
 Everything above signs in with the admin password and carries a CSRF token. A
 program that should not hold that password uses an **admin token**: a `vwa_…`
 secret that calls the control API (`/api/*`) with the same power as signing
 in — settings, model register/pull/load/unload, inference-token management,
-statistics, god mode, stress runs and the cache. Issue one in
+statistics, Prompt Lens, stress runs and the cache. Issue one in
 **Settings → Admin tokens**, or from a signed-in session:
 
 ```bash
@@ -1544,7 +1848,7 @@ still gets `200` from routes that only check it is a known admin token
 identity by name (e.g. the chat2 surface), which is confusing enough to
 avoid on purpose. FastAPI's own `/docs`, `/redoc` and `/openapi.json` are
 switched off; `GET /api/openapi.json` is the spec, with a `bearerAuth`
-scheme on every route except the public ones — `/healthz`, `/api/setup/*`,
+scheme on every route except the public ones — `/healthz`, `/readyz`, `/api/setup/*`,
 `/api/auth/login`, `/api/auth/refresh`, `/api/csrf`, and the signed chat2
 attachment download `GET /api/chat2/attachments/{attachment_id}` (it
 carries its own `?t=` signature) — and `/v1/*`, which marks them
@@ -1677,7 +1981,7 @@ renamed to); it is listed with status "grace" and stays usable, with the
 original secret, until its grace period ends.
 
 **Streams.** An admin token opens the same server-sent-event streams a session
-does by sending the header instead of a ticket — god mode, model logs, live
+does by sending the header instead of a ticket — Prompt Lens, model logs, live
 stats, header metrics and model pull progress — plus the chat2 turn streams and
 the chat playground's completion proxy (`POST /api/chat/completions`), which
 always took a bearer header (never a ticket) and now accept an admin token too.

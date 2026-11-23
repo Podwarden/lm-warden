@@ -5,14 +5,14 @@ import asyncio
 import dataclasses
 import sqlite3
 
-from app.proxy.routes_godmode import CONNECTED_FRAME, STREAM_PATH
+from app.proxy.routes_prompt_lens import CONNECTED_FRAME, STREAM_PATH
 from tests.asgi_stream import first_chunk
 from tests.conftest import seed_admin_token
 
 
 async def test_a_stream_is_audited_after_it_closes(live_app, tmp_data_dir):
     db_path = tmp_data_dir / "vllm-warden.db"
-    live_app.state.settings = dataclasses.replace(live_app.state.settings, godmode_enabled=True)
+    live_app.state.settings = dataclasses.replace(live_app.state.settings, prompt_lens_enabled=True)
     # Off the loop (M7): live_app's lifespan just started several background
     # writers (pruner, sampler, ...) that hold aiosqlite transactions across
     # an ``await``; a sync BEGIN IMMEDIATE on the loop thread would block the

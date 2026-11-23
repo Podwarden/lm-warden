@@ -22,6 +22,10 @@ export interface CacheSummary {
   known_prompt_tokens: number;
   measured_requests: number;
   estimated_requests: number;
+  /** B4: engine-measured cached tokens and the prompts of those same rows (no
+   *  estimate mixed in). Absent from an older server. */
+  measured_cached_tokens?: number;
+  measured_prompt_tokens?: number;
   /** Efficiency numerator: C over rows where both C and R are known. */
   reused_tokens: number;
   /** Efficiency denominator: max(R, C) over those same rows. */
@@ -44,6 +48,16 @@ export interface CacheSummary {
   rate_source: "learned" | "hint";
   /** Operator lens only. */
   top_diverging?: { token_id: string; token_name: string | null; requests: number }[];
+  /** The engine's prefix-cache block in tokens when it is large enough to
+   *  change the outcomes (a hybrid model on vLLM), else null. Absent from an
+   *  older server. */
+  engine_block_tokens?: number | null;
+  /** The engine also drops the last matched block of every hit (EAGLE/MTP
+   *  speculative decoding); outcomes already allow for it. */
+  engine_drops_last_block?: boolean;
+  /** Tokens per prefix-match step (vLLM --prefix-match-unit); equals
+   *  engine_block_tokens when unset. Absent from an older server. */
+  engine_match_unit_tokens?: number | null;
 }
 
 export interface CacheResponse {
@@ -168,4 +182,28 @@ export function topProblem(s: CacheSummary, opts: { lens: "operator" | "own" }):
     best = { outcome: o, share, text };
   }
   return best;
+}
+
+/** Plain wording for the engine's cache granularity, or null when it does not
+ *  shape the outcomes. `short` fits one card line; `long` is the tooltip. */
+export function engineBlockNote(s: CacheSummary | undefined): { short: string; long: string } | null {
+  const b = s?.engine_block_tokens;
+  if (!b) return null;
+  const n = (x: number) => x.toLocaleString("en-US");
+  const u = s?.engine_match_unit_tokens;
+  const drops = !!s?.engine_drops_last_block;
+  let short: string;
+  let long: string;
+  if (u && u < b) {
+    short = `engine reuses in ${u}-token steps`;
+    long = `The engine matches prompts every ${n(u)} tokens (its cache blocks are ${n(b)} tokens): the part of a prompt after the last ${n(u)}-token step is recomputed.`;
+    if (drops) long += ` With speculative decoding it also recomputes the last ${n(u)} tokens it matched.`;
+  } else {
+    short = `engine caches in ${b >= 1000 ? `~${(b / 1000).toFixed(1)}k` : String(b)}-token blocks`;
+    long = `The engine caches prompts in ${n(b)}-token blocks: the part of a prompt after its last whole block is always recomputed.`;
+    if (drops)
+      long += " With speculative decoding it also recomputes the last whole block it matched, so a prompt needs two blocks before anything is reused.";
+  }
+  long += " Requests that got everything the engine could serve count as hits.";
+  return { short, long };
 }

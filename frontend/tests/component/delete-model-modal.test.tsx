@@ -200,6 +200,10 @@ describe("DeleteModelModal", () => {
     expect(screen.getByTestId("cache-failed-notice")).toHaveTextContent(
       /cache delete failed/i,
     );
+    // The retry link goes to the Model files tab, not the retired /cache page.
+    expect(
+      screen.getByRole("link", { name: /open model files/i }),
+    ).toHaveAttribute("href", "/models?tab=files");
     // Row is gone, so the parent must still be notified — the modal
     // does NOT pretend the chain failed atomically.
     expect(onDeleted).toHaveBeenCalledTimes(1);

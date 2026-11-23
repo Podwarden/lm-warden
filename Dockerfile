@@ -46,7 +46,7 @@ ARG VW_BASE_DIGEST=sha256:befccf0e7e4089aa23926bb6f887a85c0d46c2a99e6de5c5ffdf5c
 # Building in the base image itself makes glibc, libstdc++ and CUDA match by
 # construction. Nothing about the source is modified -- spec §2 -- this is
 # upstream's own CMake on an upstream tag.
-ARG LLAMACPP_BUILD=b11719
+ARG LLAMACPP_BUILD=b12644
 
 # CUDA architectures llama.cpp is compiled for. The default is EVERY
 # architecture this image's toolchain can target. Not asserted -- measured:
@@ -150,8 +150,26 @@ ARG LLAMACPP_BUILD_JOBS
 # this image: vLLM's own Dockerfile re-adds the CUDA development toolchain to
 # its vllm-base stage for runtime JIT (FlashInfer, DeepGEMM) and it survives
 # into the published image. Only these are missing.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        cmake git libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
+#
+# cuda-nvml-dev: since b12xxx (upstream #30672, SKU-aware FP16/BF16
+# accumulation gating) ggml-cuda.cu does `#include <nvml.h>` unconditionally on
+# CUDA builds and dlopens libnvidia-ml at RUNTIME (the driver ships it), so only
+# the header is a build input. The vLLM base carries nvcc and cudart-dev but not
+# the NVML header: without this the b12644 build stops at
+# "ggml-cuda.cu:102: fatal error: nvml.h: No such file or directory". The
+# package suffix is read from the base's own cuda-nvcc-X-Y package, so a base
+# bump to another CUDA minor installs the matching header rather than a stale
+# pinned one. Build stage only -- nothing from it reaches the final image except
+# /opt/llamacpp.
+RUN apt-get update && \
+    cuda_pkg="$(dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' 'cuda-nvcc-*' \
+        | awk '$1 == "ii" {print $2}' | sed -n 's/^cuda-nvcc-\([0-9][0-9]*-[0-9][0-9]*\)$/\1/p' | head -1)" && \
+    echo "llama.cpp build stage: cuda-nvml-dev-${cuda_pkg}" && \
+    test -n "$cuda_pkg" && \
+    apt-get install -y --no-install-recommends \
+        cmake git libssl-dev ca-certificates "cuda-nvml-dev-${cuda_pkg}" && \
+    test -f /usr/local/cuda/include/nvml.h && \
+    rm -rf /var/lib/apt/lists/*
 # A full clone, not --depth 1: llama.cpp derives its build NUMBER from
 # `git rev-list --count HEAD` (cmake/build-info.cmake), so a shallow clone bakes
 # a wrong version into --version and into every log line.
@@ -384,6 +402,18 @@ ENV VW_LLAMACPP_BUILD=${LLAMACPP_BUILD}
 # re-run both. Moving it down is filesystem-identical -- nothing above reads
 # /app/app, and nothing below writes into it -- it only changes which layers a
 # source edit has to rebuild.
+# lmw_kv: the KV-cache tier (NVMe/RAM store, daemon, client and the vLLM
+# connector the engine loads via kv_connector_module_path="lmw_kv.connector").
+# --no-deps: its only third-party dependency, cryptography, comes from
+# requirements.txt above. connector.py subclasses vLLM's KVConnectorBase_V1 at
+# import time, so the check imports vLLM and proves the connector loads against
+# this image's vLLM. Placed before `COPY app` and after requirements.txt so an
+# app-only edit does not re-run it.
+COPY lmw_kv /opt/lmw_kv
+RUN pip install --no-deps /opt/lmw_kv && \
+    python3 -c "import os, lmw_kv.connector, lmw_kv.daemon; from vllm.distributed.kv_transfer.kv_connector.factory import KVConnectorFactory; from vllm.config import KVTransferConfig; c = KVConnectorFactory.get_connector_class(KVTransferConfig(kv_connector='LmwKVConnector', kv_role='kv_both', kv_connector_module_path='lmw_kv.connector')); assert c.__name__ == 'LmwKVConnector', c; d = os.path.dirname(lmw_kv.__file__); assert 'site-packages' in d or 'dist-packages' in d, 'lmw_kv is not installed into site-packages: ' + d; print('lmw_kv imports OK, vLLM factory loads', c, 'from', d)" && \
+    rm -rf /opt/lmw_kv
+
 COPY app /app/app
 # The changelog (changelog.md here, CHANGELOG.md in the public tree): an
 # image built from source without VW_BUILD_VERSION takes its release from the

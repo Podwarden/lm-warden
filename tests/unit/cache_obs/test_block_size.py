@@ -116,3 +116,77 @@ async def test_fetch_exception_is_contained():
 
     await learn_once(state, [_model()], fetch)
     assert not state.engine_block_sizes.known("qwen", _epoch(state))
+
+
+MTP_ARGS = ["--speculative-config", '{"method":"mtp","num_speculative_tokens":1}']
+PROD_1584 = PROD.replace('"784"', '"1584"')
+
+
+def test_drops_last_block_is_scoped_to_one_engine_run():
+    s = BlockSizes()
+    assert s.drops_last_block("qwen", "v:1") is False
+    s.set("qwen", "v:1", 1584, drops_last_block=True)
+    assert s.drops_last_block("qwen", "v:1") is True
+    assert s.drops_last_block("qwen", "v:2") is False
+    s.set("qwen", "v:2", 1584)
+    assert s.drops_last_block("qwen", "v:2") is False
+
+
+async def test_learns_the_mtp_block_drop_from_the_launched_args():
+    state = _state(_Sup({"qwen": 10000}))
+
+    async def fetch(host, port, path):
+        return PROD_1584
+
+    m = _model()
+    m.extra_args = MTP_ARGS
+    await learn_once(state, [m], fetch)
+    assert state.engine_block_sizes.get("qwen", _epoch(state)) == 1584
+    assert state.engine_block_sizes.drops_last_block("qwen", _epoch(state)) is True
+
+
+async def test_no_speculative_decoding_keeps_the_last_block():
+    state = _state(_Sup({"qwen": 10000}))
+
+    async def fetch(host, port, path):
+        return PROD_1584
+
+    m = _model()
+    m.extra_args = ["--speculative-config", '{"method":"ngram","num_speculative_tokens":4}']
+    await learn_once(state, [m], fetch)
+    assert state.engine_block_sizes.drops_last_block("qwen", _epoch(state)) is False
+
+
+def test_match_unit_defaults_to_the_block_and_is_scoped_to_one_run():
+    s = BlockSizes()
+    assert s.match_unit("qwen", "v:1") is None
+    s.set("qwen", "v:1", 1584)
+    assert s.match_unit("qwen", "v:1") == 1584
+    s.set("qwen", "v:1", 1584, match_unit=16, drops_last_block=True)
+    assert s.match_unit("qwen", "v:1") == 16
+    assert s.match_unit("qwen", "v:2") is None
+
+
+async def test_learns_the_prefix_match_unit_from_the_launched_args():
+    state = _state(_Sup({"qwen": 10000}))
+
+    async def fetch(host, port, path):
+        return PROD_1584
+
+    m = _model()
+    m.extra_args = [*MTP_ARGS, "--prefix-match-unit", "16"]
+    await learn_once(state, [m], fetch)
+    assert state.engine_block_sizes.match_unit("qwen", _epoch(state)) == 16
+    assert state.engine_block_sizes.drops_last_block("qwen", _epoch(state)) is True
+
+
+async def test_unusable_match_unit_reads_as_the_block():
+    state = _state(_Sup({"qwen": 10000}))
+
+    async def fetch(host, port, path):
+        return PROD_1584
+
+    m = _model()
+    m.extra_args = ["--prefix-match-unit", "100"]
+    await learn_once(state, [m], fetch)
+    assert state.engine_block_sizes.match_unit("qwen", _epoch(state)) == 1584

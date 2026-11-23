@@ -595,7 +595,7 @@ def test_stats_and_decisions_after_a_mix(tmp_data_dir, client):
     assert ds[1]["rule_id"] == ids[0]
 
 
-def test_passthrough_does_not_touch_godmode_or_content_log(tmp_data_dir, client):
+def test_passthrough_does_not_touch_prompt_lens_or_content_log(tmp_data_dir, client):
     _setup(client, tmp_data_dir)
     with (
         patch("app.proxy.routes._gm_publish") as gm,
@@ -650,6 +650,9 @@ def test_local_stream_wrapper_carries_background(tmp_data_dir, client):
         class _Req:  # only what _serve_local touches before _forward
             _body = b""
             _receive = None
+
+            async def body(self):
+                return self._body
 
         with patch.object(rm, "_forward", fake_forward):
             return await rm._serve_local(

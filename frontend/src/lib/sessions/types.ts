@@ -144,9 +144,13 @@ export interface Turn {
   prompt_tokens: number;
   cached_tokens: number | null;
   generated_tokens: number;
+  /** Fleet lens: null for a key holder (admin only). */
   reusable_tokens: number | null;
+  reusable_tokens_own?: number | null;
+  /** Fleet lens: null for a key holder (admin only). */
   cache_outcome: string | null;
   cache_outcome_own: string | null;
+  /** Fleet lens: null for a key holder (admin only). */
   divergence_cause: string | null;
   divergence_cause_own: string | null;
   dp_rank: number | null;
@@ -170,6 +174,8 @@ export interface Turn {
   evicted_on_resume?: boolean;
   lost_tokens?: number | null;
   lost_s?: number | null;
+  /** The turn ran with an isolated KV cache (plan 2); null on rows written before the mark existed. */
+  isolated?: boolean | null;
 }
 
 export interface SessionTotals {

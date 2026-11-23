@@ -38,6 +38,10 @@ export const PATCHABLE_KEYS = [
   // Sub-project C, migration 0028. llama.cpp only.
   "n_gpu_layers",
   "mmproj_filename",
+  // Plan 2: the KV cache store tier (engine flags: next load) and the model's weight in
+  // the store (live, pushed to the store at once). vLLM only.
+  "kv_store",
+  "kv_store_weight",
 ] as const;
 
 export type PatchableKey = (typeof PATCHABLE_KEYS)[number];
@@ -95,6 +99,9 @@ export interface ModelSettings {
   last_error: string | null;
   layout_notice_level?: "info" | "warning" | null;
   layout_notice?: string | null;
+  // Optional on the wire: an older server omits both, which reads as off / 1.
+  kv_store?: "off" | "ram" | "ram+nvme";
+  kv_store_weight?: number;
 }
 
 /** The three tri-state capability flags (true / false / null = auto). */
@@ -103,7 +110,7 @@ export type TristateKey = (typeof TRISTATE_KEYS)[number];
 
 export type Draft = Omit<
   Pick<ModelSettings, PatchableKey>,
-  TristateKey | "data_parallel_size" | "dp_affinity_enabled" | "dp_spill_threshold" | "thinking_policy"
+  TristateKey | "data_parallel_size" | "dp_affinity_enabled" | "dp_spill_threshold" | "thinking_policy" | "kv_store" | "kv_store_weight"
 > & {
   [K in TristateKey]: boolean | null;
 } & {
@@ -111,6 +118,8 @@ export type Draft = Omit<
   dp_affinity_enabled: boolean;
   dp_spill_threshold: number | null;
   thinking_policy: "client" | "off";
+  kv_store: "off" | "ram" | "ram+nvme";
+  kv_store_weight: number;
 };
 
 /**
@@ -123,6 +132,7 @@ export const LOADED_EDITABLE_KEYS: readonly string[] = [
   "dp_affinity_enabled",
   "dp_spill_threshold",
   "thinking_policy",
+  "kv_store_weight",
 ];
 
 /** Normalise a raw tri-state column (null / 0 / 1 / bool) to `boolean | null`. */
@@ -153,6 +163,8 @@ export function snapshotToDraft(s: ModelSettings): Draft {
     trust_remote_code: s.trust_remote_code,
     extra_args: s.extra_args,
     extra_env: s.extra_env,
+    kv_store: s.kv_store ?? "off",
+    kv_store_weight: s.kv_store_weight ?? 1,
   };
 }
 
@@ -195,8 +207,10 @@ export function dirtyKeys(draft: Draft, snapshot: Draft): PatchableKey[] {
 }
 
 /** Operator-facing label for a settings key (falls back to the key itself). */
+const KV_LABELS: Record<string, string> = { kv_store: "KV cache store", kv_store_weight: "Cache share weight" };
+
 export function labelFor(key: string): string {
-  return MODEL_HINTS[key]?.label ?? key;
+  return MODEL_HINTS[key]?.label ?? KV_LABELS[key] ?? key;
 }
 
 /**
@@ -207,6 +221,7 @@ export function labelFor(key: string): string {
  */
 export function formatSettingValue(key: string, v: unknown): string {
   if (key === "thinking_policy") return v === "off" ? "Off for every key" : "Let the client decide";
+  if (key === "kv_store") return v === "ram" ? "RAM" : v === "ram+nvme" ? "RAM + disk" : "Off";
   if (key.startsWith("supports_")) return v === null || v === undefined ? "Auto" : v ? "Yes" : "No";
   if (typeof v === "boolean") return v ? "on" : "off";
   if (v === null || v === undefined) {

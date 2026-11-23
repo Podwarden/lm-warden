@@ -73,15 +73,15 @@
 --no-host                               bypass host buffer allowing extra buffers to be used
                                         (env: LLAMA_ARG_NO_HOST)
 -ctk,  --cache-type-k TYPE              KV cache data type for K
-                                        allowed values: f32, f16, bf16, q8_0, q4_0, q4_1, iq4_nl, q5_0, q5_1
+                                        allowed values: f32, f16, bf16, f8_e4m3, q8_0, q4_0, q4_1, iq4_nl,
+                                        q5_0, q5_1
                                         (default: f16)
                                         (env: LLAMA_ARG_CACHE_TYPE_K)
 -ctv,  --cache-type-v TYPE              KV cache data type for V
-                                        allowed values: f32, f16, bf16, q8_0, q4_0, q4_1, iq4_nl, q5_0, q5_1
+                                        allowed values: f32, f16, bf16, f8_e4m3, q8_0, q4_0, q4_1, iq4_nl,
+                                        q5_0, q5_1
                                         (default: f16)
                                         (env: LLAMA_ARG_CACHE_TYPE_V)
--dt,   --defrag-thold N                 KV cache defragmentation threshold (DEPRECATED)
-                                        (env: LLAMA_ARG_DEFRAG_THOLD)
 --rpc SERVERS                           comma-separated list of RPC servers (host:port)
                                         (env: LLAMA_ARG_RPC)
 -lm,   --load-mode MODE                 model loading mode (default: auto)
@@ -129,6 +129,10 @@
                                         multiple GPUs, it is split among them like the layers (--tensor-split)
                                         (default: 0, disabled)
                                         (env: LLAMA_ARG_MOE_CACHE_MIB)
+--moe-cache-cpu-share F                 share of the MoE cache misses that the CPU computes from the host
+                                        experts instead of uploading them to the GPU once the cache is full,
+                                        from 0 to 1 (default: 0.00)
+                                        (env: LLAMA_ARG_MOE_CACHE_CPU_SHARE)
 -ncffn, --n-cpu-ffn N                   keep the dense FFN weights of the first N layers in the CPU
                                         (dense models; for MoE expert weights use --n-cpu-moe)
                                         (env: LLAMA_ARG_N_CPU_FFN)
@@ -178,6 +182,11 @@
                                         layer range to apply the control vector(s) to, start and end inclusive
 -m,    --model FNAME                    model path to load
                                         (env: LLAMA_ARG_MODEL)
+--ple, --shard FNAME,...                extra GGUF shards for the model, comma separated; may be given more
+                                        than once
+                                        paths may live anywhere, including on different drives; --ple is an
+                                        alias for --shard
+                                        (env: LLAMA_ARG_SHARD)
 -mu,   --model-url MODEL_URL            model download url (default: unused)
                                         (env: LLAMA_ARG_MODEL_URL)
 -dr,   --docker-repo [<repo>/]<model>[:quant]
@@ -231,12 +240,14 @@
                                         (env: LLAMA_ARG_LOG_TIMESTAMPS)
 --spec-draft-type-k, -ctkd, --cache-type-k-draft TYPE
                                         KV cache data type for K for the draft model
-                                        allowed values: f32, f16, bf16, q8_0, q4_0, q4_1, iq4_nl, q5_0, q5_1
+                                        allowed values: f32, f16, bf16, f8_e4m3, q8_0, q4_0, q4_1, iq4_nl,
+                                        q5_0, q5_1
                                         (default: f16)
                                         (env: LLAMA_ARG_SPEC_DRAFT_CACHE_TYPE_K)
 --spec-draft-type-v, -ctvd, --cache-type-v-draft TYPE
                                         KV cache data type for V for the draft model
-                                        allowed values: f32, f16, bf16, q8_0, q4_0, q4_1, iq4_nl, q5_0, q5_1
+                                        allowed values: f32, f16, bf16, f8_e4m3, q8_0, q4_0, q4_1, iq4_nl,
+                                        q5_0, q5_1
                                         (default: f16)
                                         (env: LLAMA_ARG_SPEC_DRAFT_CACHE_TYPE_V)
 
@@ -387,7 +398,7 @@
 --spec-draft-model, -md, --model-draft FNAME
                                         draft model for speculative decoding (default: unused)
                                         (env: LLAMA_ARG_SPEC_DRAFT_MODEL)
---spec-type none,draft-simple,draft-eagle3,draft-mtp,draft-dflash,draft-dspark,ngram-simple,ngram-map-k,ngram-map-k4v,ngram-mod,ngram-cache
+--spec-type none,draft-simple,draft-eagle3,draft-mtp,draft-dflash,draft-dspark,draft-dflash2,draft-lilicorr,ngram-simple,ngram-map-k,ngram-map-k4v,ngram-mod,ngram-cache
                                         comma-separated list of types of speculative decoding to use (default:
                                         none)
                                         
@@ -521,8 +532,8 @@
 --path PATH                             path to serve static files from (default: )
                                         (env: LLAMA_ARG_STATIC_PATH)
 --cors-origins ORIGINS                  comma-separated list of allowed origins for CORS (default: *)
-                                        if set to special value 'localhost', reflect the Origin header only if
-                                        it is localhost
+                                        if set to special value 'localhost', only allow same-origin requests
+                                        (e.g. the built-in UI)
                                         (env: LLAMA_ARG_CORS_ORIGINS)
 --cors-methods METHODS                  comma-separated list of allowed methods for CORS (default: GET, POST,
                                         DELETE, OPTIONS)
@@ -544,9 +555,18 @@
                                         JSON file that provides default UI settings (overrides UI defaults)
                                         (env: LLAMA_ARG_UI_CONFIG_FILE)
 --ui-mcp-proxy, --webui-mcp-proxy, --no-ui-mcp-proxy, --no-webui-mcp-proxy
-                                        experimental: whether to enable MCP CORS proxy - do not enable in
-                                        untrusted environments (default: disabled)
+                                        experimental: whether to enable MCP CORS proxy, for Llama Chat to
+                                        reach public MCP servers without CORS headers; local and private
+                                        addresses are refused unless --ui-mcp-proxy-allow-private-urls is set
+                                        - do not enable in untrusted environments (default: disabled)
+                                        note: for security reasons, this will limit --cors-origins to
+                                        localhost by default
                                         (env: LLAMA_ARG_UI_MCP_PROXY)
+--ui-mcp-proxy-allow-private-urls       allow the MCP CORS proxy to reach local or private addresses (e.g. MCP
+                                        servers on localhost or LAN) - anyone who can reach the proxy can then
+                                        reach your local network (default: disabled, only public addresses)
+                                        note: only has effect with --ui-mcp-proxy
+                                        (env: LLAMA_ARG_UI_MCP_PROXY_ALLOW_PRIVATE_URLS)
 --tools TOOL1,TOOL2,...                 experimental: whether to enable built-in tools for AI agents - do not
                                         enable in untrusted environments (default: no tools)
                                         specify "all" to enable all tools
@@ -566,6 +586,9 @@
                                         auth and a trusted host key are required
                                         
                                         (env: LLAMA_ARG_TOOLS_RUNTIME)
+--allow-unauthenticated-tools           allow server tools, MCP servers or MCP proxy on a non-loopback address
+                                        without an API key - only for trusted networks (default: disabled)
+                                        (env: LLAMA_ARG_ALLOW_UNAUTHENTICATED_TOOLS)
 --mcp-servers-config PATH               experimental: path to JSON file with MCP server definitions
                                         (Cursor-compatible format) - do not enable in untrusted environments
                                         (default: none)
@@ -583,8 +606,14 @@
                                         note: for security reasons, this will limit --cors-origins to
                                         localhost by default
                                         (env: LLAMA_ARG_AGENT)
---ui,  --webui, --no-ui, --no-webui     whether to enable the Web UI (default: enabled)
+--ui,  --webui, --no-ui, --no-webui     whether to enable Llama Chat, the built-in chat app (default: enabled)
                                         (env: LLAMA_ARG_UI)
+--connect                               (experimental) open a peer-to-peer tunnel for server using
+                                        llama-connect (default: disabled)
+                                        (env: LLAMA_ARG_CONNECT)
+--connect-code CODE                     manually specify a 40-character code for --connect (default: generate
+                                        a new one for each run)
+                                        (env: LLAMA_ARG_CONNECT_CODE)
 --embedding, --embeddings               restrict to only support embedding use case; use only with dedicated
                                         embedding models (default: disabled)
                                         (env: LLAMA_ARG_EMBEDDINGS)
@@ -625,6 +654,9 @@
                                         (env: LLAMA_ARG_SLOT_SAVE_PATH)
 --media-path PATH                       directory for loading local media files; files can be accessed via
                                         file:// URLs using relative paths (default: disabled)
+--media-allow-private-urls              allow http(s) media URLs (e.g. image_url) that point to local or
+                                        private addresses (default: disabled, only public addresses)
+                                        (env: LLAMA_ARG_MEDIA_ALLOW_PRIVATE_URLS)
 --models-dir PATH                       directory containing models for the router server (default: disabled)
                                         (env: LLAMA_ARG_MODELS_DIR)
 --models-preset PATH                    path to INI file containing model presets for the router server
@@ -633,6 +665,9 @@
 --models-max N                          for router server, maximum number of models to load simultaneously
                                         (default: 4, 0 = unlimited)
                                         (env: LLAMA_ARG_MODELS_MAX)
+--models-memory-margin N                for router server, MiB of device memory to keep free per device,
+                                        unload LRU models until a new one fits (default: 0, 0 = disabled)
+                                        (env: LLAMA_ARG_MODELS_MEMORY_MARGIN)
 --models-autoload, --no-models-autoload
                                         for router server, whether to automatically load models (default:
                                         enabled)
@@ -723,6 +758,10 @@
                                         (default: -1; -1 = disabled)
 --log-prompts-dir PATH                  Log prompts to directory (auto-created if not present; only used for
                                         debugging, default: disabled)
+--tts-lang FNAME                        language (ISO 639-1) for audio generation
+                                        see docs/multimodal/tts.md for per-model usage notes
+--tts-voice VOICE                       voice for audio generation (model-dependent)
+                                        see docs/multimodal/tts.md for per-model usage notes
 --embd-gemma-default                    use default EmbeddingGemma model (note: can download weights from the
                                         internet)
 --fim-qwen-1.5b-default                 use default Qwen 2.5 Coder 1.5B (note: can download weights from the

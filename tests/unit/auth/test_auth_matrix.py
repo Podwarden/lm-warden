@@ -8,6 +8,7 @@ route's dependency tree must carry exactly that bucket's guard:
   session    SESSION_ONLY_ROUTES   require_session
              + SESSION_ONLY_PREFIXES
   public     PUBLIC_ROUTES         no guard
+  key_stream KEY_STREAM_ROUTES     require_key_ticket (a key holder's ticket only)
   admin      every other route     require_jwt | require_sse_ticket | require_operator
 
 A new route that fits no bucket, a guard in the wrong bucket, or a constant
@@ -40,6 +41,7 @@ from app.auth import deps
 from app.auth.policy import (
     FOREST_ROUTES,
     KEY_HOLDER_ROUTES,
+    KEY_STREAM_ROUTES,
     SESSION_ONLY_PREFIXES,
     SESSION_ONLY_ROUTES,
     is_inference,
@@ -50,6 +52,7 @@ from app.models.routes_logs import require_sse_ticket
 from app.proxy.auth import require_bearer
 from app.stats.routes_forest import forest_viewer
 from app.stress.routes_api import require_operator
+from app.tokens.routes_me_prompt_lens import require_key_ticket
 from tests.conftest import bearer, csrf_header, jwt_login, seed_admin_token
 
 # forest_viewer: an admin credential, or a key holder's forest JWT scoped to
@@ -61,7 +64,11 @@ ADMIN_CAPABLE: set[Callable[..., Any]] = {
     require_operator,
     forest_viewer,
 }
-GUARDS: set[Callable[..., Any]] = ADMIN_CAPABLE | {deps.require_session, require_bearer}
+GUARDS: set[Callable[..., Any]] = ADMIN_CAPABLE | {
+    deps.require_session,
+    require_bearer,
+    require_key_ticket,
+}
 STUB = "x-auth-matrix"
 # origin_check_dep runs before require_session on POST /api/auth/logout; this
 # is Settings.allowed_origins' default.
@@ -93,6 +100,8 @@ def _bucket(app: FastAPI, method: str, path: str) -> str:
         return "inference"
     if (method, path) in KEY_HOLDER_ROUTES:
         return "key_holder"
+    if (method, path) in KEY_STREAM_ROUTES:
+        return "key_stream"
     if is_session_only(method, path):
         return "session"
     if (method, path) in public_routes(app):
@@ -175,10 +184,13 @@ def _misguarded(app: FastAPI) -> list[str]:
             ok = guards == {deps.require_session}
         elif bucket == "public":
             ok = guards == set()
+        elif bucket == "key_stream":
+            ok = guards == {require_key_ticket}
         else:
             ok = bool(guards & ADMIN_CAPABLE) and not guards & {
                 deps.require_session,
                 require_bearer,
+                require_key_ticket,
             }
         if not ok:
             names = sorted(g.__name__ for g in guards)
@@ -190,6 +202,7 @@ def test_every_route_carries_the_guard_of_its_bucket(client: TestClient) -> None
     assert _misguarded(client.app) == []
     mounted = {(method, path) for method, path, _ in _endpoints(client.app)}
     assert SESSION_ONLY_ROUTES - mounted == set(), "SESSION_ONLY_ROUTES names unmounted routes"
+    assert KEY_STREAM_ROUTES - mounted == set(), "KEY_STREAM_ROUTES names unmounted routes"
     assert public_routes(client.app) - mounted == set(), "a public route names an unmounted route"
 
 
@@ -229,7 +242,7 @@ def test_an_admin_token_opens_every_control_route_but_the_session_only_ones(
         if bucket == "public":
             continue
         r = _call(client, method, path, creds["admin"])
-        if bucket == "key_holder":
+        if bucket in ("key_holder", "key_stream"):
             ok = r.status_code == 403
         elif bucket == "admin":
             ok = _reached(r)
@@ -252,7 +265,7 @@ def test_a_session_opens_every_control_route(client: TestClient, creds) -> None:
         # /v1 wants an inference key; a stream wants a ticket, not the header; the key holder's
         # area wants a key holder's sign-in (403 for an admin).
         refused = bucket == "inference" or require_sse_ticket in _guards(route)
-        if bucket == "key_holder":
+        if bucket in ("key_holder", "key_stream"):
             ok = r.status_code == 403
         else:
             ok = r.status_code == 401 if refused else _reached(r)
@@ -267,7 +280,12 @@ def test_an_inference_token_is_refused_on_every_control_route(client: TestClient
     wrong: list[str] = []
     operator_routes = 0
     for method, path, route in _endpoints(client.app):
-        if _bucket(client.app, method, path) not in ("admin", "session", "key_holder"):
+        if _bucket(client.app, method, path) not in (
+            "admin",
+            "session",
+            "key_holder",
+            "key_stream",
+        ):
             continue
         r = _call(client, method, path, creds["inference"])
         if require_operator in _guards(route):
@@ -332,3 +350,40 @@ def test_forest_viewer_guards_only_the_forest_routes(client: TestClient) -> None
         if forest_viewer in _guards(route)
     }
     assert carriers == FOREST_ROUTES
+
+
+def test_the_key_stream_bucket(client: TestClient, creds) -> None:
+    """Ruling G-F2: the key holder's live stream is ticket-only. Its ticket is
+    minted on a forest route; the stream itself takes no header credential: a
+    forest sign-in or an inference key is 401, an admin credential 403."""
+    # The old /api/me/godmode path is a deprecated alias (one release).
+    assert KEY_STREAM_ROUTES == {
+        ("GET", "/api/me/prompt-lens/stream"),
+        ("GET", "/api/me/godmode/stream"),
+    }
+    assert ("POST", "/api/me/prompt-lens/ticket") in FOREST_ROUTES
+    assert ("POST", "/api/me/godmode/ticket") in FOREST_ROUTES
+    assert not KEY_STREAM_ROUTES & FOREST_ROUTES
+    for path in ("/api/me/prompt-lens/stream", "/api/me/godmode/stream"):
+        assert _call(client, "GET", path, creds["forest"]).status_code == 401
+        assert _call(client, "GET", path, creds["inference"]).status_code == 401
+        assert _call(client, "GET", path, creds["none"]).status_code == 401
+        assert _call(client, "GET", path, creds["admin"]).status_code == 403
+        assert _call(client, "GET", path, creds["session"]).status_code == 403
+
+
+def test_a_key_ticket_opens_no_admin_stream(client: TestClient, creds) -> None:
+    """A ticket whose subject is a key (``key:<id>``) is refused by every
+    admin ticket stream, even minted for that stream's own path."""
+    store = client.app.state.sse_tickets
+    streams = [
+        (path, route)
+        for method, path, route in _endpoints(client.app)
+        if method == "GET" and require_sse_ticket in _guards(route)
+    ]
+    assert streams
+    for path, _ in streams:
+        concrete = re.sub(r"\{[^}]+\}", "x", path)
+        ticket = store.mint(deps.key_stream_key("tok1"), concrete)
+        r = client.get(f"{concrete}?ticket={ticket}")
+        assert r.status_code == 401, _line("GET", path, r)

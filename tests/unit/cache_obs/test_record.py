@@ -166,3 +166,33 @@ def test_block_size_applies_to_both_lenses():
         match_own=m({None: 500}, total=500),
     )
     assert short["cache_outcome"] == "cold" and short["cache_outcome_own"] == "cold"
+
+
+def test_engine_block_drop_applies_to_both_lenses():
+    # lmwarden.com: 1,584-token blocks, MTP drops the last matched block, so
+    # one block of a 4,394-token repeat is everything the engine can serve.
+    kw = dict(
+        prompt=4_394,
+        cached=1_584,
+        block_size=1_584,
+        match_all=m({None: 4_394}, total=4_394),
+        match_own=m({None: 4_394}, total=4_394),
+    )
+    assert f(**kw)["cache_outcome"] == "partial"
+    out = f(drops_last_block=True, **kw)
+    assert out["cache_outcome"] == "hit" and out["cache_outcome_own"] == "hit"
+
+
+def test_match_unit_applies_to_both_lenses():
+    kw = dict(
+        prompt=4_394,
+        cached=4_368,
+        block_size=1_584,
+        drops_last_block=True,
+        match_all=m({None: 4_394}, total=4_394),
+        match_own=m({None: 4_394}, total=4_394),
+    )
+    out = f(match_unit=16, **kw)
+    assert out["cache_outcome"] == "hit" and out["cache_outcome_own"] == "hit"
+    out = f(match_unit=16, **{**kw, "cached": 1_584})
+    assert out["cache_outcome"] == "partial"

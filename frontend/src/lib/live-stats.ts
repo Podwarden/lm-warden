@@ -37,6 +37,9 @@ export interface LiveEngine {
   kv_tokens_total: number | null; // block_size * num_gpu_blocks
   engine_sleep_state: number | null; // 0 = awake
   preemptions_total: number | null;
+  /** True only for a real non-awake sleep state; null when the engine does not
+   *  export the gauge (MLX). Absent on an older api. */
+  engine_sleeping?: boolean | null;
   preemptions_per_s: number | null; // null on the connection's first frame
 }
 
@@ -51,6 +54,9 @@ export interface LiveCache {
   /** Interval delta hits/queries — null on the first frame. */
   prefix_hit_rate: number | null;
   prefix_hit_rate_cumulative: number | null;
+  /** Lifetime prefix-cache hit rate (local + external); null when the engine
+   *  does not export it, prefix caching is off, or no prompt yet. */
+  prefix_cache_hit_rate?: number | null;
   mm_hit_rate_cumulative: number | null;
   external_prefix_hit_rate_cumulative: number | null;
 }
@@ -136,6 +142,11 @@ export interface LiveEngineFrame {
   metrics_supported?: boolean;
   /** Why the engine reports no metrics; set only with `metrics_supported: false`. */
   metrics_unsupported_reason?: string | null;
+  /** Stats redesign B5: server-side ~10 s rates (computed prefill excludes
+   *  prefix-cache hits) and the warden's admission queue. Absent on an older api. */
+  now?: import("./stats-redesign").LiveNow;
+  /** B5: the last 5 minutes of rates, on a connection's first frame only. */
+  history_5m?: import("./stats-redesign").LiveHistoryPoint[];
   /**
    * Every loaded model's block, most significant first.
    *
@@ -287,17 +298,19 @@ export interface LiveRequestRow {
   /** Replica this request was routed to (null: single replica / unrouted). */
   dp_rank?: number | null;
   /** Requests admitted earlier on the same model + replica still prefilling,
-   *  and their uncached tokens: what this one waits behind in the engine. */
-  ahead_count?: number;
-  ahead_fresh_tokens?: number;
+   *  and their uncached tokens: what this one waits behind in the engine.
+   *  Null for a key holder: never another key's queue. */
+  ahead_count?: number | null;
+  ahead_fresh_tokens?: number | null;
   /** Predicted seconds from admission to first token at the prefill rate. */
   expected_start_s?: number | null;
   /** Why a prefill is taking its time: queued | evicted_likely | slow | null. */
   slow_cause?: "queued" | "evicted_likely" | "slow" | null;
   /** The prefill rate behind those numbers, and whether it was learned from
-   *  finished requests or is the configured hint. */
-  prefill_tok_s?: number;
-  prefill_rate_source?: "learned" | "hint";
+   *  finished requests or is the configured hint. Null for a key holder
+   *  without enough own samples (never the fleet rate). */
+  prefill_tok_s?: number | null;
+  prefill_rate_source?: "learned" | "hint" | null;
   /** The estimate was scaled down for a long idle gap. */
   est_decayed?: boolean;
   /** How often this model's estimate was right (0..1), or null. */
@@ -327,6 +340,16 @@ export interface LiveRequestRow {
    *  only after the request ends. Null = no basis for an estimate. */
   cache_est_tokens: number | null;
   cache_est_pct: number | null; // cache_est_tokens / prompt_tokens, 0..1
+  /** Stats redesign B1: engine TTFT (slot held to first token), the client's
+   *  TTFT (warden queue included), tokens of every channel so far, and this
+   *  request's decode speed over the last 5 s. Absent on an older api. */
+  ttft_s?: number | null;
+  ttft_total_s?: number | null;
+  out_tokens?: number;
+  decode_tps_5s?: number | null;
+  /** Tokens the engine reports this request has generated (non-streamed
+   *  requests, where the proxy sees nothing until the end). */
+  engine_progress_tokens?: number | null;
 }
 
 export interface LiveByToken {

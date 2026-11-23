@@ -5,7 +5,8 @@ import type { Turn } from "@/lib/sessions/types";
 
 export function TurnShape({ t }: { t: Turn }) {
   const sh = t.shape;
-  const cause = t.divergence_cause ? S.turn.causeShort[t.divergence_cause] ?? t.divergence_cause : "";
+  const dc = t.divergence_cause ?? t.divergence_cause_own; // key holders: own lens only
+  const cause = dc ? S.turn.causeShort[dc] ?? dc : "";
   return (
     <div data-testid="turn-shape" className="grid grid-cols-2 gap-x-6 gap-y-1 px-2 py-2 text-xs sm:grid-cols-3">
       {sh?.sys !== undefined && (

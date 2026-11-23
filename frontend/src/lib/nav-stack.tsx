@@ -45,12 +45,13 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   HOME_HREF,
+  isRedirectOnlyPath,
   navTarget,
   resolvePageTitle,
   shouldHideBreadcrumb,
   type BreadcrumbOverrides,
 } from "@/lib/breadcrumbs";
-import { isQueryDetailPath, logicalPath } from "@/lib/routes";
+import { isQueryDetailPath, logicalPath, trimSlash } from "@/lib/routes";
 
 /** A single entry in the back navigation stack. */
 export interface NavStackEntry {
@@ -104,7 +105,8 @@ function deriveFallbackTitle(pathname: string): string {
 
 /** Reports the query string of the URL `path` was read with. */
 function SearchReporter({ onSearch }: { onSearch: (path: string, search: string) => void }) {
-  const path = usePathname() ?? "/";
+  // Trimmed like the provider's rawPath, which it is compared with.
+  const path = trimSlash(usePathname() ?? "/");
   const search = useSearchParams()?.toString() ?? "";
   useEffect(() => {
     onSearch(path, search);
@@ -113,7 +115,10 @@ function SearchReporter({ onSearch }: { onSearch: (path: string, search: string)
 }
 
 export function NavStackProvider({ children }: { children: ReactNode }) {
-  const rawPath = usePathname() ?? "/";
+  // The static export (Mac build) has trailingSlash: true, so usePathname()
+  // reads /models/ there; trim it so the trail, the back stack and the
+  // registry see /models, as on the Linux build ("Home > Models > Models").
+  const rawPath = trimSlash(usePathname() ?? "/");
   const router = useRouter();
 
   // The last query string SearchReporter saw, with the path it saw it on: a
@@ -177,7 +182,7 @@ export function NavStackProvider({ children }: { children: ReactNode }) {
     if (shouldHideBreadcrumb(pathname)) {
       // Entering a no-shell page (sign-out, setup): the trail ends here.
       setStack([]);
-    } else if (!shouldHideBreadcrumb(prev)) {
+    } else if (!shouldHideBreadcrumb(prev) && !isRedirectOnlyPath(prev)) {
       const leaving: NavStackEntry = {
         href: prev,
         title: currentTitleRef.current,

@@ -367,6 +367,25 @@ describe('RoutingMap', () => {
     expect(within(a).getByTestId('rule-sentence').className).toContain('sr-only');
   });
 
+  it('provider legs say they are not isolated at the provider', () => {
+    stubFetch(baseRoutes());
+    renderMap({
+      rules: [
+        { ...RULE_A, fallback_cache_isolation: 'not_isolated_at_provider' },
+        { ...RULE_B, fallback_cache_isolation: null },
+      ] as RuleOut[],
+    });
+    const [a, b] = ruleItems();
+    expect(within(a).getByTestId('rule-not-isolated')).toHaveTextContent('not isolated at the provider');
+    expect(within(a).getByTestId('rule-sentence')).toHaveTextContent(
+      'If it fails, falls back to Anthropic. Isolated keys are not isolated at the provider.',
+    );
+    expect(within(b).queryByTestId('rule-not-isolated')).toBeNull();
+    expect(within(screen.getByTestId('router-rest')).getByTestId('rest-not-isolated')).toHaveTextContent(
+      'not isolated at the provider',
+    );
+  });
+
   it('empty rules: copy follows passthrough_unmatched, and the rest row stays', () => {
     stubFetch(baseRoutes());
     renderMap({ rules: [] });

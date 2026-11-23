@@ -7,7 +7,8 @@
 //                                  container since fix/live-log-drag-select;
 //                                  it uses only `mode`, `onAtBottomStateChange`
 //                                  and `jumpToLatest`, and does its own follow)
-//   - godmode/godmode-viewer.tsx  (Virtuoso; also uses `followOutput`)
+// (prompt-lens/prompt-lens-viewer.tsx used it too until the Prompt Lens dock replaced
+// that viewer; the dock follows with dock/use-follow-tail.ts.)
 //
 // Originally also driven the bench/events-tab tail; that consumer was
 // removed in epic/overhaul S1. The hook stays in `shared/` because the
@@ -15,11 +16,9 @@
 // messages, gpu_samples replay).
 //
 // The hook is deliberately tiny and unaware of the underlying list — it
-// just exposes the mode + the two callbacks the consumer wires into
-// react-virtuoso's `followOutput` and `atBottomStateChange`. Doing it
-// this way means the hook works equally well with a plain scroll
-// container (LogStream needs that for the elided-marker overlay) and
-// with Virtuoso's tracker.
+// just exposes the mode and the callbacks a scroll container calls when the
+// reader reaches or leaves the bottom, so it works with any plain scroll
+// container (LogStream needs that for the elided-marker overlay).
 
 import { useCallback, useState } from "react";
 
@@ -29,36 +28,27 @@ export interface UseStickyBottomReturn {
   /** Current mode. UI uses this to show/hide the "Jump to latest" button. */
   mode: StickyMode;
   /**
-   * Pass to react-virtuoso's `atBottomStateChange` prop. Argument is `true`
-   * when the user is at the bottom and `false` once they scroll up — we
-   * flip into `free` on `false` and stay there until `jumpToLatest()`.
+   * Call with `true` when the reader is at the bottom and `false` once they
+   * scroll up — we flip into `free` on `false` and stay there until
+   * `jumpToLatest()`.
    */
   onAtBottomStateChange: (atBottom: boolean) => void;
   /**
    * Programmatic re-stick. Call from the "Jump to latest" button.
    *
-   * The hook itself doesn't know how to scroll; the consumer is expected
-   * to chain a scroll call (e.g. `virtuosoRef.current?.scrollToIndex`) and
-   * then this. The scroll lands, the bottom-detection re-fires, and the
-   * mode flips back via the natural `atBottomStateChange` path — but if
-   * the list is empty there's no event to flip on, so we flip eagerly
-   * here too.
+   * The hook itself doesn't know how to scroll; the consumer scrolls its
+   * container to the bottom and then calls this. The scroll lands, the
+   * bottom detection re-fires and the mode flips back through
+   * `onAtBottomStateChange` — but if the list is empty there's no event to
+   * flip on, so we flip eagerly here too.
    */
   jumpToLatest: () => void;
   /**
-   * Value for `<Virtuoso followOutput=...>`. ALWAYS `"auto"` — decoupled
-   * from the stick/free latch on purpose.
-   *
-   * react-virtuoso only auto-scrolls when the list is ALREADY at the
-   * bottom, so an always-on follow keeps the tail pinned through a fast
-   * append burst yet never yanks an operator who has scrolled up to read
-   * (Virtuoso self-gates). We use `"auto"` (instant) rather than
-   * `"smooth"`: a ~200 line/s vLLM startup burst outruns the smooth
-   * animation, leaving the viewport perpetually shy of the bottom, which
-   * makes Virtuoso emit a steady stream of transient `atBottom=false` —
-   * the exact signal that used to permanently unstick the tail back when
-   * `followOutput` was gated on `mode` (`false` while "free"). The latch
-   * now drives nothing but the "Jump to latest" button's visibility.
+   * The follow policy. ALWAYS `"auto"` (follow instantly while at the
+   * bottom), decoupled from the stick/free latch on purpose: a follow gated
+   * on `mode` once unstuck the tail for good on the transient "not at the
+   * bottom" a fast append burst causes (tests/component/use-sticky-bottom).
+   * The latch drives nothing but the "Jump to latest" button's visibility.
    */
   followOutput: "auto";
 }
@@ -90,7 +80,7 @@ export function useStickyBottom(initial: StickyMode = "stick"): UseStickyBottomR
     mode,
     onAtBottomStateChange,
     jumpToLatest,
-    // Always-on follow; Virtuoso self-gates to "only when at bottom".
+    // Always-on follow; the consumer follows only while at the bottom.
     // Decoupled from `mode` so a transient `atBottom=false` during a
     // streaming burst can no longer disable tailing. See the followOutput
     // doc on UseStickyBottomReturn for the full rationale.

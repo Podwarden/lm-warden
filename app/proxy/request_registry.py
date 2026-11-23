@@ -19,6 +19,7 @@ request — every hook call in ``app/proxy/routes.py`` wraps this in try/except.
 from __future__ import annotations
 
 import asyncio
+from collections import deque
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -59,7 +60,8 @@ class LiveRequest:
     #: (forwarded, no content-bearing frame yet), then whichever kind the LATEST
     #: delta was: ``thinking`` (reasoning), ``answering`` (text), ``tool_call``.
     #: Older rows used ``decode`` for all three. A non-streaming request is
-    #: ``waiting`` from admission on: the engine reports nothing until done.
+    #: ``waiting`` from admission until its body is forwarded, then
+    #: ``running_no_stream``: the engine holds it but reports nothing until done.
     phase: str = "prefill"
     #: Whether the CLIENT asked for a stream (a non-stream client may still be
     #: streamed upstream by the runaway detector; it sees nothing either way).
@@ -162,6 +164,40 @@ class LiveRequest:
     prompt_diet: str | None = None
     #: What the sensitive data guard did (JSON, no values: app/guard/proxy.py), or None.
     guard: str | None = None
+    #: KV-cache tiers (ruling R16a: each prefix block counted once). ``served_gpu_tokens``
+    #: is the engine's own ``cached_tokens``; the RAM / NVMe figures and ``load_s`` are
+    #: the hits the KV connector recorded for this request (app/proxy/kv.py). All four
+    #: stay None when the model has no KV tier or the store daemon did not answer.
+    served_gpu_tokens: int | None = None
+    served_ram_tokens: int | None = None
+    served_nvme_tokens: int | None = None
+    load_s: float | None = None
+    #: Per-key KV sharing (plan 2): True when the request ran under an isolated key's scope,
+    #: False for a sharing key, None when no KV tier applied. ``kv_iso_cost_tokens`` is the
+    #: prompt tokens an isolated request recomputed that sharing would have served.
+    kv_isolated: bool | None = None
+    kv_iso_cost_tokens: int | None = None
+    #: Live out-token readings ``(monotonic, tokens_so_far)``, one per live tick
+    #: (0.5 s) while tokens arrive: the source of the row's 5 s decode speed
+    #: (app/proxy/live_tokens.py). Bounded; display only, never persisted.
+    out_samples: deque[tuple[float, int]] = field(default_factory=lambda: deque(maxlen=32))
+
+
+#: Phases where the request has not reached the engine yet.
+_NOT_FORWARDED = frozenset({"queued", "waiting", "blocked"})
+
+
+def engine_progress_tokens(req: LiveRequest) -> int | None:
+    """Tokens generated so far, as far as the warden can honestly tell.
+
+    A streamed request's count is observed frame by frame. A non-streaming
+    one (``running_no_stream``) is invisible until it ends, and vLLM 0.32
+    exports no per-request series to read it from, so it is None (unknown),
+    never 0. A request not yet forwarded has no engine progress either.
+    """
+    if req.phase in _NOT_FORWARDED or not req.is_stream:
+        return None
+    return req.completion_tokens
 
 
 class RequestRegistry:
@@ -291,6 +327,12 @@ def finished_record(req: LiveRequest, *, now: float) -> dict[str, Any]:
         "thinking_forced_off": req.thinking_forced_off,
         "prompt_diet": req.prompt_diet,
         "guard": req.guard,
+        "served_gpu_tokens": req.served_gpu_tokens,
+        "served_ram_tokens": req.served_ram_tokens,
+        "served_nvme_tokens": req.served_nvme_tokens,
+        "load_s": req.load_s,
+        "kv_isolated": None if req.kv_isolated is None else int(req.kv_isolated),
+        "kv_iso_cost_tokens": req.kv_iso_cost_tokens,
     }
     obs = req.cache_obs or {}
     for k in CACHE_OBS_KEYS:

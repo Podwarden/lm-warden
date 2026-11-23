@@ -482,3 +482,16 @@ body {
 .anat-dead {
   background: repeating-linear-gradient(135deg, #e0a96d 0 3px, #8a6236 3px 6px);
 }
+
+/* ── Live numbers (shared convention ui.live-numbers) ──────────────────
+ * A counter that updates while you watch (chars, tokens, rates, durations,
+ * counts) uses tabular figures and sits in a right-aligned slot, so the text
+ * after it never moves. <LiveNumber> (components/ui/live-number.tsx) adds
+ * the reserved width; this class alone fits a fixed-width cell. */
+.num-live {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  display: inline-block;
+  text-align: right;
+  white-space: nowrap;
+}

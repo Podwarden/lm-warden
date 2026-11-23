@@ -25,6 +25,7 @@ _CORE_PUBLIC: tuple[tuple[str, str], ...] = (
     ("POST", "/api/auth/refresh"),
     ("GET", "/api/csrf"),
     ("GET", "/healthz"),
+    ("GET", "/readyz"),
     # A chat2 attachment is fetched with its own signed URL (?t=).
     ("GET", "/api/chat2/attachments/{attachment_id}"),
 )

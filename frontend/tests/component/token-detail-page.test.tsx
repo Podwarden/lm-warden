@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 process.env.TZ = 'UTC';
-import { render, screen, cleanup, fireEvent, waitFor, renderHook, act } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, act } from '@testing-library/react';
 import { SWRConfig } from 'swr';
 import { setAccessToken, setCsrfToken } from '@/lib/auth-fetch';
 import { NOW, tokenDetail, seriesFixture } from './token-fixtures';
@@ -18,7 +18,6 @@ vi.mock('next/navigation', () => ({
 }));
 
 import { TokenDetailPage } from '@/components/tokens/token-detail-page';
-import { useDockOpen } from '@/components/tokens/detail/godmode-dock';
 import { NavStackProvider } from '@/lib/nav-stack';
 import { BreadcrumbHeader } from '@/components/breadcrumb-header';
 
@@ -34,13 +33,15 @@ const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { 'Content-Type': 'application/json' } });
 
 function installFetch(
-  o: { tokenStatus?: number; godmode?: unknown; godmodeStatus?: number; token?: Parameters<typeof tokenDetail>[0] } = {},
+  o: { tokenStatus?: number; promptLens?: unknown; promptLensStatus?: number; token?: Parameters<typeof tokenDetail>[0] } = {},
 ) {
   const mock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (url === '/api/auth/refresh') return json({ access_token: 'jwt' });
     if (url === '/api/csrf') return json({ csrf: 'csrf' });
-    if (url === '/api/admin/godmode/status') return json(o.godmode ?? { enabled: true }, o.godmodeStatus ?? 200);
+    if (url === '/api/admin/prompt-lens/status') return json(o.promptLens ?? { enabled: true }, o.promptLensStatus ?? 200);
+    if (url === '/api/auth/sse-ticket') return json({ ticket: 'a1' });
+    if (url.startsWith('/api/admin/prompt-lens/kept')) return json({ kept: [] });
     if (url.startsWith('/api/tokens/tok-self/series')) return json(seriesFixture());
     if (url === '/api/tokens/tok-self') {
       if (init?.method === 'PATCH') return json(tokenDetail(JSON.parse(String(init.body))));
@@ -166,7 +167,7 @@ describe('token details page', () => {
       const m = vi.fn(async (input: RequestInfo | URL) => {
         const url = String(input);
         if (url === '/api/auth/refresh') return json({ access_token: 'jwt' });
-        if (url === '/api/admin/godmode/status') return json({ enabled: true });
+        if (url === '/api/admin/prompt-lens/status') return json({ enabled: true });
         if (gone && url.startsWith('/api/tokens/tok-self')) return json({ detail: 'token not found' }, 404);
         if (url.startsWith('/api/tokens/tok-self/series')) return json(seriesFixture());
         if (url === '/api/tokens/tok-self') return json(tokenDetail());
@@ -313,7 +314,7 @@ describe('token details page', () => {
       const url = String(input);
       if (url === '/api/auth/refresh') return json({ access_token: 'jwt' });
       if (url === '/api/csrf') return json({ csrf: 'csrf' });
-      if (url === '/api/admin/godmode/status') return json({ enabled: true });
+      if (url === '/api/admin/prompt-lens/status') return json({ enabled: true });
       if (url.startsWith('/api/tokens/tok-self/series')) {
         // Mirrors the server's window, and its bin ladder closely enough:
         // a 2 h window gets 1 min bins, anything longer 30 min.
@@ -510,7 +511,7 @@ describe('token details page', () => {
         const url = String(input);
         if (url === '/api/auth/refresh') return json({ access_token: 'jwt' });
         if (url === '/api/csrf') return json({ csrf: 'csrf' });
-        if (url === '/api/admin/godmode/status') return json({ enabled: true });
+        if (url === '/api/admin/prompt-lens/status') return json({ enabled: true });
         if (url.startsWith('/api/tokens/tok-self/series')) {
           const q = new URL(url, 'http://x').searchParams;
           const from = Number(q.get('from'));
@@ -671,43 +672,46 @@ describe('token details page', () => {
     expect(screen.getByRole('textbox', { name: 'Token name' })).toBeInTheDocument(); // still editing
   });
 
-  it('renders the dock closed, with no EventSource, when god mode is enabled', async () => {
-    installFetch({ godmode: { enabled: true } });
+  const lensLink = () => screen.queryByTestId('token-prompt-lens-link');
+
+  it('links to the Prompt Lens page with the key and its earlier keys preset; no dock, no stream', async () => {
+    const f = installFetch({ promptLens: { enabled: true } });
     renderPage();
-    const bar = await screen.findByRole('button', { name: /God mode/ });
-    expect(bar).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByRole('region', { name: 'God mode for this token' })).toBeInTheDocument();
+    await waitFor(() => expect(lensLink()).not.toBeNull());
+    expect(lensLink()).toHaveAttribute('href', '/prompt-lens?key=tok-old1%2Ctok-old2%2Ctok-self');
+    expect(lensLink()).toHaveTextContent("Open this key's requests in Prompt Lens");
+    expect(screen.queryByTestId('prompt-lens-dock')).toBeNull();
     expect(FakeES.all).toHaveLength(0);
+    expect(f.mock.calls.some(([x]) => String(x).startsWith('/api/admin/prompt-lens/kept'))).toBe(false);
+  });
+
+  it('the page says Prompt Lens, never god mode', async () => {
+    installFetch({ promptLens: { enabled: true } });
+    renderPage();
+    await waitFor(() => expect(lensLink()).not.toBeNull());
+    expect(document.body.textContent ?? '').not.toMatch(/god[ -]?mode/i);
+    for (const el of document.querySelectorAll('[aria-label],[title]')) {
+      expect(`${el.getAttribute('aria-label') ?? ''} ${el.getAttribute('title') ?? ''}`).not.toMatch(/god[ -]?mode/i);
+    }
+  });
+
+  it('while Prompt Lens is off, a key that keeps captures still links to its kept captures', async () => {
+    installFetch({ promptLens: { enabled: false }, token: { keep_captures: true } });
+    renderPage();
+    await waitFor(() => expect(lensLink()).not.toBeNull());
+    expect(screen.getByTestId('keep-captures-off')).toHaveTextContent(/you can still open them in Prompt Lens/i);
+    expect(screen.getByTestId('keep-captures-off')).toHaveTextContent(/key's holder cannot/i);
   });
 
   it.each([
-    ['disabled', { godmode: { enabled: false } }],
-    ['status fetch failed', { godmodeStatus: 500 }],
-  ])('has no dock when god mode is %s', async (_label, opts) => {
+    ['disabled', { promptLens: { enabled: false } }],
+    ['status fetch failed', { promptLensStatus: 500 }],
+  ])('has no Prompt Lens link when the platform switch is %s (and nothing is kept)', async (_label, opts) => {
     installFetch(opts);
     renderPage();
     await screen.findByRole('heading', { level: 1, name: 'opencode-laptop' });
     await new Promise((r) => setTimeout(r, 50));
-    expect(screen.queryByRole('region', { name: 'God mode for this token' })).toBeNull();
-    expect(screen.queryByRole('button', { name: /God mode/ })).toBeNull();
-  });
-
-  // Operator's hard rule: opening the dock must always be a deliberate click.
-  // If god mode flips off (admin disables it, or the status fetch starts
-  // failing) while the dock happens to be open, `open` must drop to false —
-  // otherwise a later flip back to true remounts <GodModeDock> already open
-  // and a stream starts with no click.
-  it('useDockOpen resets to closed when god mode status flips off, and stays closed when it flips back on', () => {
-    const { result, rerender } = renderHook(({ enabled }) => useDockOpen(enabled), {
-      initialProps: { enabled: true },
-    });
-    act(() => result.current[1](true));
-    expect(result.current[0]).toBe(true);
-
-    rerender({ enabled: false });
-    expect(result.current[0]).toBe(false);
-
-    rerender({ enabled: true });
-    expect(result.current[0]).toBe(false);
+    expect(lensLink()).toBeNull();
+    expect(screen.queryByTestId('prompt-lens-dock')).toBeNull();
   });
 });

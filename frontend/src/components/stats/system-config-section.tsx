@@ -255,12 +255,18 @@ function SystemConfigCards({
       )}
 
       {/* A relationship BETWEEN cards: only meaningful with two or more. */}
+      {/* Configuration, not a statistic: collapsed by default. */}
       {data.gpus.length >= 2 && (
-        <GpuInterconnect
-          topology={topology}
-          cards={interconnectCards}
-          unavailableReason={liveStatus.kind === "unavailable" ? liveStatus.reason : undefined}
-        />
+        <details data-testid="system-architecture-details" className="rounded-lg border border-chat-rule">
+          <summary className="cursor-pointer px-3 py-2 text-[13px] text-chat-muted">Server architecture (how the GPUs connect)</summary>
+          <div className="px-3 pb-3">
+            <GpuInterconnect
+              topology={topology}
+              cards={interconnectCards}
+              unavailableReason={liveStatus.kind === "unavailable" ? liveStatus.reason : undefined}
+            />
+          </div>
+        </details>
       )}
     </>
   );

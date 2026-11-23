@@ -21,6 +21,16 @@ export interface MeKey {
   thinking_policy: string | null;
   anthropic_relay: boolean;
   guard_effective?: { mode?: string; packs?: string[]; rules?: number; source?: { mode?: string } } | null;
+  /** True when Prompt Lens is on for the platform (VW_PROMPT_LENS_ENABLED): the key
+   *  holder can then open captures of their own requests. */
+  prompt_lens_view_available?: boolean;
+  /** The key's prompt cache: shared with other keys, or kept separate (plan 2). */
+  kv_isolation?: "sharing" | "isolated";
+  /** The loaded models this key may use, with whether each can keep its cache apart. */
+  models?: { id: string; cache_isolation: "isolated" | "unsupported" }[];
+  /** An admin set this key to keep captures: the last 50 are kept on disk
+   *  (G-R14). */
+  keep_captures?: boolean;
 }
 
 export interface MeUsage {
@@ -49,8 +59,12 @@ export interface MeGuardEvents {
 
 const fetchKey = sessionsFetcher<unknown>("key");
 
-export function useMe<T>(url: string | null) {
-  return useSWR<T>(sessionsKey("key", url), ([, , u]: readonly [string, string, string]) => fetchKey(u) as Promise<T>);
+export function useMe<T>(url: string | null, refreshInterval?: number) {
+  return useSWR<T>(
+    sessionsKey("key", url),
+    ([, , u]: readonly [string, string, string]) => fetchKey(u) as Promise<T>,
+    refreshInterval ? { refreshInterval, keepPreviousData: true } : undefined,
+  );
 }
 
 /** A write as the key holder. Throws KeyAuthError on 401 (the sign-in is gone); returns the response otherwise. */

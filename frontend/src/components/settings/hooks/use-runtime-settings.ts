@@ -77,7 +77,8 @@ export type RuntimeKey =
   | "watchdog_interval_s"
   | "watchdog_failure_threshold"
   | "watchdog_max_restarts"
-  | "update_check_enabled";
+  | "update_check_enabled"
+  | "prompt_lens_enabled";
 
 // Sentinel the backend echoes for secret fields when a value exists.
 // We never round-trip this to the server (PATCH body strips keys whose
@@ -114,6 +115,7 @@ export interface Draft {
   watchdog_failure_threshold: number | null;
   watchdog_max_restarts: number | null;
   update_check_enabled: boolean;
+  prompt_lens_enabled: boolean;
 }
 
 function parseNumber(raw: string | null | undefined): number | null {
@@ -185,6 +187,9 @@ function snapshotToDraft(s: RuntimeResponse): Draft {
     watchdog_max_restarts: parseNumber(s.watchdog_max_restarts) ?? 3,
     // Update check (spec 2026-11-20): on unless turned off.
     update_check_enabled: parseBool(s.update_check_enabled, true),
+    // Prompt Lens: the backend sends the value in effect (the setting, else the
+    // env), so a missing row only happens on an old backend: off.
+    prompt_lens_enabled: parseBool(s.prompt_lens_enabled, false),
   };
 }
 

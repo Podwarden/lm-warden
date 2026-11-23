@@ -1246,3 +1246,30 @@ def test_reattach_mid_stream_gets_replay_then_live_frames(tmp_data_dir, client) 
     }
     # the second subscriber saw the SAME bytes as the first, start to finish
     assert captured["second"] == captured["first"]
+
+
+def test_detail_decides_live_turn_before_reading_messages(tmp_data_dir, client) -> None:
+    """A turn that finishes while `GET /chats/{id}` is reading must not come
+    back as messages without the answer AND `live_turn: null`. The runner
+    persists the assistant row before it marks the turn done, so the detail
+    takes its `live_turn` snapshot before the reads: here the turn finishes
+    mid-read and the detail still points at it (turn/live replays to done)."""
+    from app.chat2 import routes_chats
+
+    h = _auth(tmp_data_dir, client)
+    _model(tmp_data_dir / "vllm-warden.db")
+    chat = client.post("/api/chat2/chats", headers=h, json={"model": "qwen"}).json()
+    registry = client.app.state.chat2_live_turns
+    live = registry.start(chat["id"], request_id="req-race", message_id="m-race")
+    real_describe = routes_chats._describe
+
+    async def finish_mid_read(*args, **kwargs):
+        await registry.finish(live)
+        return await real_describe(*args, **kwargs)
+
+    with patch.object(routes_chats, "_describe", new=finish_mid_read):
+        detail = client.get(f"/api/chat2/chats/{chat['id']}", headers=h).json()
+    assert live.done is True
+    assert detail["live_turn"] == {"request_id": "req-race", "message_id": "m-race"}
+    # and once the turn is done before the request, it is reported null
+    assert client.get(f"/api/chat2/chats/{chat['id']}", headers=h).json()["live_turn"] is None

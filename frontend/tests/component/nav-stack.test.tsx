@@ -261,3 +261,23 @@ describe('NavStackProvider — query-id detail URLs', () => {
     expect(navState.push).toHaveBeenCalledWith('/models/detail?id=abc', { scroll: false });
   });
 });
+
+describe('NavStackProvider — redirect-only pages', () => {
+  // /cache and /chat render nothing and router.replace() elsewhere. Pushing
+  // them would make Back land on the redirect, which bounces straight back.
+  it.each([
+    ['/cache', '/models'],
+    ['/chat', '/chat2'],
+  ])('%s is never pushed: Back from %s goes to the page before it', async (redirect, target) => {
+    const { ref, go } = await start('/tokens');
+    await go(redirect);
+    await go(target);
+    expect(stackOf(ref.ctx)).toEqual([{ href: '/tokens', title: 'API tokens' }]);
+  });
+
+  it('a direct load of /cache leaves an empty stack on the target', async () => {
+    const { ref, go } = await start('/cache');
+    await go('/models');
+    expect(ref.ctx!.stack).toEqual([]);
+  });
+});

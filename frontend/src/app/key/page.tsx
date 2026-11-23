@@ -4,7 +4,9 @@
 // how many values the guard hid.
 
 import { KeyShell } from "@/components/key-area/key-shell";
-import { type CacheResponse, type MeGuardEvents, type MeUsage, useMe } from "@/lib/key-area/api";
+import { Mark } from "@/components/kv/parts";
+import { type CacheResponse, type MeGuardEvents, type MeKey, type MeUsage, useMe } from "@/lib/key-area/api";
+import { MARK } from "@/lib/kv";
 import { K } from "@/lib/key-area/strings";
 
 const num = new Intl.NumberFormat("en-US");
@@ -29,6 +31,13 @@ function Overview() {
   const usage = useMe<MeUsage>("/api/me/usage?range=24h");
   const cache = useMe<CacheResponse>("/api/me/cache?range=24h");
   const guard = useMe<MeGuardEvents>("/api/me/guard/events?limit=1");
+  const key = useMe<MeKey>("/api/me/key");
+  // An isolated key is refused on a model whose engine cannot keep its cache apart (O4).
+  const refused = new Set(
+    key.data?.kv_isolation === "isolated"
+      ? (key.data.models ?? []).filter((m) => m.cache_isolation === "unsupported").map((m) => m.id)
+      : [],
+  );
   const t = usage.data?.totals;
   const models = cache.data?.models ?? [];
   const known = models.reduce((a, m) => a + m.known_prompt_tokens, 0);
@@ -66,7 +75,14 @@ function Overview() {
               <tbody>
                 {models.map((m) => (
                   <tr key={m.model_id} className="border-b border-slate-800/60">
-                    <td className="px-2 py-1.5">{m.model}</td>
+                    <td className="px-2 py-1.5">
+                      {m.model}
+                      {refused.has(m.model) && (
+                        <Mark tone="warn" className="ml-2">
+                          {MARK.cannotSeparate}
+                        </Mark>
+                      )}
+                    </td>
                     <td className="px-2 py-1.5">{num.format(m.requests)}</td>
                     <td className="px-2 py-1.5">{compact(m.prompt_tokens)}</td>
                     <td className="px-2 py-1.5">

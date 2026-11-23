@@ -24,6 +24,9 @@ CHANGES = {
     "public_url": "https://proxy.example",
     # Whether the install reports to lmwarden.com is the owner's call.
     "update_check_enabled": True,
+    # Turning Prompt Lens on lets an admin read every prompt and reply: a
+    # leaked admin token must not be able to switch it on.
+    "prompt_lens_enabled": True,
     # The website's tracking IDs are session-only too, as extension keys
     # (SettingKey.session_only): the website package's own tests.
 }

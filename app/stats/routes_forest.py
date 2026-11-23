@@ -53,7 +53,7 @@ from typing import Any
 import jwt as pyjwt
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
-from app.auth.deps import bearer_token, require_jwt, token_refusal
+from app.auth.deps import bearer_token, key_stream_key, require_jwt, token_refusal
 from app.auth.jwt import decode, mint_forest
 from app.db.database import open_db
 from app.db.repos.tokens import TokenRepo, TokenRow
@@ -74,6 +74,9 @@ WHOLE_S = 7 * 86400
 SINCE_OVERLAP_S = 5.0
 FLOWER_RESEND_S = 600.0
 TPUT_TTL_S = 60.0
+#: A key holder's per-variant speeds come from its own requests only, and only
+#: once this many of them contributed (below it the variant has no speeds).
+TPUT_MIN_OWN = 5
 FOREST_TTL_S = 3.0  # a cached state answers every request for this long
 FULL_REBUILD_S = (
     6 * 3600.0
@@ -134,6 +137,7 @@ async def forest_viewer(request: Request) -> ForestViewer:
             ):
                 raise HTTPException(401, "session ended")
             request.state.session_id = claims.get("sid")
+            request.state.session_exp = claims.get("exp")
             return ForestViewer(token_id=row.id)
     await require_jwt(request)
     return ForestViewer(token_id=None)
@@ -157,6 +161,10 @@ async def forest_logout(
     if viewer.token_id is None:
         raise HTTPException(403, "only a key holder's sign-in can be ended here")
     await request.app.state.auth_sessions.end(getattr(request.state, "session_id", None))
+    # The key's live Prompt Lens streams end too (G7). Keyed by key, not by
+    # sign-in, so another sign-in of the same key reconnects with a fresh
+    # ticket -- as an admin logout ends every stream of that admin.
+    request.app.state.stream_registry.cancel_user(key_stream_key(viewer.token_id))
     return Response(status_code=204)
 
 
@@ -308,16 +316,26 @@ def _load_new(
     return [_slim(row) for row in db.execute(sql + " ORDER BY finished_at", args)]
 
 
-def _throughput_sync(db_path: Path, now: float) -> dict[str, dict[str, Any]]:
-    """7-day per-variant throughput, global (not per viewer)."""
+def _throughput_sync(
+    db_path: Path, now: float, token_id: str | None = None
+) -> dict[str, dict[str, Any]]:
+    """7-day per-variant throughput: every key's requests for the admin
+    (``token_id`` None); for a key holder its own requests only, and a variant
+    with fewer than TPUT_MIN_OWN of them is left out (never the fleet's)."""
+    sql = (
+        f"SELECT {', '.join(_TPUT_FIELDS)} FROM request_history"
+        " WHERE finished_at >= ? AND relayed IS NULL"
+    )
+    args: list[Any] = [now - 7 * 86400]
+    if token_id is not None:
+        sql += " AND token_id = ?"
+        args.append(token_id)
     with closing(_connect(db_path)) as db:
-        cur = db.execute(
-            f"SELECT {', '.join(_TPUT_FIELDS)} FROM request_history"
-            " WHERE finished_at >= ? AND relayed IS NULL",
-            [now - 7 * 86400],
-        )
-        rows = [dict(zip(_TPUT_FIELDS, row, strict=True)) for row in cur]
-    return forest.model_throughput(rows)
+        rows = [dict(zip(_TPUT_FIELDS, row, strict=True)) for row in db.execute(sql, args)]
+    out = forest.model_throughput(rows)
+    if token_id is not None:
+        out = {v: t for v, t in out.items() if t["n"] >= TPUT_MIN_OWN}
+    return out
 
 
 @dataclass(frozen=True)
@@ -672,7 +690,8 @@ class ForestCache:
         self._lock = asyncio.Lock()
         self._states: OrderedDict[tuple[str, str | None], _State] = OrderedDict()
         self._flights: dict[Any, asyncio.Future[Any]] = {}
-        self._tput: tuple[float, dict[str, dict[str, Any]]] | None = None
+        #: viewer token (None = admin) -> (built at, per-variant throughput)
+        self._tput: dict[str | None, tuple[float, dict[str, dict[str, Any]]]] = {}
 
     async def _single(self, key: Any, factory: Callable[[], Awaitable[Any]]) -> Any:
         fut = self._flights.get(key)
@@ -690,17 +709,22 @@ class ForestCache:
         # shield: a client that disconnects must not cancel the build the others wait for.
         return await asyncio.shield(fut)
 
-    async def throughput(self, db_path: Path) -> dict[str, dict[str, Any]]:
+    async def throughput(
+        self, db_path: Path, token_id: str | None = None
+    ) -> dict[str, dict[str, Any]]:
         now = _now()
-        if self._tput is not None and now - self._tput[0] < TPUT_TTL_S:
-            return self._tput[1]
+        hit = self._tput.get(token_id)
+        if hit is not None and now - hit[0] < TPUT_TTL_S:
+            return hit[1]
 
         async def work() -> dict[str, dict[str, Any]]:
-            value = await asyncio.to_thread(_throughput_sync, db_path, now)
-            self._tput = (now, value)
+            value = await asyncio.to_thread(_throughput_sync, db_path, now, token_id)
+            if len(self._tput) >= MAX_CACHED_KEYS:
+                self._tput.clear()
+            self._tput[token_id] = (now, value)
             return value
 
-        result: dict[str, dict[str, Any]] = await self._single("tput", work)
+        result: dict[str, dict[str, Any]] = await self._single(("tput", token_id), work)
         return result
 
     async def state(self, key: tuple[str, str | None], db_path: Path) -> _State:
@@ -711,7 +735,7 @@ class ForestCache:
         view = self.store.view
         if view is None or now - view.at >= FOREST_TTL_S:
             await self._single("store", lambda: self._refresh_store(db_path))
-        tput = await self.throughput(db_path)
+        tput = await self.throughput(db_path, key[1])
         # no await from here on, and one published view: a consistent snapshot, one state per refresh
         view = self.store.view
         assert view is not None

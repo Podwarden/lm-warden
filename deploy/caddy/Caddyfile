@@ -14,7 +14,8 @@
 #   /_next/*         → ui:3000              (safety net — Next emits /ui/_next under basePath)
 #   /api/*           → api:8080
 #   /v1/*            → api:8080             (OpenAI-compatible proxy, flush_interval -1 for SSE)
-#   /healthz         → api:8080
+#   /healthz         → api:8080             (liveness: 200 while the api is up)
+#   /readyz          → api:8080             (readiness: 200 only when a model can serve)
 #   anything else    → api:8080             (404 in Community; builds that carry
 #                                            lmwarden.com's website serve its pages)
 #
@@ -114,6 +115,10 @@
     }
 
     handle /healthz {
+        reverse_proxy api:8080
+    }
+
+    handle /readyz {
         reverse_proxy api:8080
     }
 

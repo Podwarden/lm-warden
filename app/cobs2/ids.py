@@ -30,6 +30,19 @@ class Ids:
     loose_nodes: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class HeadPartIds:
+    """The two halves of the head, separately (open spec, kvsig decision 0002):
+    the system/developer messages and the tool list, exact and loose. ``head``
+    covers both; these say which half changed. Display only: never stored,
+    never used by lineage or routing."""
+
+    sys: str
+    tools: str
+    loose_sys: str
+    loose_tools: str
+
+
 def scope_salt(body: dict[str, Any]) -> bytes:
     s = body.get("cache_salt")
     if isinstance(s, str) and s:
@@ -124,6 +137,33 @@ def ids_for(canon: Canon, key: NetworkKey, salt: bytes) -> Ids:
         tuple(m.hex() for m in lms),
         tuple(n.hex() for n in lnodes),
     )
+
+
+#: Memo tag for head part ids: ``_HEAD_PARTS_TAG + exact head id`` (18 bytes)
+#: never equals an exact id key (17 bytes).
+_HEAD_PARTS_TAG = b"p"
+
+
+def head_part_ids(canon: Canon, key: NetworkKey, salt: bytes, head: str) -> HeadPartIds:
+    """``sys`` / ``tools`` ids over ``{"head": ...}`` / ``{"tools": ...}`` and
+    their loose forms over the same keys of ``loose_head(canon)``. ``head`` is
+    ``ids_for(canon, key, salt).head``: it keys the memo, so a long
+    conversation hashes its head parts once."""
+    mk = _HEAD_PARTS_TAG + bytes.fromhex(head)
+    hit = _memo_get(mk)
+    if hit is None:
+        l_head, l_tools = loose_head(canon)
+        hit = b"".join(
+            (
+                _h(key, b"sys", salt, canon_json({"head": canon.head})),
+                _h(key, b"tools", salt, canon_json({"tools": canon.tools})),
+                _h(key, b"loose-sys", salt, canon_json({"head": l_head})),
+                _h(key, b"loose-tools", salt, canon_json({"tools": l_tools})),
+            )
+        )
+        _memo_put(mk, hit)
+    xs, xt, ls, lt = (hit[i : i + 17].hex() for i in range(0, 68, 17))
+    return HeadPartIds(sys=xs, tools=xt, loose_sys=ls, loose_tools=lt)
 
 
 def ids_for_epochs(canon: Canon, keys: Sequence[NetworkKey], salt: bytes) -> list[Ids]:

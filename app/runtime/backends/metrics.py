@@ -48,6 +48,10 @@ class EngineReading:
     # Tokens per KV block, the granularity prefix caching serves in (#301):
     # 16 by default on vLLM, 784 on a hybrid attention/Mamba model.
     kv_block_size: float | None = None
+    #: The engine's sleep LEVEL: 0 awake, 1 weights offloaded, 2 discard all.
+    #: vLLM >= 0.2x exports one gauge per state (label ``sleep_state``) with 1
+    #: on the current one; the dialect folds that into this level, so it is
+    #: never the sum of the series (which reads 1 for an awake engine).
     engine_sleep_state: float | None = None
     # --- cumulative counters (the stats layer differentiates these) ------
     prompt_tokens_total: float | None = None
@@ -59,6 +63,13 @@ class EngineReading:
     mm_cache_queries: float | None = None
     external_prefix_cache_hits: float | None = None
     external_prefix_cache_queries: float | None = None
+    #: Prompt tokens served from any prefix cache, local plus external
+    #: (vLLM 0.32 ``vllm:prompt_tokens_cached``). None when not exported.
+    prompt_tokens_cached: float | None = None
+    #: 0.0 when the engine runs with prefix caching OFF (its cache_config_info
+    #: says so), 1.0 when on, None when it does not say. A hit rate of an
+    #: engine that cannot hit is not 0 %, it is no figure at all.
+    prefix_caching_enabled: float | None = None
     flops_per_gpu_total: float | None = None
     finished_stop: float | None = None
     finished_length: float | None = None

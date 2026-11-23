@@ -39,3 +39,8 @@ class SettingsRepo:
             (key, value),
         )
         await self.db.commit()
+
+    async def delete(self, key: str) -> None:
+        """Remove a key (absent afterwards: callers fall back to their default). Commits."""
+        await self.db.execute("DELETE FROM settings WHERE key = ?", (key,))
+        await self.db.commit()

@@ -779,7 +779,9 @@ write_override() {
     echo "      VW_STATS_SAMPLER_INTERVAL_S: \"\${VW_STATS_SAMPLER_INTERVAL_S:-5.0}\""
     echo "      VW_HEADER_METRICS_INTERVAL_S: \"\${VW_HEADER_METRICS_INTERVAL_S:-2.0}\""
     echo "      VW_REQUEST_MAX_WALL_S: \"\${VW_REQUEST_MAX_WALL_S:-0.0}\""
-    echo "      VW_GODMODE_ENABLED: \"\${VW_GODMODE_ENABLED:-false}\""
+    # Prompt Lens: blank = the Settings page switch decides (default off). The
+    # old name VW_GODMODE_ENABLED in an existing .env still counts (deprecated).
+    echo "      VW_PROMPT_LENS_ENABLED: \"\${VW_PROMPT_LENS_ENABLED:-\${VW_GODMODE_ENABLED:-}}\""
     # Content logging + the runaway detector that reports through it. Off by
     # default, and forwarded here only so that setting them in .env actually
     # reaches the container -- Compose passes nothing to a service that does

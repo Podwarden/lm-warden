@@ -445,7 +445,8 @@ class RelayRecorder:
                     if lineage is not None and obs is not None and pre.ids.nodes:
                         lineage.remember_reply(
                             model_id="relay:" + model,
-                            scope=pre.salt,
+                            # The scope the observe used (per API key, key_scope).
+                            scope=seen.salt if seen is not None else pre.salt,
                             session=obs.session,
                             node=pre.ids.nodes[-1],
                             reply_ids=rids,

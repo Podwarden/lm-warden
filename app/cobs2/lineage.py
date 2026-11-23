@@ -116,6 +116,10 @@ class Observation:
     #: or forks one (so a lane survives a harness rewriting its first message),
     #: else the conv id it was observed with.
     conv: str | None = None
+    #: The deepest body index whose LOOSE node this session knows (-1: none).
+    #: Display (Prompt Lens's kvsig parts): nodes past ``exact_depth`` up to here
+    #: match only in their loose form.
+    loose_depth: int = -1
 
 
 @dataclass
@@ -165,6 +169,17 @@ class _Session:
 
 _Key = tuple[Any, ...]
 _MAX_TIPS = 4
+
+
+def key_scope(scope: bytes, token_scope: str | None) -> bytes:
+    """The scope every per-request memory is keyed on: the caller's scope (the
+    cache_salt digest; for the prefix memory, its conversation key) narrowed to
+    ONE API key. Client session ids are not secret and not per key (an OpenAI
+    ``user``, a ``prompt_cache_key``), so without this two keys sending the same
+    session id would share nodes, tips, reply anchors, heads and prefix
+    estimates: a cross-key membership side channel. ``token_scope`` is the HMAC
+    of the token id (never the raw id)."""
+    return b"cobs2-key|" + (token_scope or "").encode() + b"|" + scope
 
 
 def fallback_session(token_scope: str | None, head: str) -> str:
@@ -258,7 +273,7 @@ class Lineage:
             return Observation("new", None, False, skey)
         ms = (model_id, scope, skey)
 
-        d, hid, beyond, k = self._find(ms, ids)
+        d, hid, beyond, k, kl = self._find(ms, ids)
         edge: Edge
         parent: str | None
         pms = ms
@@ -300,7 +315,7 @@ class Lineage:
         self._record(
             ms, now, ids, self.is_compaction_request(last_user_text_loose), request_id, out_conv
         )
-        return Observation(edge, parent, beyond, skey, parent_req, k, out_conv)
+        return Observation(edge, parent, beyond, skey, parent_req, k, out_conv, kl)
 
     def _reply_anchor(self, ms: _Key, now: float, ids: Ids) -> str | None:
         """The node whose reply is the deepest message of this body that this
@@ -312,9 +327,10 @@ class Lineage:
         return None
 
     # -- internals -------------------------------------------------------
-    def _find(self, ms: _Key, ids: Ids) -> tuple[int, str | None, bool, int]:
-        """Deepest known index, its exact node id, whether loose beat exact, and
-        the deepest index whose exact node is known."""
+    def _find(self, ms: _Key, ids: Ids) -> tuple[int, str | None, bool, int, int]:
+        """Deepest known index, its exact node id, whether loose beat exact, the
+        deepest index whose exact node is known, and the deepest whose loose
+        node is."""
         n = len(ids.nodes)
         kl = -1
         if len(ids.loose_nodes) == n:
@@ -328,14 +344,14 @@ class Lineage:
                 k = i
                 break
         if k >= 0 and k >= kl:
-            return k, ids.nodes[k], False, k
+            return k, ids.nodes[k], False, k, kl
         if kl >= 0:
             exact = self._loose[(*ms, ids.loose_nodes[kl])].exact
             # Beyond only when the exact id really differs: an unchanged
             # resend whose exact nodes the LRU or TTL dropped (while the loose
             # entries survived) matches here too, and is no rewrite.
-            return kl, exact, ids.nodes[kl] != exact, k
-        return -1, None, False, k
+            return kl, exact, ids.nodes[kl] != exact, k, kl
+        return -1, None, False, k, kl
 
     def _classify_collapsed(
         self,

@@ -72,8 +72,12 @@ interface ChartShellProps {
 
 function ChartShell({ emptyLabel, hasData, tall = false, children }: ChartShellProps) {
   if (!hasData) {
+    // Same height as the chart it replaces (stats redesign, fixed-size rule):
+    // a window with no data must not move the panels below.
     return (
-      <div className="rounded-lg border border-dashed border-slate-700 bg-slate-900/30 p-8 text-center text-sm text-slate-400">
+      <div
+        className={`${tall ? "h-96" : "h-64"} flex w-full items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-900/30 p-8 text-center text-sm text-slate-400`}
+      >
         {emptyLabel}
       </div>
     );
@@ -350,6 +354,9 @@ interface TokensChartProps {
   reference?: Reference;
   /** Cache hit over the last hour, for the Prompt header. */
   cacheSummary?: CacheHitSummary;
+  /** False: one prompt bar, no cached / computed legend (the key holder's view
+   *  has no measured split). Default true. */
+  split?: boolean;
 }
 
 /** The cached part of the prompt: the sky token the in-flight table's cached
@@ -500,7 +507,7 @@ function PromptSplitLines({ row }: { row: TokenRateBucket }) {
 }
 
 const CREDIT_NOTE =
-  "Tokens are credited to the minute a request FINISHES, so a long request lands all at once and per-minute bars spike around the true rate.";
+  "Tokens are booked to the minutes they were produced: the prompt to the minute of the first token, the reply spread from the first token to the finish. The last few minutes can still grow until long requests finish.";
 
 /** Legend with a swatch AND a label per series: colour is never the only cue. */
 function CacheLegend() {
@@ -552,6 +559,7 @@ export function TokensChart({
   range,
   reference,
   cacheSummary,
+  split = true,
 }: TokensChartProps) {
   // Two stacked small multiples with independent Y axes instead of two bars
   // on one axis: stacking would let the operator read "total throughput" at a
@@ -583,7 +591,7 @@ export function TokensChart({
   });
   // Stack the cached segment only when some bucket has a measurement: a
   // window of pre-migration rows stays plain purple, with no cached claim.
-  const stackCached = buckets.some((b) => b.prompt_tps !== null && b.prompt_cached_tps !== null);
+  const stackCached = split && buckets.some((b) => b.prompt_tps !== null && b.prompt_cached_tps !== null);
   // Unmeasured rows are "no data"; a window of only those reads as empty.
   const hasData = data.some((b) => b.measured);
   const bounds = rangeBounds(range);
@@ -721,8 +729,8 @@ export function TokensChart({
           cachedKey: stackCached ? "prompt_cached_tps" : undefined,
           header: (
             <>
-              <CacheLegend />
-              <CacheHitText summary={cacheSummary} />
+              {split && <CacheLegend />}
+              {split && <CacheHitText summary={cacheSummary} />}
               <span
                 data-testid="tokens-credit-note"
                 tabIndex={0}

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import secrets
 import time
@@ -10,11 +11,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.auth.bearer import generate_bearer_token
-from app.auth.deps import require_jwt
+from app.auth.deps import key_stream_key, require_jwt
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo
+from app.db.repos.settings import SettingsRepo
 from app.db.repos.tokens import (
     _UNSET,
+    KV_ISOLATION_VALUES,
+    KvChange,
+    KvChangeRefused,
     TokenModelUsageRepo,
     TokenRepo,
     TokenRow,
@@ -24,6 +29,10 @@ from app.db.repos.tokens import (
     sqlite_utc_now,
 )
 from app.guard.resolve import effective, validate_key
+from app.kv import isolation as kv_iso
+from app.kv import policy_sync
+from app.kv import usage as kv_usage
+from app.kv.schemas import TokenCacheOut
 from app.proxy.prompt_diet import Diet, diet_json, parse_diet
 from app.proxy.thinking_policy import ThinkingPolicy
 from app.stats import request_history
@@ -102,6 +111,18 @@ class TokenCreate(BaseModel):
         return _reject_rate_limit_tps(data)
 
 
+#: How a key shares the KV cache (spec 2026-11-21 Plan 2, section 3).
+KvIsolation = Literal["sharing", "isolated"]
+
+#: The runtime setting that decides ``kv_isolation`` of a new key (O1, default sharing).
+KV_ISOLATION_DEFAULT_KEY = "kv_isolation_default"
+
+KV_RESET_SHARING = "this key shares its cache; there is nothing of its own to reset"
+
+#: O2: a holder may make their key more private, never less.
+BACK_TO_SHARING = "only an admin can switch this key back to sharing"
+
+
 class TokenUpdate(BaseModel):
     """PATCH body — every field is optional; omit to leave untouched.
 
@@ -127,6 +148,14 @@ class TokenUpdate(BaseModel):
     guard: dict[str, Any] | None = None
     #: Debug capture for the next N hours (bodies and responses, admin-only); 0 turns it off.
     capture_hours: float | None = Field(default=None, ge=0, le=720)
+    #: How the key shares the KV cache. Going to sharing retires the key's isolated scope.
+    kv_isolation: KvIsolation | None = None
+    #: The key's cap on the RAM and NVMe tiers, in percent; null clears it.
+    kv_max_pct_ram: int | None = Field(default=None, ge=1, le=100)
+    kv_max_pct_nvme: int | None = Field(default=None, ge=1, le=100)
+    #: Prompt Lens keep captures: the key's last 50 finished requests (prompts
+    #: included) are kept on disk. false turns it off and deletes what it kept.
+    keep_captures: bool | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -142,7 +171,13 @@ class TokenUpdate(BaseModel):
             raise ValueError("name cannot be null")
         return v.strip() if isinstance(v, str) else v
 
-    @field_validator("paused", "anthropic_relay", "thinking_policy", mode="before")
+    @field_validator(
+        "paused",
+        "anthropic_relay",
+        "thinking_policy",
+        "kv_isolation",
+        mode="before",
+    )
     @classmethod
     def _flag_not_null(cls, v: object) -> object:
         if v is None:
@@ -227,6 +262,7 @@ def _enrich(
         "prompt_diet": _diet_out(r.prompt_diet),
         "capture_until": r.capture_until,
         "guard": _json_or_none(r.guard),
+        "keep_captures": bool(r.keep_captures),
         "usage_24h": {
             "requests": usage_requests,
             "prompt_tokens": usage_prompt,
@@ -236,6 +272,16 @@ def _enrich(
         # Token details page (0033): the list badge shows Paused too.
         "paused_at": r.paused_at,
         "is_paused": r.paused_at is not None,
+        # Per-key KV cache: the tenant id and epoch are never shown (they name the scope).
+        "kv_isolation": r.kv_isolation,
+        "kv_max_pct_ram": r.kv_max_pct_ram,
+        "kv_max_pct_nvme": r.kv_max_pct_nvme,
+        # The served names the key may use (None: every model), split as token_allows does.
+        "allowed_models": (
+            None
+            if r.allowed_models is None
+            else [m.strip() for m in r.allowed_models.split(",") if m.strip()]
+        ),
     }
 
 
@@ -294,6 +340,7 @@ async def create_token(body: TokenCreate, request: Request, _user: str = Depends
     tid = secrets.token_hex(16)
     async with open_db(request.app.state.settings.db_path) as db:
         repo = TokenRepo(db)
+        default = await SettingsRepo(db).get(KV_ISOLATION_DEFAULT_KEY)
         await repo.create(
             token_id=tid,
             name=body.name,
@@ -303,10 +350,12 @@ async def create_token(body: TokenCreate, request: Request, _user: str = Depends
             anthropic_relay=body.anthropic_relay,
             thinking_policy=body.thinking_policy,
             guard=json.dumps(guard) if guard is not None else None,
+            kv_isolation=default if default in KV_ISOLATION_VALUES else "sharing",
         )
         created = await repo.get(tid)
     if created is None:  # defensive — race between insert and read is impossible
         raise HTTPException(500, "token vanished after create")
+    policy_sync.request_sync(request.app.state)  # a new tenant and its weight
     prefix = plaintext[:8]
     return {
         "id": tid,
@@ -344,10 +393,30 @@ async def update_token(
     Returns the full token, the same shape as ``GET /api/tokens/{id}``.
 
     **Note:** ``priority`` cannot be set to ``null`` — the column is ``NOT NULL``
-    in the schema. Sending ``{"priority": null}`` will cause the underlying DB
-    write to fail. To reset priority to the default, send ``{"priority": 5}``.
+    in the schema. ``{"priority": null}`` is a 422, refused before anything is
+    written. To reset priority to the default, send ``{"priority": 5}``.
     """
     raw = body.model_dump(exclude_unset=True)
+    # Every refusal comes before the KV change commits: priority is NOT NULL.
+    if "priority" in raw and raw["priority"] is None:
+        raise HTTPException(422, "priority cannot be null")
+    changes: list[KvChange] = []
+    try:
+        out = await _update_token(request, token_id, raw, changes)
+        # Priority (the tenant's weight), caps and isolation all reach the daemon.
+        policy_sync.request_sync(request.app.state)
+        return out
+    finally:
+        # The KV change committed on its own: push and audit it even if a later write failed.
+        if changes:
+            await after_kv_change(request, token_id, _user, changes[0], raw.get("kv_isolation"))
+
+
+async def _update_token(
+    request: Request, token_id: str, raw: dict[str, Any], change_out: list[KvChange]
+) -> dict[str, Any]:
+    """``update_token``'s writes. The KV change, once committed, is appended to
+    ``change_out`` so the caller can finish it whatever happens next."""
     async with open_db(request.app.state.settings.db_path) as db:
         repo = TokenRepo(db)
         row = await _inference_row(repo, token_id)
@@ -367,6 +436,10 @@ async def update_token(
                     status.HTTP_409_CONFLICT,
                     detail=f"Token '{row.name}' is {dead}; only a live key can be paused.",
                 )
+        # First, so a refused change applies nothing else in the body.
+        change_out.append(
+            await kv_change(request, repo, row, isolation=raw.get("kv_isolation"), reset=False)
+        )
         await repo.update(
             token_id,
             name=raw.get("name", _UNSET),
@@ -375,6 +448,11 @@ async def update_token(
             anthropic_relay=raw.get("anthropic_relay", _UNSET),
             thinking_policy=raw.get("thinking_policy", _UNSET),
             guard=guard_value,
+            kv_max_pct_ram=raw.get("kv_max_pct_ram", _UNSET),
+            kv_max_pct_nvme=raw.get("kv_max_pct_nvme", _UNSET),
+            keep_captures=(
+                _UNSET if raw.get("keep_captures") is None else bool(raw["keep_captures"])
+            ),
             capture_until=(
                 _UNSET
                 if raw.get("capture_hours") is None
@@ -400,6 +478,80 @@ async def update_token(
     # MUST still exist; the assert narrows the Optional and guards a race
     # with a concurrent DELETE.
     assert detail is not None, f"token {token_id} disappeared mid-PATCH"
+    if raw.get("paused") is True:
+        # A paused key's live Prompt Lens streams end at once (G7); their re-check
+        # would find it within seconds anyway.
+        request.app.state.stream_registry.cancel_user(key_stream_key(token_id))
+    return _with_effective(detail, request)
+
+
+async def kv_change(
+    request: Request,
+    repo: TokenRepo,
+    row: TokenRow,
+    *,
+    isolation: str | None,
+    reset: bool,
+    allow_to_sharing: bool = True,
+) -> KvChange:
+    """``TokenRepo.update_kv`` for ``row`` (and its live family), with its refusals as
+    HTTP errors: 409 for a key that no longer works or a reset of a sharing key, 403 for
+    a holder switching an isolated key back to sharing (``allow_to_sharing`` False)."""
+    if isolation is None and not reset:
+        return KvChange(family=[], retired=[])
+    try:
+        return await repo.update_kv(
+            row.id,
+            isolation=isolation,
+            reset=reset,
+            tag_for=kv_iso.tag_for_state(request.app.state),
+            now=sqlite_utc_now(),
+            allow_to_sharing=allow_to_sharing,
+        )
+    except LookupError:
+        raise HTTPException(404) from None
+    except KvChangeRefused as e:
+        if str(e) == "sharing":
+            raise HTTPException(status.HTTP_409_CONFLICT, KV_RESET_SHARING) from None
+        if str(e) == "to_sharing":
+            raise HTTPException(status.HTTP_403_FORBIDDEN, BACK_TO_SHARING) from None
+        dead = _dead_state(row, sqlite_utc_now()) or "no longer live"
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"Token '{row.name}' is {dead}; only a live key's cache setting can be changed.",
+        ) from None
+
+
+async def after_kv_change(
+    request: Request, token_id: str, user: str, change: KvChange, isolation: str | None
+) -> None:
+    """After the change committed: send the retired tags to the store (best effort) and
+    write the audit row of a session admin or key holder."""
+    if not change.family:
+        return
+    if change.retired:
+        await kv_iso.push_retired(request.app.state, change.retired)
+    kv_iso.audit_change(request, token_id=token_id, username=user, change=isolation or "reset")
+
+
+@router.post("/{token_id}/kv-reset")
+async def reset_token_kv(
+    token_id: str, request: Request, _user: str = Depends(require_jwt)
+) -> dict[str, Any]:
+    """Reset an isolated key's cache: its family moves to a fresh scope and the old one is
+    retired. 409 for a sharing key, which has no cache of its own. Returns the token, the
+    same shape as ``GET /api/tokens/{id}``."""
+    async with open_db(request.app.state.settings.db_path) as db:
+        repo = TokenRepo(db)
+        row = await _inference_row(repo, token_id)
+        if row is None:
+            raise HTTPException(404)
+        change = await kv_change(request, repo, row, isolation=None, reset=True)
+        detail = await _token_detail(db, token_id)
+    if detail is None:
+        raise HTTPException(404)
+    await after_kv_change(request, token_id, _user, change, None)
+    policy_sync.request_sync(request.app.state)
     return _with_effective(detail, request)
 
 
@@ -457,8 +609,11 @@ async def rotate_token(
                 ) from exc
             raise
     prefix = new_plaintext[:8]
+    policy_sync.request_sync(request.app.state)  # the family's newest row carries its policy
     # Verified finding #2: rotating a key ends its holders' sign-ins (the new key signs in afresh).
     await request.app.state.auth_sessions.end_subject("key", token_id)
+    # ...and so the live Prompt Lens streams those sign-ins opened (G7), whatever the grace.
+    request.app.state.stream_registry.cancel_user(key_stream_key(token_id))
     return {
         "id": new_id,
         "name": old.name,  # The active token keeps the ORIGINAL name.
@@ -508,9 +663,15 @@ class TokenListItem(BaseModel):
     prompt_diet: PromptDiet | None = None
     capture_until: float | None = None
     guard: dict[str, Any] | None = None
+    #: Prompt Lens keep captures: the last 50 finished requests are kept on disk.
+    keep_captures: bool = False
     usage_24h: TokenUsage24h
     paused_at: str | None
     is_paused: bool
+    kv_isolation: KvIsolation = "sharing"
+    kv_max_pct_ram: int | None = None
+    kv_max_pct_nvme: int | None = None
+    allowed_models: list[str] | None = None
 
 
 class TokenListPage(BaseModel):
@@ -700,7 +861,7 @@ async def get_token_usage(
 _CACHE_RANGE_S = {"1h": 3600, "24h": 86400, "7d": 7 * 86400}
 
 
-@router.get("/{token_id}/cache")
+@router.get("/{token_id}/cache", response_model=TokenCacheOut)
 async def get_token_cache(
     token_id: str,
     request: Request,
@@ -708,10 +869,23 @@ async def get_token_cache(
     _user: str = Depends(require_jwt),
 ) -> dict[str, Any]:
     """Prompt-cache observation for one key, OWN lens only (spec §5.2): matched
-    against this key's own earlier prompts, never another key's."""
+    against this key's own earlier prompts, never another key's.
+
+    For an admin, the key's KV report is merged in (``app.kv.usage.key_cache_report``):
+    ``isolation``, ``windows``, ``store`` (with ``evicted_by``) and
+    ``isolation_cost_tokens``. The key holder reads theirs at ``/api/me/key/cache``.
+    """
     since = time.time() - _CACHE_RANGE_S[range]
     settings = request.app.state.settings
     learned = getattr(request.app.state, "prefill_model", None)
+    if _user == "key-holder":
+        # The key holder's own page: prefill saved at the rate learned from
+        # its own requests, never the fleet's.
+        from app.stats import prefill_model
+
+        learned = await asyncio.to_thread(prefill_model.own_state, settings.db_path, token_id)
+    admin = _user != "key-holder"
+    stats = await kv_usage.fetch_stats(request.app.state) if admin else None
     async with open_db(settings.db_path) as db:
         if await _inference_row(TokenRepo(db), token_id) is None:
             raise HTTPException(404)
@@ -719,9 +893,18 @@ async def get_token_cache(
             db, since=since, model_ids=None, token_id=token_id
         )
         await request_history.decorate_cache_rows(
-            db, rows, learned=learned, hint=settings.prefill_tok_s_hint
+            db,
+            rows,
+            learned=learned,
+            hint=settings.prefill_tok_s_hint,
+            state=request.app.state,
         )
-    return {"token_id": token_id, "range": range, "since_epoch": since, "models": rows}
+        kv: dict[str, Any] = {}
+        if admin:
+            kv = await kv_usage.key_cache_report(
+                db, token_id, stats, kv_usage.network_key(request.app.state), admin=True
+            )
+    return {"token_id": token_id, "range": range, "since_epoch": since, "models": rows, **kv}
 
 
 @router.get("/{token_id}/series")
@@ -922,9 +1105,18 @@ async def delete_token(token_id: str, request: Request, _user: str = Depends(req
         repo = TokenRepo(db)
         if await _inference_row(repo, token_id) is None:
             raise HTTPException(404)
-        deleted = await repo.delete(token_id)
+        # An isolated key's scope is retired with the row when no live row of its family
+        # is left (a rotation successor in use keeps it).
+        deleted, retired = await repo.delete_with_retired(
+            token_id, tag_for=kv_iso.tag_for_state(request.app.state), now=sqlite_utc_now()
+        )
     if not deleted:
         raise HTTPException(404)
+    if retired:
+        await kv_iso.push_retired(request.app.state, retired)
+    policy_sync.request_sync(request.app.state)  # the tenant may be gone
     # Verified finding #2: revoking a key ends its holders' sign-ins.
     await request.app.state.auth_sessions.end_subject("key", token_id)
+    # ...and their live Prompt Lens streams (G7).
+    request.app.state.stream_registry.cancel_user(key_stream_key(token_id))
     return None

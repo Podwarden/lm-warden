@@ -176,7 +176,7 @@ def test_usage_backend_without_cached_tokens_logs_once_per_minute(
     assert len(hits) == 1 and "qwen" in hits[0].getMessage()
 
 
-def _seed_block_size(client, tmp_data_dir, block):
+def _seed_block_size(client, tmp_data_dir, block, drops_last_block=False, match_unit=None):
     """Seed B exactly where the background learner puts it: app.state's
     BlockSizes, keyed by the engine run the proxy is serving."""
     from app.db.database import open_db
@@ -188,7 +188,13 @@ def _seed_block_size(client, tmp_data_dir, block):
             return await ModelRepo(db).get("qwen")
 
     model = client.portal.call(go)
-    client.app.state.engine_block_sizes.set("qwen", engine_epoch(client.app.state, model), block)
+    client.app.state.engine_block_sizes.set(
+        "qwen",
+        engine_epoch(client.app.state, model),
+        block,
+        drops_last_block=drops_last_block,
+        match_unit=match_unit,
+    )
 
 
 def test_block_size_makes_a_whole_block_hit_read_hit(tmp_data_dir, client):
@@ -207,6 +213,30 @@ def test_block_size_makes_a_whole_block_hit_read_hit(tmp_data_dir, client):
     assert aware["cache_outcome"] == "hit" and aware["cache_outcome_own"] == "hit"
     # under one block: nothing reusable at this engine's granularity
     assert short["reusable_tokens"] >= 256 and short["cache_outcome"] == "cold"
+
+
+def test_engine_that_drops_the_last_block_reads_hit(tmp_data_dir, client):
+    # lmwarden.com (MTP): one 784-token block cached of a ~2,000-token
+    # potential is all the engine serves after dropping the last matched block.
+    _ready(client, tmp_data_dir, dp=1)
+    _spy_registry(client)
+    _seed_block_size(client, tmp_data_dir, 784, drops_last_block=True)
+    _post(client, _body("alice-user-1", "q1"), resp=_resp(_usage(2000, 0)))
+    _post(client, _body("alice-user-1", "q2"), resp=_resp(_usage(2000, 784)))
+    rec = _records(client)[1]
+    assert rec["reusable_tokens"] >= 1568
+    assert rec["cache_outcome"] == "hit" and rec["cache_outcome_own"] == "hit"
+
+
+def test_fine_match_unit_reaches_the_classifier(tmp_data_dir, client):
+    # --prefix-match-unit 16 with MTP: one 784 block of ~2,000 matched is now a
+    # shortfall (the engine could serve all but 16 tokens of the matched prefix)
+    _ready(client, tmp_data_dir, dp=1)
+    _spy_registry(client)
+    _seed_block_size(client, tmp_data_dir, 784, drops_last_block=True, match_unit=16)
+    _post(client, _body("alice-user-1", "q1"), resp=_resp(_usage(2000, 0)))
+    _post(client, _body("alice-user-1", "q2"), resp=_resp(_usage(2000, 784)))
+    assert _records(client)[1]["cache_outcome"] == "partial"
 
 
 def test_block_size_from_another_engine_run_is_ignored(tmp_data_dir, client):

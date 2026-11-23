@@ -199,6 +199,10 @@ class MlxBackend:
         engine_driver: str = "local",
         image: str | None = None,
         load_max_s: float | None = None,
+        # Accepted and IGNORED: the KV-cache tier connector is a vLLM feature.
+        kv_socket: str | None = None,
+        kv_key_file: str | None = None,
+        kv_revisions: dict[str, str] | None = None,
     ) -> LaunchPlan:
         # mlx_lm.server wants a DIRECTORY of MLX weights, not a file.
         model_dir = _model_dir(resolved)

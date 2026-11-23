@@ -257,16 +257,49 @@ class PrefillModelState:
         }
 
 
+_LEARN_SQL = (
+    "SELECT model_id, prompt_tokens, cached_tokens, cache_est_tokens, ttft_s, "
+    "inflight_same_rank_at_start, gap_s, {reusable} AS reusable_tokens FROM request_history "
+    "WHERE finished_at >= ? AND relayed IS NULL{tok} ORDER BY finished_at DESC LIMIT 50000"
+)
+#: Per-key states (a key holder's own view), rebuilt at most every REFRESH_S.
+_OWN: dict[tuple[str, str], tuple[float, PrefillModelState]] = {}
+_OWN_MAX = 256
+
+
+def own_state(db_path: Any, token_id: str, *, now: float | None = None) -> PrefillModelState:
+    """The same learned model over ONE key's own requests only (a key holder's
+    view: no figure there may come from another key's traffic). Synchronous
+    (sqlite3): call it from a worker thread. Too few own samples leave a figure
+    None, exactly as in the fleet model; the cold rate reads the own lens."""
+    import sqlite3
+    from contextlib import closing
+
+    t = now if now is not None else time.time()
+    k = (str(db_path), token_id)
+    hit = _OWN.get(k)
+    if hit is not None and t - hit[0] < REFRESH_S:
+        return hit[1]
+    with closing(sqlite3.connect(str(db_path), timeout=5.0)) as db:
+        cur = db.execute(
+            _LEARN_SQL.format(reusable="reusable_tokens_own", tok=" AND token_id = ?"),
+            (t - WINDOW_S, token_id),
+        )
+        names = [d[0] for d in cur.description]
+        rows = [dict(zip(names, r, strict=True)) for r in cur.fetchall()]
+    st = PrefillModelState(clock=lambda: t)
+    st.replace(build(rows))
+    if len(_OWN) >= _OWN_MAX:
+        _OWN.clear()
+    _OWN[k] = (t, st)
+    return st
+
+
 async def refresh(state: PrefillModelState, db_path: Any, *, now: float | None = None) -> int:
     """Recompute from the last 24 h of request_history. Returns rows read."""
     since = (now if now is not None else time.time()) - WINDOW_S
     async with open_db(db_path) as db:
-        cur = await db.execute(
-            "SELECT model_id, prompt_tokens, cached_tokens, cache_est_tokens, ttft_s, "
-            "inflight_same_rank_at_start, gap_s, reusable_tokens FROM request_history "
-            "WHERE finished_at >= ? AND relayed IS NULL ORDER BY finished_at DESC LIMIT 50000",
-            (since,),
-        )
+        cur = await db.execute(_LEARN_SQL.format(reusable="reusable_tokens", tok=""), (since,))
         names = [d[0] for d in cur.description]
         rows = [dict(zip(names, r, strict=True)) for r in await cur.fetchall()]
     state.replace(build(rows))

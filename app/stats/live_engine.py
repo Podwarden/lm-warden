@@ -68,6 +68,7 @@ from app.db.database import open_db
 from app.models.routes_logs import require_sse_ticket
 from app.runtime.backends import registry
 from app.runtime.backends.metrics import EngineReading
+from app.stats.live_ring import LiveRing
 
 # Re-exported: this module owned the parser until sub-project C, and
 # tests/unit/stats/test_live_engine.py -- plus any operator snippet -- still
@@ -128,6 +129,32 @@ def _ratio(num: float | None, den: float | None) -> float | None:
     if num is None or den is None or den <= 0:
         return None
     return num / den
+
+
+def _sleeping(level: float | None) -> bool | None:
+    """True only for a real non-awake sleep level; None when not reported."""
+    return None if level is None else level > 0
+
+
+def lifetime_prefix_hit_rate(r: EngineReading) -> float | None:
+    """Share of prompt tokens the engine served from ANY prefix cache, lifetime.
+
+    Local and external (KV connector) hits together: with a connector the reuse
+    can arrive entirely as external hits while the local counter stays 0, which
+    a local-only rate shows as 0 %. vLLM 0.32's own ``prompt_tokens_cached``
+    (local + external) over ``prompt_tokens`` is preferred; without it, local
+    plus external hits over the local queries. None -- never 0 -- when the
+    engine exports neither family, runs with prefix caching off, or has seen no
+    prompt yet.
+    """
+    if r.prefix_caching_enabled is not None and r.prefix_caching_enabled <= 0:
+        return None
+    if r.prompt_tokens_cached is not None:
+        return _ratio(r.prompt_tokens_cached, r.prompt_tokens_total)
+    if r.prefix_cache_hits is None and r.external_prefix_cache_hits is None:
+        return None
+    hits = (r.prefix_cache_hits or 0.0) + (r.external_prefix_cache_hits or 0.0)
+    return _ratio(hits, r.prefix_cache_queries)
 
 
 def _int_or_none(v: float | None) -> int | None:
@@ -314,6 +341,7 @@ def unsupported_frame(
         "kv_tokens_used": None,
         "kv_tokens_total": None,
         "engine_sleep_state": None,
+        "engine_sleeping": None,
         "preemptions_total": None,
         "preemptions_per_s": None,
     }
@@ -360,7 +388,10 @@ def build_frame(
         "kv_cache_usage_perc": r.kv_cache_usage_perc,
         "kv_tokens_used": kv_used,
         "kv_tokens_total": _int_or_none(r.kv_tokens_total),
+        # The sleep LEVEL (0 awake, 1, 2), kept for older bundles; the
+        # boolean is what a page should read (true only when really asleep).
         "engine_sleep_state": _int_or_none(r.engine_sleep_state),
+        "engine_sleeping": _sleeping(r.engine_sleep_state),
         "preemptions_total": _int_or_none(r.preemptions_total),
         "preemptions_per_s": _rate(r.preemptions_total, prev.preempt if prev else None, dt),
     }
@@ -386,6 +417,8 @@ def build_frame(
         "external_prefix_hit_rate_cumulative": _ratio(
             r.external_prefix_cache_hits, r.external_prefix_cache_queries
         ),
+        # Lifetime, local + external; null when the engine cannot say.
+        "prefix_cache_hit_rate": lifetime_prefix_hit_rate(r),
     }
 
     ttft, itl, tpot, e2e = r.ttft_hist, r.itl_hist, r.tpot_hist, r.e2e_hist
@@ -540,6 +573,14 @@ def _get_cache(request: Request) -> _MetricsCache:
     return cache
 
 
+def _get_ring(request: Request) -> LiveRing:
+    ring = getattr(request.app.state, "stats_live_ring", None)
+    if ring is None:
+        ring = LiveRing()
+        request.app.state.stats_live_ring = ring
+    return ring
+
+
 async def _loaded_models(
     db_path,
 ) -> list[tuple[str, str, int | None, str | None]]:
@@ -620,6 +661,7 @@ async def stream_live(
     with no meaning at all.
     """
     cache = _get_cache(request)
+    ring = _get_ring(request)
     settings = request.app.state.settings
     supervisor = request.app.state.supervisor
     interval = _interval_seconds()
@@ -627,6 +669,7 @@ async def stream_live(
     async def _one_block(
         row: tuple[str, str, int | None, str | None],
         prev: RateState | None,
+        first: bool = False,
     ) -> tuple[dict, RateState | None]:
         """Scrape one model (cached) and build its block.
 
@@ -683,7 +726,7 @@ async def stream_live(
                 ),
                 None,
             )
-        return build_frame(
+        block, state = build_frame(
             res.metrics,
             model=model_name,
             model_id=model_id,
@@ -692,8 +735,27 @@ async def stream_live(
             scrape_monotonic=res.monotonic,
             backend=backend.capabilities.name,
         )
+        # Stats redesign B5, additive keys AROUND build_frame's pinned shape:
+        # server-side ~10 s rates (computed prefill excludes prefix-cache
+        # hits) from the process-wide ring, the warden's own admission queue,
+        # and on a connection's first frame the last 5 minutes of rates.
+        try:
+            ring.observe(model_id, res.monotonic, res.metrics)
+            running, waiting = proxy_in_flight(
+                getattr(request.app.state, "request_registry", None), model_id
+            )
+            block["now"] = {
+                **ring.now(model_id),
+                "warden_queue": waiting,
+                "warden_running": running,
+            }
+            if first:
+                block["history_5m"] = ring.history(model_id, now=res.monotonic)
+        except Exception:  # noqa: BLE001 -- additive display data, never fail the frame
+            pass
+        return block, state
 
-    async def _one_frame(prev: dict[str, RateState]) -> dict:
+    async def _one_frame(prev: dict[str, RateState], first: bool = False) -> dict[str, Any]:
         """One tick: every loaded model, one block each. Mutates ``prev``."""
         rows = await _loaded_models(settings.db_path)
         if not rows:
@@ -702,7 +764,7 @@ async def stream_live(
             return envelope([])
         blocks = []
         for row in rows:
-            block, state = await _one_block(row, prev.get(row[0]))
+            block, state = await _one_block(row, prev.get(row[0]), first)
             if state is not None:
                 prev[row[0]] = state
             else:
@@ -721,7 +783,7 @@ async def stream_live(
             last_yield_at = time.monotonic()
             # Immediate first frame so the consumer isn't blank for ``interval``s.
             try:
-                yield f"data: {json.dumps(await _one_frame(prev))}\n\n"
+                yield f"data: {json.dumps(await _one_frame(prev, first=True))}\n\n"
                 last_yield_at = time.monotonic()
             except Exception:  # noqa: BLE001 — first-tick failure falls through to the loop
                 pass

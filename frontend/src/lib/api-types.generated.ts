@@ -786,10 +786,32 @@ export interface paths {
          *     Returns the full token, the same shape as ``GET /api/tokens/{id}``.
          *
          *     **Note:** ``priority`` cannot be set to ``null`` — the column is ``NOT NULL``
-         *     in the schema. Sending ``{"priority": null}`` will cause the underlying DB
-         *     write to fail. To reset priority to the default, send ``{"priority": 5}``.
+         *     in the schema. ``{"priority": null}`` is a 422, refused before anything is
+         *     written. To reset priority to the default, send ``{"priority": 5}``.
          */
         patch: operations["update_token_api_tokens__token_id__patch"];
+        trace?: never;
+    };
+    "/api/tokens/{token_id}/kv-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset Token Kv
+         * @description Reset an isolated key's cache: its family moves to a fresh scope and the old one is
+         *     retired. 409 for a sharing key, which has no cache of its own. Returns the token, the
+         *     same shape as ``GET /api/tokens/{id}``.
+         */
+        post: operations["reset_token_kv_api_tokens__token_id__kv_reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/tokens/{token_id}/rotate": {
@@ -858,6 +880,10 @@ export interface paths {
          * Get Token Cache
          * @description Prompt-cache observation for one key, OWN lens only (spec §5.2): matched
          *     against this key's own earlier prompts, never another key's.
+         *
+         *     For an admin, the key's KV report is merged in (``app.kv.usage.key_cache_report``):
+         *     ``isolation``, ``windows``, ``store`` (with ``evicted_by``) and
+         *     ``isolation_cost_tokens``. The key holder reads theirs at ``/api/me/key/cache``.
          */
         get: operations["get_token_cache_api_tokens__token_id__cache_get"];
         put?: never;
@@ -925,6 +951,28 @@ export interface paths {
          *     "ping the proxy" mode which is sufficient for operator confidence.
          */
         post: operations["test_token_api_tokens__token_id__test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/kv/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Kv Usage
+         * @description The tiers (capacity, used, dead), then per model its weight, part and use, and per
+         *     key inside it: use, fair share and evictions per tier, and who evicted its blocks.
+         *     Byte counts; keys no longer on the server are ``unknown``.
+         */
+        get: operations["get_kv_usage_api_kv_usage_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1378,6 +1426,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stats/v2/speed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stats V2 Speed
+         * @description Per-request latency and speed for ONE model (stats redesign B3).
+         *
+         *     ``model`` is one model row id: the page's scope. Latency and speed are
+         *     never pooled across models. Without it, only ``groups`` is meaningful (the
+         *     Requests table's Group by over everything; groups split by model).
+         *
+         *     Returns ``{range, since_epoch, model_id, last_finished_at, count, stride,
+         *     summary: {ttft, decode, prefill, duration, warden_queue}, points: [...],
+         *     groups: [...] | None}``. Definitions and the low-volume rules are in
+         *     app/stats/speed.py.
+         */
+        get: operations["stats_v2_speed_api_stats_v2_speed_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stats/v2/cache": {
         parameters: {
             query?: never;
@@ -1719,8 +1796,9 @@ export interface paths {
         };
         /**
          * Capture Read
-         * @description Admin only: one captured request (exact bodies and raw response) of a key
-         *     whose debug capture was on (app/proxy/capture.py). 404 when not captured.
+         * @description Admin only: one captured request (the path and exact body the client sent,
+         *     the translated chat body for /v1/messages and /v1/responses, the engine body and the raw
+         *     response) of a key whose debug capture was on (app/proxy/capture.py). 404 when not captured.
          */
         get: operations["capture_read_api_capture__request_id__get"];
         put?: never;
@@ -1747,6 +1825,27 @@ export interface paths {
         head?: never;
         /** Rename Key */
         patch: operations["rename_key_api_me_key_patch"];
+        trace?: never;
+    };
+    "/api/me/key/kv-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset Key Kv
+         * @description Reset the key's isolated cache (a fresh scope; the old one is retired). 409 for a
+         *     sharing key.
+         */
+        post: operations["reset_key_kv_api_me_key_kv_reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/me/key/rotate": {
@@ -1817,6 +1916,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/key/cache": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Key Cache
+         * @description The key's KV report as its holder sees it: the windows and the key's own store
+         *     totals (``store`` null when the store is not answering). Never who evicted its blocks,
+         *     never the isolation cost, never other keys or tier sizes.
+         */
+        get: operations["key_cache_api_me_key_cache_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/guard/events": {
         parameters: {
             query?: never;
@@ -1826,6 +1947,351 @@ export interface paths {
         };
         /** Guard Events */
         get: operations["guard_events_api_me_guard_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/stats/speed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Speed
+         * @description The key's own latency and speed for ONE model (key-holder lens of
+         *     /api/stats/v2/speed: ``prompt`` speed instead of computed prefill, no
+         *     names, IPs or cached figures). ``last_request_at`` is when this key's
+         *     newest request finished, any model, whatever the window: the page anchors
+         *     an empty window there.
+         */
+        get: operations["my_speed_api_me_stats_speed_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/stats/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Tokens
+         * @description Prompt and completion tokens per minute for this key (and model), booked
+         *     to the minutes they were produced (D3): the prompt at the first-token
+         *     minute, the completion spread to the finish. No cached split.
+         */
+        get: operations["my_tokens_api_me_stats_tokens_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/stats/cache": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Cache
+         * @description The key's own-lens cache: tokens reused from its OWN earlier prompts.
+         *
+         *     Prefill saved is estimated at the CONFIGURED prefill rate
+         *     (``VW_PREFILL_TOK_S_HINT``), not the rate the warden learned from all keys'
+         *     traffic, so no figure here is derived from another key.
+         */
+        get: operations["my_cache_api_me_stats_cache_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/stats/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Requests
+         * @description The key's requests in flight, all its models. ``state`` per model:
+         *     ``waiting`` (one of them waits to start), ``running`` or absent (idle).
+         */
+        get: operations["my_requests_api_me_stats_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/requests/{request_id}/capture": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Capture
+         * @deprecated
+         * @description The captured prompt and reply of one of the key's OWN requests (D8).
+         *
+         *     Deprecated (2026-11-22): the Prompt Lens dock no longer calls it (it reads
+         *     the key stream and GET /api/me/prompt-lens/requests/{req_id}/section/{kind});
+         *     it stays for one release and goes in the next.
+         */
+        get: operations["my_capture_api_me_requests__request_id__capture_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mint Ticket
+         * @description A single-use ticket for the key holder's live stream (60 s). At most
+         *     30 a minute per key, and none while the key has 4 streams open (429 with
+         *     Retry-After).
+         */
+        post: operations["mint_ticket_api_me_prompt_lens_ticket_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Key Stream
+         * @description The signed-in key's own requests, live (SSE): the stream is bound to the key
+         *     that minted the ticket and takes no key parameter. Ends when the key is
+         *     revoked, rotated or paused, the sign-in ends or expires, or Prompt Lens is turned
+         *     off. At most 4 open per key (429).
+         */
+        get: operations["key_stream_api_me_prompt_lens_stream_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/requests/{req_id}/section/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Section
+         * @description One whole section of one of the signed-in key's OWN requests (G9).
+         *
+         *     One 404 ``"no capture of yours with this id"`` for Prompt Lens off, an
+         *     unknown id, a released or expired one, and another key's. The body never
+         *     carries the key id or the hub's seq.
+         */
+        get: operations["my_section_api_me_prompt_lens_requests__req_id__section__kind__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/kept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Kept
+         * @description The signed-in key's kept captures, newest first (at most 50: an admin
+         *     turned keep_captures on for this key). 404 when Prompt Lens is off.
+         */
+        get: operations["my_kept_api_me_prompt_lens_kept_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/kept/{req_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Kept Capture
+         * @description One of the key's OWN kept captures, in the key holder's view
+         *     (``for_key_holder`` on every event). One 404 for off, unknown and another
+         *     key's id.
+         */
+        get: operations["my_kept_capture_api_me_prompt_lens_kept__req_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/godmode/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mint Ticket Legacy
+         * @deprecated
+         * @description A single-use ticket for the key holder's live stream (60 s). At most
+         *     30 a minute per key, and none while the key has 4 streams open (429 with
+         *     Retry-After).
+         */
+        post: operations["mint_ticket_legacy_api_me_godmode_ticket_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/godmode/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Key Stream Legacy
+         * @deprecated
+         * @description The signed-in key's own requests, live (SSE): the stream is bound to the key
+         *     that minted the ticket and takes no key parameter. Ends when the key is
+         *     revoked, rotated or paused, the sign-in ends or expires, or Prompt Lens is turned
+         *     off. At most 4 open per key (429).
+         */
+        get: operations["key_stream_legacy_api_me_godmode_stream_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/godmode/requests/{req_id}/section/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Section Legacy
+         * @deprecated
+         * @description One whole section of one of the signed-in key's OWN requests (G9).
+         *
+         *     One 404 ``"no capture of yours with this id"`` for Prompt Lens off, an
+         *     unknown id, a released or expired one, and another key's. The body never
+         *     carries the key id or the hub's seq.
+         */
+        get: operations["my_section_legacy_api_me_godmode_requests__req_id__section__kind__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/godmode/kept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Kept Legacy
+         * @deprecated
+         * @description The signed-in key's kept captures, newest first (at most 50: an admin
+         *     turned keep_captures on for this key). 404 when Prompt Lens is off.
+         */
+        get: operations["my_kept_legacy_api_me_godmode_kept_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/godmode/kept/{req_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Kept Capture Legacy
+         * @deprecated
+         * @description One of the key's OWN kept captures, in the key holder's view
+         *     (``for_key_holder`` on every event). One 404 for off, unknown and another
+         *     key's id.
+         */
+        get: operations["my_kept_capture_legacy_api_me_godmode_kept__req_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2337,6 +2803,131 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/prompt-lens/media/{media_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Prompt Lens Media
+         * @description Serve one stored Prompt Lens image (spec 2026-08-03, §5). Plain authed
+         *     fetch (NOT EventSource), so require_jwt applies directly — no SSE ticket.
+         *     Decoding happens here, off the proxy hot path.
+         */
+        get: operations["prompt_lens_media_api_admin_prompt_lens_media__media_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/requests/{req_id}/section/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Prompt Lens Section
+         * @description One whole section of any key's request (G9): the dock's pop-up. 404 when
+         *     neither memory nor the kept captures have it. While Prompt Lens is off only
+         *     kept captures (on disk) are served: an admin can still read them.
+         */
+        get: operations["prompt_lens_section_api_admin_prompt_lens_requests__req_id__section__kind__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/kept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Prompt Lens Kept List
+         * @description Kept captures (keys with keep_captures on), newest first. Also while
+         *     Prompt Lens is off: what is on disk stays readable to an admin.
+         */
+        get: operations["prompt_lens_kept_list_api_admin_prompt_lens_kept_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/kept/{req_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Prompt Lens Kept Capture
+         * @description One kept capture of any key, as the admin sees it (also while Prompt Lens
+         *     is off). 404 unknown.
+         */
+        get: operations["prompt_lens_kept_capture_api_admin_prompt_lens_kept__req_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Prompt Lens Status
+         * @description Whether Prompt Lens is on. The token page asks before it renders the dock
+         *     at all (spec 2026-09-18 §3.5). A plain authed fetch, like ``/media``: no
+         *     SSE ticket, and nothing is subscribed.
+         */
+        get: operations["prompt_lens_status_api_admin_prompt_lens_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Prompt Lens Stream */
+        get: operations["prompt_lens_stream_api_admin_prompt_lens_stream_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/godmode/media/{media_id}": {
         parameters: {
             query?: never;
@@ -2345,12 +2936,80 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Godmode Media
-         * @description Serve one stored god-mode image (spec 2026-08-03, §5). Plain authed
+         * Prompt Lens Media Legacy
+         * @deprecated
+         * @description Serve one stored Prompt Lens image (spec 2026-08-03, §5). Plain authed
          *     fetch (NOT EventSource), so require_jwt applies directly — no SSE ticket.
          *     Decoding happens here, off the proxy hot path.
          */
-        get: operations["godmode_media_api_admin_godmode_media__media_id__get"];
+        get: operations["prompt_lens_media_legacy_api_admin_godmode_media__media_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/godmode/requests/{req_id}/section/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Prompt Lens Section Legacy
+         * @deprecated
+         * @description One whole section of any key's request (G9): the dock's pop-up. 404 when
+         *     neither memory nor the kept captures have it. While Prompt Lens is off only
+         *     kept captures (on disk) are served: an admin can still read them.
+         */
+        get: operations["prompt_lens_section_legacy_api_admin_godmode_requests__req_id__section__kind__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/godmode/kept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Prompt Lens Kept List Legacy
+         * @deprecated
+         * @description Kept captures (keys with keep_captures on), newest first. Also while
+         *     Prompt Lens is off: what is on disk stays readable to an admin.
+         */
+        get: operations["prompt_lens_kept_list_legacy_api_admin_godmode_kept_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/godmode/kept/{req_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Prompt Lens Kept Capture Legacy
+         * @deprecated
+         * @description One kept capture of any key, as the admin sees it (also while Prompt Lens
+         *     is off). 404 unknown.
+         */
+        get: operations["prompt_lens_kept_capture_legacy_api_admin_godmode_kept__req_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2367,12 +3026,13 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Godmode Status
-         * @description Whether god mode is on. The token page asks before it renders the dock
+         * Prompt Lens Status Legacy
+         * @deprecated
+         * @description Whether Prompt Lens is on. The token page asks before it renders the dock
          *     at all (spec 2026-09-18 §3.5). A plain authed fetch, like ``/media``: no
          *     SSE ticket, and nothing is subscribed.
          */
-        get: operations["godmode_status_api_admin_godmode_status_get"];
+        get: operations["prompt_lens_status_legacy_api_admin_godmode_status_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2388,8 +3048,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Godmode Stream */
-        get: operations["godmode_stream_api_admin_godmode_stream_get"];
+        /**
+         * Prompt Lens Stream Legacy
+         * @deprecated
+         */
+        get: operations["prompt_lens_stream_legacy_api_admin_godmode_stream_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2557,6 +3220,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/system/kv-store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Kv Store
+         * @description The KV-cache tier daemon and the tier of every running engine that has one.
+         *
+         *     ``daemon.generation`` counts the daemons that turned healthy since the api started.
+         *     ``daemon.ram_requested_bytes`` is the pool asked of the daemon (``kv_store_ram_gib``)
+         *     and ``daemon.ram_granted_bytes`` the pool it committed, smaller when ``/dev/shm`` or
+         *     free memory did not fit (0: no RAM tier); both null until a daemon has answered.
+         *     ``models`` maps a model id to its tier: ``state`` is ``on``, ``unavailable`` (the
+         *     daemon does not answer right now) or ``off_until_reload`` (the engine loaded before
+         *     the daemon was up, or the daemon restarted since; reload the model to get the tier
+         *     back), with ``reason`` saying why.
+         */
+        get: operations["get_kv_store_api_system_kv_store_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/backends": {
         parameters: {
             query?: never;
@@ -2647,6 +3339,26 @@ export interface paths {
          *     endpoint.
          */
         get: operations["system_info_api_system_info_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Readiness
+         * @description /readyz with the per-model detail, for an admin.
+         */
+        get: operations["admin_readiness_api_admin_readiness_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3054,6 +3766,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/readyz": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Readyz */
+        get: operations["readyz_readyz_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3109,6 +3838,63 @@ export interface components {
             username: string;
             /** Password */
             password: string;
+        };
+        /** AdminKeptCapture */
+        AdminKeptCapture: {
+            /** Req Id */
+            req_id: string;
+            /**
+             * Kept
+             * @default true
+             */
+            kept: boolean;
+            /** Events */
+            events: {
+                [key: string]: unknown;
+            }[];
+            /** Sections */
+            sections: {
+                [key: string]: unknown;
+            };
+            /** Token Id */
+            token_id: string;
+        };
+        /** AdminKeptList */
+        AdminKeptList: {
+            /** Kept */
+            kept: components["schemas"]["AdminKeptSummary"][];
+        };
+        /** AdminKeptSummary */
+        AdminKeptSummary: {
+            /** Req Id */
+            req_id: string;
+            /** Request Id */
+            request_id?: string | null;
+            /** Model */
+            model?: string | null;
+            /** Stream */
+            stream?: boolean | null;
+            /** Session Id */
+            session_id?: string | null;
+            /** Turn */
+            turn?: number | null;
+            /** Started Ts */
+            started_ts?: number | null;
+            /** Ended Ts */
+            ended_ts?: number | null;
+            /** Finish Reason */
+            finish_reason?: string | null;
+            /** Prompt Tokens */
+            prompt_tokens?: number | null;
+            /** Completion Tokens */
+            completion_tokens?: number | null;
+            /**
+             * Kept
+             * @default true
+             */
+            kept: boolean;
+            /** Token Id */
+            token_id: string;
         };
         /** AdminToken */
         AdminToken: {
@@ -3777,6 +4563,230 @@ export interface components {
             hf_token: string | null;
         };
         /**
+         * KeptCapture
+         * @description One kept capture: its request_start, kvsig and request_end events (as
+         *     the caller may see them) and each section's size; the sections themselves
+         *     come from ``.../section/{kind}``.
+         */
+        KeptCapture: {
+            /** Req Id */
+            req_id: string;
+            /**
+             * Kept
+             * @default true
+             */
+            kept: boolean;
+            /** Events */
+            events: {
+                [key: string]: unknown;
+            }[];
+            /** Sections */
+            sections: {
+                [key: string]: unknown;
+            };
+        };
+        /** KeptList */
+        KeptList: {
+            /** Kept */
+            kept: components["schemas"]["KeptSummary"][];
+        };
+        /**
+         * KeptSummary
+         * @description One kept capture in a list (Prompt Lens keep captures, newest first).
+         */
+        KeptSummary: {
+            /** Req Id */
+            req_id: string;
+            /** Request Id */
+            request_id?: string | null;
+            /** Model */
+            model?: string | null;
+            /** Stream */
+            stream?: boolean | null;
+            /** Session Id */
+            session_id?: string | null;
+            /** Turn */
+            turn?: number | null;
+            /** Started Ts */
+            started_ts?: number | null;
+            /** Ended Ts */
+            ended_ts?: number | null;
+            /** Finish Reason */
+            finish_reason?: string | null;
+            /** Prompt Tokens */
+            prompt_tokens?: number | null;
+            /** Completion Tokens */
+            completion_tokens?: number | null;
+            /**
+             * Kept
+             * @default true
+             */
+            kept: boolean;
+        };
+        /** KvByTier */
+        KvByTier: {
+            /** Ram */
+            ram: number;
+            /** Nvme */
+            nvme: number;
+        };
+        /** KvEvictedBy */
+        KvEvictedBy: {
+            /** Token Id */
+            token_id: string;
+            /** Name */
+            name: string;
+            /** Count */
+            count: number;
+        };
+        /** KvIsolationCost */
+        KvIsolationCost: {
+            /** 24H */
+            "24h": number;
+        };
+        /**
+         * KvKeyReport
+         * @description ``GET /api/me/key/cache``: what the key holder sees.
+         */
+        KvKeyReport: {
+            /**
+             * Isolation
+             * @enum {string}
+             */
+            isolation: "sharing" | "isolated";
+            windows: components["schemas"]["KvWindows"];
+            store: components["schemas"]["KvKeyStore"] | null;
+        };
+        /**
+         * KvKeyStore
+         * @description The key's own store figures, since the store started (``since``, UTC).
+         */
+        KvKeyStore: {
+            /** Ram Bytes */
+            ram_bytes: number;
+            /** Nvme Bytes */
+            nvme_bytes: number;
+            /** Ram Share */
+            ram_share: number;
+            /** Nvme Share */
+            nvme_share: number;
+            /** Ram Evictions */
+            ram_evictions: number;
+            /** Nvme Evictions */
+            nvme_evictions: number;
+            /** Since */
+            since: string | null;
+        };
+        /** KvKeyStoreAdmin */
+        KvKeyStoreAdmin: {
+            /** Ram Bytes */
+            ram_bytes: number;
+            /** Nvme Bytes */
+            nvme_bytes: number;
+            /** Ram Share */
+            ram_share: number;
+            /** Nvme Share */
+            nvme_share: number;
+            /** Ram Evictions */
+            ram_evictions: number;
+            /** Nvme Evictions */
+            nvme_evictions: number;
+            /** Since */
+            since: string | null;
+            /** Ram Share Bytes */
+            ram_share_bytes: number;
+            /** Nvme Share Bytes */
+            nvme_share_bytes: number;
+            /** Evicted By */
+            evicted_by: components["schemas"]["KvEvictedBy"][];
+        };
+        /** KvModelUsage */
+        KvModelUsage: {
+            /** Model Id */
+            model_id: string;
+            /** Model Ids */
+            model_ids: string[];
+            /** Weight */
+            weight: number;
+            part: components["schemas"]["KvByTier"];
+            used: components["schemas"]["KvUsed"];
+            /** Tenants */
+            tenants: components["schemas"]["KvTenantUsage"][];
+        };
+        /** KvTenantUsage */
+        KvTenantUsage: {
+            /** Token Id */
+            token_id: string;
+            /** Name */
+            name: string;
+            used: components["schemas"]["KvUsed"];
+            share: components["schemas"]["KvByTier"];
+            evictions: components["schemas"]["KvByTier"];
+            /** Evicted By */
+            evicted_by: components["schemas"]["KvEvictedBy"][];
+        };
+        /** KvTier */
+        KvTier: {
+            /** Capacity */
+            capacity: number;
+            /** Used */
+            used: number;
+            /** Dead */
+            dead: number;
+        };
+        /** KvTiers */
+        KvTiers: {
+            ram: components["schemas"]["KvTier"];
+            nvme: components["schemas"]["KvTier"];
+        };
+        /**
+         * KvUsage
+         * @description ``GET /api/kv/usage``: figures since the store started (``since``, UTC).
+         */
+        KvUsage: {
+            /** Available */
+            available: boolean;
+            /** Policy */
+            policy: string | null;
+            /** Since */
+            since: string | null;
+            tiers: components["schemas"]["KvTiers"] | null;
+            /** Models */
+            models: components["schemas"]["KvModelUsage"][];
+        };
+        /** KvUsed */
+        KvUsed: {
+            /** Ram */
+            ram: number;
+            /** Nvme */
+            nvme: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * KvWindow
+         * @description One window of a key's turns whose GPU tokens are known. ``ram`` and ``nvme`` are
+         *     null when the store reported on none of them.
+         */
+        KvWindow: {
+            /** Gpu */
+            gpu: number;
+            /** Ram */
+            ram: number | null;
+            /** Nvme */
+            nvme: number | null;
+            /** Recomputed */
+            recomputed: number;
+            /** Hit Rate */
+            hit_rate: number | null;
+        };
+        /** KvWindows */
+        KvWindows: {
+            "1h": components["schemas"]["KvWindow"];
+            "24h": components["schemas"]["KvWindow"];
+            "7d": components["schemas"]["KvWindow"];
+        };
+        /**
          * LayoutNotice
          * @description What the boot-time parallel-layout reconcile did to (or could not do for) a row (#286).
          */
@@ -3855,10 +4865,16 @@ export interface components {
             /** Status */
             status: string;
         };
-        /** MeKeyPatch */
+        /**
+         * MeKeyPatch
+         * @description Omit a field to leave it alone. ``kv_isolation`` "sharing" on an isolated key is a
+         *     403: only an admin can switch it back.
+         */
         MeKeyPatch: {
             /** Name */
-            name: string;
+            name?: string | null;
+            /** Kv Isolation */
+            kv_isolation?: ("sharing" | "isolated") | null;
         };
         /** MeRevoke */
         MeRevoke: {
@@ -3923,6 +4939,17 @@ export interface components {
              * @enum {string}
              */
             thinking_policy: "client" | "off";
+            /**
+             * Kv Store
+             * @default off
+             * @enum {string}
+             */
+            kv_store: "off" | "ram" | "ram+nvme";
+            /**
+             * Kv Store Weight
+             * @default 1
+             */
+            kv_store_weight: number;
             /**
              * Parallelism Strategy
              * @default auto
@@ -4073,10 +5100,22 @@ export interface components {
              * @enum {string}
              */
             thinking_policy: "client" | "off";
+            /**
+             * Kv Store
+             * @enum {string}
+             */
+            kv_store: "off" | "ram" | "ram+nvme";
+            /** Kv Store Weight */
+            kv_store_weight: number;
             /** Thinking Policy Supported */
             thinking_policy_supported: boolean | null;
             layout_notice: components["schemas"]["LayoutNotice"] | null;
             engine: components["schemas"]["ModelEngine"] | null;
+            /**
+             * Cache Isolation
+             * @enum {string}
+             */
+            cache_isolation: "isolated" | "unsupported";
         } & {
             [key: string]: unknown;
         };
@@ -4167,6 +5206,49 @@ export interface components {
              * @default false
              */
             strip_reasoning: boolean | "before_last_user";
+        };
+        /**
+         * PromptLensChange
+         * @description One save of the switch: when, by whom, through what, before and after.
+         */
+        PromptLensChange: {
+            /** Ts */
+            ts: number;
+            /** Actor */
+            actor: string;
+            /** Via */
+            via: string;
+            /** Old Enabled */
+            old_enabled: boolean;
+            /** New Enabled */
+            new_enabled: boolean;
+            /** Old Source */
+            old_source: string;
+            /** New Source */
+            new_source: string;
+        };
+        /**
+         * PromptLensStatus
+         * @description Whether Prompt Lens is on, and where that comes from (the Settings page
+         *     shows it): ``source`` is ``setting`` (the runtime setting
+         *     ``prompt_lens_enabled``), ``env`` (``env_var``: ``VW_PROMPT_LENS_ENABLED``
+         *     or the deprecated ``VW_GODMODE_ENABLED``) or ``default`` (off).
+         */
+        PromptLensStatus: {
+            /** Enabled */
+            enabled: boolean;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "setting" | "env" | "default";
+            /** Setting */
+            setting?: boolean | null;
+            /** Env Var */
+            env_var?: string | null;
+            /** Env Value */
+            env_value?: boolean | null;
+            last_change?: components["schemas"]["PromptLensChange"] | null;
         };
         /** RouterSettingsOut */
         RouterSettingsOut: {
@@ -4293,6 +5375,10 @@ export interface components {
             created_at: string;
             /** Updated At */
             updated_at: string;
+            /** Cache Isolation */
+            cache_isolation?: ("isolated" | "unsupported") | null;
+            /** Fallback Cache Isolation */
+            fallback_cache_isolation?: "not_isolated_at_provider" | null;
         };
         /** RulePatch */
         RulePatch: {
@@ -4332,6 +5418,64 @@ export interface components {
         RulesOut: {
             /** Rules */
             rules: components["schemas"]["RuleOut"][];
+            /**
+             * Passthrough Cache Isolation
+             * @default not_isolated_at_provider
+             * @constant
+             */
+            passthrough_cache_isolation: "not_isolated_at_provider";
+        };
+        /**
+         * SectionResponse
+         * @description One whole section of a request (G9), as ``GET .../section/{kind}`` returns it.
+         *
+         *     ``offset`` is the absolute char offset ``text`` starts at (at least
+         *     ``dropped_chars``, the oldest text the store already dropped), so
+         *     ``offset + len(text)`` is the section's length: the pop-up refetches with
+         *     ``?from=`` that and appends live deltas after it. ``seq`` is the hub seq of
+         *     the last event folded in; null for a key holder (it counts every key's
+         *     events). ``calls`` for tool_calls, by index; ``messages`` for tool_results
+         *     and prompt (``sys`` and ``tools`` first); ``older`` the prompt's collapsed
+         *     summary. ``kept``: served from the key's kept captures (on disk).
+         */
+        SectionResponse: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "thinking" | "reply" | "tool_calls" | "tool_results" | "prompt";
+            /** Seq */
+            seq?: number | null;
+            /** Live */
+            live: boolean;
+            /** Dropped Chars */
+            dropped_chars: number;
+            /** Offset */
+            offset: number;
+            /** Text */
+            text?: string | null;
+            /** Calls */
+            calls?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Messages */
+            messages?: {
+                [key: string]: unknown;
+            }[] | null;
+            /**
+             * Dropped Calls
+             * @default 0
+             */
+            dropped_calls: number;
+            /** Older */
+            older?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Kept
+             * @default false
+             */
+            kept: boolean;
         };
         /** SettingsPatch */
         SettingsPatch: {
@@ -4577,6 +5721,31 @@ export interface components {
             /** Path */
             path: string;
         };
+        /**
+         * TokenCacheOut
+         * @description ``GET /api/tokens/{id}/cache``: the prompt-cache observation plus the key's admin
+         *     KV report.
+         */
+        TokenCacheOut: {
+            /** Token Id */
+            token_id: string;
+            /** Range */
+            range: string;
+            /** Since Epoch */
+            since_epoch: number;
+            /** Models */
+            models: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Isolation
+             * @enum {string}
+             */
+            isolation: "sharing" | "isolated";
+            windows: components["schemas"]["KvWindows"];
+            store: components["schemas"]["KvKeyStoreAdmin"] | null;
+            isolation_cost_tokens: components["schemas"]["KvIsolationCost"];
+        };
         /** TokenCreate */
         TokenCreate: {
             /** Name */
@@ -4658,11 +5827,28 @@ export interface components {
             guard?: {
                 [key: string]: unknown;
             } | null;
+            /**
+             * Keep Captures
+             * @default false
+             */
+            keep_captures: boolean;
             usage_24h: components["schemas"]["TokenUsage24h"];
             /** Paused At */
             paused_at: string | null;
             /** Is Paused */
             is_paused: boolean;
+            /**
+             * Kv Isolation
+             * @default sharing
+             * @enum {string}
+             */
+            kv_isolation: "sharing" | "isolated";
+            /** Kv Max Pct Ram */
+            kv_max_pct_ram?: number | null;
+            /** Kv Max Pct Nvme */
+            kv_max_pct_nvme?: number | null;
+            /** Allowed Models */
+            allowed_models?: string[] | null;
         };
         /** TokenListPage */
         TokenListPage: {
@@ -4719,6 +5905,14 @@ export interface components {
             } | null;
             /** Capture Hours */
             capture_hours?: number | null;
+            /** Kv Isolation */
+            kv_isolation?: ("sharing" | "isolated") | null;
+            /** Kv Max Pct Ram */
+            kv_max_pct_ram?: number | null;
+            /** Kv Max Pct Nvme */
+            kv_max_pct_nvme?: number | null;
+            /** Keep Captures */
+            keep_captures?: boolean | null;
         };
         /** TokenUsage24h */
         TokenUsage24h: {
@@ -6125,6 +7319,39 @@ export interface operations {
             };
         };
     };
+    reset_token_kv_api_tokens__token_id__kv_reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     rotate_token_api_tokens__token_id__rotate_post: {
         parameters: {
             query?: never;
@@ -6212,9 +7439,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["TokenCacheOut"];
                 };
             };
             /** @description Validation Error */
@@ -6300,6 +7525,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_kv_usage_api_kv_usage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KvUsage"];
                 };
             };
         };
@@ -6920,6 +8165,41 @@ export interface operations {
             };
         };
     };
+    stats_v2_speed_api_stats_v2_speed_get: {
+        parameters: {
+            query?: {
+                range?: string;
+                model?: string | null;
+                group?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     stats_v2_cache_api_stats_v2_cache_get: {
         parameters: {
             query?: {
@@ -7359,6 +8639,28 @@ export interface operations {
             };
         };
     };
+    reset_key_kv_api_me_key_kv_reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     rotate_key_api_me_key_rotate_post: {
         parameters: {
             query?: never;
@@ -7487,6 +8789,26 @@ export interface operations {
             };
         };
     };
+    key_cache_api_me_key_cache_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KvKeyReport"];
+                };
+            };
+        };
+    };
     guard_events_api_me_guard_events_get: {
         parameters: {
             query?: {
@@ -7508,6 +8830,449 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_speed_api_me_stats_speed_get: {
+        parameters: {
+            query?: {
+                range?: string;
+                model?: string | null;
+                /** @description ISO 8601 end of the window; default now */
+                until?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_tokens_api_me_stats_tokens_get: {
+        parameters: {
+            query?: {
+                range?: string;
+                model?: string | null;
+                /** @description ISO 8601 end of the window; default now */
+                until?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_cache_api_me_stats_cache_get: {
+        parameters: {
+            query?: {
+                range?: string;
+                model?: string | null;
+                /** @description ISO 8601 end of the window; default now */
+                until?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_requests_api_me_stats_requests_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    my_capture_api_me_requests__request_id__capture_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mint_ticket_api_me_prompt_lens_ticket_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
+    key_stream_api_me_prompt_lens_stream_get: {
+        parameters: {
+            query?: {
+                /** @description Single-use ticket from POST /api/me/prompt-lens/ticket (the key's sign-in). */
+                ticket?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_section_api_me_prompt_lens_requests__req_id__section__kind__get: {
+        parameters: {
+            query?: {
+                /** @description Absolute char offset (text sections). */
+                from?: number;
+            };
+            header?: never;
+            path: {
+                req_id: string;
+                kind: "thinking" | "reply" | "tool_calls" | "tool_results" | "prompt";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_kept_api_me_prompt_lens_kept_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KeptList"];
+                };
+            };
+        };
+    };
+    my_kept_capture_api_me_prompt_lens_kept__req_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KeptCapture"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mint_ticket_legacy_api_me_godmode_ticket_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
+    key_stream_legacy_api_me_godmode_stream_get: {
+        parameters: {
+            query?: {
+                /** @description Single-use ticket from POST /api/me/prompt-lens/ticket (the key's sign-in). */
+                ticket?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_section_legacy_api_me_godmode_requests__req_id__section__kind__get: {
+        parameters: {
+            query?: {
+                /** @description Absolute char offset (text sections). */
+                from?: number;
+            };
+            header?: never;
+            path: {
+                req_id: string;
+                kind: "thinking" | "reply" | "tool_calls" | "tool_results" | "prompt";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_kept_legacy_api_me_godmode_kept_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KeptList"];
+                };
+            };
+        };
+    };
+    my_kept_capture_legacy_api_me_godmode_kept__req_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KeptCapture"];
                 };
             };
             /** @description Validation Error */
@@ -8111,7 +9876,7 @@ export interface operations {
             };
         };
     };
-    godmode_media_api_admin_godmode_media__media_id__get: {
+    prompt_lens_media_api_admin_prompt_lens_media__media_id__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -8142,7 +9907,106 @@ export interface operations {
             };
         };
     };
-    godmode_status_api_admin_godmode_status_get: {
+    prompt_lens_section_api_admin_prompt_lens_requests__req_id__section__kind__get: {
+        parameters: {
+            query?: {
+                /** @description Absolute char offset (text sections). */
+                from?: number;
+            };
+            header?: never;
+            path: {
+                req_id: string;
+                kind: "thinking" | "reply" | "tool_calls" | "tool_results" | "prompt";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prompt_lens_kept_list_api_admin_prompt_lens_kept_get: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated api_tokens ids, at most 20; omit for all. */
+                token_ids?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminKeptList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prompt_lens_kept_capture_api_admin_prompt_lens_kept__req_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminKeptCapture"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prompt_lens_status_api_admin_prompt_lens_status_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -8157,14 +10021,196 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: boolean;
-                    };
+                    "application/json": components["schemas"]["PromptLensStatus"];
                 };
             };
         };
     };
-    godmode_stream_api_admin_godmode_stream_get: {
+    prompt_lens_stream_api_admin_prompt_lens_stream_get: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated api_tokens ids, at most 20. Only those keys' events are replayed and streamed. Omit for every key. */
+                token_ids?: string | null;
+                /** @description Single-use ticket from POST /api/auth/sse-ticket (browsers). Omit it when sending `Authorization: Bearer vwa_...` (an admin token). */
+                ticket?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prompt_lens_media_legacy_api_admin_godmode_media__media_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                media_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prompt_lens_section_legacy_api_admin_godmode_requests__req_id__section__kind__get: {
+        parameters: {
+            query?: {
+                /** @description Absolute char offset (text sections). */
+                from?: number;
+            };
+            header?: never;
+            path: {
+                req_id: string;
+                kind: "thinking" | "reply" | "tool_calls" | "tool_results" | "prompt";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prompt_lens_kept_list_legacy_api_admin_godmode_kept_get: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated api_tokens ids, at most 20; omit for all. */
+                token_ids?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminKeptList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prompt_lens_kept_capture_legacy_api_admin_godmode_kept__req_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminKeptCapture"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prompt_lens_status_legacy_api_admin_godmode_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromptLensStatus"];
+                };
+            };
+        };
+    };
+    prompt_lens_stream_legacy_api_admin_godmode_stream_get: {
         parameters: {
             query?: {
                 /** @description Comma-separated api_tokens ids, at most 20. Only those keys' events are replayed and streamed. Omit for every key. */
@@ -8321,6 +10367,28 @@ export interface operations {
             };
         };
     };
+    get_kv_store_api_system_kv_store_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     get_backends_api_system_backends_get: {
         parameters: {
             query?: never;
@@ -8362,6 +10430,52 @@ export interface operations {
                         [key: string]: unknown;
                     };
                 };
+            };
+        };
+    };
+    admin_readiness_api_admin_readiness_get: {
+        parameters: {
+            query?: {
+                /** @description A model id or served name */
+                model?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description No such model */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description No model (or not the named one) can serve right now */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -9065,6 +11179,33 @@ export interface operations {
                         [key: string]: unknown;
                     };
                 };
+            };
+        };
+    };
+    readyz_readyz_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description No model can serve a completion right now */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -23,11 +23,23 @@ export interface LimitsCardProps {
   onThinking?: (policy: "client" | "off") => Promise<boolean>;
   thinkingError?: string | null;
   thinkingBusy?: boolean;
+  /** The cache store's eviction policy: under fair share the priority is also the key's weight. */
+  policy?: "lru" | "fair";
 }
 
 const PRIORITIES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
-export function LimitsCard({ token, onSave, onRelay, relayError, relaying, onThinking, thinkingError, thinkingBusy }: LimitsCardProps) {
+export function LimitsCard({
+  token,
+  onSave,
+  onRelay,
+  relayError,
+  relaying,
+  onThinking,
+  thinkingError,
+  thinkingBusy,
+  policy,
+}: LimitsCardProps) {
   const [prio, setPrio] = useState(token.priority);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,6 +112,10 @@ export function LimitsCard({ token, onSave, onRelay, relayError, relaying, onThi
         </div>
         <div className="mt-1.5 text-[12px] leading-[1.45] text-chat-dim">
           Strict: a waiting P9 request always goes before a P8 one. Low priorities can wait indefinitely on a busy box.
+          {policy === "fair" && (
+            <> The priority also sets this key&apos;s part of the KV cache store: P{prio} counts {prio + 1}, P0 counts 1.</>
+          )}
+          {policy === "lru" && <> With the fair eviction policy it also sets this key&apos;s part of the KV cache store.</>}
         </div>
       </div>
 

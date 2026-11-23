@@ -299,6 +299,15 @@ recorded transcript):
          "since": <epoch seconds>, "checked_at": <epoch seconds>}}
 ```
 
+`/healthz` also carries a `models` block (`serving` and counts per state)
+saying whether any model can serve yet, and `GET /readyz` answers `200` only
+when one can (`503` with a `reason` while a model loads, after it failed, or
+when none is loaded). Wait on `/readyz` before sending traffic after a
+restart; keep `/healthz` as the liveness probe. On a PodWarden catalogue
+install `/readyz` answers `404` until the catalogue's Caddyfile routes it;
+use the admin route `/api/admin/readiness` there. Both are described in
+[API.md](API.md#health-and-readiness).
+
 `state` is `ok`, `failing`, `absent` (no `nvidia-smi`: a CPU-only install) or
 `unknown` (no probe yet). The api log records one line when it starts failing
 and one when it recovers, not one per probe.
@@ -381,7 +390,7 @@ VW_JWT_SECRET=
 VW_FRONTEND_ORIGIN=
 VW_TRUST_PROXY_ORIGIN=0
 VW_CONTAINER_GPU_COUNT=2
-VW_GODMODE_ENABLED=false
+VW_PROMPT_LENS_ENABLED=false
 ```
 
 Re-running the installer is safe: `.env` is kept, only blank secrets are filled

@@ -22,7 +22,7 @@
 # top-level CMakeLists' own override hooks (LLAMA_BUILD_NUMBER /
 # LLAMA_BUILD_COMMIT, `if (NOT DEFINED ...)`) are fed the pinned values, so
 # --version reads exactly as the Linux build's does:
-# "version: <x> (build 11719, commit 5aeac37a3)".
+# "version: <x> (build 12644, commit 94f3af3d0)".
 #
 # Steps:
 #   1. Fetches the PINNED CMake (Kitware's macos-universal release tarball,
@@ -44,7 +44,7 @@
 #            and linked from /opt/homebrew.
 #        -DLLAMA_OPENSSL=OFF      no HTTPS: the -hf/-mu download path is never
 #            used (paths.py resolves the file), and Homebrew openssl would leak
-#            in. (b11719 has no LLAMA_CURL; the HTTP client is cpp-httplib.)
+#            in. (b12644 has no LLAMA_CURL either -- only a deprecation stub; the HTTP client is cpp-httplib.)
 #        -DLLAMA_BUILD_UI=OFF -DLLAMA_USE_PREBUILT_UI=OFF  no npm and no
 #            build-time download of llama.cpp's own chat UI from a Hugging Face
 #            bucket (unpinned); the warden has its own UI and proxies the API.
@@ -81,11 +81,11 @@ set -eu
 
 # --- the pins -------------------------------------------------------------
 # llama.cpp: the Dockerfile's ARG LLAMACPP_BUILD and the fixtures' tag.
-LLAMACPP_TAG="b11719"
-LLAMACPP_BUILD_NUMBER="11719"
-LLAMACPP_COMMIT="5aeac37a35b44fde4bdffaec9159f2fcb253b622"
+LLAMACPP_TAG="b12644"
+LLAMACPP_BUILD_NUMBER="12644"
+LLAMACPP_COMMIT="94f3af3d09e74a0fb35f703194318d3b4037714a"
 LLAMACPP_URL="https://github.com/ggml-org/llama.cpp/archive/refs/tags/${LLAMACPP_TAG}.tar.gz"
-LLAMACPP_SHA256="19487eb80fe875e6ead9551195e589ed4371b7dd3a6f32d9979fd1cbfa451589"
+LLAMACPP_SHA256="50911ef4d75c92dde5475734e72ef166eb796fadb694ac525ca52223faa94144"
 # CMake 3.31.8 (llama.cpp asks for 3.14...3.28 policy range); sha256 is the
 # value in Kitware's own cmake-3.31.8-SHA-256.txt for this asset.
 CMAKE_VERSION="3.31.8"

@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
 from app.auth.deps import (
+    KEY_STREAM_PREFIX,
     SESSION_PRINCIPAL,
     authenticate_admin_token,
     bearer_token,
@@ -84,6 +85,11 @@ async def require_sse_ticket(
         user = request.app.state.sse_tickets.consume(ticket, request.url.path)
     except ValueError as exc:
         raise HTTPException(401, str(exc)) from exc
+    # A key holder's ticket (subject ``key:<id>``) opens only the key's own
+    # stream (app/tokens/routes_me_prompt_lens.py), never an admin stream, whatever
+    # path it names.
+    if str(user).startswith(KEY_STREAM_PREFIX):
+        raise HTTPException(401, "not an admin ticket")
     request.state.principal = SESSION_PRINCIPAL
     request.state.stream_key = session_stream_key(str(user))
     return stream_key(request)

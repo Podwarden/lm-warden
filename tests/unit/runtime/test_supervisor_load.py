@@ -277,3 +277,208 @@ def test_release_claim_only_clears_for_the_holding_holder():
     assert sup.claim("qwen", "load") == "watchdog", "a non-holder must not free the claim"
     sup.release_claim("qwen", "watchdog")
     assert sup.claim("qwen", "load") is None, "the holder's release frees the model"
+
+
+class _FakeKv:
+    def __init__(self, ok=True):
+        self.calls = 0
+        self.ok = ok
+        self.gen = 1
+        self.up = ok
+        self.listeners = []
+
+    async def ensure_running(self):
+        self.calls += 1
+        return self.ok
+
+    def generation(self):
+        return self.gen
+
+    def healthy(self):
+        return self.up
+
+    def on_restart(self, cb):
+        self.listeners.append(cb)
+
+
+SHA = "c" * 40
+
+
+async def _load_with_kv(tmp_path, kv_store_value, kv, *, cached=True, spawned=None):
+    settings = _Settings()
+    settings.data_dir = str(tmp_path)
+    settings.hf_token_path = str(tmp_path / "hf-token")
+    settings.db_path = tmp_path / "w.db"  # kv_launch_kwargs derives the key path from it
+    settings.hf_cache_dir = str(tmp_path / "hf")
+    if cached:  # the pulled model: refs/main names the commit the engine loads
+        refs = tmp_path / "hf" / "models--Qwen--Qwen3.5-9B" / "refs"
+        refs.mkdir(parents=True)
+        (refs / "main").write_text(SHA)
+    (tmp_path / "hf-token").write_text("hf_xxx")
+    model = _M()
+    model.kv_store = kv_store_value
+    sup = Supervisor(settings, kv_store=kv)
+    fake_proc = MagicMock()
+    fake_proc.pid = 99999
+    fake_proc.returncode = None
+    spawn = AsyncMock(return_value=fake_proc)
+    with patch("asyncio.create_subprocess_exec", new=spawn):
+        await sup.load(model, port=10001)
+    if spawned is not None:
+        spawned.extend(str(a) for a in spawn.call_args.args)
+    return sup
+
+
+@pytest.mark.asyncio
+async def test_load_waits_for_the_kv_daemon_when_kv_store_is_on(tmp_path, caplog):
+    kv = _FakeKv(ok=False)
+    sup = await _load_with_kv(tmp_path, "ram", kv)
+    assert kv.calls == 1
+    assert "qwen" in sup._handles  # unhealthy daemon: still loads
+    assert "KV tier off until it is reloaded" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_load_does_not_wait_when_kv_store_is_off(tmp_path):
+    kv = _FakeKv()
+    await _load_with_kv(tmp_path, "off", kv)
+    assert kv.calls == 0
+
+
+@pytest.mark.asyncio
+async def test_load_refuses_kv_store_under_the_docker_driver(tmp_path):
+    """F1: a sibling engine container cannot reach the daemon; refuse before any GPU claim."""
+    from app.runtime.kv_store import KvTierUnsupported
+
+    settings = _Settings()
+    settings.data_dir = str(tmp_path)
+    settings.hf_token_path = str(tmp_path / "hf-token")
+    settings.db_path = tmp_path / "w.db"
+    settings.engine_driver = "docker"
+    (tmp_path / "hf-token").write_text("hf_xxx")
+    model = _M()
+    model.kv_store = "ram"
+    kv = _FakeKv()
+    driver = FakeDriver()
+    sup = Supervisor(settings, driver=driver, kv_store=kv)
+    with pytest.raises(KvTierUnsupported, match="VW_ENGINE_DRIVER=docker"):
+        await sup.load(model, port=10001)
+    assert driver.spawned == []
+    assert sup.gpus.owner_of(1) is None
+    assert kv.calls == 0
+    model.kv_store = "off"
+    await sup.load(model, port=10001)
+    assert len(driver.spawned) == 1
+
+
+@pytest.mark.asyncio
+async def test_kv_tier_is_on_then_off_until_reload_after_a_daemon_restart(tmp_path, caplog):
+    """F3: a restarted daemon turns an engine's connector off for good; say so."""
+    import logging
+
+    kv = _FakeKv(ok=True)
+    sup = await _load_with_kv(tmp_path, "ram", kv)
+    assert sup.kv_tier("qwen") == {"state": "on", "reason": None, "generation": 1}
+    kv.up = False
+    assert sup.kv_tier("qwen")["state"] == "unavailable"
+    kv.up, kv.gen = True, 2
+    caplog.set_level(logging.WARNING, logger="app.runtime.supervisor")
+    for cb in kv.listeners:
+        cb(2)
+    tier = sup.kv_tier("qwen")
+    assert tier["state"] == "off_until_reload"
+    assert "restarted" in tier["reason"]
+    assert sup.kv_tiers() == {"qwen": tier}
+    assert any(
+        "qwen" in r.getMessage() and "until it is reloaded" in r.getMessage()
+        for r in caplog.records
+        if r.levelno == logging.WARNING
+    )
+    await sup.unload("qwen", force=True)
+    assert sup.kv_tier("qwen") is None
+
+
+@pytest.mark.asyncio
+async def test_kv_tier_is_off_until_reload_when_the_daemon_was_down_at_load(tmp_path):
+    kv = _FakeKv(ok=False)
+    sup = await _load_with_kv(tmp_path, "ram", kv)
+    kv.up = True  # the daemon comes up later: this engine's connector is already off
+    tier = sup.kv_tier("qwen")
+    assert tier["state"] == "off_until_reload"
+    assert "not healthy" in tier["reason"]
+
+
+@pytest.mark.asyncio
+async def test_kv_tier_is_none_for_a_model_without_the_tier(tmp_path):
+    sup = await _load_with_kv(tmp_path, "off", _FakeKv())
+    assert sup.kv_tier("qwen") is None
+    assert sup.kv_tiers() == {}
+
+
+def test_kv_store_admin_route_reports_daemon_and_tiers(client, tmp_data_dir):
+    """F3: GET /api/system/kv-store shows the daemon generation and each engine's tier."""
+    from tests.conftest import jwt_login, seed_admin_user
+
+    client.get("/healthz")
+    seed_admin_user(tmp_data_dir / "vllm-warden.db", allowed_gpu_indices=[0])
+    r = client.get("/api/system/kv-store", headers=jwt_login(client))
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert set(body["daemon"]) == {
+        "healthy",
+        "generation",
+        "ram_requested_bytes",
+        "ram_granted_bytes",
+    }
+    assert body["models"] == {}
+
+
+def test_kv_store_admin_route_reports_requested_and_granted_ram(client, tmp_data_dir):
+    """The daemon may shrink the pool to fit free memory: the route shows both sizes."""
+    from types import SimpleNamespace
+
+    from tests.conftest import jwt_login, seed_admin_user
+
+    client.get("/healthz")
+    seed_admin_user(tmp_data_dir / "vllm-warden.db", allowed_gpu_indices=[0])
+    client.app.state.kv_store = SimpleNamespace(
+        healthy=lambda: True,
+        generation=lambda: 2,
+        ram=lambda: {"requested_bytes": 16 << 30, "granted_bytes": 6 << 30},
+    )
+    r = client.get("/api/system/kv-store", headers=jwt_login(client))
+    assert r.status_code == 200, r.text
+    d = r.json()["daemon"]
+    assert d == {
+        "healthy": True,
+        "generation": 2,
+        "ram_requested_bytes": 16 << 30,
+        "ram_granted_bytes": 6 << 30,
+    }
+
+
+@pytest.mark.asyncio
+async def test_load_keys_the_tier_by_the_resolved_commit(tmp_path):
+    """F6: hf_revision 'main' becomes the commit in the cache, never the branch name."""
+    import json
+
+    argv: list[str] = []
+    sup = await _load_with_kv(tmp_path, "ram", _FakeKv(), spawned=argv)
+    extra = json.loads(argv[argv.index("--kv-transfer-config") + 1])["kv_connector_extra_config"]
+    assert extra["revision"] == SHA and extra["tokenizer_revision"] == SHA
+    assert sup.kv_tier("qwen")["state"] == "on"
+
+
+@pytest.mark.asyncio
+async def test_load_with_an_unresolvable_revision_runs_with_the_tier_off(tmp_path, caplog):
+    """F6: no commit for 'main' in the cache: the engine loads without the connector."""
+    import logging
+
+    caplog.set_level(logging.WARNING, logger="app.runtime.supervisor")
+    argv: list[str] = []
+    sup = await _load_with_kv(tmp_path, "ram", _FakeKv(), cached=False, spawned=argv)
+    assert "--kv-transfer-config" not in argv
+    assert "qwen" in sup._handles
+    tier = sup.kv_tier("qwen")
+    assert tier["state"] == "off_until_reload" and "not in the model cache" in tier["reason"]
+    assert any("KV tier off" in r.getMessage() for r in caplog.records)

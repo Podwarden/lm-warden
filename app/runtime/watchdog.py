@@ -98,7 +98,9 @@ async def live_config(settings) -> dict:
     return cfg
 
 
-async def probe_health(host: str, port: int, path: str = "/health") -> tuple[bool, str]:
+async def probe_health(
+    host: str, port: int, path: str = "/health", *, client: httpx.AsyncClient | None = None
+) -> tuple[bool, str]:
     """Probe the engine's own health path. Returns (healthy, detail-for-the-record).
 
     ``path`` is engine-specific: each backend declares ``capabilities.health_path``
@@ -109,14 +111,30 @@ async def probe_health(host: str, port: int, path: str = "/health") -> tuple[boo
     is stored in the crash report: if a dead engine ever answers 200 here, that
     record is what proves this probe is too weak and must escalate to a real
     generation.
+
+    ``client`` lets a frequent caller (/readyz, #342) reuse one pooled client;
+    its own timeout then applies. Without one, a client is made per call.
     """
     url = f"http://{host}:{port}{path}"
     try:
-        async with httpx.AsyncClient(timeout=PROBE_TIMEOUT_S) as c:
-            r = await c.get(url)
+        if client is not None:
+            r = await client.get(url)
+        else:
+            async with httpx.AsyncClient(timeout=PROBE_TIMEOUT_S) as c:
+                r = await c.get(url)
         return r.status_code == 200, f"HTTP {r.status_code}: {r.text[:200]}"
     except Exception as exc:  # noqa: BLE001 — any failure to reach it is unhealthy
         return False, f"{type(exc).__name__}: {exc}"
+
+
+def engine_health_path(row: Any) -> str:
+    """The row's backend health path (``capabilities.health_path``); /health
+    when the registry cannot say, so a registry hiccup never stops a probe."""
+    try:
+        return str(registry.get(row.backend).capabilities.health_path)
+    except Exception:  # noqa: BLE001
+        logger.debug("watchdog: could not resolve backend health path for %s; /health", row.id)
+        return "/health"
 
 
 def _write(path: Path, text: str) -> None:
@@ -542,7 +560,7 @@ def _classify_gpu_holders(
             declined.append(
                 (
                     pid,
-                    f"in our session {sid} but does not look like vLLM; " f"{used} MiB; {cmd[:80]}",
+                    f"in our session {sid} but does not look like vLLM; {used} MiB; {cmd[:80]}",
                 )
             )
             continue
@@ -569,7 +587,7 @@ def reap_orphan_gpu_holders(owned: EngineOwnership) -> list[int]:
     reapable, declined = _classify_gpu_holders(owned)
     if declined:
         logger.warning(
-            "watchdog: leaving %d GPU process(es) alone — not provably ours " "(#218): %s",
+            "watchdog: leaving %d GPU process(es) alone — not provably ours (#218): %s",
             len(declined),
             "; ".join(f"pid {pid}: {why}" for pid, why in declined),
         )
@@ -1014,12 +1032,7 @@ async def check_once(
         if port is None:
             continue  # no runtime record yet; nothing to probe
         host = sup.get_host(row.id) or "127.0.0.1"
-        try:
-            health_path = registry.get(row.backend).capabilities.health_path
-        except Exception:  # noqa: BLE001 — a registry hiccup must not stop the pass
-            logger.debug("watchdog: could not resolve backend health path for %s; /health", row.id)
-            health_path = "/health"
-        healthy, detail = await probe_health(host, port, health_path)
+        healthy, detail = await probe_health(host, port, engine_health_path(row))
         if healthy:
             if state.get(row.id):
                 logger.info("watchdog: %s recovered on its own", row.id)
@@ -1138,12 +1151,14 @@ async def run_watchdog_forever(settings, app_state) -> None:
     cfg = await live_config(settings)
     budget = RestartBudget(cfg["max_restarts"], settings.watchdog_restart_window_s)
     logger.info(
-        "engine watchdog started (every %ss, %s consecutive failures to act, "
-        "restore-on-boot=%s)",
+        "engine watchdog started (every %ss, %s consecutive failures to act, restore-on-boot=%s)",
         cfg["interval_s"],
         cfg["failure_threshold"],
         cfg["restore_on_boot"],
     )
+    # Published for /readyz (#342): a failed row waiting for a restore reads
+    # "loading" only while something will actually restore it.
+    app_state.watchdog_cfg = cfg
     if cfg["restore_on_boot"]:
         try:
             restored = await restore_after_warden_restart(settings, app_state)
@@ -1151,9 +1166,11 @@ async def run_watchdog_forever(settings, app_state) -> None:
                 logger.warning("watchdog: restored after warden restart: %s", restored)
         except Exception:
             logger.exception("watchdog: post-restart restore failed; continuing")
+    app_state.watchdog_boot_restore_done = True
     while True:
         try:
             cfg = await live_config(settings)
+            app_state.watchdog_cfg = cfg
             budget.reconfigure(cfg["max_restarts"])
             # In-run log rotation runs on EVERY tick, even with health
             # probing disabled: a disabled watchdog does not mean the

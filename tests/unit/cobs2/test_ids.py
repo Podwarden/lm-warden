@@ -200,3 +200,162 @@ def test_conv_id_differs_per_first_message_and_salt() -> None:
 
 def test_conv_id_none_without_body() -> None:
     assert conv_id(ids_for(_canon(), _K, b""), _K, b"") is None
+
+
+# -- Prompt Lens dock, task 3: separate sys and tools ids (display only) --------
+
+from app.cobs2.canonical import canon_json, loose_head  # noqa: E402
+from app.cobs2.ids import HeadPartIds, _h, head_part_ids  # noqa: E402
+
+_GOLDEN_BODY = {
+    "messages": [
+        {"role": "system", "content": "S\n2026-11-22 <system-reminder>r</system-reminder>"},
+        {"role": "user", "content": "u"},
+        {"role": "assistant", "content": "a  b"},
+    ],
+    "tools": [{"type": "function", "function": {"name": "t1", "parameters": {"b": 1, "a": 2}}}],
+}
+
+#: Recorded at 721f308c (before head_part_ids existed): ids_for and conv_id
+#: must stay byte-identical, so stored lineage and routing keep matching.
+_GOLDEN = {
+    b"": (
+        Ids(
+            head="015d9d887624bb81310e0de14c7743ef93",
+            msgs=("015e41db7768a5a721549e278d5c769aa4", "014543dc3b0f79cab25465bc9402346a3d"),
+            nodes=("01788487928e9c7204abbdfeb808d34aa7", "01d7d8be9556b062485552d84194dd64bd"),
+            loose_head="01f1de4db7d5a74392fba521b60931523c",
+            loose_msgs=(
+                "01f9b32e7b33446a7d407a692ec84ecff6",
+                "01862f55191495fe30e7847132dac6444e",
+            ),
+            loose_nodes=(
+                "01c07904a352fdb2621bded6a1da990c17",
+                "01f0540ad7bd099491cd5976155927276d",
+            ),
+        ),
+        "0125f0d6a40585a4105e7a0aba2830592d",
+    ),
+    b"s": (
+        Ids(
+            head="011d48b05f98c5e2a0180592d3318b98ea",
+            msgs=("0175784517d88771fe8eb3e39158ee17e4", "01f5c15ce9698eeecac8118f78678e7250"),
+            nodes=("01e6392185eff754a80735ba465f89d4d3", "019ac7d6e823668eb2d90b92e5a239f0c5"),
+            loose_head="01590c7727fe7c25eaedec7d9e226c5c8f",
+            loose_msgs=(
+                "0105d175db6eb5cfe1851bd534844f36fe",
+                "011f902ddf256fe64ec456a3362c92d26d",
+            ),
+            loose_nodes=(
+                "01a499d284965001b94407e99bf859d51a",
+                "01d473c07ea1d1cebf1640b751172dc6a3",
+            ),
+        ),
+        "01e09640da72510a15080c0591917aa9fb",
+    ),
+}
+
+
+def _gcanon(body: dict):
+    c = canonicalize(body)
+    assert c is not None
+    return c
+
+
+def _parts(c, key: NetworkKey = KEY, salt: bytes = b"") -> HeadPartIds:
+    return head_part_ids(c, key, salt, ids_for(c, key, salt).head)
+
+
+def test_head_id_unchanged() -> None:
+    from app.cobs2 import ids as ids_mod
+
+    c = _gcanon(_GOLDEN_BODY)
+    for salt, (want, want_conv) in _GOLDEN.items():
+        ids_mod._LOOSE_MEMO.clear()
+        cold = ids_for(c, KEY, salt)
+        assert cold == want and conv_id(cold, KEY, salt) == want_conv
+        # head part ids share the memo: computing them leaves ids_for as it was
+        head_part_ids(c, KEY, salt, cold.head)
+        assert ids_for(c, KEY, salt) == want
+        assert conv_id(ids_for(c, KEY, salt), KEY, salt) == want_conv
+
+
+def test_sys_and_tools_ids_are_independent() -> None:
+    a = _gcanon(
+        {"messages": [{"role": "system", "content": "S"}], "tools": [{"function": {"name": "t1"}}]}
+    )
+    b = _gcanon(
+        {"messages": [{"role": "system", "content": "S"}], "tools": [{"function": {"name": "t2"}}]}
+    )
+    pa, pb = _parts(a), _parts(b)
+    assert pa.sys == pb.sys and pa.tools != pb.tools and len(pa.sys) == 34
+    assert pa.loose_sys == pb.loose_sys and pa.loose_tools != pb.loose_tools
+    c = _gcanon(
+        {"messages": [{"role": "system", "content": "T"}], "tools": [{"function": {"name": "t1"}}]}
+    )
+    pc = _parts(c)
+    assert pc.sys != pa.sys and pc.tools == pa.tools and pc.loose_tools == pa.loose_tools
+    allids = [pa.sys, pa.tools, pa.loose_sys, pa.loose_tools]
+    assert all(len(i) == 34 and bytes.fromhex(i)[0] == KEY.epoch for i in allids)
+    assert len(set(allids)) == 4  # each label is its own namespace
+
+
+def test_loose_sys_ignores_a_date_line() -> None:
+    a = _gcanon({"messages": [{"role": "system", "content": "S\n2026-11-22"}]})
+    b = _gcanon({"messages": [{"role": "system", "content": "S\n2026-11-23"}]})
+    pa, pb = _parts(a), _parts(b)
+    assert pa.sys != pb.sys
+    assert pa.loose_sys == pb.loose_sys
+    assert pa.tools == pb.tools and pa.loose_tools == pb.loose_tools
+
+
+def test_head_part_ids_follow_the_open_spec_labels_and_payloads() -> None:
+    # kvsig decision 0002: sys over {"head": ...}, tools over {"tools": ...}, and
+    # the loose halves over the same keys of the loose head. The construction is
+    # this module's H (cobs2 prefix, canon_json), so the bytes differ from kvsig.
+    c = _gcanon(_GOLDEN_BODY)
+    for salt in (b"", b"s"):
+        p = _parts(c, salt=salt)
+        lh, lt = loose_head(c)
+        assert p.sys == _h(KEY, b"sys", salt, canon_json({"head": c.head})).hex()
+        assert p.tools == _h(KEY, b"tools", salt, canon_json({"tools": c.tools})).hex()
+        assert p.loose_sys == _h(KEY, b"loose-sys", salt, canon_json({"head": lh})).hex()
+        assert p.loose_tools == _h(KEY, b"loose-tools", salt, canon_json({"tools": lt})).hex()
+        assert ids_for(c, KEY, salt).head not in (p.sys, p.tools)
+
+
+def test_head_part_ids_isolated_by_key_and_salt() -> None:
+    c = _gcanon(_GOLDEN_BODY)
+    a = _parts(c)
+    b = _parts(c, key=NetworkKey(1, b"z" * 32))
+    s = _parts(c, salt=b"s")
+    for x in (b, s):
+        assert {a.sys, a.tools, a.loose_sys, a.loose_tools}.isdisjoint(
+            {x.sys, x.tools, x.loose_sys, x.loose_tools}
+        )
+
+
+def test_head_part_ids_hash_once_per_head(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.cobs2 import ids as ids_mod
+
+    ids_mod._LOOSE_MEMO.clear()
+    c = _gcanon(_GOLDEN_BODY)
+    head = ids_for(c, KEY, b"").head
+    first = head_part_ids(c, KEY, b"", head)
+    tagged = [k for k in ids_mod._LOOSE_MEMO if len(k) != 17]
+    assert len(tagged) == 1 and len(ids_mod._LOOSE_MEMO[tagged[0]]) == 4 * 17
+    assert tagged[0].endswith(bytes.fromhex(head))
+
+    def boom(*a, **k):
+        raise AssertionError("head parts hashed again")
+
+    monkeypatch.setattr(ids_mod, "loose_head", boom)
+    monkeypatch.setattr(ids_mod, "_h", boom)
+    # a longer turn of the same conversation reuses the memo entry
+    longer = _gcanon(
+        {
+            **_GOLDEN_BODY,
+            "messages": [*_GOLDEN_BODY["messages"], {"role": "user", "content": "more"}],
+        }
+    )
+    assert head_part_ids(longer, KEY, b"", head) == first

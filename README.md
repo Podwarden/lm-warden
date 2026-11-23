@@ -1,7 +1,7 @@
 # LM Warden
 
 **Your own OpenAI-compatible LLM API on the hardware you already own: NVIDIA
-GPUs on Linux, with vLLM v0.32.0 and llama.cpp b11719, or an Apple silicon Mac,
+GPUs on Linux, with vLLM v0.32.0 and llama.cpp b12644, or an Apple silicon Mac,
 with MLX and llama.cpp (beta). One port, a key per consumer with its usage, and
 a live view of what the hardware is doing.**
 
@@ -9,7 +9,7 @@ a live view of what the hardware is doing.**
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Linux%20%C2%B7%20macOS%20%28beta%29-555.svg)](#will-it-run-on-my-hardware)
-[![Engines](https://img.shields.io/badge/engines-vLLM%200.32.0%20%C2%B7%20llama.cpp%20b11719%20%C2%B7%20MLX-4b8bbe.svg)](#two-engines-and-the-model-that-made-us-add-the-second)
+[![Engines](https://img.shields.io/badge/engines-vLLM%200.32.0%20%C2%B7%20llama.cpp%20b12644%20%C2%B7%20MLX-4b8bbe.svg)](#two-engines-and-the-model-that-made-us-add-the-second)
 [![Deploy](https://img.shields.io/badge/deploy-Docker%20Compose%20%C2%B7%20Mac%20app-2496ed.svg)](documents/INSTALL.md)
 
 ![LM Warden's Stats page under load, stepping through its 1 h, 6 h and 24 h windows: host VRAM, GPU utilisation, power draw and tokens per minute (23 September capture, before the panel switched to tokens per second)](assets/screenshots/demo-stats.gif)
@@ -322,10 +322,10 @@ line on someone's invoice.
 | A bare engine | With LM Warden |
 |---|---|
 | One model per container, restart to switch | Register, pull, load and unload from the browser |
-| One engine, take it or leave it | vLLM v0.32.0 **and** llama.cpp b11719 on Linux, MLX **and** llama.cpp on a Mac, chosen per model |
+| One engine, take it or leave it | vLLM v0.32.0 **and** llama.cpp b12644 on Linux, MLX **and** llama.cpp on a Mac, chosen per model |
 | A single shared API key, or none | A key per consumer, each with its own page, priority lane, pause switch and rotation grace window |
 | No record of who used what | Requests, prompt tokens and completion tokens rolled up per key and per client IP, plus each key's queue wait and latency |
-| No way to see what a client actually sent | God mode: an opt-in, in-memory live view of one key's prompts and completions, streaming only while open; off by default |
+| No way to see what a client actually sent | Prompt Lens (formerly god mode): an opt-in, in-memory live view of prompts, reasoning, replies and tool calls, for all keys or one, streaming only while open; off by default |
 | A port per engine to expose | One published port; your own TLS terminator, ingress, SSO or network policy goes in front of it |
 | `nvidia-smi` in a second terminal | On Linux, per-card VRAM, utilisation, power, temperature against the driver's own throttle point, PCIe width, ECC, NVLink; on a Mac, GPU use and the memory budget Metal reports, without power |
 | No idea why a request is slow | Live request table, TTFT and duration distributions from the proxy, KV-cache pressure and preemptions where the engine reports them |
@@ -486,11 +486,14 @@ and a model; the page writes the setup and checks the requirements it can see
 you create it here, since the warden keeps only hashes.</td>
 </tr>
 <tr>
-<td colspan="2"><img src="assets/screenshots/demo-token-poster.webp" alt="The god-mode dock open at the bottom of a key's page, live, replaying that key's recent requests and streaming a response as it is generated"><br>
-<b>God mode, one key at a time.</b> Open the dock at the bottom of a key's page to
-watch that key's prompts and responses as they happen, earlier keys included.
-Close it and the stream stops; nothing is watched in the background. Off by
-default (<code>VW_GODMODE_ENABLED</code>), and held only in memory.</td>
+<td colspan="2"><img src="assets/screenshots/demo-token-poster.webp" alt="The Prompt Lens dock open at the bottom of a key's page, live, replaying that key's recent requests and streaming a response as it is generated"><br>
+<b>Prompt Lens (formerly god mode).</b> Open the dock at the bottom of the
+Stats page, or of a key's page, to watch prompts and responses as they happen:
+every key's, or that key's with its earlier keys. Each request shows its
+prompt part by part, its thinking, reply and tool calls. Close it and the
+stream stops; nothing is watched in the background. Off by default
+(a switch in Settings, or <code>VW_PROMPT_LENS_ENABLED</code>), and held only in memory unless an admin
+sets a key to keep its last 50 requests.</td>
 </tr>
 </table>
 
@@ -559,7 +562,7 @@ Three things make it usable rather than merely possible:
 - **Not an open relay.** The router is off by default; a key must carry "May
   relay to Anthropic" before any request is forwarded; the warden key never
   reaches Anthropic and the Anthropic credential never reaches an engine;
-  nothing from a passthrough is logged, stored or shown in god mode:
+  nothing from a passthrough is logged, stored or shown in Prompt Lens:
   [Router refusals](documents/ROUTING.md#router-refusals).
 
 <picture>
@@ -693,7 +696,7 @@ measurements (TTFT at the first streamed frame, duration at the end of the
 stream), at the price of the engine's per-token resolution. A number an engine
 does not report renders as **"not reported"**, never as `0`: on llama.cpp that
 means KV-cache usage, sleep state, preemptions and MFU are blank rather than
-reassuring. llama.cpp's version is fixed by the warden image (`b11719`); vLLM's
+reassuring. llama.cpp's version is fixed by the warden image (`b12644`); vLLM's
 can be pinned per model under the Docker engine driver. A GGUF-only repository
 ships no tokenizer, so token accounting falls back to a character estimate
 until you set `tokenizer_repo`; the degradation is reported rather than hidden.
@@ -725,9 +728,10 @@ and flag a key to relay, both off by default.
 
 **No prompt or completion text is stored by default.** `request_history`, the
 table behind the requests chart and the per-key rollups, has no column that
-holds it. Two diagnostic features can capture content: god mode
-(`VW_GODMODE_ENABLED`), an in-memory ring watched one key at a time from a
-dock on that key's page, streaming only while the dock is open; and the
+holds it. Two diagnostic features can capture content: Prompt Lens, formerly
+Prompt Lens (`VW_PROMPT_LENS_ENABLED`), an in-memory ring watched from a dock on the
+Stats page or a key's page, streaming only while the dock is open (an admin
+can set one key to keep its last 50 requests on disk); and the
 content log (`VW_CONTENT_LOG_ENABLED`), which writes to disk and only for
 token ids on an explicit allowlist. Both are off by default, and with both off
 the proxy's forward path is the code it would be in a build that never had
@@ -749,7 +753,7 @@ Each of these is one hop from here and says what it holds.
   source and opening a beta.
 - [documents/API.md](documents/API.md): driving it without a browser: the
   six-call first run, minting and managing a key (rename, pause, rotation
-  history, its usage and timing series, its god-mode stream), register / pull /
+  history, its usage and timing series, its Prompt Lens stream), register / pull /
   load from the API, the Anthropic Messages and OpenAI Responses routes, and
   the admin API.
 - [documents/HAZARDS.md](documents/HAZARDS.md): five things that cost an

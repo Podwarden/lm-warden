@@ -9,7 +9,7 @@ from app import platform_profile
 from app.auth.deps import require_jwt
 from app.db.database import open_db
 from app.proxy import bookkeeping
-from app.stats import request_history
+from app.stats import request_history, speed
 from app.system.gpu import gpu_probe_health
 
 router = APIRouter()
@@ -650,6 +650,53 @@ async def stats_v2_requests(
     }
 
 
+@router.get("/api/stats/v2/speed")
+async def stats_v2_speed(
+    request: Request,
+    range: str = "1h",
+    model: str | None = None,
+    group: str | None = None,
+    _user: str = Depends(require_jwt),
+) -> dict[str, Any]:
+    """Per-request latency and speed for ONE model (stats redesign B3).
+
+    ``model`` is one model row id: the page's scope. Latency and speed are
+    never pooled across models. Without it, only ``groups`` is meaningful (the
+    Requests table's Group by over everything; groups split by model).
+
+    Returns ``{range, since_epoch, model_id, last_finished_at, count, stride,
+    summary: {ttft, decode, prefill, duration, warden_queue}, points: [...],
+    groups: [...] | None}``. Definitions and the low-volume rules are in
+    app/stats/speed.py.
+    """
+    _validate_range(range)
+    if group is not None and group not in speed.GROUPS:
+        raise HTTPException(
+            status_code=400, detail=f"invalid group '{group}'; allowed: {list(speed.GROUPS)}"
+        )
+    since = time.time() - _RANGE_TO_MINUTES[range] * 60.0
+    settings = request.app.state.settings
+    selected = [model] if model else None
+    async with open_db(settings.db_path) as db:
+        await _validate_selection(db, selected)
+        rows = await speed.cached_speed_rows(
+            db, str(settings.db_path), since=since, model_ids=selected
+        )
+        last = await speed.last_finished_at(db, model_ids=selected)
+    body: dict[str, Any] = {
+        "range": range,
+        "since_epoch": since,
+        "model_id": model,
+        "last_finished_at": last,
+    }
+    if model:
+        body.update(speed.speed_payload(rows))
+    else:
+        body.update({"count": len(rows), "stride": 1, "summary": None, "points": []})
+    body["groups"] = speed.speed_groups(rows, group) if group else None
+    return body
+
+
 @router.get("/api/stats/v2/cache")
 async def stats_v2_cache(
     request: Request,
@@ -668,7 +715,11 @@ async def stats_v2_cache(
         await _validate_selection(db, selected)
         rows = await request_history.query_cache_summary(db, since=since, model_ids=selected)
         await request_history.decorate_cache_rows(
-            db, rows, learned=learned, hint=settings.prefill_tok_s_hint
+            db,
+            rows,
+            learned=learned,
+            hint=settings.prefill_tok_s_hint,
+            state=request.app.state,
         )
     return {"range": range, "since_epoch": since, "models": rows}
 

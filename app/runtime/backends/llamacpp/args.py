@@ -1,8 +1,8 @@
 """Build the ``llama-server`` argv from a ModelRow.
 
-Flag spellings were checked against llama.cpp b11719's common/arg.cpp and are
+Flag spellings were checked against llama.cpp b12644's common/arg.cpp and are
 re-checked on every test run against tests/fixtures/llamacpp/help.txt, which is
-a real --help capture (b11719).
+a real --help capture (b12644).
 If the two ever disagree, the capture is right.
 
 Four flags are emitted unconditionally and each one is load-bearing:

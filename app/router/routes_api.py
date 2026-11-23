@@ -5,7 +5,7 @@ Every write ends with ``RouterState.invalidate()`` so the data plane reloads
 the rule set on its next request.
 """
 
-from typing import Any
+from typing import Any, Literal
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
@@ -16,6 +16,7 @@ from app.db.database import open_db
 from app.db.repos.models import ModelRepo
 from app.db.repos.router_rules import RouterRuleRepo, RouterRuleRow
 from app.db.repos.settings import SettingsRepo
+from app.proxy.kv_scope import NOT_ISOLATED_AT_PROVIDER, CacheIsolation, cache_isolation
 from app.router.rules import (
     HEADER_NAME,
     INT_RANGES,
@@ -173,10 +174,17 @@ class RuleOut(BaseModel):
     min_max_tokens: int
     created_at: str
     updated_at: str
+    #: How the local target treats an isolated key (O4); None when the target is gone.
+    cache_isolation: CacheIsolation | None = None
+    #: The fallback leg goes to the upstream provider, whose prompt cache LM Warden cannot
+    #: isolate (O6); None when the rule does not fall back.
+    fallback_cache_isolation: Literal["not_isolated_at_provider"] | None = None
 
 
 class RulesOut(BaseModel):
     rules: list[RuleOut]
+    #: Unmatched models passed through to the provider are never isolated there (O6).
+    passthrough_cache_isolation: Literal["not_isolated_at_provider"] = NOT_ISOLATED_AT_PROVIDER
 
 
 class RuleOrder(BaseModel):
@@ -198,6 +206,8 @@ async def _rule_out(db: aiosqlite.Connection, r: RouterRuleRow) -> RuleOut:
         min_max_tokens=r.min_max_tokens,
         created_at=r.created_at,
         updated_at=r.updated_at,
+        cache_isolation=cache_isolation(m) if m else None,
+        fallback_cache_isolation=NOT_ISOLATED_AT_PROVIDER if r.fallback else None,
     )
 
 

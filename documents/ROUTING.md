@@ -388,7 +388,7 @@ over 40k tokens of context.**
 - A conversation stays on the replica it was placed on, so over time one
   replica can hold more long conversations than another. That is the price of
   cache locality; spill relieves it, and affinity can be turned off per model.
-- Nothing from a passthrough request is logged, stored or shown in god mode
+- Nothing from a passthrough request is logged, stored or shown in Prompt Lens
   (the opt-in live view of one key's prompts and replies).
 - Router mode needs Claude Code 2.1.227 or newer (`ANTHROPIC_CUSTOM_HEADERS`).
   Older clients use local-only mode, which still works.
@@ -557,7 +557,7 @@ leave the warden.
 neither `Authorization`, `x-api-key`, `X-LMWarden-Key` nor `cookie`; the
 Anthropic credential never reaches an engine. No log line, router statistic or
 decision record holds a header or a body, and passthrough bodies are not written
-to god mode, the content log or request history.
+to Prompt Lens, the content log or request history.
 
 **Setting up Claude Code.** Needs Claude Code 2.1.227 or newer for
 `ANTHROPIC_CUSTOM_HEADERS`. Keep your normal `claude` login, and do not set

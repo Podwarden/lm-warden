@@ -144,7 +144,7 @@ describe("in-flight table: rows animate out and in", () => {
     expect(gone.getAttribute("aria-hidden")).toBe("true");
     expect(gone.className).toContain("pointer-events-none");
     // the count is live rows only
-    expect(screen.getByText("1 active")).toBeInTheDocument();
+    expect(screen.getByTestId("live-requests")).toHaveTextContent("1 active");
     act(() => void vi.advanceTimersByTime(ROW_EXIT_MS + 5));
     expect(screen.getAllByTestId("live-row")).toHaveLength(1);
   });
@@ -170,7 +170,7 @@ describe("in-flight table: rows animate out and in", () => {
     const { rerender } = render(panel([req("a")]));
     rerender(panel([]));
     expect(screen.getAllByTestId("live-row")).toHaveLength(1);
-    expect(screen.getByText("0 active")).toBeInTheDocument();
+    expect(screen.getByTestId("live-requests")).toHaveTextContent("0 active");
     act(() => void vi.advanceTimersByTime(ROW_EXIT_MS + 5));
     expect(screen.queryByTestId("live-row")).toBeNull();
     expect(screen.getByText(/Nothing in flight/)).toBeInTheDocument();

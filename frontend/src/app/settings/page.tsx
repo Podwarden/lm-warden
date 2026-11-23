@@ -9,6 +9,7 @@ import { MaintenanceTab } from "@/components/settings/maintenance-tab";
 import { ModelTab } from "@/components/settings/model-tab";
 import { AdminTokensTab } from "@/components/settings/admin-tokens-tab";
 import { GuardPlatformTab } from "@/components/settings/guard-tab";
+import { PromptCacheTab } from "@/components/settings/prompt-cache-tab";
 import ee from "@/lib/extensions";
 import { useEdition, hasFeature } from "@/lib/edition";
 
@@ -21,7 +22,7 @@ import { useEdition, hasFeature } from "@/lib/edition";
 // do — so each pane stays under one screen-height.
 //
 // Tab order is the spec's:
-//   General → Networking → Sessions & Tokens → Maintenance → Model → Access Tokens
+//   General → Networking → Sessions & Tokens → Maintenance → Model → Prompt cache → Access Tokens
 //   → Sensitive data (the guard's platform default)
 //
 // Each of the four runtime sub-tabs owns its own useRuntimeSettings()
@@ -35,6 +36,8 @@ const CORE_TABS: { id: string; label: string }[] = [
   { id: "sessions", label: "Sessions & Tokens" },
   { id: "maintenance", label: "Maintenance" },
   { id: "model", label: "Model" },
+  // Plan 2: the KV cache store (sizes, eviction policy, new keys' isolation).
+  { id: "prompt-cache", label: "Prompt cache" },
   { id: "admin-tokens", label: "Access Tokens" },
   { id: "guard", label: "Sensitive data" },
 ];
@@ -69,6 +72,7 @@ export default function SettingsPage() {
         {activeTab === "sessions" && <SessionsTab />}
         {activeTab === "maintenance" && <MaintenanceTab />}
         {activeTab === "model" && <ModelTab />}
+        {activeTab === "prompt-cache" && <PromptCacheTab />}
         {activeTab === "admin-tokens" && <AdminTokensTab />}
         {activeTab === "guard" && <GuardPlatformTab />}
         {EeTab && <EeTab />}

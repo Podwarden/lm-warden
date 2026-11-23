@@ -112,9 +112,13 @@ def test_new_columns_are_appended_last():
 
     cols = [c.strip() for c in _MODEL_COLS.split(",")]
     # 0038 (#286) appended three more after the llama.cpp pair.
-    assert cols[-9:-6] == ["backend", "mmproj_filename", "n_gpu_layers"]
+    assert cols[-11:-8] == ["backend", "mmproj_filename", "n_gpu_layers"]
     # 0039 (#286 review) appended the boot-reconcile notice pair.
-    assert cols[-6:-3] == ["data_parallel_size", "dp_affinity_enabled", "dp_spill_threshold"]
-    assert cols[-3:-1] == ["layout_notice_level", "layout_notice"]
+    assert cols[-8:-5] == ["data_parallel_size", "dp_affinity_enabled", "dp_spill_threshold"]
+    assert cols[-5:-3] == ["layout_notice_level", "layout_notice"]
     # 0051 appended the thinking policy.
-    assert cols[-1:] == ["thinking_policy"]
+    assert cols[-3:-2] == ["thinking_policy"]
+    # 0058 appended the KV-cache tier setting.
+    assert cols[-2:-1] == ["kv_store"]
+    # 0060 appended the model's KV tier weight.
+    assert cols[-1:] == ["kv_store_weight"]

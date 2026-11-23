@@ -6,6 +6,9 @@
 import { useEffect, useState } from "react";
 
 import { KeyShell, useKeyAuthRedirect } from "@/components/key-area/key-shell";
+import { HolderCacheUse, HolderPromptCache } from "@/components/kv/holder-prompt-cache";
+import { ModelIsolationList } from "@/components/kv/parts";
+import type { KvKeyReport } from "@/lib/kv";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { type MeKey, meWrite, useMe } from "@/lib/key-area/api";
@@ -35,6 +38,7 @@ function Row({ label, children, action }: { label: string; children: React.React
 
 function Settings() {
   const { data, mutate, error } = useMe<MeKey>("/api/me/key");
+  const { data: report, mutate: mutateReport } = useMe<KvKeyReport>("/api/me/key/cache", 30_000);
   const [name, setName] = useState("");
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -47,6 +51,29 @@ function Settings() {
 
   if (!data) return null;
   const guard = guardText(data);
+  const isolated = data.kv_isolation === "isolated";
+
+  async function kvWrite(url: string, method: "PATCH" | "POST", body: unknown): Promise<string | null> {
+    try {
+      const r = await meWrite(url, method, body);
+      if (!r.ok) {
+        let detail = `HTTP ${r.status}`;
+        try {
+          const j = (await r.json()) as { detail?: unknown };
+          if (typeof j.detail === "string") detail = j.detail;
+        } catch {
+          /* not JSON */
+        }
+        return detail;
+      }
+      await mutate((await r.json()) as MeKey, { revalidate: false });
+      void mutateReport();
+      return null;
+    } catch (err) {
+      setWriteError(err);
+      return K.settings.saveError;
+    }
+  }
   const trimmed = name.trim();
 
   async function save(e: React.FormEvent) {
@@ -71,6 +98,7 @@ function Settings() {
   }
 
   return (
+    <div className="space-y-4">
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
@@ -83,7 +111,15 @@ function Settings() {
           </tr>
         </thead>
         <tbody>
-          <Row label={K.settings.models}>{data.allowed_models?.length ? data.allowed_models.join(", ") : K.settings.allModels}</Row>
+          <Row label={K.settings.models}>
+            {data.models?.length ? (
+              <ModelIsolationList models={data.models} isolated={isolated} refusedOnly />
+            ) : data.allowed_models?.length ? (
+              data.allowed_models.join(", ")
+            ) : (
+              K.settings.allModels
+            )}
+          </Row>
           <Row label={K.settings.priority}>{data.priority ?? "—"}</Row>
           <Row label={K.settings.thinking}>
             {K.settings.thinkingValues[data.thinking_policy ?? "client"] ?? data.thinking_policy}
@@ -119,6 +155,14 @@ function Settings() {
           </tr>
         </tbody>
       </table>
+    </div>
+      <HolderPromptCache
+        isolation={data.kv_isolation ?? "sharing"}
+        models={data.models ?? []}
+        onIsolate={() => kvWrite("/api/me/key", "PATCH", { kv_isolation: "isolated" })}
+        onReset={() => kvWrite("/api/me/key/kv-reset", "POST", {})}
+      />
+      {report?.windows && <HolderCacheUse report={report} />}
     </div>
   );
 }

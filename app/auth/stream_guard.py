@@ -4,7 +4,7 @@ Every stream an admin token can open runs under ``guard_stream(request,
 key)``, where ``key`` is the request's stream-registry key
 (app/auth/deps.py::stream_key): ``admin_token:<id>`` for an admin token (spec
 2026-09-19, decision 9), ``session:<username>`` for a browser session. That is
-the four ticket streams behind ``require_sse_ticket`` -- god mode, model logs,
+the four ticket streams behind ``require_sse_ticket`` -- Prompt Lens, model logs,
 live stats and header metrics -- whose dependency returns the key, plus model
 pull progress, the chat2 turn streams (``guarded``) and the chat playground's
 completion proxy (app/chat/routes_api.py, added #258), which authenticate with

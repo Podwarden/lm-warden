@@ -9,6 +9,7 @@ One published port. Caddy fans out to internal-only `api` and `ui` containers:
 | `/api/*` | FastAPI | JWT-gated control plane |
 | `/v1/*` | FastAPI | OpenAI-compatible proxy (token-gated) |
 | `/healthz` | FastAPI | Liveness probe |
+| `/readyz` | FastAPI | Readiness: `200` only when a model can serve |
 
 Which replica answers a request, and the Claude Code router: [ROUTING.md](ROUTING.md).
 
@@ -162,7 +163,7 @@ rather than reassuring.
 
 Two more limits worth knowing before you pick it:
 
-- **llama.cpp's version is fixed by the warden image** (`b11719`). Bumping it is
+- **llama.cpp's version is fixed by the warden image** (`b12644`). Bumping it is
   a warden release, not a per-model choice. vLLM's version can be pinned per
   model, but only under the Docker engine driver — the UI disables the control
   and says which of the two reasons applies rather than offering a switch that

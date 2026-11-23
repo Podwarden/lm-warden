@@ -11,7 +11,9 @@ export function fmtShareCause(t: Turn): string {
   const p = pct(share);
   if (p === null) return "—";
   if (t.relayed) return `${S.turn.upstream} ${p}%`;
-  const cause = t.divergence_cause ? S.turn.causeShort[t.divergence_cause] ?? t.divergence_cause : null;
+  // A key holder gets the own lens only (the fleet lens is admin-only).
+  const dc = t.divergence_cause ?? t.divergence_cause_own;
+  const cause = dc ? S.turn.causeShort[dc] ?? dc : null;
   return cause ? `${p}% · ${cause}` : `${p}%`;
 }
 

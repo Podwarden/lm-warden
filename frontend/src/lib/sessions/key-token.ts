@@ -103,7 +103,7 @@ export function isSessionsPath(path: string): boolean {
 
 /** The key holder's own area: opens only with a key token, never with an admin session. */
 const KEY_AREA_PATHS: ReadonlySet<string> = new Set(
-  ["/key", "/key/settings", "/key/manage", "/key/guard-log"].flatMap((p) => [p, `${p}/`]),
+  ["/key", "/key/stats", "/key/prompt-lens", "/key/settings", "/key/manage", "/key/guard-log"].flatMap((p) => [p, `${p}/`]),
 );
 
 export function isKeyAreaPath(path: string): boolean {

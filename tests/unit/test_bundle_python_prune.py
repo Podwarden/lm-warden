@@ -86,7 +86,7 @@ def _fake_root(tmp_path: Path) -> Path:
     _write(root / "bin" / SERVER_EXE, "#!/bin/sh\nfake interpreter\n")
     (root / "bin" / SERVER_EXE).chmod(0o755)
     _write(root / "bin" / "llama-server", "fake llama-server\n")
-    _write(root / "bin" / "llama-server.build", "b11719\n")
+    _write(root / "bin" / "llama-server.build", "b12644\n")
     _write(root / "lib" / "libpython3.12.dylib", "fake libpython\n")
     _write(root / "lib" / "libtcl9.0.dylib", "fake libtcl\n")
     _write(root / "lib" / "libtcl9tk9.0.dylib", "fake libtcl9tk\n")

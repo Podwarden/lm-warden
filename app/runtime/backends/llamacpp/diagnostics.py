@@ -24,8 +24,8 @@ The three levers that actually differ:
 There is deliberately NO auto-retry here: this path only REPORTS.
 
 WHERE THE PATTERNS COME FROM. Every rule is derived from a real captured log in
-tests/fixtures/llamacpp/ (captured at b11719) except the CUDA spellings inside
-_OOM_RE, which are read from the same pinned b11719 tree
+tests/fixtures/llamacpp/ (captured at b12644) except the CUDA spellings inside
+_OOM_RE, which are read from the same pinned tree (re-read at b12644)
 (ggml/src/ggml-cuda/ggml-cuda.cu) because
 the only NVIDIA host in scope was read-only when the fixtures were taken -- see
 that directory's README. The CPU and CUDA spellings share the backend-neutral
@@ -49,13 +49,14 @@ import re
 from app.runtime.backends.vllm.diagnostics import EngineDiagnosis
 
 # --- 1. Out of memory. Checked FIRST -- see the module docstring. ------------
-# The CPU spellings are in tests/fixtures/llamacpp/log_oom.txt (b11719 capture):
+# The CPU spellings are in tests/fixtures/llamacpp/log_oom.txt (b12644 capture,
+# byte-identical to b11719's):
 #   ggml_aligned_malloc: insufficient memory (attempted to allocate 21488.50 MB)
 #   ggml_backend_cpu_buffer_type_alloc_buffer: failed to allocate buffer of size ...
 #   ggml_backend_buft_alloc_buffer_n_default: failed to allocate CPU buffer of size ...
 #   llama_init_from_model: failed to initialize the context: failed to allocate
 #     buffer for kv cache
-# The CUDA spellings come from ggml/src/ggml-cuda/ggml-cuda.cu at b11719:
+# The CUDA spellings come from ggml/src/ggml-cuda/ggml-cuda.cu (unchanged b11719 -> b12644):
 #   ... cudaMalloc failed: out of memory
 #   alloc_tensor_range: failed to allocate CUDA0 buffer of size ...
 #   unable to allocate CUDA0 buffer

@@ -120,6 +120,24 @@ async def get_chat(
     chat_id: str, request: Request, user_id: int = Depends(current_user_id)
 ) -> dict[str, Any]:
     settings = request.app.state.settings
+    # Detached-turn reattach handle (app/chat2/live.py): non-null while a
+    # runner is still streaming for this chat. Reported null once the turn is
+    # done — even though the registry keeps the finished entry replayable for
+    # its GC grace window — so the client only attaches to answers that are
+    # still being written.
+    #
+    # Read it BEFORE the messages, never after. The runner persists the
+    # assistant row and only then marks the turn done, so a turn that finishes
+    # while the reads below await would otherwise come back as messages
+    # without the answer AND `live_turn: null` — an answer the client neither
+    # shows nor attaches to. Read first, "not done" can at worst point at a
+    # turn that has just finished, which `turn/live` still replays to `done`.
+    live = request.app.state.chat2_live_turns.get(chat_id)
+    live_turn = (
+        None
+        if live is None or live.done
+        else {"request_id": live.request_id, "message_id": live.message_id}
+    )
     async with open_db(settings.db_path) as db:
         repo = Chat2Repo(db)
         chat = await repo.get_chat(user_id, chat_id)
@@ -129,22 +147,12 @@ async def get_chat(
         atts = await repo.list_attachments(chat_id)
         ctx, loaded = await _describe(settings, repo, chat)
     secret = request.app.state.jwt_secret
-    # Detached-turn reattach handle (app/chat2/live.py): non-null while a
-    # runner is still streaming for this chat. Reported null the moment the
-    # turn is done — even though the registry keeps the finished entry
-    # replayable for its GC grace window — so the client only ever attaches
-    # to answers that are genuinely still being written.
-    live = request.app.state.chat2_live_turns.get(chat_id)
     return {
         "chat": serialize_chat(chat, model_loaded=loaded, context=ctx),
         "messages": [serialize_message(m) for m in msgs],
         "attachments": [serialize_attachment(secret, a) for a in atts],
         "context": ctx,
-        "live_turn": (
-            None
-            if live is None or live.done
-            else {"request_id": live.request_id, "message_id": live.message_id}
-        ),
+        "live_turn": live_turn,
     }
 
 

@@ -233,12 +233,12 @@ class _RecordingLiveRequest(LiveRequest):
 
 def test_live_registry_still_shows_the_running_estimate_mid_stream(tmp_data_dir, client):
     """Control: while the stream is in flight the live registry must still
-    receive the running delta_count estimate — the end-of-stream write must
-    not have displaced the mid-stream updates.
+    receive running counts -- the end-of-stream write must not have displaced
+    the mid-stream updates.
 
-    The update interval is patched to 0 so the estimate is pushed on the very
-    first content delta; the stream then carries reasoning text that the
-    estimate does not (and must not) include.
+    The update interval is patched to 0 so a count is pushed on every frame.
+    Since the stats redesign (B1) the live count is TOKENS of every channel,
+    reasoning included: a thinking model no longer reads 0 while it thinks.
     """
     client.get("/healthz")
     db_path = tmp_data_dir / "vllm-warden.db"
@@ -261,13 +261,12 @@ def test_live_registry_still_shows_the_running_estimate_mid_stream(tmp_data_dir,
 
     assert len(_RecordingLiveRequest.instances) == 1
     writes = _RecordingLiveRequest.instances[0]._ct_writes
-    # The mid-stream estimate: one content delta seen so far.
-    assert 1 in writes
-    # ...and it must not have absorbed the reasoning text. The final write is
-    # the full count ("thinking" + "ab" = 10 chars with the char-counting
-    # fake), and it lands AFTER the estimate.
+    # The mid-stream count after the reasoning frame: "thinking" = 8 tokens
+    # with the char-counting fake (B1: reasoning counts while it streams).
+    assert 8 in writes
+    # The final write is the full count ("thinking" + "ab" = 10), after it.
     assert writes[-1] == 10
-    assert writes.index(1) < writes.index(10)
+    assert writes.index(8) < len(writes) - 1
 
     flush_ledger(client)
     rows = _read_counters(db_path)

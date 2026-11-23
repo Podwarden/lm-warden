@@ -12,9 +12,26 @@ from pydantic import (
     model_validator,
 )
 
+from app.models.model_id_flags import long_flag_in
 from app.models.parallelism import PARALLEL_FLAGS_REFUSAL, parallel_flag_values
 from app.proxy.thinking_policy import ThinkingPolicy
 from app.runtime.backends import registry
+
+#: KV-cache tiers (lmw_kv, migration 0058). ``off`` leaves the engine untouched.
+KvStore = Literal["off", "ram", "ram+nvme"]
+
+#: Engine flags the ``kv_store`` setting owns; a second source would conflict with
+#: the connector it wires in. Each maps to the shortest abbreviation vLLM's parser
+#: still resolves to it (``--kv-o`` is ambiguous in vLLM, so refusing it costs nothing).
+_KV_FLAGS = {
+    "--kv-transfer-config": "--kv-t",
+    "--kv-offloading-backend": "--kv-o",
+    "--kv-offloading-size": "--kv-o",
+}
+KV_FLAGS_REFUSAL = (
+    "extra_args must not set --kv-transfer-config / --kv-offloading-backend / "
+    "--kv-offloading-size while kv_store is on: use the kv_store setting, or set it to off"
+)
 
 SLUG_RE = re.compile(r"^[a-zA-Z0-9._-]+$")
 
@@ -221,6 +238,11 @@ class ModelSpec(BaseModel):
     dp_spill_threshold: int | None = Field(None, ge=1)
     # Proxy-side knob (migration 0051): "off" forces thinking off for this model.
     thinking_policy: ThinkingPolicy = "client"
+    # Migration 0058: KV-cache tiers; adds --kv-transfer-config at load (reload-only).
+    kv_store: KvStore = "off"
+    # Migration 0060: the model's part of each KV tier under the fair eviction policy (the
+    # store's owner weight). Sent to the daemon at once, so it is editable while loaded.
+    kv_store_weight: int = Field(1, ge=1, le=100)
     # ``parallelism_strategy`` records the operator's choice; ``auto`` is the
     # safe default — single GPU is no-parallelism, multi-GPU defaults to TP.
     parallelism_strategy: Literal["tp", "pp", "auto"] = "auto"
@@ -352,6 +374,26 @@ class ModelSpec(BaseModel):
         ctx = info.context or {}
         if ctx.get("extra_args_written", True) and parallel_flag_values(self.extra_args):
             raise ValueError(PARALLEL_FLAGS_REFUSAL)
+        return self
+
+    @model_validator(mode="after")
+    def _no_kv_flags_in_extra_args(self, info: ValidationInfo) -> "ModelSpec":
+        """While ``kv_store`` is on it owns the engine's KV transfer flags.
+
+        With ``kv_store`` off the flags are the operator's (vLLM's own offloading, for
+        example). With it on, ``extra_args`` may not restate them, whichever field the
+        change writes: turning ``kv_store`` on over such flags is refused too, since the
+        load would pass two conflicting sources. No row can hold both (``kv_store`` is
+        new), so no legacy row is made uneditable.
+        """
+        if self.kv_store != "off" and long_flag_in("vllm", self.extra_args, _KV_FLAGS):
+            raise ValueError(KV_FLAGS_REFUSAL)
+        return self
+
+    @model_validator(mode="after")
+    def _kv_store_needs_vllm(self) -> "ModelSpec":
+        if self.kv_store != "off" and (self.backend or registry.DEFAULT_BACKEND) != "vllm":
+            raise ValueError("kv_store other than 'off' requires the vllm backend")
         return self
 
     @model_validator(mode="after")
@@ -604,10 +646,15 @@ class ModelOut(BaseModel):
     dp_affinity_enabled: bool
     dp_spill_threshold: int | None
     thinking_policy: ThinkingPolicy
+    kv_store: KvStore
+    kv_store_weight: int
     # Whether the chat template branches on enable_thinking; None = template unreadable.
     thinking_policy_supported: bool | None
     layout_notice: LayoutNotice | None
     engine: ModelEngine | None
+    # Computed from the backend: "isolated" when an isolated key may use the model,
+    # "unsupported" when its engine cannot isolate its cache and such a key is refused.
+    cache_isolation: Literal["isolated", "unsupported"]
 
 
 class ModelList(BaseModel):

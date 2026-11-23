@@ -4,7 +4,7 @@ import json
 import logging
 import secrets
 import time
-from collections.abc import AsyncGenerator, Awaitable, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable, Iterable
 from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
@@ -16,9 +16,9 @@ from starlette.background import BackgroundTask
 
 from app.cache_obs import canonical as _cobs_canonical
 from app.cobs2.canonical import _HEAD_ROLES, Canon, canonicalize, loose_message, loose_text
-from app.cobs2.ids import Ids, conv_id, ids_for, scope_salt
+from app.cobs2.ids import HeadPartIds, Ids, conv_id, head_part_ids, ids_for, scope_salt
 from app.cobs2.keys import NetworkKey
-from app.cobs2.lineage import Lineage, Observation
+from app.cobs2.lineage import Lineage, Observation, key_scope
 from app.cobs2.reply import ReplyCapture
 from app.cobs2.shape import Toolset, break_index, dead_weight_of, shape_json, shape_of, toolset_of
 from app.db.database import open_db
@@ -28,14 +28,45 @@ from app.guard import proxy as guard_proxy
 from app.guard.placeholders import RestoreMap
 from app.models.context_window import effective_context_window
 from app.models.parallelism import spill_threshold_for
-from app.proxy import content_log, forest_fields
+from app.proxy import content_log, forest_fields, prompt_lens_switch
 from app.proxy.auth import require_bearer, token_allows
 from app.proxy.capture import capturing
 from app.proxy.dp_affinity import KV_MAX_AGE_S, RANK_HEADER, client_rank
 from app.proxy.dp_affinity import conversation_key as _dp_affinity_key
 from app.proxy.envelope_hint import enrich_5xx_from_db
+from app.proxy.kv import kv_client, record_finished, set_kv_params, strip_client_kv_params
+from app.proxy.kv_scope import (
+    CACHE_SALT,
+    ISOLATION_UNAVAILABLE,
+    UNKEYED_SHARING,
+    CacheSaltRefused,
+    KvIdentity,
+    can_isolate_backend,
+    can_isolate_running,
+    cannot_isolate_message,
+    check_cache_salt,
+    gpu_salt,
+    is_isolated,
+    kv_identity,
+    reserved_salt,
+    rewrite_cache_salt,
+    running_backend,
+)
+from app.proxy.live_tokens import LiveOutCounter
 from app.proxy.model_cache import all_models, model_by_served_name
 from app.proxy.prompt_diet import apply_diet, parse_diet
+from app.proxy.prompt_lens import PromptLensHub
+from app.proxy.prompt_lens_capture import (
+    BodyLayout,
+    GmFrame,
+    ToolCallBudget,
+    ToolCallDelta,
+    _prompt_lens_prompt_window,
+    body_layout,
+    structured_prompt,
+    tool_call_delta,
+)
+from app.proxy.prompt_lens_kvsig import build_kvsig, build_kvsig_pair
 from app.proxy.reaggregate import StreamAggregator, parse_sse_event
 from app.proxy.request_id import REQUEST_ID_HEADER, with_request_id
 from app.proxy.request_registry import LiveRequest, finished_record
@@ -48,11 +79,13 @@ from app.proxy.thinking_policy import apply_thinking_off, effective_policy
 # live-request registry off app.state), which would shadow an unaliased import
 # for the whole function -- a real F823 that ruff caught rather than a style nit.
 from app.runtime.backends import registry as backend_registry
+from app.runtime.kv_store import kv_enabled
 from app.runtime.variants import (
     Variant,
     running_variant,
 )
 from app.sessions.refs import sess_ref
+from app.stats import speed
 from app.utils.client_ip import client_ip as _client_ip
 from app.utils.sse import delta_reasoning
 
@@ -60,9 +93,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1", tags=["proxy"])
 
-# God mode taps log-and-swallow: a broadcast failure must NEVER break, delay,
+# Prompt Lens taps log-and-swallow: a broadcast failure must NEVER break, delay,
 # or backpressure a proxied response.
-_gm_log = logging.getLogger("vllm_warden.godmode")
+_gm_log = logging.getLogger("vllm_warden.prompt_lens")
 
 # The only paths the runaway detector guards — the two streamable completion
 # endpoints. Every other proxied path is forwarded untouched even when armed.
@@ -145,35 +178,8 @@ def _extract_prompt(body_json) -> str:
     return body_json.get("prompt", "") or ""
 
 
-def _godmode_prompt_window(text: str, max_chars: int, tail_chars: int) -> tuple[str, bool]:
-    """Display-only capture window for the god-mode tap.
-
-    NEVER touches the forwarded request — only the tapped copy. If the prompt
-    fits within ``max_chars`` it is returned verbatim. Otherwise keep the head
-    ``(max_chars - tail_chars)`` chars PLUS the last ``tail_chars`` chars,
-    joined by the marker ``\\n\\n…[{n} chars elided]…\\n\\n`` where ``n`` is the
-    elided count. This guarantees the newest turn (which lives at the tail)
-    survives even under a giant repeated system prompt, instead of the old
-    head-slice spending the whole budget on the system prompt.
-
-    Returns ``(windowed_text, elided)`` where ``elided`` is True iff the middle
-    was dropped. O(len) — pure slices, no extra copies.
-    """
-    n = len(text)
-    if n <= max_chars:
-        return text, False
-    # Clamp the tail so a degenerate config (tail >= max) can't make the head
-    # length negative; the head is whatever budget remains after the tail.
-    tail = max(0, min(tail_chars, max_chars))
-    head_len = max_chars - tail
-    head = text[:head_len]
-    tail_str = text[n - tail :] if tail > 0 else ""
-    elided = n - head_len - tail
-    return f"{head}\n\n…[{elided} chars elided]…\n\n{tail_str}", True
-
-
-def _extract_godmode_media(body_json, store, settings) -> list[dict]:
-    """Display-only capture of ``image_url`` content parts for god mode
+def _extract_prompt_lens_media(body_json, store, settings) -> list[dict]:
+    """Display-only capture of ``image_url`` content parts for Prompt Lens
     (spec 2026-08-03). NEVER touches the forwarded request. Never raises —
     a malformed body yields a short (possibly empty) list.
 
@@ -181,7 +187,7 @@ def _extract_godmode_media(body_json, store, settings) -> list[dict]:
     the hot path), event carries {media_id, mime, chars}. Remote http(s)
     URLs -> {url} (the admin browser hotlinks them; the warden never
     fetches). Oversized -> {dropped: "too_large"}. More than
-    ``godmode_max_images_per_req`` -> one trailing {dropped: "count"}.
+    ``prompt_lens_max_images_per_req`` -> one trailing {dropped: "count"}.
     """
     media: list[dict] = []
     try:
@@ -190,8 +196,8 @@ def _extract_godmode_media(body_json, store, settings) -> list[dict]:
         messages = body_json.get("messages")
         if not isinstance(messages, list):
             return media
-        max_items = settings.godmode_max_images_per_req
-        max_chars = settings.godmode_max_image_chars
+        max_items = settings.prompt_lens_max_images_per_req
+        max_chars = settings.prompt_lens_max_image_chars
         overflow = 0
         for msg in messages:
             content = msg.get("content") if isinstance(msg, dict) else None
@@ -215,20 +221,20 @@ def _extract_godmode_media(body_json, store, settings) -> list[dict]:
                 if len(media) >= max_items:
                     overflow += 1
                     continue
-                entry = _godmode_media_entry(url, store, max_chars)
+                entry = _prompt_lens_media_entry(url, store, max_chars)
                 if entry is None:
                     continue
                 media.append(entry)
         if overflow:
             media.append({"kind": "image", "dropped": "count", "count": overflow})
     except Exception:
-        logger.warning("godmode media extraction failed", exc_info=True)
+        logger.warning("prompt_lens media extraction failed", exc_info=True)
     return media
 
 
-def _godmode_media_entry(url: str, store, max_chars: int) -> dict | None:
+def _prompt_lens_media_entry(url: str, store, max_chars: int) -> dict | None:
     """One image_url string -> media entry dict, or None to skip. Split from
-    _extract_godmode_media so the per-item paths stay readable."""
+    _extract_prompt_lens_media so the per-item paths stay readable."""
     if url.startswith("data:"):
         sep = url.find(";base64,")
         if sep < 0:
@@ -298,32 +304,43 @@ def _parse_sse_text(line: bytes) -> str | None:
         return None
 
 
-def _parse_sse_godmode(line: bytes) -> tuple[str | None, str | None, str | None]:
-    """God-mode-local SSE frame parse → ``(content, reasoning, finish_reason)``.
+def _parse_sse_prompt_lens(line: bytes) -> GmFrame:
+    """Prompt Lens-local SSE frame parse → ``GmFrame(content, reasoning,
+    finish_reason, tool_calls)`` of choice 0.
 
     Kept SEPARATE from ``_parse_sse_delta`` (whose single-string return the
-    counter path depends on) so god mode can also surface the reasoning
-    channel and ``finish_reason`` without touching that contract. With
-    vLLM's ``--reasoning-parser qwen3`` the thinking stream arrives in
-    ``delta.reasoning_content`` — or ``delta.reasoning`` on newer builds
-    (R22) — NOT inline ``<think>`` tags, so ``delta_reasoning`` reads
-    both names. Any part may be ``None``.
+    counter path depends on) so Prompt Lens can also surface the reasoning
+    channel, the tool calls and ``finish_reason`` without touching that
+    contract. With vLLM's ``--reasoning-parser qwen3`` the thinking stream
+    arrives in ``delta.reasoning_content`` — or ``delta.reasoning`` on newer
+    builds (R22) — NOT inline ``<think>`` tags, so ``delta_reasoning`` reads
+    both names. ``tool_calls`` holds one ``ToolCallDelta`` per
+    ``delta.tool_calls`` entry in frame order (parallel calls interleave by
+    ``index``); a bad entry is skipped and never costs the other channels.
     """
     if not line.startswith(b"data:"):
-        return None, None, None
+        return _GM_EMPTY
     payload = line[5:].strip()
     if payload == b"[DONE]":
-        return None, None, None
+        return _GM_EMPTY
     try:
         choice = json.loads(payload)["choices"][0]
         delta = choice.get("delta", {}) or {}
-        return (
-            delta.get("content"),
-            delta_reasoning(delta),
-            choice.get("finish_reason"),
-        )
+        content = delta.get("content")
+        reasoning = delta_reasoning(delta)
+        finish = choice.get("finish_reason")
     except Exception:
-        return None, None, None
+        return _GM_EMPTY
+    calls: tuple[ToolCallDelta, ...] = ()
+    raw = delta.get("tool_calls")
+    if isinstance(raw, list) and raw:
+        calls = tuple(
+            d for d in (tool_call_delta(tc, pos) for pos, tc in enumerate(raw)) if d is not None
+        )
+    return GmFrame(content, reasoning, finish, calls)
+
+
+_GM_EMPTY = GmFrame(None, None, None, ())
 
 
 def _parse_sse_frame(
@@ -401,13 +418,287 @@ def _parse_sse_frame(
     return usage, extra, _cached_tokens_of(ev), _prompt_tokens_of(ev), kind
 
 
-def _gm_publish(hub, event: dict) -> None:
-    """Publish an event, swallowing+logging any failure. God mode is strictly
-    best-effort observation; it must never surface an error into ``_forward``."""
+def _gm_prompt_captures(
+    body_json: Any, narrow: int, wide: int | None
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    """The stream event's structured prompt and, when ``wide`` is set, the
+    section store's wide one (G9): every window as wide as its budget."""
+    parts = structured_prompt(body_json, budget_chars=narrow)
+    if wide is None:
+        return parts, None
+    return parts, structured_prompt(body_json, budget_chars=wide, sys_chars=wide, msg_chars=wide)
+
+
+def _gm_publish(hub: Any, event: dict[str, Any], *, keep: bool = True) -> None:
+    """Publish an event, swallowing+logging any failure. Prompt Lens is strictly
+    best-effort observation; it must never surface an error into ``_forward``.
+    ``keep=False`` is a live-only event (``progress``): not kept in the ring."""
     try:
-        hub.publish(event)
+        if keep:
+            hub.publish(event)
+        else:
+            hub.publish(event, keep=False)
     except Exception:
-        _gm_log.warning("godmode publish failed for %s", event.get("type"), exc_info=True)
+        _gm_log.warning("prompt_lens publish failed for %s", event.get("type"), exc_info=True)
+
+
+def _gm_publish_tool_calls(
+    hub: Any,
+    req_id: str | None,
+    token_id: str | None,
+    calls: Iterable[ToolCallDelta],
+    budget: ToolCallBudget,
+) -> None:
+    """Publish one ``delta{channel: "tool_call"}`` per ``ToolCallDelta`` in
+    ``calls``, in order, within ``budget``. ``call_id``/``name`` appear only
+    when the fragment carries them. A call is never marked done here: the
+    stream gives no per-call end, so a call is done at ``request_end``."""
+    for d in calls:
+        fields = budget.take(d)
+        if fields is None:
+            continue
+        _gm_publish(
+            hub,
+            {
+                "type": "delta",
+                "req_id": req_id,
+                "token_id": token_id,
+                "ts": time.time(),
+                "channel": "tool_call",
+                **fields,
+            },
+        )
+
+
+def _reasoning_tokens_of(obj: Any) -> int | None:
+    """``usage.completion_tokens_details.reasoning_tokens``, when the engine reports it."""
+    usage = obj.get("usage") if isinstance(obj, dict) else None
+    details = usage.get("completion_tokens_details") if isinstance(usage, dict) else None
+    return _nonneg_int(details.get("reasoning_tokens")) if isinstance(details, dict) else None
+
+
+def _s3(v: float | None) -> float | None:
+    return round(v, 3) if v is not None else None
+
+
+def _gm_end(
+    hub: Any,
+    *,
+    req_id: str | None,
+    token_id: str | None,
+    finish_reason: str | None,
+    prompt_tokens: int,
+    completion_tokens: int,
+    live_req: LiveRequest | None,
+    cached_tokens: int | None = None,
+    reasoning_tokens: int | None = None,
+    extra: dict[str, Any] | None = None,
+    t0: float | None = None,
+) -> None:
+    """Publish one request's ``request_end`` (G5): usage, timings and cache.
+
+    Timings are the request-history row's (``finished_record``): ``ttft_s`` and
+    ``duration_s`` from admission, ``queued_s`` the admission wait; a request that never
+    left the queue spent all of ``duration_s`` there. ``decode_tps`` is the stats page's
+    (``speed.row_metrics``). ``cache`` is ``live_req.cache_obs`` (admin only: the key
+    holder's stream strips it). ``t0`` times a request with no live row. Never raises.
+    """
+    try:
+        now = _monotonic()
+        queued = ttft = dur = None
+        cache: dict[str, Any] | None = None
+        if live_req is not None:
+            dur = now - live_req.started_monotonic
+            queued = live_req.queued_s
+            if queued is None and live_req.phase == "queued":
+                queued = dur
+            if live_req.first_token_monotonic is not None:
+                ttft = live_req.first_token_monotonic - live_req.started_monotonic
+            if isinstance(live_req.cache_obs, dict):
+                cache = dict(live_req.cache_obs)
+        elif t0 is not None:
+            dur = now - t0
+        queued, ttft, dur = _s3(queued), _s3(ttft), _s3(dur)
+        decode = speed.row_metrics(
+            {
+                "queued_s": queued,
+                "ttft_s": ttft,
+                "duration_s": dur,
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+            }
+        )["decode"]
+        own = _nonneg_int(cache.get("reusable_tokens_own")) if cache is not None else None
+        event: dict[str, Any] = {
+            "type": "request_end",
+            "req_id": req_id,
+            "token_id": token_id,
+            "ts": time.time(),
+            "finish_reason": finish_reason,
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "reasoning_tokens": reasoning_tokens,
+            "cached_tokens": cached_tokens,
+            "queued_s": queued,
+            "ttft_s": ttft,
+            "duration_s": dur,
+            "decode_tps": decode,
+            "own_reused_tokens": (
+                min(cached_tokens, own) if cached_tokens is not None and own is not None else None
+            ),
+            "cache": cache,
+            **(extra or {}),
+        }
+    except Exception:  # noqa: BLE001 -- display only, never into _forward
+        _gm_log.warning("prompt_lens request_end failed", exc_info=True)
+        return
+    _gm_publish(hub, event)
+
+
+#: The fastest a request's live ``progress`` event repeats (G6), whatever the
+#: live tick (``_LIVE_UPDATE_INTERVAL_S``) is.
+_GM_PROGRESS_MIN_S = 1.0
+
+
+class _GmProgress:
+    """One streamed request's per-channel frame counts (G6), published live-only.
+
+    ``frames`` counts SSE frames with text on each channel, one per frame: a cheap
+    stand-in for a per-section rate (approximate, Q6), with no per-token tokenizing.
+    ``tick`` publishes at most once per ``max(_LIVE_UPDATE_INTERVAL_S, 1 s)``; the
+    request's ``_GmEnd.end`` publishes the final counts once, right before
+    ``request_end`` (ruling G-F5). Exists only with Prompt Lens on, streamed requests
+    only. Never raises into ``_forward``.
+    """
+
+    __slots__ = ("hub", "req_id", "token_id", "gm", "frames", "last")
+
+    def __init__(self, gm: "_GmEnd") -> None:
+        self.hub = gm.hub
+        self.req_id = gm.req_id
+        self.token_id = gm.token_id
+        self.gm = gm
+        self.frames = {"reasoning": 0, "content": 0, "tool_call": 0}
+        self.last = float("-inf")
+
+    def count(self, content: str | None, reasoning: str | None, calls: Any, now: float) -> None:
+        """Count one SSE frame's channels; publish when the throttle allows."""
+        grew = False
+        if reasoning:
+            self.frames["reasoning"] += 1
+            grew = True
+        if content:
+            self.frames["content"] += 1
+            grew = True
+        if calls:
+            self.frames["tool_call"] += 1
+            grew = True
+        if grew and now - self.last >= max(_LIVE_UPDATE_INTERVAL_S, _GM_PROGRESS_MIN_S):
+            self.last = now
+            lr = self.gm.live_req
+            self.publish(lr.completion_tokens if lr is not None else None)
+
+    def publish(self, completion_tokens: int | None) -> None:
+        lr = self.gm.live_req
+        _gm_publish(
+            self.hub,
+            {
+                "type": "progress",
+                "req_id": self.req_id,
+                "token_id": self.token_id,
+                "ts": time.time(),
+                "phase": lr.phase if lr is not None else "running",
+                "frames": dict(self.frames),
+                "completion_tokens": completion_tokens,
+            },
+            keep=False,
+        )
+
+
+class _GmEnd:
+    """One request's ``request_end``, published at most once (G5, ruling G-F1).
+
+    Created only with Prompt Lens on, right after ``request_start``. The exit that knows the
+    outcome calls ``end``; ``_forward``'s outer ``finally`` calls ``fallback`` for every
+    other exit (queue refusal, cancelled while queued or registering, send failures, ...),
+    unless the response was handed to a stream, whose generator then owns the end.
+    """
+
+    __slots__ = (
+        "hub",
+        "req_id",
+        "token_id",
+        "prompt_tokens",
+        "t0",
+        "live_req",
+        "done",
+        "handed_off",
+        "progress",
+    )
+
+    def __init__(self, hub: Any, req_id: str | None, token_id: str | None, prompt_tokens: int):
+        self.hub = hub
+        self.req_id = req_id
+        self.token_id = token_id
+        self.prompt_tokens = prompt_tokens
+        self.t0 = _monotonic()
+        self.live_req: LiveRequest | None = None
+        self.done = False
+        self.handed_off = False
+        #: Set by a streamed request's generator (G6); its final counts go out here.
+        self.progress: _GmProgress | None = None
+
+    def end(
+        self,
+        finish_reason: str | None,
+        *,
+        prompt_tokens: int,
+        completion_tokens: int,
+        cached_tokens: int | None = None,
+        reasoning_tokens: int | None = None,
+        extra: dict[str, Any] | None = None,
+    ) -> None:
+        if self.done:
+            return
+        self.done = True
+        if self.progress is not None:
+            # G-F5: the final counts, unthrottled, right before request_end.
+            # Guarded: a progress failure must never cost the request its end.
+            try:
+                self.progress.publish(completion_tokens)
+            except Exception:  # noqa: BLE001 -- display only
+                _gm_log.warning("prompt_lens final progress failed", exc_info=True)
+        _gm_end(
+            self.hub,
+            req_id=self.req_id,
+            token_id=self.token_id,
+            finish_reason=finish_reason,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            live_req=self.live_req,
+            cached_tokens=cached_tokens,
+            reasoning_tokens=reasoning_tokens,
+            extra=extra,
+            t0=self.t0,
+        )
+
+    def fallback(self, finish_reason: str | None) -> None:
+        """The end of an exit that published none, from what the live row holds."""
+        lr = self.live_req
+        self.end(
+            finish_reason,
+            prompt_tokens=lr.prompt_tokens if lr is not None else self.prompt_tokens,
+            completion_tokens=lr.completion_tokens if lr is not None else 0,
+            cached_tokens=lr.cached_tokens if lr is not None else None,
+        )
+
+
+def _gm_after_settle(gm: "_GmEnd", _task: Any) -> None:
+    """The settle task's done-callback. ``_settle`` publishes the end itself, so this
+    only acts when it did not reach that point: it raised (or was cancelled), an
+    ``error``. It never reads the task's exception, so an unawaited failure still
+    logs as it did before."""
+    gm.fallback("error")
 
 
 def _feed_detector(detector: RunawayDetector, synth: dict, ev: dict, is_chat: bool) -> None:
@@ -511,6 +802,26 @@ def _completion_text(out: dict, is_chat: bool) -> str:
 _record_warned_at = -60.0  # monotonic time of the last record-failure warning
 
 
+def _produced_s(live_req: Any, now: float) -> float | None:
+    """How long the request was producing tokens, for per-minute booking (B7, D3).
+
+    Streamed: from the first token to now (the prompt books at the first-token
+    minute). Not streamed, the warden sees no first token: from the moment the
+    slot was held to now, so the prompt books at the slot's minute and the
+    reply is spread over the whole slot (prefill included, the closest the
+    proxy can see). None without a live row: everything books at the finish.
+    """
+    if live_req is None:
+        return None
+    try:
+        t0 = live_req.first_token_monotonic
+        if t0 is None:
+            t0 = live_req.started_monotonic
+        return max(0.0, now - float(t0))
+    except Exception:  # noqa: BLE001 -- accounting must never fail a request
+        return None
+
+
 async def _record_counters(
     request: Request,
     model,
@@ -519,8 +830,11 @@ async def _record_counters(
     completion_tokens: int,
     variant: Variant | None = None,
     cached_tokens: int | None = None,
+    produced_s: float | None = None,
 ) -> None:
     # #279 stage 3: accumulate only; app/proxy/ledger.py writes once a second.
+    # ``produced_s``: first token to now, so the per-minute rollups book the
+    # tokens to the minutes they were produced in (B7, D3).
     if variant is None and token_id is not None:
         # Best effort, in its own try: a failed lookup only loses the
         # per-variant rollup, never the counters, sample and usage.
@@ -538,6 +852,7 @@ async def _record_counters(
             cached_tokens=cached_tokens,
             variant_id=variant.id if variant is not None else None,
             variant=variant,
+            produced_s=produced_s,
         )
     except Exception:  # noqa: BLE001 -- accounting must never fail a request
         global _record_warned_at
@@ -773,7 +1088,7 @@ def _cobs2_size_over(canon: Canon, limit: int) -> bool:
 class _Cobs2Pre:
     """The pure part of the cobs2 pass (safe in a worker thread)."""
 
-    __slots__ = ("ids", "salt", "scan_text", "first", "conv", "shape", "toolset")
+    __slots__ = ("ids", "salt", "scan_text", "first", "conv", "shape", "toolset", "gm")
 
     def __init__(
         self,
@@ -784,6 +1099,7 @@ class _Cobs2Pre:
         conv: str | None = None,
         shape: dict[str, Any] | None = None,
         toolset: Toolset | None = None,
+        gm: tuple[HeadPartIds, BodyLayout] | None = None,
     ) -> None:
         self.ids = ids
         self.salt = salt
@@ -793,10 +1109,15 @@ class _Cobs2Pre:
         self.conv = conv
         self.shape = shape
         self.toolset = toolset
+        # Prompt Lens only (G3): the head part ids and the body layout the kvsig
+        # event reads. None when Prompt Lens is off: no canon is kept either way.
+        self.gm = gm
 
 
 class _Cobs2Seen:
-    """What ``_forward`` keeps from the cobs2 pass for the finish."""
+    """What ``_forward`` keeps from the cobs2 pass for the finish. ``salt`` is the
+    LINEAGE scope (``key_scope``: cache_salt digest narrowed to the API key), so
+    ``remember_reply`` lands in the same per-key scope as the observe."""
 
     __slots__ = ("ids", "obs", "salt", "compaction")
 
@@ -808,10 +1129,14 @@ class _Cobs2Seen:
 
 
 def _cobs2_compute(
-    body_json: Any, key: NetworkKey | None, secret: str | None = None
+    body_json: Any, key: NetworkKey | None, secret: str | None = None, prompt_lens: bool = False
 ) -> _Cobs2Pre | None:
     """Canonical form, size cap, ids and the bounded fingerprint text. Pure;
     runs in a worker thread for a big body (the id memo is locked).
+
+    ``prompt_lens`` (on only while Prompt Lens is): also the head part ids and the
+    body layout for the kvsig event, in this same pass (``gm``; None when
+    either fails, which fails only the event).
 
     None when there is nothing to hash, no key, or the canonical form is over
     ``MAX_CHAIN_BYTES`` UTF-8 bytes (ids_for is then never run). Raises on a
@@ -851,7 +1176,79 @@ def _cobs2_compute(
             toolset = toolset_of(body_json.get("tools"), canon.tools, secret)
         except Exception:  # noqa: BLE001
             logger.debug("cobs2: toolset failed", exc_info=True)
-    return _Cobs2Pre(ids, salt, scan, msgs[0] if msgs else None, conv, shape, toolset)
+    gm: tuple[HeadPartIds, BodyLayout] | None = None
+    if prompt_lens:
+        try:
+            layout = body_layout(body_json)
+            if layout is not None:
+                gm = (head_part_ids(canon, key, salt, ids.head), layout)
+        except Exception as exc:  # noqa: BLE001 -- display only
+            # The type only: an exception's text could quote the body.
+            _gm_log.warning("prompt_lens kvsig layout failed: %s", type(exc).__name__)
+    return _Cobs2Pre(ids, salt, scan, msgs[0] if msgs else None, conv, shape, toolset, gm)
+
+
+def _gm_kvsig(
+    body_json: Any,
+    key: NetworkKey | None,
+    pre: _Cobs2Pre | None,
+    seen: _Cobs2Seen | None,
+    failed: str | None,
+    *,
+    chain: Any,
+    match_all: Any,
+    match_own: Any,
+    prompt_tokens: int,
+) -> dict[str, Any]:
+    """The kvsig event body for ``_forward`` (G3), or why there is none:
+    ``not_chat`` (no ``messages`` list), ``no_key`` (no cobs2 key), ``error``
+    (the compute or the layout failed), ``over_cap`` (the canonical form is
+    over the chain cap, so no ids were hashed)."""
+    reason: str | None = None
+    if not isinstance(body_json, dict) or not isinstance(body_json.get("messages"), list):
+        reason = "not_chat"
+    elif key is None:
+        reason = "no_key"
+    elif failed is not None:
+        reason = failed
+    elif pre is None:
+        reason = "over_cap"
+    elif pre.gm is None:
+        reason = "error"
+    if reason is not None or pre is None or pre.gm is None:
+        return build_kvsig(
+            ids=None,
+            head_parts=None,
+            obs=None,
+            chain=None,
+            match_all=None,
+            match_own=None,
+            prompt_tokens=prompt_tokens,
+            raw_body_index=[],
+            parts_chars=[],
+            sys_chars=0,
+            tools_chars=0,
+            roles=[],
+            reason=reason or "error",
+        )
+    head_parts, lay = pre.gm
+    return build_kvsig_pair(
+        ids=pre.ids,
+        head_parts=head_parts,
+        obs=seen.obs if seen is not None else None,
+        chain=chain,
+        match_all=match_all,
+        match_own=match_own,
+        prompt_tokens=prompt_tokens,
+        raw_body_index=lay.raw_body_index,
+        parts_chars=lay.parts_chars,
+        sys_chars=lay.sys_chars,
+        tools_chars=lay.tools_chars,
+        roles=lay.roles,
+        reason=None,
+        raw_head_index=lay.raw_head_index,
+        head_roles=lay.head_roles,
+    )
 
 
 def _cobs2_key_ids(body_json: Any, key: NetworkKey | None) -> Ids | None:
@@ -898,12 +1295,14 @@ def _cobs2_link(
     """The lineage step, on the event loop. The first message's sketch text is
     built lazily, only when the body collapsed."""
     compaction = Lineage.is_compaction_request(pre.scan_text)
+    # Per API key: the lineage never links one key's request to another's.
+    scope = key_scope(pre.salt, token_scope)
     obs = None
     if lineage is not None:
         first = pre.first
         obs = lineage.observe(
             model_id=model_id,
-            scope=pre.salt,
+            scope=scope,
             session_key=session_key,
             parent_session_key=parent_session_key,
             ids=pre.ids,
@@ -916,7 +1315,7 @@ def _cobs2_link(
             request_id=request_id,
             conv=pre.conv,
         )
-    return _Cobs2Seen(pre.ids, obs, pre.salt, compaction)
+    return _Cobs2Seen(pre.ids, obs, scope, compaction)
 
 
 def _cobs2_observe(
@@ -1067,6 +1466,160 @@ async def _guard_frames(it: Any, trailer: str | None) -> Any:
         yield tail
 
 
+#: ``_redacted_engine_body``: the client sent no cache_salt / keep the body's own.
+_NO_SALT = object()
+_KEEP_SALT = object()
+
+
+#: Whether the missing-network-key WARNING was logged since the key was last seen.
+_warned_no_network_key = False
+
+
+def _kv_isolation_preflight(
+    request: Request, model: Any, token: TokenRow, body_json: Any, variant: Any = None
+) -> tuple[KvIdentity, bytes | None, bool]:
+    """The request's KV identity, the network key, and whether the engine's cache_salt is
+    rewritten (every backend that honours it: vLLM). Raises the client's refusal.
+
+    Fail closed for an isolated key: a model whose backend cannot isolate its cache
+    (llama.cpp, MLX, an unknown backend) is a 403, decided first (O4: the answer, never a
+    failure to retry or fall back from); no network key, or a scope that cannot be derived
+    (no tenant id, a bad epoch), is a 503; a cache_salt that cannot be used is a 400. A
+    sharing key without the network key stays unattributed, as in step 1, except that a
+    reserved ``lmw1:`` salt, which cannot be rewritten then, is a 503 too.
+    """
+    global _warned_no_network_key
+    isolated = is_isolated(token)
+    # The engine as launched decides, not the row (which may have been edited since), both
+    # the refusal and the salt rewrite, so an admitted isolated request is always salted.
+    launched = running_backend(request.app.state, model, variant)
+    if isolated and (launched is None or not can_isolate_backend(launched)):
+        raise HTTPException(403, cannot_isolate_message(getattr(model, "served_model_name", "")))
+    salt_rewrite = (
+        can_isolate_backend(launched) if launched is not None else _honours_cache_salt(model)
+    )
+    key_obj = getattr(request.app.state, "cobs2_key", None)
+    nk = getattr(key_obj, "key", None) if key_obj is not None else None
+    if isinstance(nk, bytes):
+        _warned_no_network_key = False
+    elif not _warned_no_network_key:
+        _warned_no_network_key = True
+        logger.warning(
+            "kv: the network key is unavailable; isolated keys get 503 and sharing keys "
+            "run unattributed until it is back"
+        )
+    ident: KvIdentity | None = None
+    if isinstance(nk, bytes):
+        try:
+            ident = kv_identity(token, nk)
+        except ValueError:  # never the value: these are secrets of the key holder
+            ident = None
+    if ident is None:
+        nk = None
+        if isolated:
+            raise HTTPException(503, ISOLATION_UNAVAILABLE)
+        ident = UNKEYED_SHARING
+    if ident.isolated and not isinstance(body_json, dict):
+        raise HTTPException(400, "the request body must be a JSON object")
+    try:
+        check_cache_salt(body_json, ident)
+    except CacheSaltRefused as e:
+        raise HTTPException(400, str(e)) from None
+    if nk is None and salt_rewrite and reserved_salt(body_json):
+        raise HTTPException(503, ISOLATION_UNAVAILABLE)
+    return ident, nk, salt_rewrite
+
+
+def _salt_secrets(salt: Any) -> list[bytes]:
+    """The derived salt's secret part (its hex), as bytes; [] for anything else."""
+    if isinstance(salt, str) and salt.startswith("lmw1:"):
+        return [salt[len("lmw1:") :].encode()]
+    return []
+
+
+def _apply_cache_salt(body_json: Any, ident: KvIdentity, nk: bytes | None) -> bool:
+    """The late half: the engine's cache_salt for ``ident``; True when the body changed.
+
+    An isolated request never reaches the engine without its derived salt (ruling R7):
+    should the rewrite fail, it gets the salt of an empty client salt; should even that
+    fail, this raises a 503 and the caller's send path releases the slot and the live row.
+    """
+    if nk is None or not isinstance(body_json, dict):
+        if ident.isolated:  # the pre-flight refuses these; never forward one unsalted
+            raise HTTPException(503, ISOLATION_UNAVAILABLE)
+        return False
+    try:
+        return rewrite_cache_salt(body_json, ident, nk)
+    except Exception as e:  # noqa: BLE001 -- never the value, only its type
+        logger.warning("kv: cache_salt rewrite failed (%s)", type(e).__name__)
+        if not ident.isolated and not reserved_salt(body_json):
+            return False
+        body_json[CACHE_SALT] = gpu_salt(nk, ident.scope, "")
+        return True
+
+
+#: What replaces a per-key secret in an engine response the proxy relays or captures.
+_SECRET_PLACEHOLDER = b"<redacted>"
+
+
+def _scrub_secrets(data: bytes, secrets: tuple[bytes, ...]) -> bytes:
+    """``data`` with every per-key secret of this request replaced by the placeholder.
+
+    An engine error can echo the request (vLLM's RequestValidationError puts the whole
+    request dict in a 400), and that request carries the derived cache_salt and the
+    lmw_tenant / lmw_scope hex. The values are hex, which JSON never escapes.
+    """
+    for s in secrets:
+        if s in data:
+            data = data.replace(s, _SECRET_PLACEHOLDER)
+    return data
+
+
+class _ScrubbedResponse:
+    """An upstream error response, read whole and scrubbed (``_scrub_secrets``); the rest
+    of ``_forward`` reads it through ``aread`` / ``aiter_bytes`` as before."""
+
+    def __init__(self, resp: Any, content: bytes) -> None:
+        self._resp = resp
+        self._content = content
+        self.status_code = resp.status_code
+        self.headers = resp.headers
+
+    async def aread(self) -> bytes:
+        return self._content
+
+    async def aiter_bytes(self) -> Any:
+        if self._content:
+            yield self._content
+
+    async def aclose(self) -> None:
+        await self._resp.aclose()
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._resp, name)
+
+
+def _redacted_engine_body(body: bytes, client_salt: Any) -> bytes:
+    """The engine body as the debug capture keeps it: the client's own cache_salt and
+    the lmw_tenant / lmw_scope values blanked (secrets of the key holder)."""
+    try:
+        view = json.loads(body)
+    except ValueError:
+        return b""
+    if not isinstance(view, dict):
+        return b""
+    if client_salt is _NO_SALT:
+        view.pop(CACHE_SALT, None)
+    elif client_salt is not _KEEP_SALT:
+        view[CACHE_SALT] = client_salt
+    kvp = view.get("kv_transfer_params")
+    if isinstance(kvp, dict):
+        for k in ("lmw_tenant", "lmw_scope"):
+            if kvp.get(k):
+                kvp[k] = "<redacted>"
+    return json.dumps(view).encode()
+
+
 async def _forward(
     request: Request,
     model: ModelRow,
@@ -1079,8 +1632,15 @@ async def _forward(
     affinity_key: str | None = None,
     affinity_source: str | None = None,
     session_id: str | None = None,
+    wire_body: bytes | None = None,
+    wire_path: str | None = None,
 ) -> Response:
     """Run one request through admission, the engine and the bookkeeping.
+
+    ``wire_body`` / ``wire_path`` are for the routes that translate (``/v1/messages``,
+    ``/v1/responses``): the bytes the client sent and the path it called, which only the debug
+    capture uses (it records them as ``request_body`` / ``path``, and the translated chat body as
+    ``translated_body``). Both default to None: the request body is then the wire body.
 
     ``affinity_source`` and ``session_id`` are for routes that swap the request
     body for a translated one (``/v1/responses``): the translated chat body no
@@ -1089,12 +1649,83 @@ async def _forward(
     ``affinity_source`` set, ``affinity_key`` is used verbatim as the replica
     key and the extractor is not run on the (translated) body; ``session_id``
     is what the live row shows. Both default to None: no behaviour change.
+
+    G-F1: every request whose ``request_start`` Prompt Lens published gets exactly one
+    ``request_end``. The exit that knows the outcome publishes it; this outer ``finally``
+    publishes it for every other exit (``abort`` when cancelled, ``error`` on a raise or
+    an error status). With Prompt Lens off ``gm_slot`` stays empty: nothing else runs.
     """
+    gm_slot: list[_GmEnd] = []
+    gm_exit: str | None = None
+    try:
+        out = await _forward_body(
+            request,
+            model,
+            host,
+            port,
+            path,
+            token,
+            gm_slot,
+            variant=variant,
+            affinity_key=affinity_key,
+            affinity_source=affinity_source,
+            session_id=session_id,
+            wire_body=wire_body,
+            wire_path=wire_path,
+        )
+        if gm_slot and out.status_code >= 400:
+            gm_exit = "error"
+        return out
+    except BaseException as exc:
+        if gm_slot:
+            gm_exit = "abort" if isinstance(exc, asyncio.CancelledError) else "error"
+        raise
+    finally:
+        if gm_slot and not gm_slot[0].handed_off:
+            gm_slot[0].fallback(gm_exit)
+
+
+async def _forward_body(
+    request: Request,
+    model: ModelRow,
+    host: str,
+    port: int,
+    path: str,
+    token: TokenRow,
+    gm_slot: list[_GmEnd],
+    *,
+    variant: Variant | None,
+    affinity_key: str | None,
+    affinity_source: str | None,
+    session_id: str | None,
+    wire_body: bytes | None,
+    wire_path: str | None,
+) -> Response:
+    """``_forward``'s work; ``gm_slot`` receives the request's ``_GmEnd`` (Prompt Lens on)."""
+    wire_sanitized = False
     body = await request.body()
-    client_body = body  # debug capture records what the client (or the translator) sent
+    client_body = body  # debug capture: the request as _forward got it (translated, if it was)
     body_json = json.loads(body) if body else {}
+    # KV-cache tiers: with kv_store on, a client's own kv_transfer_params never reach the
+    # engine (vLLM acts on do_remote_prefill / do_remote_decode, and the connector on lmw_*).
+    # With kv_store off they pass through: the engine's connector, if any, is the operator's
+    # (NIXL or disaggregated prefill through extra_args) and needs them.
+    if kv_enabled(model) and strip_client_kv_params(body_json):
+        body = json.dumps(body_json).encode()
+    # Per-key KV isolation (app/proxy/kv_scope.py), first half: the request's identity and
+    # every refusal, decided HERE, before the live row and the admission slot exist, so a
+    # refused request holds neither. The engine's cache_salt is rewritten just before the
+    # upstream send, after cobs2 and cache observation read the client's own salt.
+    kv_ident, kv_nk, salt_rewrite = _kv_isolation_preflight(
+        request, model, token, body_json, variant
+    )
+    kv_redact = False  # the capture's engine body hides the per-key values
+    # The per-key secrets this request carries to the engine (derived salt, tenant and
+    # scope hex): scrubbed from a relayed error body and from the captured response.
+    kv_secrets: list[bytes] = []
+    kv_capture_salt: Any = _KEEP_SALT
     # Sensitive data guard (app/guard/proxy.py), before anything reads the body: everything below
-    # (god-mode, cobs2, capture, history, the engine) sees the sanitized body. Off for this key:
+    # (Prompt Lens, cobs2, capture, history, the engine) sees the sanitized body. Off for this key:
     # one attribute read, and the path is byte-identical.
     g_out: guard_proxy.Outcome | None = None
     # The router (app/router/data_plane.py) already scanned and sanitized a /v1/messages body:
@@ -1126,6 +1757,10 @@ async def _forward(
             body_json = g_out.body
             body = json.dumps(body_json).encode()
             client_body = body
+            # The guard rewrote the translated body; the wire bytes still hold what it removed,
+            # and the capture must not (the guard's promise is that nothing downstream sees it).
+            wire_sanitized = wire_body is not None
+            wire_body = None
         else:
             g_out = None
     # Restoring (client side) and the trailer (engine side, so reply ids, capture and the content
@@ -1206,42 +1841,52 @@ async def _forward(
         fallback_repo=getattr(model, "tokenizer_repo", None),
     )
 
-    # God mode tap (off by default). The single cheap gate below is the ONLY
+    # Prompt Lens tap (off by default). The single cheap gate below is the ONLY
     # cost on the hot path when disabled: no hub call, byte-identical forward.
     settings = request.app.state.settings
-    hub = getattr(request.app.state, "godmode_hub", None)
-    gm_on = hub is not None and settings.godmode_enabled
+    hub = getattr(request.app.state, "prompt_lens_hub", None)
+    gm_on = hub is not None and prompt_lens_switch.enabled(request.app)
+    if gm_on and isinstance(hub, PromptLensHub):
+        # Bound to the hub's epoch now: if Prompt Lens goes off (and on again)
+        # while this request runs, nothing more of it is published.
+        hub = hub.bound()
+    # The request's one request_end (G5, G-F1); set once request_start is published.
+    gm: _GmEnd | None = None
+    gm_sections: Any = None
+    gm_wide: dict[str, Any] | None = None
     req_id = None
+    # One id for the live row, the history row, the response header and the
+    # Prompt Lens capture (its request_start names it, so a capture can be found
+    # by the request it belongs to -- the key holder's View, stats redesign B11).
+    request_id = uuid4().hex
     if gm_on:
         req_id = secrets.token_hex(8)
         client_ip = _client_ip(request)
-        gm_prompt, gm_prompt_elided = _godmode_prompt_window(
+        gm_prompt, gm_prompt_elided = _prompt_lens_prompt_window(
             prompt_text,
-            settings.godmode_max_prompt_chars,
-            settings.godmode_prompt_tail_chars,
+            settings.prompt_lens_max_prompt_chars,
+            settings.prompt_lens_prompt_tail_chars,
         )
-        gm_media = _extract_godmode_media(
-            body_json, getattr(request.app.state, "godmode_media", None), settings
+        gm_media = _extract_prompt_lens_media(
+            body_json, getattr(request.app.state, "prompt_lens_media", None), settings
         )
-        _gm_publish(
-            hub,
-            {
-                "type": "request_start",
-                "req_id": req_id,
-                "ts": time.time(),
-                # token label = name if present else id prefix. NEVER the raw
-                # bearer token or Authorization header.
-                "token_label": token.name or (token.id[:8] if token.id else None),
-                "token_id": token.id,
-                "model": model.id,
-                "served_name": model.served_model_name,
-                "client_ip": client_ip,
-                "stream": is_stream,
-                "prompt": gm_prompt,
-                "prompt_elided": gm_prompt_elided,
-                **({"media": gm_media} if gm_media else {}),
-            },
+        # G1: the structured capture (roles, tools, tool calls and results),
+        # windowed and bounded. A big body is walked off the loop, like the
+        # cobs2 ids; nothing is held yet, so a cancellation here leaks nothing.
+        # G9: the WIDE capture for the section store (tool results and the
+        # prompt on expand), in the same pass: one window per message as wide
+        # as the whole budget, so a tool result is whole up to it.
+        gm_sections = getattr(request.app.state, "prompt_lens_sections", None)
+        gm_parts_fn = functools.partial(
+            _gm_prompt_captures,
+            body_json,
+            settings.prompt_lens_max_prompt_chars,
+            settings.prompt_lens_section_prompt_chars if gm_sections is not None else None,
         )
+        if len(body) > _COBS2_THREAD_BYTES:
+            gm_parts, gm_wide = await asyncio.to_thread(gm_parts_fn)
+        else:
+            gm_parts, gm_wide = gm_parts_fn()
 
     # S5 — STRICT priority scheduler in front of vLLM. Acquired here so the
     # slot is held for the full duration of the upstream call (including the
@@ -1292,8 +1937,41 @@ async def _forward(
         }
     except Exception:  # noqa: BLE001 -- display metadata must never fail a request
         logger.debug("forest: could not derive fields", exc_info=True)
-    # One id for the live row, the history row and the response header.
-    request_id = uuid4().hex
+    if gm_on:
+        # Published here, once the session and the turn are known, still before
+        # the scheduler acquire (a queued request is visible) and with no await
+        # between the forest fields and the publish.
+        _gm_publish(
+            hub,
+            {
+                "type": "request_start",
+                "req_id": req_id,
+                "ts": time.time(),
+                # token label = name if present else id prefix. NEVER the raw
+                # bearer token or Authorization header.
+                "token_label": token.name or (token.id[:8] if token.id else None),
+                "token_id": token.id,
+                "request_id": request_id,
+                "model": model.id,
+                "served_name": model.served_model_name,
+                "client_ip": client_ip,
+                "stream": is_stream,
+                # The flat prompt stays for one release (scripts read it).
+                "prompt": gm_prompt,
+                "prompt_elided": gm_prompt_elided,
+                "prompt_parts": gm_parts,
+                "session_id": session_id,
+                "turn": forest_kw.get("turn_index"),
+                **({"media": gm_media} if gm_media else {}),
+            },
+        )
+        if gm_sections is not None:
+            # Right after its request_start reached the store, no await between.
+            gm_sections.put_prompt(
+                req_id, token.id, gm_wide, keep=int(getattr(token, "keep_captures", 0) or 0)
+            )
+        gm = _GmEnd(hub, req_id, token.id, prompt_tokens)
+        gm_slot.append(gm)
     if g_out is not None and g_out.events and g_handed is None:
         _guard_log(request, g_out.events, request_id)
     try:
@@ -1327,6 +2005,8 @@ async def _forward(
         if live_req is not None and registry is not None:
             await asyncio.shield(registry.deregister(live_req.id))
         raise
+    if gm is not None:
+        gm.live_req = live_req
     # Time the admission gate ALONE. Tokenization happens above and is
     # deliberately outside this span, so the recorded
     # figure means "waited for a slot" and nothing else.
@@ -1372,6 +2052,9 @@ async def _forward(
     # (size cap, or an error) the same values from the head, the tools and
     # message 0 alone, so the key never flips with the body's size.
     cobs2_key_ids: Ids | None = None
+    # G3: why the kvsig event has no parts when the compute gave none.
+    gm_kv_reason: str | None = None
+    cobs2_key = None
     try:
         try:
             cobs2_key = getattr(request.app.state, "cobs2_key", None)
@@ -1389,12 +2072,13 @@ async def _forward(
                 try:
                     if cobs2_off_loop:
                         cobs2_pre = await asyncio.to_thread(
-                            _cobs2_compute, cobs2_snap, cobs2_key, cobs2_secret
+                            _cobs2_compute, cobs2_snap, cobs2_key, cobs2_secret, gm_on
                         )
                     else:
-                        cobs2_pre = _cobs2_compute(cobs2_snap, cobs2_key, cobs2_secret)
+                        cobs2_pre = _cobs2_compute(cobs2_snap, cobs2_key, cobs2_secret, gm_on)
                 except Exception:  # noqa: BLE001 — identity must never fail a request
                     cobs2_pre = None
+                    gm_kv_reason = "error"
                     logger.debug("cobs2: ids failed", exc_info=True)
                 if cobs2_pre is not None:
                     cobs2_key_ids = cobs2_pre.ids
@@ -1521,7 +2205,12 @@ async def _forward(
             and dp_key_source != "prompt_hash"
             and (dp_n <= 1 or dp_rank is not None)
         ):
-            mem_key = dp_key
+            # Per API key (key_scope): another key's prompts with the same
+            # client session id never feed this key's estimate.
+            mem_key = key_scope(
+                dp_key.encode("utf-8", "surrogatepass"),
+                forest_fields.hkey(request.app.state.settings.cookie_secret, token.id),
+            ).hex()
             # One engine run: the variant plus the supervisor's load counter, so
             # a restart or variant swap starts from an empty memory.
             gen = getattr(request.app.state.supervisor, "get_generation", None)
@@ -1550,6 +2239,7 @@ async def _forward(
     obs_chain = None
     obs_epoch = ""
     obs_all = obs_own = None
+    iso_star_frac: float | None = None
     try:
         if cache_index is not None:
             from app.cache_obs.canonical import chain_of
@@ -1560,8 +2250,16 @@ async def _forward(
                 obs_epoch = f"{variant.id if variant else ''}:{gen(model.id) if gen else 0}"
                 obs_all = cache_index.match(model.id, obs_epoch, obs_chain)
                 obs_own = cache_index.match(model.id, obs_epoch, obs_chain, token_id=token.id)
+                if kv_ident.isolated:
+                    # An isolated key can be served by its own blocks only: its fleet
+                    # figure is its own lens. The operator lens (what sharing would have
+                    # served) is kept for the admin-only isolation cost.
+                    if obs_chain.total_bytes > 0:
+                        iso_star_frac = obs_all.best_bytes / obs_chain.total_bytes
+                    obs_all = obs_own
     except Exception:  # noqa: BLE001 — observation must never fail a request
         obs_chain = obs_all = obs_own = None
+        iso_star_frac = None
         logger.debug("cache-obs: match failed", exc_info=True)
     cobs2_seen: _Cobs2Seen | None = None
     cobs2_kw: dict[str, Any] = {}
@@ -1671,6 +2369,16 @@ async def _forward(
         if cap_on and len(cap_resp) < cap_max:
             cap_resp.extend(chunk[: cap_max - len(cap_resp)])
 
+    def _capture_engine_body() -> str | None:
+        # What reached the engine, minus the per-key secrets: the client's own cache_salt
+        # and no lmw_tenant / lmw_scope values (app/proxy/kv_scope.py).
+        if body == client_body:
+            return None
+        if not kv_redact:
+            return body.decode("utf-8", "replace")
+        view = _redacted_engine_body(body, kv_capture_salt)
+        return None if view == client_body else view.decode("utf-8", "replace")
+
     async def _capture_done(content: bytes | None = None) -> None:
         nonlocal cap_done
         if not cap_on or cap_done or cap_store is None:
@@ -1678,15 +2386,33 @@ async def _forward(
         cap_done = True
         try:
             resp_b = bytes(content[:cap_max]) if content is not None else bytes(cap_resp)
+            if kv_secrets:
+                resp_b = _scrub_secrets(resp_b, tuple(kv_secrets))
             await cap_store.put(
                 {
                     "id": live_req.id if live_req is not None else secrets.token_hex(16),
                     "ts": time.time(),
                     "token_id": getattr(token, "id", None),
                     "model_id": model.id,
-                    "path": path,
-                    "request_body": client_body.decode("utf-8", "replace"),
-                    "engine_body": None if body == client_body else body.decode("utf-8", "replace"),
+                    # ``path`` / ``request_body`` are what the client called and sent;
+                    # ``translated_body`` is the OpenAI chat body the translator made from it
+                    # (None when the route did not translate); ``engine_body`` is what reached
+                    # the engine when that differs. Records written before 2026-11-21 hold the
+                    # translated body in ``request_body`` and have no ``translated_body``.
+                    "path": wire_path or path,
+                    "request_body": (
+                        None
+                        if wire_sanitized
+                        else (wire_body if wire_body is not None else client_body).decode(
+                            "utf-8", "replace"
+                        )
+                    ),
+                    "translated_body": (
+                        client_body.decode("utf-8", "replace")
+                        if wire_body is not None or wire_sanitized
+                        else None
+                    ),
+                    "engine_body": _capture_engine_body(),
                     "response": resp_b.decode("utf-8", "replace"),
                     "response_truncated": (len(content) if content is not None else len(cap_resp))
                     >= cap_max,
@@ -1858,7 +2584,14 @@ async def _forward(
                 # None; record.py leaves that bit out of a routed request's
                 # R_fleet, so it can never make a routed miss read "misrouted".
                 if served:
-                    cache_index.observe(model.id, obs_epoch, dp_rank, obs_chain, token.id)
+                    cache_index.observe(
+                        model.id,
+                        obs_epoch,
+                        dp_rank,
+                        obs_chain,
+                        token.id,
+                        operator_lens=not kv_ident.isolated,
+                    )
                 reporting = _cached_reporting(model)
                 if served and reporting == "usage" and live_req.cached_tokens is None:
                     _note_no_cached(model.id)
@@ -1884,6 +2617,10 @@ async def _forward(
                     rank=dp_rank,
                     rank_known=rank_known,
                     block_size=sizes.get(model.id, obs_epoch) if sizes is not None else None,
+                    drops_last_block=(
+                        sizes.drops_last_block(model.id, obs_epoch) if sizes is not None else False
+                    ),
+                    match_unit=sizes.match_unit(model.id, obs_epoch) if sizes is not None else None,
                     cobs2_edge=live_req.cobs2_edge,
                     loose_match_beyond_exact=live_req.cobs2_loose_beyond_exact,
                 )
@@ -1892,7 +2629,15 @@ async def _forward(
         try:
             history = getattr(request.app.state, "request_history", None)
             if history is not None:
-                history.record(finished_record(live_req, now=_monotonic()))
+                # With a KV tier the row waits (in a background task, never this one) for
+                # the hits the connector recorded under the request id.
+                record_finished(
+                    history,
+                    live_req,
+                    kv_client(request.app.state, model),
+                    now=_monotonic(),
+                    iso_star_frac=iso_star_frac,
+                )
         except Exception:  # noqa: BLE001 — bookkeeping must never fail a request
             logger.debug("stats: could not record finished request", exc_info=True)
         try:
@@ -1965,6 +2710,41 @@ async def _forward(
             cobs2_seen = None
             cobs2_kw = {}
             logger.debug("cobs2: ids or lineage failed", exc_info=True)
+        if gm_on:
+            # G3: the prompt map, once the request is admitted (a queued
+            # request shows none yet). Ids and sizes only: the content passes
+            # ran in the cobs2 compute; this one walks ids. Fail open.
+            try:
+                _gm_publish(
+                    hub,
+                    {
+                        "type": "kvsig",
+                        "req_id": req_id,
+                        "token_id": token.id,
+                        "ts": time.time(),
+                        "session_id": session_id,
+                        "turn": forest_kw.get("turn_index"),
+                        # G-R14: the admission wait, so the dock shows "queued"
+                        # from here on (request_end repeats it). Own timing: a
+                        # key holder may see it.
+                        "queued_s": _s3(queued_s),
+                        **_gm_kvsig(
+                            body_json,
+                            cobs2_key,
+                            cobs2_pre,
+                            cobs2_seen,
+                            gm_kv_reason,
+                            chain=obs_chain,
+                            match_all=obs_all,
+                            match_own=obs_own,
+                            prompt_tokens=prompt_tokens,
+                        ),
+                    },
+                )
+            except Exception as exc:  # noqa: BLE001 -- display only
+                _gm_log.warning("prompt_lens kvsig failed: %s", type(exc).__name__)
+            if cobs2_pre is not None:
+                cobs2_pre.gm = None  # published: the request holds no layout
         if live_req is not None:
             # Admitted: the clock for elapsed / TTFT starts now.
             live_req.started_monotonic = _monotonic()
@@ -1995,7 +2775,8 @@ async def _forward(
             except Exception:  # noqa: BLE001
                 pass
             # A non-streaming reply reports nothing until it is complete, so
-            # "prefill" would be a claim the warden cannot back.
+            # "prefill" would be a claim the warden cannot back. "waiting"
+            # lasts until the body is forwarded (then ``running_no_stream``).
             live_req.phase = "prefill" if client_wants_stream else "waiting"
         elif registry is not None:
             live_req = LiveRequest(
@@ -2040,8 +2821,53 @@ async def _forward(
 
         await asyncio.shield(_abort())
         raise
+    if gm is not None:
+        gm.live_req = live_req
+
+    if live_req is not None and salt_rewrite:
+        live_req.kv_isolated = kv_ident.isolated
 
     try:
+        # KV-cache tiers: LM Warden's own kv_transfer_params, for a model with kv_store on
+        # only, and the engine's cache_salt (per-key isolation, every vLLM model). Set here,
+        # after the cobs2 ids, the lineage link and the cache-obs chain were computed over
+        # the client's body, so none of them can change; lmw_req is the request id the
+        # connector records its hits under. Inside this try: any raise releases the slot
+        # and the live row. One re-serialisation, only when something changed.
+        kv_changed = False
+        if kv_enabled(model):
+            try:
+                set_kv_params(
+                    body_json,
+                    req_id=request_id,
+                    conv=cobs2_kw.get("cobs2_conv"),
+                    session=cobs2_kw.get("cobs2_session"),
+                    tenant=kv_ident.tenant.hex(),
+                    scope=kv_ident.scope.hex(),
+                )
+                kv_changed = True
+            except Exception:  # noqa: BLE001 — the tier is an optimisation
+                logger.debug("kv: could not set kv_transfer_params", exc_info=True)
+        if salt_rewrite:
+            kv_client_salt = (
+                body_json.get(CACHE_SALT, _NO_SALT) if isinstance(body_json, dict) else _KEEP_SALT
+            )
+            if _apply_cache_salt(body_json, kv_ident, kv_nk):
+                kv_changed = True
+                kv_capture_salt = kv_client_salt
+                kv_secrets.extend(_salt_secrets(body_json.get(CACHE_SALT)))
+            elif (isinstance(body_json, dict) and CACHE_SALT in body_json) or (
+                b"cache_salt" in body
+            ):
+                # Forward exactly what the proxy parsed: a raw body with a duplicate key
+                # could make an engine that keeps the first value read another salt.
+                kv_changed = True
+        if kv_changed:
+            body = json.dumps(body_json).encode()
+            kv_redact = True
+            if kv_enabled(model):
+                kv_secrets.extend(h.encode() for h in (kv_ident.tenant.hex(), kv_ident.scope.hex()))
+            kv_secrets[:] = [x for x in kv_secrets if x]
         url = f"http://{host}:{port}{path}"
         _gen = getattr(request.app.state.supervisor, "get_generation", None)
         client = request.app.state.upstream_clients.get(
@@ -2095,6 +2921,13 @@ async def _forward(
         # resp.aread()/aiter_bytes(), which the reaper genuinely bounds. The
         # non-stream branch still buffers the full body via aread() and returns
         # one Response, so downstream clients are byte-for-byte unchanged.
+        # A non-streaming reply's headers arrive only when generation is done,
+        # so from here on the engine holds the request: the row is
+        # ``running_no_stream``, not ``waiting``. vLLM exports no per-request
+        # series, so whether its own scheduler has admitted it yet cannot be
+        # told per request; "forwarded" is the honest boundary.
+        if live_req is not None and not client_wants_stream:
+            live_req.phase = "running_no_stream"
         send_start = _monotonic()
         try:
             resp = await asyncio.wait_for(client.send(upstream, stream=True), timeout=send_deadline)
@@ -2120,6 +2953,11 @@ async def _forward(
             )
             resp = await asyncio.wait_for(client.send(upstream, stream=True), timeout=send_deadline)
         upstream_ok = 200 <= resp.status_code < 300
+        if kv_secrets and resp.status_code >= 400:
+            # An error body is small; read it whole so a secret split across two
+            # chunks is still found. Bounded like the response start.
+            raw_err = await asyncio.wait_for(resp.aread(), timeout=idle_s)
+            resp = _ScrubbedResponse(resp, _scrub_secrets(raw_err, tuple(kv_secrets)))
     except TimeoutError as exc:
         # Verified finding #4: the engine accepted the request and then never answered.
         await _deregister()
@@ -2172,6 +3010,17 @@ async def _forward(
             # over the tokenizer estimate.
             stream_usage_completion: int | None = None
             gm_finish_reason = None
+            # G5: how the stream ended, for request_end (Prompt Lens only reads them).
+            gm_exit: str | None = None  # "abort" / "error" when the body raised
+            gm_client_gone = False
+            gm_wall = False
+            gm_reasoning_tokens: int | None = None
+            # G2: per-request bound on the tool-call text Prompt Lens publishes.
+            gm_tc = ToolCallBudget(settings.prompt_lens_section_prompt_chars) if gm_on else None
+            # G6: per-channel frame counts, published live-only (Prompt Lens on only).
+            gm_prog: _GmProgress | None = None
+            if gm is not None:
+                gm_prog = gm.progress = _GmProgress(gm)
             # Last non-null finish_reason seen in the SSE stream, for the content
             # log record. Only tracked when do_content_log is set.
             sse_finish_reason = None
@@ -2181,6 +3030,15 @@ async def _forward(
             # at most every _LIVE_UPDATE_INTERVAL_S. The exact count is still
             # recomputed once at the end for accounting (below).
             delta_count = 0
+            # B1: tokens of every generated channel, counted every live tick.
+            live_out = LiveOutCounter()
+
+            async def _live_count(text: str) -> int:
+                n = await tok_cache.count(
+                    model.hf_repo, text, fallback_repo=getattr(model, "tokenizer_repo", None)
+                )
+                return int(n)
+
             last_live_update = 0.0
             last_disconnect_check = 0.0
             # Runaway detector (armed only when runaway_active). Feeds every
@@ -2227,6 +3085,7 @@ async def _forward(
                         logger.debug("forest: tools_out failed", exc_info=True)
                 await _deregister()
                 await resp.aclose()
+                produced_s = _produced_s(live_req, _monotonic())
                 await _record_counters(
                     request,
                     model,
@@ -2235,19 +3094,32 @@ async def _forward(
                     completion_tokens,
                     variant,
                     _acct_cached(),
+                    produced_s=produced_s,
                 )
-                if gm_on:
-                    _gm_publish(
-                        hub,
-                        {
-                            "type": "request_end",
-                            "req_id": req_id,
-                            "token_id": token_id,
-                            "ts": time.time(),
-                            "finish_reason": gm_finish_reason,
-                            "prompt_tokens": _acct_prompt(),
-                            "completion_tokens": completion_tokens,
-                        },
+                if gm is not None:
+                    if enforce_trip:
+                        gm_reason: str | None = "runaway"
+                    elif gm_exit is not None:
+                        gm_reason = gm_exit
+                    elif gm_client_gone:
+                        gm_reason = "abort"
+                    elif (
+                        resp.status_code >= 400
+                        or prefix_failed
+                        or gm_wall
+                        # The upstream idle limit ended it (_idle_bounded marks the row).
+                        or (live_req is not None and live_req.orphan)
+                    ):
+                        gm_reason = "error"
+                    else:
+                        gm_reason = gm_finish_reason
+                    gm.end(
+                        gm_reason,
+                        prompt_tokens=_acct_prompt(),
+                        completion_tokens=completion_tokens,
+                        cached_tokens=_acct_cached(),
+                        reasoning_tokens=gm_reasoning_tokens,
+                        extra=gm_tc.end_fields() if gm_tc is not None else None,
                     )
                 # Release the scheduler slot only after the body is fully
                 # drained — otherwise we'd hand the slot to the next waiter
@@ -2332,6 +3204,7 @@ async def _forward(
                                 live_req.orphan = True
                             except Exception:
                                 pass
+                        gm_wall = True
                         break
                     # (b) downstream client gone — throttled receive-poll.
                     if now - last_disconnect_check >= _LIVE_UPDATE_INTERVAL_S:
@@ -2343,6 +3216,7 @@ async def _forward(
                                         live_req.orphan = True
                                     except Exception:
                                         pass
+                                gm_client_gone = True
                                 break
                         except Exception:
                             pass
@@ -2417,13 +3291,6 @@ async def _forward(
                             accumulated += delta
                             completion_text += delta
                             delta_count += 1
-                            if live_req is not None:
-                                try:
-                                    if now - last_live_update >= _LIVE_UPDATE_INTERVAL_S:
-                                        live_req.completion_tokens = delta_count
-                                        last_live_update = now
-                                except Exception:
-                                    pass
                         # R11 completion accounting, separate parse (the
                         # contract above is untouched): the engine's usage
                         # frame wins over our estimate; until it arrives,
@@ -2443,13 +3310,28 @@ async def _forward(
                             live_req.cached_tokens = cached
                         if stream_usage_completion is None:
                             completion_text += extra
-                        # God-mode tap: emit content + reasoning channels and
-                        # track the last non-null finish_reason. Separate parse
-                        # so the counter path (accumulated) is untouched. Runs
-                        # every line (independent of `delta`) so reasoning-only
-                        # frames still surface on the reasoning channel.
+                        if live_req is not None:
+                            # B1: the live row counts TOKENS of every channel
+                            # (content, reasoning, tool calls), not content
+                            # frames; tokenized once per live tick, new text only.
+                            try:
+                                live_out.feed((delta or "") + extra, frame_usage)
+                                if (
+                                    live_out.dirty or frame_usage is not None
+                                ) and now - last_live_update >= _LIVE_UPDATE_INTERVAL_S:
+                                    n_out = await live_out.count(_live_count)
+                                    live_req.completion_tokens = n_out
+                                    live_req.out_samples.append((now, n_out))
+                                    last_live_update = now
+                            except Exception:  # noqa: BLE001 -- display only
+                                pass
+                        # Prompt Lens tap: emit content, reasoning and tool-call
+                        # channels and track the last non-null finish_reason.
+                        # Separate parse so the counter path (accumulated) is
+                        # untouched. Runs every line (independent of `delta`)
+                        # so reasoning-only and tool-call-only frames surface.
                         if gm_on:
-                            gm_content, gm_reasoning, gm_fr = _parse_sse_godmode(line)
+                            gm_content, gm_reasoning, gm_fr, gm_calls = _parse_sse_prompt_lens(line)
                             if gm_content:
                                 _gm_publish(
                                     hub,
@@ -2474,8 +3356,17 @@ async def _forward(
                                         "text": gm_reasoning,
                                     },
                                 )
+                            if gm_calls and gm_tc is not None:
+                                _gm_publish_tool_calls(hub, req_id, token_id, gm_calls, gm_tc)
+                            if gm_prog is not None:
+                                gm_prog.count(gm_content, gm_reasoning, gm_calls, now)
                             if gm_fr is not None:
                                 gm_finish_reason = gm_fr
+                            # G5: the engine's reasoning count, on its usage frame.
+                            if b'"reasoning_tokens"' in line:
+                                gm_rt = _reasoning_tokens_of(parse_sse_event(line))
+                                if gm_rt is not None:
+                                    gm_reasoning_tokens = gm_rt
 
                     if enforce_trip:
                         # Detector tripped in enforce mode: stop forwarding
@@ -2492,6 +3383,15 @@ async def _forward(
                 # runaway finish_reason + [DONE] so the client sees a clean end.
                 if enforce_trip and detector is not None:
                     yield _runaway_terminal_chunk(is_chat_path, first_meta, detector.finish_reason)
+            except BaseException as exc:
+                if gm is not None:
+                    # Cancelled, or the client closed the body: abort. Anything else: error.
+                    gm_exit = (
+                        "abort"
+                        if isinstance(exc, asyncio.CancelledError | GeneratorExit)
+                        else "error"
+                    )
+                raise
             finally:
                 # Settle in a task shielded from this task's cancellation. On
                 # a client disconnect Starlette cancels this body task, and
@@ -2507,18 +3407,38 @@ async def _forward(
                 # scheduler's own release sites are shielded for exactly this
                 # reason. On the normal path nothing is cancelled, so the
                 # await simply runs _settle to completion inline as before.
-                await asyncio.shield(_settle())
+                if gm is None:
+                    await asyncio.shield(_settle())
+                else:
+                    # G-F1: _settle publishes the end. When it cannot (it raised) the
+                    # settle task's done-callback does, so a cancellation that re-lands
+                    # on this await (a real client disconnect) never pre-empts the
+                    # settled figures: the end waits for the task, not for this frame.
+                    settle_task = asyncio.ensure_future(_settle())
+                    settle_task.add_done_callback(functools.partial(_gm_after_settle, gm))
+                    await asyncio.shield(settle_task)
 
         # A never-started async generator skips its ``finally`` when closed or
         # discarded, so a client that vanishes before the first chunk would
         # leak the admission slot and the replica in-flight count. The guard
         # releases both exactly once in that case; once ``gen`` has started,
         # its own ``_settle`` owns the cleanup and the guard stays out of it.
+        on_deregister = _deregister
+        if gm is not None:
+            gm_unstarted = gm
+
+            async def _deregister_unstarted() -> None:
+                try:
+                    await _deregister()
+                finally:
+                    gm_unstarted.fallback("error" if resp.status_code >= 400 else "abort")
+
+            on_deregister = _deregister_unstarted
         guard = _UnstartedStreamGuard(
             gen(),
-            _abandon_unstarted_stream(_deregister, resp, _release_slot),
+            _abandon_unstarted_stream(on_deregister, resp, _release_slot),
         )
-        return StreamingResponse(
+        streaming = StreamingResponse(
             guard,
             background=BackgroundTask(guard.abandon),
             status_code=resp.status_code,
@@ -2527,6 +3447,10 @@ async def _forward(
                 REQUEST_ID_HEADER: request_id,
             },
         )
+        if gm is not None:
+            # From here the stream owns the end: gen() or the unstarted guard.
+            gm.handed_off = True
+        return streaming
 
     if runaway_active and _is_sse_stream(resp):
         # Non-streaming client, but we forced upstream stream=true so the
@@ -2606,6 +3530,7 @@ async def _forward(
                 completion_tokens,
                 variant,
                 _acct_cached(),
+                produced_s=_produced_s(live_req, _monotonic()),
             )
         finally:
             await _deregister()
@@ -2649,6 +3574,29 @@ async def _forward(
                         prompt=prompt_text,
                         completion=completion,
                     )
+        if gm is not None:
+            # This path publishes no deltas (it never did); the request still ends.
+            # Guarded: never 500 a request that generated fine.
+            try:
+                choices0 = (out.get("choices") or [{}])[0]
+                if tripped_enforce:
+                    gm_agg_finish: str | None = "runaway"
+                elif resp.status_code >= 400:
+                    gm_agg_finish = "error"
+                else:
+                    gm_agg_finish = (
+                        choices0.get("finish_reason") if isinstance(choices0, dict) else None
+                    )
+                gm.end(
+                    gm_agg_finish,
+                    prompt_tokens=_acct_prompt(),
+                    completion_tokens=completion_tokens,
+                    cached_tokens=_acct_cached(),
+                    reasoning_tokens=_reasoning_tokens_of(out),
+                )
+            except Exception:  # noqa: BLE001 -- display only
+                _gm_log.warning("prompt_lens re-aggregated end failed", exc_info=True)
+                gm.fallback(None)
         if g_restore is not None and g_out is not None:
             raw_out, g_restored[0] = guard_proxy.restore_json(
                 json.dumps(out).encode(), g_restore, trailer=None, restore_mode=g_out.restore_mode
@@ -2730,6 +3678,7 @@ async def _forward(
             completion_tokens,
             variant,
             _acct_cached(),
+            produced_s=_produced_s(live_req, _monotonic()),
         )
     except TimeoutError:
         # Wall-clock backstop fired: the upstream read outlived
@@ -2749,11 +3698,14 @@ async def _forward(
         await resp.aclose()
         await _release_slot()
 
-    # God-mode tap (non-stream): no upstream streaming is forced here, so the
+    # Prompt Lens tap (non-stream): no upstream streaming is forced here, so the
     # client sees ONE synthetic delta per channel on completion plus a
     # request_end — a documented limitation (non-stream clients appear as one
     # block, not live token-by-token).
-    if gm_on:
+    if gm is not None:
+        gm_ns_finish: str | None = None
+        gm_ns_reasoning: int | None = None
+        nonstream_tc = ToolCallBudget(settings.prompt_lens_section_prompt_chars)
         try:
             parsed = json.loads(content)
             choice0 = (parsed.get("choices") or [{}])[0]
@@ -2786,20 +3738,33 @@ async def _forward(
                         "text": gm_reasoning,
                     },
                 )
-            _gm_publish(
-                hub,
-                {
-                    "type": "request_end",
-                    "req_id": req_id,
-                    "token_id": token_id,
-                    "ts": time.time(),
-                    "finish_reason": choice0.get("finish_reason"),
-                    "prompt_tokens": _acct_prompt(),
-                    "completion_tokens": completion_tokens,
-                },
-            )
+            # G2: one tool_call delta per message.tool_calls entry, whole
+            # arguments, index = its position in the list.
+            raw_calls = message.get("tool_calls")
+            if isinstance(raw_calls, list) and raw_calls:
+                _gm_publish_tool_calls(
+                    hub,
+                    req_id,
+                    token_id,
+                    [
+                        d._replace(index=pos)
+                        for pos, c in enumerate(raw_calls)
+                        if (d := tool_call_delta(c, pos)) is not None
+                    ],
+                    nonstream_tc,
+                )
+            gm_ns_finish = choice0.get("finish_reason")
+            gm_ns_reasoning = _reasoning_tokens_of(parsed)
         except Exception:
-            _gm_log.warning("godmode non-stream tap failed", exc_info=True)
+            _gm_log.warning("prompt_lens non-stream tap failed", exc_info=True)
+        gm.end(
+            "error" if resp.status_code >= 400 else gm_ns_finish,
+            prompt_tokens=_acct_prompt(),
+            completion_tokens=completion_tokens,
+            cached_tokens=_acct_cached(),
+            reasoning_tokens=gm_ns_reasoning,
+            extra=nonstream_tc.end_fields(),
+        )
 
     # Error enrichment: on upstream 5xx, attempt to attach a last_error
     # hint from the models row to the JSON error envelope. Pure-function
@@ -2933,6 +3898,7 @@ async def list_models(request: Request, token: TokenRow = Depends(require_bearer
             # it has no way to interpret. See app/stress/routes_api.py.
             blocks = await warden_blocks_for(request.app.state, db, loaded, all_models=rows)
     sup = getattr(request.app.state, "supervisor", None)
+    isolated = is_isolated(token)
     data = []
     for r in loaded:
         entry: dict[str, Any] = {
@@ -2954,5 +3920,10 @@ async def list_models(request: Request, token: TokenRow = Depends(require_bearer
         block = blocks.get(r.id)
         if block is not None:
             entry["warden"] = block
+        if isolated:
+            # O4: which models this isolated key can use. A sharing key's list is unchanged.
+            entry["lmw_cache_isolation"] = (
+                "isolated" if can_isolate_running(request.app.state, r) else "unsupported"
+            )
         data.append(entry)
     return {"object": "list", "data": data}

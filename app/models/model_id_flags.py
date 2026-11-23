@@ -59,11 +59,51 @@ _ABBREV_FLOORS: dict[str, dict[str, str]] = {
 }
 
 
+def _long_name(backend: str, tok: str) -> str | None:
+    """The long option name one argv token reaches, as the backend's parser sees it.
+
+    Drops a ``=value``, a vLLM dotted key (``.x``) and rewrites ``_`` to ``-`` where
+    the backend's parser does. None for a token that is not a ``--`` option.
+    """
+    name = tok.partition("=")[0]
+    if not name.startswith("--"):
+        return None
+    if backend in _DOTTED_KEYS:
+        name = name.partition(".")[0]
+    if backend in _NORMALISE_UNDERSCORES:
+        name = name.replace("_", "-")
+    return name
+
+
+def _reaches(backend: str, name: str, full: str, floor: str) -> bool:
+    """True if the normalised long ``name`` resolves to ``full`` (exact or abbreviation)."""
+    if name == full:
+        return True
+    return backend in _ALLOW_ABBREV and len(name) >= len(floor) and full.startswith(name)
+
+
+def long_flag_in(backend: str, extra_args: list[str], floors: dict[str, str]) -> str | None:
+    """The first ``extra_args`` token that sets one of ``floors``' long flags, as written.
+
+    ``floors`` maps each canonical long flag to the shortest abbreviation the engine
+    still resolves to it (a floor set too low only over-refuses). Every spelling the
+    backend's parser accepts counts: ``=value``, underscores, vLLM dotted keys and
+    argparse abbreviations. None when no token does.
+    """
+    for tok in extra_args:
+        name = _long_name(backend, str(tok))
+        if name is not None and any(
+            _reaches(backend, name, full, floor) for full, floor in floors.items()
+        ):
+            return str(tok)
+    return None
+
+
 def _is_model_id_name(backend: str, name: str) -> bool:
     """True if a normalised, abbrev-resolved long name is this backend's flag."""
     if backend in _ALLOW_ABBREV:
         for full, floor in _ABBREV_FLOORS[backend].items():
-            if len(name) >= len(floor) and full.startswith(name):
+            if _reaches(backend, name, full, floor):
                 return True
     return name in MODEL_ID_FLAGS[backend]
 
@@ -72,16 +112,10 @@ def _is_model_id_token(backend: str, tok: str) -> bool:
     """True if one argv token is the backend's model-id flag, in any accepted
     spelling (canonical long name, ``=value`` form, underscore spelling, vLLM
     dotted key, short alias, or argparse abbreviation down to the floor)."""
-    name = tok.partition("=")[0]
-    if name in _SHORT_ALIASES[backend]:
+    if tok.partition("=")[0] in _SHORT_ALIASES[backend]:
         return True
-    if name.startswith("--"):
-        if backend in _DOTTED_KEYS:
-            name = name.partition(".")[0]
-        if backend in _NORMALISE_UNDERSCORES:
-            name = name.replace("_", "-")
-        return _is_model_id_name(backend, name)
-    return False
+    name = _long_name(backend, tok)
+    return name is not None and _is_model_id_name(backend, name)
 
 
 def model_id_flag_in(backend: str, extra_args: list[str]) -> str | None:

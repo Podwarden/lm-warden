@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lmw-kv"
+version = "0.1.0"
+description = "LM Warden KV block store and vLLM connector"
+requires-python = ">=3.11"
+dependencies = ["cryptography"]
+
+[tool.setuptools]
+packages = ["lmw_kv"]

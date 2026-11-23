@@ -22,6 +22,8 @@ export const K = {
   shell: {
     nav: [
       { href: "/key", label: "Overview" },
+      { href: "/key/stats", label: "Stats" },
+      { href: "/key/prompt-lens", label: "Prompt Lens" },
       { href: "/sessions", label: "Sessions" },
       { href: "/key/guard-log", label: "Sensitive data log" },
       { href: "/key/settings", label: "Settings" },
@@ -33,6 +35,16 @@ export const K = {
     never: "never expires",
     status: { active: "active", paused: "paused", revoked: "revoked", expired: "expired" },
     loadError: "Could not load this key. Try again in a moment.",
+  },
+  stats: {
+    privacy:
+      "This page shows only requests made with your key. It shows nothing fleet-wide: no other keys, users, IP addresses, sessions, prompts, installs or server load, and no cache figure tells you whether anyone else sent the same text.",
+    /** CAPTURE_NOTE of app/tokens/routes_me_stats.py, word for word. */
+    capture:
+      "Captures are kept briefly in server memory, not on disk, and the platform's admins can see them too. You only ever see captures of requests made with your key.",
+    /** CAPTURE_NOTE_KEPT: the same for a key an admin set to keep captures. */
+    captureKept:
+      "Captures are kept briefly in server memory, and the platform's admins can see them too. An admin set this key to keep captures: the last 50 captures are kept on disk for this key. You only ever see captures of requests made with your key.",
   },
   overview: {
     requests: "requests, last 24 h",

@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { LoadProgressCompact } from "@/components/models/load-progress/load-progress-compact";
 import type { LoadProgressOut } from "@/lib/load-progress";
 import { modelHref } from "@/lib/routes";
+import { Mark } from "@/components/kv/parts";
+import { KV_STORE_LABEL, MARK } from "@/lib/kv";
 
 export type ModelStatus =
   | "registered"
@@ -34,6 +36,10 @@ export interface ModelRow {
    * information.
    */
   backend?: string | null;
+  /** The KV cache store tier (plan 2); vLLM only. */
+  kv_store?: "off" | "ram" | "ram+nvme";
+  /** Whether the engine keeps an isolated key's cache apart (admin models list, O4). */
+  cache_isolation?: "isolated" | "unsupported";
 }
 
 /** Display name for a backend, or null when there is nothing worth showing. */
@@ -108,7 +114,7 @@ export function ModelCard({
             <span className="font-mono">{model.hf_revision}</span>
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
           {backendBadgeLabel(model.backend) !== null && (
             <Badge variant="info" data-testid="backend-badge">
               {backendBadgeLabel(model.backend)}
@@ -130,6 +136,24 @@ export function ModelCard({
             <span className="text-slate-500">none</span>
           )}
         </p>
+        {(model.kv_store !== undefined || model.cache_isolation !== undefined) && (
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+            <span data-testid="model-kv-store">
+              {(model.backend ?? "vllm") === "vllm" ? (
+                <>
+                  KV cache store: <b className="font-semibold text-slate-200">{KV_STORE_LABEL[model.kv_store ?? "off"]}</b>
+                </>
+              ) : (
+                "KV cache store not available"
+              )}
+            </span>
+            {model.cache_isolation === "unsupported" && (
+              <Mark tone="warn" testId="model-isolation-refused" title="Requests with an isolated key get 403 on this model: its engine cannot keep one key's cache apart from another's.">
+                {MARK.refused}
+              </Mark>
+            )}
+          </div>
+        )}
         {model.status === "pulling" && (
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-slate-400">

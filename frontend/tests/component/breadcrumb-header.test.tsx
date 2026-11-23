@@ -122,7 +122,7 @@ describe('BreadcrumbHeader — trail', () => {
 
   it('the current segment is never a link, in both renderings', () => {
     mount('/cache');
-    const all = screen.getAllByText('Cache');
+    const all = screen.getAllByText('Model files');
     expect(all.length).toBe(2); // desktop + mobile
     for (const el of all) {
       expect(el).toHaveAttribute('aria-current', 'page');
@@ -256,5 +256,35 @@ describe('BreadcrumbHeader — query-id detail URLs', () => {
     await act(async () => {});
     // Only /stats is behind us.
     expect(screen.getByRole('button', { name: 'Back to Stats' })).toBeInTheDocument();
+  });
+});
+
+describe('BreadcrumbHeader — trailing slash (static export, trailingSlash: true)', () => {
+  // The Mac build serves every page at /ui/<route>/, so usePathname() ends in
+  // a slash. The trail must not count that slash as one more crumb
+  // ("Home > Models > Models").
+  it.each([
+    ['/models/', ['Home', 'Models']],
+    ['/stats/', ['Home', 'Stats']],
+    ['/router/stats/', ['Home', 'Router', 'Activity']],
+  ])('%s', (p, labels) => {
+    mount(p);
+    const items = Array.from(desktop().querySelectorAll('li')).map((li) => li.textContent?.trim()).filter(Boolean);
+    expect(items).toEqual(labels);
+  });
+
+  it('a slash-terminated page is still pushed once, without its slash', async () => {
+    const { go } = mount('/tokens/');
+    await go('/models/');
+    expect(screen.getAllByText('API tokens').length).toBeGreaterThan(0);
+    expect(desktop().querySelectorAll('li')).toHaveLength(2);
+  });
+});
+
+describe('BreadcrumbHeader — slash-terminated detail page', () => {
+  it('/models/detail/?id=abc still resolves to the model crumb', () => {
+    mount('/models/detail/?id=abc');
+    const items = Array.from(desktop().querySelectorAll('li')).map((li) => li.textContent?.trim()).filter(Boolean);
+    expect(items).toEqual(['Home', 'Models', 'Model']);
   });
 });

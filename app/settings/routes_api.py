@@ -50,9 +50,11 @@ from app.db.database import open_db
 from app.db.repos.models import ModelRepo
 from app.db.repos.settings import SettingsRepo
 from app.home import current_mode
+from app.kv import policy_sync
 from app.models.policy import OPERATOR_FIELDS, TRISTATE_FIELDS
 from app.models.serialisation import thinking_policy_supported_for
 from app.models.writer import apply_model_change, refuse_session_to_set
+from app.runtime.kv_store import kv_enabled
 from app.system.hf import validate_hf_token
 
 log = logging.getLogger(__name__)
@@ -93,6 +95,22 @@ RUNTIME_KEYS: dict[str, str] = {
     "watchdog_max_restarts": "none",
     # Daily update check (spec 2026-11-20): read on every pass, no restart.
     "update_check_enabled": "none",
+    # Prompt Lens (owner request 2026-11-22): applied at once by the PATCH
+    # (app/proxy/prompt_lens_switch.py); overrides VW_PROMPT_LENS_ENABLED.
+    "prompt_lens_enabled": "none",
+    # KV-cache tier daemon (read when the api starts it). RAM tier size in GiB,
+    # NVMe tier directory (empty = no NVMe tier) and its cap in GB.
+    "kv_store_ram_gib": "warden-restart",
+    "kv_store_nvme_dir": "warden-restart",
+    "kv_store_nvme_cap_gb": "warden-restart",
+    # How a NEW key shares the KV cache (O1): read when a key is created, no restart.
+    "kv_isolation_default": "none",
+    # KV eviction (spec 5.4): sent to the running daemon at once (app/kv/policy_sync.py).
+    # kv_evict_policy "lru" (default) or "fair"; idle protection in RAM in minutes
+    # (default 120) and on NVMe in hours (default 168).
+    "kv_evict_policy": "none",
+    "kv_idle_ram_min": "none",
+    "kv_idle_nvme_h": "none",
 }
 
 
@@ -269,6 +287,18 @@ def _url(v: Any) -> str:
     return s.rstrip("/")
 
 
+def _abs_dir_or_empty(v: Any) -> str:
+    """A directory path for the KV store's NVMe tier; empty means no NVMe tier."""
+    if not isinstance(v, str):
+        raise ValueError("must be a string")
+    s = v.strip()
+    if s and not s.startswith("/"):
+        raise ValueError("must be an absolute path or empty")
+    if len(s) > 1024 or "\0" in s:
+        raise ValueError("is not a valid path")
+    return s
+
+
 # Per-spec, lines 350–363 of docs/superpowers/specs/2026-05-11-vllm-warden-ui-redesign-design.md:
 #   default_token_expiration_days: matches TokenCreate Field(ge=0, le=3650)
 #   rotation_grace_hours:          matches TokenRotate Field(ge=0, le=720)
@@ -298,6 +328,15 @@ _COERCERS = {
     "watchdog_failure_threshold": _bounded_int(2, 20),
     "watchdog_max_restarts": _bounded_int(0, 20),
     "update_check_enabled": _bool,
+    "prompt_lens_enabled": _bool,
+    "kv_store_ram_gib": _bounded_int(1, 4096),
+    "kv_store_nvme_dir": _abs_dir_or_empty,
+    "kv_store_nvme_cap_gb": _bounded_int(1, 1_000_000),
+    "kv_isolation_default": _choice("sharing", "isolated"),
+    # The same bounds as app/kv/policy_sync.py, which reads them.
+    "kv_evict_policy": _choice("lru", "fair"),
+    "kv_idle_ram_min": _bounded_int(1, 10080),
+    "kv_idle_nvme_h": _bounded_int(1, 8760),
     # hf_token, admin_username, admin_password are handled out-of-band below.
 }
 
@@ -329,6 +368,9 @@ SESSION_ONLY_RUNTIME_KEYS: frozenset[str] = frozenset(
         # Whether the install reports to lmwarden.com is the owner's call,
         # not something a leaked admin token may switch back on.
         "update_check_enabled",
+        # Prompt Lens on shows an admin every prompt and reply: a leaked admin
+        # token must not be able to turn it on (it may read the status).
+        "prompt_lens_enabled",
     }
 )
 
@@ -425,6 +467,15 @@ async def get_runtime(request: Request, _user: str = Depends(require_jwt)) -> di
     # Mask hf_token if a value was persisted; leave None if absent.
     if out.get("hf_token") is not None:
         out["hf_token"] = _MASKED
+    # Prompt Lens: the value in effect when no setting is stored (the env, else
+    # off), so the switch shows what is actually on. Where it comes from:
+    # GET /api/admin/prompt-lens/status.
+    if out.get("prompt_lens_enabled") is None:
+        from app.proxy import prompt_lens_switch
+
+        out["prompt_lens_enabled"] = (
+            "true" if prompt_lens_switch.configured(request.app) else "false"
+        )
     return out
 
 
@@ -501,9 +552,14 @@ async def patch_runtime(
     # Coerce every other key. Build the dict of canonical TEXT values to write
     # so the inner DB block can stay short.
     to_write: dict[str, str] = {}
+    # Prompt Lens "Use server default": null clears the stored switch, so the
+    # env value (VW_PROMPT_LENS_ENABLED, else off) applies again.
+    prompt_lens_clear = "prompt_lens_enabled" in body and body["prompt_lens_enabled"] is None
     for k, v in body.items():
         if k in ("admin_username", "admin_password", "hf_token"):
             continue  # handled above / out-of-band
+        if k == "prompt_lens_enabled" and prompt_lens_clear:
+            continue
         coercer = coercers.get(k)
         if coercer is None:
             # Defensive: a key in RUNTIME_KEYS but missing from _COERCERS would
@@ -597,10 +653,44 @@ async def patch_runtime(
         repo = SettingsRepo(db)
         mode_before = (await current_mode(db))[0] if "home_page_mode" in to_write else None
         for k, stored in to_write.items():
+            if k == "prompt_lens_enabled":
+                continue  # below
             await repo.set(k, stored)
             kind = keys[k]
             if kind != "none":
                 kinds.add(kind)
+
+        # Prompt Lens: applied at once (no restart), right after its own write,
+        # so memory follows the stored value. Off ends
+        # every open stream and drops what memory holds. Each save is recorded
+        # (prompt_lens_switch_audit) and logged with who made it.
+        if "prompt_lens_enabled" in to_write or prompt_lens_clear:
+            from app.proxy import prompt_lens_switch
+
+            new_value = None if prompt_lens_clear else to_write["prompt_lens_enabled"] == "true"
+            # One save at a time, so two opposite saves cannot leave the stored
+            # value and the one in memory apart.
+            async with prompt_lens_switch.save_lock(request.app):
+                before = prompt_lens_switch.status(request.app)
+                if new_value is None:
+                    await repo.delete("prompt_lens_enabled")
+                else:
+                    await repo.set("prompt_lens_enabled", to_write["prompt_lens_enabled"])
+                prompt_lens_switch.apply(request.app, new_value)
+                after = prompt_lens_switch.status(request.app)
+            principal = principal_of(request)
+            via = "session" if principal.is_session else f"admin token {principal.id}"
+            await prompt_lens_switch.record_change(
+                db, actor=_user, via=via, before=before, after=after
+            )
+            if before["enabled"] != after["enabled"]:
+                log.info(
+                    "Prompt Lens %s -> %s by %s (%s)",
+                    "on" if before["enabled"] else "off",
+                    "on" if after["enabled"] else "off",
+                    _user,
+                    via,
+                )
 
     # What `/` serves changed: say who did it (a session's username, or the
     # admin token id it acted through) in the application log.
@@ -614,6 +704,9 @@ async def patch_runtime(
             _user,
             via,
         )
+
+    if any(k.startswith("kv_") for k in to_write):
+        policy_sync.request_sync(request.app.state)  # the daemon hears at once
 
     out_kinds = sorted(kinds)
     return {
@@ -776,6 +869,7 @@ async def patch_model_settings(
             # the writer's coercers and keep this endpoint's existing 400s.
             from_untyped_body=True,
         )
+    await policy_sync.after_model_change(request.app.state, model_id, body, was_on=kv_enabled(m))
 
     return {"ok": True}
 

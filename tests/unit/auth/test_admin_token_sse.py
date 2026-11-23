@@ -28,7 +28,7 @@ from app.db.database import open_db
 from app.db.repos.models import ModelRepo, ModelRow
 from app.db.repos.tokens import sqlite_utc_in, sqlite_utc_now
 from app.db.repos.users import UserRepo
-from app.proxy.routes_godmode import CONNECTED_FRAME, STREAM_PATH
+from app.proxy.routes_prompt_lens import CONNECTED_FRAME, STREAM_PATH
 from app.system.gpu import GpuSnapshot
 from app.system.routes_gpus import _ProbeCache
 from tests.asgi_stream import first_chunk, open_stream
@@ -36,7 +36,7 @@ from tests.conftest import bearer, seed_admin_token, wait_until_async
 
 #: The four ticket streams (require_sse_ticket), by name.
 TICKET_STREAMS = {
-    "godmode": STREAM_PATH,
+    "prompt_lens": STREAM_PATH,
     "model-logs": "/api/models/demo/logs/stream",
     "stats-live": "/api/stats/live",
     "header-metrics": "/api/header/metrics/stream",
@@ -50,7 +50,7 @@ STREAM_NAMES = [*TICKET_STREAMS, "pull-progress", "chat2-turn-live"]
 @pytest.fixture
 async def streams(live_app, tmp_data_dir: Path) -> dict[str, str]:
     """Every stream able to send its first chunk at once: path by name."""
-    live_app.state.settings = dataclasses.replace(live_app.state.settings, godmode_enabled=True)
+    live_app.state.settings = dataclasses.replace(live_app.state.settings, prompt_lens_enabled=True)
     # The log stream replays the file's tail before it follows it.
     (tmp_data_dir / "logs").mkdir(exist_ok=True)
     (tmp_data_dir / "logs" / "demo.log").write_text("seed-line\n")
@@ -122,7 +122,7 @@ def _delete_token(db_path: Path, token_id: str) -> None:
 # loop keep scheduling the writer while sqlite's busy handler waits it out.
 
 
-async def test_an_admin_bearer_opens_the_godmode_stream(streams_app, tmp_data_dir):
+async def test_an_admin_bearer_opens_the_prompt_lens_stream(streams_app, tmp_data_dir):
     _, secret = await asyncio.to_thread(seed_admin_token, tmp_data_dir / "vllm-warden.db")
     status, body = await first_chunk(streams_app, STREAM_PATH, bearer(secret))
     assert status == 200

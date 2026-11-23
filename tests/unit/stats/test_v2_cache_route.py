@@ -67,3 +67,36 @@ def test_cache_route_shape_and_prefill_saved(tmp_data_dir, client):
 def test_cache_route_rejects_bad_range(tmp_data_dir, client):
     _, auth = _ready(client, tmp_data_dir)
     assert client.get("/api/stats/v2/cache?range=5y", headers=auth).status_code in (400, 422)
+
+
+def test_cache_route_reports_the_engine_cache_block(tmp_data_dir, client):
+    # The card says "engine caches in ~1.6k-token blocks" from these fields:
+    # unknown (or classic 16-token pages) reads None, never a guess.
+    from app.db.database import open_db
+    from app.db.repos.models import ModelRepo
+    from app.proxy.routes_dp import engine_epoch
+
+    db_path, auth = _ready(client, tmp_data_dir)
+    _seed_history(db_path, cached_tokens=0, reusable_tokens=1000, cached_source="engine")
+    [m] = client.get("/api/stats/v2/cache?range=1h", headers=auth).json()["models"]
+    assert m["engine_block_tokens"] is None and m["engine_drops_last_block"] is False
+    assert m["engine_match_unit_tokens"] is None
+
+    async def go():
+        async with open_db(str(db_path)) as db:
+            return await ModelRepo(db).get("id-model-a")
+
+    model = client.portal.call(go)
+    epoch = engine_epoch(client.app.state, model)
+    client.app.state.engine_block_sizes.set("id-model-a", epoch, 1584, drops_last_block=True)
+    [m] = client.get("/api/stats/v2/cache?range=1h", headers=auth).json()["models"]
+    assert m["engine_block_tokens"] == 1584 and m["engine_drops_last_block"] is True
+    assert m["engine_match_unit_tokens"] == 1584
+    client.app.state.engine_block_sizes.set(
+        "id-model-a", epoch, 1584, drops_last_block=True, match_unit=16
+    )
+    [m] = client.get("/api/stats/v2/cache?range=1h", headers=auth).json()["models"]
+    assert m["engine_block_tokens"] == 1584 and m["engine_match_unit_tokens"] == 16
+    client.app.state.engine_block_sizes.set("id-model-a", epoch, 16)
+    [m] = client.get("/api/stats/v2/cache?range=1h", headers=auth).json()["models"]
+    assert m["engine_block_tokens"] is None and m["engine_drops_last_block"] is False

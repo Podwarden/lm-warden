@@ -24,6 +24,7 @@ from app.runtime.backends.vllm.env import (
     build_subprocess_env,
 )
 from app.runtime.backends.vllm.metrics import read as read_vllm_metrics
+from app.runtime.backends.vllm.spec_decode import drops_last_cached_block, prefix_match_unit
 
 if TYPE_CHECKING:  # pragma: no cover - type-only, never imported at runtime
     from app.runtime.backends.paths import ResolvedModelPaths
@@ -156,9 +157,18 @@ class VllmBackend:
         engine_driver: str = "local",
         image: str | None = None,
         load_max_s: float | None = None,
+        kv_socket: str | None = None,
+        kv_key_file: str | None = None,
+        kv_revisions: dict[str, str] | None = None,
     ) -> LaunchPlan:
         argv = list(LAUNCH_HEAD) + build_vllm_args(
-            model, port=port, overrides=overrides, bind_host=bind_host
+            model,
+            port=port,
+            overrides=overrides,
+            driver=engine_driver,
+            bind_host=bind_host,
+            kv_socket=kv_socket,
+            kv_revisions=kv_revisions,
         )
         env = build_subprocess_env(
             model,
@@ -168,6 +178,7 @@ class VllmBackend:
             allowed_prefixes=self.capabilities.env_prefixes,
             allowed_exact=self.capabilities.env_exact,
             load_max_s=load_max_s,
+            kv_key_file=kv_key_file,
         )
         return LaunchPlan(
             argv=argv,
@@ -210,3 +221,15 @@ class VllmBackend:
             return read_vllm_metrics(body)
         except Exception:  # noqa: BLE001 - a failed parse is "no metrics"
             return None
+
+    def drops_last_cached_block(self, extra_args: list[str] | None) -> bool:
+        """Does an engine launched with ``extra_args`` drop the last matched
+        prefix-cache block on every hit? (EAGLE/MTP speculative decoding; see
+        ``.spec_decode``.) Read by app/cache_obs/block_size.py; a backend
+        without this method keeps every whole block."""
+        return drops_last_cached_block(extra_args)
+
+    def prefix_match_unit(self, extra_args: list[str] | None, block_size: int) -> int:
+        """The prefix-match unit an engine launched with ``extra_args`` uses
+        (``--prefix-match-unit``; default the block). See ``.spec_decode``."""
+        return prefix_match_unit(extra_args, block_size)

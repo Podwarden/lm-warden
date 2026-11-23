@@ -58,6 +58,8 @@ import { PresetStrip } from "@/components/models/settings/preset-strip";
 import { SuggestPanel } from "@/components/models/settings/suggest-panel";
 import { EffectiveArgvPanel } from "@/components/models/settings/effective-argv-panel";
 import { computeDiff } from "@/components/models/settings/diff-list";
+import { isVllm, KvStoreCard, KvWeightCard } from "@/components/kv/kv-store-section";
+import { KV_STORE_LABEL, fmtPct, useEvictPolicy, type CacheIsolation, type KvUsage } from "@/lib/kv";
 
 /**
  * Keep tensor_parallel_size × data_parallel_size == number of GPUs when the
@@ -354,6 +356,19 @@ export function ModelSettingsPage({ id }: { id: string }) {
     authFetchJSON,
   );
   const gpus = useMemo(() => gpuData?.gpus ?? [], [gpuData]);
+  // Plan 2: the cache store's policy, disk folder and use, and whether this model's engine
+  // keeps an isolated key's cache apart (the models list's answer).
+  const policy = useEvictPolicy();
+  const { data: runtime } = useSWR<Record<string, string | null>>("/api/settings/runtime", authFetchJSON, {
+    revalidateOnFocus: false,
+  });
+  const { data: modelInfo } = useSWR<{ cache_isolation?: CacheIsolation }>(`/api/models/${id}`, authFetchJSON, {
+    revalidateOnFocus: false,
+  });
+  const { data: kvUsage } = useSWR<KvUsage>("/api/kv/usage", authFetchJSON, {
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+  });
   // Global mutate for cross-page cache coherence after a successful save.
   const { mutate: globalMutate } = useSWRConfig();
 
@@ -651,6 +666,12 @@ export function ModelSettingsPage({ id }: { id: string }) {
           case "supports_reasoning":
             if (v === null || typeof v === "boolean") next[k] = v;
             break;
+          case "kv_store":
+            if (v === "off" || v === "ram" || v === "ram+nvme") next.kv_store = v;
+            break;
+          case "kv_store_weight":
+            if (typeof v === "number" && Number.isInteger(v) && v >= 1 && v <= 100) next.kv_store_weight = v;
+            break;
           case "n_gpu_layers":
             if (v === null) next.n_gpu_layers = null;
             else if (typeof v === "number" && Number.isFinite(v))
@@ -697,6 +718,11 @@ export function ModelSettingsPage({ id }: { id: string }) {
   }
 
   const pill = STATUS_PILL[data.status] ?? { text: data.status, tone: "idle" as const };
+  const vllm = isVllm(data.backend);
+  const kvPart = (Array.isArray(kvUsage?.models) ? kvUsage.models : []).find((m) => m.model_id === id || m.model_ids?.includes(id))?.part?.ram ?? null;
+  const cacheIsolation = modelInfo?.cache_isolation;
+  const setKv = <K extends "kv_store" | "kv_store_weight">(k: K, v: Draft[K]) =>
+    setDraft((d) => (d === null ? d : { ...d, [k]: v }));
   const backendLabel = data.backend === "llamacpp" ? "llama.cpp" : "vLLM";
 
   function renderSection(group: SectionGroup): ReactNode {
@@ -862,6 +888,16 @@ export function ModelSettingsPage({ id }: { id: string }) {
         </span>
       </div>
       <div className="flex flex-col gap-3">
+        <KvStoreCard
+          backend={data.backend}
+          loaded={isLoaded}
+          kvStore={draft.kv_store}
+          nvmeDir={runtime ? (runtime.kv_store_nvme_dir ?? "") : undefined}
+          cacheIsolation={cacheIsolation}
+          disabled={saving}
+          dirty={draft.kv_store !== snap.kv_store}
+          onStore={(v) => setKv("kv_store", v)}
+        />
         {SECTION_GROUPS.filter((g) => g.band === "engine").map(renderSection)}
       </div>
     </section>
@@ -885,6 +921,17 @@ export function ModelSettingsPage({ id }: { id: string }) {
         <span className="text-[12.5px] text-chat-muted">Applies immediately, even while loaded</span>
       </div>
       <div className="flex flex-col gap-3">
+        {vllm && (
+          <KvWeightCard
+            weight={draft.kv_store_weight}
+            part={kvPart}
+            kvStore={draft.kv_store}
+            policy={policy}
+            disabled={liveDisabled}
+            dirty={draft.kv_store_weight !== snap.kv_store_weight}
+            onWeight={(w) => setKv("kv_store_weight", w)}
+          />
+        )}
         {SECTION_GROUPS.filter((g) => g.band === "live").map(renderSection)}
       </div>
     </section>
@@ -953,6 +1000,30 @@ export function ModelSettingsPage({ id }: { id: string }) {
           {isLoaded ? [liveBand, engineBand] : [engineBand, liveBand]}
         </div>
         <aside aria-label="In effect" className="flex min-w-0 flex-col gap-4 min-[1100px]:sticky min-[1100px]:top-4">
+          <section aria-label="Cache in effect" data-testid="kv-in-effect" className="rounded-xl border border-vw-rule-soft/70 bg-chat-surface/55 px-4 py-3.5">
+            <h2 className="m-0 mb-2 text-[14px] font-semibold">In effect</h2>
+            <dl className="m-0 grid grid-cols-[1fr_auto] gap-y-1 text-[13px]">
+              <dt className="text-chat-muted">KV cache store</dt>
+              <dd className="m-0 text-right font-medium">
+                {!vllm ? "not available" : data.kv_store && data.kv_store !== "off" ? `on · ${KV_STORE_LABEL[data.kv_store]}` : "off"}
+              </dd>
+              {vllm && (
+                <>
+                  <dt className="text-chat-muted">Weight</dt>
+                  <dd className="m-0 text-right font-medium">
+                    {data.kv_store_weight ?? 1}
+                    {kvPart != null && ` (${fmtPct(kvPart)})`}
+                  </dd>
+                </>
+              )}
+              {cacheIsolation && (
+                <>
+                  <dt className="text-chat-muted">Isolated keys</dt>
+                  <dd className="m-0 text-right font-medium">{cacheIsolation === "isolated" ? "served" : "refused"}</dd>
+                </>
+              )}
+            </dl>
+          </section>
           <EffectiveArgvPanel
             modelId={id}
             extraArgs={data.extra_args}

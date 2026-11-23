@@ -76,6 +76,13 @@ interface CacheTableProps {
   onMutate: () => void;
 }
 
+// Phone (below sm) cell: no padding, left-aligned, its column name above the
+// value (the header row is hidden there).
+const PHONE_LABEL =
+  "max-sm:block max-sm:p-0 max-sm:text-left max-sm:before:content-[attr(data-label)] " +
+  "max-sm:before:mb-0.5 max-sm:before:block max-sm:before:text-[11px] max-sm:before:uppercase " +
+  "max-sm:before:tracking-wide max-sm:before:text-slate-500";
+
 export function CacheTable({ repos, onMutate }: CacheTableProps) {
   // Tracks the repo currently mid-flight for delete; null = idle.
   const [busyRepo, setBusyRepo] = useState<string | null>(null);
@@ -145,9 +152,13 @@ export function CacheTable({ repos, onMutate }: CacheTableProps) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border border-slate-700">
-      <table className="w-full text-sm">
-        <thead className="bg-slate-800 text-xs uppercase tracking-wide text-slate-400">
+    // Below sm (phones) the table stacks: the header row hides and each repo
+    // is a two-column card (repo id full width and wrapping, Size | Last used,
+    // Owned by, actions), with the header's names moved onto the cells via
+    // data-label, so nothing scrolls sideways or spills past the card.
+    <div className="rounded-md border border-slate-700 sm:overflow-x-auto">
+      <table className="w-full text-sm max-sm:block">
+        <thead className="bg-slate-800 text-xs uppercase tracking-wide text-slate-400 max-sm:hidden">
           <tr>
             <th scope="col" className="px-3 py-2 text-left">Repo</th>
             <th scope="col" className="px-3 py-2 text-right">Size</th>
@@ -156,22 +167,24 @@ export function CacheTable({ repos, onMutate }: CacheTableProps) {
             <th scope="col" className="px-3 py-2 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-800">
+        <tbody className="divide-y divide-slate-800 max-sm:block">
           {sorted.map((row) => {
             const { label, tone } = rowStatus(row.matched_models);
             const isActive = row.matched_models.some((m) => ACTIVE_STATUSES.has(m.status));
             const promptOpen = forcePrompt?.repo === row.repo;
             const err = errorByRepo[row.repo];
             return (
-              <tr key={row.path} data-testid={`cache-row-${row.repo}`} className="hover:bg-slate-800/50">
-                <td className="px-3 py-2 font-mono text-xs text-slate-100">{row.repo}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-slate-200">
+              <tr key={row.path} data-testid={`cache-row-${row.repo}`} className="hover:bg-slate-800/50 max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-3 max-sm:gap-y-2 max-sm:p-3">
+                <td className="break-all px-3 py-2 font-mono text-xs text-slate-100 max-sm:col-span-2 max-sm:p-0 max-sm:text-sm">
+                  {row.repo}
+                </td>
+                <td data-label="Size" className={`px-3 py-2 text-right tabular-nums text-slate-200 ${PHONE_LABEL}`}>
                   {formatBytes(row.size_bytes)}
                 </td>
-                <td className="px-3 py-2 text-right text-xs text-slate-400">
+                <td data-label="Last used" className={`px-3 py-2 text-right text-xs text-slate-400 ${PHONE_LABEL}`}>
                   {formatRelativeTime(row.last_modified)}
                 </td>
-                <td className="px-3 py-2 text-xs text-slate-300">
+                <td data-label="Owned by" className={`px-3 py-2 text-xs text-slate-300 max-sm:col-span-2 ${PHONE_LABEL}`}>
                   <Badge
                     variant={
                       tone === "active"
@@ -186,12 +199,12 @@ export function CacheTable({ repos, onMutate }: CacheTableProps) {
                     {label}
                   </Badge>
                   {row.matched_models.length > 0 && (
-                    <span className="ml-2 text-slate-400">
+                    <span className="ml-2 break-words text-slate-400">
                       {row.matched_models.map((m) => m.served_model_name).join(", ")}
                     </span>
                   )}
                 </td>
-                <td className="px-3 py-2 text-right">
+                <td className="px-3 py-2 text-right max-sm:col-span-2 max-sm:p-0">
                   {promptOpen ? (
                     <div className="flex flex-col items-end gap-1">
                       <span className="text-[11px] text-amber-400" data-testid={`cache-row-${row.repo}-force-msg`}>

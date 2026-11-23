@@ -298,7 +298,7 @@ def _fast_bcrypt(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture(autouse=True)
 def _hermetic_nvidia_smi(monkeypatch: pytest.MonkeyPatch) -> None:
     """Make nvidia-smi look ABSENT in every unit test: a host with
-    /usr/bin/nvidia-smi but no working driver (ollama.h, it exits 9) made the
+    /usr/bin/nvidia-smi but no working driver (a CPU-only build host: it exits 9) made the
     probe 'failing' and nulled vram/util/power in the stats tests. A test
     that wants a real or fake nvidia-smi overrides this fixture BY NAME in
     its own module (tests/unit/system/test_gpu_probe_health.py does)."""

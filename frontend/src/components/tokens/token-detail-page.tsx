@@ -2,7 +2,9 @@
 
 // /ui/tokens/{id} — token details (spec docs/superpowers/specs/2026-09-18-token-details-design.md).
 // Manage the key (rename, limits, pause/resume, test, rotate, delete), chart its
-// usage for any period, and watch its traffic in the god-mode dock. The look is
+// usage for any period, and open its traffic in Prompt Lens (the admin page,
+// its Key filter preset to this key and its earlier keys, spec 2026-11-22 Q9;
+// a dock on this page until 2026-11-23). The look is
 // the approved mockup's, verbatim (§4.6); see components/tokens/detail/*.
 
 import Link from "next/link";
@@ -19,6 +21,7 @@ import { RotateTokenDialog } from "@/components/tokens/rotate-token-dialog";
 import { errorDetail, useTokenActions } from "@/components/tokens/use-token-actions";
 import { TokenHeader } from "@/components/tokens/detail/token-header";
 import { LimitsCard, type LimitsPatch } from "@/components/tokens/detail/limits-card";
+import { KeepCapturesCard } from "@/components/tokens/detail/keep-captures-card";
 import { DetailsCard } from "@/components/tokens/detail/details-card";
 import { LineageCard } from "@/components/tokens/detail/lineage-card";
 import { UsageSection } from "@/components/tokens/detail/usage-section";
@@ -27,13 +30,18 @@ import { ModelUsageCard } from "@/components/tokens/detail/model-usage-card";
 import { CacheCard } from "@/components/tokens/detail/cache-card";
 import { GuardCard } from "@/components/tokens/detail/guard-card";
 import type { StripWindow } from "@/components/tokens/detail/history-strip";
-import { GodModeDock, useDockHeight, useDockOpen, useGodModeEnabled } from "@/components/tokens/detail/godmode-dock";
+import { promptLensHref } from "@/components/prompt-lens/prompt-lens-page";
+import { usePromptLensEnabled } from "@/components/prompt-lens/prompt-lens-view";
 import { useWindowSelection } from "@/components/tokens/detail/use-window-selection";
 import { Toast, useToast } from "@/components/tokens/detail/toast";
 import { useBreadcrumb } from "@/lib/use-breadcrumb";
 import { tokenHref } from "@/lib/routes";
 import { btn, CARD } from "@/components/tokens/detail/styles";
 import { cn } from "@/lib/utils";
+import { CacheUseCard } from "@/components/kv/cache-use-card";
+import { TokenPromptCacheCard, type KvPatch } from "@/components/kv/token-prompt-cache-card";
+import { TokenStoreUse } from "@/components/kv/token-store-use";
+import { modelsForKey, useEvictPolicy, type CacheIsolation, type KvUsage, type ModelIsolation, type TokenCacheOut } from "@/lib/kv";
 
 // Lands the content box on the mockup's pixels inside the app's
 // `main.container.p-6` (see Task F13 notes in the plan): 1218 px wide, 5 px
@@ -41,8 +49,6 @@ import { cn } from "@/lib/utils";
 const ROOT = "vw-td mx-auto -mt-[5px] max-w-[1218px] text-[14px] leading-[1.5] text-chat-fg antialiased max-sm:-mx-2";
 const MAX_SPAN_S = 366 * 86400; // series 422s beyond this (spec §3.4)
 const STRIP_MAX_BINS = 360; // the server ceiling for max_bins
-const DOCK_BAR = 40;
-const DOCK_GRIP = 6;
 
 // The token poll: a plain number. Not an inline arrow — SWR restarts its
 // polling timer whenever `refreshInterval` changes identity, so on 1h/6h,
@@ -216,6 +222,35 @@ export function TokenDetailPage({ id }: { id: string }) {
   // on the italic "Token" placeholder.
   useBreadcrumb({ title: token?.name ?? (error ? id : undefined) });
 
+  // ---- per-key KV cache (plan 2) ----------------------------------------------
+  // The key's windows, store figures and isolation cost (admin report); the store's
+  // tiers and policy; the loaded models the key may use (its allowed_models, null: all)
+  // with whether their engine keeps an isolated key's cache apart.
+  const policy = useEvictPolicy();
+  const kvKey = token && !gone ? `/api/tokens/${encodeURIComponent(id)}/cache?range=24h` : null;
+  const { data: kvReport, mutate: mutateKv } = useSWR<TokenCacheOut>(kvKey, authFetchJSON, {
+    refreshInterval: 30_000,
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+  });
+  const { data: kvUsage } = useSWR<KvUsage>(token && !gone ? "/api/kv/usage" : null, authFetchJSON, {
+    refreshInterval: 30_000,
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+  });
+  const { data: modelList } = useSWR<{ models: { served_model_name: string; status: string; kv_store?: string; cache_isolation?: CacheIsolation }[] }>(
+    token && !gone ? "/api/models" : null,
+    authFetchJSON,
+    { revalidateOnFocus: false },
+  );
+  const kvModels: ModelIsolation[] = modelsForKey(
+    (modelList?.models ?? [])
+      .filter((m) => m.status === "loaded" && m.cache_isolation)
+      .map((m) => ({ id: m.served_model_name, cache_isolation: m.cache_isolation as CacheIsolation })),
+    token?.allowed_models,
+  );
+  const storeOn = (modelList?.models ?? []).some((m) => m.kv_store != null && m.kv_store !== "off");
+
   // ---- token set --------------------------------------------------------------
   const [chainOn, setChainOn] = useState(true);
   // The strip's zoom (see StripKey). Remembered per token, like `goneKey`, so
@@ -346,9 +381,12 @@ export function TokenDetailPage({ id }: { id: string }) {
   }, [onPreset]);
 
   // ---- dock ---------------------------------------------------------------------------
-  const gmEnabled = useGodModeEnabled();
-  const [dockOpen, setDockOpen] = useDockOpen(gmEnabled); // never remembered, never auto-opens
-  const [dockH, setDockH] = useDockHeight();
+  const gmEnabled = usePromptLensEnabled();
+  // While Prompt Lens is off, a key that keeps captures keeps its link: the
+  // admin can still open the captures on disk (read-only; nothing is live).
+  const lensOn = gmEnabled || !!token?.keep_captures;
+  const [keepBusy, setKeepBusy] = useState(false);
+  const [keepError, setKeepError] = useState<string | null>(null);
 
   const showToast = toast.show; // stable (useCallback) — named so the effect's deps are exact
   useEffect(() => {
@@ -389,10 +427,39 @@ export function TokenDetailPage({ id }: { id: string }) {
     if (!err) toast.show("Limits saved");
     return err;
   }
+  async function onSaveKv(p: KvPatch): Promise<string | null> {
+    const err = await patch({ ...p });
+    if (!err) {
+      toast.show(p.kv_isolation === "isolated" ? "Cache isolated" : p.kv_isolation === "sharing" ? "Cache shared" : "Cache caps saved");
+      mutateKv().catch(() => {});
+    }
+    return err;
+  }
+  async function onResetKv(): Promise<string | null> {
+    const r = await authFetch(`${key}/kv-reset`, { method: "POST" });
+    if (!r.ok) return errorDetail(r, `HTTP ${r.status}`);
+    refresh();
+    mutateKv().catch(() => {});
+    toast.show("Cache reset");
+    return null;
+  }
   async function onThinking(policy: "client" | "off"): Promise<boolean> {
     const ok = await actions.setThinkingPolicy(policy);
     if (ok) toast.show(policy === "off" ? "Thinking forced off" : "Client decides thinking");
     return ok;
+  }
+
+  async function onKeepCaptures(on: boolean): Promise<boolean> {
+    setKeepBusy(true);
+    setKeepError(null);
+    try {
+      const err = await patch({ keep_captures: on });
+      setKeepError(err);
+      if (!err) toast.show(on ? "Keeping captures" : "Captures no longer kept; kept ones deleted");
+      return err == null;
+    } finally {
+      setKeepBusy(false);
+    }
   }
 
   async function onRelay(on: boolean): Promise<boolean> {
@@ -429,11 +496,8 @@ export function TokenDetailPage({ id }: { id: string }) {
   if (isLoading || (!token && !error)) return <Loading />;
   if (!token) return <LoadError message={error instanceof Error ? error.message : "Unknown error"} />;
 
-  const paddingBottom = gmEnabled ? (dockOpen ? dockH + DOCK_BAR + 44 - 24 : 64 + 44 - 24) : 40;
-  const toastBottom = gmEnabled ? (dockOpen ? dockH + DOCK_GRIP + DOCK_BAR + 20 : DOCK_BAR + 20) : 20;
-
   return (
-    <div className={ROOT} style={{ paddingBottom }}>
+    <div className={ROOT} style={{ paddingBottom: 40 }}>
       <TokenHeader
         token={token}
         nowSec={nowSec}
@@ -452,6 +516,7 @@ export function TokenDetailPage({ id }: { id: string }) {
         <aside className="space-y-3.5">
           <LimitsCard
             token={token}
+            policy={policy}
             onSave={onSaveLimits}
             onRelay={onRelay}
             relayError={actions.relayError}
@@ -460,10 +525,28 @@ export function TokenDetailPage({ id }: { id: string }) {
             thinkingError={actions.thinkingError}
             thinkingBusy={actions.thinkingBusy}
           />
+          <KeepCapturesCard
+            on={!!token.keep_captures}
+            onToggle={onKeepCaptures}
+            busy={keepBusy}
+            error={keepError}
+            platformOn={gmEnabled}
+            lensHref={lensOn ? promptLensHref("admin", { keys: tokenIds }) : null}
+          />
+          <TokenPromptCacheCard
+            token={token}
+            policy={policy}
+            models={kvModels}
+            onSave={onSaveKv}
+            onReset={onResetKv}
+          />
           <DetailsCard token={token} nowSec={nowSec} />
           <LineageCard lineage={lineage} nowSec={nowSec} />
         </aside>
 
+        <div className="min-w-0 space-y-3.5">
+        {kvReport && <CacheUseCard windows={kvReport.windows} testId="token-cache-use" />}
+        {kvReport && <TokenStoreUse report={kvReport} usage={kvUsage} storeOn={storeOn} />}
         <UsageSection
           sel={shownSel}
           window={shownWindow}
@@ -495,6 +578,7 @@ export function TokenDetailPage({ id }: { id: string }) {
             </>
           )}
         </UsageSection>
+        </div>
       </div>
 
       <div className="mt-5">
@@ -508,19 +592,7 @@ export function TokenDetailPage({ id }: { id: string }) {
         onRotated={(successorId) => router.push(tokenHref(successorId))}
       />
 
-      {gmEnabled && (
-        <GodModeDock
-          tokenName={token.name}
-          tokenIds={tokenIds}
-          includesEarlier={chain}
-          open={dockOpen}
-          onOpenChange={setDockOpen}
-          height={dockH}
-          onHeightChange={setDockH}
-        />
-      )}
-
-      <Toast api={toast} bottomPx={toastBottom} />
+      <Toast api={toast} bottomPx={20} />
     </div>
   );
 }

@@ -42,6 +42,8 @@ import {
   type Tone,
 } from "@/components/router/styles";
 import { cn } from "@/lib/utils";
+import { Mark } from "@/components/kv/parts";
+import { MARK } from "@/lib/kv";
 import {
   fmtClock,
   fmtIn,
@@ -149,6 +151,12 @@ function trafficWords(t: RuleTraffic): { n: number; word: string; tone: Tone }[]
   ].filter((p) => p.n > 0);
 }
 
+// O6: the provider's prompt cache is shared by every key relaying through the account.
+const NOT_ISOLATED_TEXT = MARK.notAtProvider;
+const NOT_ISOLATED_SENTENCE = "Isolated keys are not isolated at the provider.";
+// O4: a local model whose engine cannot keep keys apart refuses isolated keys.
+const REFUSED_SENTENCE = "Isolated keys are refused there.";
+
 function sentence(
   i: number,
   rule: RuleOut,
@@ -171,12 +179,15 @@ function sentence(
     : rule.fallback
       ? "If it fails, falls back to Anthropic."
       : "If it fails, refuses with 529.";
+  const iso =
+    (rule.cache_isolation === "unsupported" ? ` ${REFUSED_SENTENCE}` : "") +
+    (rule.fallback && rule.fallback_cache_isolation ? ` ${NOT_ISOLATED_SENTENCE}` : "");
   const tr = traffic
     ? `${trafficWords(traffic)
         .map((p) => `${fmtInt(p.n)} ${p.word}`)
         .join(", ")}.`
     : "No traffic yet.";
-  return `${head} ${to} ${fail} ${tr}`;
+  return `${head} ${to} ${fail}${iso} ${tr}`;
 }
 
 // ── Small pieces ───────────────────────────────────────────────────────────
@@ -474,6 +485,11 @@ export function RoutingMap({
                         {pillInfo.text}
                       </span>
                     )}
+                    {r.cache_isolation === "unsupported" && (
+                      <Mark tone="warn" testId="rule-isolated-refused">
+                        {MARK.refused}
+                      </Mark>
+                    )}
                   </span>
                   <span aria-hidden="true" className={cn(C_META, META)}>
                     {!r.enabled ? (
@@ -502,6 +518,11 @@ export function RoutingMap({
                             <Swatch color={STROKE.danger} />
                             If it fails: refuse (529, Claude Code retries)
                           </span>
+                        )}
+                        {r.fallback && r.fallback_cache_isolation && (
+                          <Mark tone="warn" testId="rule-not-isolated" title={MARK.notAtProviderTip}>
+                          {NOT_ISOLATED_TEXT}
+                        </Mark>
                         )}
                         <span>{r.strip_thinking ? "Thinking off" : "Thinking passed through"}</span>
                         {r.min_max_tokens > 0 && <span>max_tokens ≥ {fmtInt(r.min_max_tokens)}</span>}
@@ -600,7 +621,7 @@ export function RoutingMap({
             <li data-testid="router-rest" className={cn(ROW, GRID, ROW_REST)}>
               <span className="sr-only">
                 {passthrough
-                  ? "Every other Claude model and /v1 path goes to Anthropic, on the user's own login. Needs a key that may relay to Anthropic."
+                  ? `Every other Claude model and /v1 path goes to Anthropic, on the user's own login. Needs a key that may relay to Anthropic. ${NOT_ISOLATED_SENTENCE}`
                   : "Every other Claude model and /v1 path is answered 404 Not found and is not relayed."}
                 {passCount > 0 ? ` ${fmtInt(passCount)} passed through.` : ""}
               </span>
@@ -619,7 +640,10 @@ export function RoutingMap({
                       <span className="h-2.5 w-2.5 flex-none rounded-[3px] bg-vw-info-fg" />
                       Anthropic
                     </span>{" "}
-                    <span className="text-[12.5px] text-chat-muted">on the user&apos;s own login</span>
+                    <span className="text-[12.5px] text-chat-muted">on the user&apos;s own login</span>{" "}
+                    <Mark tone="warn" testId="rest-not-isolated" title={MARK.notAtProviderTip}>
+                      {NOT_ISOLATED_TEXT}
+                    </Mark>
                   </>
                 ) : (
                   <>

@@ -1,0 +1,11 @@
+-- 0059_godmode_self_view.sql
+--
+-- Stats redesign B11 (owner decision D8, 2026-11-22): god mode in the key
+-- holder's own view. 1 = when the platform has god mode on (VW_GODMODE_ENABLED),
+-- this key's holder may open the captured prompt and reply of their OWN
+-- requests (GET /api/me/requests/{id}/capture). Default off; only an admin sets
+-- it (PATCH /api/tokens/{id}).
+--
+-- Rollback: the column is inert when 0; SQLite >= 3.35 can
+-- ALTER TABLE api_tokens DROP COLUMN godmode_self_view;
+ALTER TABLE api_tokens ADD COLUMN godmode_self_view INTEGER NOT NULL DEFAULT 0;

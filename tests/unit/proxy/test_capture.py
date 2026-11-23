@@ -154,3 +154,73 @@ def test_patch_capture_hours_opens_and_closes_the_window(tmp_data_dir, client):
         client.patch(f"/api/tokens/{tid}", json={"capture_hours": -1}, headers=hdrs).status_code
         == 422
     )
+
+
+# -- the record holds what the client called, not only what the engine got (#338) ----
+
+from unittest.mock import AsyncMock, patch  # noqa: E402
+
+from tests.unit.proxy.test_messages import AUTH, _json_upstream  # noqa: E402
+from tests.unit.proxy.test_thinking_policy import OK  # noqa: E402
+
+# Odd spacing and key order on purpose: the record must hold these exact bytes.
+_ANTHROPIC = (
+    b'{"model":"qwen",  "max_tokens":20,"messages":[{"role":"user",'
+    b'"content":[{"type":"text","text":"hi","cache_control":{"type":"ephemeral"}}]}]}'
+)
+_RESPONSES = b'{"model": "qwen","input":[{"role":"user","content":"hi"}],"max_output_tokens":20}'
+_CHAT_RAW = b'{"model":"qwen",   "messages":[{"role":"user","content":"hi"}]}'
+
+
+def _captured(client, tmp_data_dir, path, raw):
+    _ready(client, tmp_data_dir)
+    db_path = tmp_data_dir / "vllm-warden.db"
+    _key(db_path, capture_until=time.time() + 600)
+    send = AsyncMock(return_value=_json_upstream(OK))
+    with patch("httpx.AsyncClient.send", new=send):
+        r = client.post(path, headers={**AUTH, "content-type": "application/json"}, content=raw)
+    assert r.status_code == 200, r.text
+    rid = _rid(db_path)
+    return wait_until(lambda: client.app.state.capture_store.get(rid), what="capture file"), rid
+
+
+def test_chat_record_is_the_wire_request_and_has_no_translation(tmp_data_dir, client):
+    rec, _ = _captured(client, tmp_data_dir, "/v1/chat/completions", _CHAT_RAW)
+    assert rec["path"] == "/v1/chat/completions"
+    assert rec["request_body"].encode() == _CHAT_RAW
+    assert rec["translated_body"] is None
+
+
+def test_messages_record_keeps_the_anthropic_body_and_the_translation(tmp_data_dir, client):
+    rec, rid = _captured(client, tmp_data_dir, "/v1/messages", _ANTHROPIC)
+    assert rec["path"] == "/v1/messages"
+    assert rec["request_body"].encode() == _ANTHROPIC
+    chat = json.loads(rec["translated_body"])
+    assert chat["messages"][-1]["role"] == "user" and "cache_control" not in rec["translated_body"]
+    assert "cache_control" in rec["request_body"]
+    got = client.get(f"/api/capture/{rid}", headers=_admin(client, tmp_data_dir))
+    assert got.status_code == 200 and got.json()["path"] == "/v1/messages"
+    assert got.json()["translated_body"] == rec["translated_body"]
+
+
+def test_responses_record_keeps_the_responses_body_and_the_translation(tmp_data_dir, client):
+    rec, _ = _captured(client, tmp_data_dir, "/v1/responses", _RESPONSES)
+    assert rec["path"] == "/v1/responses"
+    assert rec["request_body"].encode() == _RESPONSES
+    chat = json.loads(rec["translated_body"])
+    assert "messages" in chat and "input" not in chat
+
+
+def test_a_record_from_before_the_split_still_reads(tmp_data_dir, client):
+    old = {
+        "id": "oldrec0001",
+        "ts": time.time(),
+        "path": "/v1/chat/completions",
+        "request_body": "{}",
+        "engine_body": None,
+        "response": "r",
+    }
+    client.get("/healthz")
+    client.app.state.capture_store.put_sync(old)
+    got = client.get("/api/capture/oldrec0001", headers=_admin(client, tmp_data_dir))
+    assert got.status_code == 200 and got.json() == old

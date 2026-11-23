@@ -841,3 +841,32 @@ def test_known_reply_from_another_session_does_not_link() -> None:
     )
     o2 = _full(lin, _ids("other", "ans", "x"), sk="s2", request_id="r2")
     assert o2.edge == "new" and o2.conv is None
+
+
+def test_loose_depth_reported_beyond_exact() -> None:
+    lin = Lineage()
+    assert _full(lin, _ids("fresh"), sk="other").loose_depth == -1
+
+    def body(*, reasoning: bool, more: bool) -> Ids:
+        a1 = {"role": "assistant", "content": "a1"}
+        if reasoning:
+            a1["reasoning_content"] = "thinking it over"
+        msgs = [{"role": "user", "content": "u0"}, a1]
+        if more:
+            msgs.append({"role": "user", "content": "u2"})
+        c = canonicalize({"messages": msgs})
+        assert c is not None
+        return ids_for(c, KEY, S)
+
+    t1 = body(reasoning=True, more=False)
+    first = _full(lin, t1)
+    assert (first.exact_depth, first.loose_depth) == (-1, -1)
+    t2 = body(reasoning=False, more=True)
+    assert t2.nodes[0] == t1.nodes[0] and t2.nodes[1] != t1.nodes[1]
+    o = _full(lin, t2)
+    assert o.exact_depth == 0
+    assert o.loose_depth == 1
+    assert o.loose_match_beyond_exact is True
+    # An unchanged resend knows both chains to the same depth.
+    again = _full(lin, t2)
+    assert (again.exact_depth, again.loose_depth) == (2, 2)

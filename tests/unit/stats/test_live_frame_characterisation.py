@@ -79,6 +79,9 @@ def _frames() -> dict:
         # it pins, which is the one thing a characterisation test must not do.
         if f.get("latency"):
             f["latency"].pop("buckets", None)
+        # Additive stats-redesign fields, asserted in test_vllm_0_32_metrics.py.
+        f["engine"].pop("engine_sleeping", None)
+        f["cache"].pop("prefix_cache_hit_rate", None)
     return {"first_frame": first, "rate_frame": rated}
 
 

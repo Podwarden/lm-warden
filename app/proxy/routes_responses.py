@@ -4,7 +4,7 @@ The same shape as routes_messages.py: the route owns no forwarding of its own.
 It validates the Responses body, turns it into an OpenAI chat body
 (responses_translate.py), and runs it through the shared ``_forward`` as
 ``/v1/chat/completions`` -- so admission, priority, accounting, the live
-registry, prefix-cache estimate, replica affinity, god mode and the runaway
+registry, prefix-cache estimate, replica affinity, Prompt Lens and the runaway
 detector behave exactly as they do for OpenAI traffic. Auth is
 ``require_bearer`` (``Authorization: Bearer``, ``X-LMWarden-Key``), routing is
 ``_resolve_target``: SERVED model names only, router on or off (router rules
@@ -152,6 +152,7 @@ async def _serve_local(
     # _forward reads the body from the request: hand it the translated one.
     # `_body` is Starlette's cache of an already-read body; `_receive` covers
     # a reader that goes to the stream (the same re-set chat_completions does).
+    wire = await request.body()  # the client's bytes (cached by _parse); capture records them
     body = json.dumps(tr.oai).encode()
     request._body = body
 
@@ -172,6 +173,8 @@ async def _serve_local(
         affinity_key=key,
         affinity_source=source,
         session_id=session_id,
+        wire_body=wire,
+        wire_path="/v1/responses",
     )
     # A guard block reply is LM Warden's answer, not the model's: say so.
     out_model = GUARD_MODEL if guard_blocked(resp) else req.model

@@ -47,7 +47,7 @@ import { fileURLToPath } from 'node:url';
  *   chat-ui and KaTeX set inline styles; the conventions allow it for styles.
  * - connect-src 'self': fetch, EventSource (/api/... SSE) and the /v1 calls
  *   are all same-origin. The console opens no WebSocket.
- * - img-src data: blob:: inline SVG icons and god-mode images shown through
+ * - img-src data: blob:: inline SVG icons and Prompt Lens images shown through
  *   object URLs.
  * - worker-src 'self' blob:: no worker today; listed so a bundled worker
  *   does not silently fall back to script-src.

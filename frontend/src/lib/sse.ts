@@ -65,19 +65,52 @@ const MAX_BACKOFF_MS = 5_000;
  *  from the operator. The doubling sequence then ramps as before. */
 const INITIAL_BACKOFF_MS = 250;
 
+/** Longest a 429's Retry-After is honoured before the next mint. */
+const MAX_RETRY_AFTER_MS = 60_000;
+
+/** The default ticket mint: the admin session's POST /api/auth/sse-ticket. */
+function defaultMint(path: string): Promise<Response> {
+  return authFetch('/api/auth/sse-ticket', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path }),
+  });
+}
+
+/** A 429's Retry-After in ms (seconds form only), or 0. */
+function retryAfterMs(r: Response): number {
+  const raw = r.headers?.get?.('Retry-After');
+  const n = raw == null ? NaN : Number(raw);
+  return Number.isFinite(n) && n > 0 ? Math.min(n * 1000, MAX_RETRY_AFTER_MS) : 0;
+}
+
 interface UseEventSourceOptions<T> {
   onMessage: (m: T) => void;
   enabled?: boolean;
   /**
-   * Extra query parameters for the stream URL (e.g. god mode's `token_ids`).
+   * Extra query parameters for the stream URL (e.g. Prompt Lens's `token_ids`).
    *
    * The SSE ticket is still minted for the BARE `path`: the ticket check on the
-   * server compares `request.url.path` only, and the god-mode 409 check in
+   * server compares `request.url.path` only, and the Prompt Lens 409 check in
    * `POST /api/auth/sse-ticket` compares the body's path exactly. The ticket is
    * appended last, so the URL is `${path}?${query}&ticket=…`. Changing the
    * query tears the stream down and reconnects.
    */
   query?: Record<string, string>;
+  /**
+   * Mints the SSE ticket for `path` (default: `POST /api/auth/sse-ticket` with
+   * the admin session). The key holder's stream passes its own
+   * (`POST /api/me/prompt-lens/ticket` with the key's sign-in). The response must
+   * be JSON `{ticket}`; its status is classified as for the default: 4xx
+   * except 429 terminal, 5xx and 429 retried (429 after its Retry-After).
+   */
+  mint?: (path: string) => Promise<Response>;
+  /** Called on every EventSource open (first connect and each reconnect),
+   *  before that connection's first message. */
+  onOpen?: () => void;
+  /** Changing it drops the connection and connects again from scratch (a
+   *  "retry" after a terminal error). */
+  restartKey?: number;
 }
 
 export function useEventSource<T>(
@@ -97,6 +130,11 @@ export function useEventSource<T>(
   // a non-memoised handler by always reading from the ref.
   const onMessageRef = useRef(opts.onMessage);
   onMessageRef.current = opts.onMessage;
+  const onOpenRef = useRef(opts.onOpen);
+  onOpenRef.current = opts.onOpen;
+  // Read at connect time, like onMessage: a fresh closure must not reconnect.
+  const mintRef = useRef(opts.mint);
+  mintRef.current = opts.mint;
 
   // Serialised once per render so the effect can depend on a string: a fresh
   // object literal from the caller must not reconnect on every render.
@@ -113,7 +151,7 @@ export function useEventSource<T>(
     let attempts = 0;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
-    const scheduleReconnect = (httpStatus: number | null) => {
+    const scheduleReconnect = (httpStatus: number | null, minDelayMs = 0) => {
       if (stopped) return;
       attempts += 1;
       if (attempts > MAX_RECONNECT) {
@@ -132,7 +170,7 @@ export function useEventSource<T>(
         errorCode: httpStatus,
         attempts,
       });
-      const delay = Math.min(backoffMs, MAX_BACKOFF_MS);
+      const delay = Math.max(Math.min(backoffMs, MAX_BACKOFF_MS), minDelayMs);
       backoffMs *= 2;
       timer = setTimeout(connect, delay);
     };
@@ -171,18 +209,16 @@ export function useEventSource<T>(
       }
 
       let ticket: string;
+      let waitMs = 0;
       try {
-        const r = await authFetch('/api/auth/sse-ticket', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ path }),
-        });
+        const r = await (mintRef.current ?? defaultMint)(path);
         if (!r.ok) {
           if (isTerminalStatus(r.status)) {
             // 401/403/404/etc — give up, tell the UI.
             setTerminal(r.status);
             return;
           }
+          if (r.status === 429) waitMs = retryAfterMs(r);
           // 5xx or 429 — schedule a retry. Throwing into the catch
           // below keeps the backoff path consolidated.
           throw new Error(String(r.status));
@@ -219,7 +255,7 @@ export function useEventSource<T>(
         }
         const status =
           e instanceof Error && /^\d+$/.test(e.message) ? Number(e.message) : null;
-        scheduleReconnect(status);
+        scheduleReconnect(status, waitMs);
         return;
       }
 
@@ -236,6 +272,7 @@ export function useEventSource<T>(
         backoffMs = INITIAL_BACKOFF_MS;
         attempts = 0;
         setState({ status: 'connected', errorCode: null, attempts: 0 });
+        onOpenRef.current?.();
       };
       es.onmessage = (e) => {
         try {
@@ -265,7 +302,7 @@ export function useEventSource<T>(
       es?.close();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path, opts.enabled, qs]);
+  }, [path, opts.enabled, qs, opts.restartKey]);
 
   return state;
 }

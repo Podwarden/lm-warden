@@ -103,3 +103,16 @@ def test_cache_obs_fields_are_null_by_default_and_merged_when_set() -> None:
     assert all(rec[k] is None for k in keys)
     rec = finished_record(_req(cache_obs={"cache_outcome": "hit", "reusable_tokens": 7}), now=101.0)
     assert rec["cache_outcome"] == "hit" and rec["reusable_tokens"] == 7
+
+
+def test_kv_isolation_fields_default_to_none() -> None:
+    rec = finished_record(_req(), now=101.0)
+    assert rec["kv_isolated"] is None
+    assert rec["kv_iso_cost_tokens"] is None
+
+
+def test_kv_isolation_fields_round_trip() -> None:
+    rec = finished_record(_req(kv_isolated=True, kv_iso_cost_tokens=2048), now=101.0)
+    assert (rec["kv_isolated"], rec["kv_iso_cost_tokens"]) == (1, 2048)
+    rec = finished_record(_req(kv_isolated=False, kv_iso_cost_tokens=0), now=101.0)
+    assert (rec["kv_isolated"], rec["kv_iso_cost_tokens"]) == (0, 0)

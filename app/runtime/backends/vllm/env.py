@@ -16,6 +16,8 @@ from __future__ import annotations
 import logging
 import os
 
+from app.runtime.kv_store import kv_enabled
+
 log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -116,6 +118,9 @@ HARD_LOCKED_ENV_KEYS: frozenset[str] = frozenset(
         "LLAMA_ARG_PORT",
         "LLAMA_ARG_ENDPOINT_METRICS",
         "LLAMA_CACHE",
+        # lmw_kv: path of the network key file (never the key); set by the builder
+        # when kv_store is on, so extra_env cannot repoint the connector at another key.
+        "LMW_KV_KEY_FILE",
     }
 )
 
@@ -269,6 +274,7 @@ def build_subprocess_env(
     allowed_prefixes: tuple[str, ...] = ALLOWED_ENV_PREFIXES,
     allowed_exact: frozenset[str] = ALLOWED_ENV_EXACT,
     load_max_s: float | None = None,
+    kv_key_file: str | None = None,
 ) -> dict[str, str]:
     """Construct the env dict for a vLLM subprocess.
 
@@ -368,5 +374,9 @@ def build_subprocess_env(
     env["HUGGING_FACE_HUB_TOKEN"] = hf_token
     env["HF_TOKEN"] = hf_token
     env["PATH"] = "/usr/local/bin:/usr/bin:/bin"
+    if kv_enabled(model):
+        if not kv_key_file:
+            raise ValueError("kv_store is enabled but no kv_key_file was given")
+        env["LMW_KV_KEY_FILE"] = kv_key_file
 
     return env

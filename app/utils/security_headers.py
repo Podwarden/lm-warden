@@ -6,7 +6,7 @@ Caddyfile, a Hub-installed stack's own Caddyfile, Traefik, or nothing at all
 frontend/next.config.ts (frontend/src/lib/security-headers.ts).
 
 * ``X-Content-Type-Options: nosniff`` -- a response is only ever what its
-  Content-Type says (god-mode media and chat2 attachments are user-supplied
+  Content-Type says (Prompt Lens media and chat2 attachments are user-supplied
   bytes).
 * ``Referrer-Policy: strict-origin-when-cross-origin`` -- no paths or query
   strings (signed attachment URLs, SSE tickets) leak to other origins.

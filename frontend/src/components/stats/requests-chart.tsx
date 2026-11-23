@@ -286,13 +286,14 @@ export function ColourLegend({
   if (field === "none") {
     return (
       <span className="text-[11px] text-chat-dim" data-testid="colour-legend-none">
-        one {groups.length ? "client and one model" : "series"} — colour carries nothing here
+        one {groups.length ? "key and one model" : "series"} — colour carries nothing here
       </span>
     );
   }
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]" data-testid="colour-legend">
-      <span className="text-chat-dim">colour = {field}</span>
+      {/* "client" groups by the key's name (the IP only for anonymous requests). */}
+      <span className="text-chat-dim">colour = {field === "client" ? "key" : field}</span>
       {groups.map((g) => {
         const off = hidden.has(g.key);
         return (

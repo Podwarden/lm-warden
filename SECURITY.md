@@ -42,7 +42,7 @@ Out of scope, and best reported upstream:
 - llama.cpp itself — <https://github.com/ggml-org/llama.cpp/security>
 - the behaviour of a model you chose to load.
 
-Things that are by design rather than vulnerabilities: god mode and the content
+Things that are by design rather than vulnerabilities: Prompt Lens and the content
 log can show request content to an admin when an operator switches them on
 (both are off by default — see
 [Where request content can end up](documents/OPERATING.md#where-request-content-can-end-up)),

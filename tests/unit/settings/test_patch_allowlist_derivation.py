@@ -143,6 +143,8 @@ _EXPECTED_OPERATOR_WRITABLE = {
     "dp_affinity_enabled",
     "dp_spill_threshold",
     "thinking_policy",
+    "kv_store",
+    "kv_store_weight",
     "parallelism_strategy",
     "max_batch_size",
     "max_model_len",
@@ -241,6 +243,8 @@ def test_tristate_and_loaded_editable_are_the_capability_flags():
         "dp_affinity_enabled",
         "dp_spill_threshold",
         "thinking_policy",
+        # KV plan 2: sent to the store daemon at once (app/kv/policy_sync.py).
+        "kv_store_weight",
     }
     assert TRISTATE_FIELDS == capability_flags
 
@@ -294,6 +298,8 @@ def test_patchable_surface_pins_the_pre_policy_frozenset():
             "dp_affinity_enabled",
             "dp_spill_threshold",
             "thinking_policy",
+            "kv_store",
+            "kv_store_weight",
             "backend",
             "dtype",
             "engine_channel",
@@ -321,7 +327,7 @@ def test_patchable_surface_pins_the_pre_policy_frozenset():
             "trust_remote_code",
         }
     )
-    assert len(_PATCHABLE_MODEL_FIELDS) == 29
+    assert len(_PATCHABLE_MODEL_FIELDS) == 31
 
 
 @pytest.mark.parametrize(

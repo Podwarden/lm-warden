@@ -44,6 +44,7 @@ from typing import Any
 
 from app.chat2.catalog import chat_template_suggests_reasoning, read_hf_chat_template
 from app.db.repos.models import ModelRow
+from app.proxy.kv_scope import cache_isolation
 from app.runtime.backends.registry import DEFAULT_BACKEND
 
 # Folded into the nested ``engine`` object rather than published flat. Kept as a
@@ -151,6 +152,8 @@ def _serialise(row: ModelRow, hf_cache_dir: Path | None = None) -> dict[str, Any
         if row.layout_notice_level and row.layout_notice
         else None
     )
+    # O4: whether an isolated key can use this model (its backend salts the prefix cache).
+    body["cache_isolation"] = cache_isolation(row)
     body["engine"] = (
         None
         if not row.engine_channel

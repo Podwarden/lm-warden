@@ -4,6 +4,7 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 from app.auth.csrf import csrf_check, ensure_csrf_id
 from app.config import load_settings
@@ -135,6 +136,20 @@ async def lifespan(app: FastAPI):
 
     app.state.setup_lock = await prepare_first_run(settings.db_path, settings.data_dir, os.environ)
 
+    # KV-cache tier daemon: runs only while some model has kv_store != "off".
+    # Starts in the background so it never delays api startup.
+    from app.runtime.kv_store import KvStoreSupervisor
+
+    app.state.kv_store = KvStoreSupervisor(settings)
+    # Every daemon generation, the first included, gets the eviction policy, the weights
+    # and the full retired scope list (app/kv/policy_sync.py); a load waits for that.
+    from app.kv import policy_sync
+
+    app.state.kv_sync = policy_sync.PolicySync()
+    app.state.kv_store.on_healthy(lambda _gen: policy_sync.request_sync(app.state))
+    app.state.kv_store.sync_before_loads()
+    await app.state.kv_store.start()
+
     # #210 — under the local-subprocess driver the vLLM engine inherits this
     # process's /dev/shm. On Kubernetes that is 64 MiB unless the pod spec asks
     # for more, which is far too little for tensor-parallel workers and shows
@@ -159,6 +174,7 @@ async def lifespan(app: FastAPI):
         ports=app.state.port_allocator,
         driver=_build_engine_driver(app.state.settings),
         on_wrapper_spawn=record_wrapper_pid,
+        kv_store=app.state.kv_store,
         admission=await admission_for_profile(
             platform_profile.PROFILE, hf_cache_dir=app.state.settings.hf_cache_dir
         ),
@@ -304,26 +320,45 @@ async def lifespan(app: FastAPI):
     app.state.playground_store = PlaygroundStore()
     app.state.chat_active_requests = ActiveRequestCounter()
 
-    # God mode (live prompt/output viewer) — in-memory broadcast hub. Always
-    # instantiated (cheap); the proxy taps only publish when
-    # settings.godmode_enabled is true, so when off the hot path never touches
-    # it. Bounds are read once here from settings.
-    from app.proxy.godmode import GodModeHub
+    # Prompt Lens (live prompt/output viewer) — in-memory broadcast hub. Always
+    # instantiated (cheap); the proxy taps only publish while Prompt Lens is on
+    # (app/proxy/prompt_lens_switch.py: the runtime setting, else the env), so
+    # when off the hot path never touches it. Bounds are read once here from
+    # settings.
+    from app.proxy.prompt_lens import PromptLensHub
+    from app.proxy.prompt_lens_kept import KeptCaptures
+    from app.proxy.prompt_lens_sections import PromptLensSections
 
-    app.state.godmode_hub = GodModeHub(
-        ring_events=settings.godmode_ring_events,
-        ring_chars=settings.godmode_ring_chars,
+    # Prompt Lens keep captures (G-R4): the writer in front of prompt_lens_kept.
+    # Idle (one awaiting task) unless a key with keep_captures on finishes a
+    # request while Prompt Lens is on.
+    app.state.prompt_lens_kept = KeptCaptures(settings.db_path)
+    # G9: the whole-section store beside the ring, fed by the hub.
+    app.state.prompt_lens_sections = PromptLensSections(
+        total_chars=settings.prompt_lens_section_chars,
+        max_channel_chars=settings.prompt_lens_section_max_chars,
+        ttl_s=settings.prompt_lens_section_ttl_s,
+        on_kept=app.state.prompt_lens_kept.offer,
+    )
+    app.state.prompt_lens_hub = PromptLensHub(
+        ring_events=settings.prompt_lens_ring_events,
+        ring_chars=settings.prompt_lens_ring_chars,
+        sections=app.state.prompt_lens_sections,
     )
 
-    # God-mode media store (inline images) — out-of-band blob store so image
+    # Prompt Lens media store (inline images) — out-of-band blob store so image
     # payloads never inflate the event ring. Always instantiated (cheap);
-    # only written when settings.godmode_enabled is true.
-    from app.proxy.godmode import GodModeMediaStore
+    # only written while Prompt Lens is on.
+    from app.proxy.prompt_lens import PromptLensMediaStore
 
-    app.state.godmode_media = GodModeMediaStore(
-        store_chars=settings.godmode_media_store_chars,
-        max_item_chars=settings.godmode_max_image_chars,
+    app.state.prompt_lens_media = PromptLensMediaStore(
+        store_chars=settings.prompt_lens_media_store_chars,
+        max_item_chars=settings.prompt_lens_max_image_chars,
     )
+    # The runtime switch (Settings page) over the env value.
+    from app.proxy import prompt_lens_switch
+
+    await prompt_lens_switch.load(app)
 
     # Live request registry (feature/live-stats-dashboard, Plane B). In-process,
     # single-worker, lock-light — tracks every in-flight /v1 request with token
@@ -405,6 +440,7 @@ async def lifespan(app: FastAPI):
         _prefill_model.run_forever(app.state.prefill_model, settings.db_path)
     )
     audit_task = asyncio.create_task(admin_audit.run_forever())
+    kept_task = asyncio.create_task(app.state.prompt_lens_kept.run_forever())
     # Daily update check (spec 2026-11-20). Decides per pass whether it is on.
     from app.updates.client import run_forever as run_update_check
     from app.updates.version import release_version
@@ -459,7 +495,16 @@ async def lifespan(app: FastAPI):
             for task in bg_tasks:
                 task.cancel()
             await asyncio.gather(*bg_tasks, return_exceptions=True)
-        for _closer in (app.state.router_http.aclose, app.state.upstream_clients.aclose_all):
+        # Daemon goes with the api; engine connectors fail open without it.
+        try:
+            await app.state.kv_sync.aclose()
+            await app.state.kv_store.stop()
+        except Exception:  # noqa: BLE001 -- shutdown must proceed
+            logging.getLogger(__name__).warning("shutdown: kv store stop failed", exc_info=True)
+        _closers = [app.state.router_http.aclose, app.state.upstream_clients.aclose_all]
+        if (_readiness := getattr(app.state, "readiness", None)) is not None:
+            _closers.append(_readiness.aclose)  # /readyz's pooled engine-probe client
+        for _closer in _closers:
             try:
                 await _closer()
             except Exception:  # noqa: BLE001 -- one failed close must not skip the rest
@@ -478,6 +523,15 @@ async def lifespan(app: FastAPI):
                 await app.state.ledger.flush()
         except Exception:  # noqa: BLE001 -- shutdown must proceed (TimeoutError included)
             logging.getLogger(__name__).warning("ledger: final flush failed", exc_info=True)
+        # Kept captures still queued are written while the DB is usable
+        # (bounded), BEFORE the writer is cancelled, so the one it has in hand
+        # is not lost (review M6).
+        try:
+            async with asyncio.timeout(5):
+                await app.state.prompt_lens_kept.flush()
+        except Exception:  # noqa: BLE001 -- shutdown must proceed (TimeoutError included)
+            logging.getLogger(__name__).warning("prompt_lens: kept captures final flush failed")
+        kept_task.cancel()
         sampler_task.cancel()
         pruner_task.cancel()
         watchdog_task.cancel()
@@ -510,6 +564,7 @@ async def lifespan(app: FastAPI):
             block_size_task,
             audit_task,
             update_task,
+            kept_task,
             *((parent_watch_task,) if parent_watch_task is not None else ()),
             return_exceptions=True,
         )
@@ -557,6 +612,11 @@ def build_app() -> FastAPI:
 
     reg = Registry()
     load_extensions(reg)
+
+    # SSE tickets ride in the query string; keep them out of the access log.
+    from app.auth.sse_tickets import install_access_log_redaction
+
+    install_access_log_redaction()
 
     app = FastAPI(
         title="LM Warden",
@@ -617,6 +677,11 @@ def build_app() -> FastAPI:
 
     app.include_router(tokens_routes_api.router)
 
+    # The KV store's use per model and per key (spec 2026-11-21, Plan 2, section 6).
+    from app.kv import routes_api as kv_routes_api
+
+    app.include_router(kv_routes_api.router)
+
     # Claude Code model router control API (#287).
     from app.router import routes_api as router_routes_api
 
@@ -651,6 +716,14 @@ def build_app() -> FastAPI:
     from app.tokens import routes_me
 
     app.include_router(routes_me.router)
+    from app.tokens import routes_me_prompt_lens, routes_me_stats
+
+    app.include_router(routes_me_stats.router)
+    app.include_router(routes_me_prompt_lens.router)
+    # The old /api/me/godmode paths, deprecated (one release).
+    from app.proxy.prompt_lens_legacy import legacy_router
+
+    app.include_router(legacy_router(routes_me_prompt_lens.router))
 
     app.include_router(guard_routes.router)
 
@@ -693,9 +766,11 @@ def build_app() -> FastAPI:
 
     app.include_router(proxy_routes_messages.router)
 
-    from app.proxy import routes_godmode as proxy_routes_godmode
+    from app.proxy import routes_prompt_lens as proxy_routes_prompt_lens
 
-    app.include_router(proxy_routes_godmode.router)
+    app.include_router(proxy_routes_prompt_lens.router)
+    # The old /api/admin/godmode paths, deprecated (one release).
+    app.include_router(legacy_router(proxy_routes_prompt_lens.router))
 
     from app.system import routes_version as system_routes_version
 
@@ -722,6 +797,11 @@ def build_app() -> FastAPI:
     from app.system import routes_info as system_routes_info
 
     app.include_router(system_routes_info.router)
+
+    # /api/admin/readiness: /readyz with the per-model detail (#342).
+    from app.system import readiness as system_readiness
+
+    app.include_router(system_readiness.router)
 
     # Shell status feed (planner iter 44): mounted ONLY when the macOS shell
     # injected a valid per-launch bearer as VW_SHELL_TOKEN; unset/empty keeps
@@ -911,6 +991,11 @@ def build_app() -> FastAPI:
     # a default CSP, HSTS over HTTPS only) on every response -- including the
     # body limit's 413 -- so it is outermost. Pure ASGI: streams untouched.
     # See app/utils/security_headers.py.
+    # Deprecated /godmode routes: every answer says so (one release).
+    from app.proxy.prompt_lens_legacy import DeprecatedPathMiddleware
+
+    app.add_middleware(DeprecatedPathMiddleware)
+
     from app.utils.security_headers import SecurityHeadersMiddleware
 
     app.add_middleware(SecurityHeadersMiddleware)
@@ -920,15 +1005,41 @@ def build_app() -> FastAPI:
         return {"csrf": request.state.csrf_token}
 
     @app.get("/healthz")
-    async def healthz() -> dict[str, object]:
+    async def healthz(request: Request) -> dict[str, object]:
         # Always 200 while the control plane is up: this is the container's
         # liveness probe, and failing it over lost GPU telemetry would get a
         # still-serving engine restarted. The GPU state rides along for
         # operators and the Hub to read (#255) -- the last-known result of
         # the GPU probe, from memory, never a fresh nvidia-smi call.
+        #
+        # The models block (#342) is the same kind of passenger: it reports
+        # whether any model can serve, but never changes the status code --
+        # a model load takes minutes and a failing liveness probe meanwhile
+        # restarts the api mid-load. Readiness is /readyz below.
         from app.system.gpu import gpu_probe_health
+        from app.system.readiness import models_health
 
-        return {"ok": True, "gpu": gpu_probe_health().as_dict()}
+        return {
+            "ok": True,
+            "gpu": gpu_probe_health().as_dict(),
+            "models": await models_health(request.app.state),
+        }
+
+    @app.get(
+        "/readyz",
+        responses={503: {"description": "No model can serve a completion right now"}},
+    )
+    async def readyz(request: Request) -> JSONResponse:
+        # 200 only when at least one model passes the router's own check AND
+        # its engine answers its health path now; 503 with a reason otherwise
+        # (#342). Not a liveness signal: a warden with no model loaded on
+        # purpose is alive and correctly not ready.
+        # The body is {ready, reason} only: the route is public, so the model
+        # names, timestamps and errors are on /api/admin/readiness.
+        from app.system.readiness import public_readiness
+
+        ready, body = await public_readiness(request.app.state)
+        return JSONResponse(body, status_code=200 if ready else 503)
 
     # After every route exists: the bearer scheme and the public exemptions are
     # computed from the mounted routes.

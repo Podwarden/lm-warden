@@ -16,10 +16,10 @@
  * the component and is paused while a mouse button is held in the log or a
  * selection lives inside it.
  *
- * The file-local Virtuoso mock below renders only the LAST few rows, like a
- * real virtualized window. It overrides the render-everything shim in
- * tests/setup.ts, so the "all lines are in the DOM" assertion fails if the
- * component goes back to virtualizing.
+ * react-virtuoso itself was dropped from the dependencies with the Prompt
+ * Lens dock (2026-11-22), together with the virtualized-window mock this file
+ * used to carry; the "all lines are in the DOM" assertion still fails if the
+ * component goes back to any virtualized list.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -27,25 +27,6 @@ import React from 'react';
 import { render, screen, act, cleanup, fireEvent } from '@testing-library/react';
 import { LogStream } from '@/components/models/log-stream';
 import { setAccessToken, setCsrfToken } from '@/lib/auth-fetch';
-
-vi.mock('react-virtuoso', () => {
-  const WINDOW = 5;
-  function Virtuoso(props: {
-    data?: ReadonlyArray<unknown>;
-    itemContent?: (index: number, item: unknown) => React.ReactNode;
-    style?: React.CSSProperties;
-    components?: { List?: React.ComponentType<React.HTMLAttributes<HTMLDivElement>> };
-  }) {
-    const { data = [], itemContent, style, components } = props;
-    const start = Math.max(0, data.length - WINDOW);
-    const rows = data.slice(start).map((item, i) =>
-      React.createElement('div', { key: start + i }, itemContent?.(start + i, item)),
-    );
-    const List = components?.List ?? 'div';
-    return React.createElement('div', { style }, React.createElement(List, {}, rows));
-  }
-  return { Virtuoso };
-});
 
 class FakeES {
   static last: FakeES;

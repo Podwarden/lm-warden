@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 from collections.abc import Awaitable, Callable
 from enum import Enum
@@ -14,6 +15,13 @@ from app.runtime.backends.vllm.images import resolve_image
 from app.runtime.engine import EngineSpec
 from app.runtime.engine.local_subprocess import LocalSubprocessDriver
 from app.runtime.gpu_ownership import GpuOwnership
+from app.runtime.kv_store import (
+    KvRevisionUnresolved,
+    check_kv_driver,
+    kv_enabled,
+    kv_launch_kwargs,
+    without_kv,
+)
 from app.runtime.variants import Variant, runtime_facts, variant_of
 
 UNLOAD_GRACE_SECONDS = 30.0
@@ -97,8 +105,19 @@ class Supervisor:
         on_wrapper_spawn: Callable[[str, int], None] | None = None,
         admission: Any = None,
         ports: Any = None,
+        kv_store: Any = None,
     ) -> None:
         self.settings = settings
+        # KvStoreSupervisor (or None): a load with kv_store on waits for its
+        # daemon so the engine's connector does not fail open for the whole run.
+        self._kv_store = kv_store
+        # model_id -> (daemon generation the engine loaded under, why its tier is off).
+        # Only for engines whose row has kv_store on; cleared with the other per-engine
+        # state. A generation of None, or a reason, means the tier is off until reload.
+        self._kv_loads: dict[str, tuple[int | None, str | None]] = {}
+        on_restart = getattr(kv_store, "on_restart", None)
+        if callable(on_restart):
+            on_restart(self._kv_daemon_restarted)
         # The engine port pool (verified finding #3). Once load() registers an engine, the
         # supervisor owns its port and returns it on every way the engine goes away: unload
         # (including a force-unload mid-spawn) and exit. Callers release only a port that never
@@ -190,10 +209,13 @@ class Supervisor:
             self._hosts.pop(model_id, None)
             self._overrides.pop(model_id, None)
             self._variants.pop(model_id, None)
+            had_kv = self._kv_loads.pop(model_id, None) is not None
             self._engine_ids.pop(model_id, None)
             self._watchers.pop(model_id, None)
             self._state.pop(model_id, None)
             self.gpus.release(model_id)
+        if had_kv:  # before on_exit, which may load the model again
+            await self._release_kv_owner(model_id)
         if on_exit is not None:
             await on_exit(rc)
 
@@ -205,6 +227,37 @@ class Supervisor:
         on_exit: Callable[[int], Awaitable[None]] | None = None,
         overrides: dict | None = None,
     ) -> None:
+        # Before anything else: a docker-driver engine cannot reach the daemon, so a
+        # kv_store row is refused rather than launched with a connector that cannot work.
+        check_kv_driver(model, getattr(self.settings, "engine_driver", "local"))
+        kv_load: tuple[int | None, str | None] | None = None
+        if self._kv_store is not None and kv_enabled(model):
+            # Before the lock: a slow daemon boot must not stall other loads.
+            if await self._kv_store.ensure_running():
+                kv_load = (self._kv_store.generation(), None)
+            else:
+                kv_load = (None, "the KV store daemon was not healthy when the model loaded")
+                logging.getLogger(__name__).warning(
+                    "kv store daemon is not healthy; model %s loads with its KV tier off "
+                    "until it is reloaded",
+                    model.id,
+                )
+        # The KV plan kwargs, with the revision resolved to the commit the engine loads.
+        # Off the loop (it reads the HF cache). A revision with no known commit runs this
+        # load with the tier off, never keyed by a branch name that can move.
+        plan_model = model
+        kv_kwargs: dict[str, Any] = {}
+        if kv_enabled(model):
+            try:
+                kv_kwargs = await asyncio.to_thread(kv_launch_kwargs, self.settings, model)
+            except KvRevisionUnresolved as exc:
+                plan_model = without_kv(model)
+                kv_load = (None, f"the KV tier is off for this load: {exc}")
+                logging.getLogger(__name__).warning(
+                    "kv store: model %s loads with its KV tier off until it is reloaded: %s",
+                    model.id,
+                    exc,
+                )
         async with self._lock:
             if model.id in self._handles:
                 raise RuntimeError(f"model {model.id} already running")
@@ -274,7 +327,7 @@ class Supervisor:
                         hf_cache_dir=self.settings.hf_cache_dir,
                     )
                 plan = backend.plan(
-                    model,
+                    plan_model,
                     port=port,
                     bind_host=backend.bind_host(driver_name),
                     overrides=overrides,
@@ -284,6 +337,7 @@ class Supervisor:
                     engine_driver=driver_name,
                     image=engine_image,
                     load_max_s=self.settings.load_max_s,
+                    **kv_kwargs,
                 )
                 spec = EngineSpec(
                     model_id=model.id,
@@ -331,6 +385,8 @@ class Supervisor:
                 self._hosts[model.id] = _driver_engine_host(self._driver, model.id)
                 self._overrides[model.id] = overrides
                 self._variants[model.id] = variant
+                if kv_load is not None:
+                    self._kv_loads[model.id] = kv_load
                 self._engine_ids[model.id] = engine_id
                 self._state[model.id] = ModelState.LOADING
                 self._watchers[model.id] = asyncio.create_task(self._watch_exit(model.id, on_exit))
@@ -338,6 +394,53 @@ class Supervisor:
             except Exception:
                 self.gpus.release(model.id)
                 raise
+
+    def kv_tier(self, model_id: str) -> dict[str, Any] | None:
+        """The KV tier of a running engine whose row has kv_store on, else None.
+
+        ``state`` is ``on``, ``unavailable`` (the daemon does not answer right now; a
+        daemon that is restarted turns this into ``off_until_reload``) or
+        ``off_until_reload`` (the engine's connector is off for the rest of its life:
+        the daemon was not up when it loaded, or has restarted since). ``reason`` says
+        why for the last two.
+        """
+        rec = self._kv_loads.get(model_id)
+        if rec is None or self._kv_store is None:
+            return None
+        gen, reason = rec
+        current = self._kv_store.generation()
+        if reason is None and gen != current:
+            reason = "the KV store daemon restarted after the model loaded"
+        if reason is not None:
+            return {"state": "off_until_reload", "reason": reason, "generation": gen}
+        if not self._kv_store.healthy():
+            return {
+                "state": "unavailable",
+                "reason": "the KV store daemon does not answer",
+                "generation": gen,
+            }
+        return {"state": "on", "reason": None, "generation": gen}
+
+    def kv_tiers(self) -> dict[str, dict[str, Any]]:
+        """``kv_tier`` for every running engine whose row has kv_store on."""
+        out = {}
+        for model_id in sorted(self._kv_loads):
+            tier = self.kv_tier(model_id)
+            if tier is not None:
+                out[model_id] = tier
+        return out
+
+    def _kv_daemon_restarted(self, generation: int) -> None:
+        """A new daemon is up: every engine loaded under an older one has its tier off."""
+        for model_id, (gen, reason) in sorted(self._kv_loads.items()):
+            if reason is None and gen != generation:
+                logging.getLogger(__name__).warning(
+                    "kv store: model %s loaded under daemon generation %s; its KV tier is "
+                    "off until it is reloaded (the daemon is now at generation %d)",
+                    model_id,
+                    gen,
+                    generation,
+                )
 
     def _release_port(self, port: int | None) -> None:
         if port is not None and self._port_pool is not None:
@@ -533,6 +636,22 @@ class Supervisor:
                 raise UnloadRefused(model_id, cur)
 
     async def unload(self, model_id: str, *, force: bool = False) -> None:
+        had_kv: list[bool] = []
+        try:
+            await self._unload(model_id, force=force, had_kv=had_kv)
+        finally:
+            if had_kv and had_kv[0]:
+                await self._release_kv_owner(model_id)
+
+    async def _release_kv_owner(self, model_id: str) -> None:
+        """The engine of a ``kv_store`` row went away: drop its owner from the daemon's
+        namespaces (I3), so a ``ram`` row no longer keeps NVMe off. Best effort."""
+        # Late: app.kv imports the DB repos, which import this package.
+        from app.kv.policy_sync import release_owner
+
+        await release_owner(self._kv_store, model_id)
+
+    async def _unload(self, model_id: str, *, force: bool, had_kv: list[bool]) -> None:
         async with self._lock:
             cur = self._state.get(model_id)
             if cur is not None and cur is not ModelState.READY and not force:
@@ -575,6 +694,7 @@ class Supervisor:
                 self._hosts.pop(model_id, None)
                 self._overrides.pop(model_id, None)
                 self._variants.pop(model_id, None)
+                had_kv.append(self._kv_loads.pop(model_id, None) is not None)
                 self._engine_ids.pop(model_id, None)
                 self._state.pop(model_id, None)
                 self.gpus.release(model_id)

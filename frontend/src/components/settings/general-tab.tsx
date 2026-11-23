@@ -10,11 +10,12 @@ import { useRuntimeSettings, type RuntimeKey } from "@/components/settings/hooks
 import { SettingsTabShell } from "@/components/settings/settings-tab-shell";
 import { SettingSection } from "@/components/settings/setting-section";
 import { RuntimeField } from "@/components/settings/runtime-field";
+import { PromptLensSource } from "@/components/settings/prompt-lens-source";
 import { authFetchJSON } from "@/lib/auth-fetch";
 import type { GpuInfo } from "@/components/gpu/gpu-checklist";
 
 // ---------------------------------------------------------------------------
-// General tab — Identity / Hugging Face / Defaults for new models.
+// General tab — Identity / Hugging Face / Defaults for new models / Privacy.
 //
 // Sections come from the #154 spec wireframe. Field ordering inside each
 // section follows RUNTIME_GENERAL_KEYS in settings-hints.ts (the
@@ -24,10 +25,11 @@ import type { GpuInfo } from "@/components/gpu/gpu-checklist";
 const IDENTITY_KEYS: RuntimeKey[] = ["admin_username", "admin_password"];
 const HUGGINGFACE_KEYS: RuntimeKey[] = ["hf_token"];
 const DEFAULTS_KEYS: RuntimeKey[] = ["default_gpu_indices"];
+const PRIVACY_KEYS: RuntimeKey[] = ["prompt_lens_enabled"];
 
 export function GeneralTab() {
   const controls = useRuntimeSettings(RUNTIME_GENERAL_KEYS);
-  const { draft, editing, saving, setField } = controls;
+  const { draft, snapshot, editing, saving, setField } = controls;
   const disabled = !editing || saving;
 
   // GPU inventory for the default_gpu_indices checkbox picker. /api/system/gpus
@@ -103,6 +105,27 @@ export function GeneralTab() {
                 />
               );
             })}
+          </SettingSection>
+
+          <SettingSection
+            title="Privacy"
+            subtitle="What this server keeps of the requests it serves."
+          >
+            {PRIVACY_KEYS.map((k) => {
+              const hint: FieldHint | undefined = RUNTIME_HINTS[k];
+              if (!hint) return null;
+              return (
+                <RuntimeField
+                  key={k}
+                  fieldKey={k}
+                  hint={hint}
+                  draft={draft}
+                  setField={setField}
+                  disabled={disabled}
+                />
+              );
+            })}
+            <PromptLensSource saved={snapshot?.prompt_lens_enabled} editing={editing} />
           </SettingSection>
         </>
       )}

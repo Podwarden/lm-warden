@@ -1,7 +1,8 @@
 import hashlib
+import logging
 import re
 import secrets
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -11,6 +12,8 @@ from app.auth.bearer import generate_admin_token, generate_bearer_token
 from app.proxy.token_cache import invalidate_all
 
 _SQLITE_UTC_FMT = "%Y-%m-%d %H:%M:%S"
+
+log = logging.getLogger(__name__)
 
 
 def sqlite_utc_now() -> str:
@@ -73,14 +76,35 @@ class TokenRow:
     # Sensitive data guard (0055): JSON, None = inherit the platform setting.
     # Appended last, per the rule above.
     guard: str | None = None
+    # Prompt Lens self view (0059). INERT since the owner decision of 2026-11-22: a
+    # key holder sees their own captures whenever Prompt Lens is on for the
+    # platform, so nothing reads or writes this column. Kept because 0059 is in
+    # production and migrations are forward-only. Appended last, per the rule above.
+    godmode_self_view: int = 0
+    # Per-key KV sharing (0060). "sharing" (O1 default) or "isolated"; the family's stable
+    # cache identity (never empty: the row's own id at creation, copied by rotate); the
+    # reset epoch; optional per-tier caps as a percentage, None = no cap. Appended last.
+    kv_isolation: str = "sharing"
+    kv_tenant_id: str = ""
+    kv_epoch: int = 0
+    kv_max_pct_ram: int | None = None
+    kv_max_pct_nvme: int | None = None
+    # Prompt Lens keep captures (0061): 1 = the key's last 50 finished requests
+    # are kept on disk (prompt_lens_kept, app/proxy/prompt_lens_kept.py). Admin-only.
+    # Appended last, per the rule above.
+    keep_captures: int = 0
 
 
 _SELECT_COLS = (
     "id, name, prefix, scope, allowed_models, rate_limit_rpm, rate_limit_tpm, "
     "revoked_at, last_used_at, created_at, expires_at, rotated_at, rotated_from, "
     "rate_limit_tps, priority, paused_at, created_by, anthropic_relay, "
-    "thinking_policy, prompt_diet, capture_until, guard"
+    "thinking_policy, prompt_diet, capture_until, guard, godmode_self_view, "
+    "kv_isolation, kv_tenant_id, kv_epoch, kv_max_pct_ram, kv_max_pct_nvme, keep_captures"
 )
+
+#: The values ``api_tokens.kv_isolation`` may hold.
+KV_ISOLATION_VALUES = ("sharing", "isolated")
 
 
 #: Columns a rotation copies from the predecessor: everything that decides what the key may do.
@@ -97,7 +121,47 @@ _POLICY_COLS = (
     "prompt_diet",
     "capture_until",
     "guard",
+    "kv_isolation",
+    "kv_tenant_id",
+    "kv_epoch",
+    "kv_max_pct_ram",
+    "kv_max_pct_nvme",
+    "keep_captures",
 )
+
+
+#: The isolation scope tag of a key family at an epoch: ``app.kv.isolation.tag_for``.
+TagFor = Callable[[str, int], bytes]
+
+
+@dataclass(frozen=True, repr=False)
+class KvChange:
+    """What ``TokenRepo.update_kv`` did: the ids of the rows it changed (the live family)
+    and the scope tags it retired. The tags are never logged, so the repr counts them."""
+
+    family: list[str]
+    retired: list[bytes]
+
+    def __repr__(self) -> str:
+        return f"KvChange(family={self.family!r}, retired=<{len(self.retired)} tags>)"
+
+    __str__ = __repr__
+
+
+class KvChangeRefused(ValueError):
+    """``update_kv`` refused: ``"dead"`` (the key no longer works), ``"sharing"`` (a reset
+    of a key with no scope of its own) or ``"to_sharing"`` (an isolated key may not go back
+    to sharing for this caller: O2)."""
+
+
+def _live_family_sql() -> str:
+    """The live rows of the key family ``:tenant`` at ``:now``: the rule require_bearer
+    applies, so a predecessor inside its rotation grace window is live and an expired
+    row is not."""
+    return (
+        "kv_tenant_id = :tenant AND (revoked_at IS NULL OR revoked_at > :now) "
+        "AND (expires_at IS NULL OR expires_at > :now)"
+    )
 
 
 def hash_token(plaintext: str) -> str:
@@ -155,6 +219,7 @@ class TokenRepo:
         anthropic_relay: bool = False,
         thinking_policy: str = "client",
         guard: str | None = None,
+        kv_isolation: str = "sharing",
     ) -> None:
         """Insert a new API token row and commit.
 
@@ -162,7 +227,11 @@ class TokenRepo:
         priority must be 0..9 (DB CHECK trigger enforces this, but we validate
         at the Pydantic layer too so users get a 422 instead of a 500).
         created_by is the issuing user of an admin token; None for inference.
+        kv_isolation is "sharing" or "isolated"; the new row is its own KV family
+        (kv_tenant_id = token_id).
         """
+        if kv_isolation not in KV_ISOLATION_VALUES:
+            raise ValueError(f"kv_isolation must be one of {KV_ISOLATION_VALUES}")
         prefix = plaintext[:8]
         if expires_in_days > 0:
             expires_at = sqlite_utc_in(timedelta(days=expires_in_days))
@@ -171,8 +240,9 @@ class TokenRepo:
         await self.db.execute(
             "INSERT INTO api_tokens"
             "(id, name, prefix, hash, scope, allowed_models, expires_at, "
-            " priority, created_by, anthropic_relay, thinking_policy, guard) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " priority, created_by, anthropic_relay, thinking_policy, guard, "
+            " kv_isolation, kv_tenant_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 token_id,
                 name,
@@ -186,6 +256,8 @@ class TokenRepo:
                 int(anthropic_relay),
                 thinking_policy,
                 guard,
+                kv_isolation,
+                token_id,
             ),
         )
         await self.db.commit()
@@ -421,12 +493,153 @@ class TokenRepo:
         )
         return [TokenRow(*r) for r in await cur.fetchall()]
 
-    async def revoke(self, token_id: str) -> None:
+    async def _begin(self) -> None:
+        if not self.db.in_transaction:
+            await self.db.execute("BEGIN IMMEDIATE")
+
+    async def _retire(
+        self, tenant: str, epoch: int, tag_for: TagFor | None, now: str
+    ) -> list[bytes]:
+        """Record the scope ``(tenant, epoch)`` as retired, inside the caller's transaction.
+
+        Without ``tag_for`` (no network key) nothing is recorded: a scope nobody derives
+        again is never found, so its blocks only age out by the normal policy instead of
+        going first.
+        """
+        if tag_for is None:
+            # Never the tenant or the tag: both name the scope.
+            log.warning(
+                "kv: a key's old cache scope was not retired because the network key is "
+                "unavailable; its blocks age out by the normal policy"
+            )
+            return []
+        tag = tag_for(tenant, epoch)
         await self.db.execute(
-            "UPDATE api_tokens SET revoked_at = datetime('now') WHERE id = ?", (token_id,)
+            "INSERT OR IGNORE INTO kv_retired_scopes(scope_tag, kv_tenant_id, retired_at) "
+            "VALUES (?, ?, ?)",
+            (tag.hex(), tenant, now),
         )
+        return [tag]
+
+    async def _retire_on_delete(
+        self, token_id: str, tag_for: TagFor | None, now: str
+    ) -> list[bytes]:
+        """Retire what deleting ``token_id`` leaves behind, inside the caller's transaction.
+
+        When no other live row of the family is left, this row (live, expired or revoked)
+        is the family's last chance to be named: once the rows are gone, the re-sync
+        (``app.kv.policy_sync.retired_tags``) cannot derive its tags. So every epoch below
+        the family's highest is retired (resets made without a network key recorded
+        nothing), and the highest too when a row at it is isolated. A sharing family
+        that was never isolated retires nothing."""
+        cur = await self.db.execute("SELECT kv_tenant_id FROM api_tokens WHERE id = ?", (token_id,))
+        row = await cur.fetchone()
+        if row is None or not row[0]:
+            return []
+        tenant = row[0]
+        cur = await self.db.execute(
+            f"SELECT 1 FROM api_tokens WHERE {_live_family_sql()} AND id != :id LIMIT 1",
+            {"tenant": tenant, "now": now, "id": token_id},
+        )
+        if await cur.fetchone() is not None:
+            return []
+        cur = await self.db.execute(
+            "SELECT kv_epoch, kv_isolation FROM api_tokens WHERE kv_tenant_id = ?", (tenant,)
+        )
+        rows = await cur.fetchall()
+        top = max(e for e, _ in rows)
+        epochs = list(range(top))
+        if any(e == top and iso == "isolated" for e, iso in rows):
+            epochs.append(top)
+        if not epochs:
+            return []
+        if tag_for is None:
+            return await self._retire(tenant, top, None, now)  # logs the skip once
+        out: list[bytes] = []
+        for e in epochs:
+            out += await self._retire(tenant, e, tag_for, now)
+        return out
+
+    async def revoke(self, token_id: str, *, now: str | None = None) -> None:
+        """Revoke ``token_id`` at ``now``.
+
+        It retires no KV scope. Only admin tokens are revoked this way (an inference key
+        ends by rotate, whose family lives on, or by delete, which retires), and the policy
+        re-sync (``app.kv.policy_sync.retired_tags``) retires the current scope of an
+        isolated family with no live row left from the rows themselves."""
+        now = now or sqlite_utc_now()
+        await self.db.execute("UPDATE api_tokens SET revoked_at = ? WHERE id = ?", (now, token_id))
         await self.db.commit()
         invalidate_all()
+
+    async def update_kv(
+        self,
+        token_id: str,
+        *,
+        isolation: str | None,
+        reset: bool,
+        tag_for: TagFor | None,
+        now: str,
+        allow_to_sharing: bool = True,
+    ) -> KvChange:
+        """Set a key's KV isolation and/or reset its cache, on every live row of its family,
+        in one transaction.
+
+        The key leaves its scope when it goes from isolated to sharing, or an isolated key
+        is reset: the family moves to the next epoch and the old scope's tag is retired.
+        Sharing to isolated changes no epoch and retires nothing (O3); it lands on a scope
+        that was never retired, because leaving isolation bumped the epoch. Never writes
+        ``kv_tenant_id``. Raises LookupError for an unknown id, ``KvChangeRefused("dead")``
+        for a key that no longer works and ``KvChangeRefused("sharing")`` for a reset of a
+        key that would be sharing. With ``allow_to_sharing`` False (a key holder, O2),
+        ``isolation="sharing"`` on a key that is isolated raises ``KvChangeRefused(
+        "to_sharing")``, decided inside the transaction so it cannot race an admin's switch.
+        The same setting again returns an empty change.
+        """
+        if isolation is not None and isolation not in KV_ISOLATION_VALUES:
+            raise ValueError(f"kv_isolation must be one of {KV_ISOLATION_VALUES}")
+        await self._begin()
+        try:
+            cur = await self.db.execute(
+                "SELECT kv_isolation, kv_tenant_id, kv_epoch, revoked_at, expires_at "
+                "FROM api_tokens WHERE id = ?",
+                (token_id,),
+            )
+            row = await cur.fetchone()
+            if row is None:
+                raise LookupError(token_id)
+            current, tenant, epoch, revoked_at, expires_at = row
+            if (revoked_at is not None and revoked_at <= now) or (
+                expires_at is not None and expires_at <= now
+            ):
+                raise KvChangeRefused("dead")
+            target = current if isolation is None else isolation
+            if not allow_to_sharing and current == "isolated" and target == "sharing":
+                raise KvChangeRefused("to_sharing")
+            if reset and target != "isolated":
+                raise KvChangeRefused("sharing")
+            leaves = current == "isolated" and (target == "sharing" or reset)
+            if target == current and not leaves:
+                await self.db.rollback()
+                return KvChange(family=[], retired=[])
+            params = {"tenant": tenant, "now": now}
+            cur = await self.db.execute(
+                f"SELECT id FROM api_tokens WHERE {_live_family_sql()} ORDER BY created_at, id",
+                params,
+            )
+            family = [r[0] for r in await cur.fetchall()]
+            await self.db.execute(
+                f"UPDATE api_tokens SET kv_isolation = :iso, kv_epoch = :epoch "
+                f"WHERE {_live_family_sql()}",
+                {**params, "iso": target, "epoch": epoch + 1 if leaves else epoch},
+            )
+            retired = await self._retire(tenant, epoch, tag_for, now) if leaves else []
+            await self.db.commit()
+        except Exception:
+            await self.db.rollback()
+            raise
+        invalidate_all()
+        return KvChange(family=family, retired=retired)
 
     # How stale last_used_at may get before a request rewrites it.
     LAST_USED_GRANULARITY_S = 60
@@ -449,11 +662,49 @@ class TokenRepo:
         )
         await self.db.commit()
 
-    async def delete(self, token_id: str) -> bool:
-        cur = await self.db.execute("DELETE FROM api_tokens WHERE id = ?", (token_id,))
-        await self.db.commit()
+    async def _kept_lineage(self, token_id: str, *, earlier_only: bool) -> list[str]:
+        """Ids whose kept captures go with ``token_id``: the key and the keys
+        it was rotated from, and with ``earlier_only=False`` its successors too."""
+        chain = await self.lineage(token_id)
+        ids = [r.id for r in chain]
+        if earlier_only and token_id in ids:
+            ids = ids[: ids.index(token_id) + 1]
+        return ids or [token_id]
+
+    async def _purge_kept(self, ids: Sequence[str]) -> None:
+        marks = ",".join("?" * len(ids))
+        await self.db.execute(
+            f"DELETE FROM prompt_lens_kept WHERE token_id IN ({marks})", tuple(ids)
+        )
+
+    async def delete(
+        self, token_id: str, *, tag_for: TagFor | None = None, now: str | None = None
+    ) -> bool:
+        """Delete ``token_id``; True when a row went. Retires the family's scopes when no
+        live row is left (``_retire_on_delete``)."""
+        deleted, _retired = await self.delete_with_retired(token_id, tag_for=tag_for, now=now)
+        return deleted
+
+    async def delete_with_retired(
+        self, token_id: str, *, tag_for: TagFor | None = None, now: str | None = None
+    ) -> tuple[bool, list[bytes]]:
+        """``delete``, also returning the scope tags it retired in the same transaction
+        (``_retire_on_delete``)."""
+        now = now or sqlite_utc_now()
+        await self._begin()
+        try:
+            # Its kept captures go with it, and those of the keys it was rotated
+            # from (their switch and note live on this, the newest key: review
+            # I4). The FK cascades this key's too; this does not rely on it.
+            await self._purge_kept(await self._kept_lineage(token_id, earlier_only=True))
+            retired = await self._retire_on_delete(token_id, tag_for, now)
+            cur = await self.db.execute("DELETE FROM api_tokens WHERE id = ?", (token_id,))
+            await self.db.commit()
+        except Exception:
+            await self.db.rollback()
+            raise
         invalidate_all()
-        return cur.rowcount > 0
+        return cur.rowcount > 0, retired
 
     async def update(
         self,
@@ -467,6 +718,9 @@ class TokenRepo:
         prompt_diet: "str | None | _Unset" = _UNSET,
         capture_until: "float | None | _Unset" = _UNSET,
         guard: "str | None | _Unset" = _UNSET,
+        kv_max_pct_ram: "int | None | _Unset" = _UNSET,
+        kv_max_pct_nvme: "int | None | _Unset" = _UNSET,
+        keep_captures: "bool | _Unset" = _UNSET,
     ) -> bool:
         """PATCH-style update for the operator-editable fields.
 
@@ -478,6 +732,11 @@ class TokenRepo:
         (the page says "paused since ..."). ``paused=False`` clears it. The
         rule that a dead key cannot be paused lives in the route, which has
         the row in hand; this method writes what it is told.
+
+        ``keep_captures=True`` sets a fresh generation (a random non-zero
+        number) unless the switch is already on. ``keep_captures=False`` turns
+        it off for the key's whole rotation lineage and deletes their kept
+        captures, in the same transaction.
 
         Returns True if a row was updated, False if token_id was unknown. A
         call that sets nothing returns True without touching the database.
@@ -511,6 +770,20 @@ class TokenRepo:
         if not isinstance(guard, _Unset):
             sets.append("guard = ?")
             params.append(guard)
+        if not isinstance(kv_max_pct_ram, _Unset):
+            sets.append("kv_max_pct_ram = ?")
+            params.append(kv_max_pct_ram)
+        if not isinstance(kv_max_pct_nvme, _Unset):
+            sets.append("kv_max_pct_nvme = ?")
+            params.append(kv_max_pct_nvme)
+        if keep_captures is True:
+            # On: a fresh generation, unless it is already on (keeps its own).
+            sets.append(
+                "keep_captures = CASE WHEN keep_captures != 0 THEN keep_captures ELSE ? END"
+            )
+            params.append(secrets.randbits(62) | 1)
+        elif keep_captures is False:
+            sets.append("keep_captures = 0")
         if not sets:
             return True  # noop PATCH — treat as success (idempotent)
         params.append(token_id)
@@ -518,6 +791,14 @@ class TokenRepo:
             f"UPDATE api_tokens SET {', '.join(sets)} WHERE id = ?",
             params,
         )
+        if keep_captures is False and cur.rowcount > 0:
+            # Off for the whole rotation lineage, and what it kept is deleted (I4).
+            ids = await self._kept_lineage(token_id, earlier_only=False)
+            marks = ",".join("?" * len(ids))
+            await self.db.execute(
+                f"UPDATE api_tokens SET keep_captures = 0 WHERE id IN ({marks})", tuple(ids)
+            )
+            await self._purge_kept(ids)
         await self.db.commit()
         invalidate_all()
         return cur.rowcount > 0

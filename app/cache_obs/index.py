@@ -7,6 +7,8 @@ hold the replica ranks that processed that exact prefix as an int bitmask (bit
 cost ~216 bytes, more than the rest of the entry; message entries just mark a
 message as seen. A routed request's fleet best leaves bit 0 out (record.py).
 Scope "*" is everyone (operator lens); a token's own scope is a digest of its id (own lens).
+An isolated key's prefixes can serve nobody else, so they are observed on its own lens only
+(``operator_lens=False``); the operator lens never predicts a hit that cannot happen.
 
 ``match`` runs BEFORE forward so a request never matches itself; ``observe``
 runs after the engine processed the prompt. Two methods are the whole contract,
@@ -72,9 +74,17 @@ class PrefixIndex:
         self._d.move_to_end(key)
 
     def observe(
-        self, model_id: str, epoch: str, rank: int | None, chain: Chain, token_id: str | None
+        self,
+        model_id: str,
+        epoch: str,
+        rank: int | None,
+        chain: Chain,
+        token_id: str | None,
+        *,
+        operator_lens: bool = True,
     ) -> None:
-        scopes = (_ALL,) if token_id is None else (_ALL, _scope(token_id))
+        own = () if token_id is None else (_scope(token_id),)
+        scopes = ((_ALL,) + own) if operator_lens else own
         for sc in scopes:
             for k in chain.chunks:
                 self._put(("c", model_id, epoch, sc, k), rank, chunk=True)

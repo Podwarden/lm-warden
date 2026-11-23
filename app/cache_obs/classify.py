@@ -49,9 +49,17 @@ def classify(
     allow_misrouted: bool = True,
     cached_is_estimate: bool = False,
     block_size: int | None = None,
+    drops_last_block: bool = False,
+    match_unit: int | None = None,
     cobs2_edge: str | None = None,
     loose_match_beyond_exact: bool = False,
 ) -> str | None:
+    """``match_unit``: the engine matches prefixes every this many tokens
+    (vLLM ``--prefix-match-unit``, a divisor of the block; None = the block).
+    ``drops_last_block``: the engine pops one more unit off every hit (vLLM
+    with EAGLE/MTP speculative decoding,
+    app/runtime/backends/vllm/spec_decode.py). Both apply only with a block
+    size above BLOCK_AWARE_ABOVE, like the rounding they shape."""
     out = _classify(
         cached=cached,
         reusable=reusable,
@@ -60,6 +68,8 @@ def classify(
         allow_misrouted=allow_misrouted,
         cached_is_estimate=cached_is_estimate,
         block_size=block_size,
+        drops_last_block=drops_last_block,
+        match_unit=match_unit,
     )
     # cobs2 (plan 3 task 6), after every other rule: a miss whose lineage
     # explains it. The conversation was compacted (a new, collapsed body), or
@@ -112,6 +122,8 @@ def _classify(
     allow_misrouted: bool,
     cached_is_estimate: bool,
     block_size: int | None,
+    drops_last_block: bool = False,
+    match_unit: int | None = None,
 ) -> str | None:
     if cached is None or reusable is None:
         return None
@@ -125,9 +137,30 @@ def _classify(
     # Block-aware (#301): the engine caches whole blocks only, so what it
     # could serve is R rounded down to a block; under one block is nothing to
     # reuse at all (cold, never lost). The thresholds then apply unchanged.
+    #
+    # An engine that drops the last matched block (EAGLE/MTP: the drafter needs
+    # the tokens before the generation point recomputed) serves one block less
+    # again: lmwarden.com, 1,584-token blocks, cached = (floor(R/B) - 1) * B on
+    # 1,036 of 1,160 measured requests. A request that got exactly that is a
+    # hit; under two blocks there is nothing it could serve (cold).
+    #
+    # With --prefix-match-unit N (N divides B) the engine matches every N
+    # tokens, and the drop costs one unit, not one block (vLLM 0.32:
+    # hit_length -= min(alignment_tokens, block_size)). Unit = B is the above.
     if block_size is not None and block_size > BLOCK_AWARE_ABOVE:
-        r -= r % block_size
-        fleet -= fleet % block_size
+        unit = block_size
+        if match_unit and 0 < match_unit < block_size and block_size % match_unit == 0:
+            unit = match_unit
+        r -= r % unit
+        fleet -= fleet % unit
+        if drops_last_block:
+            r = max(r - unit, 0)
+            fleet = max(fleet - unit, 0)
+            # Rule 1 again: the index's token count is a byte proportion, so
+            # a prompt just short of two blocks by the index (3,143 of 3,168)
+            # can still get one. A measured C proves the engine matched more.
+            if cached > r and not cached_is_estimate:
+                r = cached
     if r < MIN_REUSABLE:
         if allow_misrouted and fleet >= MIN_REUSABLE:
             return "misrouted"

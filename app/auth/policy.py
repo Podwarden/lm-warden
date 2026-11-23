@@ -1,7 +1,7 @@
 """Which credential each route takes -- the control API's auth policy as data.
 
 Read by tests/unit/auth/test_auth_matrix.py, which walks every mounted route,
-sorts it into one of four buckets and fails when the route's dependencies do
+sorts it into a bucket and fails when the route's dependencies do
 not carry that bucket's guard (or a constant names a route that is gone), and
 by app/openapi_spec.py, which marks the public routes and /v1 with `security: []`.
 
@@ -9,6 +9,8 @@ by app/openapi_spec.py, which marks the public routes and /v1 with `security: []
   session    SESSION_ONLY_ROUTES, or under a     require_session
              SESSION_ONLY_PREFIXES path
   public     app/auth/public_routes.py           no credential
+  key_stream KEY_STREAM_ROUTES                   require_key_ticket: a key holder's
+                                                 single-use ticket, no header
   admin      every other route                   require_jwt / require_sse_ticket /
                                                  require_operator: a session JWT
                                                  or an admin token (vwa_...)
@@ -50,12 +52,46 @@ FOREST_ROUTES: frozenset[tuple[str, str]] = frozenset(
         # The key holder's own area (app/tokens/routes_me.py): see KEY_HOLDER_ROUTES.
         ("GET", "/api/me/key"),
         ("PATCH", "/api/me/key"),
+        ("POST", "/api/me/key/kv-reset"),
+        ("GET", "/api/me/key/cache"),
         ("POST", "/api/me/key/rotate"),
         ("POST", "/api/me/key/revoke"),
         ("GET", "/api/me/usage"),
         ("GET", "/api/me/cache"),
         ("GET", "/api/me/guard/events"),
+        # The key holder's Stats view (app/tokens/routes_me_stats.py): own rows
+        # only, bound to the signed-in key, nothing fleet-wide.
+        ("GET", "/api/me/stats/speed"),
+        ("GET", "/api/me/stats/tokens"),
+        ("GET", "/api/me/stats/cache"),
+        ("GET", "/api/me/stats/requests"),
+        ("GET", "/api/me/requests/{request_id}/capture"),
+        # The key holder's live Prompt Lens stream: the ticket mint (G7). The
+        # stream itself is ticket-only, see KEY_STREAM_ROUTES.
+        ("POST", "/api/me/prompt-lens/ticket"),
+        # One whole section of an own request (G9), from memory or the key's
+        # kept captures.
+        ("GET", "/api/me/prompt-lens/requests/{req_id}/section/{kind}"),
+        # The key's own kept captures (keep_captures, an admin's switch).
+        ("GET", "/api/me/prompt-lens/kept"),
+        ("GET", "/api/me/prompt-lens/kept/{req_id}"),
     }
+)
+# The same key-holder routes under their deprecated /api/me/godmode paths
+# (app/proxy/prompt_lens_legacy.py): one release.
+FOREST_ROUTES = FOREST_ROUTES | frozenset(
+    (m, p.replace("/api/me/prompt-lens", "/api/me/godmode", 1))
+    for m, p in FOREST_ROUTES
+    if p.startswith("/api/me/prompt-lens/")
+)
+
+#: The key holder's ticket streams (ruling G-F2): a single-use ticket minted by
+#: the key's sign-in (``POST /api/me/prompt-lens/ticket``) and nothing else --
+#: ``require_key_ticket``. A header credential is refused: a forest sign-in or
+#: an inference key 401, an admin session or admin token 403 (the admin
+#: watches every key on /api/admin/prompt-lens/stream).
+KEY_STREAM_ROUTES: frozenset[tuple[str, str]] = frozenset(
+    {("GET", "/api/me/prompt-lens/stream"), ("GET", "/api/me/godmode/stream")}  # old: deprecated
 )
 
 #: Routes ONLY a key holder's sign-in opens: the key's own area. An admin session or admin token

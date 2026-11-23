@@ -18,6 +18,27 @@ def _truthy(raw: str) -> bool:
     return raw.strip().lower() in _TRUTHY
 
 
+#: Deprecated env names already warned about in this process (one line each).
+_DEPRECATED_LOGGED: set[str] = set()
+
+
+def _prompt_lens_env(suffix: str) -> tuple[str | None, str | None]:
+    """``VW_PROMPT_LENS_<suffix>``, else the deprecated ``VW_GODMODE_<suffix>``
+    (the feature's former name; installs set it). Returns (value, the name it
+    came from), (None, None) when neither is set; an empty value counts as not
+    set (install.sh forwards the variable blank). A value from the old name is
+    logged once per process."""
+    new, old = f"VW_PROMPT_LENS_{suffix}", f"VW_GODMODE_{suffix}"
+    if os.environ.get(new, "").strip():
+        return os.environ[new], new
+    if os.environ.get(old, "").strip():
+        if old not in _DEPRECATED_LOGGED:
+            _DEPRECATED_LOGGED.add(old)
+            log.warning("%s is deprecated: set %s instead (same meaning)", old, new)
+        return os.environ[old], old
+    return None, None
+
+
 def _parse_trusted_proxies(raw: str) -> tuple[str, ...]:
     """VW_TRUSTED_PROXIES: comma-separated CIDRs. Blank = the built-in
     default (loopback + private ranges); "none" = trust no peer. A malformed
@@ -117,24 +138,38 @@ class Settings:
     # pre-#160); "docker" = sibling container via the host docker socket
     # (requires VLLM_ENGINE_IMAGE; image-channel resolution lands in P2/#161).
     engine_driver: str = "local"
-    # God mode (live prompt/output viewer) — OFF by default. When false the
-    # proxy hot path is byte-identical to pre-godmode: no hub call happens at
-    # any tap. All bounds are read once at startup into GodModeHub.
-    godmode_enabled: bool = False
-    godmode_ring_events: int = 2000
-    godmode_ring_chars: int = 4_000_000
-    godmode_max_prompt_chars: int = 16000
-    # Display-only capture window: when a prompt exceeds godmode_max_prompt_chars
+    # Prompt Lens (live prompt/output viewer) — OFF by default. When false the
+    # proxy hot path is byte-identical to pre-Prompt Lens: no hub call happens at
+    # any tap. All bounds are read once at startup into PromptLensHub.
+    prompt_lens_enabled: bool = False
+    # Which env variable set prompt_lens_enabled: "VW_PROMPT_LENS_ENABLED", the
+    # deprecated "VW_GODMODE_ENABLED", or None (neither: the default). The
+    # runtime setting ``prompt_lens_enabled`` (Settings page) overrides it while
+    # the app runs: app/proxy/prompt_lens_switch.py.
+    prompt_lens_env_var: str | None = None
+    prompt_lens_ring_events: int = 2000
+    prompt_lens_ring_chars: int = 4_000_000
+    prompt_lens_max_prompt_chars: int = 16000
+    # Display-only capture window: when a prompt exceeds prompt_lens_max_prompt_chars
     # the tap keeps the head PLUS this many chars from the tail (joined by an
     # elision marker), so the newest turn — which lives at the tail — survives
     # even under a giant repeated system prompt. Never affects the forwarded
     # request. 0 = pure head-slice (pre-#tail behaviour).
-    godmode_prompt_tail_chars: int = 4000
-    # God-mode media store (spec 2026-08-03 — inline images). Bounds for the
-    # out-of-band image blob store; only consulted when godmode_enabled.
-    godmode_media_store_chars: int = 64_000_000
-    godmode_max_image_chars: int = 14_000_000
-    godmode_max_images_per_req: int = 16
+    prompt_lens_prompt_tail_chars: int = 4000
+    # Prompt Lens media store (spec 2026-08-03 — inline images). Bounds for the
+    # out-of-band image blob store; only consulted when prompt_lens_enabled.
+    prompt_lens_media_store_chars: int = 64_000_000
+    prompt_lens_max_image_chars: int = 14_000_000
+    prompt_lens_max_images_per_req: int = 16
+    # Wider window of the structured prompt capture kept for the dock's
+    # whole-section fetch (G9). Display only; bounded by the section store.
+    prompt_lens_section_prompt_chars: int = 256_000
+    # The whole-section store (G9, app/proxy/prompt_lens_sections.py): every stored
+    # section text and wide prompt together, one channel's cap, and how long a
+    # finished request's sections stay. In memory only.
+    prompt_lens_section_chars: int = 16_000_000
+    prompt_lens_section_max_chars: int = 2_000_000
+    prompt_lens_section_ttl_s: float = 600.0
     # Content logging (diagnostic) — see app/proxy/content_log.py. Disabled by
     # default; when off the proxy forward path is byte-identical to a build
     # without it. Hard-scoped to an explicit token allowlist so this can run on
@@ -321,14 +356,19 @@ def load_settings() -> Settings:
         os.environ.get("VW_WATCHDOG_CRASH_LOG_BYTES", str(4 * 1024 * 1024))
     )
     engine_log_max_bytes = int(os.environ.get("VW_ENGINE_LOG_MAX_BYTES", str(32 * 1024 * 1024)))
-    godmode_enabled = _truthy(os.environ.get("VW_GODMODE_ENABLED", ""))
-    godmode_ring_events = int(os.environ.get("VW_GODMODE_RING_EVENTS", "2000"))
-    godmode_ring_chars = int(os.environ.get("VW_GODMODE_RING_CHARS", "4000000"))
-    godmode_max_prompt_chars = int(os.environ.get("VW_GODMODE_MAX_PROMPT_CHARS", "16000"))
-    godmode_prompt_tail_chars = int(os.environ.get("VW_GODMODE_PROMPT_TAIL_CHARS", "4000"))
-    godmode_media_store_chars = int(os.environ.get("VW_GODMODE_MEDIA_STORE_CHARS", "64000000"))
-    godmode_max_image_chars = int(os.environ.get("VW_GODMODE_MAX_IMAGE_CHARS", "14000000"))
-    godmode_max_images_per_req = int(os.environ.get("VW_GODMODE_MAX_IMAGES_PER_REQ", "16"))
+    prompt_lens_raw, prompt_lens_env_var = _prompt_lens_env("ENABLED")
+    prompt_lens_enabled = _truthy(prompt_lens_raw or "")
+    prompt_lens_ring_events = int(_prompt_lens_env("RING_EVENTS")[0] or "2000")
+    prompt_lens_ring_chars = int(_prompt_lens_env("RING_CHARS")[0] or "4000000")
+    prompt_lens_max_prompt_chars = int(_prompt_lens_env("MAX_PROMPT_CHARS")[0] or "16000")
+    prompt_lens_prompt_tail_chars = int(_prompt_lens_env("PROMPT_TAIL_CHARS")[0] or "4000")
+    prompt_lens_media_store_chars = int(_prompt_lens_env("MEDIA_STORE_CHARS")[0] or "64000000")
+    prompt_lens_max_image_chars = int(_prompt_lens_env("MAX_IMAGE_CHARS")[0] or "14000000")
+    prompt_lens_max_images_per_req = int(_prompt_lens_env("MAX_IMAGES_PER_REQ")[0] or "16")
+    prompt_lens_section_prompt_chars = int(_prompt_lens_env("SECTION_PROMPT_CHARS")[0] or "256000")
+    prompt_lens_section_chars = int(_prompt_lens_env("SECTION_CHARS")[0] or "16000000")
+    prompt_lens_section_max_chars = int(_prompt_lens_env("SECTION_MAX_CHARS")[0] or "2000000")
+    prompt_lens_section_ttl_s = float(_prompt_lens_env("SECTION_TTL_S")[0] or "600")
     request_max_wall_s = float(os.environ.get("VW_REQUEST_MAX_WALL_S", "0.0"))
     upstream_idle_s = max(1.0, float(os.environ.get("VW_UPSTREAM_IDLE_S", "300")))
     nonstream_max_s = max(1.0, float(os.environ.get("VW_NONSTREAM_MAX_S", "1800")))
@@ -419,14 +459,19 @@ def load_settings() -> Settings:
         watchdog_crash_keep=watchdog_crash_keep,
         watchdog_crash_log_bytes=watchdog_crash_log_bytes,
         engine_log_max_bytes=engine_log_max_bytes,
-        godmode_enabled=godmode_enabled,
-        godmode_ring_events=godmode_ring_events,
-        godmode_ring_chars=godmode_ring_chars,
-        godmode_max_prompt_chars=godmode_max_prompt_chars,
-        godmode_prompt_tail_chars=godmode_prompt_tail_chars,
-        godmode_media_store_chars=godmode_media_store_chars,
-        godmode_max_image_chars=godmode_max_image_chars,
-        godmode_max_images_per_req=godmode_max_images_per_req,
+        prompt_lens_enabled=prompt_lens_enabled,
+        prompt_lens_env_var=prompt_lens_env_var,
+        prompt_lens_ring_events=prompt_lens_ring_events,
+        prompt_lens_ring_chars=prompt_lens_ring_chars,
+        prompt_lens_max_prompt_chars=prompt_lens_max_prompt_chars,
+        prompt_lens_prompt_tail_chars=prompt_lens_prompt_tail_chars,
+        prompt_lens_media_store_chars=prompt_lens_media_store_chars,
+        prompt_lens_max_image_chars=prompt_lens_max_image_chars,
+        prompt_lens_max_images_per_req=prompt_lens_max_images_per_req,
+        prompt_lens_section_prompt_chars=prompt_lens_section_prompt_chars,
+        prompt_lens_section_chars=prompt_lens_section_chars,
+        prompt_lens_section_max_chars=prompt_lens_section_max_chars,
+        prompt_lens_section_ttl_s=prompt_lens_section_ttl_s,
         request_max_wall_s=request_max_wall_s,
         upstream_idle_s=upstream_idle_s,
         nonstream_max_s=nonstream_max_s,

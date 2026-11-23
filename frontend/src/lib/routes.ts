@@ -25,6 +25,14 @@
 export const MODEL_DETAIL_PATH = "/models/detail";
 export const MODEL_SETTINGS_PATH = "/models/detail/settings";
 export const TOKEN_DETAIL_PATH = "/tokens/detail";
+/**
+ * The downloaded model weights on disk: the "Model files" tab of /models
+ * (it was the top-level /cache page until 2026-11-23; /cache redirects here).
+ * A query tab, not /models/files: /models/<segment> is the old model-detail
+ * bookmark shape, which next.config.ts and app/webui/redirects.py send to
+ * /models/detail?id=<segment>.
+ */
+export const MODEL_FILES_HREF = "/models?tab=files";
 /** Session detail (sessions pages): `/sessions/detail?id=<s_… or r_…>`. */
 export const SESSION_DETAIL_PATH = "/sessions/detail";
 
@@ -47,7 +55,7 @@ export function sessionHref(ref: string): string {
 }
 
 /** Strip one trailing slash (the export builds with `trailingSlash: true`). */
-function trimSlash(pathname: string): string {
+export function trimSlash(pathname: string): string {
   return pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
 }
 

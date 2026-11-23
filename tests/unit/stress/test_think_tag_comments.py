@@ -45,8 +45,8 @@ def test_no_mangled_tag_forms_in_either_file() -> None:
             assert MANGLED_PLAIN not in line, f"{path.name}:{n} still mangled: {line!r}"
 
 
-def test_godmode_docstring_names_the_inline_tag() -> None:
-    doc = _docstring(ROUTES.read_text(), "_parse_sse_godmode")
+def test_prompt_lens_docstring_names_the_inline_tag() -> None:
+    doc = _docstring(ROUTES.read_text(), "_parse_sse_prompt_lens")
     line = _line(doc, "NOT inline")
     assert OPEN_TAG in line, f"inline tag missing: {line!r}"
 

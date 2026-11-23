@@ -31,12 +31,20 @@ from app.db.repos.tokens import TokenRow
 from app.guard import anthropic as guard_anthropic
 from app.guard import proxy as guard_proxy
 from app.proxy.auth import token_allows, upstream_credential_headers
+from app.proxy.kv_scope import (
+    ISOLATION_UNAVAILABLE,
+    RELAY_BODY_UNCHECKED,
+    can_isolate_running,
+    cannot_isolate_message,
+    is_isolated,
+    strip_cache_control,
+)
 from app.proxy.messages_clamp import clamp_max_tokens
 from app.proxy.messages_translate import error_body
 from app.proxy.model_cache import model_by_id, model_by_served_name
 from app.proxy.request_id import REQUEST_ID_HEADER, copy_request_id
 from app.proxy.session_id import extract_session
-from app.router.passthrough import RelayError, relay
+from app.router.passthrough import RelayError, has_request_body, relay
 from app.router.relay_record import RelayRecorder
 from app.router.rules import RuleSet, RuleSpec, match_rule
 from app.router.state import Decision, Route
@@ -218,6 +226,16 @@ async def _relay_to_anthropic(
     refusal = _relay_gate(request, token)
     if refusal is not None:  # defence in depth: every caller has already gated
         return _refuse(rec, 403, refusal[0], refusal[1])
+    if is_isolated(token):
+        # O6: the provider's prompt cache is shared by every key relaying through the
+        # account, so an isolated key's request leaves with no cache_control mark at all.
+        # Here, on the one road to the provider, so a fallback is stripped too.
+        checked = await _isolated_relay_body(request, body)
+        if isinstance(checked, tuple):
+            rec.set("refused", checked[0], checked[1])
+            rec.finish()
+            return _err(checked[1], checked[2])
+        body = checked
     rec.route = route
     rec.reason = reason
 
@@ -282,6 +300,52 @@ async def _relay_to_anthropic(
             resp, guarded, on_engine_chunk=recorder.on_chunk if recorder is not None else None
         )
     return resp
+
+
+async def _isolated_relay_body(
+    request: Request, body: bytes | None
+) -> bytes | None | tuple[str, int, str]:
+    """What an isolated key relays: ``body`` (or the catch-all's own request body) with
+    every ``cache_control`` mark removed, or (reason, status, message) to refuse.
+
+    No body (a passthrough GET) passes untouched. A body that is not a JSON object, or
+    that repeats a key, cannot be checked: refused (fail closed). Any other body is
+    re-serialised from the checked object.
+    """
+    if body is None:
+        if not has_request_body(request):
+            return None
+        cap = (await request.app.state.router.ruleset(request.app.state.settings.db_path)).config
+        body = await _read_capped(request, cap.max_body_mb << 20)
+        if body is None:
+            return (
+                "request_too_large",
+                413,
+                f"router: body exceeds {cap.max_body_mb} MiB (request_too_large)",
+            )
+    if not body:
+        return body
+    try:
+        data = json.loads(body, object_pairs_hook=_unique_keys)
+    except ValueError:  # also UnicodeDecodeError and a duplicate key
+        data = None
+    if not isinstance(data, dict):
+        return ("isolated_body_unchecked", 400, RELAY_BODY_UNCHECKED)
+    strip_cache_control(data)
+    # Always re-serialised, so the bytes that leave are exactly the object that was
+    # checked. ASCII escapes: a lone surrogate the client sent as \ud800 survives.
+    return json.dumps(data).encode()
+
+
+def _unique_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """A JSON object, refusing a repeated key: a parser that keeps the first value would
+    read a mark this one (which keeps the last) never saw."""
+    out: dict[str, Any] = {}
+    for k, v in pairs:
+        if k in out:
+            raise ValueError("duplicate key")
+        out[k] = v
+    return out
 
 
 def _refuse(rec: _Rec, status: int, reason: str, message: str) -> Response:
@@ -523,6 +587,20 @@ async def _rule_flow(
             fallback_rule=rule.fallback,
             path="/v1/messages/count_tokens" if count_tokens else "/v1/messages",
         )
+        if exc.status_code == 403:
+            # O4 (an isolated key on a model that cannot isolate) and every other 403 is
+            # the answer, never a failure to fall back from.
+            outcome = Outcome("local", None, 403, False)
+        elif exc.status_code == 503 and exc.detail == ISOLATION_UNAVAILABLE:
+            # This key's isolation failed, not the engine: never trips the breaker. With
+            # fallback on, the request goes to the provider stripped of every cache_control
+            # mark (_relay_to_anthropic; O6 allows an isolated key there); with fallback off,
+            # the 503 is the answer.
+            outcome = (
+                Outcome("fallback", "isolation_unavailable", 503, False)
+                if rule.fallback
+                else Outcome("local", None, 503, False)
+            )
         if outcome.route == "local":
             rec.set("local", f"status_{exc.status_code}", exc.status_code)
             rec.finish()
@@ -616,6 +694,14 @@ async def _local_leg(
         raise _Fail(_soft_outcome("target_missing", rule, count_tokens=count_tokens))
     served = target.served_model_name
     rec.model_out = served
+    if (
+        not count_tokens
+        and is_isolated(token)
+        and not can_isolate_running(request.app.state, target)
+    ):
+        # O4 before the soft outcomes: a target that cannot isolate refuses an isolated key
+        # whether or not it is loaded or its breaker is open, never a relay in its place.
+        raise HTTPException(403, cannot_isolate_message(served))
     try:
         resolved = _resolve_loaded(request, target, served)
     except HTTPException:

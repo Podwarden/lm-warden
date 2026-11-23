@@ -56,6 +56,8 @@ _COLS = (
     "session_source",
     "reusable_tokens_own",
     "cached_ttft_est_tokens",
+    "diverged_at_own",
+    "kv_isolated",
 )
 _SELECT = "SELECT " + ", ".join(_COLS) + " FROM request_history"
 
@@ -105,6 +107,9 @@ class Row:
     session_source: str | None = None
     reusable_tokens_own: int | None = None
     cached_ttft_est_tokens: int | None = None
+    diverged_at_own: int | None = None
+    #: The turn ran isolated (0060): True / False, None on rows written before it.
+    kv_isolated: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -136,6 +141,10 @@ class ListRow:
     cache_outcome: str | None = None
     cache_outcome_own: str | None = None
     cached_ttft_est_tokens: int | None = None
+    cobs2_parent_req: str | None = None
+    cobs2_parent_node: str | None = None
+    diverged_at_own: int | None = None
+    ttft_s: float | None = None
 
 
 def _shape(v: Any) -> dict[str, Any] | None:
@@ -208,6 +217,8 @@ def _row(t: tuple[Any, ...]) -> Row:
         session_source=d["session_source"],
         reusable_tokens_own=d["reusable_tokens_own"],
         cached_ttft_est_tokens=d["cached_ttft_est_tokens"],
+        diverged_at_own=d["diverged_at_own"],
+        kv_isolated=None if d["kv_isolated"] is None else bool(d["kv_isolated"]),
     )
 
 
@@ -345,6 +356,17 @@ def request_row(db: sqlite3.Connection, request_id: str) -> Row | None:
     return _row(t) if t is not None else None
 
 
+def owned_ids(db: sqlite3.Connection, token_id: str, ids: Collection[str]) -> set[str]:
+    """Which of ``ids`` are requests of ``token_id``: a primary-key lookup each."""
+    want = sorted(set(ids))
+    out: set[str] = set()
+    for i in range(0, len(want), 500):
+        part = want[i : i + 500]
+        q = f"SELECT id FROM request_history WHERE token_id = ? AND id IN ({','.join('?' * len(part))})"
+        out.update(r[0] for r in db.execute(q, (token_id, *part)))
+    return out
+
+
 def toolsets(
     db: sqlite3.Connection, digests: Collection[str]
 ) -> dict[str, list[tuple[str, str, int]]]:
@@ -392,7 +414,8 @@ _LIST_COLS = (
     " CASE WHEN json_valid(cobs2_shape) THEN json_extract(cobs2_shape, '$.dw.boil') END,"
     " CASE WHEN json_valid(cobs2_shape) THEN json_extract(cobs2_shape, '$.dw.reason') END,"
     " cobs2_toolset, CASE WHEN tools_out <> '[]' THEN tools_out END,"
-    " reusable_tokens, reusable_tokens_own, cache_outcome, cache_outcome_own, cached_ttft_est_tokens"
+    " reusable_tokens, reusable_tokens_own, cache_outcome, cache_outcome_own, cached_ttft_est_tokens,"
+    " cobs2_parent_req, cobs2_parent_node, diverged_at_own, ttft_s"
 )
 
 
@@ -444,6 +467,10 @@ def list_rows(
             cache_outcome=t[25],
             cache_outcome_own=t[26],
             cached_ttft_est_tokens=t[27],
+            cobs2_parent_req=t[28],
+            cobs2_parent_node=t[29],
+            diverged_at_own=t[30],
+            ttft_s=t[31],
         )
         for t in got[:limit]
     ]

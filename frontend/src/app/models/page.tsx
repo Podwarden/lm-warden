@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useCallback, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { authFetchJSON } from "@/lib/auth-fetch";
 import { Button } from "@/components/ui/button";
@@ -8,12 +9,66 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ModelCard, type ModelRow } from "@/components/models/model-card";
 import { AddModelModal } from "@/components/models/add-model-modal";
 import { useActiveLoadProgress } from "@/lib/load-progress";
+import { KvUsagePanel, type KvModelInfo } from "@/components/kv/kv-usage-panel";
+import type { KvUsage } from "@/lib/kv";
+import { Tabs } from "@/components/ui/tabs";
+import { ModelFilesPanel } from "@/components/models/model-files-panel";
+
+// Two tabs: the fleet, and the downloaded weights on disk ("Model files",
+// the old top-level /cache page). The tab lives in ?tab= so /cache and the
+// delete-model modal can deep-link to it (MODEL_FILES_HREF in lib/routes).
+const TABS = [
+  { id: "models", label: "Models" },
+  { id: "files", label: "Model files" },
+] as const;
+type TabId = (typeof TABS)[number]["id"];
+
+function parseTab(v: string | null): TabId {
+  return v === "files" ? "files" : "models";
+}
 
 interface ModelsResponse {
   models: ModelRow[];
 }
 
 export default function ModelsPage() {
+  // useSearchParams opts the tree into client-side rendering; Suspense is
+  // required around it in the static export (same as router/stats).
+  return (
+    <Suspense fallback={null}>
+      <ModelsView />
+    </Suspense>
+  );
+}
+
+function ModelsView() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tab = parseTab(searchParams.get("tab"));
+  const search = searchParams.toString();
+  // replace, not push: switching tabs is not a history step.
+  const onTabChange = useCallback(
+    (id: string) => {
+      const q = new URLSearchParams(search);
+      if (id === "files") q.set("tab", "files");
+      else q.delete("tab");
+      const qs = q.toString();
+      router.replace(qs ? `/models?${qs}` : "/models", { scroll: false });
+    },
+    [router, search],
+  );
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-semibold">Models</h1>
+      <Tabs tabs={[...TABS]} activeTab={tab} onTabChange={onTabChange}>
+        {tab === "files" ? <ModelFilesPanel /> : <FleetTab />}
+      </Tabs>
+    </div>
+  );
+}
+
+function FleetTab() {
   const [open, setOpen] = useState(false);
   const { data, error, isLoading } = useSWR<ModelsResponse>(
     "/api/models",
@@ -42,18 +97,33 @@ export default function ModelsPage() {
   const activeLoads = useActiveLoadProgress(anyLoading);
 
   const hasModels = !isLoading && !error && models.length > 0;
+
+  // Plan 2: the cache store's use (admin only), and which keys are isolated to mark them.
+  const storeOn = models.some((m) => m.kv_store !== undefined && m.kv_store !== "off");
+  const { data: kvUsage } = useSWR<KvUsage>(hasModels ? "/api/kv/usage" : null, authFetchJSON, {
+    refreshInterval: 15_000,
+    shouldRetryOnError: false,
+  });
+  const { data: tokenPage } = useSWR<{ items: { id: string; kv_isolation?: string }[] }>(
+    hasModels && storeOn ? "/api/tokens?limit=500" : null,
+    authFetchJSON,
+    { revalidateOnFocus: false, shouldRetryOnError: false },
+  );
+  const isolated = new Set((tokenPage?.items ?? []).filter((t) => t.kv_isolation === "isolated").map((t) => t.id));
+  const kvModels: Record<string, KvModelInfo> = Object.fromEntries(
+    models.map((m) => [m.id, { name: m.served_model_name, kv_store: m.kv_store }]),
+  );
   const isEmpty = !isLoading && !error && models.length === 0;
 
   return (
     <div className="space-y-4">
       {/* S4 design principle #2 (instrument-panel aesthetic): the Add-model
-          control sits inline with the H1 only when the fleet is populated.
+          control sits at the top of the tab only when the fleet is populated.
           On an empty fleet the CTA becomes a deliberate hero in the empty
           state below — operators land on /models the first time and need
           one obvious path forward, not a small button tucked in a corner. */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Models</h1>
-        {hasModels && (
+      {hasModels && (
+        <div className="flex justify-end">
           <Button
             variant="outline"
             onClick={() => setOpen(true)}
@@ -61,8 +131,8 @@ export default function ModelsPage() {
           >
             Add model
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {isLoading && (
         <div className="grid gap-4 md:grid-cols-2">
@@ -92,6 +162,8 @@ export default function ModelsPage() {
           ))}
         </div>
       )}
+
+      {hasModels && <KvUsagePanel usage={kvUsage} models={kvModels} storeOn={storeOn} isolated={isolated} />}
 
       <AddModelModal open={open} onClose={() => setOpen(false)} />
     </div>

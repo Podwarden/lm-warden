@@ -410,6 +410,7 @@ async def test_v2_readers_skip_the_forest_columns(tmp_path):
         + rh._COBS2_COLUMNS
         + rh._SESSIONS_COLUMNS
         + rh._DIET_COLUMNS
+        + rh._KV_ISO_COLUMNS
     )
     db_path = await _migrated(tmp_path)
     store = RequestHistoryStore(db_path)

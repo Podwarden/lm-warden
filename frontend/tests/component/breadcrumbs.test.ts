@@ -34,7 +34,8 @@ describe('buildBreadcrumbs — the route table', () => {
     ['/connect', [['/', 'Home'], ['/connect', 'Connect']]],
     ['/chat', [['/', 'Home'], ['/chat', 'Chat']]],
     ['/chat2', [['/', 'Home'], ['/chat2', 'Chat']]],
-    ['/cache', [['/', 'Home'], ['/cache', 'Cache']]],
+    // /cache only redirects to the Model files tab of /models now.
+    ['/cache', [['/', 'Home'], ['/cache', 'Model files']]],
     ['/settings', [['/', 'Home'], ['/settings', 'Settings']]],
     ['/templates', [['/', 'Home'], ['/templates', 'Templates']]],
   ])('%s', (p, expected) => {

@@ -13,6 +13,13 @@ services:
     # processes. Without this, supervisor stores in-container PIDs and
     # attribution silently falls back to kind: external. See vllm-warden#42.
     pid: host
+    # /dev/shm for the engines and the KV-cache RAM tier (docs/operating.md,
+    # "KV-cache tiers"). Tensor-parallel engines need at least 2 GiB. The RAM
+    # tier's pool lives here too: the store daemon sizes it to the free space
+    # minus 2 GiB (kept for the engines), so 20gb holds the default 16 GiB
+    # tier. /dev/shm is RAM and counts against the container's memory: lower
+    # this on a small host, and set kv_store_ram_gib to match.
+    shm_size: "20gb"
     environment:
       VW_JWT_SECRET: ""
       # The origin(s) every state-changing browser request must come from
@@ -38,6 +45,9 @@ services:
     volumes:
       - vw-data:/data
       - vw-hfcache:/root/.cache/huggingface
+      # KV-cache NVMe tier: point VW_KV_DIR at a directory on a fast local
+      # disk, then set the runtime setting kv_store_nvme_dir to /kv.
+      - ${VW_KV_DIR:-/var/lib/lmw-kv}:/kv
     deploy:
       resources:
         reservations:

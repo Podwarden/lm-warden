@@ -6,20 +6,25 @@ from __future__ import annotations
 import asyncio
 import base64
 import time
+from collections.abc import Sequence
 from contextlib import closing
-from typing import Any
+from dataclasses import replace
+from typing import Any, TypeVar
 
+from app.cache_obs.record import ttft_estimate
 from app.sessions import store
 from app.sessions.listing import GROUP_PAGE, apply_list
 from app.sessions.model import (
     MAX_TURNS,
     ListContext,
     build_session,
+    own_lens,
     segment,
     summarize_list,
     turn_json,
 )
 from app.sessions.refs import ParsedRef, is_fallback, sess_ref, session_id
+from app.stats import prefill_model
 from app.stats.routes_forest import ForestViewer
 from app.stats.routes_forest import _connect as _forest_connect
 
@@ -31,6 +36,51 @@ _FALLBACK_SIDE = MAX_TURNS
 _list_cache: dict[
     tuple[Any, ...], tuple[float, list[dict[str, Any]], float | None, float | None]
 ] = {}
+
+
+_R = TypeVar("_R", store.Row, store.ListRow)
+
+
+def _live_own(state: Any, viewer: ForestViewer) -> frozenset[str]:
+    """A key holder's in-flight request ids (on the loop: the registry is not
+    read from worker threads); empty for an admin."""
+    if viewer.token_id is None:
+        return frozenset()
+    reg = getattr(state, "request_registry", None)
+    snap = reg.snapshot() if reg is not None else ()
+    return frozenset(o.id for o in snap if o.token_id == viewer.token_id)
+
+
+def _for_viewer(
+    db: Any, state: Any, viewer: ForestViewer, rows: Sequence[_R], live_own: frozenset[str]
+) -> list[_R]:
+    """The one place the sessions API scopes cache figures by role: an admin
+    gets the rows as stored; a key holder gets the own lens only (no fleet-lens
+    figure, no lineage pointer to another key's request; ``own_lens``) and a
+    TTFT cache estimate re-derived from its own learned cold rate (the stored
+    one used the fleet's)."""
+    tok = viewer.token_id
+    if tok is None:
+        return list(rows)
+    owned = {r.id for r in rows} | live_own
+    ext = {r.cobs2_parent_req for r in rows if r.cobs2_parent_req} - owned
+    if ext:
+        owned |= store.owned_ids(db, tok, ext)
+    out = [own_lens(r, owned) for r in rows]
+    if any(r.cached_ttft_est_tokens is not None for r in out):
+        rates = _cold_rates(state, {r.model_id for r in out}, viewer)
+        out = [
+            r
+            if r.cached_ttft_est_tokens is None
+            else replace(
+                r,
+                cached_ttft_est_tokens=ttft_estimate(
+                    r.prompt_tokens, r.ttft_s, rates.get(r.model_id)
+                ),
+            )
+            for r in out
+        ]
+    return out
 
 
 class NotRecordedYet(Exception):
@@ -69,14 +119,16 @@ async def _scan(
     if hit is not None and now - hit[0] < LIST_CACHE_S:
         return hit
     secret = state.settings.cookie_secret
+    live_own = _live_own(state, viewer)
 
     def work() -> tuple[list[dict[str, Any]], float | None, float | None]:
         with closing(_connect(db_path)) as db:
             rows, trunc = store.list_rows(db, since=now - range_s, token_id=tok)
+            rows = _for_viewer(db, state, viewer, rows, live_own)
             ctx = ListContext(
                 toolsets=store.toolsets(db, {r.toolset for r in rows if r.toolset}),
                 engines=store.model_engines(db, {r.model_id for r in rows if r.model_id}),
-                cold_rates=_cold_rates(state, {r.model_id for r in rows if r.model_id}),
+                cold_rates=_cold_rates(state, {r.model_id for r in rows if r.model_id}, viewer),
             )
             items = summarize_list(
                 rows,
@@ -179,8 +231,15 @@ def _visible(viewer: ForestViewer, token_id: str | None) -> bool:
     return viewer.token_id is None or viewer.token_id == token_id
 
 
-def _cold_rates(state: Any, model_ids: set[str]) -> dict[str, float | None]:
-    pm = getattr(state, "prefill_model", None)
+def _cold_rates(
+    state: Any, model_ids: set[str], viewer: ForestViewer | None = None
+) -> dict[str, float | None]:
+    """Learned cold prefill rates: the fleet's for an admin, the key's own for
+    a key holder (no figure of a key holder's may come from another key)."""
+    if viewer is not None and viewer.token_id is not None:
+        pm: Any = prefill_model.own_state(state.settings.db_path, viewer.token_id)
+    else:
+        pm = getattr(state, "prefill_model", None)
     if pm is None:
         return {}
     out: dict[str, float | None] = {}
@@ -244,6 +303,7 @@ async def get_session(state: Any, viewer: ForestViewer, ref: ParsedRef) -> dict[
             if o.id == ref.ref:
                 live = (o.token_id, getattr(o, "cobs2_session", None))
                 break
+    live_own = _live_own(state, viewer)
 
     def work() -> dict[str, Any] | None:
         with closing(_connect(db_path)) as db:
@@ -271,6 +331,7 @@ async def get_session(state: Any, viewer: ForestViewer, ref: ParsedRef) -> dict[
             if got is None or not got[0]:
                 return None
             rows, trunc, sid, root = got
+            rows = _for_viewer(db, state, viewer, rows, live_own)
             digests = {r.toolset for r in rows if r.toolset}
             ts = store.toolsets(db, digests)
             hmacs = {h for d in ts.values() for h, _f, _c in d} | {
@@ -285,7 +346,7 @@ async def get_session(state: Any, viewer: ForestViewer, ref: ParsedRef) -> dict[
             token_name=rows[-1].token_name,
             truncated=trunc,
             oldest_data_at=oldest,
-            cold_rates=_cold_rates(state, {r.model_id for r in rows}),
+            cold_rates=_cold_rates(state, {r.model_id for r in rows}, viewer),
             toolsets=ts,
             tool_names=names,
             root_session=root,
@@ -300,12 +361,14 @@ async def get_request(
 ) -> dict[str, Any] | None:
     db_path = state.settings.db_path
     secret = state.settings.cookie_secret
+    live_own = _live_own(state, viewer)
 
     def read() -> dict[str, Any] | None:
         with closing(_connect(db_path)) as db:
             row = store.request_row(db, request_id)
             if row is None or not _visible(viewer, row.token_id):
                 return None
+            row = _for_viewer(db, state, viewer, [row], live_own)[0]
             sid = None
             turn = 1
             if row.cobs2_session:

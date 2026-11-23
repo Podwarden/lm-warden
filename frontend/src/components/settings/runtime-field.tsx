@@ -179,6 +179,16 @@ export function RuntimeField({
           disabled={disabled}
         />
       );
+    case "prompt_lens_enabled":
+      return (
+        <SettingField
+          kind="boolean"
+          field={hint}
+          value={draft.prompt_lens_enabled}
+          onChange={(v) => setField("prompt_lens_enabled", v)}
+          disabled={disabled}
+        />
+      );
     case "watchdog_restore_on_boot":
       return (
         <SettingField

@@ -134,8 +134,9 @@ async def request_detail(
 async def capture_read(
     request: Request, request_id: str, _user: str = Depends(require_jwt)
 ) -> dict[str, Any]:
-    """Admin only: one captured request (exact bodies and raw response) of a key
-    whose debug capture was on (app/proxy/capture.py). 404 when not captured."""
+    """Admin only: one captured request (the path and exact body the client sent,
+    the translated chat body for /v1/messages and /v1/responses, the engine body and the raw
+    response) of a key whose debug capture was on (app/proxy/capture.py). 404 when not captured."""
     store = getattr(request.app.state, "capture_store", None)
     rec: dict[str, Any] | None = (
         await asyncio.to_thread(store.get, request_id) if store is not None else None

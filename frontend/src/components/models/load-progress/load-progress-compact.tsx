@@ -15,6 +15,7 @@
 
 import type { LoadProgressOut } from "@/lib/load-progress";
 import { formatDuration } from "@/lib/load-progress";
+import { LiveNumber } from "@/components/ui/live-number";
 
 export interface LoadProgressCompactProps {
   progress: LoadProgressOut | undefined;
@@ -103,7 +104,7 @@ export function LoadProgressCompact({ progress }: LoadProgressCompactProps) {
       {/* Elapsed always shows so the card conveys "it is doing something"
           even without history. */}
       <div className="text-xs text-slate-500">
-        {formatDuration(progress.elapsed_s)} elapsed
+        <LiveNumber reserve={6}>{formatDuration(progress.elapsed_s)}</LiveNumber> elapsed
       </div>
     </div>
   );
