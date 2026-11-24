@@ -222,14 +222,21 @@ async def cache(
 @router.get("/key/cache", response_model=KvKeyReport)
 async def key_cache(request: Request, tid: str = Depends(key_holder)) -> dict[str, Any]:
     """The key's KV report as its holder sees it: the windows and the key's own store
-    totals (``store`` null when the store is not answering). Never who evicted its blocks,
-    never the isolation cost, never other keys or tier sizes."""
+    totals (``store`` null when the store is not answering), its own reuse figures and
+    its own most reloaded parts (``top_reused``, null when the store cannot say). Never
+    who evicted its blocks, never the isolation cost, never other keys, their reloads or
+    tier sizes."""
     stats = await kv_usage.fetch_stats(request.app.state)
     async with open_db(request.app.state.settings.db_path) as db:
         if await tokens._inference_row(TokenRepo(db), tid) is None:
             raise HTTPException(404)
         return await kv_usage.key_cache_report(
-            db, tid, stats, kv_usage.network_key(request.app.state), admin=False
+            db,
+            tid,
+            stats,
+            kv_usage.network_key(request.app.state),
+            admin=False,
+            app_state=request.app.state,
         )
 
 

@@ -240,6 +240,23 @@ RUN mkdir -p /opt/llamacpp && \
     cd / && ldd /opt/llamacpp/llama-server > /opt/llamacpp/.ldd.txt && \
     ! grep -q 'not found' /opt/llamacpp/.ldd.txt
 
+# Bundled vLLM engine: a second vLLM build next to the base image's, for models
+# the stock vLLM cannot run (a model opts in with `engine_vllm_version`; see
+# app/runtime/backends/vllm/engines.py). It lives in its own venv under
+# /opt/lmw-engines/<version id> and shares nothing with the base install.
+#
+# Its own stage, FROM the bare base: the install reads only deploy/engines/ and
+# lmw_kv/, so an app-only commit never re-runs the ~9 GB download. On by
+# default; `--build-arg LMW_BUNDLED_VLLM=0` builds without it (an empty
+# /opt/lmw-engines, and the model pin is then refused at load).
+FROM vllm/vllm-openai@${VW_BASE_DIGEST} AS bundled-vllm
+ARG LMW_BUNDLED_VLLM=1
+RUN --mount=type=bind,source=deploy/engines,target=/engines \
+    --mount=type=bind,source=lmw_kv,target=/src/lmw_kv,rw \
+    mkdir -p /opt/lmw-engines && \
+    LMW_BUNDLED_VLLM=${LMW_BUNDLED_VLLM} LMW_KV_SRC=/src/lmw_kv \
+    bash /engines/vllm-0.34.0rc1.dev1202-pr69165/install.sh
+
 FROM vllm/vllm-openai@${VW_BASE_DIGEST}
 ARG LLAMACPP_BUILD
 
@@ -390,6 +407,10 @@ RUN ln -s /opt/llamacpp/llama-server /usr/local/bin/llama-server && \
     ldd /usr/local/bin/llama-server | tee /tmp/ldd.txt && \
     ! grep -q 'not found' /tmp/ldd.txt && rm -f /tmp/ldd.txt
 ENV VW_LLAMACPP_BUILD=${LLAMACPP_BUILD}
+
+# The bundled vLLM engine(s), from the stage above (empty when built with
+# LMW_BUNDLED_VLLM=0). The code reads this root; VW_ENGINES_ROOT overrides it.
+COPY --from=bundled-vllm /opt/lmw-engines /opt/lmw-engines
 
 # Application source LAST, because it is the ONLY input that changes on a
 # typical commit. Everything above -- the base, the gguf-plugin patch, the

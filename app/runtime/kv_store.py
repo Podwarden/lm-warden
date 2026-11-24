@@ -29,7 +29,12 @@ DEFAULT_RAM_GIB = 16.0
 DEFAULT_NVME_CAP_GB = 250.0
 
 #: The ``kv_store`` values that turn the connector on (``off`` is everything else).
-KV_TIERS = ("ram", "ram+nvme")
+KV_TIERS = ("ram", "ram+nvme", "nvme")
+#: The ones that write blocks to the disk folder (they need ``kv_store_nvme_dir``).
+DISK_TIERS = ("ram+nvme", "nvme")
+#: The RAM pool, in GiB, of a daemon whose every model is ``nvme``: RAM only holds a block
+#: while it moves between the GPU and the disk (spec 4.2).
+STAGING_POOL_GIB = 1.0
 
 
 #: The only engine driver that can run the KV connector. The daemon's socket, its RAM
@@ -262,6 +267,11 @@ def _num(raw: str | None, default: float) -> float:
     return v if v >= 0 else default
 
 
+def _true(raw: str | None) -> bool:
+    """A boolean runtime setting as the DB stores it (``"true"``/``"false"``)."""
+    return (raw or "").strip().lower() == "true"
+
+
 #: A daemon commits its whole RAM pool before it answers, so its start timeout grows
 #: with the pool (``KvStoreSupervisor.start_timeout_for``): ``start_timeout_s`` covers a
 #: pool of up to this many GiB and scales in proportion above it. The default 60 s over
@@ -327,6 +337,9 @@ class KvStoreSupervisor:
         self._start_timeout_now = start_timeout_s  # scaled with the requested pool
         self._ram_requested: int | None = None  # bytes asked of the running daemon
         self._ram_granted: int | None = None  # bytes it committed (its hello ram_bytes)
+        # Why there is no RAM pool: the daemon's hello, or this supervisor's own reason
+        # when it starts no daemon at all; the same text either way.
+        self._pool_error: str | None = None
         self._logged_no_tier = False
         self._live_client: Client | None = None
         self._stats_client: Client | None = None
@@ -438,6 +451,11 @@ class KvStoreSupervisor:
         until a daemon has answered."""
         return {"requested_bytes": self._ram_requested, "granted_bytes": self._ram_granted}
 
+    def pool_error(self) -> str | None:
+        """Why there is no RAM pool, or None: the running daemon's ``hello.pool_error``, or
+        the reason this supervisor started no daemon (no pool fits and no NVMe folder)."""
+        return self._pool_error
+
     def generation(self) -> int:
         """The generation of the current (or last) healthy daemon; 0 before the first."""
         return self._generation
@@ -479,14 +497,21 @@ class KvStoreSupervisor:
 
     # ---- internals -----------------------------------------------------------
 
-    async def _read_config(self) -> tuple[bool, dict[str, float | str]]:
+    async def _read_config(self) -> tuple[bool, dict[str, float | str | bool]]:
         from app.db.repos.models import ModelRepo
 
         async with open_db(self._settings.db_path) as db:
             models = await ModelRepo(db).list_all()
-            wanted = any(m.kv_store in KV_TIERS for m in models)
+            on = [m.kv_store for m in models if m.kv_store in KV_TIERS]
+            wanted = bool(on)
             kv = await SettingsRepo(db).get_many(
-                ["kv_store_ram_gib", "kv_store_nvme_dir", "kv_store_nvme_cap_gb"]
+                [
+                    "kv_store_ram_gib",
+                    "kv_store_nvme_dir",
+                    "kv_store_nvme_cap_gb",
+                    "kv_store_nvme_marker",
+                    "kv_store_nvme_allow_root_disk",
+                ]
             )
         # One engine worker per GPU at most runs beside the pool (a model's TP/DP workers
         # each hold one GPU); every GPU a registered model may use counts.
@@ -496,9 +521,13 @@ class KvStoreSupervisor:
             "nvme_dir": (kv.get("kv_store_nvme_dir") or "").strip(),
             "nvme_cap_gb": _num(kv.get("kv_store_nvme_cap_gb"), DEFAULT_NVME_CAP_GB),
             "engine_workers": float(max(1, len(gpus))),
+            # Some model on and every such model disk only: the pool is the staging pool.
+            "staging_only": bool(on) and all(t == "nvme" for t in on),
+            "nvme_marker": _true(kv.get("kv_store_nvme_marker")),
+            "nvme_allow_root_disk": _true(kv.get("kv_store_nvme_allow_root_disk")),
         }
 
-    def _argv(self, cfg: dict[str, float | str]) -> list[str] | None:
+    def _argv(self, cfg: dict[str, float | str | bool]) -> list[str] | None:
         """The daemon argv, or None when there would be no tier at all. Blocking (statvfs,
         unlink, /proc reads): the loop runs it in a worker thread.
 
@@ -508,23 +537,30 @@ class KvStoreSupervisor:
         anything to start."""
         import lmw_kv.ram as ram
 
-        wanted = int(float(cfg["ram_gib"]) * (1 << 30))
+        ram_gib = float(cfg["ram_gib"])
+        if cfg.get("staging_only"):
+            ram_gib = min(ram_gib, STAGING_POOL_GIB)  # spec 4.2: RAM is only in-flight space
+        wanted = int(ram_gib * (1 << 30))
         workers = int(cfg.get("engine_workers", 0) or 0)
         pool = Path(self._shm_path) / "lmw-kv.pool"
+        reason: str | None = None
         try:
             # Our daemon is not running here: a pool file is a leftover of one that died.
             # The daemon unlinks it too; doing it first keeps it out of the free space.
+            free = ram.free_bytes(pool.parent) + ram.file_bytes(pool)
             ram.discard_stale(pool)
-            fitted = ram.grant(
-                wanted,
-                ram.fit_shm(pool, wanted),
-                ram.fit_memory(wanted, engine_workers=workers),
-            )
+            shm = ram.fit_shm(pool, wanted)
+            mem = ram.fit_memory(wanted, engine_workers=workers)
+            fitted = ram.grant(wanted, shm, mem)
+            if fitted == 0:
+                reason = ram.pool_error(pool, wanted, free=free, shm_fit=shm, mem_fit=mem)
         except OSError as exc:
             log.warning("kv store: cannot size %s (%s); no RAM tier", pool, exc)
             fitted = 0
+            reason = f"RAM pool {ram.fmt_gib(wanted)} GiB cannot be sized in {pool.parent}: {exc}"
         nvme = str(cfg["nvme_dir"])
         if fitted == 0 and not nvme:
+            self._pool_error = reason or f"RAM pool {ram.fmt_gib(wanted)} GiB does not fit"
             if not self._logged_no_tier:  # the poll runs every few seconds: say it once
                 self._logged_no_tier = True
                 log.warning(
@@ -533,8 +569,9 @@ class KvStoreSupervisor:
                 )
             return None
         self._logged_no_tier = False
+        self._pool_error = None  # the daemon's hello says from here on
         self._ram_requested = wanted
-        self._start_timeout_now = self.start_timeout_for(float(cfg["ram_gib"]))
+        self._start_timeout_now = self.start_timeout_for(ram_gib)
         argv = [
             *self._command,
             "--parent-pid",
@@ -550,6 +587,10 @@ class KvStoreSupervisor:
         ]
         if nvme:
             argv += ["--nvme-dir", nvme, "--nvme-cap-gb", str(cfg["nvme_cap_gb"])]
+            if cfg.get("nvme_marker"):
+                argv.append("--nvme-marker")
+            if cfg.get("nvme_allow_root_disk"):
+                argv.append("--nvme-allow-root-disk")
         return argv
 
     def _notify(self) -> None:
@@ -643,6 +684,8 @@ class KvStoreSupervisor:
             if h is not None:
                 rb = h.get("ram_bytes")
                 self._ram_granted = rb if isinstance(rb, int) and not isinstance(rb, bool) else None
+                pe = h.get("pool_error")
+                self._pool_error = pe if isinstance(pe, str) and pe else None
                 break
             if loop.time() >= give_up:
                 log.warning(

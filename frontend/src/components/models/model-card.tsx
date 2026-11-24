@@ -37,7 +37,7 @@ export interface ModelRow {
    */
   backend?: string | null;
   /** The KV cache store tier (plan 2); vLLM only. */
-  kv_store?: "off" | "ram" | "ram+nvme";
+  kv_store?: "off" | "ram" | "ram+nvme" | "nvme";
   /** Whether the engine keeps an isolated key's cache apart (admin models list, O4). */
   cache_isolation?: "isolated" | "unsupported";
 }
@@ -81,16 +81,29 @@ function formatBytes(n: number): string {
   return `${v.toFixed(1)} ${units[i]}`;
 }
 
+/** Why the KV cache store keeps a tier off (``GET /api/kv/usage``), null when fine. */
+export interface KvStoreErrors {
+  pool_error?: string | null;
+  nvme_error?: string | null;
+}
+
 export function ModelCard({
   model,
   loadProgress,
+  kvErrors,
 }: {
   model: ModelRow;
   /** Live load-progress snapshot for the compact bar; only meaningful while
    *  ``status === "loading"``.  The list page passes the matching entry from
    *  ``useActiveLoadProgress()`` by model id, or ``undefined`` if none. */
   loadProgress?: LoadProgressOut;
+  /** The store's pool and disk errors: shown for a model with the store on. */
+  kvErrors?: KvStoreErrors;
 }) {
+  const storeOn = (model.backend ?? "vllm") === "vllm" && model.kv_store !== undefined && model.kv_store !== "off";
+  const diskMode = model.kv_store === "ram+nvme" || model.kv_store === "nvme";
+  const poolError = storeOn ? kvErrors?.pool_error : null;
+  const nvmeError = storeOn && diskMode ? kvErrors?.nvme_error : null;
   const pct =
     model.status === "pulling" && model.pulled_total && model.pulled_total > 0
       ? Math.min(100, Math.round((model.pulled_bytes / model.pulled_total) * 100))
@@ -153,6 +166,16 @@ export function ModelCard({
               </Mark>
             )}
           </div>
+        )}
+        {poolError && (
+          <p className="break-words text-xs text-amber-300" data-testid="model-kv-pool-error">
+            KV cache store off: {poolError}
+          </p>
+        )}
+        {nvmeError && (
+          <p className="break-words text-xs text-amber-300" data-testid="model-kv-nvme-error">
+            {nvmeError}
+          </p>
         )}
         {model.status === "pulling" && (
           <div className="space-y-1">

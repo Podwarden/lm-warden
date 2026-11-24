@@ -67,6 +67,25 @@ class KvLiveConfig:
     gpu_case_size: int = 8192
     flood_factor: float = 10.0
     flood_max_tokens: int = 0
+    # Disk only (test_kv_disk_only_live.py) and the tier the other two files run on.
+    tier: str = "ram+nvme"
+    segment_dir: str = ""
+    weights_dir: str = ""
+    long_size: int = 50000
+    match_unit: int = 16
+    socket: str = field(default="", repr=False)
+    gpu_flush_tokens: int = 160000
+    write_tolerance: float = 0.10
+    block_size: int = 0
+
+    @property
+    def has_ram_tier(self) -> bool:
+        """``nvme`` keeps blocks in RAM only while they move: no RAM tier to test."""
+        return self.tier != "nvme"
+
+    def store_tokens(self, tiers: dict[str, object]) -> int:
+        """Tokens the store served, from RAM or NVMe."""
+        return int(tiers.get("ram") or 0) + int(tiers.get("nvme") or 0)
 
 
 def load_config(env: dict[str, str] | None = None) -> KvLiveConfig:
@@ -104,6 +123,15 @@ def load_config(env: dict[str, str] | None = None) -> KvLiveConfig:
         gpu_case_size=int(e.get("VW_KV_LIVE_GPU_CASE_SIZE") or 8192),
         flood_factor=float(e.get("VW_KV_LIVE_FLOOD_FACTOR") or 10.0),
         flood_max_tokens=int(e.get("VW_KV_LIVE_FLOOD_MAX_TOKENS") or 0),
+        tier=e.get("VW_KV_LIVE_TIER") or "ram+nvme",
+        segment_dir=e.get("VW_KV_LIVE_SEGMENT_DIR", ""),
+        weights_dir=e.get("VW_KV_LIVE_WEIGHTS_DIR", ""),
+        long_size=int(e.get("VW_KV_LIVE_LONG_SIZE") or 50000),
+        match_unit=int(e.get("VW_KV_LIVE_MATCH_UNIT") or 16),
+        socket=e.get("VW_KV_LIVE_SOCKET", ""),
+        gpu_flush_tokens=int(e.get("VW_KV_LIVE_GPU_FLUSH_TOKENS") or 160000),
+        write_tolerance=float(e.get("VW_KV_LIVE_WRITE_TOLERANCE") or 0.10),
+        block_size=int(e.get("VW_KV_LIVE_BLOCK_SIZE") or 0),
     )
 
 

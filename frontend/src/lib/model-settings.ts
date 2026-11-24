@@ -100,7 +100,7 @@ export interface ModelSettings {
   layout_notice_level?: "info" | "warning" | null;
   layout_notice?: string | null;
   // Optional on the wire: an older server omits both, which reads as off / 1.
-  kv_store?: "off" | "ram" | "ram+nvme";
+  kv_store?: "off" | "ram" | "ram+nvme" | "nvme";
   kv_store_weight?: number;
 }
 
@@ -118,7 +118,7 @@ export type Draft = Omit<
   dp_affinity_enabled: boolean;
   dp_spill_threshold: number | null;
   thinking_policy: "client" | "off";
-  kv_store: "off" | "ram" | "ram+nvme";
+  kv_store: "off" | "ram" | "ram+nvme" | "nvme";
   kv_store_weight: number;
 };
 
@@ -221,7 +221,7 @@ export function labelFor(key: string): string {
  */
 export function formatSettingValue(key: string, v: unknown): string {
   if (key === "thinking_policy") return v === "off" ? "Off for every key" : "Let the client decide";
-  if (key === "kv_store") return v === "ram" ? "RAM" : v === "ram+nvme" ? "RAM + disk" : "Off";
+  if (key === "kv_store") return v === "ram" ? "RAM" : v === "ram+nvme" ? "RAM + disk" : v === "nvme" ? "Disk only" : "Off";
   if (key.startsWith("supports_")) return v === null || v === undefined ? "Auto" : v ? "Yes" : "No";
   if (typeof v === "boolean") return v ? "on" : "off";
   if (v === null || v === undefined) {

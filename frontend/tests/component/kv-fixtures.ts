@@ -27,6 +27,7 @@ export const KEY_STORE: S['KvKeyStore'] = {
 
 export const ADMIN_STORE: S['KvKeyStoreAdmin'] = {
   ...KEY_STORE,
+  reuse: null, // the holder's reuse type is not the admin one
   ram_share_bytes: 2.9 * GiB,
   nvme_share_bytes: 45 * GB,
   evicted_by: [

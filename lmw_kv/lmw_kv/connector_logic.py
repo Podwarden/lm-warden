@@ -35,6 +35,7 @@ import threading
 import time
 from array import array
 from collections.abc import Callable, Iterable, Mapping, Sequence
+from concurrent.futures import Future
 from dataclasses import dataclass, field, replace
 from typing import Any, Protocol, TypeGuard
 
@@ -45,9 +46,17 @@ log = logging.getLogger("lmw_kv.connector")
 
 KEY_ENV = "LMW_KV_KEY_FILE"
 DEFAULT_MIN_TOKENS = 2048
-TIERS = ("ram", "ram+nvme")
+TIERS = ("ram", "ram+nvme", "nvme")
 LAYOUT_VERSION = 1
 STATE_PROBES = 16  # single-key state lookups per match, at most
+#: The daemon minor that knows staging namespaces (``nvme``, disk only).
+STAGING_MIN_MINOR = 2
+#: A load window that gets no slot is retried this often, this far apart (spec 4.3).
+LOAD_EMPTY_RETRIES = 8
+LOAD_RETRY_S = 0.025
+LOAD_RETRY_BUDGET_S = LOAD_EMPTY_RETRIES * LOAD_RETRY_S  # most a window waits for slots
+#: The daemon's limit on a ``begin_load`` tag, in UTF-8 bytes (a longer one is a bad request).
+LOAD_TAG_MAX_BYTES = 255
 
 # ---- configuration ------------------------------------------------------------
 
@@ -127,8 +136,38 @@ def namespace_revisions(
 
 
 def uses_nvme(tiers: str) -> bool:
-    """``ram+nvme`` writes blocks through to NVMe and loads them back; ``ram`` never does."""
-    return tiers == "ram+nvme"
+    """``ram+nvme`` and ``nvme`` write blocks to NVMe and load them back; ``ram`` never does."""
+    return tiers in ("ram+nvme", "nvme")
+
+
+def uses_staging(tiers: str) -> bool:
+    """``nvme`` (disk only): RAM holds a block only while it moves to or from the disk."""
+    return tiers == "nvme"
+
+
+def store_supports(tiers: str, hello: Mapping[str, Any]) -> bool:
+    """Can this daemon serve ``tiers``? Disk only needs staging namespaces (minor 2)."""
+    if not uses_staging(tiers):
+        return True
+    minor = hello.get("minor", 0)
+    return isinstance(minor, int) and not isinstance(minor, bool) and minor >= STAGING_MIN_MINOR
+
+
+def load_tag(value: str) -> str:
+    """``value`` as a ``begin_load`` tag: itself when the daemon takes it, else its
+    SHA-256 hex (64 characters, the same for the same value, so a request still counts
+    once). A string that is not valid UTF-8 is hashed too."""
+    try:
+        if len(value.encode("utf-8")) <= LOAD_TAG_MAX_BYTES:
+            return value
+    except UnicodeEncodeError:  # a lone surrogate
+        pass
+    return hashlib.sha256(value.encode("utf-8", "surrogatepass")).hexdigest()
+
+
+def window_blocks(pool_bytes: int, block_bytes: int, ranks: int) -> int:
+    """Blocks one load window pins: half the pool's slots, shared by every rank (spec 4.3)."""
+    return max(1, (pool_bytes // block_bytes) // (2 * max(1, ranks)))
 
 
 def read_secret(path: str | None) -> bytes | None:
@@ -393,6 +432,9 @@ class SaveEntry:
     gid: int
     block_id: int
     tenant: bytes = field(default=b"", repr=False)  # pays for the block
+    #: The block's index in its prefix chain (the daemon's parent check); None for a
+    #: state block, whose parent belongs to the attention chain.
+    depth: int | None = None
 
     @property
     def scope(self) -> bytes:
@@ -543,7 +585,7 @@ class SchedulerLogic:
             keys=block_keys_for(self._secret, bscope.salt, self._ns_id, token_ids, self._bs),
             root=root_key(self._secret, bscope.salt, self._ns_id),
             scope=bscope,
-            tag=tag if isinstance(tag, str) and tag else req_id,
+            tag=load_tag(tag if isinstance(tag, str) and tag else req_id),
             prompt_len=len(token_ids),
             tenant=tenant,
         )
@@ -586,7 +628,7 @@ class SchedulerLogic:
         # A job that fails is reported as a failed request (vLLM recomputes it all),
         # whatever blocks it lists; an empty job can only fail.
         doomed = doomed or not entries
-        tag = req.tag if req else req_id
+        tag = req.tag if req else load_tag(req_id)
         tenant = req.tenant if req else b""
         self._pending_loads.append(
             LoadJob(req_id, tag, num_external_tokens, entries, doomed, tenant)
@@ -644,7 +686,15 @@ class SchedulerLogic:
                     continue
                 parent = req.keys[bi - 1] if bi > 0 else req.root
                 plan.saves.append(
-                    SaveEntry(req.keys[bi], parent, req.scope, g.gid, bid, req.tenant)
+                    SaveEntry(
+                        req.keys[bi],
+                        parent,
+                        req.scope,
+                        g.gid,
+                        bid,
+                        req.tenant,
+                        None if g.is_state else bi,
+                    )
                 )
         req.saved_upto = full
 
@@ -772,10 +822,12 @@ def serve_loads(
 
 class _WorkerClient(Protocol):
     def begin_load(
-        self, ns_id: bytes, keys: list[bytes], *, tenant: bytes = b""
+        self, ns_id: bytes, keys: list[bytes], *, tenant: bytes = b"", tag: str = ""
     ) -> tuple[int, list[dict[str, int]], int] | None: ...
 
-    def end_load(self, handle: int) -> bool | None: ...
+    def end_load(self, handle: int, *, used: bool | None = None) -> bool | None: ...
+
+    def lookup(self, ns_id: bytes, keys: list[bytes]) -> int | None: ...
 
     def begin_save(
         self,
@@ -786,6 +838,7 @@ class _WorkerClient(Protocol):
         *,
         tenant: bytes = b"",
         scope_tag: bytes = b"",
+        depth: int | None = None,
     ) -> dict[str, int] | None: ...
 
     def commit_save(self, ns_id: bytes, key: bytes) -> bool | None: ...
@@ -794,6 +847,9 @@ class _WorkerClient(Protocol):
 
 
 Copy = Callable[[int, int, int], None]  # (group id, GPU block id, byte offset in the RAM file)
+#: Runs a call on the loader's prefetch thread (its own daemon connection) and returns
+#: its future: the next window's ``begin_load`` overlaps this window's copy.
+Prefetch = Callable[[Callable[[], Any]], "Future[Any]"]
 
 
 def run_load_job(
@@ -806,17 +862,36 @@ def run_load_job(
     copy: Copy,
     sync: Callable[[], None],
     same_file: Callable[[], bool],
+    *,
+    window: int,
+    sleep: Callable[[float], None] = time.sleep,
+    prefetch: Prefetch | None = None,
 ) -> list[int] | None:
-    """Pin every slot, check every offset, copy RAM -> GPU, wait, release the pins.
+    """Load each entry in windows of at most ``window`` blocks (spec 4.3).
 
-    Returns, per entry, how many of its blocks the daemon read from NVMe; None (the
-    request is reported failed, vLLM recomputes it) when the job is doomed or empty,
-    the daemon fails, fewer blocks come back than planned, an offset is out of range,
-    or the RAM file was replaced meanwhile. Nothing is copied unless every slot checks.
-    Every failure logs one warning naming the request, so the recompute is visible.
+    Per window: pin, check every offset, copy RAM -> GPU, wait, check the RAM file,
+    release the pins with ``used``. A shorter reply is progress; an empty one is
+    checked once with ``lookup`` (a block that is gone fails the job at once), else retried
+    ``LOAD_EMPTY_RETRIES`` times, ``LOAD_RETRY_S`` apart. Returns, per entry,
+    how many of its blocks the daemon read from NVMe (summed over its windows); None
+    (the request is reported failed, vLLM recomputes it) when the job is doomed or
+    empty, the daemon fails, a window stays empty, an offset is out of range, or the
+    RAM file was replaced meanwhile. Each window is checked before it is copied; a
+    failure fails the whole request. Every failure logs one warning naming the
+    request, so the recompute is visible.
+
+    With ``prefetch`` the windows are half as large and the next one's
+    ``begin_load`` (the daemon's NVMe reads) runs on the prefetch thread while this one
+    is copied to the GPU, so at most ``window`` blocks are pinned at once, as before. Each
+    window is still checked before it is copied, the windows are used in order, and the
+    prefetched window is released unused whenever the pipeline stops: a failure fails the
+    job; a short or empty reply goes on one window at a time from where it ended.
     """
     try:
-        nvme = _load(client, job, ns_ids, names, sizes, limit, copy, sync, same_file)
+        nvme = _load(
+            client, job, ns_ids, names, sizes, limit, copy, sync, same_file, window, sleep,
+            prefetch,
+        )  # fmt: skip
         why = "incomplete"
     except Exception as exc:  # fail open
         nvme, why = None, repr(exc)
@@ -835,39 +910,228 @@ def _load(
     copy: Copy,
     sync: Callable[[], None],
     same_file: Callable[[], bool],
+    window: int,
+    sleep: Callable[[float], None],
+    prefetch: Prefetch | None = None,
 ) -> list[int] | None:
     if job.doomed or not job.entries:
         return None
-    handles: list[int] = []
-    try:
-        todo: list[tuple[int, int, int]] = []
-        nvme: list[int] = []
-        for e in job.entries:
-            got = client.begin_load(ns_ids[e.gid], e.keys, tenant=job.tenant)
+    w = max(1, window)
+    nvme = [0] * len(job.entries)
+    first, at = 0, 0  # where the one-window-at-a-time loop starts
+    if prefetch is not None and w >= 2:
+        where = _load_pipelined(
+            client, job, ns_ids, names, sizes, limit, copy, sync, same_file, w // 2, prefetch,
+            nvme,
+        )  # fmt: skip
+        if where is None:
+            return None
+        first, at = where
+    for ei in range(first, len(job.entries)):
+        e = job.entries[ei]
+        total, i, empties = nvme[ei], (at if ei == first else 0), 0
+        while i < len(e.keys):
+            got = _load_window(
+                client, job, ns_ids[e.gid], e, i, w, names, sizes, limit, copy, sync, same_file
+            )
             if got is None:
                 return None
-            handle, slots, from_nvme = got
-            handles.append(handle)
-            if len(slots) < len(e.keys):
-                return None
-            nvme.append(min(from_nvme, len(e.keys)))
-            for slot, bid in zip(slots, e.block_ids, strict=False):
-                off = slot.get(names[e.gid]) if isinstance(slot, dict) else None
-                if not in_bounds(off, sizes[e.gid], limit):
+            n, from_nvme = got
+            if n == 0:
+                if empties == 0 and not _still_stored(client, ns_ids[e.gid], e.keys[i]):
+                    return None  # the block is gone, not slow: recompute at once
+                empties += 1
+                if empties > LOAD_EMPTY_RETRIES:
                     return None
-                todo.append((e.gid, bid, off))
-        for gid, bid, off in todo:
-            copy(gid, bid, off)
-        sync()
-        return nvme if same_file() else None
+                sleep(LOAD_RETRY_S)  # another rank's window frees soon
+                continue
+            empties = 0
+            total += from_nvme
+            i += n
+        nvme[ei] = total
+    return nvme
+
+
+def _load_pipelined(
+    client: _WorkerClient,
+    job: LoadJob,
+    ns_ids: Mapping[int, bytes],
+    names: Mapping[int, str],
+    sizes: Mapping[int, int],
+    limit: int,
+    copy: Copy,
+    sync: Callable[[], None],
+    same_file: Callable[[], bool],
+    half: int,
+    prefetch: Prefetch,
+    nvme: list[int],
+) -> tuple[int, int] | None:
+    """Every window of ``half`` blocks, the next one's ``begin_load`` running while this
+    one copies. Adds each entry's NVMe blocks to ``nvme``. Returns where the serial loop
+    goes on (entry, key index), ``(len(entries), 0)`` when all is loaded, or None (fail
+    the job). The prefetched window is always released unused when it is not copied."""
+    windows = [(ei, s) for ei, e in enumerate(job.entries) for s in range(0, len(e.keys), half)]
+    if not windows:
+        return len(job.entries), 0
+
+    def begin(ei: int, start: int) -> Callable[[], Any]:
+        e = job.entries[ei]
+        keys = e.keys[start : start + half]
+        return lambda: client.begin_load(ns_ids[e.gid], keys, tenant=job.tenant, tag=job.tag)
+
+    end = _ender(client, prefetch)  # a handle ends on the connection that began it
+    nxt: Future[Any] | None = prefetch(begin(*windows[0]))
+    try:
+        for k, (ei, start) in enumerate(windows):
+            assert nxt is not None
+            cur, nxt = nxt, None
+            got = _reply(cur)
+            if got is not None and k + 1 < len(windows):
+                try:
+                    nxt = prefetch(begin(*windows[k + 1]))
+                except BaseException:
+                    _end_quietly(end, got[0])  # this window is not copied: release it
+                    raise
+            e = job.entries[ei]
+            asked = len(e.keys[start : start + half])
+            used = _use_window(
+                client, got, e, start, asked, names, sizes, limit, copy, sync, same_file, end
+            )
+            if used is None:
+                return None
+            n, from_nvme = used
+            nvme[ei] += from_nvme
+            if n < asked:  # short or empty: one window at a time from here (spec 4.3)
+                return ei, start + n
+        return len(job.entries), 0
     finally:
-        if handles:
+        if nxt is not None:
+            _release_unused(end, nxt)
+
+
+def _reply(fut: Future[Any]) -> tuple[int, list[dict[str, int]], int] | None:
+    """A prefetched ``begin_load`` reply; an exception is a daemon failure (None)."""
+    try:
+        got = fut.result()
+    except Exception as exc:  # fail open
+        log.debug("LM Warden KV: a prefetched begin_load raised: %r", exc)
+        return None
+    return got if isinstance(got, tuple) else None
+
+
+def _ender(client: _WorkerClient, prefetch: Prefetch) -> Callable[..., Any]:
+    """``end_load`` run on the prefetch thread, where every pipelined window began.
+
+    The client keeps one connection per thread and the daemon tracks a handle on the
+    connection that began it, freeing it when that connection drops. Ending it there
+    keeps that bookkeeping exact. If the prefetch thread is gone, the call goes out from
+    here: the store still frees the pins, and the closed connection holds nothing."""
+
+    def end(handle: int, **kw: Any) -> Any:
+        try:
+            fut = prefetch(lambda: client.end_load(handle, **kw))
+        except Exception:  # the executor is shut down
+            return client.end_load(handle, **kw)
+        return fut.result()
+
+    return end
+
+
+def _end_quietly(end: Callable[..., Any], handle: int) -> None:
+    try:
+        end(handle)
+    except Exception as exc:  # fail open: the daemon frees it when the connection ends
+        log.debug("LM Warden KV: releasing a prefetched window failed: %r", exc)
+
+
+def _release_unused(end: Callable[..., Any], fut: Future[Any]) -> None:
+    """End a prefetched window that is not copied (nothing read its slots)."""
+    got = _reply(fut)
+    if got is not None:
+        _end_quietly(end, got[0])
+
+
+def _still_stored(client: _WorkerClient, ns_id: bytes, key: bytes) -> bool:
+    """After an empty window: is its first block still in the store? The protocol cannot
+    tell "no free slot" from "block gone"; one lookup does. Any doubt is a miss."""
+    try:
+        return bool(client.lookup(ns_id, [key]))
+    except Exception:
+        return False
+
+
+def _load_window(
+    client: _WorkerClient,
+    job: LoadJob,
+    ns_id: bytes,
+    e: LoadEntry,
+    start: int,
+    window: int,
+    names: Mapping[int, str],
+    sizes: Mapping[int, int],
+    limit: int,
+    copy: Copy,
+    sync: Callable[[], None],
+    same_file: Callable[[], bool],
+) -> tuple[int, int] | None:
+    """One window of an entry: (blocks loaded, of them from NVMe), or None (fail the job).
+
+    The pins are released whatever happens; ``used`` only once the window's copy,
+    sync and RAM file check all succeeded.
+    """
+    keys = e.keys[start : start + window]
+    got = client.begin_load(ns_id, keys, tenant=job.tenant, tag=job.tag)
+    return _use_window(client, got, e, start, len(keys), names, sizes, limit, copy, sync, same_file)
+
+
+def _use_window(
+    client: _WorkerClient,
+    got: tuple[int, list[dict[str, int]], int] | None,
+    e: LoadEntry,
+    start: int,
+    asked: int,
+    names: Mapping[int, str],
+    sizes: Mapping[int, int],
+    limit: int,
+    copy: Copy,
+    sync: Callable[[], None],
+    same_file: Callable[[], bool],
+    end: Callable[..., Any] | None = None,
+) -> tuple[int, int] | None:
+    """Check, copy and release one ``begin_load`` reply for ``asked`` keys from ``start``.
+
+    ``end`` releases the handle (``client.end_load`` unless given)."""
+    if got is None:
+        return None
+    end_load = client.end_load if end is None else end
+    handle, slots, from_nvme = got
+    used = False
+    try:
+        n = min(len(slots), asked)
+        todo: list[tuple[int, int]] = []
+        for slot, bid in zip(slots[:n], e.block_ids[start : start + n], strict=True):
+            off = slot.get(names[e.gid]) if isinstance(slot, dict) else None
+            if not in_bounds(off, sizes[e.gid], limit):
+                return None
+            todo.append((bid, off))
+        if n == 0:
+            return 0, 0
+        for bid, off in todo:
+            copy(e.gid, bid, off)
+        sync()
+        if not same_file():
+            return None
+        used = True
+        return n, min(max(from_nvme, 0), n)
+    finally:
+        if used:
+            end_load(handle, used=True)
+        else:
             try:
                 sync()  # never release a pin while a copy may still read it
             except Exception:
                 pass
-            for h in handles:
-                client.end_load(h)
+            end_load(handle)
 
 
 class SetupError(Exception):
@@ -880,6 +1144,7 @@ def attach_store(
     map_ram: Callable[[], None],
     same_file: Callable[[], bool],
     nvme: bool = True,
+    staging: bool = False,
     *,
     owner: str,
     model: bytes,
@@ -892,15 +1157,15 @@ def attach_store(
     ``register_ns`` sets the slot size. Registering again after the mapping
     (``register_ns`` is idempotent) covers a daemon that restarted in between: it has
     the file we mapped but not our namespaces. ``nvme`` is registered with every
-    namespace (``uses_nvme`` of the tiers), and so are ``owner``, ``model`` (the model
-    tag), the group's ``role_of`` and the TP ``rank``. Returns group id -> store
-    namespace id.
+    namespace (``uses_nvme`` of the tiers), and so are ``staging`` (``uses_staging``),
+    ``owner``, ``model`` (the model tag), the group's ``role_of`` and the TP ``rank``.
+    Returns group id -> store namespace id.
     """
     roles = {g.gid: role_of(g) for g in groups}
     who = (owner, model, rank, roles)
-    _register_all(client, namespaces, nvme, who)
+    _register_all(client, namespaces, nvme, staging, who)
     map_ram()
-    ids = _register_all(client, namespaces, nvme, who)
+    ids = _register_all(client, namespaces, nvme, staging, who)
     if not same_file():
         raise SetupError("the daemon restarted during setup")
     return ids
@@ -910,6 +1175,7 @@ def _register_all(
     client: Any,
     namespaces: Sequence[tuple[int, Namespace, Mapping[str, int]]],
     nvme: bool,
+    staging: bool,
     who: tuple[str, bytes, int, Mapping[int, str]],
 ) -> dict[int, bytes]:
     owner, model, rank, roles = who
@@ -920,7 +1186,14 @@ def _register_all(
         if role is None:
             raise SetupError(f"group {gid} is not a known KV-cache group")
         got = client.register_ns(
-            ns, dict(groups), nvme=nvme, owner=owner, model=model, role=role, rank=rank
+            ns,
+            dict(groups),
+            nvme=nvme,
+            owner=owner,
+            model=model,
+            role=role,
+            rank=rank,
+            staging=staging,
         )
         if got != want:
             raise SetupError(f"register_ns for group {gid} failed or disagreed")
@@ -975,7 +1248,13 @@ def run_saves(
         for s in saves:
             ns = ns_ids[s.gid]
             offs = client.begin_save(
-                ns, s.key, s.parent, s.scope, tenant=s.tenant, scope_tag=s.scope_tag
+                ns,
+                s.key,
+                s.parent,
+                s.scope,
+                tenant=s.tenant,
+                scope_tag=s.scope_tag,
+                depth=s.depth,
             )
             if offs is None:
                 continue

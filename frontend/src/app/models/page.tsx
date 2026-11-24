@@ -13,18 +13,21 @@ import { KvUsagePanel, type KvModelInfo } from "@/components/kv/kv-usage-panel";
 import type { KvUsage } from "@/lib/kv";
 import { Tabs } from "@/components/ui/tabs";
 import { ModelFilesPanel } from "@/components/models/model-files-panel";
+import { AliasesPanel } from "@/components/models/aliases-panel";
 
-// Two tabs: the fleet, and the downloaded weights on disk ("Model files",
-// the old top-level /cache page). The tab lives in ?tab= so /cache and the
-// delete-model modal can deep-link to it (MODEL_FILES_HREF in lib/routes).
+// Tabs: the fleet, the downloaded weights on disk ("Model files", the old
+// top-level /cache page), and the named model aliases clients call. The tab
+// lives in ?tab= so /cache and the delete-model modal can deep-link to it
+// (MODEL_FILES_HREF in lib/routes).
 const TABS = [
   { id: "models", label: "Models" },
   { id: "files", label: "Model files" },
+  { id: "aliases", label: "Aliases" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
 function parseTab(v: string | null): TabId {
-  return v === "files" ? "files" : "models";
+  return v === "files" ? "files" : v === "aliases" ? "aliases" : "models";
 }
 
 interface ModelsResponse {
@@ -50,7 +53,7 @@ function ModelsView() {
   const onTabChange = useCallback(
     (id: string) => {
       const q = new URLSearchParams(search);
-      if (id === "files") q.set("tab", "files");
+      if (id === "files" || id === "aliases") q.set("tab", id);
       else q.delete("tab");
       const qs = q.toString();
       router.replace(qs ? `/models?${qs}` : "/models", { scroll: false });
@@ -62,7 +65,7 @@ function ModelsView() {
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">Models</h1>
       <Tabs tabs={[...TABS]} activeTab={tab} onTabChange={onTabChange}>
-        {tab === "files" ? <ModelFilesPanel /> : <FleetTab />}
+        {tab === "files" ? <ModelFilesPanel /> : tab === "aliases" ? <AliasesPanel /> : <FleetTab />}
       </Tabs>
     </div>
   );
@@ -158,6 +161,7 @@ function FleetTab() {
               key={m.id}
               model={m}
               loadProgress={activeLoads?.find((p) => p.model_id === m.id)}
+              kvErrors={kvUsage}
             />
           ))}
         </div>

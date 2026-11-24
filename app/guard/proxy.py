@@ -67,17 +67,42 @@ def mask(value: str, public_prefix: str | None = None) -> str:
 # --- settings --------------------------------------------------------------------------------
 
 
-def guard_for(platform: dict[str, Any] | None, token: Any) -> Guard | None:
+_GUARD_MODE_RANK = {"sanitize": 1, "block": 2}
+
+
+def _alias_mode(alias: Any) -> str | None:
+    """The alias's guard mode when it is a guard (sanitize | block); anything
+    else (inherit/absent/garbage) is inert."""
+    if alias is None:
+        return None
+    m = getattr(alias, "guard", None)
+    return m if m in _GUARD_MODE_RANK else None
+
+
+def guard_for(platform: dict[str, Any] | None, token: Any, alias: Any = None) -> Guard | None:
     """The key's compiled guard, or None. With no platform setting and nothing on the key this is
-    one attribute read."""
+    one attribute read.
+
+    An alias that carries a guard (D4c) can only strengthen: the effective mode
+    is the stricter of the key's and the alias's (block > sanitize > none); an
+    alias never weakens a key.
+    """
+    alias_mode = _alias_mode(alias)
     raw = getattr(token, "guard", None)
-    if platform is None and not raw:
+    if platform is None and not raw and alias_mode is None:
         return None
     try:
         key = json.loads(raw) if raw else None
     except ValueError:
         key = None
-    return compile_guard(compiled_settings(effective(platform, key)))
+    eff = compiled_settings(effective(platform, key))
+    if alias_mode is None:
+        return compile_guard(eff)
+    out = dict(eff) if eff else {}
+    cur_rank = _GUARD_MODE_RANK.get(out.get("mode") or "", 0)
+    if _GUARD_MODE_RANK[alias_mode] > cur_rank:
+        out["mode"] = alias_mode
+    return compile_guard(out)
 
 
 # --- session state ---------------------------------------------------------------------------

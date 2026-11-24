@@ -29,7 +29,11 @@ FAKE = textwrap.dedent(
     """
     import json, os, socketserver, sys
     a = sys.argv[1:]
+    bare = ("--nvme-marker", "--nvme-allow-root-disk")  # the flags without a value
+    flags = [x for x in a if x in bare]
+    a = [x for x in a if x not in bare]
     d = dict(zip(a[::2], a[1::2]))
+    d.update({f: True for f in flags})
     with open(os.environ["FAKE_ARGS"], "a") as f:
         f.write(json.dumps({"pid": os.getpid(), "args": d}) + "\\n")
 
@@ -43,6 +47,8 @@ FAKE = textwrap.dedent(
                 out = {"op": r["op"], "id": r["id"], "ok": True, "protocol": 1, "minor": 1,
                        "ram_path": d["--ram-path"], "added": 0, "released": 0,
                        "ram_bytes": int(os.environ.get("FAKE_RAM_BYTES", "0"))}
+                if os.environ.get("FAKE_POOL_ERROR"):
+                    out["pool_error"] = os.environ["FAKE_POOL_ERROR"]
                 self.wfile.write(json.dumps(out).encode() + b"\\n")
 
     socketserver.ThreadingUnixStreamServer(d["--socket"], H).serve_forever()
@@ -245,6 +251,147 @@ async def test_nvme_dir_and_cap_are_passed_only_when_set(env, monkeypatch):
     assert args["--nvme-dir"] == "/tmp/nv"
     assert args["--nvme-cap-gb"] == "100.0"
     assert args["--ram-gib"] == "2.0"
+    await sup.stop()
+
+
+async def test_staging_only_daemon_asks_for_one_gib(env, monkeypatch):
+    """Every model with the store on is disk only: the RAM setting is not the pool."""
+    monkeypatch.setattr("lmw_kv.ram.fit_shm", lambda path, wanted: wanted)
+    await _seed(env, a="nvme", b="off")
+    async with open_db(env.settings.db_path) as db:
+        repo = SettingsRepo(db)
+        await repo.set("kv_store_nvme_dir", "/tmp/nv")
+        await repo.set("kv_store_ram_gib", "16")
+    sup = _sup(env)
+    await sup.start()
+    await _until(sup.healthy)
+    assert _launches(env)[0]["args"]["--ram-gib"] == "1.0"
+    await sup.stop()
+
+
+async def test_a_small_ram_setting_is_not_raised_to_the_staging_pool(env, monkeypatch):
+    monkeypatch.setattr("lmw_kv.ram.fit_shm", lambda path, wanted: wanted)
+    await _seed(env, a="nvme")
+    async with open_db(env.settings.db_path) as db:
+        repo = SettingsRepo(db)
+        await repo.set("kv_store_nvme_dir", "/tmp/nv")
+        await repo.set("kv_store_ram_gib", "1")
+    sup = _sup(env)
+    await sup.start()
+    await _until(sup.healthy)
+    assert _launches(env)[0]["args"]["--ram-gib"] == "1.0"
+    await sup.stop()
+
+
+async def test_mixed_models_pool_uses_the_ram_setting(env, monkeypatch):
+    """Review Focus 5: a RAM-tier model next to a disk only one shares the RAM setting's pool."""
+    monkeypatch.setattr("lmw_kv.ram.fit_shm", lambda path, wanted: wanted)
+    await _seed(env, a="nvme", b="ram+nvme")
+    async with open_db(env.settings.db_path) as db:
+        repo = SettingsRepo(db)
+        await repo.set("kv_store_nvme_dir", "/tmp/nv")
+        await repo.set("kv_store_ram_gib", "16")
+    sup = _sup(env)
+    await sup.start()
+    await _until(sup.healthy)
+    assert _launches(env)[0]["args"]["--ram-gib"] == "16.0"
+    await sup.stop()
+
+
+async def test_marker_flag_passed_when_set(env, monkeypatch):
+    monkeypatch.setattr("lmw_kv.ram.fit_shm", lambda path, wanted: wanted)
+    await _seed(env, a="nvme")
+    async with open_db(env.settings.db_path) as db:
+        repo = SettingsRepo(db)
+        await repo.set("kv_store_nvme_dir", "/tmp/nv")
+        await repo.set("kv_store_nvme_marker", "true")
+    sup = _sup(env)
+    await sup.start()
+    await _until(sup.healthy)
+    assert _launches(env)[0]["args"].get("--nvme-marker") is True
+    await sup.stop()
+
+
+async def test_marker_flag_not_passed_by_default_or_without_a_dir(env, monkeypatch):
+    monkeypatch.setattr("lmw_kv.ram.fit_shm", lambda path, wanted: wanted)
+    await _seed(env, a="ram")
+    async with open_db(env.settings.db_path) as db:
+        await SettingsRepo(db).set("kv_store_nvme_marker", "true")  # no folder set
+    sup = _sup(env)
+    await sup.start()
+    await _until(sup.healthy)
+    assert "--nvme-marker" not in _launches(env)[0]["args"]
+    await sup.stop()
+
+
+async def test_allow_root_disk_flag_passed_when_set(env, monkeypatch):
+    monkeypatch.setattr("lmw_kv.ram.fit_shm", lambda path, wanted: wanted)
+    await _seed(env, a="ram+nvme")
+    async with open_db(env.settings.db_path) as db:
+        repo = SettingsRepo(db)
+        await repo.set("kv_store_nvme_dir", "/tmp/nv")
+        await repo.set("kv_store_nvme_allow_root_disk", "true")
+    sup = _sup(env)
+    await sup.start()
+    await _until(sup.healthy)
+    assert _launches(env)[0]["args"].get("--nvme-allow-root-disk") is True
+    await sup.stop()
+
+
+async def test_allow_root_disk_flag_not_passed_by_default_or_without_a_dir(env, monkeypatch):
+    monkeypatch.setattr("lmw_kv.ram.fit_shm", lambda path, wanted: wanted)
+    await _seed(env, a="nvme", b="ram")
+    async with open_db(env.settings.db_path) as db:
+        await SettingsRepo(db).set("kv_store_nvme_dir", "/tmp/nv")
+    sup = _sup(env)
+    await sup.start()
+    await _until(sup.healthy)
+    assert "--nvme-allow-root-disk" not in _launches(env)[0]["args"]
+    await sup.stop()
+    async with open_db(env.settings.db_path) as db:
+        repo = SettingsRepo(db)
+        await repo.set("kv_store_nvme_dir", "")
+        await repo.set("kv_store_nvme_allow_root_disk", "true")
+    env.args_file.unlink()
+    sup = _sup(env)
+    await sup.start()
+    await _until(sup.healthy)
+    assert "--nvme-allow-root-disk" not in _launches(env)[0]["args"]
+    await sup.stop()
+
+
+async def test_the_daemons_pool_error_is_reported(env, monkeypatch):
+    monkeypatch.setattr("lmw_kv.ram.fit_shm", lambda path, wanted: wanted)
+    monkeypatch.setenv("FAKE_POOL_ERROR", "RAM pool 8 GiB does not fit /dev/shm 2 GiB")
+    await _seed(env, a="ram")
+    sup = _sup(env)
+    assert sup.pool_error() is None
+    await sup.start()
+    await _until(sup.healthy)
+    assert sup.pool_error() == "RAM pool 8 GiB does not fit /dev/shm 2 GiB"
+    await sup.stop()
+
+
+async def test_a_refused_start_reports_the_pool_reason(env, monkeypatch):
+    """No NVMe folder and no pool: no daemon, and the api shows the daemon's reason text."""
+    from types import SimpleNamespace as NS
+
+    shm = Path(env.settings.data_dir)
+    real = os.statvfs
+    monkeypatch.setattr(
+        "lmw_kv.ram.os.statvfs",
+        lambda p: NS(f_bavail=2 << 30, f_bfree=2 << 30, f_frsize=1, f_blocks=2 << 30)
+        if str(p).startswith(str(shm))
+        else real(p),
+    )
+    await _seed(env, a="ram")
+    async with open_db(env.settings.db_path) as db:
+        await SettingsRepo(db).set("kv_store_ram_gib", "8")
+    sup = _sup(env)
+    await sup.start()
+    await _until(lambda: sup.pool_error() is not None)
+    assert sup.pool_error() == f"RAM pool 8 GiB does not fit {shm} 2 GiB"
+    assert _launches(env) == [] and not sup.healthy()
     await sup.stop()
 
 

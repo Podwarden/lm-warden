@@ -687,6 +687,12 @@ def build_app() -> FastAPI:
 
     app.include_router(router_routes_api.router)
 
+    # Model aliases: a named, ordered list of target models plus optional
+    # proxy-side settings, managed next to the Models page.
+    from app.aliases import routes_api as aliases_routes_api
+
+    app.include_router(aliases_routes_api.router)
+
     # Connect a client: GET /api/connect/clients, the per-tool setup recipes
     # (docs/superpowers/plans/2026-10-04-connect-clients.md).
     from app.connect import routes_api as connect_routes_api

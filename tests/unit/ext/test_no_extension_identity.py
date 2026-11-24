@@ -41,6 +41,12 @@ EXPECTED_ADDED = {
     # Update check (spec 2026-11-20).
     ("GET", "/api/system/update-status"),
     ("POST", "/api/system/update-status/dismiss"),
+    # Model aliases admin API.
+    ("GET", "/api/aliases"),
+    ("POST", "/api/aliases"),
+    ("GET", "/api/aliases/{alias_id}"),
+    ("PATCH", "/api/aliases/{alias_id}"),
+    ("DELETE", "/api/aliases/{alias_id}"),
 }
 
 NONDETERMINISTIC_HEADERS = {"date", "set-cookie", "x-request-id", "content-length"}

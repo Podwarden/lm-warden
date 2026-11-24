@@ -882,8 +882,8 @@ export interface paths {
          *     against this key's own earlier prompts, never another key's.
          *
          *     For an admin, the key's KV report is merged in (``app.kv.usage.key_cache_report``):
-         *     ``isolation``, ``windows``, ``store`` (with ``evicted_by``) and
-         *     ``isolation_cost_tokens``. The key holder reads theirs at ``/api/me/key/cache``.
+         *     ``isolation``, ``windows``, ``store`` (with ``evicted_by`` and the key's admin
+         *     ``reuse``) and ``isolation_cost_tokens``. The key holder reads theirs at ``/api/me/key/cache``.
          */
         get: operations["get_token_cache_api_tokens__token_id__cache_get"];
         put?: never;
@@ -968,7 +968,11 @@ export interface paths {
          * Get Kv Usage
          * @description The tiers (capacity, used, dead), then per model its weight, part and use, and per
          *     key inside it: use, fair share and evictions per tier, and who evicted its blocks.
-         *     Byte counts; keys no longer on the server are ``unknown``.
+         *     With a minor 2 store, ``reuse`` per model and per key (reuse, reloads, disk bytes
+         *     written and read, the histogram of reloads at eviction, regret) and each model's
+         *     ``top_reused`` (null: not available). Byte counts; keys no longer on the server are
+         *     ``unknown``. ``pool_error`` and ``nvme_error`` say why the store keeps its RAM pool or
+         *     its disk tier off (null when fine).
          */
         get: operations["get_kv_usage_api_kv_usage_get"];
         put?: never;
@@ -1099,6 +1103,43 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/aliases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Aliases */
+        get: operations["list_aliases_api_aliases_get"];
+        put?: never;
+        /** Create Alias */
+        post: operations["create_alias_api_aliases_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aliases/{alias_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Alias */
+        get: operations["get_alias_api_aliases__alias_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Alias */
+        delete: operations["delete_alias_api_aliases__alias_id__delete"];
+        options?: never;
+        head?: never;
+        /** Patch Alias */
+        patch: operations["patch_alias_api_aliases__alias_id__patch"];
         trace?: never;
     };
     "/api/connect/clients": {
@@ -1926,8 +1967,10 @@ export interface paths {
         /**
          * Key Cache
          * @description The key's KV report as its holder sees it: the windows and the key's own store
-         *     totals (``store`` null when the store is not answering). Never who evicted its blocks,
-         *     never the isolation cost, never other keys or tier sizes.
+         *     totals (``store`` null when the store is not answering), its own reuse figures and
+         *     its own most reloaded parts (``top_reused``, null when the store cannot say). Never
+         *     who evicted its blocks, never the isolation cost, never other keys, their reloads or
+         *     tier sizes.
          */
         get: operations["key_cache_api_me_key_cache_get"];
         put?: never;
@@ -3238,7 +3281,16 @@ export interface paths {
          *     ``models`` maps a model id to its tier: ``state`` is ``on``, ``unavailable`` (the
          *     daemon does not answer right now) or ``off_until_reload`` (the engine loaded before
          *     the daemon was up, or the daemon restarted since; reload the model to get the tier
-         *     back), with ``reason`` saying why.
+         *     back), with ``reason`` saying why. Each model also carries its ``kv_store`` (``ram``,
+         *     ``ram+nvme`` or ``nvme``). ``daemon.staging`` is the daemon's ``stats.staging`` (the
+         *     disk only tier's in-flight figures), or null when no daemon answers.
+         *
+         *     The start guards: ``daemon.pool_error`` says why there is no RAM pool
+         *     (for example ``RAM pool 8 GiB does not fit /dev/shm 2 GiB``; also when the api started
+         *     no daemon for it), ``daemon.nvme_error`` why the disk tier is off (a folder on the root
+         *     disk, no marker, a full disk), ``daemon.nvme_cap_effective_bytes`` the disk cap in
+         *     force and ``daemon.nvme_cap_note`` why it is under ``kv_store_nvme_cap_gb``. Each is
+         *     null when fine or when no daemon answers.
          */
         get: operations["get_kv_store_api_system_kv_store_get"];
         put?: never;
@@ -3977,6 +4029,102 @@ export interface components {
              */
             grace_hours: 0 | 1 | 24;
         };
+        /** AliasIn */
+        AliasIn: {
+            /** Name */
+            name: string;
+            /** Targets */
+            targets?: string[];
+            /**
+             * Guard
+             * @default inherit
+             * @enum {string}
+             */
+            guard: "inherit" | "sanitize" | "block";
+            /**
+             * Thinking Policy
+             * @default inherit
+             * @enum {string}
+             */
+            thinking_policy: "inherit" | "client" | "on" | "off";
+            /** Params */
+            params?: {
+                [key: string]: components["schemas"]["AliasParam"];
+            };
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+        };
+        /** AliasOut */
+        AliasOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Targets */
+            targets: components["schemas"]["AliasTargetOut"][];
+            /** Guard */
+            guard: string;
+            /** Thinking Policy */
+            thinking_policy: string;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Enabled */
+            enabled: boolean;
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
+        };
+        /**
+         * AliasParam
+         * @description One entry in the params map: a request parameter's value and mode.
+         */
+        AliasParam: {
+            /** Value */
+            value: unknown;
+            /**
+             * Mode
+             * @default default
+             * @enum {string}
+             */
+            mode: "default" | "force" | "cap";
+        };
+        /** AliasPatch */
+        AliasPatch: {
+            /** Name */
+            name?: string | null;
+            /** Targets */
+            targets?: string[] | null;
+            /** Guard */
+            guard?: ("inherit" | "sanitize" | "block") | null;
+            /** Thinking Policy */
+            thinking_policy?: ("inherit" | "client" | "on" | "off") | null;
+            /** Params */
+            params?: {
+                [key: string]: components["schemas"]["AliasParam"];
+            } | null;
+            /** Enabled */
+            enabled?: boolean | null;
+        };
+        /** AliasTargetOut */
+        AliasTargetOut: {
+            /** Id */
+            id: string;
+            /** Served Model Name */
+            served_model_name: string | null;
+            /** Status */
+            status: string | null;
+        };
+        /** AliasesOut */
+        AliasesOut: {
+            /** Aliases */
+            aliases: components["schemas"]["AliasOut"][];
+        };
         /** Body_upload_api_chat2_attachments_post */
         Body_upload_api_chat2_attachments_post: {
             /**
@@ -4639,6 +4787,13 @@ export interface components {
             /** Count */
             count: number;
         };
+        /** KvHistBucket */
+        KvHistBucket: {
+            /** Positions */
+            positions: number;
+            /** Bytes */
+            bytes: number;
+        };
         /** KvIsolationCost */
         KvIsolationCost: {
             /** 24H */
@@ -4656,6 +4811,8 @@ export interface components {
             isolation: "sharing" | "isolated";
             windows: components["schemas"]["KvWindows"];
             store: components["schemas"]["KvKeyStore"] | null;
+            /** Top Reused */
+            top_reused?: components["schemas"]["KvTopRow"][] | null;
         };
         /**
          * KvKeyStore
@@ -4676,6 +4833,7 @@ export interface components {
             nvme_evictions: number;
             /** Since */
             since: string | null;
+            reuse?: components["schemas"]["KvReuseHolder"] | null;
         };
         /** KvKeyStoreAdmin */
         KvKeyStoreAdmin: {
@@ -4693,6 +4851,7 @@ export interface components {
             nvme_evictions: number;
             /** Since */
             since: string | null;
+            reuse?: components["schemas"]["KvReuseAdmin"] | null;
             /** Ram Share Bytes */
             ram_share_bytes: number;
             /** Nvme Share Bytes */
@@ -4712,6 +4871,72 @@ export interface components {
             used: components["schemas"]["KvUsed"];
             /** Tenants */
             tenants: components["schemas"]["KvTenantUsage"][];
+            reuse?: components["schemas"]["KvReuseAdmin"] | null;
+            /** Top Reused */
+            top_reused?: components["schemas"]["KvTopRowAdmin"][] | null;
+        };
+        /**
+         * KvReuseAdmin
+         * @description Adds the charged view (reloads by every key of the positions a key pays for now),
+         *     the reads back from disk, the histogram of reloads at eviction (charged view: by
+         *     every key) and regret.
+         */
+        KvReuseAdmin: {
+            /** Positions */
+            positions: number;
+            /** Positions Reused */
+            positions_reused: number;
+            /** Reused Pct */
+            reused_pct: number | null;
+            /** Reloads */
+            reloads: number;
+            /** Nvme Bytes Written */
+            nvme_bytes_written: number;
+            /** Never Reused Nvme Bytes */
+            never_reused_nvme_bytes: number;
+            /** Half Life S */
+            half_life_s: number;
+            charged_positions: components["schemas"]["KvByTier"];
+            charged_positions_reused: components["schemas"]["KvByTier"];
+            /** All Reloads */
+            all_reloads: number;
+            /** Ram Reloads */
+            ram_reloads: number;
+            /** Nvme Reloads */
+            nvme_reloads: number;
+            /** Nvme Bytes Read */
+            nvme_bytes_read: number;
+            /** Evicted Hist */
+            evicted_hist: {
+                [key: string]: {
+                    [key: string]: components["schemas"]["KvHistBucket"];
+                };
+            };
+            /** Regret */
+            regret: number;
+        };
+        /**
+         * KvReuseHolder
+         * @description A key's reuse of what it saved, from the saver view only: "reused" means reloaded
+         *     by the key itself, never by another key. ``positions``, ``positions_reused`` and
+         *     ``reloads`` are of the positions stored now; the disk bytes are since the store
+         *     started.
+         */
+        KvReuseHolder: {
+            /** Positions */
+            positions: number;
+            /** Positions Reused */
+            positions_reused: number;
+            /** Reused Pct */
+            reused_pct: number | null;
+            /** Reloads */
+            reloads: number;
+            /** Nvme Bytes Written */
+            nvme_bytes_written: number;
+            /** Never Reused Nvme Bytes */
+            never_reused_nvme_bytes: number;
+            /** Half Life S */
+            half_life_s: number;
         };
         /** KvTenantUsage */
         KvTenantUsage: {
@@ -4724,6 +4949,7 @@ export interface components {
             evictions: components["schemas"]["KvByTier"];
             /** Evicted By */
             evicted_by: components["schemas"]["KvEvictedBy"][];
+            reuse?: components["schemas"]["KvReuseAdmin"] | null;
         };
         /** KvTier */
         KvTier: {
@@ -4740,6 +4966,39 @@ export interface components {
             nvme: components["schemas"]["KvTier"];
         };
         /**
+         * KvTopRow
+         * @description One of the most reloaded cached parts, by its label (never a key or a tag).
+         */
+        KvTopRow: {
+            /** Label */
+            label: string;
+            /** Depth Tokens */
+            depth_tokens: number | null;
+            /** Reloads */
+            reloads: number;
+        };
+        /** KvTopRowAdmin */
+        KvTopRowAdmin: {
+            /** Label */
+            label: string;
+            /** Depth Tokens */
+            depth_tokens: number | null;
+            /** Reloads */
+            reloads: number;
+            /** Decayed */
+            decayed: number;
+            /** Last Reload */
+            last_reload: string | null;
+            /** First Saved */
+            first_saved: string | null;
+            /** Tiers */
+            tiers: string[];
+            /** Keys Seen */
+            keys_seen: string;
+            /** Charged Name */
+            charged_name: string;
+        };
+        /**
          * KvUsage
          * @description ``GET /api/kv/usage``: figures since the store started (``since``, UTC).
          */
@@ -4753,6 +5012,10 @@ export interface components {
             tiers: components["schemas"]["KvTiers"] | null;
             /** Models */
             models: components["schemas"]["KvModelUsage"][];
+            /** Pool Error */
+            pool_error?: string | null;
+            /** Nvme Error */
+            nvme_error?: string | null;
         };
         /** KvUsed */
         KvUsed: {
@@ -4944,7 +5207,7 @@ export interface components {
              * @default off
              * @enum {string}
              */
-            kv_store: "off" | "ram" | "ram+nvme";
+            kv_store: "off" | "ram" | "ram+nvme" | "nvme";
             /**
              * Kv Store Weight
              * @default 1
@@ -5104,7 +5367,7 @@ export interface components {
              * Kv Store
              * @enum {string}
              */
-            kv_store: "off" | "ram" | "ram+nvme";
+            kv_store: "off" | "ram" | "ram+nvme" | "nvme";
             /** Kv Store Weight */
             kv_store_weight: number;
             /** Thinking Policy Supported */
@@ -7808,6 +8071,154 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DecisionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_aliases_api_aliases_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AliasesOut"];
+                };
+            };
+        };
+    };
+    create_alias_api_aliases_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AliasIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AliasOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_alias_api_aliases__alias_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alias_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AliasOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_alias_api_aliases__alias_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alias_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_alias_api_aliases__alias_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alias_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AliasPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AliasOut"];
                 };
             };
             /** @description Validation Error */

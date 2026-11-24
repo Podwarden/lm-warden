@@ -59,3 +59,21 @@ def test_engine_docker_capable_driver_reports_version_select(tmp_data_dir, clien
     body = r.json()
     assert body["driver"] == "docker"
     assert body["supports_version_select"] is True
+
+
+def test_bundled_vllm_listed(tmp_data_dir, client, tmp_path, monkeypatch):
+    root = tmp_path / "engines"
+    bin_dir = root / "0.34.0rc1.dev1202-pr69165" / "bin"
+    bin_dir.mkdir(parents=True)
+    vllm = bin_dir / "vllm"
+    vllm.write_text("#!/bin/sh\n")
+    vllm.chmod(0o755)
+    monkeypatch.setenv("VW_ENGINES_ROOT", str(root))
+
+    client.get("/healthz")
+    _seed_done(tmp_data_dir / "vllm-warden.db")
+    auth = _jwt_auth(client)
+
+    r = client.get("/api/system/engine", headers=auth)
+    assert r.status_code == 200
+    assert r.json()["bundled_vllm"] == ["0.34.0rc1.dev1202-pr69165"]

@@ -49,15 +49,16 @@ VW_IMAGE_API_LEGACY="llm-warden vllm-warden"
 COMPOSE_MIN_MAJOR=2
 COMPOSE_MIN_MINOR=24
 # Free space the stack needs on the Docker data root, in GB (10^9 bytes, the
-# unit docker itself reports in). Measured on v2026.09.04.2: the api image is
-# 9.2 GB compressed on the wire and unpacks to 19.7 GB of layers; with the
+# unit docker itself reports in). Measured on v2026.11.24.1, which added the
+# bundled vLLM engine (+4.3 GB on the wire, +9.7 GB unpacked): the api image is
+# 14.3 GB compressed on the wire and unpacks to ~29.4 GB of layers; with the
 # containerd image store (the default on a fresh Docker Engine 29) the
 # compressed layers are kept next to the unpacked ones, so the image costs
-# ~29 GB as Docker stores it. documents/INSTALL.md "What it will cost you in
+# ~44 GB as Docker stores it. documents/INSTALL.md "What it will cost you in
 # disk" carries the same numbers.
-DISK_IMAGE_GB=29     # the api image alone, as Docker stores it
-DISK_STACK_GB=40     # the stack with room to run, before any model is pulled
-DISK_FLOOR_GB=20     # under this the api image cannot even be unpacked
+DISK_IMAGE_GB=44     # the api image alone, as Docker stores it
+DISK_STACK_GB=55     # the stack with room to run, before any model is pulled
+DISK_FLOOR_GB=30     # under this the api image cannot even be unpacked
 : "${GPU_TOOLKIT_INSTALL:=}"
 : "${TERM:=}"
 
@@ -305,8 +306,8 @@ preflight_disk() {
   else
     warn "Only ${DISK_FREE_GB} GB free on $DISK_ROOT (Docker data root); the stack wants about ${DISK_STACK_GB} GB there."
   fi
-  warn "  The api image alone takes ~${DISK_IMAGE_GB} GB as Docker stores it (9.2 GB compressed on the wire,"
-  warn "  19.7 GB unpacked, and the containerd image store keeps both), and models come on top:"
+  warn "  The api image alone takes ~${DISK_IMAGE_GB} GB as Docker stores it (14.3 GB compressed on the wire,"
+  warn "  ~29.4 GB unpacked, and the containerd image store keeps both), and models come on top:"
   warn "  a 7B AWQ checkpoint is ~5 GB, and the HuggingFace cache grows with every pull."
   if [ "$DISK_STATE" = floor ]; then
     warn "  Grow the disk, or move the Docker data root (data-root in /etc/docker/daemon.json), and re-run."

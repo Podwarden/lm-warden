@@ -872,8 +872,8 @@ async def get_token_cache(
     against this key's own earlier prompts, never another key's.
 
     For an admin, the key's KV report is merged in (``app.kv.usage.key_cache_report``):
-    ``isolation``, ``windows``, ``store`` (with ``evicted_by``) and
-    ``isolation_cost_tokens``. The key holder reads theirs at ``/api/me/key/cache``.
+    ``isolation``, ``windows``, ``store`` (with ``evicted_by`` and the key's admin
+    ``reuse``) and ``isolation_cost_tokens``. The key holder reads theirs at ``/api/me/key/cache``.
     """
     since = time.time() - _CACHE_RANGE_S[range]
     settings = request.app.state.settings

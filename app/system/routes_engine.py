@@ -13,10 +13,12 @@ and is far too heavy for a metadata read) and cache it at import time. It is
 
 Sub-project B adds ``GET /api/system/backends``, which generalises this from
 one driver capability to each backend's capabilities resolved against the
-active driver. ``/api/system/engine``
-is kept BYTE-IDENTICAL as a deprecated alias so an old UI against a new API
-does not break mid-rollout; it is removed no earlier than the release after the
-frontend stops calling it.
+active driver. ``/api/system/engine`` is
+kept compatible as a deprecated alias so an old UI against a new API does not
+break mid-rollout; it is removed no earlier than the release after the
+frontend stops calling it. Since the bundled-engine work it also carries
+``bundled_vllm`` (the ids of engines bundled into the image); an old UI reads
+the other fields as before.
 """
 
 from __future__ import annotations
@@ -27,7 +29,9 @@ from typing import Any
 from fastapi import APIRouter, Depends, Request
 
 from app.auth.deps import require_jwt
+from app.kv.usage import fetch_stats, store_errors
 from app.runtime.backends import registry
+from app.runtime.backends.vllm.engines import list_bundled_engines
 
 try:
     _VLLM_VERSION: str | None = version("vllm")
@@ -159,6 +163,7 @@ async def get_engine(request: Request, _user: str = Depends(require_jwt)) -> dic
         "driver": "docker" if supports else "subprocess",
         "supports_version_select": supports,
         "vllm_version": _VLLM_VERSION,
+        "bundled_vllm": list_bundled_engines(),
     }
 
 
@@ -173,19 +178,38 @@ async def get_kv_store(request: Request, _user: str = Depends(require_jwt)) -> d
     ``models`` maps a model id to its tier: ``state`` is ``on``, ``unavailable`` (the
     daemon does not answer right now) or ``off_until_reload`` (the engine loaded before
     the daemon was up, or the daemon restarted since; reload the model to get the tier
-    back), with ``reason`` saying why.
+    back), with ``reason`` saying why. Each model also carries its ``kv_store`` (``ram``,
+    ``ram+nvme`` or ``nvme``). ``daemon.staging`` is the daemon's ``stats.staging`` (the
+    disk only tier's in-flight figures), or null when no daemon answers.
+
+    The start guards: ``daemon.pool_error`` says why there is no RAM pool
+    (for example ``RAM pool 8 GiB does not fit /dev/shm 2 GiB``; also when the api started
+    no daemon for it), ``daemon.nvme_error`` why the disk tier is off (a folder on the root
+    disk, no marker, a full disk), ``daemon.nvme_cap_effective_bytes`` the disk cap in
+    force and ``daemon.nvme_cap_note`` why it is under ``kv_store_nvme_cap_gb``. Each is
+    null when fine or when no daemon answers.
     """
     kv = getattr(request.app.state, "kv_store", None)
     sup = getattr(request.app.state, "supervisor", None)
     tiers = getattr(sup, "kv_tiers", None)
     ram_fn = getattr(kv, "ram", None)
     ram = ram_fn() if callable(ram_fn) else {}
+    stats = await fetch_stats(request.app.state)
+    staging = stats.get("staging") if isinstance(stats, dict) else None
+    errors = store_errors(stats, kv)
+    st = stats if isinstance(stats, dict) else {}
+    cap = st.get("nvme_cap_effective_bytes")
+    note = st.get("nvme_cap_note")
     return {
         "daemon": {
             "healthy": bool(kv.healthy()) if kv is not None else False,
             "generation": int(kv.generation()) if kv is not None else 0,
             "ram_requested_bytes": ram.get("requested_bytes"),
             "ram_granted_bytes": ram.get("granted_bytes"),
+            "staging": staging if isinstance(staging, dict) else None,
+            **errors,
+            "nvme_cap_effective_bytes": cap if type(cap) is int else None,
+            "nvme_cap_note": note if isinstance(note, str) and note else None,
         },
         "models": tiers() if callable(tiers) else {},
     }

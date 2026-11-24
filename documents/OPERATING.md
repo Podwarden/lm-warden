@@ -103,6 +103,28 @@ website's paths answer 404.
 
 ---
 
+## Models that need the bundled vLLM (Inkling-2-Mini)
+
+The image carries a second vLLM build next to the stock one, under
+`/opt/lmw-engines/0.34.0rc1.dev1202-pr69165`: a vLLM nightly with one upstream
+pull request applied, for models the stock vLLM cannot load yet. Inkling-2-Mini
+is the first; the build also runs its official checkpoint on Ampere cards
+(RTX 30xx, A-series), which stock vLLM rejects.
+
+To use it, add the model as usual, then set its engine pin in the model's
+settings before loading it, through the API (`$W`, `$M`
+and `AUTH` as in [API.md](API.md)):
+
+```bash
+curl -s -X PATCH $W/api/models/$M/settings "${AUTH[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{"engine_vllm_version": "0.34.0rc1.dev1202-pr69165"}'
+```
+
+Every other model keeps the stock vLLM. `GET /api/system/engine` lists the
+bundled builds under `bundled_vllm`; a pin that names none of them is refused
+at load, before any GPU is claimed.
+
 ## Managing API keys
 
 **API tokens** lists every key; click a name — there or on the stats page —

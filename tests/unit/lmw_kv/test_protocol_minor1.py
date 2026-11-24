@@ -58,7 +58,7 @@ def _ns_doc() -> dict[str, Any]:
 
 def test_hello_reports_minor_1(running: Running) -> None:
     r = _client(running).hello()
-    assert r is not None and r["protocol"] == 1 and r["minor"] == 1
+    assert r is not None and r["protocol"] == 1 and r["minor"] >= 1
 
 
 def test_minor_1_fields_round_trip(running: Running) -> None:
@@ -98,7 +98,7 @@ def test_v1_0_requests_still_work(running: Running) -> None:
             "id": 1,
             "ok": True,
             "protocol": 1,
-            "minor": 1,
+            "minor": 2,  # the daemon is minor 2 now; the request line is step 1's
             "ram_path": str(running.ram_path),
             "ram_bytes": hello["ram_bytes"],
         }

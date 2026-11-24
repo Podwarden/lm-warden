@@ -6,8 +6,10 @@ file and pins it, so every slot is addressable by byte offset.
 
 from __future__ import annotations
 
+import contextlib
 import mmap
 import os
+import stat
 import threading
 from pathlib import Path
 
@@ -207,6 +209,90 @@ def discard_stale(path: Path) -> None:
     landing in memory the daemon no longer uses.
     """
     path.unlink(missing_ok=True)
+
+
+GIB = 1 << 30
+
+
+def fmt_gib(n: int) -> str:
+    """``n`` bytes in GiB for a reason text: at most one decimal, no trailing ``.0``."""
+    text = f"{n / GIB:.1f}"
+    return text[:-2] if text.endswith(".0") else text
+
+
+def free_bytes(directory: Path) -> int:
+    """Free bytes for an unprivileged writer on the filesystem holding ``directory``."""
+    st = os.statvfs(directory)
+    return int(st.f_bavail * st.f_frsize)
+
+
+def file_bytes(path: Path) -> int:
+    """Size of the file at ``path`` (an earlier pool of ours), 0 when there is none."""
+    try:
+        st = path.stat()
+    except OSError:
+        return 0
+    return st.st_size if stat.S_ISREG(st.st_mode) else 0
+
+
+def held_bytes(directory: Path) -> int:
+    """Bytes the filesystem mounted at ``directory`` has in use that no file in it holds:
+    deleted files a process still maps, such as the pool of an earlier daemon that an
+    engine still maps. 0 when ``directory`` is not a mount point (the estimate needs the
+    whole filesystem) or it cannot be read."""
+    try:
+        if not os.path.ismount(directory):
+            return 0
+        st = os.statvfs(directory)
+        used = (st.f_blocks - st.f_bfree) * st.f_frsize
+        seen = 0
+        for root, _dirs, files in os.walk(directory):
+            for name in files:
+                with contextlib.suppress(OSError):
+                    seen += os.lstat(os.path.join(root, name)).st_blocks * 512
+    except (OSError, AttributeError, TypeError):
+        return 0
+    return max(0, int(used) - seen)
+
+
+def held_note(directory: Path) -> str:
+    """The reason text's tail when deleted files still hold space there, else ``""``."""
+    held = held_bytes(directory)
+    if fmt_gib(held) == "0":
+        return ""
+    return (
+        f"; {fmt_gib(held)} GiB there is held by deleted files, likely the pool of an earlier "
+        "KV store daemon that a running engine still maps (reload the models that use the store)"
+    )
+
+
+def pool_error(path: Path, wanted: int, *, free: int, shm_fit: int, mem_fit: int) -> str | None:
+    """Why a pool of ``wanted`` bytes at ``path`` gets no RAM tier, or None when it gets one.
+
+    ``free`` is the free space of the pool's filesystem plus the size of an earlier pool
+    file of ours that this one replaces; ``shm_fit`` and ``mem_fit`` are ``fit_shm`` and
+    ``fit_memory``. A pool that does not fit ``free`` is refused outright, never shrunk,
+    and the reason a ``grant`` would shrink to nothing names what took the room. The
+    daemon and the api (when it starts no daemon) show the same text.
+    """
+    if wanted <= 0:
+        return None
+    directory = path.parent
+    if wanted > free:
+        return f"RAM pool {fmt_gib(wanted)} GiB does not fit {directory} {fmt_gib(free)} GiB" + (
+            held_note(directory)
+        )
+    if grant(wanted, shm_fit, mem_fit) > 0:
+        return None
+    if mem_fit < shm_fit:
+        return (
+            f"RAM pool {fmt_gib(wanted)} GiB does not fit free memory: {fmt_gib(mem_fit)} GiB is "
+            "left after the safety margin and the engine reserve"
+        )
+    return (
+        f"RAM pool {fmt_gib(wanted)} GiB does not fit {directory} {fmt_gib(free)} GiB less the "
+        f"{fmt_gib(SHM_RESERVE_BYTES)} GiB kept free for the engines" + held_note(directory)
+    )
 
 
 def fit_shm(path: Path, wanted: int) -> int:

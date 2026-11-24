@@ -61,6 +61,7 @@ from app.models.policy import (
 )
 from app.models.schemas import ModelSpec
 from app.runtime.kv_store import (
+    DISK_TIERS,
     KV_ENGINE_DRIVER,
     configured_engine_driver,
     kv_driver_refusal,
@@ -70,10 +71,14 @@ from app.utils.validation_errors import redact_validation_errors
 
 #: The runtime setting naming the store's disk folder (empty: no disk tier).
 NVME_DIR_KEY = "kv_store_nvme_dir"
-NO_DISK_FOLDER = (
-    'kv_store "ram+nvme" needs a disk folder, and none is set: set kv_store_nvme_dir '
-    '(Settings, Prompt cache) and restart the warden, or choose "ram"'
-)
+
+
+def no_disk_folder(value: str) -> str:
+    """The 400 detail for a ``kv_store`` of ``value`` (a disk tier) with no disk folder set."""
+    return (
+        f'kv_store "{value}" needs a disk folder, and none is set: set kv_store_nvme_dir '
+        '(Settings, Prompt cache) and restart the warden, or choose "ram"'
+    )
 
 
 class ModelChangeRefused(HTTPException):
@@ -349,12 +354,12 @@ async def _check_model_change(
         driver = configured_engine_driver()
         if driver != KV_ENGINE_DRIVER:
             raise ModelChangeRefused(status_code=422, detail=kv_driver_refusal(driver))
-    # RAM + disk with no disk folder would run as RAM only, silently: refuse it (owner,
-    # 2026-11-22), saying where the folder is set.
-    if "kv_store" in coerced and spec.kv_store == "ram+nvme":
+    # A disk tier with no disk folder would run as RAM only (or keep nothing), silently:
+    # refuse it (owner, 2026-11-22), saying where the folder is set.
+    if "kv_store" in coerced and spec.kv_store in DISK_TIERS:
         nvme_dir = (await SettingsRepo(db).get_many([NVME_DIR_KEY])).get(NVME_DIR_KEY) or ""
         if not nvme_dir.strip():
-            raise ModelChangeRefused(status_code=400, detail=NO_DISK_FOLDER)
+            raise ModelChangeRefused(status_code=400, detail=no_disk_folder(spec.kv_store))
 
     # 6. cross-row checks
     if "gpu_indices" in coerced:

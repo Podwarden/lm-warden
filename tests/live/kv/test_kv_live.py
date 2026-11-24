@@ -7,6 +7,9 @@ What they prove on real hardware (see tests/live/kv/README.md for how to run the
 * ``test_restore_after_engine_restart``: after an engine restart the turn is served from
   the RAM or NVMe tier (history shows it) and TTFT is at least 5x lower than vanilla cold
   at 20k+ tokens.
+
+The tier comes from ``VW_KV_LIVE_TIER`` (``ram+nvme`` by default; ``nvme`` for a disk only
+run). Every check counts store tokens from RAM or NVMe, so both tiers run the same tests.
 * ``test_cached_tokens_include_connector_tokens``: ruling R24's assumption that vLLM's
   ``cached_tokens`` includes the tokens the connector loaded.
 * ``test_fail_open_when_daemon_killed_mid_load``: the store daemon is killed while a long
@@ -207,12 +210,22 @@ def prompt_ids(salt: str, n: int) -> list[int]:
     return [rng.randrange(1000, 140000) for _ in range(n)]
 
 
-def send(w: Warden, salt: str, size: int, phase: str) -> Shot:
+def send(
+    w: Warden,
+    salt: str,
+    size: int,
+    phase: str,
+    *,
+    ids: list[int] | None = None,
+    max_tokens: int | None = None,
+) -> Shot:
+    """One greedy streamed completion of ``prompt_ids(salt, size)``, or of ``ids``."""
     cfg = w.cfg
+    want = cfg.max_tokens if max_tokens is None else max_tokens
     body = {
         "model": cfg.model,
-        "prompt": prompt_ids(salt, size),
-        "max_tokens": cfg.max_tokens,
+        "prompt": prompt_ids(salt, size) if ids is None else ids,
+        "max_tokens": want,
         "temperature": 0.0,
         "seed": 0,
         "stream": True,
@@ -248,7 +261,7 @@ def send(w: Warden, salt: str, size: int, phase: str) -> Shot:
                     vals = sorted((top or {}).values(), reverse=True)
                     shot.margins.append(vals[0] - vals[1] if len(vals) > 1 else float("inf"))
     shot.total_s = time.perf_counter() - t0
-    assert len(shot.token_ids) == cfg.max_tokens, f"{phase} {size}: {len(shot.token_ids)} tokens"
+    assert len(shot.token_ids) == want, f"{phase} {size}: {len(shot.token_ids)} tokens"
     if shot.request_id:
         shot.turn = w.turn(shot.request_id)
     print(
@@ -326,9 +339,10 @@ def run(kv_cfg: KvLiveConfig):
         w.load(mid)
         for n in kv_cfg.sizes:
             r.vanilla[n] = send(w, r.salt, n, "vanilla")
-        # 2. Save pass: ram+nvme, fresh engine, the same prompts (stored write-through).
+        # 2. Save pass: the tier under test (VW_KV_LIVE_TIER, ``ram+nvme`` by default),
+        # fresh engine, the same prompts (stored write-through, or disk only).
         w.unload(mid)
-        w.patch(mid, kv_store="ram+nvme")
+        w.patch(mid, kv_store=kv_cfg.tier)
         w.load(mid)
         argv = w.ok("GET", f"/api/models/{mid}/effective-argv")["argv"]
         r.extra["argv_kv"] = next(
@@ -363,7 +377,7 @@ def test_kv_transfer_config_asks_for_recompute(run: Run) -> None:
     cfg = json.loads(run.extra["argv_kv"])
     assert cfg["kv_connector"] == "LmwKVConnector"
     assert cfg["kv_load_failure_policy"] == "recompute"
-    assert cfg["kv_connector_extra_config"]["tiers"] == "ram+nvme"
+    assert cfg["kv_connector_extra_config"]["tiers"] == run.w.cfg.tier
 
 
 def test_parity_after_restore(run: Run) -> None:

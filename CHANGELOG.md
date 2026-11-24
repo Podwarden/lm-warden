@@ -7,6 +7,20 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.11.24.1] — 2026-11-24
+
+### Added
+
+- **Bundled vLLM engines, and `engine_vllm_version`: Inkling-2-Mini runs out of the box.** The image now carries a second vLLM build next to the default one, under `/opt/lmw-engines/<version id>`. The first is `0.34.0rc1.dev1202-pr69165` (a vLLM nightly plus one upstream pull request and one small LM Warden patch, for models the stock 0.32.0 cannot run; the patch maps `chat_template_kwargs.enable_thinking=false` to the lowest reasoning effort for Inkling, which has no thinking switch of its own). Set `engine_vllm_version` in a model's settings to run that model on it; every other model keeps the stock vLLM. To run Inkling-2-Mini, add the model and set `engine_vllm_version: 0.34.0rc1.dev1202-pr69165`; the patched build also runs its official NVFP4/MXFP8 checkpoint on Ampere cards (RTX 30xx, A-series). Building from source with `--build-arg LMW_BUNDLED_VLLM=0` leaves the engine out.
+- **Model aliases, and the Aliases tab.** An alias is a stable model name with an ordered list of target models: the first target that is loaded serves the request, and a request to an alias with no loaded target gets `404 no model behind alias '<name>' is loaded`. An alias wins over a model with the same name. Each alias can also set a sensitive-data guard (the stricter of the key's and the alias's applies), a thinking policy and request parameters (default, force or cap). Manage them in the Aliases tab of the Models page (`/ui/models?tab=aliases`) or through `/api/aliases`. `GET /v1/models` lists each alias with the fields of the model that serves it, including `max_model_len`. Point clients at a stable alias and swap the model behind it without touching them.
+- **`GET /api/system/engine` gained `bundled_vllm`**, the ids of the bundled engines in the running image (an empty list when there are none).
+
+### Changed
+
+- **Upgrade note: the api image is about 4.3 GB bigger to download (14.3 GB) and needs more disk.** It now includes the bundled vLLM engine. Plan for about 44 GB per release as Docker stores it; the installer now wants 55 GB free on the Docker data root and refuses a first pull under 30 GB.
+- **Upgrade note: a model with `engine_vllm_version` set and no matching bundled engine is now refused at load.** Before this release the field was ignored and the model ran on the stock vLLM without a word. It now fails before any GPU is claimed, with a message naming the missing id. A model with `engine_channel` or `engine_image` set behaves as before; only a bare `engine_vllm_version` selects a bundled engine. Clear the field on any model that should run on the stock vLLM.
+- **Upgrade note: the KV cache store checks its disk folder and RAM pool at start.** An install whose `kv_store_nvme_dir` sits on the container's root filesystem (for example `/tmp`) now has its NVMe tier turned off, with the reason shown in Settings, Prompt cache, on the model card and in `GET /api/system/kv-store` (`daemon.nvme_error`). It stays off until the folder is on a dedicated disk, or until `kv_store_nvme_allow_root_disk` is set to true (warden restart). A RAM pool (`kv_store_ram_gib`) that does not fit the free space of `/dev/shm` is now refused, with a visible error (`daemon.pool_error`, also on the model card and in `GET /api/kv/usage`), instead of starting with no room. Give the container a larger `/dev/shm` or lower `kv_store_ram_gib`. See docs/operating.md.
+
 ## [v2026.11.23.1] — 2026-11-23
 
 ### Added

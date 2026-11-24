@@ -667,7 +667,7 @@ export function ModelSettingsPage({ id }: { id: string }) {
             if (v === null || typeof v === "boolean") next[k] = v;
             break;
           case "kv_store":
-            if (v === "off" || v === "ram" || v === "ram+nvme") next.kv_store = v;
+            if (v === "off" || v === "ram" || v === "ram+nvme" || v === "nvme") next.kv_store = v;
             break;
           case "kv_store_weight":
             if (typeof v === "number" && Number.isInteger(v) && v >= 1 && v <= 100) next.kv_store_weight = v;

@@ -58,7 +58,7 @@ def test_engine_route_response_shape_is_unchanged(tmp_data_dir, client):
     r = client.get("/api/system/engine", headers=auth)
     assert r.status_code == 200
     body = r.json()
-    assert sorted(body) == ["driver", "supports_version_select", "vllm_version"]
+    assert sorted(body) == ["bundled_vllm", "driver", "supports_version_select", "vllm_version"]
     assert body["driver"] == "subprocess"
     assert body["supports_version_select"] is False
 
@@ -282,7 +282,7 @@ def test_deprecated_engine_alias_is_still_vllm_only(tmp_data_dir, client):
     only caller and still reads vllm_version."""
     auth = _ready(tmp_data_dir, client)
     body = client.get("/api/system/engine", headers=auth).json()
-    assert set(body) == {"driver", "supports_version_select", "vllm_version"}
+    assert set(body) == {"driver", "supports_version_select", "vllm_version", "bundled_vllm"}
 
 
 # ---------------------------------------------------------------------------

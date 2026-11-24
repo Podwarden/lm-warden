@@ -27,6 +27,7 @@ from app.config import Settings
 from app.db.constants import ACTIVE_STATUSES
 from app.db.database import open_db
 from app.db.repos.load_history import LoadHistoryRepo, load_fingerprint, median
+from app.db.repos.model_aliases import ModelAliasRepo
 from app.db.repos.models import ModelRepo, ModelRow
 from app.db.repos.runtime import RuntimeRepo
 from app.db.repos.setup import SetupRepo
@@ -1638,6 +1639,9 @@ async def delete_model(model_id: str, request: Request, _user: str = Depends(req
         if row.status in ACTIVE_STATUSES:
             raise HTTPException(409, f"cannot delete model in status '{row.status}'")
         await ModelRepo(db).delete(model_id)
+        # An alias whose target is this row keeps the alias (the target list is
+        # a list of model ids with no foreign key); drop just this id.
+        await ModelAliasRepo(db).drop_target(model_id)
         # #273: the row's HF cache dir is only reclaimable once no OTHER row
         # references the same hf_repo — blobs are content-addressed and can
         # be shared across rows and revisions. Delete commits above, so this

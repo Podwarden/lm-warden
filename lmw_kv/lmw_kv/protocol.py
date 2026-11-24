@@ -1,4 +1,4 @@
-"""Wire protocol of the KV store daemon, version 1, minor 1.
+"""Wire protocol of the KV store daemon, version 1, minor 2.
 
 One JSON object per line (UTF-8, ``\\n`` terminated) in each direction over a
 Unix stream socket. A request is ``{"op": str, "id": int, ...}``; the reply is
@@ -8,7 +8,8 @@ protocol is engine-neutral: it speaks of namespaces, block keys, groups and byte
 slots, nothing else. ``PROTOCOL.md`` is the full reference.
 
 Minor 1 adds optional fields (each with a stated default, so a minor 0 request means
-what it always meant) and three ops. The daemon ignores fields it does not know.
+what it always meant) and three ops; minor 2 adds more optional fields and the op
+``top_reused``. The daemon ignores fields it does not know.
 """
 
 from __future__ import annotations
@@ -17,22 +18,24 @@ import json
 from typing import Any
 
 VERSION = 1
-MINOR = 1
+MINOR = 2
 MAX_LINE = 8 << 20  # bytes per request or reply line
 
 # op -> the request fields it takes (besides "op" and "id"); every field added in
 # minor 1 is optional (the comments give the default).
 OPS: dict[str, tuple[str, ...]] = {
     "hello": (),
-    # nvme: true; owner: ""; model: "" (16 bytes); role: "attention"; rank: 0
-    "register_ns": ("namespace", "groups", "nvme", "owner", "model", "role", "rank"),
+    # nvme: true; owner: ""; model: "" (16 bytes); role: "attention"; rank: 0;
+    # staging (minor 2): false
+    "register_ns": ("namespace", "groups", "nvme", "owner", "model", "role", "rank", "staging"),
     "lookup": ("ns", "keys"),
-    # tenant, scope_tag: "" (16 bytes); pos: the key (32 bytes)
-    "begin_save": ("ns", "key", "parent", "scope", "tenant", "scope_tag", "pos"),
+    # tenant, scope_tag: "" (16 bytes); pos: the key (32 bytes); depth (minor 2): unknown
+    "begin_save": ("ns", "key", "parent", "scope", "tenant", "scope_tag", "pos", "depth"),
     "commit_save": ("ns", "key"),
     "abort_save": ("ns", "key"),
-    "begin_load": ("ns", "keys", "tenant"),  # tenant: ""
-    "end_load": ("handle",),
+    # tenant: ""; tag (minor 2): none, a load that never counts a reload
+    "begin_load": ("ns", "keys", "tenant", "tag"),
+    "end_load": ("handle", "used"),  # used (minor 2): unknown, no reload
     "record_hits": ("tag", "ram_tokens", "nvme_tokens", "load_s", "tenant"),  # tenant: ""
     "pop_hits": ("tag",),
     "stats": (),
@@ -40,6 +43,8 @@ OPS: dict[str, tuple[str, ...]] = {
     "release_owner": ("owner",),
     "retire_scopes": ("scope_tags",),
     "set_policy": ("policy",),
+    # minor 2: model, tenant (16 bytes, default any); view "admin" or "holder"; n 1 to 50
+    "top_reused": ("model", "tenant", "view", "n"),
 }
 
 # fields that appear only in replies
@@ -58,6 +63,7 @@ REPLY_FIELDS = (
     "stats",
     "released",
     "added",
+    "rows",
     "error",
 )
 

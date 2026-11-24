@@ -429,7 +429,14 @@ def test_kv_store_admin_route_reports_daemon_and_tiers(client, tmp_data_dir):
         "generation",
         "ram_requested_bytes",
         "ram_granted_bytes",
+        "staging",
+        "pool_error",
+        "nvme_error",
+        "nvme_cap_effective_bytes",
+        "nvme_cap_note",
     }
+    assert body["daemon"]["staging"] is None  # no daemon answers
+    assert body["daemon"]["pool_error"] is None and body["daemon"]["nvme_error"] is None
     assert body["models"] == {}
 
 
@@ -445,6 +452,7 @@ def test_kv_store_admin_route_reports_requested_and_granted_ram(client, tmp_data
         healthy=lambda: True,
         generation=lambda: 2,
         ram=lambda: {"requested_bytes": 16 << 30, "granted_bytes": 6 << 30},
+        stats_client=lambda: SimpleNamespace(stats=lambda: {"staging": {"in_flight": 3}}),
     )
     r = client.get("/api/system/kv-store", headers=jwt_login(client))
     assert r.status_code == 200, r.text
@@ -454,7 +462,61 @@ def test_kv_store_admin_route_reports_requested_and_granted_ram(client, tmp_data
         "generation": 2,
         "ram_requested_bytes": 16 << 30,
         "ram_granted_bytes": 6 << 30,
+        "staging": {"in_flight": 3},
+        "pool_error": None,
+        "nvme_error": None,
+        "nvme_cap_effective_bytes": None,
+        "nvme_cap_note": None,
     }
+
+
+def test_kv_store_admin_route_shows_the_pool_and_disk_guards(client, tmp_data_dir):
+    """R16, R17: the daemon's pool error, disk error and effective cap reach the route."""
+    from types import SimpleNamespace
+
+    from tests.conftest import jwt_login, seed_admin_user
+
+    client.get("/healthz")
+    seed_admin_user(tmp_data_dir / "vllm-warden.db", allowed_gpu_indices=[0])
+    stats = {
+        "pool_error": "RAM pool 8 GiB does not fit /dev/shm 2 GiB",
+        "nvme_error": None,
+        "nvme_cap_effective_bytes": 34_500_000_000,
+        "nvme_cap_note": "cap 250 GB clamped to 34.5 GB: the filesystem has 49.5 GB free "
+        "and 15% is kept free",
+    }
+    client.app.state.kv_store = SimpleNamespace(
+        healthy=lambda: True,
+        generation=lambda: 1,
+        ram=lambda: {"requested_bytes": 8 << 30, "granted_bytes": 0},
+        pool_error=lambda: "RAM pool 8 GiB does not fit /dev/shm 2 GiB",
+        stats_client=lambda: SimpleNamespace(stats=lambda: stats),
+    )
+    d = client.get("/api/system/kv-store", headers=jwt_login(client)).json()["daemon"]
+    assert d["pool_error"] == "RAM pool 8 GiB does not fit /dev/shm 2 GiB"
+    assert d["nvme_error"] is None
+    assert d["nvme_cap_effective_bytes"] == 34_500_000_000
+    assert d["nvme_cap_note"].startswith("cap 250 GB clamped to 34.5 GB")
+
+
+def test_kv_store_admin_route_shows_a_refused_start(client, tmp_data_dir):
+    """No daemon was started (the pool did not fit, no disk folder): the api's own reason."""
+    from types import SimpleNamespace
+
+    from tests.conftest import jwt_login, seed_admin_user
+
+    client.get("/healthz")
+    seed_admin_user(tmp_data_dir / "vllm-warden.db", allowed_gpu_indices=[0])
+    client.app.state.kv_store = SimpleNamespace(
+        healthy=lambda: False,
+        generation=lambda: 0,
+        ram=lambda: {"requested_bytes": None, "granted_bytes": None},
+        pool_error=lambda: "RAM pool 8 GiB does not fit /dev/shm 2 GiB",
+        stats_client=lambda: None,
+    )
+    d = client.get("/api/system/kv-store", headers=jwt_login(client)).json()["daemon"]
+    assert d["pool_error"] == "RAM pool 8 GiB does not fit /dev/shm 2 GiB"
+    assert d["nvme_error"] is None and d["nvme_cap_note"] is None
 
 
 @pytest.mark.asyncio

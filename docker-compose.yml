@@ -45,8 +45,8 @@ services:
     volumes:
       - vw-data:/data
       - vw-hfcache:/root/.cache/huggingface
-      # KV-cache NVMe tier: point VW_KV_DIR at a directory on a fast local
-      # disk, then set the runtime setting kv_store_nvme_dir to /kv.
+      # KV-cache NVMe tier: point VW_KV_DIR at the mount point of a dedicated
+      # local disk, then set the runtime setting kv_store_nvme_dir to /kv.
       - ${VW_KV_DIR:-/var/lib/lmw-kv}:/kv
     deploy:
       resources:

@@ -90,8 +90,9 @@ async def test_migrations_idempotent(tmp_data_dir):
         # + 0057 (home_page_mode, home_page_off_action) + 0058 (models.kv_store)
         # + 0059 (api_tokens.godmode_self_view, stats redesign B11)
         # + 0060 (per-key KV sharing columns, models.kv_store_weight, kv_retired_scopes)
-        # + 0061 (api_tokens.keep_captures, prompt_lens_kept).
-        assert count == 60
+        # + 0061 (api_tokens.keep_captures, prompt_lens_kept)
+        # + 0062 (model_aliases: named, ordered model lists with proxy settings).
+        assert count == 61
 
 
 async def test_migrations_create_all_v2_tables(tmp_data_dir):

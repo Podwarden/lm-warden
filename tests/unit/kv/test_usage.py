@@ -500,7 +500,7 @@ def test_admin_and_holder_key_cache_routes(tmp_data_dir, client):
     h = client.get("/api/me/key/cache", headers=k)
     assert h.status_code == 200, h.text
     hb = h.json()
-    assert set(hb) == {"isolation", "windows", "store"}
+    assert set(hb) == {"isolation", "windows", "store", "top_reused"}
     assert "evicted_by" not in hb["store"] and "ram_share_bytes" not in hb["store"]
     assert hb["windows"] == WINDOWS_APPROX
     # the holder's older prompt-cache page shows no KV store figures

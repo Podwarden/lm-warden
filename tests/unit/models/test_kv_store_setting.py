@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from app.cobs2.keys import KEY_FILENAME
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo, ModelRow
+from app.models.writer import no_disk_folder
 from app.runtime.backends.vllm.env import ENGINE_SHM_PATH
 from tests.conftest import csrf_header, jwt_login, seed_admin_user
 
@@ -100,7 +101,7 @@ def test_patch_when_unloaded(client, db_path, auth):
 
 def test_bad_value_is_422(client, db_path, auth):
     _seed(db_path)
-    for bad in ("on", "nvme", "", None):
+    for bad in ("on", "disk", "", None):
         r = client.patch("/api/models/m1/settings", json={"kv_store": bad}, headers=auth)
         assert r.status_code == 422, (bad, r.text)
     assert _get(db_path).kv_store == "off"
@@ -265,3 +266,52 @@ def test_ram_and_disk_with_a_disk_folder(client, db_path, auth):
     r = client.patch("/api/models/m1/settings", json={"kv_store": "ram+nvme"}, headers=auth)
     assert r.status_code == 200, r.text
     assert _get(db_path).kv_store == "ram+nvme"
+
+
+def test_nvme_needs_a_disk_folder(client, db_path, auth):
+    """Disk only with no disk folder would keep nothing: refused, naming the setting."""
+    _seed(db_path)
+    r = client.patch("/api/models/m1/settings", json={"kv_store": "nvme"}, headers=auth)
+    assert r.status_code == 400, r.text
+    assert r.json()["detail"] == no_disk_folder("nvme")
+    assert "kv_store_nvme_dir" in r.json()["detail"]
+    assert _get(db_path).kv_store == "off"
+    r = client.post(
+        "/api/models",
+        json={"served_model_name": "kv3", "hf_repo": "o/m", "gpu_indices": [0], "kv_store": "nvme"},
+        headers=auth,
+    )
+    assert r.status_code == 400, r.text
+
+
+def test_nvme_accepted_with_a_folder_and_round_trips(client, db_path, auth):
+    _seed(db_path)
+    _set_nvme_dir(db_path, "/kv")
+    r = client.patch("/api/models/m1/settings", json={"kv_store": "nvme"}, headers=auth)
+    assert r.status_code == 200, r.text
+    assert _get(db_path).kv_store == "nvme"
+    assert client.get("/api/models/m1", headers=auth).json()["kv_store"] == "nvme"
+
+
+def test_nvme_refused_while_loaded(client, db_path, auth):
+    _seed(db_path, status="loaded")
+    _set_nvme_dir(db_path, "/kv")
+    r = client.patch("/api/models/m1/settings", json={"kv_store": "nvme"}, headers=auth)
+    assert r.status_code == 409, r.text
+    assert _get(db_path).kv_store == "off"
+
+
+def test_nvme_refused_under_the_docker_driver(client, db_path, auth, monkeypatch):
+    _seed(db_path)
+    _set_nvme_dir(db_path, "/kv")
+    monkeypatch.setenv("VW_ENGINE_DRIVER", "docker")
+    r = client.patch("/api/models/m1/settings", json={"kv_store": "nvme"}, headers=auth)
+    assert r.status_code == 422, r.text
+    assert "VW_ENGINE_DRIVER=docker" in r.text
+    assert _get(db_path).kv_store == "off"
+
+
+def test_kv_store_report_has_staging_null_without_a_daemon(client, db_path, auth):
+    r = client.get("/api/system/kv-store", headers=auth)
+    assert r.status_code == 200, r.text
+    assert r.json()["daemon"]["staging"] is None

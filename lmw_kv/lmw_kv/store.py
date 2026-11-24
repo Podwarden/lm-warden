@@ -84,6 +84,22 @@ Layout and rules:
   namespaces from their manifests. Scoring reads per-segment byte maps kept in memory;
   SQLite runs only in ``_plan_reclaim`` (indexed lookups). A namespace not registered
   since the store opened becomes dead after ``UNREGISTERED_GRACE_S``.
+- **Staging** (disk-only spec 4.2, S1 to S9). A namespace registered ``staging`` by every
+  owner, with NVMe wanted, keeps a block in RAM only while it is in flight: saving,
+  queued for its write, or pinned by a load. It leaves once on NVMe (or when its write
+  cannot land) through ``_drop_staging``, counted in ``stats.staging`` and never as an
+  eviction. A staging block stays ``queued`` until ``_write_through`` settles it, so it
+  is never a victim. Saves hold at most ``STAGING_SAVE_SHARE`` of the slots; with NVMe
+  off they are refused. A staging block is never charged to its tenant's RAM (no cap,
+  no share). Other namespaces are untouched by any of this.
+- **Reuse counters** (disk-only spec 6, ``lmw_kv.reuse``). One ``PosCounters`` per
+  position, from its first commit until it leaves both tiers: loads and reloads (once
+  per request tag; a reload only for ``end_load(used=True)``), by tier, decayed. Every
+  hook is O(1) under the lock and uses the latest clock reading, never a new one.
+  Evictions and reclaims (and NVMe drops) feed the histograms; staging releases, aborts
+  and failed promotions never do. Inert (N1): no victim, refusal or admission reads
+  them; only ``stats`` and ``top_reused`` do. Labels are keyed by the data key while
+  NVMe is on, else by 32 random bytes made at start.
 
 One condition variable guards every index mutation; slot copies and segment I/O
 run outside it, and so does every whole-table SQLite read (opening a manifest).
@@ -98,11 +114,13 @@ import logging
 import mmap
 import os
 import queue
+import secrets
 import sqlite3
 import threading
 import time
 from collections import OrderedDict
-from collections.abc import Callable, Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from concurrent.futures import CancelledError, Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -111,17 +129,20 @@ from lmw_kv import ram
 from lmw_kv.fair import DEFAULT_OWNER_WEIGHT, Policy, over_order, parts, shares
 from lmw_kv.format import (
     HEADER_LEN,
+    ReadBuffer,
     SegmentWriter,
     _existing_segments,
     _seg_path,
     load_or_create_data_key,
-    read_record,
+    read_record_into,
     record_size,
 )
 from lmw_kv.keys import Namespace, namespace_id
 from lmw_kv.manifest import Entry, Manifest, PosRow
 from lmw_kv.ram import RamPool, create_pool_file, discard_stale, fit_memory, fit_shm
 from lmw_kv.retired import RETIRED_NAME, RetiredScopes, RetiredStoreError
+from lmw_kv.reuse import REUSE_NAME, PosCounters, ReuseBook, empty_report
+from lmw_kv.reuse_db import ReuseDb, ReuseDbError
 
 log = logging.getLogger(__name__)
 
@@ -132,6 +153,11 @@ HITS_MAX = 10_000
 MANIFEST_NAME = "manifest.db"
 #: Longest a load waits for another load's promotion of the same block; then a miss.
 PROMOTE_WAIT_S = 10.0
+#: Worker threads that read, check and decrypt the NVMe records of a ``begin_load``'s
+#: promotions in parallel, straight into their slots. Reads, ``zlib.crc32``
+#: and ``AESGCM.decrypt_into`` release the GIL; 8 cover the test host's disk (4.3 GB/s
+#: at 4 threads of direct reads).
+PROMOTE_THREADS = 8
 #: A namespace on NVMe that has not registered since the store opened is class dead only
 #: after this long (models load again after a restart).
 UNREGISTERED_GRACE_S = 1800.0
@@ -146,6 +172,15 @@ CAPPED_SCAN = 1024
 #: (model, tenant) pairs whose eviction counts ``stats`` keeps, the most recently counted
 #: first: the reply stays bounded for the life of the store (``by_tenant`` keeps all).
 PAIR_STATS_MAX = 4096
+#: Staging saves (being saved or waiting for their write) hold at most this share of the
+#: pool's slots (S7); loads may use any free slot.
+STAGING_SAVE_SHARE = 0.5
+#: Back-pressure (``Store._staging_wait``): a staging save with no room waits for writes
+#: to land, at most ``STAGING_SAVE_WAIT_MAX_S`` in all, and gives up after
+#: ``STAGING_SAVE_WAIT_S`` with no write landing (the disk is stuck). The engine's prefill
+#: step waits with it. The client's save deadline (``client.SAVE_TIMEOUT_S``) is longer.
+STAGING_SAVE_WAIT_S = 0.5
+STAGING_SAVE_WAIT_MAX_S = 1.5
 _NVME_ERRORS = (OSError, sqlite3.Error, RuntimeError)
 
 _SAVING = "saving"
@@ -177,6 +212,13 @@ class StoreConfig:
     clock: Callable[[], float] = time.time
     #: Engine workers whose host memory the pool leaves free (``ram.fit_memory``).
     engine_workers: int = 0
+    #: Why the daemon left the NVMe tier off at start (its start guards), or None.
+    nvme_error: str | None = None
+    #: Why ``nvme_cap_bytes`` is smaller than the operator's cap (the disk's room), or None.
+    nvme_cap_note: str | None = None
+    #: The operator's cap when the daemon clamped ``nvme_cap_bytes`` (the cap in force) to
+    #: the disk's room; None: ``nvme_cap_bytes`` is the operator's cap.
+    nvme_cap_asked: int | None = None
 
 
 @dataclass
@@ -194,6 +236,8 @@ class _Block:
     scope_tag: bytes = field(default=b"", repr=False)
     last_used: float = 0.0
     charged: int = 0  # bytes counted in RAM usage (0 until committed)
+    depth: int = -1  # index in its prefix chain as saved (minor 2), -1 if unknown
+    staging: bool = False  # in RAM only while in flight (its namespace was staging)
 
 
 @dataclass
@@ -252,6 +296,19 @@ class LoadHandle:
 
 
 @dataclass
+class _Pending:
+    """A promotion ``_load_one`` started and a worker runs; ``begin_load``
+    ends it in order with ``_finish``."""
+
+    info: _Ns
+    key: bytes
+    tenant: bytes
+    b: _Block
+    slot: int
+    future: Future[bool]
+
+
+@dataclass
 class _Ns:
     ns_id: bytes
     groups: dict[str, int]
@@ -264,13 +321,23 @@ class _Ns:
     role: str = "attention"
     rank: int = 0
     live: bool = True  # False once its last owner is released
+    staging_by: dict[str, bool] = field(default_factory=dict)  # owner -> staging flag
+    staging: bool = False  # S1: NVMe wanted and every owner registered staging
 
 
 class Store:
     def __init__(self, cfg: StoreConfig) -> None:
         self.cfg = cfg
         self._cond = threading.Condition()
+        # The latest store clock reading: the counters' "now", so they never call the
+        # clock themselves (the lru golden counts every reading).
+        self._clock_seen = 0.0
         self._closed = False
+        # Promotions run in these threads (made on the first NVMe load).
+        self._promoters: ThreadPoolExecutor | None = None
+        self._promoters_lock = threading.Lock()
+        # .defer: this begin_load hands promotions to the workers; .buf: a worker's buffer
+        self._tls = threading.local()
         self._ns: dict[bytes, _Ns] = {}
         self._ram: OrderedDict[_Ik, _Block] = OrderedDict()  # least recently used first
         self._children: dict[_Ik, int] = {}  # RAM entries per parent
@@ -279,11 +346,21 @@ class Store:
         self._nvme_evictions = 0
         self._hits: OrderedDict[str, dict[str, float]] = OrderedDict()
         self._load_ids = itertools.count(1)
-        self._loads: dict[int, list[_Block]] = {}  # handle id -> the blocks it pinned
-        self._ram_budget = self._fit_budget(cfg)
-        self._ram_budget = self._create_pool(cfg, self._ram_budget)
+        self._loads: dict[int, list[tuple[_Ik, _Block]]] = {}  # handle id -> what it pinned
+        # Why there is no RAM pool, or None: ``stats`` and ``hello`` show it.
+        self._pool_error: str | None = None
+        self._ram_budget, self._pool_error = self._fit_budget(cfg)
+        self._ram_budget, error = self._create_pool(cfg, self._ram_budget)
+        self._pool_error = self._pool_error or error
+        self._nvme_error = cfg.nvme_error  # why NVMe is off (the daemon's guards), or None
+        # The operator's cap (``stats.nvme_cap_bytes``, minor 1); ``cfg.nvme_cap_bytes`` is
+        # the cap in force (``stats.nvme_cap_effective_bytes``).
+        self._nvme_cap_asked = (
+            cfg.nvme_cap_asked if cfg.nvme_cap_asked is not None else cfg.nvme_cap_bytes
+        )
         self._retired = RetiredScopes()  # memory first; attached to a file with NVMe
         self._positions: dict[Tier, dict[_Pos, set[_Ik]]] = {"ram": {}, "nvme": {}}
+        self._parent_refused = 0  # begin_save refusals by the parent check
         self._nv: dict[_Ik, _NvRec] = {}  # every block in an open manifest
         self._seg_bytes: dict[tuple[bytes, int], dict[bytes, int]] = {}  # key -> bytes
         # Per segment, for fair scoring: bytes per (model, tenant, scope tag), and the
@@ -308,7 +385,7 @@ class Store:
         self._tenant_nv: dict[bytes, int] = {}
         self._tenant_segs: dict[bytes, dict[tuple[bytes, int], int]] = {}
         self._capped_pos: dict[bytes, int] = {}  # where a capped tenant's next scan starts
-        self._opened_at = cfg.clock()
+        self._opened_at = self._clock()
         self._grace_done = False
         self._acct: dict[Tier, dict[_Acct, int]] = {"ram": {}, "nvme": {}}
         self._tenants: dict[bytes, _TenantStats] = {}
@@ -323,6 +400,8 @@ class Store:
         # the latest change last.
         self._tenant_dirty: dict[_Ik, bytes] = {}
         self._persist_lock = threading.Lock()
+        self._reuse_db: ReuseDb | None = None  # reuse.db, while the NVMe tier is on
+        self._reuse_lock = threading.Lock()  # one reuse.db writer at a time
         self._policy = Policy()
         self._nv_kids: dict[_Ik, int] = {}  # NVMe records per (ns, parent): the leaf test
         # RAM positions for ``fair``. Candidates are positions whose every RAM member is
@@ -339,6 +418,21 @@ class Store:
         self._pos_seq: dict[_Pos, int] = {}  # touch order, to compare across pairs
         self._touches = itertools.count()
         self._saving: dict[bytes, int] = {}  # SAVING blocks per tenant (the RAM cap)
+        # Staging (spec 4.2): every staging block in RAM, and the counts since start.
+        self._staged: dict[_Ik, _Block] = {}
+        self._staging_counts = {
+            "save_refused": 0, "save_waited": 0, "write_dropped": 0, "released": 0,
+        }  # fmt: skip
+        self._staging_stalled = False  # a save's wait for room ran out (_staging_wait)
+        self._staging_stall_warned = False
+        self._staging_left_at = 0.0  # time.monotonic() a staging block last left RAM
+        self._staging_off_warned = False  # S2's warning, once per time the tier is off
+        # Reuse counters (spec 6): inert, read only by ``stats`` and ``top_reused`` (N1).
+        self._reuse = ReuseBook(clock=self._clock)
+        self._reuse_out: dict[tuple[Tier, _Pos], int] = {}  # bytes evicted so far, per tier
+        # handle -> (request tag, tenant, tier of each loaded block), tagged loads only
+        self._load_tags: dict[int, tuple[str, bytes, list[Tier]]] = {}
+        self._label_rand = secrets.token_bytes(32)  # the label key while NVMe is off
 
         self._nvme_enabled = False
         self._nvme_off_logged = False
@@ -363,10 +457,26 @@ class Store:
                 self._nvme_off(exc)
             if self._nvme_enabled:
                 self._attach_retired(cfg.nvme_dir)
+                db, rows = self._read_reuse(cfg.nvme_dir)
+                with self._cond:
+                    self._adopt_reuse(db, rows)
+                self.persist_reuse()
 
         self._queue: queue.Queue[_Ik | None] = queue.Queue(WRITE_QUEUE_MAX)
         self._thread = threading.Thread(target=self._writer_loop, name="lmw-kv-writer", daemon=True)
         self._thread.start()
+
+    def _clock(self) -> float:
+        """The store clock (``cfg.clock``); every reading is kept for the counters."""
+        now = self.cfg.clock()
+        if now > self._clock_seen:
+            self._clock_seen = now
+        return now
+
+    @property
+    def _label_key(self) -> bytes:
+        """The key of ``top_reused`` labels: the data key while NVMe is on."""
+        return self._data_key if self._nvme_enabled and self._data_key else self._label_rand
 
     # ---- public API -------------------------------------------------------------
 
@@ -380,6 +490,7 @@ class Store:
         model: bytes = b"",
         role: str = "attention",
         rank: int = 0,
+        staging: bool = False,
     ) -> bytes:
         """Register a namespace with its per-block bytes for each group; returns the ns id.
 
@@ -389,6 +500,9 @@ class Store:
         sets its own flag again (the last one wins). ``model``, ``role`` and ``rank`` are
         fixed by the first registration; an empty ``model`` means the first 16 bytes of
         the namespace id. A later owner with another model joins as an owner only.
+
+        ``staging`` asks for RAM only while a block is in flight (spec 4.2): the
+        namespace is staging while it wants NVMe and every owner asked for it (S1).
         """
         if not groups:
             raise ValueError("a namespace needs at least one group")
@@ -414,6 +528,7 @@ class Store:
                 )  # fmt: skip
                 self._ns[ns_id] = info
             info.owners[owner] = nvme
+            info.staging_by[owner] = staging
             if owner:
                 self._last_owner[info.model] = owner
             info.live = True
@@ -437,6 +552,7 @@ class Store:
                 if owner not in info.owners:
                     continue
                 del info.owners[owner]
+                info.staging_by.pop(owner, None)
                 if not info.owners:
                     info.live = False  # its NVMe flag stays: lru treats its blocks as before
                     gone += 1
@@ -475,6 +591,7 @@ class Store:
         tenant: bytes = b"",
         scope_tag: bytes = b"",
         pos: bytes = b"",
+        depth: int | None = None,
     ) -> dict[str, int] | None:
         """Reserve a RAM slot for a new block: group -> byte offset, or None.
 
@@ -482,29 +599,67 @@ class Store:
         for a sharing key) and ``pos`` is its position key (empty means ``key``). A save
         under a retired scope, or an isolated save while the retired set is unreadable,
         is refused; so is a save of a key already stored (retired or not).
+
+        ``depth`` is the block's index in its prefix chain. Above 0 the save is refused
+        unless the parent is stored in this namespace (RAM in any state, or the NVMe
+        index) and not hidden; the check reads in-memory indexes only. ``None`` and 0
+        skip it.
         """
+        deadline: list[float] = []  # of this save's wait for staging room, once it waits
         with self._cond:
-            info = self._usable(ns_id)
-            ik = (ns_id, key)
-            if info is None or self._hidden(scope_tag):
-                return None
-            if ik in self._ram or self._nvme_entries(info, key) is not None:
-                return None
-            pk = (ns_id, parent)
-            self._add_child(pk)  # the parent is no longer a leaf while this block exists
-            slot = self._alloc(tenant, info.model)
-            if slot is None:
-                self._drop_child(pk)
-                return None
+            while True:  # every check again after a wait: the lock was let go
+                info = self._usable(ns_id)
+                ik = (ns_id, key)
+                if info is None or self._hidden(scope_tag):
+                    return None
+                if ik in self._ram or self._nvme_entries(info, key) is not None:
+                    return None
+                if info.staging and not self._staging_save_ok(info):
+                    if self._staging_wait(info, deadline):
+                        continue
+                    self._staging_counts["save_refused"] += 1
+                    return None
+                pk = (ns_id, parent)
+                if depth and not self._parent_stored(pk):
+                    self._parent_refused += 1
+                    return None
+                self._add_child(pk)  # the parent is no longer a leaf while this block exists
+                if info.staging:
+                    slot = self._alloc(tenant, info.model, staging=True)
+                else:
+                    slot = self._alloc(tenant, info.model)
+                if slot is None:
+                    self._drop_child(pk)
+                    if info.staging:
+                        if self._staging_wait(info, deadline):
+                            continue
+                        self._staging_counts["save_refused"] += 1
+                    return None
+                break
             b = _Block(
                 slot, parent, scope, _SAVING, model=info.model, pos=pos or key,
-                tenant=tenant, scope_tag=scope_tag, last_used=self.cfg.clock(),
+                tenant=tenant, scope_tag=scope_tag, last_used=self._clock(),
+                depth=-1 if depth is None else depth, staging=info.staging,
             )  # fmt: skip
             self._ram[ik] = b
+            if b.staging:
+                self._staged[ik] = b
             self._pos_add("ram", (b.model, b.pos), ik)
             self._lru_add((b.model, b.pos), tenant, b.last_used)
-            self._saving[tenant] = self._saving.get(tenant, 0) + 1
+            if not b.staging:  # a transfer, not storage: no tenant cap or share (S8)
+                self._saving[tenant] = self._saving.get(tenant, 0) + 1
             return self._offsets(info, slot)
+
+    def _parent_stored(self, pk: _Ik) -> bool:
+        """Is the parent block stored (RAM in any state, or NVMe) and not hidden?
+
+        In-memory indexes only; the caller holds the lock.
+        """
+        b = self._ram.get(pk)
+        if b is not None:
+            return not self._hidden(b.scope_tag)
+        rec = self._nv.get(pk) if self._nvme_on(pk[0]) else None
+        return rec is not None and not self._hidden(rec.scope_tag)
 
     def commit_save(self, ns_id: bytes, key: bytes) -> None:
         """The slot holds the block: make it visible and queue its NVMe write."""
@@ -513,17 +668,25 @@ class Store:
             b = self._ram.get(ik)
             if b is None or b.state != _SAVING:
                 return
-            self._unsaving(b.tenant)
+            if not b.staging:
+                self._unsaving(b.tenant)
             b.state = _VALID
             self._ram.move_to_end(ik)
-            b.last_used = self.cfg.clock()
+            b.last_used = self._clock()
             self._lru_touch((b.model, b.pos), b.last_used)
             self._charge_ram(ik, b)
+            self._reuse.saved((b.model, b.pos), b.tenant, b.depth, b.last_used)
             if not self._nvme_on(ns_id):
+                if b.staging:  # its write cannot land (S5)
+                    self._drop_staging(ik, b, "write_dropped")
                 return
             try:
                 self._queue.put_nowait(ik)
             except queue.Full:
+                if b.staging:  # S3: aborted, never kept RAM-only
+                    log.debug("write-through queue full; a staging block is dropped")
+                    self._drop_staging(ik, b, "write_dropped")
+                    return
                 log.debug("write-through queue full; block stays in RAM only")
                 return
             b.queued = True
@@ -535,14 +698,20 @@ class Store:
             b = self._ram.get(ik)
             if b is not None and b.state == _SAVING:
                 self._remove(ik, b)
+                if b.staging:
+                    self._staging_room()
 
-    def begin_load(self, ns_id: bytes, keys: Sequence[bytes], *, tenant: bytes = b"") -> LoadHandle:
+    def begin_load(
+        self, ns_id: bytes, keys: Sequence[bytes], *, tenant: bytes = b"", tag: str = ""
+    ) -> LoadHandle:
         """Pin the leading stored keys in RAM (promoting NVMe-only ones first).
 
         ``slots`` holds group -> offset per pinned key, stopping at the first key
         that cannot be loaded, so it may be shorter than ``keys``. Release exactly
         these pins with ``end_load(handle.id)``. A non-empty ``tenant`` takes over the
         charge of every loaded position, in RAM and on NVMe ("last user pays").
+        ``tag`` names the request: each returned position counts one load per tag (one
+        per call without a tag), and only a tagged load can count a reload.
         """
         with self._cond:
             info = self._usable(ns_id)
@@ -550,21 +719,60 @@ class Store:
         handle = LoadHandle(handle_id, [])
         if info is None:
             return handle
-        pinned: list[_Block] = []
+        pinned: list[tuple[_Ik, _Block]] = []
+        tiers: list[Tier] = []
         with self._cond:
             self._loads[handle_id] = pinned  # recorded as pins are taken
+            if tag:
+                self._load_tags[handle_id] = (tag, tenant, tiers)
+        started: list[tuple[bytes, tuple[dict[str, int], _Block, bool] | _Pending]] = []
+
+        def settle() -> bool:
+            """Finish the started loads in order. False once one is a miss: the loads
+            after it are undone, as the serial loop would never have started them."""
+            todo = list(started)
+            started.clear()
+            ok = True
+            try:
+                while todo:
+                    key, it = todo.pop(0)
+                    got = self._finish(it, keep=ok) if isinstance(it, _Pending) else it
+                    if got is None:
+                        ok = False
+                    elif not ok:  # loaded after a miss: not part of this load
+                        self._unpin((info.ns_id, key), got[1])
+                    else:
+                        offsets, b, promoted = got
+                        handle.slots.append(offsets)
+                        handle.nvme_blocks += promoted
+                        with self._cond:
+                            pinned.append(((info.ns_id, key), b))
+                            tiers.append("nvme" if promoted else "ram")
+                            self._reuse.loaded((b.model, b.pos), tag)
+            finally:
+                started.extend(todo)  # on a raise: the caller undoes what is left
+            return ok
+
         try:
-            for key in keys:
-                # Two arguments when there is no tenant: step 1's call, exactly.
-                got = self._load_one(info, key, tenant) if tenant else self._load_one(info, key)
-                if got is None:
-                    break
-                offsets, b, promoted = got
-                handle.slots.append(offsets)
-                handle.nvme_blocks += promoted
-                with self._cond:
-                    pinned.append(b)
+            self._tls.defer = self._parallel(info, keys)
+            try:
+                for key in keys:
+                    if started and self._settle_first(info, key) and not settle():
+                        break
+                    # Two arguments when there is no tenant: step 1's call, exactly.
+                    got = self._load_one(info, key, tenant) if tenant else self._load_one(info, key)
+                    if got is None:
+                        break
+                    started.append((key, got))
+            finally:
+                self._tls.defer = False
+            settle()
         except BaseException:
+            for key, it in started:  # never finished: undo (no promotion stays PROMOTING)
+                if isinstance(it, _Pending):
+                    self._finish(it, keep=False)
+                else:
+                    self._unpin((info.ns_id, key), it[1])
             self.end_load(handle_id)  # the caller never sees this handle: free its pins
             raise
         finally:
@@ -573,17 +781,32 @@ class Store:
         if not pinned:
             with self._cond:
                 self._loads.pop(handle_id, None)
+                self._load_tags.pop(handle_id, None)
         return handle
 
-    def end_load(self, handle_id: int) -> None:
-        """Release one ``begin_load``'s pins; an unknown or ended handle is a no-op."""
+    def end_load(self, handle_id: int, *, used: bool | None = None) -> None:
+        """Release one ``begin_load``'s pins; an unknown or ended handle is a no-op.
+
+        A staging block whose last pin this was leaves RAM unless it still waits for
+        its write (S4 to S6). ``used`` True (the adapter copied every slot and checked
+        the file) counts a reload of each loaded position, once per request tag, after
+        the pins are released; None or False counts nothing more.
+        """
         with self._cond:
             pinned = self._loads.pop(handle_id, None)
+            tagged = self._load_tags.pop(handle_id, None)
             if pinned is None:
                 log.debug("end_load: unknown or already ended handle %d", handle_id)
                 return
-            for b in pinned:
+            for ik, b in pinned:
                 b.pins -= 1
+                if b.staging:
+                    self._staging_settle(ik, b)
+            if used is True and tagged is not None:
+                tag, tenant, tiers = tagged
+                now = self._clock_seen
+                for (_, b), tier in zip(pinned, tiers, strict=True):
+                    self._reuse.reloaded((b.model, b.pos), tag, tenant, tier, now)
 
     def record_hits(
         self,
@@ -618,6 +841,22 @@ class Store:
         """
         return self._retired.add(list(tags))  # its own lock; never under ``_cond``
 
+    def top_reused(
+        self, model: bytes | None, tenant: bytes | None, view: str, n: int
+    ) -> list[dict[str, Any]]:
+        """The most reloaded stored positions as label rows (``reuse.ReuseBook.top``).
+
+        ``view`` is ``admin`` (every reload; ``tenant`` filters by who is charged) or
+        ``holder`` (``tenant``'s own reloads only). Rows carry a label, never a key.
+        """
+        if view not in ("admin", "holder"):
+            raise ValueError(f"unknown view {view!r}")
+        with self._cond:
+            return self._reuse.top(
+                model, tenant, "admin" if view == "admin" else "holder", n, self._label_key,
+                _LiveView(self), self._reuse_dead, self._reuse_charged,
+            )  # fmt: skip
+
     def usage(self, tier: Tier) -> dict[tuple[bytes, bytes], int]:
         """Bytes per ``(model, tenant)`` in ``tier``, by position; dead blocks excluded."""
         with self._cond:
@@ -629,18 +868,26 @@ class Store:
             self._policy = policy
             self._rank_dirty.update(self._segs)  # shares and idle limits may have changed
 
-    def enable_nvme(self, nvme_dir: Path) -> bool:
+    def enable_nvme(
+        self, nvme_dir: Path, cap_bytes: int | None = None, cap_note: str | None = None
+    ) -> bool:
         """Turn the NVMe tier on after start; True when it is on.
 
         For a daemon that started RAM-only because another daemon held the directory's
-        lock, once it gets the lock. Blocks committed before stay RAM-only. A store whose
-        NVMe tier was switched off by an error stays off. The manifests are read outside
-        the lock; scopes retired while RAM-only are written to the new retired file.
+        lock (or its guards refused the directory), once it may use it. Blocks committed
+        before stay RAM-only. A store whose NVMe tier was switched off by an error stays
+        off. The manifests are read outside the lock; scopes retired while RAM-only are
+        written to the new retired file. ``cap_bytes`` (with ``cap_note``) is the cap in
+        force from now on: the daemon clamps it to the disk's room.
         """
         with self._enable_lock:
             with self._cond:
                 if self._nvme_enabled or self._nvme_off_logged or self.cfg.nvme_cap_bytes <= 0:
                     return self._nvme_enabled
+                if cap_bytes is not None:
+                    self._nvme_cap_asked = self.cfg.nvme_cap_bytes  # unclamped while off
+                    self.cfg.nvme_cap_bytes = cap_bytes
+                    self.cfg.nvme_cap_note = cap_note
                 wanted = [ns_id for ns_id, info in self._ns.items() if self._wants_nvme(info)]
             opened: list[_Opened] = []
             try:
@@ -663,16 +910,31 @@ class Store:
                 return False
             # Before the tier shows as on: the daemon sees "on" as done (its lock retry).
             self._attach_retired(nvme_dir)
+            reuse_db, reuse_rows = self._read_reuse(nvme_dir)
             with self._cond:
                 self._data_key = data_key
                 for o in opened:
                     self._install(o)
                 self._nvme_enabled = True
+                self._nvme_error = None
+                self._adopt_reuse(reuse_db, reuse_rows)
+                self._staging_off_warned = False  # a later switch off warns again (S2)
                 # Registered meanwhile: NVMe waits for its manifest (never a write without).
                 late = [ns_id for ns_id, info in self._ns.items() if self._set_nvme(info)]
             for ns_id in late:
                 self._open_late(ns_id)
+            self.persist_reuse()  # the file now matches the positions on NVMe
             return self._nvme_enabled
+
+    def set_nvme_error(self, reason: str | None) -> None:
+        """Why the NVMe tier is off (a daemon guard refused the directory), for ``stats``."""
+        with self._cond:
+            if not self._nvme_enabled:
+                self._nvme_error = reason
+
+    def pool_error(self) -> str | None:
+        """Why there is no RAM pool, or None. Lock-free, like ``ram_bytes``."""
+        return self._pool_error
 
     def ram_bytes(self) -> int:
         """Size of the RAM file (the budget before the first namespace).
@@ -706,13 +968,26 @@ class Store:
                 "policy": self._policy.mode,
                 # Wall time the store started: every count below is since then.
                 "started_at": self._opened_at,
-                "nvme_cap_bytes": self.cfg.nvme_cap_bytes if self._nvme_enabled else 0,
+                "nvme_cap_bytes": self._nvme_cap_asked if self._nvme_enabled else 0,
+                # The start guards: why a tier is off, and the cap in force.
+                "pool_error": self._pool_error,
+                "nvme_error": None if self._nvme_enabled else self._nvme_error,
+                "nvme_cap_effective_bytes": self.cfg.nvme_cap_bytes if self._nvme_enabled else 0,
+                "nvme_cap_note": self.cfg.nvme_cap_note if self._nvme_enabled else None,
                 # The retired set (lock order: _cond, then its own lock, as _hidden).
                 "retired_scopes": len(self._retired),
                 "isolation_refused": self._retired.isolation_refused,
+                "parent_refused": self._parent_refused,
                 "retired_persist_degraded": self._retired.persist_degraded,
+                "staging": {
+                    "namespaces": sum(1 for i in self._ns.values() if i.live and i.staging),
+                    "in_flight": len(self._staged),
+                    **self._staging_counts,
+                },
             }
-            out.update(self._attribution_stats())
+            reuse = self._reuse.report(_LiveView(self), self._reuse_dead, self._reuse_charged)
+            out["reuse"] = reuse["store"]
+            out.update(self._attribution_stats(reuse))
             return out
 
     def flush(self) -> None:
@@ -725,7 +1000,12 @@ class Store:
         self._closed = True
         self._queue.put(None)
         self._thread.join()
+        with self._promoters_lock:
+            workers, self._promoters = self._promoters, None
+        if workers is not None:
+            workers.shutdown(wait=True)
         self._persist_tenants()
+        self.persist_reuse()  # last: every NVMe write has landed and been counted
         for w in self._writers.values():
             try:
                 w.close()
@@ -734,6 +1014,10 @@ class Store:
         for m in self._manifests.values():
             m.close()
         self._retired.close()
+        with self._reuse_lock:
+            db, self._reuse_db = self._reuse_db, None
+            if db is not None:
+                db.close()
         with self._cond:
             self._ram.clear()
             self._children.clear()
@@ -741,6 +1025,7 @@ class Store:
             self._positions["ram"].clear()
             self._lru_clear()
             self._saving.clear()
+            self._staged.clear()
             if self._pool is not None:
                 self._pool.close()
                 self._pool = None
@@ -750,19 +1035,30 @@ class Store:
     # ---- RAM tier (callers hold the lock unless noted) ---------------------------
 
     @staticmethod
-    def _fit_budget(cfg: StoreConfig) -> int:
-        """The pool size; one WARNING when it is smaller than asked (or 0)."""
+    def _fit_budget(cfg: StoreConfig) -> tuple[int, str | None]:
+        """The pool size and, when it is 0, why (``ram.pool_error``).
+
+        A pool that does not fit the free space of its filesystem (an earlier pool file of
+        ours counts as free: it is replaced) is refused with one ERROR, never shrunk. One
+        WARNING when it is shrunk (for the engine reserve or free memory) or turned off.
+        """
         wanted = cfg.ram_bytes
+        directory = cfg.ram_path.parent
         try:
+            free = ram.free_bytes(directory) + ram.file_bytes(cfg.ram_path)
             discard_stale(cfg.ram_path)  # one size, one inode per store (C1)
             shm = fit_shm(cfg.ram_path, wanted)
         except OSError as exc:
             log.warning("no RAM tier: cannot size %s: %s", cfg.ram_path, exc)
-            return 0
+            return 0, f"RAM pool {ram.fmt_gib(wanted)} GiB cannot be sized in {directory}: {exc}"
+        if wanted > free:  # refused, not shrunk
+            reason = ram.pool_error(cfg.ram_path, wanted, free=free, shm_fit=shm, mem_fit=wanted)
+            log.error("%s", reason)
+            return 0, reason
         mem = fit_memory(wanted, engine_workers=cfg.engine_workers)
         got = ram.grant(wanted, shm, mem)
         if got >= wanted // mmap.PAGESIZE * mmap.PAGESIZE:
-            return got
+            return got, None
         if mem <= shm:
             limit = "free memory less the safety margin and the engine reserve"
         else:
@@ -776,33 +1072,35 @@ class Store:
                 limit,
                 ram.MIN_POOL_BYTES / GIB,
             )
-        else:
-            log.warning(
-                "RAM tier shrunk: requested %.2f GiB, granted %.2f GiB (%s)",
-                wanted / GIB,
-                got / GIB,
-                limit,
-            )
-        return got
+            return 0, ram.pool_error(cfg.ram_path, wanted, free=free, shm_fit=shm, mem_fit=mem)
+        log.warning(
+            "RAM tier shrunk: requested %.2f GiB, granted %.2f GiB (%s)",
+            wanted / GIB,
+            got / GIB,
+            limit,
+        )
+        return got, None
 
     @staticmethod
-    def _create_pool(cfg: StoreConfig, size: int) -> int:
-        """Create and commit the pool file now; the budget, or 0 when that failed."""
+    def _create_pool(cfg: StoreConfig, size: int) -> tuple[int, str | None]:
+        """Create and commit the pool file now; the budget (0 when that failed) and why."""
         if size == 0:
-            return 0
+            return 0, None
         t0 = time.monotonic()
         try:
             create_pool_file(cfg.ram_path, size)
         except OSError as exc:
             log.warning("no RAM tier: cannot create %s: %s", cfg.ram_path, exc)
-            return 0
+            directory = cfg.ram_path.parent
+            reason = f"RAM pool {ram.fmt_gib(size)} GiB cannot be committed in {directory}: "
+            return 0, reason + (exc.strerror or str(exc)) + ram.held_note(directory)
         log.info(
             "RAM pool %s: %.2f GiB committed in %.1f s",
             cfg.ram_path,
             size / GIB,
             time.monotonic() - t0,
         )
-        return size
+        return size, None
 
     def _fit_ram(self, slot_bytes: int) -> bool:
         if self._ram_budget == 0:
@@ -819,6 +1117,10 @@ class Store:
             self._positions["ram"].clear()
             self._lru_clear()
             self._saving.clear()
+            self._staged.clear()
+            self._reuse_out.clear()
+            for pos in [p for p in self._reuse.rows if p not in self._positions["nvme"]]:
+                self._reuse.forget(pos)  # its RAM copies went with the old slots
             self._pool.close()
             self._pool = None
         try:
@@ -829,6 +1131,7 @@ class Store:
             log.warning("no RAM tier: %s", exc)
             self.cfg.ram_path.unlink(missing_ok=True)  # give its memory back
             self._ram_budget = 0
+            self._pool_error = f"RAM pool off: {exc}"
             for info in self._ns.values():
                 info.ram_ok = False
             return False
@@ -869,9 +1172,12 @@ class Store:
             self._saving.pop(tenant, None)
 
     def _remove(self, ik: _Ik, b: _Block) -> None:
-        if b.state == _SAVING:
+        slot_bytes = b.charged or (self._pool.slot_bytes if self._pool is not None else 0)
+        if b.state == _SAVING and not b.staging:
             self._unsaving(b.tenant)
         del self._ram[ik]
+        if b.staging:
+            self._staged.pop(ik, None)
         assert self._pool is not None
         self._pool.free(b.slot)
         self._drop_child((ik[0], b.parent))
@@ -882,16 +1188,164 @@ class Store:
         self._lru_del((b.model, b.pos), b.tenant)
         if self._evict_for is not None:
             self._count_eviction("ram", b.tenant, b.model)
+        # A staging block never leaves by eviction (S9): its drops are releases.
+        evicted = self._evict_for is not None and not b.staging
+        self._reuse_left("ram", ik, b.model, b.pos, b.tenant, b.scope_tag, slot_bytes, evicted)
 
-    def _alloc(self, taker: bytes = b"", model: bytes = b"", *, load: bool = False) -> int | None:
+    def _reuse_left(
+        self,
+        tier: Tier,
+        ik: _Ik,
+        model: bytes,
+        pos_key: bytes,
+        tenant: bytes,
+        scope_tag: bytes,
+        nbytes: int,
+        evicted: bool,
+    ) -> None:
+        """A member of position ``(model, pos_key)`` left ``tier`` (lock held; O(1)).
+
+        Once the position has no member left there, the counters hear of it: ``left``
+        when it went by eviction or reclaim (RAM), or for any NVMe drop. A RAM removal
+        that is not an eviction (a release, an abort, a failed promotion) tallies
+        nothing, and only forgets the counters when the position is gone from both
+        tiers. A dead position (retired scope, unregistered namespace) tallies nothing.
+        """
+        pos = (model, pos_key)
+        out = (tier, pos)
+        if evicted:
+            self._reuse_out[out] = self._reuse_out.get(out, 0) + nbytes
+        if pos in self._positions[tier]:
+            return  # other members of the position are still in this tier
+        got = self._reuse_out.pop(out, 0)
+        gone = pos not in self._positions["ram"] and pos not in self._positions["nvme"]
+        if (tier == "ram" and not evicted) or self._dead_known(ik[0], scope_tag):
+            if gone:
+                self._reuse.forget(pos)
+            return
+        self._reuse.left(
+            pos, tier, tenant, evicted=evicted, gone=gone, now=self._clock_seen, nbytes=got
+        )
+
+    def _reuse_live(self, pos: _Pos) -> tuple[bool, bool] | None:
+        """(in RAM, on NVMe) for the reports; a staging block is a transfer, not RAM."""
+        ram = any(not self._ram[ik].staging for ik in self._positions["ram"].get(pos, ()))
+        nvme = self._nvme_enabled and pos in self._positions["nvme"]
+        return (ram, nvme) if ram or nvme else None
+
+    def _reuse_dead(self, pos: _Pos) -> bool:
+        """Every member of the position is class dead (retired scope, no owner)."""
+        tags: list[tuple[bytes, bytes]] = []
+        for ik in self._positions["ram"].get(pos, ()):
+            tags.append((ik[0], self._ram[ik].scope_tag))
+        for ik in self._positions["nvme"].get(pos, ()):
+            rec = self._nv.get(ik)
+            if rec is not None:
+                tags.append((ik[0], rec.scope_tag))
+        return bool(tags) and all(self._dead(ns_id, tag) for ns_id, tag in tags)
+
+    def _reuse_charged(self, pos: _Pos) -> bytes:
+        """The tenant paying for the position (every member, after a load takes it)."""
+        for ik in sorted(self._positions["ram"].get(pos, ())):
+            return self._ram[ik].tenant
+        for ik in sorted(self._positions["nvme"].get(pos, ())):
+            rec = self._nv.get(ik)
+            if rec is not None:
+                return rec.tenant
+        return b""
+
+    def _staging_save_ok(self, info: _Ns) -> bool:
+        """S2 and S7 for a save in a staging namespace (lock held)."""
+        if not self._nvme_on(info.ns_id):
+            if not self._nvme_enabled and not self._staging_off_warned:
+                self._staging_off_warned = True
+                log.warning("NVMe tier off: disk-only models store nothing")
+            return False
+        assert self._pool is not None
+        cap = int(self._pool.slots_total * STAGING_SAVE_SHARE)
+        saves = sum(1 for b in self._staged.values() if b.state == _SAVING or b.queued)
+        return saves < cap
+
+    def _staging_wait(self, info: _Ns, deadline: list[float]) -> bool:
+        """Back-pressure for a staging save with no room (lock held): wait for a staging
+        block to leave RAM and say whether to check again.
+
+        One prefill step can complete more blocks than half the pool while the disk
+        still writes the last step's; a refusal there loses the block and, through the
+        parent check, every later block of the prompt. So the save waits, and the
+        engine's step waits with it: while writes keep landing, up to
+        ``STAGING_SAVE_WAIT_MAX_S`` in all (``deadline`` holds when it started), so a
+        disk slower than the prefill slows the prefill to its speed. When no staging
+        block has left RAM for ``STAGING_SAVE_WAIT_S`` the disk is stuck: the store is
+        marked stalled and saves are refused at once until a block leaves RAM again, so
+        a stuck disk costs one short wait, not one per block. No wait without NVMe: no
+        write can land.
+        """
+        if not self._nvme_on(info.ns_id) or self._staging_stalled:
+            return False
+        now = time.monotonic()
+        if not deadline:
+            deadline.append(now)
+            self._staging_counts["save_waited"] += 1
+        stuck_at = max(deadline[0], self._staging_left_at) + STAGING_SAVE_WAIT_S
+        give_up_at = deadline[0] + STAGING_SAVE_WAIT_MAX_S
+        if now >= stuck_at:
+            if not self._staging_stall_warned:
+                self._staging_stall_warned = True
+                log.warning(
+                    "no staging write landed for %.1f s: refusing saves until one does "
+                    "(the disk tier is stuck or very slow)",
+                    STAGING_SAVE_WAIT_S,
+                )
+            self._staging_stalled = True
+            return False
+        if now >= give_up_at:
+            return False  # the disk is slower than the prefill: this block is not stored
+        self._cond.wait(min(stuck_at, give_up_at) - now)
+        return True
+
+    def _staging_settle(self, ik: _Ik, b: _Block) -> None:
+        """A staging block no longer pinned and not waiting for its write leaves RAM:
+        released when it is on NVMe (S4, S6), a dropped write when not (S5)."""
+        if self._ram.get(ik) is not b or b.pins or b.queued or b.state != _VALID:
+            return
+        self._drop_staging(ik, b, "released" if b.durable else "write_dropped")
+
+    def _drop_staging(self, ik: _Ik, b: _Block, counter: str) -> None:
+        """The one way a staging block leaves RAM under S3 to S6 (lock held).
+
+        ``counter`` is ``released`` or ``write_dropped``. Never an eviction (S9).
+        """
+        taker = self._evict_for
+        self._evict_for = None  # no eviction count, whoever is evicting meanwhile
+        try:
+            self._remove(ik, b)
+        finally:
+            self._evict_for = taker
+        self._staging_counts[counter] += 1
+        self._staging_room()
+
+    def _staging_room(self) -> None:
+        """A staging block left RAM (lock held): wake the saves waiting for room, and let
+        saves wait again after a stall (``_staging_wait``)."""
+        self._staging_stalled = False
+        self._staging_left_at = time.monotonic()
+        self._cond.notify_all()
+
+    def _alloc(
+        self, taker: bytes = b"", model: bytes = b"", *, load: bool = False, staging: bool = False
+    ) -> int | None:
         """A free slot, evicting for it if need be.
 
-        ``taker`` is who needs the room, ``model`` the model of the block it is for and
-        ``load`` whether the block is promoted by a load rather than saved (the last two
-        are read only under ``fair``).
+        ``taker`` is who needs the room, ``model`` the model of the block it is for,
+        ``load`` whether the block is promoted by a load rather than saved and
+        ``staging`` whether it is a staging block (the last three are read only under
+        ``fair``; under ``lru`` a staging allocation is step 1's, S8).
         """
         assert self._pool is not None
         if self._policy.mode == "fair":
+            if staging:
+                return self._alloc_staging_fair(taker)
             return self._alloc_fair(taker, model, load)
         slot = self._pool.alloc()
         while slot is None:
@@ -962,6 +1416,26 @@ class Store:
         finally:
             self._evict_for = None
 
+    def _alloc_staging_fair(self, taker: bytes) -> int | None:
+        """S8 under ``fair``: a staging block is a transfer, not storage, so
+        no tenant cap and no R4 refusal; with no free slot it takes a dead position,
+        else the least recently used one whose every RAM block is also on NVMe. It never
+        takes a block that is only in RAM: with neither, the allocation fails."""
+        pool = self._pool
+        assert pool is not None
+        self._evict_for = taker
+        try:
+            slot = pool.alloc()
+            while slot is None:
+                victim = self._dead_victim() or self._oldest_durable_victim()
+                if victim is None:
+                    return None
+                self._drop_victim(victim)
+                slot = pool.alloc()
+            return slot
+        finally:
+            self._evict_for = None
+
     def _drop_victim(self, victim: _Victim) -> None:
         for ik, b in victim:
             self._remove(ik, b)
@@ -1023,7 +1497,7 @@ class Store:
 
     def _idle_victim(self) -> _Victim | None:
         """Class idle: unused for longer than ``idle_ram_s``, oldest first."""
-        cutoff = self.cfg.clock() - self._policy.idle_ram_s
+        cutoff = self._clock() - self._policy.idle_ram_s
         for _, pos in self._cand_all:
             if self._pos_used[pos] >= cutoff:
                 return None  # touch order: everything after was used later
@@ -1175,8 +1649,11 @@ class Store:
 
     def _load_one(
         self, info: _Ns, key: bytes, tenant: bytes = b""
-    ) -> tuple[dict[str, int], _Block, bool] | None:
+    ) -> tuple[dict[str, int], _Block, bool] | _Pending | None:
         """Pin one block: (offsets, block, promoted from NVMe by this call), or None.
+
+        Inside a parallel ``begin_load`` (``_tls.defer``) a promotion is handed to a
+        worker thread and a ``_Pending`` comes back instead; ``begin_load`` ends it.
 
         A non-empty ``tenant`` takes over the charge of the block's whole position.
         """
@@ -1196,7 +1673,7 @@ class Store:
                     return None
                 b.pins += 1
                 self._ram.move_to_end(ik)
-                b.last_used = self.cfg.clock()
+                b.last_used = self._clock()
                 self._lru_touch((b.model, b.pos), b.last_used)
                 self._nv_touch(ik, b.last_used)
                 if tenant:
@@ -1208,7 +1685,10 @@ class Store:
             e0 = entries[0]
             parent = e0.parent
             self._add_child((info.ns_id, parent))
-            slot = self._alloc(tenant, e0.model or info.ns_id[:MODEL_LEN], load=True)
+            if info.staging:
+                slot = self._alloc(tenant, e0.model or info.ns_id[:MODEL_LEN], staging=True)
+            else:
+                slot = self._alloc(tenant, e0.model or info.ns_id[:MODEL_LEN], load=True)
             if slot is None:
                 self._drop_child((info.ns_id, parent))
                 return None
@@ -1216,13 +1696,24 @@ class Store:
             b = _Block(
                 slot, parent, scope, _PROMOTING, pins=1, durable=True,
                 model=e0.model or info.ns_id[:MODEL_LEN], pos=e0.pos or key,
-                tenant=e0.tenant, scope_tag=e0.scope_tag, last_used=self.cfg.clock(),
+                tenant=e0.tenant, scope_tag=e0.scope_tag, last_used=self._clock(),
+                staging=info.staging,
             )  # fmt: skip
             self._ram[ik] = b
+            if b.staging:
+                self._staged[ik] = b
             self._pos_add("ram", (b.model, b.pos), ik)
             self._lru_add((b.model, b.pos), b.tenant, b.last_used)
             pool = self._pool
         assert pool is not None
+        if getattr(self._tls, "defer", False):
+            workers = self._workers()
+            if workers is not None:  # begin_load finishes it, in order (settle)
+                try:
+                    fut = workers.submit(self._promote, pool, slot, info, key, entries)
+                except RuntimeError:  # shut down meanwhile (close): a miss, never PROMOTING
+                    return self._promoted(info, key, tenant, b, slot, None)
+                return _Pending(info, key, tenant, b, slot, fut)
         ok: bool | None = None  # None: the promotion raised
         result: tuple[dict[str, int], _Block, bool] | None = None
         try:
@@ -1230,25 +1721,99 @@ class Store:
         except Exception as exc:
             log.warning("promotion from NVMe failed, a miss: %r", exc)
         finally:
-            # Whatever happened, the block leaves PROMOTING and waiters wake up.
-            with self._cond:
-                try:
-                    # A scope retired while the bytes were copied is never served.
-                    if ok and not self._hidden(b.scope_tag):
-                        b.state = _VALID
-                        self._touch_nvme(info.ns_id, key)
-                        self._nv_touch(ik, self.cfg.clock())
-                        self._charge_ram(ik, b)
-                        if tenant:
-                            self._take_charge(b, tenant)
-                        result = self._offsets(info, slot), b, True
-                    elif self._ram.get(ik) is b:
-                        self._remove(ik, b)
-                        if ok is False:  # a damaged record is a miss, never a load
-                            self._drop_nvme(info.ns_id, key)
-                finally:
-                    self._cond.notify_all()
+            result = self._promoted(info, key, tenant, b, slot, ok)
         return result
+
+    def _promoted(
+        self, info: _Ns, key: bytes, tenant: bytes, b: _Block, slot: int, ok: bool | None
+    ) -> tuple[dict[str, int], _Block, bool] | None:
+        """The end of a promotion: VALID when ``ok``, else out of RAM (a damaged record,
+        ``ok`` False, also leaves the NVMe index). The block leaves PROMOTING and every
+        waiter wakes up, whatever happens."""
+        ik = (info.ns_id, key)
+        result: tuple[dict[str, int], _Block, bool] | None = None
+        with self._cond:
+            try:
+                # A scope retired while the bytes were copied is never served.
+                if ok and not self._hidden(b.scope_tag):
+                    b.state = _VALID
+                    self._touch_nvme(info.ns_id, key)
+                    self._nv_touch(ik, self._clock())
+                    self._charge_ram(ik, b)
+                    if tenant:
+                        self._take_charge(b, tenant)
+                    rec = self._nv.get(ik)
+                    if rec is not None:
+                        self._reuse.nvme_read((b.model, b.pos), rec.nbytes, rec.tenant)
+                    result = self._offsets(info, slot), b, True
+                elif self._ram.get(ik) is b:
+                    self._remove(ik, b)
+                    if ok is False:  # a damaged record is a miss, never a load
+                        self._drop_nvme(info.ns_id, key)
+            finally:
+                self._cond.notify_all()
+        return result
+
+    def _finish(self, p: _Pending, *, keep: bool) -> tuple[dict[str, int], _Block, bool] | None:
+        """Wait for a worker's promotion and end it (``_promoted``). ``keep`` False undoes
+        it whatever the outcome: out of RAM, and the NVMe record is not judged. The wait
+        comes first in every case: the worker may still be writing into the slot."""
+        ok: bool | None = None
+        if not keep:
+            p.future.cancel()
+        try:
+            got = p.future.result()
+            ok = got if keep else None
+        except CancelledError:
+            pass
+        except Exception as exc:
+            log.warning("promotion from NVMe failed, a miss: %r", exc)
+        finally:
+            result = self._promoted(p.info, p.key, p.tenant, p.b, p.slot, ok)
+        return result
+
+    def _unpin(self, ik: _Ik, b: _Block) -> None:
+        """Release one pin a load took but does not return (``end_load`` for one block)."""
+        with self._cond:
+            b.pins -= 1
+            if b.staging:
+                self._staging_settle(ik, b)
+
+    def _settle_first(self, info: _Ns, key: bytes) -> bool:
+        """Must the started loads finish before this key's load starts? Yes when the key
+        is in RAM (a hit, or a wait on another load's promotion: never wait while holding
+        unfinished ones), and whenever its slot could take a policy decision (no free
+        slot, or a ``fair`` non-staging allocation, which reads the tenant's charges):
+        then every decision sees the earlier loads finished, as in the serial loop."""
+        with self._cond:
+            if (info.ns_id, key) in self._ram or self._pool is None:
+                return True
+            if self._pool.slots_free() == 0:
+                return True
+            return self._policy.mode == "fair" and not info.staging
+
+    def _parallel(self, info: _Ns, keys: Sequence[bytes]) -> bool:
+        """Does this ``begin_load`` hand its promotions to the workers? Only with NVMe
+        on for the namespace and more than one key (one key has nothing to overlap)."""
+        if len(keys) < 2:
+            return False
+        with self._cond:
+            return not self._closed and bool(self._data_key) and self._nvme_on(info.ns_id)
+
+    def _workers(self) -> ThreadPoolExecutor | None:
+        with self._promoters_lock:
+            if self._closed:
+                return None
+            if self._promoters is None:
+                self._promoters = ThreadPoolExecutor(
+                    PROMOTE_THREADS,
+                    thread_name_prefix="lmw-kv-promote",
+                    initializer=self._worker_init,
+                )
+            return self._promoters
+
+    def _worker_init(self) -> None:
+        self._tls.buf = ReadBuffer()  # kept for the thread's life: one record's bytes
 
     # ---- NVMe tier --------------------------------------------------------------
 
@@ -1259,6 +1824,7 @@ class Store:
 
     def _nvme_off(self, exc: BaseException) -> None:
         self._nvme_enabled = False
+        self._nvme_error = f"NVMe tier switched off after an error: {exc}"
         if not self._nvme_off_logged:
             self._nvme_off_logged = True
             log.warning("NVMe tier switched off, RAM tier continues: %s", exc)
@@ -1336,6 +1902,8 @@ class Store:
         want = self._wants_nvme(info)
         late = want and self._nvme_enabled and info.ns_id not in self._manifests
         info.nvme = want and not late
+        # S1, from ``want``: while the manifest opens, saves are refused (S2), never kept.
+        info.staging = want and bool(info.staging_by) and all(info.staging_by.values())
         return late
 
     def _attach_retired(self, nvme_dir: Path) -> None:
@@ -1347,6 +1915,92 @@ class Store:
             self._retired.attach(nvme_dir / RETIRED_NAME)
         except RetiredStoreError:
             pass  # logged by RetiredScopes; isolation refused until a later attach works
+
+    def _read_reuse(self, nvme_dir: Path) -> tuple[ReuseDb | None, list[tuple[_Pos, PosCounters]]]:
+        """Open ``reuse.db`` and read its rows (no lock held).
+
+        A file that cannot be opened or read leaves the counters in memory only and sets
+        ``reuse_persist_degraded``: no isolation property depends on it (fail open).
+        """
+        db: ReuseDb | None = None
+        try:
+            db = ReuseDb(nvme_dir / REUSE_NAME)
+            return db, db.rows()
+        except ReuseDbError as exc:
+            if db is not None:
+                db.close()
+            self._reuse.persist_degraded = True
+            log.warning("reuse counters are kept in memory only: %s", exc)
+            return None, []
+
+    def _adopt_reuse(self, db: ReuseDb | None, rows: list[tuple[_Pos, PosCounters]]) -> None:
+        """Install the rows read, once the manifests are (``_cond`` held).
+
+        A row whose position has no NVMe member goes (RAM-only counters are never kept,
+        and the next write deletes the row). A position on NVMe with no row starts as new:
+        no reloads, ``d = 1``, ``first_saved`` the oldest ``last_used`` of its members.
+        """
+        if db is None:
+            return
+        self._reuse_db = db
+        self._reuse.load(rows)
+        on_nvme = self._positions["nvme"]
+        for pos, c in rows:
+            if pos in on_nvme:
+                continue
+            if self._reuse.rows.get(pos) is c:
+                self._reuse.forget(pos)  # only the file knew it
+            else:
+                self._reuse.mark(pos)  # a live RAM-only position: the row leaves the file
+        for pos, iks in on_nvme.items():
+            if pos in self._reuse.rows:
+                continue
+            members = sorted(
+                (self._nv[ik] for ik in iks if ik in self._nv), key=lambda r: r.last_used
+            )
+            if not members:
+                continue
+            oldest = members[0]
+            self._reuse.seed(
+                pos,
+                PosCounters(
+                    first_saved=oldest.last_used, saver=oldest.tenant, depth=-1, d=1.0,
+                    t=oldest.last_used,
+                ),
+            )  # fmt: skip
+
+    def persist_reuse(self) -> None:
+        """Write the changed counters of NVMe positions to ``reuse.db`` (no lock held).
+
+        The dirty set is taken under ``_cond``; the write runs outside it, one writer at
+        a time. A failed write keeps the rows dirty, sets ``reuse_persist_degraded`` and
+        logs one warning; counting goes on. RAM-only positions are never written (Q10): a
+        changed position without an NVMe member is deleted from the file instead.
+        """
+        with self._reuse_lock:
+            with self._cond:
+                db = self._reuse_db
+                if db is None:
+                    self._reuse.untrack()
+                    return
+                ups, dels = self._reuse.dirty()
+                on_nvme = self._positions["nvme"] if self._nvme_enabled else {}
+                keep = [(p, c) for p, c in ups if p in on_nvme]
+                dels.extend(p for p, _ in ups if p not in on_nvme)
+            if not keep and not dels:
+                return
+            try:
+                db.write(keep, dels)
+            except ReuseDbError as exc:
+                with self._cond:
+                    self._reuse.redirty(keep, dels)
+                    first = not self._reuse.persist_degraded
+                    self._reuse.persist_degraded = True
+                if first:
+                    log.warning("reuse counters not written, kept in memory: %s", exc)
+                return
+            with self._cond:
+                self._reuse.persist_degraded = False
 
     def _nvme_present(self, info: _Ns, key: bytes) -> bool:
         entries = self._nvme_entries(info, key)
@@ -1389,6 +2043,12 @@ class Store:
         if rec is not None and self._evict_for is not None:
             self._count_eviction("nvme", rec.tenant, rec.model)
         self._nv_del((ns_id, key))
+        if rec is not None:
+            evicted = self._evict_for is not None
+            self._reuse_left(
+                "nvme", (ns_id, key), rec.model, rec.pos, rec.tenant, rec.scope_tag, rec.nbytes,
+                evicted,
+            )  # fmt: skip
         # The record bytes stay on disk until their whole segment is deleted.
         b = self._ram.get((ns_id, key))
         if b is not None:
@@ -1399,14 +2059,18 @@ class Store:
     def _promote(
         self, pool: RamPool, slot: int, info: _Ns, key: bytes, entries: list[Entry]
     ) -> bool:
+        """Read, check and decrypt the block's records straight into its slot. True when
+        every group checks out with the registered size; False is a damaged record."""
         d = self._ns_dir(info.ns_id)
+        buf: ReadBuffer = getattr(self._tls, "buf", None) or ReadBuffer()
         with pool.view(slot) as view:
             for e in entries:
-                data = read_record(d, e.loc, self._data_key, key, e.group)
-                if data is None or len(data) != info.groups[e.group]:
+                off, size = info.offsets[e.group], info.groups[e.group]
+                n = read_record_into(
+                    d, e.loc, self._data_key, key, e.group, view[off : off + size], buf
+                )
+                if n != size:
                     return False
-                off = info.offsets[e.group]
-                view[off : off + len(data)] = data
         return True
 
     def _writer_loop(self) -> None:
@@ -1430,6 +2094,14 @@ class Store:
             if b is not None:
                 with self._cond:
                     b.queued = False  # whatever raised, the block is evictable again
+                    if b.staging:
+                        self._staging_settle(ik, b)  # S4, or S5 on every other path
+
+    def _unqueue(self, b: _Block) -> None:
+        """The write is over. A staging block stays queued (never a victim) until
+        ``_write_through`` settles it, in the same lock hold that clears the flag."""
+        if not b.staging:
+            b.queued = False
 
     def _write_through_once(self, ik: _Ik) -> None:
         ns_id, key = ik
@@ -1439,7 +2111,10 @@ class Store:
             if b is None:
                 return
             if info is None or not self._nvme_on(ns_id) or self._pool is None:
-                b.queued = False
+                self._unqueue(b)
+                return
+            if b.staging and self._hidden(b.scope_tag):
+                self._unqueue(b)  # retired in flight: never written, dropped (S5)
                 return
             # Bytes this block adds on disk, plus a header in case a new segment starts.
             need = sum(record_size(g, n) for g, n in info.groups.items()) + HEADER_LEN
@@ -1449,7 +2124,7 @@ class Store:
             finally:
                 self._evict_for = None
             if not room:
-                b.queued = False  # stays RAM only, evictable as a leaf
+                self._unqueue(b)  # stays RAM only, evictable as a leaf
                 return
             pool = self._pool
         try:  # a queued block is never evicted, so its slot is stable here
@@ -1474,11 +2149,11 @@ class Store:
                 self._cur_seg[ns_id] = locs[g].segment
         except _NVME_ERRORS as exc:
             with self._cond:
-                b.queued = False
+                self._unqueue(b)
                 self._nvme_off(exc)
             return
         with self._cond:
-            b.queued = False
+            self._unqueue(b)
             for loc in locs.values():  # the records are on disk either way
                 self._grow_seg(ns_id, loc.segment, loc.offset + loc.length)
             if not self._nvme_on(ns_id):
@@ -1500,15 +2175,16 @@ class Store:
                 segments[loc.segment] = segments.get(loc.segment, 0) + loc.length
             rec = _NvRec(
                 model=b.model, pos=b.pos, parent=b.parent, tenant=b.tenant,
-                scope_tag=b.scope_tag, nbytes=sum(segments.values()), segments=segments, last_used=self.cfg.clock(),
+                scope_tag=b.scope_tag, nbytes=sum(segments.values()), segments=segments, last_used=self._clock(),
             )  # fmt: skip
             self._nv_add(ik, rec)
+            self._reuse.nvme_written((b.model, b.pos), rec.nbytes, b.tenant)
 
     def _grow_seg(self, ns_id: bytes, seg: int, end: int) -> None:
         """A record now ends at ``end`` in ``seg``: its file is that long (lock held)."""
         rec = self._segs.get((ns_id, seg))
         if rec is None:
-            rec = self._segs[(ns_id, seg)] = [self.cfg.clock(), 0]
+            rec = self._segs[(ns_id, seg)] = [self._clock(), 0]
             self._rank_new((ns_id, seg))
         if end > rec[1]:
             self._nvme_used += int(end - rec[1])
@@ -1786,7 +2462,7 @@ class Store:
         """What every segment's score shares: computed once per choice."""
         return _ScoreCtx(
             ratios=self._nvme_over_ratios() if ratios else {},
-            cutoff=self.cfg.clock() - self._policy.idle_nvme_s,
+            cutoff=self._clock() - self._policy.idle_nvme_s,
             dead_ns={},
             dead_tag={},
         )
@@ -2004,9 +2680,19 @@ class Store:
             return True
         return bool(scope_tag) and scope_tag in self._retired
 
+    def _dead_known(self, ns_id: bytes, scope_tag: bytes) -> bool:
+        """``_dead`` without reading the clock: the grace as last seen (counter hooks)."""
+        info = self._ns.get(ns_id)
+        if info is None:
+            if self._grace_done:
+                return True
+        elif not info.live:
+            return True
+        return bool(scope_tag) and scope_tag in self._retired
+
     def _grace_over(self) -> bool:
         if not self._grace_done:
-            self._grace_done = self.cfg.clock() - self._opened_at >= UNREGISTERED_GRACE_S
+            self._grace_done = self._clock() - self._opened_at >= UNREGISTERED_GRACE_S
         return self._grace_done
 
     def _charge(self, tier: Tier, acct: _Acct, n: int) -> None:
@@ -2018,8 +2704,12 @@ class Store:
             book.pop(acct, None)
 
     def _charge_ram(self, ik: _Ik, b: _Block) -> None:
-        """Count a block that just became valid in RAM: one pool slot."""
-        if b.charged or self._pool is None:
+        """Count a block that just became valid in RAM: one pool slot.
+
+        A staging block is never counted: it is a transfer, not storage, so it never
+        weighs on its tenant's RAM cap or share (S8).
+        """
+        if b.charged or b.staging or self._pool is None:
             return
         b.charged = self._pool.slot_bytes
         self._charge("ram", (ik[0], b.model, b.tenant, b.scope_tag), b.charged)
@@ -2163,7 +2853,7 @@ class Store:
                     self._charge("ram", (ik[0], rb.model, tenant, rb.scope_tag), rb.charged)
                 used = self._pos_used.get(pos, rb.last_used)
                 self._lru_del(pos, rb.tenant)
-                if rb.state == _SAVING:
+                if rb.state == _SAVING and not rb.staging:
                     self._unsaving(rb.tenant)
                     self._saving[tenant] = self._saving.get(tenant, 0) + 1
                 rb.tenant = tenant
@@ -2226,8 +2916,13 @@ class Store:
                 t.nvme_evictions += 1
             t.evicted_by[taker] = t.evicted_by.get(taker, 0) + 1
 
-    def _attribution_stats(self) -> dict[str, Any]:
-        """``dead_bytes``, ``by_tenant``, ``by_model`` and ``by_namespace`` for ``stats``."""
+    def _attribution_stats(self, reuse: dict[str, Any]) -> dict[str, Any]:
+        """``dead_bytes``, ``by_tenant``, ``by_model`` and ``by_namespace`` for ``stats``.
+
+        ``reuse`` is ``ReuseBook.report``: every tenant row and every (model, tenant) row
+        carries its ``reuse`` map (zeros when it has none), and so does each
+        ``by_model[m].reuse[t]``.
+        """
         dead = {"ram": 0, "nvme": 0}
         by_tenant: dict[str, dict[str, Any]] = {}
         by_model: dict[str, dict[str, Any]] = {}
@@ -2240,6 +2935,7 @@ class Store:
                     "ram_bytes": 0, "nvme_bytes": 0, "ram_evictions": 0,
                     "nvme_evictions": 0, "evicted_by": {}, "ram_tokens": 0, "nvme_tokens": 0,
                     "ram_share": 0.0, "nvme_share": 0.0,
+                    "reuse": reuse["by_tenant"].get(tenant.hex()) or empty_report(),
                 }  # fmt: skip
             return row
 
@@ -2258,6 +2954,7 @@ class Store:
                     "ram_part": part["ram"].get(model, 0.0),
                     "nvme_part": part["nvme"].get(model, 0.0),
                     "tenants": {},
+                    "reuse": {},
                 }  # fmt: skip
             return row
 
@@ -2265,7 +2962,7 @@ class Store:
             by_ns[ns_id.hex()] = {
                 "model": info.model.hex(), "role": info.role, "rank": info.rank,
                 "owners": dict(info.owners), "live": info.live,
-                "ram_bytes": 0, "nvme_bytes": 0,
+                "ram_bytes": 0, "nvme_bytes": 0, "staging": info.staging,
             }  # fmt: skip
             model_row(info.model)["owners"].update(info.owners)
         for tier in _TIERS:
@@ -2278,6 +2975,7 @@ class Store:
                     continue
                 tenant_row(tenant)[f"{tier}_bytes"] += n
                 model_row(model)[f"{tier}_bytes"] += n
+        by_pair: dict[_Pair, dict[str, Any]] = reuse["by_model_tenant"]
         pairs = set(usage["ram"]) | set(usage["nvme"]) | set(self._pair_stats)
         for model, tenant in sorted(pairs):
             pair = (model, tenant)
@@ -2295,6 +2993,13 @@ class Store:
             m_row["evicted_by"] = (
                 {k.hex(): v for k, v in ps.evicted_by.items()} if ps is not None else {}
             )
+        # Beside ``tenants``, not in its rows (whose shape Plan 2's tests fix): the pairs
+        # listed there, and every pair with a position stored now in either view.
+        for pair, r in sorted(by_pair.items()):
+            if pair in pairs or _stored_now(r):
+                model_row(pair[0])["reuse"][pair[1].hex()] = r
+        for t_hex in reuse["by_tenant"]:  # a saver whose positions others pay for keeps its row
+            tenant_row(bytes.fromhex(t_hex))
         for tenant, t in self._tenants.items():
             row = tenant_row(tenant)
             row["ram_evictions"] = t.ram_evictions
@@ -2310,6 +3015,31 @@ class Store:
             "by_model": by_model,
             "by_namespace": by_ns,
         }
+
+
+def _stored_now(r: dict[str, Any]) -> bool:
+    """A ``reuse`` map with a position stored now, in the charged or the saver view."""
+    return bool(sum(r["charged"]["positions"].values()) or r["saver"]["positions"])
+
+
+class _LiveView(Mapping[_Pos, tuple[bool, bool]]):
+    """Where each stored position is, (in RAM, on NVMe), read when asked (lock held)."""
+
+    def __init__(self, store: Store) -> None:
+        self._s = store
+
+    def __getitem__(self, pos: _Pos) -> tuple[bool, bool]:
+        got = self._s._reuse_live(pos)
+        if got is None:
+            raise KeyError(pos)
+        return got
+
+    def __iter__(self) -> Iterator[_Pos]:
+        p = self._s._positions
+        return (pos for pos in {**p["ram"], **p["nvme"]} if pos in self)
+
+    def __len__(self) -> int:
+        return sum(1 for _ in self)
 
 
 def _listed(entries: Iterable[tuple[int, _Pos]]) -> Iterator[_Pos]:

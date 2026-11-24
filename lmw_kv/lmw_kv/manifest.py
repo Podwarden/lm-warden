@@ -83,6 +83,12 @@ class Manifest:
         self._db = sqlite3.connect(path, check_same_thread=False, isolation_level=None)
         try:
             self._db.execute("PRAGMA journal_mode=WAL")
+            # No disk flush per row: the writer puts rows while it holds the store lock,
+            # and a flush per row (SQLite's default, FULL) stalled every save behind it
+            # on a busy disk. In WAL mode NORMAL survives a daemon crash; a power loss
+            # can drop the last rows, which are then misses (the records are only
+            # written back, never flushed, either way).
+            self._db.execute("PRAGMA synchronous=NORMAL")
             self._db.execute(_TABLE)
             have = {r[1] for r in self._db.execute("PRAGMA table_info(blocks)").fetchall()}
             for name, decl in _ADDED_COLUMNS:
@@ -101,6 +107,10 @@ class Manifest:
     def journal_mode(self) -> str:
         with self._lock:
             return str(self._db.execute("PRAGMA journal_mode").fetchone()[0])
+
+    def synchronous(self) -> int:
+        with self._lock:
+            return int(self._db.execute("PRAGMA synchronous").fetchone()[0])
 
     def put(
         self,

@@ -103,6 +103,11 @@ RUNTIME_KEYS: dict[str, str] = {
     "kv_store_ram_gib": "warden-restart",
     "kv_store_nvme_dir": "warden-restart",
     "kv_store_nvme_cap_gb": "warden-restart",
+    # The daemon uses the NVMe folder only while <folder>/.lmw-kv-disk exists (mount guard).
+    "kv_store_nvme_marker": "warden-restart",
+    # The daemon refuses an NVMe folder on the root disk (same device as "/", or an
+    # overlay, tmpfs or ramfs) unless this is true.
+    "kv_store_nvme_allow_root_disk": "warden-restart",
     # How a NEW key shares the KV cache (O1): read when a key is created, no restart.
     "kv_isolation_default": "none",
     # KV eviction (spec 5.4): sent to the running daemon at once (app/kv/policy_sync.py).
@@ -332,6 +337,8 @@ _COERCERS = {
     "kv_store_ram_gib": _bounded_int(1, 4096),
     "kv_store_nvme_dir": _abs_dir_or_empty,
     "kv_store_nvme_cap_gb": _bounded_int(1, 1_000_000),
+    "kv_store_nvme_marker": _bool,
+    "kv_store_nvme_allow_root_disk": _bool,
     "kv_isolation_default": _choice("sharing", "isolated"),
     # The same bounds as app/kv/policy_sync.py, which reads them.
     "kv_evict_policy": _choice("lru", "fair"),

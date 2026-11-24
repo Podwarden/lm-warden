@@ -54,7 +54,27 @@ function fromRuntime(r: Record<string, string | null | undefined>): Draft {
 }
 
 interface KvStoreStatus {
-  daemon: { healthy: boolean; generation: number; ram_requested_bytes: number | null; ram_granted_bytes: number | null };
+  daemon: {
+    healthy: boolean;
+    generation: number;
+    ram_requested_bytes: number | null;
+    ram_granted_bytes: number | null;
+    /** Why there is no RAM pool (e.g. it does not fit /dev/shm), null when fine. */
+    pool_error?: string | null;
+    /** Why the disk tier is off (e.g. the folder is on the root disk), null when fine. */
+    nvme_error?: string | null;
+    nvme_cap_effective_bytes?: number | null;
+    /** Why the disk cap in force is under the setting, null when it is not. */
+    nvme_cap_note?: string | null;
+  };
+}
+
+function GuardNote({ testId, children }: { testId: string; children: ReactNode }) {
+  return (
+    <p className="m-0 mt-1.5 break-words text-[12.5px] text-amber-300" data-testid={testId}>
+      {children}
+    </p>
+  );
 }
 
 function Section({ title, sub, chip, children }: { title: string; sub?: string; chip: ReactNode; children: ReactNode }) {
@@ -299,6 +319,7 @@ export function PromptCacheTab() {
       >
         <Field id="kv-ram-gib" label="RAM tier size" help="The store gets less when the host is short of memory; the status line shows what it got.">
           <NumberInput id="kv-ram-gib" value={draft.kv_store_ram_gib} unit="GiB" onChange={set("kv_store_ram_gib")} />
+          {d?.pool_error && <GuardNote testId="kv-pool-error">KV cache store off: {d.pool_error}</GuardNote>}
         </Field>
         <Field id="kv-nvme-dir" label="Disk folder" help="Empty means no disk tier. Use a fast local disk.">
           <input
@@ -308,6 +329,10 @@ export function PromptCacheTab() {
             onChange={(e) => set("kv_store_nvme_dir")(e.target.value)}
             className="w-full max-w-[320px] rounded-md border border-chat-rule bg-chat-page px-2.5 py-1.5 !font-mono text-[13px] text-chat-fg"
           />
+          {d?.nvme_error && <GuardNote testId="kv-nvme-error">{d.nvme_error}</GuardNote>}
+          {!d?.nvme_error && d?.nvme_cap_note && (
+            <GuardNote testId="kv-nvme-cap-note">Disk tier {d.nvme_cap_note}</GuardNote>
+          )}
         </Field>
         <Field id="kv-nvme-cap" label="Disk tier size" help="Most the store may write to that folder.">
           <NumberInput id="kv-nvme-cap" value={draft.kv_store_nvme_cap_gb} unit="GB" onChange={set("kv_store_nvme_cap_gb")} />

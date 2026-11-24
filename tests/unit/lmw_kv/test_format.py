@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import stat
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -135,3 +136,82 @@ def test_corrupt_data_key_is_an_error(tmp_path: Path) -> None:
     (tmp_path / "data.key").write_bytes(b"short")
     with pytest.raises(RuntimeError):
         load_or_create_data_key(tmp_path)
+
+
+# ---- read_record_into (Task 13): the same checks, decrypted into a caller's buffer -----
+
+
+def _into(tmp_path: Path, loc: Location, key: bytes, bk: bytes, group: str, size: int = 64):
+    from lmw_kv.format import ReadBuffer, read_record_into
+
+    out = bytearray(size)
+    n = read_record_into(tmp_path, loc, key, bk, group, memoryview(out), ReadBuffer())
+    return None if n is None else bytes(out[:n])
+
+
+def test_read_record_into_round_trips_and_reuses_one_buffer(tmp_path: Path) -> None:
+    from lmw_kv.format import ReadBuffer, read_record_into
+
+    w = SegmentWriter(tmp_path, NS_A, KEY)
+    items = [(_k(1), "full", b"alpha" * 10), (_k(2), "swa", b"beta"), (_k(3), "full", b"")]
+    locs = [w.append(k, g, p) for k, g, p in items]
+    w.close()
+    buf = ReadBuffer()
+    for (k, g, p), loc in zip(items, locs, strict=True):
+        out = bytearray(len(p))
+        assert read_record_into(tmp_path, loc, KEY, k, g, memoryview(out), buf) == len(p)
+        assert bytes(out) == p
+        assert read_record(tmp_path, loc, KEY, k, g) == p
+
+
+def test_read_record_into_misses_exactly_where_read_record_does(tmp_path: Path) -> None:
+    w = SegmentWriter(tmp_path, NS_A, KEY)
+    loc = w.append(_k(1), "full", b"payload-bytes")
+    w.close()
+    assert _into(tmp_path, loc, KEY, _k(1), "full") == b"payload-bytes"
+    assert _into(tmp_path, loc, KEY, _k(2), "full") is None
+    assert _into(tmp_path, loc, KEY, _k(1), "swa") is None
+    assert _into(tmp_path, loc, b"\x02" * 32, _k(1), "full") is None  # GCM tag
+    assert _into(tmp_path, loc, KEY, _k(1), "full", size=5) is None  # buffer too small
+    seg = tmp_path / "000001.seg"
+    orig = seg.read_bytes()
+    end = loc.offset + loc.length
+    for at in (end - 4 - 20, loc.offset + 4, end - 1):  # ciphertext, block key, CRC
+        b = bytearray(orig)
+        b[at] ^= 0x01
+        seg.write_bytes(bytes(b))
+        assert _into(tmp_path, loc, KEY, _k(1), "full") is None
+        assert read_record(tmp_path, loc, KEY, _k(1), "full") is None
+    seg.write_bytes(orig[:-3])  # truncated
+    assert _into(tmp_path, loc, KEY, _k(1), "full") is None
+    seg.unlink()
+    assert _into(tmp_path, loc, KEY, _k(1), "full") is None
+
+
+def test_read_record_into_checks_the_crc_before_the_tag(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A CRC mismatch is a miss without decrypting: the CRC check stays on the read path."""
+    from lmw_kv import format as format_
+
+    w = SegmentWriter(tmp_path, NS_A, KEY)
+    loc = w.append(_k(1), "full", b"payload-bytes")
+    w.close()
+    seg = tmp_path / "000001.seg"
+    b = bytearray(seg.read_bytes())
+    b[loc.offset + loc.length - 1] ^= 0x01  # only the stored CRC
+    seg.write_bytes(bytes(b))
+    calls: list[int] = []
+    real = format_.AESGCM
+
+    class Spy:
+        def __init__(self, key: bytes) -> None:
+            self._aead = real(key)
+
+        def decrypt_into(self, *a: Any) -> Any:
+            calls.append(1)
+            return self._aead.decrypt_into(*a)
+
+    monkeypatch.setattr(format_, "AESGCM", Spy)
+    assert _into(tmp_path, loc, KEY, _k(1), "full") is None
+    assert calls == []

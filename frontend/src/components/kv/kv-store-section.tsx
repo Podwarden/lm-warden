@@ -112,7 +112,14 @@ const OPTIONS: { v: KvStoreMode; title: string; help: string }[] = [
   { v: "off", title: "Off", help: "Prompts are cached on the GPU only." },
   { v: "ram", title: "RAM", help: "Also keeps them in host RAM. Lost when the server restarts." },
   { v: "ram+nvme", title: "RAM + disk", help: "Also writes them to disk. Survives a restart; reloads a long prompt in seconds." },
+  {
+    v: "nvme",
+    title: "Disk only",
+    help: "Writes them to disk and keeps about 1 GiB of RAM to move them. Survives a restart. For hosts with little spare RAM.",
+  },
 ];
+
+const DISK_MODES: KvStoreMode[] = ["ram+nvme", "nvme"];
 
 export function KvStoreCard({
   backend,
@@ -138,7 +145,7 @@ export function KvStoreCard({
   const vllm = isVllm(backend);
   const engine = backend === "llamacpp" ? "llama.cpp" : backend === "mlx" ? "MLX" : !backend || backend === "vllm" ? "vLLM" : backend;
   const noDisk = nvmeDir !== undefined && !(nvmeDir ?? "").trim();
-  const summary = vllm ? (kvStore === "off" ? "off" : kvStore === "ram" ? "RAM" : "RAM + disk") : "not available";
+  const summary = vllm ? (kvStore === "off" ? "off" : kvStore === "ram" ? "RAM" : kvStore === "nvme" ? "disk only" : "RAM + disk") : "not available";
   return (
     <section className={CARD} aria-label="KV cache store" data-testid="section-kv-store">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -148,9 +155,9 @@ export function KvStoreCard({
         </h3>
         <span className="text-[12px] text-chat-dim">{summary}</span>
       </div>
-      <div role="radiogroup" aria-label="KV cache store" className="mt-3 grid gap-2 min-[700px]:grid-cols-3">
+      <div role="radiogroup" aria-label="KV cache store" className="mt-3 grid gap-2 grid-cols-2 min-[700px]:grid-cols-4">
         {OPTIONS.map((o) => {
-          const refused = (!vllm && o.v !== "off") || (o.v === "ram+nvme" && noDisk);
+          const refused = (!vllm && o.v !== "off") || (DISK_MODES.includes(o.v) && noDisk);
           const off = disabled || loaded || refused;
           const on = kvStore === o.v;
           return (
@@ -183,7 +190,7 @@ export function KvStoreCard({
       </div>
       {vllm && noDisk && (
         <p className={cn(HELP, "mt-2")}>
-          No disk folder is set, so RAM + disk is not offered. Set one in Settings, Prompt cache, then restart the warden.
+          No disk folder is set, so RAM + disk and Disk only are not offered. Set one in Settings, Prompt cache, then restart the warden.
         </p>
       )}
       {vllm && (

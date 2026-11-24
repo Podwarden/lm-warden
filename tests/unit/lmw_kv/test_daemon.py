@@ -22,9 +22,17 @@ from typing import Any
 
 import pytest
 
+from lmw_kv import daemon as daemon_mod
 from lmw_kv import protocol
 from lmw_kv.client import Client
-from lmw_kv.daemon import NVME_LOCK_NAME, Daemon, store_config
+from lmw_kv.daemon import (
+    MARKER_NAME,
+    NVME_LOCK_NAME,
+    Daemon,
+    nvme_dir_ready,
+    store_config,
+    try_take_nvme,
+)
 from lmw_kv.keys import Namespace
 from lmw_kv.store import Store, StoreConfig
 
@@ -483,10 +491,59 @@ def test_begin_load_reports_blocks_promoted_from_nvme(running: Running) -> None:
     assert loaded is not None and len(loaded[1]) == 3 and loaded[2] == 2
 
 
+@pytest.fixture(autouse=True)
+def _no_nvme_clamp(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The NVMe cap as asked: the real clamp (R17, tested in test_daemon_guards.py with a
+    fake statvfs) reads the free space of tmp_path's disk, which these tests must not
+    depend on."""
+    monkeypatch.setattr(daemon_mod, "nvme_cap", lambda _dir, cap: (cap, None, None))
+
+
 def _args(tmp_path: Path, nvme: Path) -> argparse.Namespace:
+    # tmp_path may be on the container's root disk (CI runs without --basetemp): these
+    # tests are about the lock and the marker, so they take the root disk override (R17).
     return argparse.Namespace(
-        ram_path=str(tmp_path / "ram.pool"), ram_gib=0.01, nvme_dir=str(nvme), nvme_cap_gb=1.0
+        ram_path=str(tmp_path / "ram.pool"),
+        ram_gib=0.01,
+        nvme_dir=str(nvme),
+        nvme_cap_gb=1.0,
+        nvme_allow_root_disk=True,
     )
+
+
+def test_missing_marker_runs_without_nvme_and_retries(tmp_path: Path, caplog: Any) -> None:
+    """The mount guard: with the marker setting on, a bare directory is not the disk."""
+    nvme = tmp_path / "nvme"
+    nvme.mkdir()
+    args = _args(tmp_path, nvme)
+    args.nvme_marker = True
+    with caplog.at_level(logging.WARNING, logger="lmw_kv.daemon"):
+        cfg, fd = store_config(args)
+    assert cfg.nvme_dir is None and fd is None
+    warns = [r.getMessage() for r in caplog.records if MARKER_NAME in r.getMessage()]
+    assert warns == [f"NVMe tier off: {nvme} has no {MARKER_NAME} marker"]
+    assert not nvme_dir_ready(nvme, True)
+    store = Store(cfg)
+    try:
+        # still no marker, no lock taken
+        assert try_take_nvme(store, nvme, marker=True, allow_root_disk=True) is None
+        assert store.stats()["nvme_enabled"] is False
+        (nvme / MARKER_NAME).touch()
+        assert nvme_dir_ready(nvme, True)
+        fd2 = try_take_nvme(store, nvme, marker=True, allow_root_disk=True)
+        assert fd2 is not None
+        assert store.stats()["nvme_enabled"] is True
+        os.close(fd2)
+    finally:
+        store.close()
+
+
+def test_marker_not_required_by_default(tmp_path: Path) -> None:
+    nvme = tmp_path / "nvme"
+    cfg, fd = store_config(_args(tmp_path, nvme))  # no nvme_marker attribute at all
+    assert cfg.nvme_dir == nvme and fd is not None
+    assert nvme_dir_ready(nvme, False)
+    os.close(fd)
 
 
 def test_a_second_daemon_on_the_same_nvme_dir_runs_ram_only(tmp_path: Path, caplog: Any) -> None:
@@ -639,12 +696,13 @@ def test_a_ram_only_daemon_turns_nvme_on_once_it_gets_the_lock(tmp_path: Path) -
     second = Store(second_cfg)
     try:
         assert second.register_namespace(NS, GROUPS) == ns
-        assert try_take_nvme(second, nvme) is None  # still held by the first daemon
+        # still held by the first daemon
+        assert try_take_nvme(second, nvme, allow_root_disk=True) is None
         assert second.stats()["nvme_enabled"] is False
         assert second.lookup(ns, [_k("old")]) == 0
         first.close()
         os.close(fd1)  # the first daemon exits
-        fd = try_take_nvme(second, nvme)
+        fd = try_take_nvme(second, nvme, allow_root_disk=True)
         assert fd is not None
         assert second.stats()["nvme_enabled"] is True
         assert second.lookup(ns, [_k("old")]) == 1  # the first daemon's blocks are visible
@@ -716,7 +774,9 @@ def test_cancelling_the_nvme_retry_mid_take_keeps_the_lock_fd(
     entered, release = threading.Event(), threading.Event()
     fd = os.open(tmp_path / "lock", os.O_RDWR | os.O_CREAT, 0o600)
 
-    def take(store: Store, nvme_dir: Path) -> int:
+    def take(
+        store: Store, nvme_dir: Path, marker: bool = False, allow_root_disk: bool = False
+    ) -> int:
         entered.set()
         release.wait(30)
         return fd  # the take won the lock after all
@@ -1088,3 +1148,63 @@ def test_sigterm_while_the_pool_is_committed_removes_the_pool(
         shutil.rmtree(sockdir, ignore_errors=True)
     assert not Path(args.ram_path).exists()
     assert not os.path.exists(args.socket)  # it never started serving
+
+
+def test_daemon_persists_once_per_interval(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(daemon_mod, "REUSE_PERSIST_S", 0.01)
+    calls: list[bool] = []  # per call: was the stop already asked for
+    stopping = threading.Event()
+
+    class FakeStore:
+        def persist_reuse(self) -> None:
+            calls.append(stopping.is_set())
+
+    async def go() -> None:
+        task = asyncio.create_task(daemon_mod._persist_reuse_loop(FakeStore()))  # type: ignore[arg-type]
+        for _ in range(3000):  # a safety bound: fails only if the loop never runs
+            if len(calls) >= 2:
+                break
+            await asyncio.sleep(0.01)
+        assert len(calls) >= 2  # periodic calls
+        stopping.set()
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+
+    asyncio.run(go())
+    assert calls[0] is False and calls[1] is False
+    assert calls[-1] is True  # one more at stop, and it is the last call
+
+
+def test_a_save_slower_than_the_fast_deadline_is_not_aborted(running: Running) -> None:
+    """A save call that waits on the store (a writer holding the lock, staging room) must
+    not time out at the fast deadline: a timeout drops the connection, the daemon then
+    aborts the save begun on it and the rest of the prompt's chain is refused."""
+    c = Client(running.sock, timeout_s=0.05, slow_timeout_s=SLOW_S)
+    ns = c.register_ns(NS, GROUPS)
+    assert ns is not None
+    real = running.store.begin_save
+
+    def slow(*args: Any, **kw: Any) -> Any:
+        time.sleep(0.2)
+        return real(*args, **kw)
+
+    running.store.begin_save = slow  # type: ignore[method-assign]
+    assert c.begin_save(ns, _k("a"), ROOT) is not None
+    running.store.begin_save = real  # type: ignore[method-assign]
+    assert c.commit_save(ns, _k("a")) is True
+    assert c.lookup(ns, [_k("a")]) == 1
+    assert not running.daemon.released.acquire(timeout=0.2)  # the connection stayed up
+
+
+def test_a_failed_save_call_backs_off_longer(tmp_path: Path) -> None:
+    """A hung daemon must not cost the engine a save deadline on every step."""
+    from lmw_kv import client as client_mod
+
+    c = Client(str(tmp_path / "nothing.sock"), timeout_s=0.05, save_timeout_s=0.05)
+    t0 = time.monotonic()
+    assert c.begin_save(b"\x01" * 32, _k("a"), ROOT) is None
+    assert c._conn().retry_at - t0 >= client_mod.SAVE_RETRY_AFTER_S - 0.1
+    c2 = Client(str(tmp_path / "nothing.sock"), timeout_s=0.05)
+    t0 = time.monotonic()
+    assert c2.lookup(b"\x01" * 32, [_k("a")]) == 0
+    assert c2._conn().retry_at - t0 <= client_mod.RETRY_AFTER_S + 0.1

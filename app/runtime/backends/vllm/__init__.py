@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any
 from app.runtime.backends import BackendCapabilities, LaunchPlan
 from app.runtime.backends.vllm.args import build_vllm_args, engine_bind_host
 from app.runtime.backends.vllm.diagnostics import diagnose_engine_log
+from app.runtime.backends.vllm.engines import bundled_engine_bin, bundled_pin
 from app.runtime.backends.vllm.env import (
     ALLOWED_ENV_EXACT,
     ALLOWED_ENV_PREFIXES,
@@ -161,7 +162,13 @@ class VllmBackend:
         kv_key_file: str | None = None,
         kv_revisions: dict[str, str] | None = None,
     ) -> LaunchPlan:
-        argv = list(LAUNCH_HEAD) + build_vllm_args(
+        argv_head = list(LAUNCH_HEAD)
+        pin = bundled_pin(model)
+        if pin and engine_driver == "local":
+            bin_path = bundled_engine_bin(pin)
+            if bin_path is not None:
+                argv_head = [str(bin_path), "serve"]
+        argv = argv_head + build_vllm_args(
             model,
             port=port,
             overrides=overrides,

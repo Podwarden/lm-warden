@@ -21,7 +21,7 @@ export type KvTenantUsage = S["KvTenantUsage"];
 export type TokenCacheOut = S["TokenCacheOut"];
 export type KvIsolation = "sharing" | "isolated";
 export type CacheIsolation = "isolated" | "unsupported";
-export type KvStoreMode = "off" | "ram" | "ram+nvme";
+export type KvStoreMode = "off" | "ram" | "ram+nvme" | "nvme";
 export type EvictPolicy = "lru" | "fair";
 
 export const WINDOW_KEYS = ["1h", "24h", "7d"] as const;
@@ -104,7 +104,7 @@ export function useEvictPolicy(): EvictPolicy {
   return data?.kv_evict_policy === "fair" ? "fair" : "lru";
 }
 
-export const KV_STORE_LABEL: Record<KvStoreMode, string> = { off: "off", ram: "RAM", "ram+nvme": "RAM + disk" };
+export const KV_STORE_LABEL: Record<KvStoreMode, string> = { off: "off", ram: "RAM", "ram+nvme": "RAM + disk", nvme: "disk only" };
 
 /** Shown on a turn, a router rule and the models lists. */
 export const MARK = {

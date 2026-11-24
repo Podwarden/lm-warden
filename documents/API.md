@@ -170,6 +170,14 @@ curl -s $W/api/models/$M -H "Authorization: Bearer $JWT" | jq '.status, .last_er
 curl -s -X POST $W/api/models/$M/unload "${AUTH[@]}"
 ```
 
+`engine_vllm_version` pins the engine binary a model launches. A bare
+version id with no `engine_channel` and no `engine_image` selects an engine
+bundled in the image under `/opt/lmw-engines/<version id>/` — the warden
+launches that install's `vllm` instead of the one on PATH, and refuses the
+load (before claiming any GPU) when the id names no bundled engine. A pin
+that sets `engine_channel` selects the docker-driver image path instead and
+is never treated as bundled.
+
 Loading is not instant: the weights go to the GPU, CUDA graphs are captured and
 a warmup request is served before the model is reported `loaded`. Tens of
 seconds is normal for a small model, minutes for a large one.
@@ -372,6 +380,42 @@ model is marked `failed` with the stall reason. There is no automatic retry.
 
 ---
 
+## Model aliases
+
+A **model alias** is a named, first-class object clients call. It holds an
+**ordered list of target models** (loaded or not) plus optional proxy-side
+settings; it is not a rule, not a template, and not a copy of a model. The
+proxy resolves a request's `model` against alias names **first**, then served
+names, so an alias may share the name of a model and then wins (`lmw-default`
+→ `[qwen]` answers as `lmw-default` while `qwen` is served). It is how clients
+survive a model swap.
+
+Rules (owner decisions 2026-11-23/24):
+
+| Rule | Meaning |
+|------|---------|
+| D4a name priority | A request's `model` is matched against alias names **first**, then model served names. An alias may have the same name as a model and then wins. Alias names are unique among aliases only. |
+| D4b fallback | The first target in the list that is **loaded** serves the request. If none is loaded, the answer is `404` `no model behind alias '<name>' is loaded` -- the same status as today's not-loaded answer. |
+| D4c settings | `guard` (sensitive data): `inherit` \| `sanitize` \| `block` -- the **stricter** of the key's guard and the alias's applies (block > sanitize > none); an alias never weakens a key. `thinking_policy`: `inherit` \| `client` \| `on` \| `off` -- precedence key > alias > model. `params`: a map of request parameter → `{value, mode}`, mode `default` (used only when the client sent none), `force` (always replaces) or `cap` (numeric only: `min(client, value)`, or `value` when the client sent none). Allowed parameters: `max_tokens` int ≥1 (all three modes), `temperature` float 0–2, `top_p` float 0–1, `top_k` int ≥−1, `min_p` float 0–1, `presence_penalty` / `frequency_penalty` float −2–2, `repetition_penalty` float 0–2, `seed` int, `reasoning_effort` one of `low|medium|high` (default/force only), and `chat_template_kwargs.<key>` entries (any JSON scalar, default/force only). Anything else is refused at write time (`422`). |
+| D4d allow-list | A request through an alias is allowed when the key's model allow-list contains the alias name **or** the served name of the model that serves it. |
+| D4e `/v1/models` | `/v1/models` lists each alias that has a loaded target (allowed for the key) under the alias name, and hides a model whose served name is shadowed by an alias. |
+
+Endpoints (JWT; the same credential as every other control route):
+
+| Route | Meaning |
+|-------|---------|
+| `GET /api/aliases` | `{"aliases": [...]}` — each alias with its targets (`id`, `served_model_name`, `status`), settings and `enabled`. |
+| `POST /api/aliases` | `201`; `name` (same pattern and length as `served_model_name`) is unique among aliases (a duplicate is `409`); targets must exist (`422`); 0–8 distinct targets. A name may equal a model's served name. |
+| `GET /api/aliases/{id}` | `200` or `404`. |
+| `PATCH /api/aliases/{id}` | `200`; omitted keys are left alone; a duplicate name is `409`; `422` for a value that breaks the rules above. |
+| `DELETE /api/aliases/{id}` | `204`; `404` if unknown. |
+
+Deleting a model **removes it from every alias's `targets`** (the alias itself
+survives, with an empty or shortened list). Re-adding it means re-adding it
+to the targets.
+
+---
+
 ## Health and readiness
 
 Two public routes (no credential) for two different questions, and an admin
@@ -468,6 +512,18 @@ traffic after a deploy or a restart. Keep `/healthz` as the container's
 liveness probe. Do not make `/readyz` the api container's readiness probe
 either: a warden with no model loaded is correctly not ready, and the same
 container serves the UI and the API you would use to load one.
+
+---
+
+## Engine capability
+
+`GET /api/system/engine` (JWT) reports the active engine driver's
+capability: `driver` (`"docker"` or `"subprocess"`), `supports_version_select`
+(whether this driver can honor an engine-version pin), `vllm_version` (the
+vLLM package version baked into the image, or null) and `bundled_vllm` — the
+sorted list of version ids of the engines bundled in the image under
+`/opt/lmw-engines` (empty when none is installed). A model row's
+`engine_vllm_version` names one of those ids; see the model section above.
 
 ---
 

@@ -29,6 +29,8 @@ from app.guard.placeholders import RestoreMap
 from app.models.context_window import effective_context_window
 from app.models.parallelism import spill_threshold_for
 from app.proxy import content_log, forest_fields, prompt_lens_switch
+from app.proxy.alias_overrides import apply_alias_params
+from app.proxy.aliases import first_loaded_target, resolve_alias
 from app.proxy.auth import require_bearer, token_allows
 from app.proxy.capture import capturing
 from app.proxy.dp_affinity import KV_MAX_AGE_S, RANK_HEADER, client_rank
@@ -53,7 +55,7 @@ from app.proxy.kv_scope import (
     running_backend,
 )
 from app.proxy.live_tokens import LiveOutCounter
-from app.proxy.model_cache import all_models, model_by_served_name
+from app.proxy.model_cache import all_aliases, all_models, model_by_served_name
 from app.proxy.prompt_diet import apply_diet, parse_diet
 from app.proxy.prompt_lens import PromptLensHub
 from app.proxy.prompt_lens_capture import (
@@ -73,7 +75,11 @@ from app.proxy.request_registry import LiveRequest, finished_record
 from app.proxy.runaway import RunawayDetector
 from app.proxy.scheduler import model_admission_cap
 from app.proxy.session_id import SessionInfo, extract_session
-from app.proxy.thinking_policy import apply_thinking_off, effective_policy
+from app.proxy.thinking_policy import (
+    apply_thinking_off,
+    apply_thinking_on,
+    effective_policy,
+)
 
 # Aliased: the forward handler already binds a LOCAL `registry` (the Plane-B
 # live-request registry off app.state), which would shadow an unaliased import
@@ -129,11 +135,19 @@ STALE_KEEPALIVE_FAIL_S = 1.0
 async def _resolve_target(request: Request, served_name: str):
     # From the cached models table (#293): every ModelRepo write drops it, so a
     # status change decides the very next request's 404.
-    model = await model_by_served_name(
-        getattr(request.app.state, "model_cache", None),
-        request.app.state.settings.db_path,
-        served_name,
-    )
+    cache = getattr(request.app.state, "model_cache", None)
+    db_path = request.app.state.settings.db_path
+    # Aliases first (D4a): an enabled alias wins over a model with the same served name.
+    alias = await resolve_alias(cache, db_path, served_name)
+    if alias is not None:
+        # D4b: the first LOADED target in the ordered list serves the request.
+        model = first_loaded_target(alias, await all_models(cache, db_path))
+        request.state.lmw_alias = alias
+        if model is None:
+            raise HTTPException(404, f"no model behind alias '{alias.name}' is loaded")
+        return _resolve_loaded(request, model, served_name)
+    request.state.lmw_alias = None
+    model = await model_by_served_name(cache, db_path, served_name)
     return _resolve_loaded(request, model, served_name)
 
 
@@ -1734,7 +1748,11 @@ async def _forward_body(
     g_guard = (
         None
         if g_handed is not None
-        else guard_proxy.guard_for(getattr(request.app.state, "guard_platform", None), token)
+        else guard_proxy.guard_for(
+            getattr(request.app.state, "guard_platform", None),
+            token,
+            getattr(request.state, "lmw_alias", None),
+        )
     )
     if g_handed is not None:
         g_out = g_handed
@@ -2313,18 +2331,20 @@ async def _forward_body(
         body = json.dumps(body_json).encode()
 
     # Thinking policy (spec 2026-10-25 §17.3): a token or model set to "off"
-    # forces chat_template_kwargs.enable_thinking=false. Runs on the final
-    # (already translated, for /v1/messages and /v1/responses) chat body.
-    # "client" forwards the bytes untouched. Fail open: any error forwards the
-    # body as it was.
+    # forces chat_template_kwargs.enable_thinking=false. An alias's policy takes
+    # the model's place (D4c); the key still wins. Runs on the final (already
+    # translated, for /v1/messages and /v1/responses) chat body. "client"
+    # forwards the bytes untouched. Fail open: any error forwards the body as
+    # it was.
+    alias = getattr(request.state, "lmw_alias", None)
     thinking_forced_off = False
     try:
-        if (
-            effective_policy(
-                getattr(token, "thinking_policy", None), getattr(model, "thinking_policy", None)
-            )
-            == "off"
-        ):
+        policy = effective_policy(
+            getattr(token, "thinking_policy", None),
+            getattr(model, "thinking_policy", None),
+            getattr(alias, "thinking_policy", None),
+        )
+        if policy == "off":
             if apply_thinking_off(body_json):
                 body = json.dumps(body_json).encode()
             # Marked for every chat body under an effective "off", even when the
@@ -2333,8 +2353,21 @@ async def _forward_body(
             # it", so the post-deploy check reads 1 on every turn.
             if isinstance(body_json.get("messages"), list):
                 thinking_forced_off = True
+        elif policy == "on":
+            if apply_thinking_on(body_json):
+                body = json.dumps(body_json).encode()
     except Exception:
         logger.debug("thinking policy: could not apply, forwarding unchanged", exc_info=True)
+
+    # Alias parameter overrides (D4c): applied on the final chat/completions body
+    # right after the thinking policy, inside the same fail-open try (an error
+    # forwards the body unchanged and logs at debug).
+    try:
+        if alias is not None and alias.params:
+            if apply_alias_params(body_json, alias.params):
+                body = json.dumps(body_json).encode()
+    except Exception:
+        logger.debug("alias params: could not apply, forwarding unchanged", exc_info=True)
 
     # Prompt diet (2026-10-28): the key's opt-in cut of unused tools and carried
     # reasoning, on the final chat body. Lineage and the recorded shape were
@@ -3837,9 +3870,21 @@ async def chat_completions(request: Request, token: TokenRow = Depends(require_b
     served_name = body_json.get("model")
     if not served_name:
         raise HTTPException(400, "missing 'model' field")
-    if not token_allows(token, served_name):
+    alias = await resolve_alias(
+        getattr(request.app.state, "model_cache", None),
+        request.app.state.settings.db_path,
+        served_name,
+    )
+    if alias is None and not token_allows(token, served_name):
+        # Non-alias request: the original refusal, before the lookup that 404s.
         raise HTTPException(403, f"token not allowed for model '{served_name}'")
     model, host, port, variant = await _resolve_target(request, served_name)
+    if alias is not None and not (
+        token_allows(token, served_name) or token_allows(token, model.served_model_name)
+    ):
+        # D4d: a request through an alias is allowed when the key's allow-list
+        # contains the alias name OR the served name of the model that serves it.
+        raise HTTPException(403, f"token not allowed for model '{served_name}'")
 
     # Re-set the body on the request so _forward can re-read it.
     async def _receive():
@@ -3859,9 +3904,21 @@ async def completions(request: Request, token: TokenRow = Depends(require_bearer
     served_name = body_json.get("model")
     if not served_name:
         raise HTTPException(400, "missing 'model' field")
-    if not token_allows(token, served_name):
+    alias = await resolve_alias(
+        getattr(request.app.state, "model_cache", None),
+        request.app.state.settings.db_path,
+        served_name,
+    )
+    if alias is None and not token_allows(token, served_name):
+        # Non-alias request: the original refusal, before the lookup that 404s.
         raise HTTPException(403, f"token not allowed for model '{served_name}'")
     model, host, port, variant = await _resolve_target(request, served_name)
+    if alias is not None and not (
+        token_allows(token, served_name) or token_allows(token, model.served_model_name)
+    ):
+        # D4d: a request through an alias is allowed when the key's allow-list
+        # contains the alias name OR the served name of the model that serves it.
+        raise HTTPException(403, f"token not allowed for model '{served_name}'")
 
     async def _receive():
         return {"type": "http.request", "body": body_bytes, "more_body": False}
@@ -3880,11 +3937,41 @@ async def list_models(request: Request, token: TokenRow = Depends(require_bearer
     # write drops, so it is never a superseded generation of a row.
     cache = getattr(request.app.state, "model_cache", None)
     rows = await all_models(cache, settings.db_path)
-    loaded = [r for r in rows if r.status == "loaded" and token_allows(token, r.served_model_name)]
+    aliases = await all_aliases(cache, settings.db_path)
+    # D4e: an enabled alias shadows a model with the same served name; that
+    # model is hidden and the alias is listed instead.
+    alias_names = {a.name for a in aliases if a.enabled}
+    loaded = [
+        r
+        for r in rows
+        if r.status == "loaded"
+        and r.served_model_name not in alias_names
+        and token_allows(token, r.served_model_name)
+    ]
+    # D4e: each enabled alias with a loaded target the key may use (by the
+    # alias name or the serving model's served name) is listed under the alias
+    # name with the SAME fields as that model's own entry: clients size their
+    # context from max_model_len.
+    alias_targets = []
+    for alias in aliases:
+        if not alias.enabled:
+            continue
+        target = first_loaded_target(alias, rows)
+        if target is None:
+            continue
+        if not (token_allows(token, alias.name) or token_allows(token, target.served_model_name)):
+            continue
+        alias_targets.append((alias, target))
+    listed = list(loaded)
+    seen = {r.id for r in loaded}
+    for _alias, target in alias_targets:
+        if target.id not in seen:
+            seen.add(target.id)
+            listed.append(target)
     blocks: dict[str, dict[str, Any]] = {}
     # The stress records still need the database, but only when something is
     # listed: a token that sees no loaded model costs no connection at all.
-    if loaded:
+    if listed:
         async with open_db(settings.db_path) as db:
             # Additive only. `id`/`object`/`owned_by` keep their exact meaning:
             # OpenAI clients ignore unknown fields, so `warden` costs nothing to a
@@ -3896,11 +3983,11 @@ async def list_models(request: Request, token: TokenRow = Depends(require_bearer
             # configuration this engine is not running -- a client told it may send
             # 96k-token prompts to an engine allocated for 32k would get a refusal
             # it has no way to interpret. See app/stress/routes_api.py.
-            blocks = await warden_blocks_for(request.app.state, db, loaded, all_models=rows)
+            blocks = await warden_blocks_for(request.app.state, db, listed, all_models=rows)
     sup = getattr(request.app.state, "supervisor", None)
     isolated = is_isolated(token)
-    data = []
-    for r in loaded:
+    entries: dict[str, dict[str, Any]] = {}
+    for r in listed:
         entry: dict[str, Any] = {
             "id": r.served_model_name,
             "object": "model",
@@ -3925,5 +4012,8 @@ async def list_models(request: Request, token: TokenRow = Depends(require_bearer
             entry["lmw_cache_isolation"] = (
                 "isolated" if can_isolate_running(request.app.state, r) else "unsupported"
             )
-        data.append(entry)
+        entries[r.id] = entry
+    data = [entries[r.id] for r in loaded]
+    for alias, target in alias_targets:
+        data.append({**entries[target.id], "id": alias.name})
     return {"object": "list", "data": data}

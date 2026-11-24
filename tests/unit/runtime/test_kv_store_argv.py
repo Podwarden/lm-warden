@@ -58,7 +58,7 @@ def test_off_and_missing_attribute_emit_nothing():
     assert _flag(build_vllm_args(_model(), port=1)) is None  # stand-in row without the column
 
 
-@pytest.mark.parametrize("tiers", ["ram", "ram+nvme"])
+@pytest.mark.parametrize("tiers", ["ram", "ram+nvme", "nvme"])
 def test_tiers_emit_exact_connector_config(tiers):
     argv = build_vllm_args(_model(kv_store=tiers), port=1, kv_socket=SOCK, kv_revisions=REVS)
     assert json.loads(_flag(argv)) == {
@@ -86,7 +86,7 @@ def test_flag_precedes_extra_args():
     assert argv.index("--kv-transfer-config") < argv.index("--foo")
 
 
-@pytest.mark.parametrize("tiers", ["ram", "ram+nvme"])
+@pytest.mark.parametrize("tiers", ["ram", "ram+nvme", "nvme"])
 def test_docker_driver_never_gets_the_connector_argv(tiers):
     """F1: a docker-driver engine is a sibling container; it cannot reach the daemon."""
     with pytest.raises(KvTierUnsupported, match="VW_ENGINE_DRIVER=docker"):

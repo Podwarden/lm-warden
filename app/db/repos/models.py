@@ -104,7 +104,7 @@ class ModelRow:
     # Migration 0051: "client" = the request decides, "off" = the proxy forces
     # thinking off. Read per request, so editable while loaded.
     thinking_policy: str = "client"
-    # Migration 0058: KV-cache tiers, "off" | "ram" | "ram+nvme". Changes argv, so reload-only.
+    # Migration 0058: KV-cache tiers, "off" | "ram" | "ram+nvme" | "nvme". Changes argv, so reload-only.
     kv_store: str = "off"
     # Migration 0060: the model's part of each KV tier under the fair eviction policy.
     kv_store_weight: int = 1

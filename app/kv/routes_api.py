@@ -24,7 +24,11 @@ router = APIRouter(prefix="/api/kv", tags=["kv"])
 async def get_kv_usage(request: Request, _user: str = Depends(require_jwt)) -> dict[str, Any]:
     """The tiers (capacity, used, dead), then per model its weight, part and use, and per
     key inside it: use, fair share and evictions per tier, and who evicted its blocks.
-    Byte counts; keys no longer on the server are ``unknown``."""
+    With a minor 2 store, ``reuse`` per model and per key (reuse, reloads, disk bytes
+    written and read, the histogram of reloads at eviction, regret) and each model's
+    ``top_reused`` (null: not available). Byte counts; keys no longer on the server are
+    ``unknown``. ``pool_error`` and ``nvme_error`` say why the store keeps its RAM pool or
+    its disk tier off (null when fine)."""
     stats = await usage.fetch_stats(request.app.state)
     nk = usage.network_key(request.app.state)
     names: dict[bytes, tuple[str, str]] = {}
@@ -35,4 +39,7 @@ async def get_kv_usage(request: Request, _user: str = Depends(require_jwt)) -> d
             names = usage.tenant_names(rows, nk)
         except ImportError:
             names = {}
-    return usage.kv_usage(stats, names)
+    top = await usage.fetch_tops(request.app.state, stats)
+    out = usage.kv_usage(stats, names, top)
+    out.update(usage.store_errors(stats, getattr(request.app.state, "kv_store", None)))
+    return out

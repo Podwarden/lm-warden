@@ -18,7 +18,7 @@ from app.proxy.thinking_policy import ThinkingPolicy
 from app.runtime.backends import registry
 
 #: KV-cache tiers (lmw_kv, migration 0058). ``off`` leaves the engine untouched.
-KvStore = Literal["off", "ram", "ram+nvme"]
+KvStore = Literal["off", "ram", "ram+nvme", "nvme"]
 
 #: Engine flags the ``kv_store`` setting owns; a second source would conflict with
 #: the connector it wires in. Each maps to the shortest abbreviation vLLM's parser
@@ -422,6 +422,22 @@ class ModelSpec(BaseModel):
             b = self.backend or registry.DEFAULT_BACKEND
             if tok := model_id_flag_in(b, self.extra_args):
                 raise ValueError(model_id_refusal(b, tok))
+        return self
+
+    @model_validator(mode="after")
+    def _engine_vllm_version_valid(self) -> "ModelSpec":
+        """A bare ``engine_vllm_version`` names a bundled install (see
+        ``engines.bundled_pin``): it must be a safe version id, never a path,
+        so it can never reach a filesystem path.
+
+        Only when the row carries no ``engine_channel``: that is the
+        docker-driver image path, where the version is an upstream tag and
+        no bundled install is consulted.
+        """
+        if self.engine_vllm_version and not self.engine_channel:
+            from app.runtime.backends.vllm.engines import validate_version_id
+
+            validate_version_id(self.engine_vllm_version)
         return self
 
     @model_validator(mode="after")

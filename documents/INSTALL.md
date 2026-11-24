@@ -16,10 +16,10 @@ On Linux there are two routes, and you should pick one before you start:
 
 | | [Path A: run the published images](#path-a-run-the-published-images) | [Path B: build everything from source](#path-b-build-everything-from-source) |
 |---|---|---|
-| What you download | ~9.3 GB of image layers | a ~9 GB CUDA base image, then source from GitHub, PyPI and npm |
+| What you download | ~14.3 GB of image layers | a ~9 GB CUDA base image, then source from GitHub, PyPI and npm |
 | What you compile | nothing | llama.cpp against CUDA, `@podwarden/chat-ui`, the Next.js UI |
 | Time to a running stack | the image pull, then seconds | ~19 minutes on 32 threads; 1–3 hours on 4–8 cores — or ~5 minutes if you narrow the CUDA architectures to your own card ([B2](#b2-build-and-how-long-it-really-takes)) |
-| Disk | ~40 GB | ~40 GB, plus a BuildKit cache that reached 39 GB here |
+| Disk | ~55 GB | ~55 GB, plus a BuildKit cache that reached 39 GB here |
 | Choose it if | you want to run the software | you want the binaries to be ones you built, or you need to change the CUDA architectures, the llama.cpp pin, or the chat-ui pin |
 
 Path B is not harder to *drive* — it is four commands — but it is longer, it
@@ -85,7 +85,7 @@ This is the Linux host. A Mac needs only what
 - **The NVIDIA Container Toolkit, registered with Docker.** A working
   `nvidia-smi` is not sufficient and this is the single most likely thing to
   stop you at step A2. See [A2](#a2-preflight-first).
-- **40 GB free on the Docker data root** — the filesystem under
+- **55 GB free on the Docker data root** — the filesystem under
   `docker info --format '{{.DockerRootDir}}'`, usually `/var/lib/docker`, which
   is often not the one under `/`.
 - **`curl` and `jq`**, if you intend to drive the first run or the model API from
@@ -98,25 +98,26 @@ A GPU is needed to *run* the api image. It is not needed to build it.
 
 ### What it will cost you in disk
 
-Measured on the host, for one release:
+Measured on the host, for one release (the api row adds the bundled vLLM
+engine that v2026.11.24.1 brought in: +4.3 GB on the wire, +9.7 GB unpacked):
 
 | Image | On disk | On the wire |
 |---|---|---|
-| `lm-warden` (api) | 28.9 GB | 9.22 GB |
+| `lm-warden` (api) | ~44 GB | 14.3 GB |
 | `lm-warden-ui` | 313 MB | 75.5 MB |
 | `caddy:2-alpine` | 88.7 MB | 24.3 MB |
 
-The 28.9 GB is not a mistake and not a redundant copy you can avoid: the image
-unpacks to about 19.7 GB, and a current Docker Engine's containerd image store
-keeps the compressed layers alongside it. **Every release you keep costs another
-~29 GB.** Two releases coexisted on this host during the trial and together held
-~58 GB.
+The ~44 GB is not a mistake and not a redundant copy you can avoid: the image
+unpacks to about 29.4 GB, and a current Docker Engine's containerd image store
+keeps the compressed layers alongside it. **Every release you keep costs up to
+another ~44 GB**, less the layers it shares with the one before (the base and
+the bundled engine rarely change between releases).
 
 Models come on top of that and are not small. The HuggingFace cache — the
 `vw-hfcache` volume — grows with every model you pull and has no bound.
 
-The installer measures free space there, warns under 40 GB, and refuses a
-first pull under 20 GB, where the image cannot even be unpacked (`--check`
+The installer measures free space there, warns under 55 GB, and refuses a
+first pull under 30 GB, where the image cannot even be unpacked (`--check`
 reports the number without installing).
 
 ### `VW_COOKIE_SECRET` is mandatory and has no fallback
@@ -365,7 +366,7 @@ LM Warden is installed in /home/you/lm-warden
 
 **The trial cannot tell you honestly.** Wall clock on that run was 5 seconds,
 because Docker already held a previous release and the pull moved about 26 MB of
-changed layers. A first-time host on a clean Docker downloads ~9.3 GB and unpacks
+changed layers. A first-time host on a clean Docker downloads ~14.3 GB and unpacks
 ~29 GB, and how long that takes is entirely your link. Budget minutes, not
 seconds, and watch `docker compose pull` rather than a stopwatch.
 

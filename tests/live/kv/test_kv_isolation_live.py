@@ -356,7 +356,7 @@ def iso(kv_cfg: KvLiveConfig):
         r.extra["runtime"] = {k: runtime.get(k) for k in runtime if str(k).startswith("kv_")}
         if kv_cfg.log_cmd:
             r.log_before = run_cmd(kv_cfg.log_cmd).stdout.splitlines()
-        set_store(r, "ram+nvme")
+        set_store(r, kv_cfg.tier)
         yield r
     finally:
         try:
@@ -427,6 +427,8 @@ def gpu_case(iso: Iso, tier: str) -> dict[str, Any]:
     result["A again"] = {"cached": again.usage_cached, "tiers": again.tiers}
     assert not leaks, f"{tier}: another key reused A's blocks: {leaks}"
     got = int(again.tiers.get(tier) or 0)
+    if tier == "ram" and not cfg.has_ram_tier:  # disk only: the "RAM path" loads from NVMe
+        got = cfg.store_tokens(again.tiers)
     if tier == "gpu" and again.tiers.get("gpu") is None:  # kv_store off: no tier columns
         got = int(again.turn.get("cached_tokens") or again.usage_cached or 0)
     assert got > 0, f"{tier}: A's repeat did not hit its own {tier} blocks: {again.tiers}"
@@ -459,7 +461,7 @@ def test_g8_gpu_isolation_without_daemon(iso: Iso) -> None:
         iso.extra["g8"] = gpu_case(iso, "gpu")
         assert daemon_alive(cfg) is False, "the daemon came back during the test"
     finally:
-        set_store(iso, "ram+nvme")
+        set_store(iso, iso.w.cfg.tier)
 
 
 # ---------------------------------------------------------------------------
@@ -476,7 +478,7 @@ def test_g11_parity_mixed_keys(iso: Iso) -> None:
     set_store(iso, "off")
     vp = iso.send(iso.b, p, n, "g11-vanilla-p")
     vq = iso.send(iso.b, q, n, "g11-vanilla-q")
-    set_store(iso, "ram+nvme")
+    set_store(iso, iso.w.cfg.tier)
     res: dict[str, Any] = {}
     bad: list[str] = []
 
@@ -542,6 +544,8 @@ def _unload_row(w: Warden, model_id: str) -> None:
 
 def test_g12_two_rows_one_namespace(iso: Iso) -> None:
     cfg = iso.w.cfg
+    if not cfg.has_ram_tier:
+        pytest.skip("G12 needs a ram row beside the tier under test; VW_KV_LIVE_TIER=nvme")
     if not (cfg.g12_hf_repo and cfg.g12_revision and cfg.segments_cmd):
         pytest.skip("set VW_KV_LIVE_G12_HF_REPO, VW_KV_LIVE_G12_REVISION, VW_KV_LIVE_SEGMENTS_CMD")
     if len(cfg.g12_gpus) < 2:
@@ -618,6 +622,8 @@ def usage(w: Warden) -> dict[str, Any]:
 
 def test_fair_flood_smoke(iso: Iso) -> None:
     cfg = iso.w.cfg
+    if not cfg.has_ram_tier:
+        pytest.skip("the fair flood measures the RAM tier's share; VW_KV_LIVE_TIER=nvme")
     w, mid = iso.w, iso.model_id
     w.ok("PATCH", "/api/settings/runtime", json={"kv_evict_policy": "fair"})
     deadline = time.monotonic() + 30

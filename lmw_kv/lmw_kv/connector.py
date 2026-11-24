@@ -39,6 +39,7 @@ import mmap
 import os
 import queue
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -72,7 +73,10 @@ if TYPE_CHECKING:
     from vllm.v1.kv_cache_interface import KVCacheConfig
     from vllm.v1.request import Request
 
-logger = init_logger(__name__)
+# Under "vllm": vLLM's logging config gives a handler only to that logger tree, so an
+# INFO line from "lmw_kv.connector" (the "store on" and "worker ready" lines operators
+# check after a load) never reached the engine log.
+logger = init_logger("vllm.lmw_kv.connector")
 
 # Env vars that change the bytes of a KV block without changing the config we read.
 _LAYOUT_ENV = ("VLLM_KV_CACHE_LAYOUT", "VLLM_ATTENTION_BACKEND")
@@ -90,6 +94,11 @@ class LmwKVMeta(KVConnectorMetadata):
 def _block_lists(blocks: KVCacheBlocks) -> list[list[int | None]]:
     """vLLM ``KVCacheBlocks`` -> per group, per position: block id, None for null."""
     return [[None if b.is_null else b.block_id for b in gb] for gb in blocks.blocks]
+
+
+def _page_round(n: int) -> int:
+    """A group's bytes as the daemon lays them out in a slot: rounded up to a page."""
+    return -(-n // mmap.PAGESIZE) * mmap.PAGESIZE
 
 
 def _cuda_ok(rc: Any) -> bool:
@@ -125,10 +134,15 @@ class LmwKVConnector(KVConnectorBase_V1, SupportsHMA):
         self._ram_path = ""
         self._ram_id: tuple[int, int] | None = None
         self._limit = 0
+        self._hello: dict[str, Any] = {}
+        self._window = 1  # blocks per load window (connector_logic.window_blocks)
         self._device: torch.device | None = None
         self._tracker = cl.LoadTracker()
         self._jobs: queue.Queue[cl.LoadJob | None] = queue.Queue()
         self._loader: threading.Thread | None = None
+        # The next load window's begin_load runs here, on its own daemon connection,
+        # while the loader thread copies the current one.
+        self._prefetch: ThreadPoolExecutor | None = None
         try:
             self._setup(vllm_config, kv_cache_config)
         except _Off as exc:
@@ -147,7 +161,9 @@ class LmwKVConnector(KVConnectorBase_V1, SupportsHMA):
     def _setup(self, vllm_config: VllmConfig, kv_cache_config: KVCacheConfig) -> None:
         cfg = cl.parse_config(self._kv_transfer_config.kv_connector_extra_config)
         if cfg is None:
-            raise _Off("kv_connector_extra_config needs socket, tiers ram|ram+nvme, min_tokens")
+            raise _Off(
+                "kv_connector_extra_config needs socket, tiers ram|ram+nvme|nvme, min_tokens"
+            )
         secret = cl.read_secret(os.environ.get(cl.KEY_ENV))
         if secret is None:
             raise _Off(f"{cl.KEY_ENV} missing, unreadable or not v1:<64 hex>")
@@ -367,6 +383,7 @@ class LmwKVConnector(KVConnectorBase_V1, SupportsHMA):
                 self._map_ram,
                 self._same_file,
                 nvme=cl.uses_nvme(self._cfg.tiers),
+                staging=cl.uses_staging(self._cfg.tiers),
                 owner=self._cfg.owner,
                 model=self._model,
                 rank=self._rank,
@@ -374,15 +391,24 @@ class LmwKVConnector(KVConnectorBase_V1, SupportsHMA):
             )
         except cl.SetupError as exc:
             raise _Off(str(exc)) from None
+        if not cl.store_supports(self._cfg.tiers, self._hello):
+            raise _Off("the daemon is too old for disk-only")
+        block_bytes = max(_page_round(s) for s in self._sizes.values())
+        self._window = cl.window_blocks(
+            self._limit, block_bytes, self._model_ns.tp * self._model_ns.pp
+        )
+        self._prefetch = ThreadPoolExecutor(1, thread_name_prefix="lmw-kv-prefetch")
         self._loader = threading.Thread(target=self._load_loop, name="lmw-kv-load", daemon=True)
         self._loader.start()
         self._ready = True
         logger.info(
-            "LM Warden KV worker rank %d ready: %d groups, %d bytes/block, RAM file %d bytes",
+            "LM Warden KV worker rank %d ready: %d groups, %d bytes/block, RAM file %d bytes, "
+            "loads in windows of %d blocks",
             self._rank,
             len(self._groups),
             sum(self._sizes.values()),
             self._limit,
+            self._window,
         )
 
     def _map_ram(self) -> None:
@@ -391,6 +417,7 @@ class LmwKVConnector(KVConnectorBase_V1, SupportsHMA):
         h = self._client.hello()
         if not h or h.get("protocol") != 1:
             raise _Off("daemon unreachable or wrong protocol")
+        self._hello = h
         path, ram_bytes = h.get("ram_path"), h.get("ram_bytes")
         if not isinstance(path, str) or not isinstance(ram_bytes, int) or ram_bytes <= 0:
             raise _Off("daemon has no RAM tier")
@@ -465,6 +492,8 @@ class LmwKVConnector(KVConnectorBase_V1, SupportsHMA):
                     self._copy_in,
                     stream.synchronize,
                     self._same_file,
+                    window=self._window,
+                    prefetch=None if self._prefetch is None else self._prefetch.submit,
                 )
         if nvme is None and self._ready and not self._same_file():
             self._off("the daemon restarted; restart the engine to use the KV store again")
@@ -536,6 +565,9 @@ class LmwKVConnector(KVConnectorBase_V1, SupportsHMA):
             self._jobs.put(None)
             self._loader.join(timeout=5)
             self._loader = None
+        if self._prefetch is not None:
+            self._prefetch.shutdown(wait=False, cancel_futures=True)
+            self._prefetch = None
         if self._pinned_addr is not None:
             try:
                 torch.cuda.cudart().cudaHostUnregister(self._pinned_addr)

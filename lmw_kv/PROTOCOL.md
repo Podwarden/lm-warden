@@ -1,4 +1,4 @@
-# LM Warden KV store protocol, version 1, minor 1
+# LM Warden KV store protocol, version 1, minor 2
 
 The KV store daemon (`python -m lmw_kv.daemon`) keeps KV-cache blocks in a RAM tier
 (a shared-memory file) and an encrypted NVMe tier. Any inference engine can talk to
@@ -17,6 +17,15 @@ backward compatible:
   still works against this daemon, and its extra fields change nothing.
 - An op a daemon does not know is answered `unknown_op`. An adapter that needs a minor 1
   op checks `minor >= 1` first, or treats `unknown_op` like any failed call (fail open).
+
+Minor 2 adds: `depth` on `begin_save` (the parent check) and `parent_refused` in
+`stats`; `staging` on `register_ns` (staging namespaces), with `staging` in `stats` and
+in each `by_namespace` row; `tag` on `begin_load`, `used` on `end_load`, the reuse
+counters in `stats` (`reuse`, a `reuse` map in each `by_tenant` row, and
+`by_model[*].reuse`) and the op `top_reused`; `pool_error` in `hello` and `stats`, and
+`nvme_error`, `nvme_cap_effective_bytes` and `nvme_cap_note` in `stats` (the pool and
+disk guards). Later minor 2 fields are listed here as they land. An adapter that needs
+a minor 2 feature checks `minor >= 2`, or treats `unknown_op` like any failed call.
 
 Minor 1 adds: `owner`, `model`, `role` and `rank` on `register_ns`; `tenant`,
 `scope_tag` and `pos` on `begin_save`; `tenant` on `begin_load` and `record_hits`; the
@@ -214,10 +223,12 @@ the model tag in `model`. The daemon's error messages never repeat them.
 
 ### `hello`
 Request: `{"op":"hello","id":1}`
-Reply: `protocol` (int, 1), `minor` (int, 1; missing on a minor 0 daemon), `ram_path`
-(string), `ram_bytes` (int). Check `protocol == 1` before anything else. The daemon
-creates the RAM file (and commits all of it) before it listens, so once `hello` answers
-the file at `ram_path` exists with `ram_bytes` bytes (0: no RAM tier).
+Reply: `protocol` (int, 1), `minor` (int, 2; missing on a minor 0 daemon), `ram_path`
+(string), `ram_bytes` (int), and (minor 2) `pool_error` (string, sent only when there
+is no RAM pool for a reason; missing means null: the same text as `stats.pool_error`). Check `protocol == 1`
+before anything else. The daemon creates the RAM file (and commits all of it) before it
+listens, so once `hello` answers the file at `ram_path` exists with `ram_bytes` bytes
+(0: no RAM tier).
 
 ### `register_ns`
 Request: `namespace` (object with exactly the fields `model_repo`, `revision_sha`,
@@ -242,6 +253,36 @@ Minor 1 fields, all optional:
 
 `model`, `role` and `rank` are fixed by the first registration of the namespace; a
 later registration with other values only adds its owner.
+
+Minor 2 adds `staging` (boolean, default `false`; any other type is `bad_request`). A
+staging namespace keeps a block in RAM only while it moves between the engine and NVMe
+(a disk-only model). The rules, all inside the daemon and only for staging namespaces:
+
+- A namespace is staging only while its NVMe is on for every owner and every owner
+  registered it with `staging: true`. One owner without it makes a plain namespace.
+  `release_owner` and registering again decide it again.
+- While the NVMe tier is off (switched off by an error, or the directory not yet ours),
+  `begin_save` answers `null`. The daemon logs one warning each time this starts.
+- A `commit_save` that cannot queue its NVMe write drops the block instead of keeping it
+  in RAM.
+- Once a block's NVMe write lands, its RAM copy goes at once. If a load pins it, it goes
+  at that load's `end_load`.
+- A write that does not land (no room under the cap, a tenant's NVMe cap, an owner
+  without NVMe joining meanwhile, an NVMe error, its scope retired) drops the block, at
+  `end_load` if a load pins it.
+- A block a load read from NVMe leaves RAM when the last load pinning it ends.
+- Saves being written or waiting for their write hold at most half the pool's slots;
+  past that, `begin_save` answers `null`. Loads may use any free slot.
+- With no free slot a staging block may evict like a load. Under `lru` that is the
+  usual victim. Under `fair` it takes a dead position, or else the least recently used
+  one whose every RAM block is also on NVMe, and never one that is only in RAM: with
+  neither, `begin_save` answers `null`. Tenant RAM caps and shares do not apply to
+  staging blocks: they are not counted in any tenant's RAM bytes.
+- These drops are not evictions: they count in `stats.staging`, never in `evictions`,
+  `ram_evictions` or `evicted_by`.
+
+`lookup` is unchanged: a staging block counts while it is in RAM (committed) and, once
+written, through NVMe.
 Reply: `ns` (hex id). Idempotent; registering again with different group sizes is
 `bad_request`. A namespace whose blocks need larger slots than the RAM pool has may
 wait for the pool to go idle, then run without RAM (lookups return 0) until it
@@ -254,7 +295,15 @@ Request: `ns`, `keys` (list of hex). Reply: `n`, the number of leading keys stor
 ### `begin_save`
 Request: `ns`, `key`, `parent` (the previous block's key, or the root key), `scope`,
 and optionally (minor 1) `tenant` (16 bytes, default empty), `scope_tag` (16 bytes,
-default empty: a sharing block) and `pos` (32 bytes, default `key`).
+default empty: a sharing block) and `pos` (32 bytes, default `key`). Minor 2 adds
+`depth` (int, 0 or more, default unknown; a negative number, a boolean or a non-integer
+is `bad_request`): the block's index in its prefix chain, 0 for the first block.
+With `depth` above 0 the reply is `null` unless the parent is stored in the same
+namespace (in RAM in any state, or on NVMe) and its scope is not retired. `depth` 0 or
+no `depth` skips the check. Send `depth` only for namespaces saved as a prefix chain
+(attention groups, including the MTP layer). Do not send it for sparse state
+namespaces: a state block's parent key belongs to the attention chain, so the check
+would refuse every state block. The check reads in-memory indexes only.
 Reply: `offsets`: object group to byte offset, or `null` when the block already
 exists or is being saved, or there is no free slot, or the namespace is unusable
 (not registered, or released by its last owner). It is also `null` when `scope_tag`
@@ -276,6 +325,10 @@ be committed. A block that is not being saved is ignored.
 ### `begin_load`
 Request: `ns`, `keys`, and optionally (minor 1) `tenant` (16 bytes, default empty).
 A non-empty `tenant` takes over the charge of every loaded block, in RAM and on NVMe.
+Minor 2 adds `tag` (string, at most 255 UTF-8 bytes, default none; anything else is
+`bad_request`): a name for the request, the same on every rank and group that loads
+for it. Each position returned counts one load per tag (one per call without a tag).
+Without a tag a load never counts a reload (see `end_load`).
 Reply: `handle` (int), `slots`: a list, one object
 (group to byte offset) per key, for a prefix of `keys` (it may be shorter than
 `lookup` reported, or empty), and `nvme` (int): how many of those blocks this call
@@ -286,6 +339,14 @@ first read into RAM, so this call can take a while. The listed slots are pinned:
 ### `end_load`
 Request: `handle`. Reply: `{}`. Releases exactly the pins that `begin_load` took.
 An unknown or ended handle is ignored.
+Minor 2 adds `used` (boolean, default unknown; `null` is unknown too; anything else is
+`bad_request`). Send `used: true` once every slot was copied, the copy synced and the
+RAM file checked unchanged. It counts one reload of each position the load returned,
+once per `begin_load` tag, after the pins are released: a `ram` reload when the
+position was in RAM at `begin_load`, an `nvme` reload when that call read it from NVMe.
+`false` or no `used` counts nothing more. With loads split into windows, `used` is per
+window: if a later window fails, the earlier windows' reloads stay counted. Counters
+are advisory, so this is accepted.
 
 ### `record_hits`
 Request: `tag`, `ram_tokens` (int), `nvme_tokens` (int), `load_s` (number), and
@@ -307,7 +368,45 @@ Reply: `stats`: `ram_bytes`, `ram_used`, `nvme_used`, `nvme_enabled`, `blocks`,
 Minor 1 adds (byte counts are RAM slot bytes and NVMe record bytes on disk; tenants,
 models and namespaces are hex):
 
-- `policy` (`"lru"` or `"fair"`) and `nvme_cap_bytes`.
+- `policy` (`"lru"` or `"fair"`) and `nvme_cap_bytes` (the operator's cap,
+  `--nvme-cap-gb`, while NVMe is on; 0 while it is off). The cap the store enforces can
+  be lower: see `nvme_cap_effective_bytes` (minor 2).
+- `pool_error` (string or null, minor 2, default null): why there is no RAM pool. The
+  daemon compares the pool it is asked for with the free space of the pool file's
+  filesystem (`statvfs`, plus the size of an earlier pool file it replaces). A pool that
+  does not fit is not created and not shrunk: `RAM pool 8 GiB does not fit /dev/shm 2
+  GiB` (figures in GiB, at most one decimal). When space there is still held by deleted
+  files (an earlier daemon's pool that an engine still maps) the text says so. A pool
+  that fits but would shrink to nothing (the 2 GiB kept for the engines, or free memory)
+  or fails to commit has a reason too. The store then stores nothing: every save is
+  refused (fail open).
+- `nvme_error` (string or null, minor 2, default null): why the NVMe tier is off while it
+  is off, for example `NVMe tier off: /tmp is on the root filesystem (overlay); mount a
+  dedicated disk there, or set kv_store_nvme_allow_root_disk`. The daemon refuses an NVMe
+  directory whose filesystem is the root filesystem (`st_dev` of `/`) or an `overlay`,
+  `tmpfs` or `ramfs` mount (from `/proc/self/mountinfo`; where that is missing only the
+  `st_dev` rule applies), unless started with `--nvme-allow-root-disk`. Also a missing
+  marker (`--nvme-marker`), a lock held by another daemon, a disk with no room left
+  (below), or an I/O error that switched the tier off.
+- `nvme_cap_effective_bytes` (int, minor 2, default `nvme_cap_bytes`): the cap the store
+  enforces, `min(--nvme-cap-gb, segment bytes on disk + free bytes - 15% of the
+  filesystem's size)`, worked out when the tier comes on (at start and on each retry),
+  not per write; 0 while NVMe is off. When that is 0 the tier stays off and `nvme_error` says the disk
+  is too full.
+- `nvme_cap_note` (string or null, minor 2, default null): why the cap in force is under
+  `--nvme-cap-gb`, for example `cap 250 GB clamped to 42.1 GB: the filesystem has 49.5 GB
+  free and 15% is kept free` (figures in GB of 10^9 bytes).
+- `parent_refused` (int, minor 2): `begin_save` calls refused by the parent check, since
+  `started_at`.
+- `staging` (minor 2): `namespaces` (how many namespaces are staging now), `in_flight`
+  (RAM slots held by staging blocks now, in any state), and since `started_at`:
+  `save_refused` (staging saves answered `null` because NVMe was off, half the pool was
+  already saving, or no slot could be found), `save_waited` (staging saves that found no
+  room and waited for writes to land, up to 1.5 s, before they got a slot or were
+  refused; a save that waits answers later, so a client gives `begin_save`,
+  `commit_save` and `abort_save` a deadline longer than that wait), `write_dropped` (staging blocks dropped
+  because their write could not be queued or did not land) and `released` (staging
+  blocks that left RAM once on NVMe).
 - `started_at` (float, Unix seconds, wall time): when the store started. Evictions,
   `evicted_by` and the hit token counts below are counted since then; a daemon that
   does not send it is read as "unknown".
@@ -330,7 +429,42 @@ models and namespaces are hex):
   keeps every count.
 - `by_namespace`: namespace id to `model`, `role`, `rank`, `owners` (owner to its
   `nvme` flag), `live` (false once the last owner is released), `ram_bytes`,
-  `nvme_bytes`.
+  `nvme_bytes`, and (minor 2) `staging` (boolean: the namespace is staging now).
+- `reuse` (minor 2), store-wide: `reuse_persist_degraded` (boolean), `half_life_s`
+  (21600, the decay half-life), `order` (`"lru"`: the victim order inside one pair) and,
+  since `started_at`, `nvme_bytes_written` (record bytes that landed on NVMe) and
+  `nvme_bytes_read` (record bytes read back by promotions).
+- `reuse` in each `by_tenant` row, and `by_model[*].reuse`: tenant to the same map for
+  that model (minor 2; beside `tenants`, for the pairs listed there and every pair with
+  a position stored now). Two views. A daemon that does not send it is read as "not
+  available".
+  - `charged`, the tenant paying for a position now: `positions` and
+    `positions_reloaded` (stored now, and stored now with at least one reload), each
+    `{"ram", "nvme"}` (a position in both tiers counts in both); `reloads`,
+    `ram_reloads`, `nvme_reloads` (of the positions stored now); `evicted_hist`.
+  - `saver`, the tenant that saved a position: `positions` and `positions_reloaded`
+    (ints, a position counted once across tiers), `saver_reloads`, `evicted_hist`,
+    `nvme_bytes_written`, `nvme_bytes_read`, `wasted_nvme_bytes`, `regret`,
+    `admission_skipped` and `ghost_admitted` (both 0 in this minor). In the saver view
+    "reused" means reused by the saver itself: `positions_reloaded`, the saver
+    histogram and `wasted_nvme_bytes` count only `saver_reloads`, never reloads by other
+    tenants. So another key's reload of a sharing key's position never moves the
+    sharing key's own figures.
+  - `evicted_hist`: per tier (`ram`, `nvme`), per bucket of reloads when the position
+    left that tier by eviction or reclaim (`"0"`, `"1"`, `"2-3"`, `"4-7"`, `"8+"`),
+    `{"positions", "bytes"}`, since `started_at`. Staging releases are not evictions
+    and are not counted.
+  - `wasted_nvme_bytes`: NVMe bytes written for positions that left NVMe without a
+    reload by their saver. `regret`: saves of a position that left both tiers less than
+    24 hours earlier.
+  - A position whose every block is dead (retired scope, or a namespace with no owner)
+    appears in no figure.
+
+A **position** is `(model, pos)`: the same `pos` in every namespace of a model (every
+group and rank) is one position, counted once. Its counters live from the first commit
+of any member until it leaves both tiers. **No decision between two (model, tenant)
+pairs reads reuse counters.** No victim, refusal or admission reads them at all in this
+minor: they only count.
 
 ### `release_owner` (minor 1)
 Request: `owner` (string, at most 255 bytes). Reply: `released` (int): how many
@@ -363,6 +497,15 @@ practice a restart. Sharing blocks are not affected, and the daemon keeps servin
 later write that fails keeps the new tags retired in memory, retries them on the next
 write and reports `retired_persist_degraded: true`.
 
+The reuse counters (minor 2) are kept the same way in `<nvme_dir>/reuse.db`, one table
+`reuse` keyed by (model, position) with one column per counter of a position. The
+daemon writes the changed rows in one transaction every 30 seconds and at a clean stop,
+outside the store lock. Only positions with a member on NVMe are written. At attach, a
+row whose position has no NVMe member is deleted, and a position on NVMe with no row
+starts with no reloads and `d = 1`. Unlike `retired.db`, failure is open: if the file
+cannot be opened, read or written, the daemon keeps counting in memory, logs one warning
+and reports `reuse.reuse_persist_degraded: true`. No isolation property depends on it.
+
 ### `set_policy` (minor 1)
 Request: `policy`, an object. Reply: `{}`. Every key is optional (missing means the
 default), and keys the daemon does not know are ignored:
@@ -381,6 +524,31 @@ default), and keys the daemon does not know are ignored:
 A policy with any bad value is `bad_request` and changes nothing: the previous policy
 stays in force. A good one replaces the whole policy at once; the next eviction uses
 it. The daemon starts with `{"mode": "lru"}`.
+
+### `top_reused` (minor 2)
+Request: `view` (`"admin"` or `"holder"`), `n` (int, 1 to 50), and optionally `model`
+and `tenant` (16 bytes each, default any). `tenant` is required for `"holder"`.
+Anything else is `bad_request`. Reply: `rows`, at most `n` stored positions, most
+reloaded first, never a dead one. A minor 1 daemon answers `unknown_op`: read that as
+"not available".
+
+- `"holder"`: the tenant's own top list, ranked by its own reloads (a bounded top-64
+  count per tenant), so it never shows reloads by other tenants. A row is `label`,
+  `model` (hex), `depth` (-1 when unknown) and `reloads` (the tenant's own count).
+- `"admin"`: positions reloaded at least once, by all reloads (with `tenant`: only those
+  it is charged for). A row adds to the holder fields `decayed` (the reload count
+  halved every `half_life_s`), `last_reload` and `first_saved` (Unix seconds, wall time;
+  `last_reload` 0 when never), `tiers` (list of `"ram"`, `"nvme"`), `tenants_seen` (how
+  many distinct tenants reloaded it, at most 4), `many` (true once a fifth one did) and
+  `charged` (hex tenant).
+
+A **label** is `HMAC-SHA256(label_key, "lmw-reuse-label\0" + view_tenant + model +
+pos)`, its first 6 bytes in hex (12 characters). `view_tenant` is the holder's tenant,
+or empty for `"admin"`, so two tenants see unrelated labels for the same position.
+`label_key` is the NVMe data key while NVMe is on (labels are stable across restarts),
+else 32 random bytes made when the daemon starts. A label is not a block key or a
+position key and cannot be matched to either. Rows carry no key, scope or scope tag,
+and labels are never logged.
 
 ## Eviction
 

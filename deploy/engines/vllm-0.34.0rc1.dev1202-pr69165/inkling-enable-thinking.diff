@@ -1,0 +1,13 @@
+--- a/vllm/renderers/inkling.py
++++ b/vllm/renderers/inkling.py
+@@ -141,6 +141,10 @@
+         params: ChatParams,
+     ) -> list[int]:
+         kwargs = params.chat_template_kwargs or {}
++        # LM Warden: Inkling has no thinking switch; map the Qwen-style
++        # enable_thinking=false to the lowest reasoning effort when no effort was given.
++        if kwargs.get("reasoning_effort") is None and kwargs.get("enable_thinking") is False:
++            kwargs = {**kwargs, "reasoning_effort": "none"}
+ 
+         if not self._is_inkling2 and kwargs.get("continue_final_message"):
+             raise ValueError("Inkling renderer does not support continue_final_message")

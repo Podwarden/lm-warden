@@ -256,3 +256,13 @@ def test_reclaim_queries_use_their_indexes(tmp_path: Path) -> None:
         args = (b"x",) * sql.count("?")  # the trace may or may not expand parameters
         plan = " ".join(r[3] for r in m._db.execute("EXPLAIN QUERY PLAN " + sql, args))
         assert f"INDEX {index} " in plan, (sql, plan)
+
+
+def test_a_row_write_does_not_wait_for_a_disk_flush(tmp_path: Path) -> None:
+    """The writer puts a row while it holds the store lock. ``synchronous=FULL`` (SQLite's
+    default) flushes the WAL to the disk on every row, which took 21 ms (up to 0.67 s)
+    on a busy virtual disk and stalled every save behind it. In WAL mode ``NORMAL``
+    survives a crash of the daemon; only a power loss can drop the last rows (a miss)."""
+    m = Manifest(tmp_path / "manifest.db")
+    assert m.journal_mode() == "wal"
+    assert m.synchronous() == 1  # NORMAL

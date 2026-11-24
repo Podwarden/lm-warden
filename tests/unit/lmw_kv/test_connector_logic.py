@@ -63,8 +63,10 @@ class FakeClient:
         self.next_off = 0
         self.ended: list[int] = []
         self.load_limit: int | None = None  # emulate NVMe eviction after lookup
+        self.loaded: dict[bytes, int] = {}  # blocks handed out per namespace (load_limit)
         self.offsets_override: dict[str, Any] | None = None
         self.nvme = 0  # blocks each begin_load reports as promoted from NVMe
+        self.depths: dict[tuple[bytes, bytes], int | None] = {}  # begin_save's depth
 
     def lookup(self, ns_id: bytes, keys: list[bytes]) -> int:
         self.calls.append(("lookup", ns_id, len(keys)))
@@ -76,16 +78,18 @@ class FakeClient:
         return n
 
     def begin_load(
-        self, ns_id: bytes, keys: list[bytes], *, tenant: bytes = b""
+        self, ns_id: bytes, keys: list[bytes], *, tenant: bytes = b"", tag: str = ""
     ) -> tuple[int, list[dict[str, int]], int]:
-        self.calls.append(("begin_load", ns_id, list(keys), tenant))
+        self.calls.append(("begin_load", ns_id, list(keys), tenant, tag))
         n = self.lookup(ns_id, keys)
-        if self.load_limit is not None:
-            n = min(n, self.load_limit)
+        if self.load_limit is not None:  # only load_limit blocks of a namespace remain
+            n = max(0, min(n, self.load_limit - self.loaded.get(ns_id, 0)))
+        self.loaded[ns_id] = self.loaded.get(ns_id, 0) + n
         return 7, [self.offsets_override or {"*": 4096 * i} for i in range(n)], min(self.nvme, n)
 
-    def end_load(self, handle: int) -> bool:
+    def end_load(self, handle: int, *, used: bool | None = None) -> bool:
         self.ended.append(handle)
+        self.calls.append(("end_load", handle, used))
         return True
 
     def begin_save(
@@ -98,8 +102,10 @@ class FakeClient:
         tenant: bytes = b"",
         scope_tag: bytes = b"",
         pos: bytes = b"",
+        depth: int | None = None,
     ) -> dict[str, int] | None:
         self.calls.append(("begin_save", ns_id, key, parent, scope, tenant, scope_tag, pos))
+        self.depths[(ns_id, key)] = depth
         if (ns_id, key) in self.stored:
             return None
         if self.offsets_override is not None:
@@ -356,6 +362,31 @@ def test_tag_defaults_to_the_engine_request_id() -> None:
     assert s.build([], lambda rid: None).loads[0].tag == "r9"
 
 
+def test_a_tag_over_the_daemon_limit_becomes_its_hash() -> None:
+    import hashlib
+
+    long_id = "r" * 300
+    wide = "\u00e9" * 128  # 128 characters, 256 UTF-8 bytes
+    fits = "\u00e9" * 127 + "x"  # 255 bytes: kept as it is
+    assert cl.load_tag(fits) == fits
+    for v in (long_id, wide, "\ud800" + "x"):  # the last one is not valid UTF-8
+        t = cl.load_tag(v)
+        assert t == cl.load_tag(v) and len(t) == 64 and t != v
+        assert len(t.encode("utf-8")) <= cl.LOAD_TAG_MAX_BYTES
+    assert cl.load_tag(long_id) == hashlib.sha256(long_id.encode()).hexdigest()
+    assert cl.load_tag(long_id) != cl.load_tag(long_id + "2")
+    for rid, params in ((long_id, None), ("r", {"lmw_req": wide})):
+        fc = FakeClient()
+        s = _sched(fc)
+        keys = _keys(12)
+        _store(fc, 1, keys[:2])
+        _store(fc, 0, [keys[1]])
+        assert s.match(rid, list(range(12)), params, 0) == (8, True)
+        s.after_alloc(rid, [[None, 1, None], [2, 3, 4]], 8)
+        tag = s.build([], lambda r: None).loads[0].tag
+        assert tag == cl.load_tag(long_id if params is None else wide) and len(tag) == 64
+
+
 def test_a_null_block_where_a_load_must_land_dooms_the_job() -> None:
     fc = FakeClient()
     s = _sched(fc)
@@ -497,6 +528,7 @@ def test_a_load_that_lists_no_blocks_is_doomed() -> None:
             lambda g, b, o: None,
             lambda: None,
             lambda: True,
+            window=1000,
         )
         is None
     )
@@ -563,6 +595,8 @@ def _run_load(fc: FakeClient, job: cl.LoadJob, limit: int = 1 << 20, same: bool 
         copy=lambda g, b, o: copies.append((g, b, o)),
         sync=lambda: syncs.append(1),
         same_file=lambda: same,
+        window=1000,
+        sleep=lambda _s: None,
     )
     return ok, copies, syncs
 
@@ -620,6 +654,7 @@ def test_load_job_with_unreachable_daemon_fails() -> None:
         copy=lambda g, b, o: None,
         sync=lambda: None,
         same_file=lambda: True,
+        window=1000,
     )
     assert ok is None
 
@@ -734,7 +769,16 @@ def test_a_load_that_raises_logs_the_reason(caplog: Any) -> None:
 
     with caplog.at_level(logging.WARNING, logger="lmw_kv.connector"):
         got = cl.run_load_job(
-            fc, _job(fc), STORE_IDS, NAMES, SIZES, 1 << 20, boom, lambda: None, lambda: True
+            fc,
+            _job(fc),
+            STORE_IDS,
+            NAMES,
+            SIZES,
+            1 << 20,
+            boom,
+            lambda: None,
+            lambda: True,
+            window=1000,
         )
     assert got is None and fc.ended  # pins still released
     (line,) = [r.getMessage() for r in caplog.records if "load failed" in r.getMessage()]
@@ -760,13 +804,20 @@ class FreshDaemon:
         self.ram = ram
         self.calls: list[str] = []
         self.nvme: list[bool] = []
+        self.staging: list[bool] = []
         self.minor1: list[dict[str, Any]] = []
 
     def register_ns(
-        self, ns: Namespace, groups: dict[str, int], nvme: bool = True, **minor1: Any
+        self,
+        ns: Namespace,
+        groups: dict[str, int],
+        nvme: bool = True,
+        staging: bool = False,
+        **minor1: Any,
     ) -> bytes:
         self.calls.append("register_ns")
         self.nvme.append(nvme)
+        self.staging.append(staging)
         self.minor1.append(minor1)
         self.ram.touch()
         return namespace_id(ns)

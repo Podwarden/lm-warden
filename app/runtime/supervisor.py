@@ -11,6 +11,11 @@ import httpx
 from app.config import Settings
 from app.runtime.backends import registry
 from app.runtime.backends.paths import resolve_model_paths
+from app.runtime.backends.vllm.engines import (
+    bundled_engine_bin,
+    bundled_pin,
+    list_bundled_engines,
+)
 from app.runtime.backends.vllm.images import resolve_image
 from app.runtime.engine import EngineSpec
 from app.runtime.engine.local_subprocess import LocalSubprocessDriver
@@ -274,6 +279,16 @@ class Supervisor:
                     "whose vLLM version is fixed by the warden image. Clear the "
                     "engine pin on this model, or run LM Warden with "
                     "VW_ENGINE_DRIVER=docker to select engine versions."
+                )
+            # A bare engine_vllm_version names a bundled install. A pin naming
+            # an install this image does not carry is refused BEFORE any GPU is
+            # claimed, the same way the image pin above is: a load that is going
+            # to fail must not hold a card.
+            pin = bundled_pin(model)
+            if pin and bundled_engine_bin(pin) is None:
+                raise EnginePinUnsupported(
+                    f"bundled vLLM engine '{pin}' is not in this image "
+                    f"(present: {', '.join(list_bundled_engines()) or 'none'})"
                 )
             # Pass the served name so a refusal can say which model is in the
             # way; the id alone is meaningless to whoever reads last_error.

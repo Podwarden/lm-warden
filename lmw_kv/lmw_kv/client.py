@@ -6,7 +6,8 @@ promotion in ``begin_load``) never delays or fails another thread's. A thread's 
 ends. Any timeout, connection error, malformed reply or ``ok: false`` makes the call return ``None`` (``0`` for ``lookup``); nothing is
 raised. A failed connection is dropped (a late reply could not be matched to its
 request) and not retried by that thread for ``RETRY_AFTER_S``, so a dead or hung daemon
-costs a thread at most one timeout per half second. Failures are logged at most once
+costs a thread at most one timeout per half second (one save deadline per
+``SAVE_RETRY_AFTER_S`` after a save call). Failures are logged at most once
 a minute.
 """
 
@@ -40,6 +41,17 @@ LOAD_MAX_S = 30.0
 #: its whole life.
 REGISTER_TIMEOUT_S = 30.0
 REGISTER_TRIES = 2
+#: Deadline of ``begin_save``, ``commit_save`` and ``abort_save``. A save may wait in the
+#: daemon: for the store lock (held by the writer while it records a block) and, in a
+#: staging namespace, for room (``store.STAGING_SAVE_WAIT_S``). A timeout here costs more
+#: than the wait: it drops the thread's connection, the daemon aborts every save begun
+#: on it, and each later block of that prompt is refused for want of its parent.
+SAVE_TIMEOUT_S = 2.0
+#: After a save call fails on the transport, that thread makes no daemon call for this
+#: long (instead of ``RETRY_AFTER_S``): a hung daemon then costs the engine one save
+#: deadline every few seconds, not one per step.
+SAVE_RETRY_AFTER_S = 5.0
+_SAVE_OPS = frozenset({"begin_save", "commit_save", "abort_save"})
 
 
 def _close_box(box: list[socket.socket | None]) -> None:
@@ -84,12 +96,15 @@ class Client:
         slow_timeout_s: float = 2.0,
         load_per_key_s: float = LOAD_PER_KEY_S,
         register_timeout_s: float = REGISTER_TIMEOUT_S,
+        save_timeout_s: float = SAVE_TIMEOUT_S,
     ) -> None:
         """``register_timeout_s`` is the deadline of each ``register_ns`` try (see
         ``REGISTER_TIMEOUT_S``). ``begin_load`` may promote every key from NVMe, so its
         deadline is ``slow_timeout_s + load_per_key_s * len(keys)``, at most
-        ``LOAD_MAX_S``."""
+        ``LOAD_MAX_S``. ``save_timeout_s`` is the deadline of the save calls (see
+        ``SAVE_TIMEOUT_S``)."""
         self.socket_path = socket_path
+        self.save_timeout_s = save_timeout_s
         self.timeout_s = timeout_s
         self.slow_timeout_s = slow_timeout_s
         self.register_timeout_s = register_timeout_s
@@ -129,12 +144,16 @@ class Client:
         model: bytes = b"",
         role: str = "attention",
         rank: int = 0,
+        staging: bool = False,
     ) -> bytes | None:
         """``nvme`` False: the namespace's blocks stay in RAM, never on NVMe.
 
         ``owner`` names who holds the namespace (NVMe is on only if every owner wants
         it); ``model`` (16 bytes) groups namespaces for accounting; ``role`` and ``rank``
         say which part of the model it is. A minor 0 daemon ignores them.
+
+        ``staging`` (minor 2, sent only when true) asks the daemon to keep a block in
+        RAM only while it moves to or from NVMe. An older daemon ignores it.
 
         A transport failure is tried once more (after the back-off); a refusal is not.
         """
@@ -148,6 +167,8 @@ class Client:
             "role": role,
             "rank": rank,
         }
+        if staging:
+            req["staging"] = True
         for attempt in range(1, REGISTER_TRIES + 1):
             r, transport = self._call_once(req, self.register_timeout_s)
             if r is not None or not transport:
@@ -176,10 +197,12 @@ class Client:
         tenant: bytes = b"",
         scope_tag: bytes = b"",
         pos: bytes = b"",
+        depth: int | None = None,
     ) -> dict[str, int] | None:
         """``tenant`` pays for the block, ``scope_tag`` names its isolation scope (empty
         for a sharing key), ``pos`` is its position key (sent only when set; the daemon
-        uses ``key`` otherwise)."""
+        uses ``key`` otherwise). ``depth`` (minor 2) is the block's index in its prefix chain,
+        sent only when set; above 0 the daemon refuses a block whose parent is not stored."""
         req: dict[str, Any] = {
             "op": "begin_save",
             "ns": ns_id.hex(),
@@ -191,33 +214,40 @@ class Client:
         }
         if pos:
             req["pos"] = pos.hex()
-        r = self._call(req)
+        if depth is not None:
+            req["depth"] = depth
+        r = self._call(req, self.save_timeout_s)
         off = r.get("offsets") if r else None
         return off if isinstance(off, dict) else None
 
     def commit_save(self, ns_id: bytes, key: bytes) -> bool | None:
-        r = self._call({"op": "commit_save", "ns": ns_id.hex(), "key": key.hex()})
+        r = self._call(
+            {"op": "commit_save", "ns": ns_id.hex(), "key": key.hex()}, self.save_timeout_s
+        )
         return True if r is not None else None
 
     def abort_save(self, ns_id: bytes, key: bytes) -> bool | None:
-        r = self._call({"op": "abort_save", "ns": ns_id.hex(), "key": key.hex()})
+        r = self._call(
+            {"op": "abort_save", "ns": ns_id.hex(), "key": key.hex()}, self.save_timeout_s
+        )
         return True if r is not None else None
 
     def begin_load(
-        self, ns_id: bytes, keys: list[bytes], *, tenant: bytes = b""
+        self, ns_id: bytes, keys: list[bytes], *, tenant: bytes = b"", tag: str = ""
     ) -> tuple[int, list[dict[str, int]], int] | None:
         """``(handle, slots, nvme_blocks)``; ``slots`` may be shorter than ``keys``;
         ``nvme_blocks`` of them were promoted from NVMe by this call. A ``tenant`` takes
-        over the charge of the loaded blocks."""
-        r = self._call(
-            {
-                "op": "begin_load",
-                "ns": ns_id.hex(),
-                "keys": [k.hex() for k in keys],
-                "tenant": tenant.hex(),
-            },
-            self.load_timeout(len(keys)),
-        )
+        over the charge of the loaded blocks. ``tag`` (minor 2, sent only when set) names
+        the request, so its loads count once per position."""
+        req: dict[str, Any] = {
+            "op": "begin_load",
+            "ns": ns_id.hex(),
+            "keys": [k.hex() for k in keys],
+            "tenant": tenant.hex(),
+        }
+        if tag:
+            req["tag"] = tag
+        r = self._call(req, self.load_timeout(len(keys)))
         if (
             r is None
             or not isinstance(r.get("handle"), int)
@@ -233,8 +263,13 @@ class Client:
         """The ``begin_load`` deadline for ``n_keys`` keys."""
         return min(self.slow_timeout_s + self.load_per_key_s * max(n_keys, 0), LOAD_MAX_S)
 
-    def end_load(self, handle: int) -> bool | None:
-        r = self._call({"op": "end_load", "handle": handle})
+    def end_load(self, handle: int, *, used: bool | None = None) -> bool | None:
+        """``used`` (minor 2, sent only when set): True once every slot was copied and
+        checked, which counts a reload of each loaded position."""
+        req: dict[str, Any] = {"op": "end_load", "handle": handle}
+        if used is not None:
+            req["used"] = used
+        r = self._call(req)
         return True if r is not None else None
 
     def record_hits(
@@ -293,6 +328,29 @@ class Client:
         r = self._call({"op": "set_policy", "policy": policy}, self.slow_timeout_s)
         return True if r is not None else None
 
+    # ---- minor 2 (an older daemon answers unknown_op: None) -----------------------
+
+    def top_reused(
+        self,
+        *,
+        model: bytes | None = None,
+        tenant: bytes | None = None,
+        view: str = "admin",
+        n: int = 10,
+    ) -> list[dict[str, Any]] | None:
+        """The most reloaded stored positions as label rows (PROTOCOL.md ``top_reused``);
+        None when the daemon cannot say (down, slow, or a minor 1 daemon)."""
+        req: dict[str, Any] = {"op": "top_reused", "view": view, "n": n}
+        if model:
+            req["model"] = model.hex()
+        if tenant:
+            req["tenant"] = tenant.hex()
+        r = self._call(req, self.slow_timeout_s)
+        rows = r.get("rows") if r else None
+        if not isinstance(rows, list) or not all(isinstance(x, dict) for x in rows):
+            return None
+        return rows
+
     # ---- transport --------------------------------------------------------------
 
     def _call(self, req: dict[str, Any], timeout_s: float | None = None) -> dict[str, Any] | None:
@@ -311,7 +369,8 @@ class Client:
         except (OSError, ValueError, p.ProtocolError) as exc:
             conn.close()
             conn.buf = b""
-            conn.retry_at = time.monotonic() + RETRY_AFTER_S
+            back_off = SAVE_RETRY_AFTER_S if req["op"] in _SAVE_OPS else RETRY_AFTER_S
+            conn.retry_at = time.monotonic() + back_off
             self._note(f"{req['op']}: {exc or type(exc).__name__}")
             return None, True
         if reply.get("ok") is not True:  # the connection is fine; this request was not

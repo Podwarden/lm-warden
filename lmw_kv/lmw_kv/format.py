@@ -12,7 +12,9 @@ covers everything before it. Any mismatch on read is a miss, never an error.
 
 from __future__ import annotations
 
+import ctypes
 import errno
+import logging
 import os
 import secrets
 import struct
@@ -24,6 +26,8 @@ from typing import BinaryIO
 
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+log = logging.getLogger("lmw_kv.format")
 
 MAGIC = b"LMWKVSEG"
 FORMAT_VERSION = 1
@@ -41,6 +45,55 @@ _LINK_UNSUPPORTED = {
     errno.EMLINK,
     errno.EXDEV,
 }
+
+
+# sync_file_range flags: WAIT_BEFORE | WRITE | WAIT_AFTER
+_SYNC_FILE_RANGE_FLAGS = 1 | 2 | 4
+
+
+def _load_sync_file_range() -> ctypes._NamedFuncPointer | None:
+    try:
+        fn = ctypes.CDLL(None, use_errno=True).sync_file_range
+        fn.argtypes = [ctypes.c_int, ctypes.c_int64, ctypes.c_int64, ctypes.c_uint]
+        fn.restype = ctypes.c_int
+        return fn
+    except (OSError, AttributeError):
+        return None
+
+
+_LIBC_SYNC_FILE_RANGE = _load_sync_file_range()
+_drop_error_logged = False
+
+
+def _sync_range(fd: int, offset: int, length: int) -> None:
+    """Wait for writeback of one byte range, without a device cache flush when libc allows."""
+    fn = _LIBC_SYNC_FILE_RANGE
+    if fn is None:
+        os.fdatasync(fd)
+        return
+    if fn(fd, offset, length, _SYNC_FILE_RANGE_FLAGS) != 0:
+        err = ctypes.get_errno()
+        raise OSError(err, os.strerror(err))
+
+
+def drop_range(fd: int, offset: int, length: int, *, written: bool) -> None:
+    """Drop a byte range from the page cache. Never raises.
+
+    ``written``: the range was just written, so wait for its writeback first
+    (DONTNEED leaves dirty pages cached). A no-op where ``posix_fadvise`` is missing.
+    """
+    global _drop_error_logged
+    advise = getattr(os, "posix_fadvise", None)
+    if advise is None:
+        return
+    try:
+        if written:
+            _sync_range(fd, offset, length)
+        advise(fd, offset, length, os.POSIX_FADV_DONTNEED)
+    except OSError as e:
+        if not _drop_error_logged:
+            _drop_error_logged = True
+            log.debug("page cache drop failed: %s", e)
 
 
 @dataclass(frozen=True)
@@ -98,6 +151,7 @@ class SegmentWriter:
         header = MAGIC + struct.pack("<H", FORMAT_VERSION) + self._ns_id + secrets.token_bytes(12)
         f.write(header)
         f.flush()
+        drop_range(f.fileno(), 0, len(header), written=True)
         self._f = f
         self._size = len(header)
 
@@ -119,6 +173,7 @@ class SegmentWriter:
         offset = self._size
         self._f.write(record)
         self._f.flush()
+        drop_range(self._f.fileno(), offset, total, written=True)
         self._size += total
         return Location(self._segment, offset, total)
 
@@ -130,42 +185,132 @@ class SegmentWriter:
             self._f = None
 
 
-def read_record(
-    dir: Path, loc: Location, data_key: bytes, expect_key: bytes, expect_group: str
-) -> bytes | None:
-    """Decrypt one record; ``None`` on any mismatch or damage."""
-    if loc.length < _MIN_RECORD:
-        return None
+class ReadBuffer:
+    """A reusable buffer for raw records, so a reading thread allocates (and page-faults)
+    once instead of per record. One per thread: it is not locked."""
+
+    def __init__(self) -> None:
+        self._buf = bytearray()
+
+    def view(self, n: int) -> memoryview:
+        if len(self._buf) < n:
+            self._buf = bytearray(n)
+        return memoryview(self._buf)[:n]
+
+
+def _read_raw(dir: Path, loc: Location, rec: memoryview) -> bytes | None:
+    """The segment header, with the record read into ``rec``; ``None`` on any I/O error.
+
+    The segment is opened with ``POSIX_FADV_RANDOM`` (no readahead past the record) and
+    both ranges are dropped from the page cache after the read (spec 4.5).
+    """
     try:
-        with open(_seg_path(dir, loc.segment), "rb") as f:
-            header = f.read(HEADER_LEN)
-            f.seek(loc.offset)
-            rec = f.read(loc.length)
+        fd = os.open(_seg_path(dir, loc.segment), os.O_RDONLY)
     except OSError:
         return None
-    if len(header) != HEADER_LEN or len(rec) != loc.length:
+    try:
+        if hasattr(os, "posix_fadvise"):
+            try:
+                os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_RANDOM)
+            except OSError:
+                pass
+        header = os.pread(fd, HEADER_LEN, 0)
+        if hasattr(os, "preadv"):
+            got = os.preadv(fd, [rec], loc.offset)
+        else:  # pragma: no cover - platforms without preadv
+            data = os.pread(fd, loc.length, loc.offset)
+            got = len(data)
+            rec[:got] = data
+        drop_range(fd, 0, HEADER_LEN, written=False)
+        drop_range(fd, loc.offset, loc.length, written=False)
+    except OSError:
+        return None
+    finally:
+        os.close(fd)
+    return header if got == loc.length else None
+
+
+def _checked(
+    header: bytes, rec: memoryview, loc: Location, expect_key: bytes, expect_group: str
+) -> tuple[bytes, memoryview, bytes] | None:
+    """(nonce, ciphertext with tag, AAD) of a record whose frame, CRC, key and group
+    check out; ``None`` otherwise. Views into ``rec``, never copies."""
+    if len(header) != HEADER_LEN:
         return None
     if header[:8] != MAGIC or struct.unpack("<H", header[8:10])[0] != FORMAT_VERSION:
         return None
-    ns_id = header[10:42]
     (total,) = struct.unpack("<I", rec[:4])
     if total != loc.length:
         return None
     (crc,) = struct.unpack("<I", rec[-4:])
     if zlib.crc32(rec[:-4]) != crc:
         return None
-    key = rec[4:36]
+    key = bytes(rec[4:36])
     glen = rec[36]
-    group = rec[37 : 37 + glen]
+    group = bytes(rec[37 : 37 + glen])
     nonce_at = 37 + glen
-    nonce = rec[nonce_at : nonce_at + _NONCE_LEN]
+    nonce = bytes(rec[nonce_at : nonce_at + _NONCE_LEN])
     ct = rec[nonce_at + _NONCE_LEN : -4]
     if key != expect_key or group != expect_group.encode("utf-8") or len(ct) < _TAG_LEN:
         return None
+    return nonce, ct, header[10:42] + key + group
+
+
+def read_record(
+    dir: Path, loc: Location, data_key: bytes, expect_key: bytes, expect_group: str
+) -> bytes | None:
+    """Decrypt one record; ``None`` on any mismatch or damage."""
+    if loc.length < _MIN_RECORD:
+        return None
+    rec = memoryview(bytearray(loc.length))
+    header = _read_raw(dir, loc, rec)
+    got = None if header is None else _checked(header, rec, loc, expect_key, expect_group)
+    if got is None:
+        return None
+    nonce, ct, aad = got
     try:
-        return AESGCM(data_key).decrypt(nonce, ct, ns_id + key + group)
+        return AESGCM(data_key).decrypt(nonce, ct, aad)
     except InvalidTag:
         return None
+
+
+def read_record_into(
+    dir: Path,
+    loc: Location,
+    data_key: bytes,
+    expect_key: bytes,
+    expect_group: str,
+    out: memoryview,
+    buf: ReadBuffer,
+) -> int | None:
+    """``read_record`` decrypting into ``out`` (the payload's first bytes): the payload
+    length, or ``None`` on any mismatch or damage, or when ``out`` is too small.
+
+    The same checks in the same order (frame, CRC, key, group, then the GCM tag), with
+    the raw record read into ``buf`` and no other copy. Large reads, the CRC and the
+    decrypt release the GIL, so several threads can run this at once. On a
+    ``None`` the bytes left in ``out`` are undefined.
+    """
+    if loc.length < _MIN_RECORD:
+        return None
+    rec = buf.view(loc.length)
+    header = _read_raw(dir, loc, rec)
+    got = None if header is None else _checked(header, rec, loc, expect_key, expect_group)
+    if got is None:
+        return None
+    nonce, ct, aad = got
+    n = len(ct) - _TAG_LEN
+    if len(out) < n:
+        return None
+    aead = AESGCM(data_key)
+    try:
+        if hasattr(aead, "decrypt_into"):
+            aead.decrypt_into(nonce, ct, aad, out[:n])
+        else:  # pragma: no cover - cryptography older than 45
+            out[:n] = aead.decrypt(nonce, ct, aad)
+    except InvalidTag:
+        return None
+    return n
 
 
 def _parse_key(path: Path) -> bytes:

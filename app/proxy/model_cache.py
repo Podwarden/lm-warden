@@ -17,6 +17,11 @@ Same race rule as app/proxy/token_cache.py: a caller snapshots generation()
 BEFORE it reads and passes it to put(), so a write committing while the read is
 in flight makes the snapshot dead on arrival. Lookups return deep copies (rows
 carry lists and dicts) so a caller can never mutate the shared snapshot.
+
+Aliases ride the same snapshot and the same invalidation: every write to
+``model_aliases`` (an alias's own writes, and ``drop_target`` when a model is
+deleted) plus every write to ``models`` bumps the generation, so an alias
+lookup can never be answered from a superseded table.
 """
 
 from __future__ import annotations
@@ -29,6 +34,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
+    from app.db.repos.model_aliases import AliasRow
     from app.db.repos.models import ModelRow
 
 logger = logging.getLogger(__name__)
@@ -67,6 +73,7 @@ class ModelCache:
         self._ttl = ttl_s
         self._clock = clock
         self._snap: _Snapshot | None = None
+        self._aliases_snap: tuple[tuple[AliasRow, ...], float, int] | None = None
 
     def _live(self) -> _Snapshot | None:
         snap = self._snap
@@ -76,6 +83,30 @@ class ModelCache:
             self._snap = None
             return None
         return snap
+
+    def _live_aliases(self) -> tuple[tuple[AliasRow, ...], float, int] | None:
+        snap = self._aliases_snap
+        if snap is None:
+            return None
+        if snap[2] != _generation or self._clock() - snap[1] > self._ttl:
+            self._aliases_snap = None
+            return None
+        return snap
+
+    def aliases(self) -> Any:
+        """Every alias (a copy), or MISS."""
+        snap = self._live_aliases()
+        return MISS if snap is None else copy.deepcopy(list(snap[0]))
+
+    def alias_by_name(self, name: str) -> Any:
+        """The alias with this name (a copy), None if absent, or MISS."""
+        snap = self._live_aliases()
+        if snap is None:
+            return MISS
+        return copy.deepcopy(next((a for a in snap[0] if a.name == name), None))
+
+    def put_aliases(self, aliases: list[AliasRow], gen: int) -> None:
+        self._aliases_snap = (tuple(aliases), self._clock(), gen)
 
     def rows(self) -> Any:
         """Every row in ``created_at`` order (a copy), or MISS."""
@@ -121,6 +152,42 @@ def _cached(cache: ModelCache | None, method: str, *args: str) -> Any:
     except Exception:  # noqa: BLE001
         logger.exception("model_cache: %s failed", method)
         return MISS
+
+
+async def _read_aliases(cache: ModelCache | None, db_path: str | Path) -> list[AliasRow]:
+    from app.db.database import open_db
+    from app.db.repos.model_aliases import ModelAliasRepo
+
+    # Snapshot BEFORE the read, same race rule as _read above.
+    gen = generation()
+    async with open_db(Path(db_path)) as db:
+        rows = await ModelAliasRepo(db).list()
+    if cache is not None:
+        try:
+            cache.put_aliases(rows, gen)
+        except Exception:  # noqa: BLE001 -- fail open: the read already succeeded
+            logger.exception("model_cache: put aliases failed")
+    return rows
+
+
+async def all_aliases(cache: ModelCache | None, db_path: str | Path) -> list[AliasRow]:
+    hit = _cached(cache, "aliases")
+    if hit is not MISS:
+        return cast("list[AliasRow]", hit)
+    rows = await _read_aliases(cache, db_path)
+    # A miss returns a deep copy as well: the caller must never mutate the
+    # shared snapshot.
+    return copy.deepcopy(rows)
+
+
+async def alias_by_name(
+    cache: ModelCache | None, db_path: str | Path, name: str
+) -> AliasRow | None:
+    hit = _cached(cache, "alias_by_name", name)
+    if hit is not MISS:
+        return cast("AliasRow | None", hit)
+    rows = await _read_aliases(cache, db_path)
+    return next((copy.deepcopy(a) for a in rows if a.name == name), None)
 
 
 async def all_models(cache: ModelCache | None, db_path: str | Path) -> list[ModelRow]:

@@ -5,9 +5,16 @@ They prove on real hardware what the unit tests cannot: the restored KV gives th
 same tokens as a vanilla run, a restore is much faster than recomputing, and the
 store failing never breaks a request.
 
-Two files. `test_kv_live.py` is step 1 (tiers, parity, fail-open).
+Three files. `test_kv_live.py` is step 1 (tiers, parity, fail-open).
 `test_kv_isolation_live.py` is Plan 2 (per-key isolation, two rows on one namespace,
-the fair policy under a flood).
+the fair policy under a flood). `test_kv_disk_only_live.py` is the disk only mode
+(`kv_store` `nvme`: blocks live on disk, RAM holds them only while they move).
+
+Step 1's and Plan 2's files run on the tier in `VW_KV_LIVE_TIER` (`ram+nvme` by
+default). With `nvme` a check that expects RAM tokens accepts store tokens from RAM or
+NVMe, and two checks that need a RAM tier skip with that reason: G12 (it needs a `ram`
+row beside the tier under test) and the fair flood smoke (it measures the RAM tier's
+share).
 
 They are opt-in. The `live` marker keeps them out of a plain `pytest` run, and a
 missing env var skips the whole directory with the list of what is missing.
@@ -61,6 +68,29 @@ to `fair` for one test and back to what it was.
 | `test_fair_flood_smoke` | `kv_evict_policy` `fair`. A flooder sends 10 times its share of the RAM tier (the share is the tier over the 2 keys of the test, Task 15 N1), then the engine restarts and the victim's session loads from RAM or NVMe |
 | `test_g7c_no_secret_in_logs` | last, so it covers the whole run: the tenant tag, scope, scope tag and derived salt of every key (each epoch, each client salt sent), and B's rewritten reserved salt, appear in no api log line, engine log line, history row, capture (API and files) or `effective-argv`. A value a client sent itself is exempt only in that request's own capture and history row. Values are never printed |
 
+### Disk only: `test_kv_disk_only_live.py`
+
+It runs first (file order) and takes about 10 minutes. It sets the model's `kv_store` to
+`off` for a vanilla pass and to `nvme` for the rest, and puts it back at the end. The
+instance needs `kv_store_ram_gib` 1, a disk folder at `/kv` with the marker file
+(`kv_store_nvme_marker` true) and `--prefix-match-unit 16` in the model's `extra_args`.
+It reads the daemon's socket, its NVMe manifest and the page cache, so it runs inside the
+api container.
+
+The shared run: a vanilla pass of the long prompt (`VW_KV_LIVE_LONG_SIZE`), a save pass
+with `nvme`, a wait for the writes to land, an engine restart and a resume.
+
+| Test | Checks |
+|---|---|
+| `test_disk_only_argv_and_pool` | the engine argv has `"tiers": "nvme"`; `GET /api/system/kv-store` shows a 1 GiB pool and at least one staging namespace |
+| `test_long_prompt_resumes_from_disk` | the resume loads exactly `floor((P - 1) / B) * B` tokens from NVMe (MTP with `disable_eagle_block_drop`, or no MTP) and none from RAM or the GPU; TTFT at least `VW_KV_LIVE_MIN_SPEEDUP` times lower than vanilla cold; output identical to the save pass's cold output, and to vanilla's or differing first at a near-tie |
+| `test_ram_returns_to_empty` | `ram_used` and `staging.in_flight` are 0 once the save pass's writes land, and again after the resume |
+| `test_segments_stay_out_of_the_page_cache` | at most 64 MiB of the segment files are in the page cache after the save pass and after the resume |
+| `test_weights_stay_in_the_page_cache` | the resident share of the weight files drops by at most 2 percentage points between the model load and the end of the resume |
+| `test_state_snapshots_saved_with_match_unit_16` | each GDN state namespace holds exactly the snapshots at vLLM's chunk ends floored to `B` (each chunk starts where the last one ended) plus `floor((P - 1) / B) * B`: read from the manifest against the prompt's attention chain, as a block count from `stats.by_namespace`, and by a `lookup` of each key |
+| `test_partial_head_block_is_private` | X (20,000 tokens) is saved and flushed from the GPU by unique prompts; W, X's first 10,000 tokens (16-aligned, not a multiple of `B`), is sent; X again gets `gpu = floor(c_W / B) * B` and the store serves the rest up to `floor((P - 1) / B) * B`, with X's cold output; W again hits `c_W` on the GPU with its first output |
+| `test_write_volume_and_counters` | `stats.reuse.nvme_bytes_written` during the run within 10% of the records the manifest gained; `/api/kv/usage` per model adds up to the same; the resume grew the key's own `reuse.reloads` by one per position loaded (one request, not one per group) |
+
 The derived values are computed by the test (re-implemented from `lmw_kv/PROTOCOL.md`
 and cross-checked against `lmw_kv.scopes` when it is importable), from the network key
 file and the key rows in the database. So G7's "A's derived salt" and G7c need the run
@@ -110,12 +140,25 @@ Optional:
 | `VW_KV_LIVE_NVME_FLUSH_S` | 15 | seconds to let the write-through to NVMe finish before a check that needs it |
 | `VW_KV_LIVE_FLOOD_FACTOR` | 10 | the flood in multiples of the flooder's RAM share |
 | `VW_KV_LIVE_FLOOD_MAX_TOKENS` | 0 | a cap on the flood's tokens (0: none) |
+| `VW_KV_LIVE_TIER` | `ram+nvme` | the tier step 1's and Plan 2's files run on: `ram+nvme` or `nvme` |
+| `VW_KV_LIVE_SOCKET` | none | the daemon's socket (`/dev/shm/lmw-kv.sock` in the api container). Without it, or the two dirs below, the disk only file skips |
+| `VW_KV_LIVE_SEGMENT_DIR` | none | the NVMe directory (`/kv`): segment files and manifests |
+| `VW_KV_LIVE_WEIGHTS_DIR` | none | a directory holding the model's `*.safetensors` (symlinks are followed) |
+| `VW_KV_LIVE_LONG_SIZE` | 50000 | the disk only file's long prompt, in tokens |
+| `VW_KV_LIVE_MATCH_UNIT` | 16 | the model's `--prefix-match-unit` |
+| `VW_KV_LIVE_BLOCK_SIZE` | none | the engine block size; without it the test reads it from the engine log (`VW_KV_LIVE_LOG_CMD`) |
+| `VW_KV_LIVE_GPU_FLUSH_TOKENS` | 160000 | tokens of unique 20k prompts that evict the GPU prefix cache (more than it holds) |
+| `VW_KV_LIVE_WRITE_TOLERANCE` | 0.10 | how far `nvme_bytes_written` and the reports may be from the records written |
 
 ## Setting up the instance
 
-1. The api service needs a `/dev/shm` big enough for the RAM tier plus 1 GiB
+1. The api service needs a `/dev/shm` of at least twice the RAM tier plus 2 GiB
    plus the engine, and a fast local disk mounted at `/kv`
-   (see `docs/operating.md`, "KV-cache tiers").
+   (see `docs/operating.md`, "KV-cache tiers"). The daemon keeps 2 GiB of
+   `/dev/shm` free, and the tests kill it: the new daemon sizes its pool while the
+   running engine still maps the old one. With less, the new pool is shrunk, and a
+   disk only pool (1 GiB, the minimum) is not made at all, so the store stays off
+   until the next daemon start. 8 GiB works for the disk only run; 4 GiB did not.
 2. Runtime settings: `kv_store_nvme_dir` `/kv`, `kv_store_ram_gib` to fit
    `/dev/shm`. Restart the api after changing them.
 3. Register the model with a pinned revision (a full commit id) and a
@@ -144,6 +187,134 @@ Set `PYTHONUNBUFFERED=1` when the output goes to a file, or the progress lines
 arrive only at the end.
 
 ## Results
+
+### 2026-11-23, disk only read path, RTX A4000 (16 GB, sm_86), TP1
+
+The disk only resume was 1.9x faster than cold (below, same day). It is now 9x at 50k and
+5.9x at 20k. Same host, model, args and settings as the run below (`shm_size` 8 GiB), image
+built from this branch at `17b89458` (llama.cpp for sm_86 only). The tests ran inside the
+api container with `VW_KV_LIVE_TIER=nvme`.
+
+**Where the time went (before).** A 50k resume loads 115 records (2.19 GB) in 5.7 s. The
+daemon promoted them one at a time: 4.9 s, as pread 0.7 s, the CRC with a 19.5 MB slice
+copy 1.4 s, a second slice copy 0.5 s, the AES-GCM decrypt into a new buffer 1.2 s, the
+page cache drop 0.5 s, the copy into the RAM slot 0.2 s and the rest 0.3 s. The GPU copy
+(0.85 s) ran only after each window's reads. On this host direct reads of the same
+records run at 1.4 GB/s on one thread and 4.3 GB/s on four. A copy from pinned memory to
+the GPU runs at 2.85 GB/s (the card's PCIe link): 0.77 s at 50k and 0.31 s at 20k, the
+floor of any resume here.
+
+**What changed.**
+
+1. A record is read into a reused buffer and checked on views, with no slice copy, and
+   decrypted with `AESGCM.decrypt_into` straight into its RAM slot. Same checks in the same
+   order: frame, CRC, key, group, then the GCM tag. `decrypt` (a new 19.5 MB buffer each
+   time) does not speed up across threads (1.4 to 1.8 GB/s); `decrypt_into` does (5.8 GB/s
+   on one thread, 11.3 on eight).
+2. A load's promotions run in 8 worker threads and finish in key order. The store's own
+   steps and their order are unchanged: a block that needs a policy decision (no free slot,
+   or a `fair` allocation outside disk only mode) waits for the earlier ones first.
+3. The connector reads the next window while it copies the current one to the GPU (two
+   half windows, so the pins stay within one window).
+
+| Prompt | Cold | Before | After (warm engine) | After (first request after restart) |
+|---|---|---|---|---|
+| 20,000 | 3.88 to 4.19 s | 2.03 s (1.9x) | 0.65 to 0.68 s, load 0.41 s (5.7x to 6.4x) | not measured |
+| 50,000 | 12.33 to 12.46 s | 6.38 s (1.9x) | 1.10 s, load 0.79 s (11.3x) | 1.39 to 1.61 s, load 0.79 to 0.94 s (7.7x to 9.0x) |
+
+Each change on its own, from a driver on the same prompts: change 1 took the 50k resume from
+6.3 s to 2.1 s and the warm 20k one to 0.90 s; change 2 to 1.56 s and 0.73 s; change 3 to
+1.44 to 1.61 s and 0.65 to 0.68 s. A first request after an engine restart carries about
+0.55 s of engine warm-up besides the load; a warm one about 0.25 s.
+
+**Live suite on the final image** (`pytest tests/live/kv -v`, 28.7 minutes): 19 passed, 1
+failed, 2 skipped. The failure was the weights page cache check, which found no weight
+files: the run's `VW_KV_LIVE_WEIGHTS_DIR` pointed at a folder that does not exist. The
+disk only file then ran again on its own with the right folder (below). The skips are G12
+and the fair flood (no RAM tier on `nvme`).
+
+| Test | Result |
+|---|---|
+| Resume from disk (50k) | 49,632 `nvme` tokens exactly, 0 RAM, 0 GPU. TTFT 12.46 s cold, 13.26 s save pass, 1.39 s resume (load 0.79 s): **9.0x**. Identical to the save pass and to vanilla |
+| RAM back to empty | `ram_used` 0 and `in_flight` 0 after the save pass (writes landed at once) and after the resume |
+| Segments in the page cache | 1.4 MiB resident of 9.0 GB in 167 segment files, after the save pass and after the resume |
+| Weights in the page cache | re-run (below): 92.9% resident after the load and after the resume (0.0 points drop) |
+| State snapshots | each of the 3 GDN namespaces: 7,920 ... 47,520 and 49,632, 7 blocks, each found by `lookup` |
+| Partial head block | W first: `nvme` 7,920, TTFT 0.81 s. X after W: `gpu` 9,504 + `nvme` 10,032, TTFT 0.53 s, identical to X cold. W again: `gpu` 9,984, identical |
+| Write volume and counters | 532 records, 10,127,916,540 B, equal to `nvme_bytes_written`; reloads +94 for 94 positions |
+| G7, G8, G11, G7c | pass. G7 NVMe path: A's repeat 19,536 from NVMe, TTFT 0.75 s (2.95 s before). G11 restores 0.67 to 1.12 s |
+| Restore (step 1) | 2,048: 0.60 s; **20,000: 0.66 s vs 3.88 s cold (5.9x)**; 50,000: 1.10 s vs 12.41 s (11.3x). Parity identical at every size |
+| Daemon killed during the 50k load | output identical, engine serving; the kill landed after `begin_load` |
+| NVMe after a daemon restart | 19,536 `nvme`, TTFT 1.09 s, load 0.52 s |
+| Failed load, old namespace | pass (one `load failed` line, vanilla output; the other revision 0) |
+
+**The disk only file again** (on a fresh api, with the weights folder right): **8 passed** in
+5.7 minutes. Resume 1.58 s against 12.38 s cold (load 0.98 s): 7.8x, identical output.
+Weights 92.9% resident after the load and after the resume (0.0 points). Segments 3.6 MiB
+resident of 6.1 GB in 756 files. `ram_used` and `in_flight` 0 after the save pass and the
+resume. Snapshots, partial head block, write volume (532 records, 10.13 GB, equal to
+`nvme_bytes_written`) and reloads (+94) as above.
+
+### 2026-11-23, disk only (`kv_store` `nvme`), RTX A4000 (16 GB, sm_86), TP1
+
+- **Hardware.** One host: AMD Ryzen 9 5950X, 62 GB RAM, NVMe disk (ext4).
+- **Setup.** A temporary LM Warden on the test host (Kubernetes, local-subprocess driver),
+  image built from this branch at `253a87a7` (llama.cpp built for sm_86 only), vLLM
+  0.32.0. Model `Qwen/Qwen3.5-4B` @ `851bf6e8`, bf16, `max_model_len` 65536,
+  `gpu_memory_utilization` 0.9, `--prefix-match-unit 16`, MTP with
+  `disable_eagle_block_drop`, `--max-num-batched-tokens 8192 --max-num-seqs 8
+  --max-cudagraph-capture-size 16`. Block size 528, GPU prefix cache 113,465 tokens.
+  `kv_store_ram_gib` 1, `kv_store_nvme_dir` `/kv` with the marker, `kv_store_nvme_cap_gb`
+  60, api `shm_size` 8 GiB. The tests ran inside the api container with
+  `VW_KV_LIVE_TIER=nvme`.
+- **Result.** `pytest tests/live/kv -v`: **18 passed, 2 failed, 2 skipped** in 27.3
+  minutes. Both failures are the 5x speed-up checks: a disk only resume is about 1.9x
+  faster than cold, not 5x (below). The skips are G12 and the fair flood (no RAM tier).
+
+Disk only (`test_kv_disk_only_live.py`, P = 50,000):
+
+| Check | Result |
+|---|---|
+| Argv and pool | `"tiers": "nvme"`; pool 1 GiB granted; 4 staging namespaces |
+| Resume from disk | 49,632 `nvme` tokens (exactly `floor((P - 1) / B) * B`), 0 RAM, 0 GPU. TTFT 12.38 s cold, 13.19 s save pass, 6.38 s resume: **1.9x (fails the 5x check)**. Load 5.79 s for 115 records (2.2 GB) |
+| Parity | resume identical to the save pass and to vanilla |
+| RAM back to empty | `ram_used` 0 and `staging.in_flight` 0 after the save pass and after the resume; the writes had landed when the stream ended (0.0 s wait) (1) |
+| Segments in the page cache | 0.9 MiB resident of 4.4 GB in 78 segment files, after the save pass and after the resume (1) |
+| Weights in the page cache | 97.9% resident after the load and after the resume (0.0 points drop) (1) |
+| State snapshots | each of the 3 GDN namespaces holds exactly 7,920, 15,840, 23,760, 31,680, 39,600, 47,520 and 49,632 (7 blocks in `stats.by_namespace`, each found by `lookup`) |
+| Partial head block | W (10,000 tokens): its tail checkpoint `c_W` = 9,984 (18 blocks + 480). X (20,000) after W: `gpu` 9,504 + `nvme` 10,032, output identical to X's cold output. W again: `gpu` 9,984, output identical |
+| Write volume | 532 records written during the file (10.13 GB): 427 of 19,464,285 B (attention) and 105 of 17,301,589 B (GDN state). `nvme_bytes_written` 10,127,916,540, equal to the manifest's record bytes; `/api/kv/usage` per model the same |
+| Reloads | the resume grew the key's own `reuse.reloads` by 94: one per position loaded (94), not one per namespace or window |
+| Empty load windows | no counter exists, and a window that waits and then succeeds logs nothing. 0 `load failed` lines outside the failed-load test. With a 1 GiB pool and one rank a window is 27 blocks and nothing else held slots during a resume, so the estimate is 0 empty windows and 0 s added |
+
+(1) These figures are from the first pass of this file on the same image and settings
+(with a 4 GiB `/dev/shm`), which passed the same checks as the final run; the final
+run's report file went with the deployment before it was copied. Every other figure is
+from the final run.
+
+Step 1 and Plan 2 on `nvme`, same run:
+
+| Test | Result |
+|---|---|
+| G7 | B and C: 0 everywhere in all three cases. A's repeat: 8,176 from the GPU; 19,536 from NVMe after an engine restart (TTFT 2.80 s, load 2.57 s); 19,536 from NVMe after a daemon and engine restart (load 2.37 s) |
+| G8 | B and C: 0 cached. A's repeat: 8,176 cached |
+| G11 | all 8 comparisons with vanilla identical; restores 19,536 from NVMe; D's isolated turn reused nothing |
+| G12, fair flood | skipped (no RAM tier on `nvme`) |
+| G7c | 38 requests; 8 tenant tags, 10 scopes, 10 scope tags and 152 derived salts found in none of the api log, the engine logs, 38 history rows, 38 captures, 62 capture files and `effective-argv` |
+| Restore (step 1) | 2,048: 1,584 `nvme`, TTFT 0.78 s; 20,000: 19,536, 2.03 s vs 3.88 s cold (**1.9x, fails the 5x check**); 50,000: 49,632, 4.97 s, load 4.63 s. Parity identical at every size; `cached_tokens` = gpu + ram + nvme |
+| Daemon killed during the 50k load | output identical, engine serving. The kill landed before the lookup: the worker turned its store off ("the daemon restarted") and the request recomputed (0 cached) |
+| NVMe after a daemon restart | 19,536 `nvme`, TTFT 2.95 s, load 2.39 s, identical |
+| Failed load | one `load failed` line, vanilla output, 0 cached |
+| Old namespace | control 19,536 from NVMe; after the revision changed, 0 |
+
+- **Disk read speed.** The disk is not the limit: direct reads of the same segment
+  files ran at 5.2 GB/s, while a resume reads about 0.4 GB/s (115 records, 2.2 GB, in
+  5.8 s). Per 19.5 MB record, the CRC takes about 3.6 ms and the AES-GCM decrypt about
+  7.6 ms (about 1.3 s of the 5.8 s); the rest was not broken down.
+- **`/dev/shm`.** A first attempt with a 4 GiB `/dev/shm` failed G7's NVMe case: after
+  the daemon was killed, the new one could fit only 0.99 GiB beside the old pool (still
+  mapped by the engine) and the 2 GiB reserve, under the 1 GiB minimum, so it ran
+  with no RAM tier and the disk only store stayed off. 8 GiB passed.
 
 ### 2026-11-22, RTX A4000 (16 GB, sm_86) and Quadro RTX 5000 (16 GB, sm_75), TP1
 

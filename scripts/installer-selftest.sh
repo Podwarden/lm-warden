@@ -232,12 +232,12 @@ assert_grep "--check reports the free disk with its number" 'Disk OK: 110 GB fre
 
 # ---- free disk on the Docker data root (#249) ------------------------------------------------
 
-# 35 GB: under the 40 GB the stack wants, over the 20 GB floor. Warned, carried on.
+# 35 GB: under the 55 GB the stack wants, over the 30 GB floor. Warned, carried on.
 run disk_low STUB_GPUS=0 STUB_DF_AVAIL_KB=34180000 -- --gpus none --yes
 assert_rc "35 GB free: exits 0" 0 "$RC" "$OUT"
 assert_grep "35 GB free: names the number and the data root" 'Only 35 GB free on /var/lib/docker' "$OUT"
-assert_grep "35 GB free: names what the stack wants" 'about 40 GB' "$OUT"
-assert_grep "35 GB free: names the image size as stored" '~29 GB as Docker stores it' "$OUT"
+assert_grep "35 GB free: names what the stack wants" 'about 55 GB' "$OUT"
+assert_grep "35 GB free: names the image size as stored" '~44 GB as Docker stores it' "$OUT"
 assert_grep "35 GB free: says it is carrying on" 'Carrying on' "$OUT"
 assert_grep "35 GB free: still pulls" '^docker compose pull' "$CALLS"
 
