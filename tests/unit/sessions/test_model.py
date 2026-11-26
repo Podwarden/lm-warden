@@ -712,3 +712,25 @@ def test_cached_share_counts_only_requests_that_report_cache() -> None:
         ]
     )
     assert s["totals"]["cached_share"] == pytest.approx(0.9)
+
+
+def test_three_element_tools_out_entries_read_like_old_ones() -> None:
+    """Task 1.4: tools_out entries gained args8 ([family, hash8, args8]); the
+    read model takes both shapes (old rows keep two elements)."""
+
+    def with_args(rows: list[Row]) -> list[Row]:
+        return [replace(r, tools_out=tuple((*t, "f" * 8) for t in r.tools_out)) for r in rows]
+
+    old = cc_fixture()
+    assert build(with_args(old)) == build(old)
+    ts = {"d1": [("h1", "read", 400), ("h2", "web", 400)]}
+    rows = [
+        R(
+            "m1",
+            toolset="d1",
+            shape={"chars": 4000, "dw": {"dup": 0, "boil": 0, "reason": 0}},
+            tools_out=(("read", "h1", "abcdef01"), ("web", "h2")),
+        )
+    ]
+    t = build(rows, toolsets=ts)["tools"]
+    assert (t["offered"], t["called"], t["unused"]) == (2, 2, 0)

@@ -177,6 +177,36 @@ class LiveRequest:
     #: prompt tokens an isolated request recomputed that sharing would have served.
     kv_isolated: bool | None = None
     kv_iso_cost_tokens: int | None = None
+    #: Prompt Lens layer 1 (analysis plan Task 1.3, migration 0063): the first
+    #: broken part (``sys``, ``tools``, ``node:<i>``), its cause code, the span
+    #: class and line of a changed system prompt line, the counterfactual and
+    #: lost tokens and the count of further breaks. Codes and ints only; None =
+    #: not computed (kvsig off, or a lens fault: fail-open).
+    lens_break: str | None = None
+    lens_cause: str | None = None
+    lens_span_class: str | None = None
+    lens_span_line: int | None = None
+    lens_lost_tokens: int | None = None
+    lens_cf_tokens: int | None = None
+    lens_other_breaks: int | None = None
+    #: Relays: the upstream's cache_creation_input_tokens and the cache_control
+    #: marks counted in the relayed body.
+    cache_write_tokens: int | None = None
+    cache_marks: int | None = None
+    #: Layer 3 (filled by analysis Task 1.4): repeated tool-result tokens,
+    #: the request's max_tokens, the reply's reasoning tokens, size and calls,
+    #: the per-call verdicts (``[[hash8, code], ...]``, at most 16) and the
+    #: per-tool lint ints.
+    lens_repeat_results: int | None = None
+    max_tokens_req: int | None = None
+    reasoning_tokens: int | None = None
+    reply_chars: int | None = None
+    calls_n: int | None = None
+    calls_bad: list[Any] | None = None
+    tools_lint: list[int] | None = None
+    #: Prompt version (analysis Task 3.1): ``h:<name>`` from X-Prompt-Version,
+    #: else the detected 8 hex id; None with kvsig off.
+    lens_version: str | None = None
     #: Live out-token readings ``(monotonic, tokens_so_far)``, one per live tick
     #: (0.5 s) while tokens arrive: the source of the row's 5 s decode speed
     #: (app/proxy/live_tokens.py). Bounded; display only, never persisted.
@@ -333,6 +363,23 @@ def finished_record(req: LiveRequest, *, now: float) -> dict[str, Any]:
         "load_s": req.load_s,
         "kv_isolated": None if req.kv_isolated is None else int(req.kv_isolated),
         "kv_iso_cost_tokens": req.kv_iso_cost_tokens,
+        "lens_break": req.lens_break,
+        "lens_cause": req.lens_cause,
+        "lens_span_class": req.lens_span_class,
+        "lens_span_line": req.lens_span_line,
+        "lens_lost_tokens": req.lens_lost_tokens,
+        "lens_cf_tokens": req.lens_cf_tokens,
+        "lens_other_breaks": req.lens_other_breaks,
+        "cache_write_tokens": req.cache_write_tokens,
+        "cache_marks": req.cache_marks,
+        "lens_repeat_results": req.lens_repeat_results,
+        "max_tokens_req": req.max_tokens_req,
+        "reasoning_tokens": req.reasoning_tokens,
+        "reply_chars": req.reply_chars,
+        "calls_n": req.calls_n,
+        "calls_bad": list(req.calls_bad) if req.calls_bad is not None else None,
+        "tools_lint": list(req.tools_lint) if req.tools_lint is not None else None,
+        "lens_version": req.lens_version,
     }
     obs = req.cache_obs or {}
     for k in CACHE_OBS_KEYS:

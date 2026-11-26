@@ -42,6 +42,7 @@ from urllib.parse import urlsplit
 
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field
 
 from app.auth.deps import refuse_session_only, require_jwt
 from app.auth.passwords import new_password_problem
@@ -795,6 +796,35 @@ async def get_model_settings(
     return body
 
 
+def _require_installed_engine(current: Any, body: dict[str, Any]) -> None:
+    """422 a bare ``engine_vllm_version`` that names no installed bundled engine (#343).
+
+    A bare version (the merged row has no ``engine_channel``) selects an install
+    under the engines root; one that is not there would only fail at load time.
+    ``null`` (back to the default engine) and a channel-pinned version (an
+    upstream image tag) are not checked. Shape errors (a path) are left to the
+    writer's ``ModelSpec`` validation.
+    """
+    from app.runtime.backends.vllm.engines import VERSION_ID_RE, list_bundled_engines
+
+    version = body.get("engine_vllm_version")
+    if not isinstance(version, str) or not version:
+        return
+    channel = body["engine_channel"] if "engine_channel" in body else current.engine_channel
+    if channel or not VERSION_ID_RE.fullmatch(version):
+        return
+    installed = list_bundled_engines()
+    if version not in installed:
+        have = ", ".join(installed) or "none"
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"engine_vllm_version: {version!r} is not a bundled engine in this "
+                f"image (installed: {have})"
+            ),
+        )
+
+
 @model_settings_router.patch("/{model_id}/settings")
 async def patch_model_settings(
     model_id: str,
@@ -866,6 +896,7 @@ async def patch_model_settings(
         m = await ModelRepo(db).get(model_id)
         if not m:
             raise HTTPException(status_code=404, detail="model not found")
+        _require_installed_engine(m, body)
         await apply_model_change(
             db,
             principal=principal,
@@ -908,3 +939,158 @@ async def dismiss_layout_notice(
             )
         await repo.clear_info_layout_notice(model_id)
     return None
+
+
+# -- Prompt Lens price cards (analysis Task 2.2) --------------------------------------
+
+lens_prices_router = APIRouter(prefix="/api/admin/lens", tags=["prompt-lens"])
+
+_CARD_FIELDS = (
+    "id, provider, model, currency, input_per_m_micros, output_per_m_micros, "
+    "cache_read_per_m_micros, cache_write_per_m_micros, effective_from"
+)
+_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+class LensRateCard(BaseModel):
+    """One platform price card (``rate_cards`` row with no org), in micro-units
+    of the currency per million tokens (100000 = 0.10)."""
+
+    provider: str = Field(min_length=1, max_length=120)
+    model: str = Field(min_length=1, max_length=200)
+    currency: str = Field(default="USD", min_length=3, max_length=3)
+    input_per_m_micros: int = Field(ge=0, le=10**12)
+    output_per_m_micros: int = Field(ge=0, le=10**12)
+    cache_read_per_m_micros: int | None = Field(default=None, ge=0, le=10**12)
+    cache_write_per_m_micros: int | None = Field(default=None, ge=0, le=10**12)
+    effective_from: str
+
+
+class LensRateCardsPut(BaseModel):
+    cards: list[LensRateCard] = Field(max_length=200)
+
+
+class LensReferenceCard(BaseModel):
+    """Price an own model as ``provider``/``model``; both null clears it."""
+
+    provider: str | None = Field(default=None, max_length=120)
+    model: str | None = Field(default=None, max_length=200)
+
+
+def _card_json(r: Any) -> dict[str, Any]:
+    keys = (
+        "id",
+        "provider",
+        "model",
+        "currency",
+        "input_per_m_micros",
+        "output_per_m_micros",
+        "cache_read_per_m_micros",
+        "cache_write_per_m_micros",
+        "effective_from",
+    )
+    return dict(zip(keys, r, strict=True))
+
+
+@lens_prices_router.get("/rate-cards")
+async def get_lens_rate_cards(
+    request: Request, _user: str = Depends(require_jwt)
+) -> dict[str, Any]:
+    """The platform's price cards, the shipped list prices (not yet confirmed)
+    and each own model's reference card."""
+    from app.lens.prices import REFERENCE_PREFIX, load_defaults
+
+    async with open_db(request.app.state.settings.db_path) as db:
+        cur = await db.execute(
+            f"SELECT {_CARD_FIELDS} FROM rate_cards WHERE org_id IS NULL "
+            "ORDER BY provider, model, effective_from DESC"
+        )
+        cards = [_card_json(r) for r in await cur.fetchall()]
+        cur = await db.execute(
+            "SELECT key, value FROM settings WHERE key LIKE ?", (REFERENCE_PREFIX + "%",)
+        )
+        reference: dict[str, Any] = {}
+        for key, value in await cur.fetchall():
+            try:
+                d = json.loads(value)
+            except ValueError:
+                continue
+            if isinstance(d, dict):
+                reference[key[len(REFERENCE_PREFIX) :]] = {
+                    "provider": d.get("provider"),
+                    "model": d.get("model"),
+                }
+    return {"cards": cards, "defaults": load_defaults(), "reference": reference}
+
+
+@lens_prices_router.put("/rate-cards")
+async def put_lens_rate_cards(
+    body: LensRateCardsPut, request: Request, _user: str = Depends(require_jwt)
+) -> dict[str, Any]:
+    """Add or replace price cards (one per provider, model and effective date)."""
+    import uuid
+
+    for c in body.cards:
+        if not _DATE.fullmatch(c.effective_from):
+            raise HTTPException(status_code=422, detail="effective_from must be YYYY-MM-DD")
+    async with open_db(request.app.state.settings.db_path) as db:
+        for c in body.cards:
+            cur = await db.execute(
+                "SELECT id FROM rate_cards WHERE org_id IS NULL AND provider = ? "
+                "AND model = ? AND effective_from = ?",
+                (c.provider, c.model, c.effective_from),
+            )
+            row = await cur.fetchone()
+            vals = (
+                c.currency.upper(),
+                c.input_per_m_micros,
+                c.output_per_m_micros,
+                c.cache_read_per_m_micros,
+                c.cache_write_per_m_micros,
+            )
+            if row is not None:
+                await db.execute(
+                    "UPDATE rate_cards SET currency = ?, input_per_m_micros = ?, "
+                    "output_per_m_micros = ?, cache_read_per_m_micros = ?, "
+                    "cache_write_per_m_micros = ? WHERE id = ?",
+                    (*vals, row[0]),
+                )
+            else:
+                await db.execute(
+                    "INSERT INTO rate_cards (id, org_id, provider, model, currency, "
+                    "input_per_m_micros, output_per_m_micros, cache_read_per_m_micros, "
+                    "cache_write_per_m_micros, markup_pct, effective_from) "
+                    "VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, 0, ?)",
+                    (uuid.uuid4().hex, c.provider, c.model, *vals, c.effective_from),
+                )
+        await db.commit()
+    return {"ok": True, "saved": len(body.cards)}
+
+
+@lens_prices_router.put("/reference-card/{model_id}")
+async def put_lens_reference_card(
+    model_id: str,
+    body: LensReferenceCard,
+    request: Request,
+    _user: str = Depends(require_jwt),
+) -> dict[str, Any]:
+    """Price own model ``model_id`` as another provider's card (money is shown
+    for own engines only with one); null clears it."""
+    from app.lens.prices import REFERENCE_PREFIX
+
+    if (body.provider is None) != (body.model is None):
+        raise HTTPException(status_code=422, detail="give both provider and model, or neither")
+    async with open_db(request.app.state.settings.db_path) as db:
+        if not await ModelRepo(db).get(model_id):
+            raise HTTPException(status_code=404, detail="model not found")
+        key = REFERENCE_PREFIX + model_id
+        if body.provider is None:
+            await db.execute("DELETE FROM settings WHERE key = ?", (key,))
+        else:
+            await db.execute(
+                "INSERT INTO settings (key, value) VALUES (?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                (key, json.dumps({"provider": body.provider, "model": body.model})),
+            )
+        await db.commit()
+    return {"ok": True}

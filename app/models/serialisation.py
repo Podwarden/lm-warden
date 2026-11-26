@@ -154,6 +154,10 @@ def _serialise(row: ModelRow, hf_cache_dir: Path | None = None) -> dict[str, Any
     )
     # O4: whether an isolated key can use this model (its backend salts the prefix cache).
     body["cache_isolation"] = cache_isolation(row)
+    # #343: a bare bundled pin has no channel, so ``engine`` stays null for it;
+    # the version is published flat as well so the UI can show which install a
+    # model runs on.
+    body["engine_vllm_version"] = row.engine_vllm_version
     body["engine"] = (
         None
         if not row.engine_channel

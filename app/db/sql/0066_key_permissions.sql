@@ -1,0 +1,22 @@
+-- 0066_key_permissions.sql
+--
+-- Per-key permissions (owner decision 2026-11-26; replaces B11, "no per-key
+-- switch", of 2026-11-22). The admin sets both when creating or editing a key.
+--
+-- api_tokens.prompt_lens: 1 = the key's holder may use Prompt Lens on their own
+-- traffic (the key-area pages, the Prompt Lens API and the Prompt Lens MCP
+-- tools). Prompt Lens for a holder also needs the platform switch
+-- (prompt_lens_switch.enabled). EXISTING keys get 1 (nobody loses access); a key
+-- created through the API starts at 0 unless the admin ticks it.
+--
+-- api_tokens.engine_facts: 1 = the key may read the static engine facts of the
+-- models it may use (GET /api/me/engine, the `engine_facts` MCP tool). Existing
+-- and new keys: 1.
+--
+-- A rotation copies both to the successor (TokenRepo _POLICY_COLS).
+--
+-- Rollback: inert on its own; SQLite >= 3.35 can
+-- ALTER TABLE api_tokens DROP COLUMN prompt_lens;
+-- ALTER TABLE api_tokens DROP COLUMN engine_facts;
+ALTER TABLE api_tokens ADD COLUMN prompt_lens INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE api_tokens ADD COLUMN engine_facts INTEGER NOT NULL DEFAULT 1;

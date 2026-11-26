@@ -14,6 +14,7 @@ import re
 from typing import Any
 
 from app.models.model_id_flags import model_id_flag_in, model_id_refusal
+from app.proxy.remote_media import allowed_domains
 from app.runtime.kv_store import check_kv_driver, kv_enabled
 
 # vLLM 0.20.0 requires GGUF models to be addressed as ``repo_id:quant_type``
@@ -282,6 +283,11 @@ def build_vllm_args(
                 separators=(",", ":"),
             ),
         ]
+    # #324: remote media is refused unless the operator allow-listed hosts; give
+    # the engine the same list so it refuses the rest even if a request got by.
+    media_hosts = allowed_domains()
+    if media_hosts:
+        args += ["--allowed-media-domains", *media_hosts]
     extra_args = list(getattr(model, "extra_args", []) or [])
     # Makes vLLM report usage.prompt_tokens_details.cached_tokens on the final
     # usage chunk, so finished requests record a MEASURED prefix-cache hit. A

@@ -131,6 +131,24 @@ async def test_request_history_table_exists_with_columns(tmp_data_dir):
         # Added by 0060 (per-key KV sharing), likewise.
         "kv_isolated": "INTEGER",
         "kv_iso_cost_tokens": "INTEGER",
+        # Added by 0063 (Prompt Lens analysis), likewise.
+        "lens_break": "TEXT",
+        "lens_cause": "TEXT",
+        "lens_span_class": "TEXT",
+        "lens_span_line": "INTEGER",
+        "lens_lost_tokens": "INTEGER",
+        "lens_cf_tokens": "INTEGER",
+        "lens_other_breaks": "INTEGER",
+        "cache_write_tokens": "INTEGER",
+        "cache_marks": "INTEGER",
+        "lens_repeat_results": "INTEGER",
+        "max_tokens_req": "INTEGER",
+        "reasoning_tokens": "INTEGER",
+        "reply_chars": "INTEGER",
+        "calls_n": "INTEGER",
+        "calls_bad": "TEXT",
+        "tools_lint": "TEXT",
+        "lens_version": "TEXT",
     }
     assert set(cols) == set(expected)
     for name, typ in expected.items():
@@ -195,6 +213,23 @@ async def test_request_history_table_exists_with_columns(tmp_data_dir):
         "guard",
         "kv_isolated",
         "kv_iso_cost_tokens",
+        "lens_break",
+        "lens_cause",
+        "lens_span_class",
+        "lens_span_line",
+        "lens_lost_tokens",
+        "lens_cf_tokens",
+        "lens_other_breaks",
+        "cache_write_tokens",
+        "cache_marks",
+        "lens_repeat_results",
+        "max_tokens_req",
+        "reasoning_tokens",
+        "reply_chars",
+        "calls_n",
+        "calls_bad",
+        "tools_lint",
+        "lens_version",
     ):
         assert cols[optional][notnull_idx] == 0, optional
 

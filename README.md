@@ -325,7 +325,7 @@ line on someone's invoice.
 | One engine, take it or leave it | vLLM v0.32.0 **and** llama.cpp b12644 on Linux, MLX **and** llama.cpp on a Mac, chosen per model |
 | A single shared API key, or none | A key per consumer, each with its own page, priority lane, pause switch and rotation grace window |
 | No record of who used what | Requests, prompt tokens and completion tokens rolled up per key and per client IP, plus each key's queue wait and latency |
-| No way to see what a client actually sent | Prompt Lens (formerly god mode): an opt-in, in-memory live view of prompts, reasoning, replies and tool calls, for all keys or one, streaming only while open; off by default |
+| No way to see what a client actually sent | Prompt Lens: an opt-in, in-memory live view of prompts, reasoning, replies and tool calls, for all keys or one, streaming only while open; off by default |
 | A port per engine to expose | One published port; your own TLS terminator, ingress, SSO or network policy goes in front of it |
 | `nvidia-smi` in a second terminal | On Linux, per-card VRAM, utilisation, power, temperature against the driver's own throttle point, PCIe width, ECC, NVLink; on a Mac, GPU use and the memory budget Metal reports, without power |
 | No idea why a request is slow | Live request table, TTFT and duration distributions from the proxy, KV-cache pressure and preemptions where the engine reports them |
@@ -486,11 +486,11 @@ and a model; the page writes the setup and checks the requirements it can see
 you create it here, since the warden keeps only hashes.</td>
 </tr>
 <tr>
-<td colspan="2"><img src="assets/screenshots/demo-token-poster.webp" alt="The Prompt Lens dock open at the bottom of a key's page, live, replaying that key's recent requests and streaming a response as it is generated"><br>
-<b>Prompt Lens (formerly god mode).</b> Open the dock at the bottom of the
-Stats page, or of a key's page, to watch prompts and responses as they happen:
+<td colspan="2"><img src="assets/screenshots/demo-token-poster.webp" alt="A key's page: its priority, its usage over the last hour and a link that opens Prompt Lens on that key's requests"><br>
+<b>Prompt Lens.</b> Open the Prompt Lens page from the menu,
+or from a key's page, to watch prompts and responses as they happen:
 every key's, or that key's with its earlier keys. Each request shows its
-prompt part by part, its thinking, reply and tool calls. Close it and the
+prompt part by part, its thinking, reply and tool calls. Leave the page and the
 stream stops; nothing is watched in the background. Off by default
 (a switch in Settings, or <code>VW_PROMPT_LENS_ENABLED</code>), and held only in memory unless an admin
 sets a key to keep its last 50 requests.</td>

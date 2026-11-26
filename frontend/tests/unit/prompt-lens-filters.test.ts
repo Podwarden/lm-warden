@@ -91,6 +91,7 @@ describe('Prompt Lens filters: defaults', () => {
       sessions: null,
       models: null,
       ips: null,
+      harnesses: null,
       phase: 'all',
       finish: null,
       has: [],
@@ -168,22 +169,10 @@ describe('Prompt Lens filters: apply', () => {
 
 describe('Prompt Lens filters: persistence', () => {
   const KEY = 'vw.prompt-lens.filters.stats';
-  const OLD_KEY = 'vw.godmode.filters.stats';
-
-  it('reads filters saved under the old god mode key, then saves under the new one', () => {
-    localStorage.setItem(OLD_KEY, JSON.stringify({ models: ['m'], phase: 'finished' }));
+  it('ignores filters saved under the removed old key', () => {
+    localStorage.setItem('vw.godmode.filters.stats', JSON.stringify({ phase: 'finished' }));
     const { result } = renderHook(() => useDockFilters('stats', 'admin', {}));
-    expect(result.current[0]).toMatchObject({ models: ['m'], phase: 'finished' });
-    act(() => result.current[1]({ ...result.current[0], phase: 'live' }));
-    expect(JSON.parse(localStorage.getItem(KEY) ?? '{}')).toMatchObject({ phase: 'live' });
-    expect(localStorage.getItem(OLD_KEY)).toBeNull();
-  });
-
-  it('the new key wins over the old one', () => {
-    localStorage.setItem(OLD_KEY, JSON.stringify({ phase: 'finished' }));
-    localStorage.setItem(KEY, JSON.stringify({ phase: 'live' }));
-    const { result } = renderHook(() => useDockFilters('stats', 'admin', {}));
-    expect(result.current[0].phase).toBe('live');
+    expect(result.current[0].phase).toBe('all');
   });
 
   it('starts from the defaults and persists a change', () => {
@@ -210,7 +199,7 @@ describe('Prompt Lens filters: persistence', () => {
     );
     expect(result.current[0].q).toBe('secret');
     const saved = JSON.parse(localStorage.getItem(KEY) ?? '{}');
-    expect(Object.keys(saved).sort()).toEqual(['finish', 'has', 'models', 'phase']);
+    expect(Object.keys(saved).sort()).toEqual(['finish', 'harnesses', 'has', 'models', 'phase']);
     localStorage.setItem(KEY, JSON.stringify({ q: 'old', sessions: ['s'], ips: ['i'], keys: ['k'] }));
     const b = renderHook(() => useDockFilters('stats', 'admin', {}));
     expect(b.result.current[0]).toEqual(defaultFilters('admin'));

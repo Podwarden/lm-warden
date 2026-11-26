@@ -26,9 +26,14 @@ from app.db.repos.models import ModelRow
 from app.db.repos.tokens import TokenRow
 from app.guard import proxy as guard_proxy
 from app.guard.placeholders import RestoreMap
+from app.lens import hot as lens_hot
+from app.lens import reply_verdicts
+from app.lens import versions as lens_versions
+from app.lens.causes import LensVerdict, RenderOrder
+from app.lens.heads import RecentHeads
 from app.models.context_window import effective_context_window
 from app.models.parallelism import spill_threshold_for
-from app.proxy import content_log, forest_fields, prompt_lens_switch
+from app.proxy import content_log, forest_fields, prompt_lens_switch, remote_media
 from app.proxy.alias_overrides import apply_alias_params
 from app.proxy.aliases import first_loaded_target, resolve_alias
 from app.proxy.auth import require_bearer, token_allows
@@ -132,7 +137,7 @@ _monotonic = time.monotonic
 STALE_KEEPALIVE_FAIL_S = 1.0
 
 
-async def _resolve_target(request: Request, served_name: str):
+async def _resolve_target(request: Request, served_name: str) -> tuple[ModelRow, str, int, Variant]:
     # From the cached models table (#293): every ModelRepo write drops it, so a
     # status change decides the very next request's 404.
     cache = getattr(request.app.state, "model_cache", None)
@@ -149,6 +154,35 @@ async def _resolve_target(request: Request, served_name: str):
     request.state.lmw_alias = None
     model = await model_by_served_name(cache, db_path, served_name)
     return _resolve_loaded(request, model, served_name)
+
+
+async def _resolve_for_token(
+    request: Request, token: TokenRow, served_name: str
+) -> tuple[ModelRow, str, int, Variant]:
+    """Authorize ``token`` for ``served_name`` and resolve the engine behind it.
+
+    Every route that takes a model name from the body (the OpenAI routes and
+    /v1/messages) goes through here, so an alias is handled the same way
+    everywhere: it wins over a model of the same name, the first loaded target
+    serves, and the key's allow-list may name the alias OR the serving model
+    (D4d). Sets ``request.state.lmw_alias`` for the alias settings _forward applies.
+    """
+    alias = await resolve_alias(
+        getattr(request.app.state, "model_cache", None),
+        request.app.state.settings.db_path,
+        served_name,
+    )
+    if alias is None and not token_allows(token, served_name):
+        # Non-alias request: the original refusal, before the lookup that 404s.
+        raise HTTPException(403, f"token not allowed for model '{served_name}'")
+    target = await _resolve_target(request, served_name)
+    if alias is not None and not (
+        token_allows(token, served_name) or token_allows(token, target[0].served_model_name)
+    ):
+        # D4d: a request through an alias is allowed when the key's allow-list
+        # contains the alias name OR the served name of the model that serves it.
+        raise HTTPException(403, f"token not allowed for model '{served_name}'")
+    return target
 
 
 def _resolve_loaded(
@@ -1102,7 +1136,7 @@ def _cobs2_size_over(canon: Canon, limit: int) -> bool:
 class _Cobs2Pre:
     """The pure part of the cobs2 pass (safe in a worker thread)."""
 
-    __slots__ = ("ids", "salt", "scan_text", "first", "conv", "shape", "toolset", "gm")
+    __slots__ = ("ids", "salt", "scan_text", "first", "conv", "shape", "toolset", "gm", "lens")
 
     def __init__(
         self,
@@ -1114,6 +1148,7 @@ class _Cobs2Pre:
         shape: dict[str, Any] | None = None,
         toolset: Toolset | None = None,
         gm: tuple[HeadPartIds, BodyLayout] | None = None,
+        lens: lens_hot.LensPre | None = None,
     ) -> None:
         self.ids = ids
         self.salt = salt
@@ -1126,6 +1161,9 @@ class _Cobs2Pre:
         # Prompt Lens only (G3): the head part ids and the body layout the kvsig
         # event reads. None when Prompt Lens is off: no canon is kept either way.
         self.gm = gm
+        # Prompt Lens layer 1 (analysis plan Task 1.3): digests, hashes, sizes
+        # and the memoised probes; it holds the body until the link releases it.
+        self.lens = lens
 
 
 class _Cobs2Seen:
@@ -1133,17 +1171,23 @@ class _Cobs2Seen:
     LINEAGE scope (``key_scope``: cache_salt digest narrowed to the API key), so
     ``remember_reply`` lands in the same per-key scope as the observe."""
 
-    __slots__ = ("ids", "obs", "salt", "compaction")
+    __slots__ = ("ids", "obs", "salt", "compaction", "lens")
 
     def __init__(self, ids: Ids, obs: Observation | None, salt: bytes, compaction: bool) -> None:
         self.ids = ids
         self.obs = obs
         self.salt = salt
         self.compaction = compaction
+        # Prompt Lens layer 1: the lineage-side inputs (None: not computed).
+        self.lens: lens_hot.LensState | None = None
 
 
 def _cobs2_compute(
-    body_json: Any, key: NetworkKey | None, secret: str | None = None, prompt_lens: bool = False
+    body_json: Any,
+    key: NetworkKey | None,
+    secret: str | None = None,
+    prompt_lens: bool = False,
+    lens: bool = False,
 ) -> _Cobs2Pre | None:
     """Canonical form, size cap, ids and the bounded fingerprint text. Pure;
     runs in a worker thread for a big body (the id memo is locked).
@@ -1151,6 +1195,9 @@ def _cobs2_compute(
     ``prompt_lens`` (on only while Prompt Lens is): also the head part ids and the
     body layout for the kvsig event, in this same pass (``gm``; None when
     either fails, which fails only the event).
+
+    ``lens``: also the Prompt Lens layer 1 inputs (``app.lens.hot.prepare``),
+    in this same pass; None when they fail, which fails only the lens fields.
 
     None when there is nothing to hash, no key, or the canonical form is over
     ``MAX_CHAIN_BYTES`` UTF-8 bytes (ids_for is then never run). Raises on a
@@ -1199,7 +1246,14 @@ def _cobs2_compute(
         except Exception as exc:  # noqa: BLE001 -- display only
             # The type only: an exception's text could quote the body.
             _gm_log.warning("prompt_lens kvsig layout failed: %s", type(exc).__name__)
-    return _Cobs2Pre(ids, salt, scan, msgs[0] if msgs else None, conv, shape, toolset, gm)
+    lens_pre: lens_hot.LensPre | None = None
+    if lens:
+        try:
+            lens_pre = lens_hot.prepare(body_json, canon, ids, key, salt)
+        except Exception as exc:  # noqa: BLE001 -- the lens never fails the pass
+            # The type only: an exception's text could quote the body.
+            _gm_log.warning("lens: prepare failed: %s", type(exc).__name__)
+    return _Cobs2Pre(ids, salt, scan, msgs[0] if msgs else None, conv, shape, toolset, gm, lens_pre)
 
 
 def _gm_kvsig(
@@ -1213,6 +1267,7 @@ def _gm_kvsig(
     match_all: Any,
     match_own: Any,
     prompt_tokens: int,
+    lens: LensVerdict | None = None,
 ) -> dict[str, Any]:
     """The kvsig event body for ``_forward`` (G3), or why there is none:
     ``not_chat`` (no ``messages`` list), ``no_key`` (no cobs2 key), ``error``
@@ -1262,6 +1317,7 @@ def _gm_kvsig(
         reason=None,
         raw_head_index=lay.raw_head_index,
         head_roles=lay.head_roles,
+        lens=lens,
     )
 
 
@@ -1305,13 +1361,21 @@ def _cobs2_link(
     token_scope: str | None,
     inflight_heads: Any,
     request_id: str | None = None,
+    lens_heads: RecentHeads | None = None,
+    lens_parents: lens_hot.ParentHeads | None = None,
+    render_order: RenderOrder = "sys_first",
 ) -> _Cobs2Seen:
     """The lineage step, on the event loop. The first message's sketch text is
-    built lazily, only when the body collapsed."""
+    built lazily, only when the body collapsed.
+
+    With ``pre.lens`` (Prompt Lens layer 1): the lineage records each new
+    node's probes from its memo, then ``lens_hot.link`` finds the parent's head
+    and feeds ``lens_heads``; any fault leaves ``seen.lens`` None (fail-open)."""
     compaction = Lineage.is_compaction_request(pre.scan_text)
     # Per API key: the lineage never links one key's request to another's.
     scope = key_scope(pre.salt, token_scope)
     obs = None
+    lp = pre.lens
     if lineage is not None:
         first = pre.first
         obs = lineage.observe(
@@ -1328,8 +1392,29 @@ def _cobs2_link(
             inflight_heads=inflight_heads,
             request_id=request_id,
             conv=pre.conv,
+            probes_for=lp.probes_at if lp is not None else None,
         )
-    return _Cobs2Seen(pre.ids, obs, scope, compaction)
+    seen = _Cobs2Seen(pre.ids, obs, scope, compaction)
+    if lp is not None:
+        pre.lens = None
+        if obs is not None:
+            try:
+                seen.lens = lens_hot.link(
+                    lp,
+                    obs,
+                    scope=scope,
+                    model_id=model_id,
+                    request_id=request_id,
+                    heads=lens_heads,
+                    parents=lens_parents,
+                    now=time.monotonic(),
+                    render_order=render_order,
+                )
+            except Exception as exc:  # noqa: BLE001 -- the lens never fails the link
+                _gm_log.warning("lens: link failed: %s", type(exc).__name__)
+        if seen.lens is None:
+            lp.release()
+    return seen
 
 
 def _cobs2_observe(
@@ -1942,6 +2027,9 @@ async def _forward_body(
     except Exception:  # noqa: BLE001 -- display metadata must never fail a request
         logger.debug("live-stats: could not derive session id", exc_info=True)
     forest_kw: dict[str, Any] = {}
+    # Prompt Lens layer 3 (analysis plan Task 1.4) runs only with kvsig on (a
+    # network key): with it off the lens makes zero calls and its fields stay None.
+    lens_l3 = getattr(request.app.state, "cobs2_key", None) is not None
     try:
         _secret = request.app.state.settings.cookie_secret
         _skey = forest_fields.hkey(_secret, session_id)
@@ -1951,10 +2039,30 @@ async def _forward_body(
             "parent_session_key": forest_fields.hkey(_secret, parent_session_id),
             "turn_index": _turns.next(_skey) if _turns is not None else None,
             "batch_id": forest_fields.clean_batch_id(request.headers.get("x-batch-id")),
-            "tools_in": forest_fields.tools_in_from_body(body_json),
+            # The error heuristic for OpenAI-format results only: an Anthropic
+            # tool_result says is_error itself (translated to an "Error" prefix).
+            "tools_in": forest_fields.tools_in_from_body(
+                body_json, heuristic=lens_l3 and wire_path != "/v1/messages"
+            ),
         }
     except Exception:  # noqa: BLE001 -- display metadata must never fail a request
         logger.debug("forest: could not derive fields", exc_info=True)
+    if lens_l3:
+        # Layer 3 (spec 8.1, length cut): the cap this request asked for.
+        try:
+            _mt = _nonneg_int(body_json.get("max_tokens"))
+            if _mt is None:
+                _mt = _nonneg_int(body_json.get("max_completion_tokens"))
+            forest_kw["max_tokens_req"] = _mt
+        except Exception as exc:  # noqa: BLE001 -- the lens never fails a request
+            _gm_log.warning("lens: max_tokens failed: %s", type(exc).__name__)
+        # Prompt version (Task 3.1): the client's own name wins over detection.
+        try:
+            forest_kw["lens_version"] = lens_versions.client_version(
+                request.headers.get("x-prompt-version")
+            )
+        except Exception as exc:  # noqa: BLE001 -- the lens never fails a request
+            _gm_log.warning("lens: version header failed: %s", type(exc).__name__)
     if gm_on:
         # Published here, once the session and the turn are known, still before
         # the scheduler acquire (a queued request is visible) and with no await
@@ -2090,10 +2198,10 @@ async def _forward_body(
                 try:
                     if cobs2_off_loop:
                         cobs2_pre = await asyncio.to_thread(
-                            _cobs2_compute, cobs2_snap, cobs2_key, cobs2_secret, gm_on
+                            _cobs2_compute, cobs2_snap, cobs2_key, cobs2_secret, gm_on, True
                         )
                     else:
-                        cobs2_pre = _cobs2_compute(cobs2_snap, cobs2_key, cobs2_secret, gm_on)
+                        cobs2_pre = _cobs2_compute(cobs2_snap, cobs2_key, cobs2_secret, gm_on, True)
                 except Exception:  # noqa: BLE001 — identity must never fail a request
                     cobs2_pre = None
                     gm_kv_reason = "error"
@@ -2281,6 +2389,9 @@ async def _forward_body(
         logger.debug("cache-obs: match failed", exc_info=True)
     cobs2_seen: _Cobs2Seen | None = None
     cobs2_kw: dict[str, Any] = {}
+    # Prompt Lens layer 1 (analysis plan Task 1.3): set after the link, read by
+    # the kvsig event and, with the outcome, at the finish. None = no lens.
+    lens_state: lens_hot.LensState | None = None
     cobs2_lineage = getattr(request.app.state, "cobs2_lineage", None)
     # Set once the engine has actually processed the prompt (a 2xx, and either
     # a finished non-stream body or a first streamed frame). Anything earlier --
@@ -2505,10 +2616,16 @@ async def _forward_body(
         try:
             _msg = ((resp_body.get("choices") or [{}])[0] or {}).get("message")
             live_req.tools_out = forest_fields.tools_out_from_message(
-                _msg, request.app.state.settings.cookie_secret
+                _msg, request.app.state.settings.cookie_secret, args=lens_l3
             )
         except Exception:  # noqa: BLE001
             logger.debug("forest: tools_out failed", exc_info=True)
+        if lens_l3:
+            # Layer 3 (spec 8.1, long thinking): the engine's reasoning count.
+            try:
+                live_req.reasoning_tokens = _reasoning_tokens_of(resp_body)
+            except Exception as exc:  # noqa: BLE001 -- the lens never fails a request
+                _gm_log.warning("lens: reasoning tokens failed: %s", type(exc).__name__)
 
     reply_cap = (
         ReplyCapture() if is_chat_path and isinstance(body_json.get("messages"), list) else None
@@ -2559,8 +2676,35 @@ async def _forward_body(
         except Exception:  # noqa: BLE001
             logger.debug("cobs2: remember reply failed", exc_info=True)
 
+    def _set_lens_reply() -> None:
+        # Prompt Lens layer 3 (spec 8.1): the reply's counts and a verdict per
+        # tool call, on the message ReplyCapture assembled once the response
+        # is complete (the proxied bytes are already out or fixed). FAIL-OPEN,
+        # each field on its own; codes and counts only, the type in the log.
+        if not lens_l3 or reply_cap is None or live_req is None:
+            return
+        if live_req.orphan or live_req.finish_reason == "error" or not reply_cap.complete:
+            return
+        msg = reply_cap.message()
+        if msg is None:
+            return
+        try:
+            live_req.reply_chars, live_req.calls_n = reply_verdicts.reply_counts(msg)
+        except Exception as exc:  # noqa: BLE001 -- the lens never fails a request
+            _gm_log.warning("lens: reply counts failed: %s", type(exc).__name__)
+        try:
+            verdicts = reply_verdicts.call_verdicts(
+                msg,
+                reply_verdicts.offered_of(body_json.get("tools")),
+                request.app.state.settings.cookie_secret,
+            )
+            live_req.calls_bad = verdicts  # [k, hash8, code], the non-ok calls only
+        except Exception as exc:  # noqa: BLE001
+            _gm_log.warning("lens: call verdicts failed: %s", type(exc).__name__)
+
     async def _deregister() -> None:
         _set_cobs2_reply()
+        _set_lens_reply()
         _release_dp_rank()
         if live_req is not None:
             live_req.cached_tokens = _acct_cached()
@@ -2659,6 +2803,38 @@ async def _forward_body(
                 )
         except Exception:  # noqa: BLE001 — bookkeeping must never fail a request
             logger.debug("cache-obs: observe failed", exc_info=True)
+        # Prompt Lens layer 1: the row's verdict, with this request's own
+        # outcome and reuse. FAIL-OPEN: a fault leaves the lens fields None.
+        try:
+            if lens_state is not None and live_req is not None:
+                served = upstream_ok and prefix_processed and not prefix_failed
+                co = live_req.cache_obs or {}
+                lens_hot.apply(
+                    live_req,
+                    lens_state.final(
+                        prompt_tokens=_acct_prompt(),
+                        own_outcome=co.get("cache_outcome_own") if served else None,
+                        actual_tokens=(
+                            lens_hot.own_reuse(_acct_cached(), co.get("reusable_tokens_own"))
+                            if served
+                            else None
+                        ),
+                        gap_s=live_req.gap_s,
+                    ),
+                )
+        except Exception as exc:  # noqa: BLE001 -- the lens never fails a request
+            _gm_log.warning("lens: finish failed: %s", type(exc).__name__)
+        # Layer 2/3 fields the kvsig pass prepared: the repeated tool results
+        # (at this request's tokens per char) and the toolset's lint. FAIL-OPEN.
+        try:
+            if lens_state is not None and live_req is not None:
+                live_req.lens_repeat_results = lens_state.repeat_tokens(_acct_prompt())
+                if lens_state.tools_lint is not None:
+                    live_req.tools_lint = list(lens_state.tools_lint)
+                if live_req.lens_version is None:  # a header's name, set at admission, wins
+                    live_req.lens_version = lens_state.version
+        except Exception as exc:  # noqa: BLE001
+            _gm_log.warning("lens: repeat results failed: %s", type(exc).__name__)
         try:
             history = getattr(request.app.state, "request_history", None)
             if history is not None:
@@ -2701,6 +2877,8 @@ async def _forward_body(
                         and o.cobs2_head
                     ],
                     request_id=request_id,
+                    lens_heads=getattr(request.app.state, "lens_heads", None),
+                    lens_parents=getattr(request.app.state, "lens_parents", None),
                 )
                 c_ids, c_obs = cobs2_seen.ids, cobs2_seen.obs
                 cobs2_kw = {
@@ -2743,6 +2921,15 @@ async def _forward_body(
             cobs2_seen = None
             cobs2_kw = {}
             logger.debug("cobs2: ids or lineage failed", exc_info=True)
+        # Prompt Lens layer 1: the structural verdict at admission (the kvsig
+        # event's lens block). FAIL-OPEN, and the type only in the log.
+        try:
+            lens_state = cobs2_seen.lens if cobs2_seen is not None else None
+            if lens_state is not None:
+                lens_state.admit(prompt_tokens)
+        except Exception as exc:  # noqa: BLE001 -- the lens never fails a request
+            lens_state = None
+            _gm_log.warning("lens: admission failed: %s", type(exc).__name__)
         if gm_on:
             # G3: the prompt map, once the request is admitted (a queued
             # request shows none yet). Ids and sizes only: the content passes
@@ -2771,6 +2958,7 @@ async def _forward_body(
                             match_all=obs_all,
                             match_own=obs_own,
                             prompt_tokens=prompt_tokens,
+                            lens=lens_state.adm if lens_state is not None else None,
                         ),
                     },
                 )
@@ -3198,7 +3386,7 @@ async def _forward_body(
                             completion=accumulated,
                         )
 
-            tools_acc = forest_fields.ToolsOutAccumulator()
+            tools_acc = forest_fields.ToolsOutAccumulator(args=lens_l3)
             client_r = (
                 guard_proxy.ChatStreamRestorer(
                     g_restore, trailer=None, restore_mode=g_out.restore_mode
@@ -3337,6 +3525,17 @@ async def _forward_body(
                             live_req.phase = frame_kind
                         if frame_usage is not None:
                             stream_usage_completion = frame_usage
+                        if lens_l3 and live_req is not None and b'"reasoning_tokens"' in line:
+                            # Layer 3: the engine's reasoning count, on its usage
+                            # frame (one parse a stream, behind the byte gate).
+                            try:
+                                _rt = _reasoning_tokens_of(parse_sse_event(line))
+                                if _rt is not None:
+                                    live_req.reasoning_tokens = _rt
+                            except Exception as exc:  # noqa: BLE001
+                                _gm_log.warning(
+                                    "lens: reasoning tokens failed: %s", type(exc).__name__
+                                )
                         if delta or extra or (frame_usage or 0) > 0:
                             prefix_processed = True
                         if live_req is not None and cached is not None:
@@ -3870,21 +4069,22 @@ async def chat_completions(request: Request, token: TokenRow = Depends(require_b
     served_name = body_json.get("model")
     if not served_name:
         raise HTTPException(400, "missing 'model' field")
-    alias = await resolve_alias(
-        getattr(request.app.state, "model_cache", None),
-        request.app.state.settings.db_path,
-        served_name,
-    )
-    if alias is None and not token_allows(token, served_name):
-        # Non-alias request: the original refusal, before the lookup that 404s.
-        raise HTTPException(403, f"token not allowed for model '{served_name}'")
-    model, host, port, variant = await _resolve_target(request, served_name)
-    if alias is not None and not (
-        token_allows(token, served_name) or token_allows(token, model.served_model_name)
-    ):
-        # D4d: a request through an alias is allowed when the key's allow-list
-        # contains the alias name OR the served name of the model that serves it.
-        raise HTTPException(403, f"token not allowed for model '{served_name}'")
+    # #324: the engine fetches any remote media URL it is handed, so refuse
+    # them unless the operator allow-listed the host.
+    media_why = remote_media.refusal(body_json)
+    if media_why:
+        return JSONResponse(
+            {
+                "error": {
+                    "message": media_why,
+                    "type": "invalid_request_error",
+                    "param": "messages",
+                    "code": "remote_media_not_allowed",
+                }
+            },
+            status_code=400,
+        )
+    model, host, port, variant = await _resolve_for_token(request, token, served_name)
 
     # Re-set the body on the request so _forward can re-read it.
     async def _receive():
@@ -3904,21 +4104,7 @@ async def completions(request: Request, token: TokenRow = Depends(require_bearer
     served_name = body_json.get("model")
     if not served_name:
         raise HTTPException(400, "missing 'model' field")
-    alias = await resolve_alias(
-        getattr(request.app.state, "model_cache", None),
-        request.app.state.settings.db_path,
-        served_name,
-    )
-    if alias is None and not token_allows(token, served_name):
-        # Non-alias request: the original refusal, before the lookup that 404s.
-        raise HTTPException(403, f"token not allowed for model '{served_name}'")
-    model, host, port, variant = await _resolve_target(request, served_name)
-    if alias is not None and not (
-        token_allows(token, served_name) or token_allows(token, model.served_model_name)
-    ):
-        # D4d: a request through an alias is allowed when the key's allow-list
-        # contains the alias name OR the served name of the model that serves it.
-        raise HTTPException(403, f"token not allowed for model '{served_name}'")
+    model, host, port, variant = await _resolve_for_token(request, token, served_name)
 
     async def _receive():
         return {"type": "http.request", "body": body_bytes, "more_body": False}

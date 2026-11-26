@@ -92,7 +92,11 @@ async def test_migrations_idempotent(tmp_data_dir):
         # + 0060 (per-key KV sharing columns, models.kv_store_weight, kv_retired_scopes)
         # + 0061 (api_tokens.keep_captures, prompt_lens_kept)
         # + 0062 (model_aliases: named, ordered model lists with proxy settings).
-        assert count == 61
+        # + 0063 (request_history lens_* and layer 3 fields, all nullable).
+        # + 0064 (lens_session_scores and lens_findings: scores of quiet sessions).
+        # + 0065 (request_history.lens_version and lens_wontfix).
+        # + 0066 (api_tokens.prompt_lens and engine_facts: per-key permissions).
+        assert count == 65
 
 
 async def test_migrations_create_all_v2_tables(tmp_data_dir):

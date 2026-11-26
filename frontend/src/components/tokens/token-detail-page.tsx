@@ -22,6 +22,7 @@ import { errorDetail, useTokenActions } from "@/components/tokens/use-token-acti
 import { TokenHeader } from "@/components/tokens/detail/token-header";
 import { LimitsCard, type LimitsPatch } from "@/components/tokens/detail/limits-card";
 import { KeepCapturesCard } from "@/components/tokens/detail/keep-captures-card";
+import { PermissionsCard } from "@/components/tokens/detail/permissions-card";
 import { DetailsCard } from "@/components/tokens/detail/details-card";
 import { LineageCard } from "@/components/tokens/detail/lineage-card";
 import { UsageSection } from "@/components/tokens/detail/usage-section";
@@ -462,6 +463,12 @@ export function TokenDetailPage({ id }: { id: string }) {
     }
   }
 
+  async function onPermission(flag: "prompt_lens" | "engine_facts", on: boolean): Promise<string | null> {
+    const err = await patch({ [flag]: on });
+    if (!err) toast.show(`${flag === "prompt_lens" ? "Prompt Lens" : "Engine facts"} ${on ? "allowed" : "turned off"} for this key`);
+    return err;
+  }
+
   async function onRelay(on: boolean): Promise<boolean> {
     const ok = await actions.setAnthropicRelay(on);
     if (ok) toast.show(on ? "Relay enabled" : "Relay disabled");
@@ -524,6 +531,12 @@ export function TokenDetailPage({ id }: { id: string }) {
             onThinking={onThinking}
             thinkingError={actions.thinkingError}
             thinkingBusy={actions.thinkingBusy}
+          />
+          <PermissionsCard
+            promptLens={token.prompt_lens !== false}
+            engineFacts={token.engine_facts !== false}
+            onChange={onPermission}
+            platformOn={gmEnabled}
           />
           <KeepCapturesCard
             on={!!token.keep_captures}

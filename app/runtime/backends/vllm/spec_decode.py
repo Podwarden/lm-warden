@@ -110,3 +110,16 @@ def prefix_match_unit(extra_args: Sequence[str] | None, block_size: int) -> int:
     if 0 < unit <= block_size and block_size % unit == 0:
         return unit
     return block_size
+
+
+def speculative_method(extra_args: Sequence[str] | None) -> str | None:
+    """The speculative-decoding method an engine launched with ``extra_args`` runs, lower case
+    (a model-specific ``*_mtp`` name reads ``mtp``, as vLLM normalises it), or None when the
+    args name none."""
+    if not extra_args:
+        return None
+    method = _spec_config(list(extra_args)).get("method")
+    if not isinstance(method, str) or not method.strip():
+        return None
+    method = method.strip().lower()
+    return "mtp" if method.endswith("_mtp") else method

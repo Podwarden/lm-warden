@@ -435,6 +435,33 @@ set +e; (cd "$D" && env PATH="$STUBS:$PATH" STUB_GPUS=0 "$SH" ./install.sh --gpu
 assert_rc "re-run with a blanked secret exits 0" 0 "$RC" "$OUT"
 s=$(env_val VW_COOKIE_SECRET "$D/.env"); [ "${#s}" -eq 64 ] && pass "blank secret refilled on re-run" || fail "blank secret not refilled"
 
+# VW_GODMODE_* (Prompt Lens' former name, no longer read) in an old .env is renamed
+run pl_migrate STUB_GPUS=0 -- --gpus none --yes
+{ cat "$D/.env"; printf 'VW_GODMODE_ENABLED=true   # was on\nVW_GODMODE_RING_EVENTS=123\nVW_GODMODE_SECTION_TTL_S=\n'; } > "$D/.env.tmp" && mv "$D/.env.tmp" "$D/.env"
+sed 's/^VW_PROMPT_LENS_ENABLED=.*/VW_PROMPT_LENS_ENABLED=/' "$D/.env" > "$D/.env.tmp" && mv "$D/.env.tmp" "$D/.env"
+set +e; (cd "$D" && env PATH="$STUBS:$PATH" STUB_GPUS=0 "$SH" ./install.sh --gpus none --yes) >"$OUT" 2>&1; RC=$?; set -e
+assert_rc "old VW_GODMODE_* in .env: re-run exits 0" 0 "$RC" "$OUT"
+[ "$(env_val VW_PROMPT_LENS_ENABLED "$D/.env")" = true ] && pass "VW_GODMODE_ENABLED renamed to VW_PROMPT_LENS_ENABLED" || fail "VW_PROMPT_LENS_ENABLED=$(env_val VW_PROMPT_LENS_ENABLED "$D/.env")"
+[ "$(env_val VW_PROMPT_LENS_RING_EVENTS "$D/.env")" = 123 ] && pass "a bound is renamed too" || fail "VW_PROMPT_LENS_RING_EVENTS=$(env_val VW_PROMPT_LENS_RING_EVENTS "$D/.env")"
+[ "$(grep -c '^VW_PROMPT_LENS_ENABLED=' "$D/.env")" = 1 ] && pass "renamed in place (one VW_PROMPT_LENS_ENABLED line)" || fail "duplicate VW_PROMPT_LENS_ENABLED lines"
+assert_nogrep "old active lines are gone" '^VW_GODMODE_(ENABLED|RING_EVENTS)=' "$D/.env"
+assert_grep "a blank old variable is left alone" '^VW_GODMODE_SECTION_TTL_S=$' "$D/.env"
+assert_grep "the rename is logged" 'Renamed VW_GODMODE_ENABLED to VW_PROMPT_LENS_ENABLED' "$OUT"
+assert_nogrep "the override forwards only the new name" 'VW_GODMODE' "$D/docker-compose.override.yml"
+# a second run changes nothing
+cp "$D/.env" "$WORK/pl-env-1"
+set +e; (cd "$D" && env PATH="$STUBS:$PATH" STUB_GPUS=0 "$SH" ./install.sh --gpus none --yes) >"$OUT" 2>&1; RC=$?; set -e
+cmp -s "$D/.env" "$WORK/pl-env-1" && pass "the rename is idempotent" || fail "second run changed .env"
+
+# ... but a value already under the new name wins and is not overwritten
+run pl_both STUB_GPUS=0 -- --gpus none --yes
+sed 's/^VW_PROMPT_LENS_ENABLED=.*/VW_PROMPT_LENS_ENABLED=false/' "$D/.env" > "$D/.env.tmp" && mv "$D/.env.tmp" "$D/.env"
+printf 'VW_GODMODE_ENABLED=true\n' >> "$D/.env"
+set +e; (cd "$D" && env PATH="$STUBS:$PATH" STUB_GPUS=0 "$SH" ./install.sh --gpus none --yes) >"$OUT" 2>&1; RC=$?; set -e
+assert_rc "both names set: re-run exits 0" 0 "$RC" "$OUT"
+[ "$(env_val VW_PROMPT_LENS_ENABLED "$D/.env")" = false ] && pass "the new name keeps its value" || fail "VW_PROMPT_LENS_ENABLED=$(env_val VW_PROMPT_LENS_ENABLED "$D/.env")"
+assert_grep "both names set: warns that the old one is ignored" 'VW_GODMODE_ENABLED in .env is no longer read' "$OUT"
+
 # ---- --dir: install into a separate directory -----------------------------------------------
 
 run dir STUB_GPUS=0 -- --gpus none --yes --dir "$WORK/target/opt-vllm-warden"

@@ -40,6 +40,7 @@ import asyncio
 import json
 import logging
 import math
+import re
 import sqlite3
 import time
 from collections import OrderedDict, deque
@@ -53,6 +54,8 @@ import aiosqlite
 from app.cache_obs.classify import BLOCK_AWARE_ABOVE, DIVERGENCE_CAUSES, OUTCOMES
 from app.db.database import open_db
 from app.db.repos.models import ModelRepo
+from app.lens.causes import CAUSES
+from app.lens.probes import SPAN_CLASSES
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +142,23 @@ _COLUMNS = (
     "guard",
     "kv_isolated",
     "kv_iso_cost_tokens",
+    "lens_break",
+    "lens_cause",
+    "lens_span_class",
+    "lens_span_line",
+    "lens_lost_tokens",
+    "lens_cf_tokens",
+    "lens_other_breaks",
+    "cache_write_tokens",
+    "cache_marks",
+    "lens_repeat_results",
+    "max_tokens_req",
+    "reasoning_tokens",
+    "reply_chars",
+    "calls_n",
+    "calls_bad",
+    "tools_lint",
+    "lens_version",
 )
 # The forest's six columns (session_key .. tools_in, just before the cobs2 tail of _COLUMNS) are
 # written with every row but read only by the forest route, which selects them itself: the v2
@@ -187,6 +207,28 @@ _DIET_COLUMNS = ("prompt_diet", "guard")
 # Per-key KV isolation (migration 0060): whether the turn ran isolated and what isolation cost
 # it in recomputed tokens. Read by the sessions and key cache pages, never by the v2 readers.
 _KV_ISO_COLUMNS = ("kv_isolated", "kv_iso_cost_tokens")
+# Prompt Lens analysis (migration 0063): layer 1 codes and counts, relay cache
+# writes and marks, layer 3 counts. Read by app/sessions and the lens only,
+# never by the v2 readers. Codes, ints and JSON ints only, never text.
+_LENS_COLUMNS = (
+    "lens_break",
+    "lens_cause",
+    "lens_span_class",
+    "lens_span_line",
+    "lens_lost_tokens",
+    "lens_cf_tokens",
+    "lens_other_breaks",
+    "cache_write_tokens",
+    "cache_marks",
+    "lens_repeat_results",
+    "max_tokens_req",
+    "reasoning_tokens",
+    "reply_chars",
+    "calls_n",
+    "calls_bad",
+    "tools_lint",
+    "lens_version",
+)
 _COBS2_EDGES = frozenset({"new", "continue", "fork", "compacted_from", "subagent"})
 _READ_COLUMNS = _COLUMNS[
     : -len(_FOREST_COLUMNS)
@@ -194,6 +236,7 @@ _READ_COLUMNS = _COLUMNS[
     - len(_SESSIONS_COLUMNS)
     - len(_DIET_COLUMNS)
     - len(_KV_ISO_COLUMNS)
+    - len(_LENS_COLUMNS)
 ]
 _SELECT = "SELECT " + ", ".join(_READ_COLUMNS) + " FROM request_history"
 # INSERT OR IGNORE: the id is the registry's uuid, and a record that somehow
@@ -218,6 +261,13 @@ def _json_text(v: Any) -> str | None:
 def _opt_str(v: Any) -> str | None:
     """An optional string column value: str passes through, anything else → None."""
     if v is None or isinstance(v, str):
+        return v
+    return None
+
+
+def _version_text(v: Any) -> str | None:
+    """A prompt version (0065): ``h:<name>`` or 8 hex, printable ASCII, at most 66 chars."""
+    if isinstance(v, str) and 0 < len(v) <= 66 and all(32 <= ord(c) < 127 for c in v):
         return v
     return None
 
@@ -319,6 +369,23 @@ def _row_params(record: dict[str, Any], finished_at: float) -> tuple[Any, ...]:
         _opt_str(record.get("guard")),
         _opt_bool(record.get("kv_isolated")),
         _opt_int(record.get("kv_iso_cost_tokens")),
+        _lens_break(record.get("lens_break")),
+        _code(record.get("lens_cause"), _LENS_CAUSES),
+        _code(record.get("lens_span_class"), _SPAN_CLASSES),
+        _opt_int(record.get("lens_span_line")),
+        _opt_int(record.get("lens_lost_tokens")),
+        _opt_int(record.get("lens_cf_tokens")),
+        _opt_int(record.get("lens_other_breaks")),
+        _opt_int(record.get("cache_write_tokens")),
+        _opt_int(record.get("cache_marks")),
+        _opt_int(record.get("lens_repeat_results")),
+        _opt_int(record.get("max_tokens_req")),
+        _opt_int(record.get("reasoning_tokens")),
+        _opt_int(record.get("reply_chars")),
+        _opt_int(record.get("calls_n")),
+        _json_text(record.get("calls_bad")),
+        _json_text(record.get("tools_lint")),
+        _version_text(record.get("lens_version")),
     )
 
 
@@ -337,6 +404,20 @@ _UPSERT_TOOL = (
     "VALUES (?,?,?,?,?,?,?) ON CONFLICT(token_id, tool_hmac) DO UPDATE SET name=excluded.name, "
     "family=excluded.family, size=excluded.size, last_seen=max(last_seen, excluded.last_seen)"
 )
+
+
+_LENS_CAUSES = frozenset(CAUSES)
+_SPAN_CLASSES = frozenset(SPAN_CLASSES)
+_LENS_BREAK_RE = re.compile(r"sys|tools|node:\d{1,9}")
+
+
+def _code(v: Any, known: frozenset[str]) -> str | None:
+    """A code column: only a known code is stored, anything else is NULL."""
+    return v if isinstance(v, str) and v in known else None
+
+
+def _lens_break(v: Any) -> str | None:
+    return v if isinstance(v, str) and _LENS_BREAK_RE.fullmatch(v) else None
 
 
 def _cause(v: Any) -> str | None:
@@ -490,6 +571,17 @@ class RequestHistoryStore:
         except TimeoutError:
             pass
         return request_id in self._committed_set
+
+    async def wait_commit(self, timeout_s: float) -> None:
+        """Return when a batch of rows has committed (in this process), or after ``timeout_s``.
+        A caller loops over its own check: it may wake for a batch that is not the one it
+        waits for."""
+        try:
+            async with asyncio.timeout(max(0.0, timeout_s)):
+                async with self._commit_cond:
+                    await self._commit_cond.wait()
+        except TimeoutError:
+            pass
 
     async def _mark_committed(self, batch: list[tuple[Any, ...]]) -> None:
         for params in batch:
@@ -1143,6 +1235,19 @@ async def prune(db: aiosqlite.Connection, *, cutoff: float, max_rows: int) -> di
     side_cutoff = cutoff - TOOL_NAME_REFRESH_S
     await db.execute("DELETE FROM cobs2_toolsets WHERE last_seen < ?", (side_cutoff,))
     await db.execute("DELETE FROM session_tools WHERE last_seen < ?", (side_cutoff,))
+    # Prompt Lens scores go with the requests they were scored from: a session
+    # whose last request is older than anything left (age or count cap).
+    await db.execute(
+        "DELETE FROM lens_findings WHERE EXISTS (SELECT 1 FROM lens_session_scores s"
+        " WHERE s.key_id = lens_findings.key_id AND s.sess_ref = lens_findings.sess_ref"
+        " AND s.last_at < COALESCE((SELECT MIN(finished_at) FROM request_history), ?))",
+        (cutoff,),
+    )
+    await db.execute(
+        "DELETE FROM lens_session_scores WHERE last_at < "
+        "COALESCE((SELECT MIN(finished_at) FROM request_history), ?)",
+        (cutoff,),
+    )
     return {"by_age": by_age, "by_count": by_count, "newest_deleted": newest}
 
 

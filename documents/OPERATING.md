@@ -148,6 +148,16 @@ is on it:
   still sends `rate_limit_tps` is refused with 422, and
   `VW_RATE_LIMIT_WINDOW_S` is no longer read — a leftover line in `.env` is
   ignored.
+- **Permissions**: **Prompt Lens**, whether the key's holder
+  may use Prompt Lens on their own traffic (the key area's pages, the Prompt Lens
+  API and the MCP tools), and **Engine facts**, whether the key may read the
+  cache block size, match unit and context length of the models it may use
+  (`GET /api/me/engine`). Both are also in the Create dialog. A new key starts
+  with Prompt Lens off (tick it when the holder should use it) and engine facts
+  on; keys that existed before keep Prompt Lens, so nobody loses access.
+  Prompt Lens for a holder also needs the platform switch (Settings, General,
+  Privacy). A rotated key inherits both; the holder sees them, read-only, on
+  their Settings page. Each change is in the audit trail.
 - **Test** it: whether the key is live, paused, expired or revoked, and
   whether the proxy answers.
 - **Rotate** it. A new key keeps the name; the old one becomes
@@ -353,6 +363,29 @@ and sends a test request. Its data is `GET /api/connect/clients`
 
 ---
 
+## Remote media in requests
+
+By default LM Warden refuses requests that point at media by URL. A multimodal
+request may carry images, video or audio as `data:` URLs (or base64 sources);
+an `http(s)` URL in an `image_url`, `video_url` or `audio_url` part of
+`/v1/chat/completions` is answered with 400, and the Anthropic-shaped
+(`/v1/messages`) and Responses-shaped (`/v1/responses`) routes accept only
+`data:` images. Other schemes, such as `file:`, are always refused.
+
+To let clients use remote media, set `VW_REMOTE_MEDIA_ALLOWED_DOMAINS` to a
+comma-separated list of host names (for example
+`images.example.com,cdn.example.org`). A URL is accepted only when its host
+equals one of them exactly (no wildcards, no subdomain matching), and the
+same list is passed to vLLM as `--allowed-media-domains` when a model loads,
+so the engine refuses any other host itself. Restart the app and reload the
+models for a change to take effect.
+
+Remote media that is allowed is fetched **by the engine process**, not by the
+warden, from whatever network the engine runs on: the host network under the
+subprocess driver, the compose network under the docker driver. Allow only
+hosts you trust to be reached from there. Prompt Lens shows a remote image URL
+as text with a "load image" button and never loads it by itself.
+
 ## Where request content can end up
 
 By default no prompt or completion text is stored anywhere. `request_history`
@@ -362,20 +395,21 @@ reasons, and that is the whole of the metadata path. Two diagnostic features
 can capture content. Both are off by default, and with both off the proxy's
 forward path is the code it would be in a build that never had them.
 
-**Prompt Lens** (called god mode before 2026-11-22; turned on by the switch in
+**Prompt Lens** (turned on by the switch in
 Settings, General, Privacy, or `VW_PROMPT_LENS_ENABLED`) streams prompts,
 replies, reasoning, tool calls and any inline images to the admin session —
 the way to settle "the model said X" when the client is somebody else's code,
-and to see which parts of a prompt matched earlier requests. Its name on
-screen changed from "God mode" to "Prompt Lens" on 2026-11-22, and its other
-names followed: the env variables are `VW_PROMPT_LENS_*` and the routes
-`/api/{admin,me}/prompt-lens/...`; the old `VW_GODMODE_*` names and `/godmode`
-routes still work for one release (deprecated). The Settings switch overrides
+and to see which parts of a prompt matched earlier requests. The env
+variables are `VW_PROMPT_LENS_*` and the routes are
+`/api/{admin,me}/prompt-lens/...` (called god mode before 2026-11-22; the
+old `VW_GODMODE_*` names and `/godmode` routes were removed in the release
+after v2026.11.24.1). The Settings switch overrides
 the env variable and applies at once: off ends every open Prompt Lens view and
 clears what memory holds (kept captures stay on disk). With it on, Prompt Lens
 is a page of its own, in the menu: `/ui/prompt-lens` for the admin (every key;
 breadcrumb Home › Prompt Lens) and `/ui/key/prompt-lens` for a key holder
-(their own requests only; in the key area's nav). It takes the whole screen:
+(their own requests only; in the key area's nav, and only for a key whose
+**Prompt Lens** permission is on, see Managing API keys). It takes the whole screen:
 the filter line at the top, the list of requests, live and recent, beside the
 request screen, which opens one: its prompt part by part (the kvsig prompt
 map), thinking, reply and tool calls as they stream. On a phone the list fills

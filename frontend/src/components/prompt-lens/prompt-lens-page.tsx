@@ -17,6 +17,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
+import { parseView, type LensView } from "@/lib/prompt-lens/scorecard";
 import type { RequestView } from "@/lib/prompt-lens/store";
 
 /** The smallest height the page takes on a very short window. */
@@ -65,11 +66,14 @@ export function FullScreen({ children, testid }: { children: ReactNode; testid?:
   );
 }
 
-/** ?req= and ?key= of the address, read once when the page opens: a pick
- *  later rewrites ?req= and must not select again. */
+/** ?req=, ?key=, ?view= and ?session= of the address, read once when the page
+ *  opens: a pick later rewrites ?req= and must not select again. ?view=sessions
+ *  with ?session=<session id> opens that session's scorecard. */
 export function useLensDeepLink(params: URLSearchParams | null): {
   select: { requestId: string; nonce: number } | null;
   keys: string[] | null;
+  view: LensView;
+  session: string | null;
 } {
   const [first] = useState(() => {
     const req = params?.get("req") ?? "";
@@ -78,7 +82,15 @@ export function useLensDeepLink(params: URLSearchParams | null): {
       .split(",")
       .map((k) => k.trim())
       .filter(Boolean);
-    return { select: req ? { requestId: req, nonce: 1 } : null, keys: keys.length ? keys : null };
+    const session = params?.get("session") ?? "";
+    const view = parseView(params?.get("view"));
+    return {
+      select: req ? { requestId: req, nonce: 1 } : null,
+      keys: keys.length ? keys : null,
+      // A bare ?session= means the Sessions view.
+      view: view === "requests" && session && !req ? "sessions" : view,
+      session: session || null,
+    };
   });
   return first;
 }
@@ -93,9 +105,37 @@ export function useWritePick(): (r: RequestView) => void {
   }, []);
 }
 
-/** Where the Requests eye and the key details page send the reader. */
-export function promptLensHref(scope: "admin" | "key", o: { req?: string | null; keys?: string[] | null } = {}): string {
+/** Write the view and the open session into the address (?view=, ?session=),
+ *  keeping the rest; like `useWritePick` it adds no history entry. */
+export function writeLensParams(o: { view?: LensView; session?: string | null; req?: string | null }): void {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (o.view !== undefined) {
+    if (o.view === "requests") url.searchParams.delete("view");
+    else url.searchParams.set("view", o.view);
+  }
+  if (o.session !== undefined) {
+    if (o.session) url.searchParams.set("session", o.session);
+    else url.searchParams.delete("session");
+  }
+  if (o.req !== undefined) {
+    if (o.req) url.searchParams.set("req", o.req);
+    else url.searchParams.delete("req");
+  }
+  window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+}
+
+/** Where the Requests eye, the key details page and the Sessions page send the
+ *  reader. `session` opens that session's scorecard (the Sessions view). */
+export function promptLensHref(
+  scope: "admin" | "key",
+  o: { req?: string | null; keys?: string[] | null; session?: string | null } = {},
+): string {
   const q = new URLSearchParams();
+  if (o.session) {
+    q.set("view", "sessions");
+    q.set("session", o.session);
+  }
   if (o.req) q.set("req", o.req);
   if (scope === "admin" && o.keys && o.keys.length) q.set("key", o.keys.join(","));
   const qs = q.toString();

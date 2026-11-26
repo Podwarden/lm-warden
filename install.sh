@@ -697,6 +697,31 @@ env_get() {
   sed -n "s/^$1=//p" .env | head -1 | sed 's/[[:space:]]*#.*$//; s/^[[:space:]]*//; s/[[:space:]]*$//'
 }
 
+# env_unset KEY: remove every active KEY= line from .env.
+env_unset() {
+  K="$1" awk 'BEGIN { k = ENVIRON["K"] } index($0, k "=") != 1 { print }' .env > .env.tmp \
+    && mv .env.tmp .env && chmod 600 .env
+}
+
+# Prompt Lens was called god mode until 2026-11-22; its VW_GODMODE_<X> variables
+# are no longer read. Rename each one an existing .env still sets (non-blank) to
+# VW_PROMPT_LENS_<X>, unless the new name already has a value: that one won
+# before and still wins, so the old line is left alone and only reported.
+migrate_prompt_lens_env() {
+  _olds=$(sed -n 's/^\(VW_GODMODE_[A-Z0-9_]*\)=.*/\1/p' .env)
+  for _old in $_olds; do
+    _new="VW_PROMPT_LENS_${_old#VW_GODMODE_}"
+    [ -n "$(env_get "$_old")" ] || continue
+    if [ -n "$(env_get "$_new")" ]; then
+      warn "$_old in .env is no longer read, and $_new is already set, so it is left as is; delete the $_old line."
+      continue
+    fi
+    env_set "$_new" "$(env_get "$_old")"
+    env_unset "$_old"
+    log "Renamed $_old to $_new in .env (the old name is no longer read)."
+  done
+}
+
 rand_hex() { # rand_hex BYTES
   if command -v openssl >/dev/null 2>&1; then
     openssl rand -hex "$1"
@@ -780,9 +805,8 @@ write_override() {
     echo "      VW_STATS_SAMPLER_INTERVAL_S: \"\${VW_STATS_SAMPLER_INTERVAL_S:-5.0}\""
     echo "      VW_HEADER_METRICS_INTERVAL_S: \"\${VW_HEADER_METRICS_INTERVAL_S:-2.0}\""
     echo "      VW_REQUEST_MAX_WALL_S: \"\${VW_REQUEST_MAX_WALL_S:-0.0}\""
-    # Prompt Lens: blank = the Settings page switch decides (default off). The
-    # old name VW_GODMODE_ENABLED in an existing .env still counts (deprecated).
-    echo "      VW_PROMPT_LENS_ENABLED: \"\${VW_PROMPT_LENS_ENABLED:-\${VW_GODMODE_ENABLED:-}}\""
+    # Prompt Lens: blank = the Settings page switch decides (default off).
+    echo "      VW_PROMPT_LENS_ENABLED: \"\${VW_PROMPT_LENS_ENABLED:-}\""
     # Content logging + the runaway detector that reports through it. Off by
     # default, and forwarded here only so that setting them in .env actually
     # reaches the container -- Compose passes nothing to a service that does
@@ -954,6 +978,7 @@ if [ ! -f .env ]; then
   log "Created .env from .env.example."
 else
   log "Existing .env kept; only blank secrets and the flags you passed are written."
+  migrate_prompt_lens_env
 fi
 
 if [ "$GEN_SECRETS" -eq 1 ]; then

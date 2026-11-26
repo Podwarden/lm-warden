@@ -30,7 +30,17 @@ function runtime(extra: Record<string, string | null> = {}) {
   };
 }
 
-function install(status: Status, rt = runtime()) {
+const CARD = {
+  id: 'c1', provider: 'upstream.example', model: 'big', currency: 'USD', input_per_m_micros: 100_000,
+  output_per_m_micros: 400_000, cache_read_per_m_micros: 10_000, cache_write_per_m_micros: null, effective_from: '2026-11-21',
+};
+const DEFAULT = {
+  provider: 'openrouter', model: 'anthropic/claude-haiku-5.5', currency: 'USD', input_per_m_micros: 100_000,
+  output_per_m_micros: null, cache_read_per_m_micros: 10_000, cache_write_per_m_micros: 125_000,
+  effective_from: '2026-11-21', source: 'a test source',
+};
+
+function install(status: Status, rt = runtime(), cards: Record<string, unknown> = { cards: [], defaults: [], reference: {} }) {
   const calls: { method: string; url: string; body?: string }[] = [];
   let current = { ...status };
   let currentRt = { ...rt };
@@ -41,6 +51,10 @@ function install(status: Status, rt = runtime()) {
     if (method === 'GET' && url === '/api/settings/runtime') return new Response(JSON.stringify(currentRt));
     if (method === 'GET' && url === '/api/system/gpus') return new Response(JSON.stringify({ gpus: [] }));
     if (method === 'GET' && url === '/api/admin/prompt-lens/status') return new Response(JSON.stringify(current));
+    if (method === 'GET' && url === '/api/admin/lens/rate-cards') return new Response(JSON.stringify(cards));
+    if (method === 'GET' && url === '/api/models')
+      return new Response(JSON.stringify({ models: [{ id: 'm1', served_model_name: 'local-model' }] }));
+    if (method === 'PUT' && url.startsWith('/api/admin/lens/')) return new Response(JSON.stringify({ ok: true }));
     if (method === 'PATCH' && url === '/api/settings/runtime') {
       const on = JSON.parse(String(init?.body)).prompt_lens_enabled as boolean | null;
       if (on === null) {
@@ -98,15 +112,15 @@ describe('Settings — Prompt Lens switch', () => {
     expect(await screen.findByTestId('prompt-lens-source')).toHaveTextContent(/Off by default/);
   });
 
-  it('names the env variable in effect, and the deprecated name as such', async () => {
+  it('names the env variable in effect', async () => {
     install(
-      { enabled: true, source: 'env', setting: null, env_var: 'VW_GODMODE_ENABLED', env_value: true },
+      { enabled: true, source: 'env', setting: null, env_var: 'VW_PROMPT_LENS_ENABLED', env_value: true },
       runtime({ prompt_lens_enabled: 'true' }),
     );
     await renderPage();
     const note = await screen.findByTestId('prompt-lens-source');
-    await waitFor(() => expect(note).toHaveTextContent(/On, from VW_GODMODE_ENABLED/));
-    expect(note).toHaveTextContent(/deprecated name of VW_PROMPT_LENS_ENABLED/);
+    await waitFor(() => expect(note).toHaveTextContent(/On, from VW_PROMPT_LENS_ENABLED/));
+    expect(note).not.toHaveTextContent(/deprecated/);
     expect(screen.getByLabelText(/Prompt Lens/)).toBeChecked();
   });
 
@@ -227,5 +241,62 @@ describe('Settings — Prompt Lens switch', () => {
     expect(await screen.findByTestId('prompt-lens-edit-hint')).toHaveTextContent(/Press Edit to change/);
     fireEvent.click(screen.getByRole('button', { name: /^edit$/i }));
     await waitFor(() => expect(screen.queryByTestId('prompt-lens-edit-hint')).toBeNull());
+  });
+});
+
+
+describe('Settings — Prompt Lens price cards', () => {
+  beforeEach(() => {
+    setAccessToken('test-jwt');
+    setCsrfToken('test-csrf');
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+  const status: Status = { enabled: true, source: 'setting', setting: true, env_var: null, env_value: null };
+
+  it('lists the cards with their effective date, and the shipped list prices apart', async () => {
+    install(status, runtime({ prompt_lens_enabled: 'true' }), { cards: [CARD], defaults: [DEFAULT], reference: {} });
+    await renderPage();
+    const list = await screen.findByTestId('price-card-list');
+    expect(list).toHaveTextContent('upstream.example · big: in 0.1 · out 0.4 · read 0.01 USD, effective 2026-11-21');
+    expect(screen.getByTestId('price-defaults')).toHaveTextContent('anthropic/claude-haiku-5.5 (2026-11-21)');
+    expect(screen.getByTestId('price-defaults')).toHaveTextContent('not used until you confirm');
+  });
+
+  it('saves a card in micro-units per million tokens; an empty output price is refused', async () => {
+    const calls = install(status, runtime({ prompt_lens_enabled: 'true' }), { cards: [], defaults: [DEFAULT], reference: {} });
+    await renderPage();
+    await screen.findByTestId('price-cards');
+    fireEvent.click(await screen.findByRole('button', { name: /^edit$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /anthropic\/claude-haiku-5.5/ })); // loads the shipped prices
+    expect((screen.getByLabelText('Input price') as HTMLInputElement).value).toBe('0.1');
+    fireEvent.click(screen.getByRole('button', { name: 'Add or replace price card' }));
+    expect(await screen.findByText('The output price must be a number.')).toBeInTheDocument();
+    expect(calls.some((c) => c.method === 'PUT')).toBe(false);
+    fireEvent.change(screen.getByLabelText('Output price'), { target: { value: '0.5' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Add or replace price card' }));
+    });
+    const put = calls.find((c) => c.method === 'PUT' && c.url === '/api/admin/lens/rate-cards');
+    expect(put).toBeTruthy();
+    expect(JSON.parse(put?.body ?? '{}').cards[0]).toMatchObject({
+      provider: 'openrouter', model: 'anthropic/claude-haiku-5.5', input_per_m_micros: 100_000,
+      output_per_m_micros: 500_000, cache_read_per_m_micros: 10_000, cache_write_per_m_micros: 125_000,
+      effective_from: '2026-11-21',
+    });
+  });
+
+  it('picks a reference card per own model', async () => {
+    const calls = install(status, runtime({ prompt_lens_enabled: 'true' }), { cards: [CARD], defaults: [], reference: {} });
+    await renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: /^edit$/i }));
+    const pick = await screen.findByLabelText('Reference card for local-model');
+    await act(async () => {
+      fireEvent.change(pick, { target: { value: 'upstream.example\u0000big' } });
+    });
+    const put = calls.find((c) => c.method === 'PUT' && c.url === '/api/admin/lens/reference-card/m1');
+    expect(JSON.parse(put?.body ?? '{}')).toEqual({ provider: 'upstream.example', model: 'big' });
   });
 });

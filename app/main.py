@@ -115,6 +115,14 @@ async def lifespan(app: FastAPI):
     # In-process session lineage (ids and digests only), like PrefixMemory.
     app.state.cobs2_lineage = Lineage()
 
+    from app.lens.heads import RecentHeads
+    from app.lens.hot import ParentHeads
+
+    # Prompt Lens layer 1 (lens spec 4.6): each key's recent heads, and the head
+    # each recent request was sent with. Ids and keyed digests only, bounded.
+    app.state.lens_heads = RecentHeads()
+    app.state.lens_parents = ParentHeads()
+
     from app.auth.sse_tickets import TicketStore
 
     app.state.sse_tickets = TicketStore(
@@ -356,7 +364,10 @@ async def lifespan(app: FastAPI):
         max_item_chars=settings.prompt_lens_max_image_chars,
     )
     # The runtime switch (Settings page) over the env value.
+    from app.config import warn_removed_prompt_lens_env
     from app.proxy import prompt_lens_switch
+
+    warn_removed_prompt_lens_env()
 
     await prompt_lens_switch.load(app)
 
@@ -441,6 +452,9 @@ async def lifespan(app: FastAPI):
     )
     audit_task = asyncio.create_task(admin_audit.run_forever())
     kept_task = asyncio.create_task(app.state.prompt_lens_kept.run_forever())
+    from app.lens.scorer_job import ScorerJob
+
+    lens_scorer_task = asyncio.create_task(ScorerJob(app.state).run_forever())
     # Daily update check (spec 2026-11-20). Decides per pass whether it is on.
     from app.updates.client import run_forever as run_update_check
     from app.updates.version import release_version
@@ -532,6 +546,7 @@ async def lifespan(app: FastAPI):
         except Exception:  # noqa: BLE001 -- shutdown must proceed (TimeoutError included)
             logging.getLogger(__name__).warning("prompt_lens: kept captures final flush failed")
         kept_task.cancel()
+        lens_scorer_task.cancel()
         sampler_task.cancel()
         pruner_task.cancel()
         watchdog_task.cancel()
@@ -565,6 +580,7 @@ async def lifespan(app: FastAPI):
             audit_task,
             update_task,
             kept_task,
+            lens_scorer_task,
             *((parent_watch_task,) if parent_watch_task is not None else ()),
             return_exceptions=True,
         )
@@ -722,14 +738,22 @@ def build_app() -> FastAPI:
     from app.tokens import routes_me
 
     app.include_router(routes_me.router)
-    from app.tokens import routes_me_prompt_lens, routes_me_stats
+    from app.tokens import routes_me_engine, routes_me_prompt_lens, routes_me_stats
 
     app.include_router(routes_me_stats.router)
     app.include_router(routes_me_prompt_lens.router)
-    # The old /api/me/godmode paths, deprecated (one release).
-    from app.proxy.prompt_lens_legacy import legacy_router
+    app.include_router(routes_me_engine.router)
+    # Prompt Lens request findings (both scopes).
+    from app.lens import routes_ui as lens_routes_ui
 
-    app.include_router(legacy_router(routes_me_prompt_lens.router))
+    app.include_router(lens_routes_ui.router)
+    # The Prompt Lens REST API and MCP endpoint (an inference key, a sign-in, or the admin).
+    from app.lens import api as lens_api
+
+    app.include_router(lens_api.router)
+    from app.lens import mcp as lens_mcp
+
+    app.include_router(lens_mcp.router)
 
     app.include_router(guard_routes.router)
 
@@ -756,6 +780,7 @@ def build_app() -> FastAPI:
 
     app.include_router(settings_routes_api.router)
     app.include_router(settings_routes_api.model_settings_router)
+    app.include_router(settings_routes_api.lens_prices_router)
 
     from app.proxy import routes as proxy_routes
 
@@ -775,8 +800,6 @@ def build_app() -> FastAPI:
     from app.proxy import routes_prompt_lens as proxy_routes_prompt_lens
 
     app.include_router(proxy_routes_prompt_lens.router)
-    # The old /api/admin/godmode paths, deprecated (one release).
-    app.include_router(legacy_router(proxy_routes_prompt_lens.router))
 
     from app.system import routes_version as system_routes_version
 
@@ -997,11 +1020,6 @@ def build_app() -> FastAPI:
     # a default CSP, HSTS over HTTPS only) on every response -- including the
     # body limit's 413 -- so it is outermost. Pure ASGI: streams untouched.
     # See app/utils/security_headers.py.
-    # Deprecated /godmode routes: every answer says so (one release).
-    from app.proxy.prompt_lens_legacy import DeprecatedPathMiddleware
-
-    app.add_middleware(DeprecatedPathMiddleware)
-
     from app.utils.security_headers import SecurityHeadersMiddleware
 
     app.add_middleware(SecurityHeadersMiddleware)

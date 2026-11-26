@@ -1,7 +1,6 @@
 """The Prompt Lens switch on the Settings page: runtime setting ``prompt_lens_enabled``.
 
-* Precedence: the setting when set, else the env (``VW_PROMPT_LENS_ENABLED`` or
-  the deprecated ``VW_GODMODE_ENABLED``), else off. ``GET
+* Precedence: the setting when set, else the env (``VW_PROMPT_LENS_ENABLED``), else off. ``GET
   /api/admin/prompt-lens/status`` says which source is in effect.
 * Changed live, no restart. Off stops new captures at once, ends every open
   Prompt Lens stream (admin and key holder) and drops the in-memory ring and
@@ -75,11 +74,13 @@ async def test_default_is_off_from_the_default(env: Env) -> None:
 
 async def test_env_decides_while_the_setting_is_unset(env: Env) -> None:
     env.app.state.settings = dataclasses.replace(
-        env.app.state.settings, prompt_lens_enabled=True, prompt_lens_env_var="VW_GODMODE_ENABLED"
+        env.app.state.settings,
+        prompt_lens_enabled=True,
+        prompt_lens_env_var="VW_PROMPT_LENS_ENABLED",
     )
     st = await _status(env)
     assert st["enabled"] is True and st["source"] == "env"
-    assert st["env_var"] == "VW_GODMODE_ENABLED" and st["env_value"] is True
+    assert st["env_var"] == "VW_PROMPT_LENS_ENABLED" and st["env_value"] is True
     r = await env.http.get(URL, headers=env.admin)
     assert r.json()["prompt_lens_enabled"] == "true"
 

@@ -42,6 +42,9 @@ export const PATCHABLE_KEYS = [
   // the store (live, pushed to the store at once). vLLM only.
   "kv_store",
   "kv_store_weight",
+  // #343: which bundled vLLM install runs this model (null = the default one).
+  // vLLM only; applies on the next load.
+  "engine_vllm_version",
 ] as const;
 
 export type PatchableKey = (typeof PATCHABLE_KEYS)[number];
@@ -102,6 +105,11 @@ export interface ModelSettings {
   // Optional on the wire: an older server omits both, which reads as off / 1.
   kv_store?: "off" | "ram" | "ram+nvme" | "nvme";
   kv_store_weight?: number;
+  // #343. Optional on the wire: an older server omits both, which reads as the
+  // default engine. With an engine_channel the version is an upstream image tag
+  // (the try-stack path), not a bundled install, and this page leaves it alone.
+  engine_channel?: string | null;
+  engine_vllm_version?: string | null;
 }
 
 /** The three tri-state capability flags (true / false / null = auto). */
@@ -110,7 +118,7 @@ export type TristateKey = (typeof TRISTATE_KEYS)[number];
 
 export type Draft = Omit<
   Pick<ModelSettings, PatchableKey>,
-  TristateKey | "data_parallel_size" | "dp_affinity_enabled" | "dp_spill_threshold" | "thinking_policy" | "kv_store" | "kv_store_weight"
+  TristateKey | "data_parallel_size" | "dp_affinity_enabled" | "dp_spill_threshold" | "thinking_policy" | "kv_store" | "kv_store_weight" | "engine_vllm_version"
 > & {
   [K in TristateKey]: boolean | null;
 } & {
@@ -120,6 +128,7 @@ export type Draft = Omit<
   thinking_policy: "client" | "off";
   kv_store: "off" | "ram" | "ram+nvme" | "nvme";
   kv_store_weight: number;
+  engine_vllm_version: string | null;
 };
 
 /**
@@ -165,6 +174,7 @@ export function snapshotToDraft(s: ModelSettings): Draft {
     extra_env: s.extra_env,
     kv_store: s.kv_store ?? "off",
     kv_store_weight: s.kv_store_weight ?? 1,
+    engine_vllm_version: s.engine_vllm_version ?? null,
   };
 }
 
@@ -225,6 +235,7 @@ export function formatSettingValue(key: string, v: unknown): string {
   if (key.startsWith("supports_")) return v === null || v === undefined ? "Auto" : v ? "Yes" : "No";
   if (typeof v === "boolean") return v ? "on" : "off";
   if (v === null || v === undefined) {
+    if (key === "engine_vllm_version") return "default engine";
     if (key === "dtype" || (ARG_BACKED_KEYS as readonly string[]).includes(key)) return "default";
     return "auto";
   }

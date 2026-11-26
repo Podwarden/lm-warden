@@ -668,6 +668,9 @@ class ModelOut(BaseModel):
     thinking_policy_supported: bool | None
     layout_notice: LayoutNotice | None
     engine: ModelEngine | None
+    # The bare ``engine_vllm_version`` column: a bundled install id when the model has
+    # no ``engine_channel`` (``engine`` is null then), else the pinned upstream tag.
+    engine_vllm_version: str | None
     # Computed from the backend: "isolated" when an isolated key may use the model,
     # "unsupported" when its engine cannot isolate its cache and such a key is refused.
     cache_isolation: Literal["isolated", "unsupported"]

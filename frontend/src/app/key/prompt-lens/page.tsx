@@ -18,7 +18,7 @@ import { type MeKey, useMe } from "@/lib/key-area/api";
 
 function KeyPromptLens() {
   const params = useSearchParams();
-  const { select } = useLensDeepLink(params);
+  const { select, view, session } = useLensDeepLink(params);
   const onPick = useWritePick();
   const me = useMe<MeKey>("/api/me/key");
   const available = me.data?.prompt_lens_view_available === true;
@@ -29,7 +29,10 @@ function KeyPromptLens() {
         <div data-testid="prompt-lens-off" className="text-sm text-slate-400">
           <h2 className="mb-2 text-base font-semibold text-slate-200">Prompt Lens is not available</h2>
           <p>
-            The administrator has not turned Prompt Lens on. Your requests are still on the{" "}
+            {me.data.prompt_lens === false
+              ? "The administrator has not allowed Prompt Lens for this key."
+              : "The administrator has not turned Prompt Lens on."}{" "}
+            Your requests are still on the{" "}
             <Link href="/key/stats" className="underline">
               Stats
             </Link>{" "}
@@ -41,7 +44,7 @@ function KeyPromptLens() {
   }
   return (
     <KeyShell fill crumb="Prompt Lens">
-      <PromptLensView scope="key" pageKey="key-stats" select={select} onPick={onPick} />
+      <PromptLensView scope="key" pageKey="key-stats" select={select} onPick={onPick} view={view} session={session} />
     </KeyShell>
   );
 }

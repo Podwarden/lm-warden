@@ -1,8 +1,10 @@
 // Prompt Lens media strip — inline image thumbnails for vision requests
 // (spec 2026-08-03). Stored items are fetched through authFetch (the UI's
 // JWT lives in a header, so a bare <img src> can't authenticate) and shown
-// via object URLs; remote http(s) urls are hotlinked directly (user-chosen
-// auto-load). Click any thumbnail -> full-size lightbox.
+// via object URLs. A remote http(s) url is shown as text with a "load image"
+// button and is never fetched until the admin clicks it (#324): a request's
+// author chose that URL, so loading it would tell them the admin's IP and
+// whether the admin's network can reach it. Click any thumbnail -> lightbox.
 
 "use client";
 
@@ -85,12 +87,36 @@ function MediaItem({
     );
   }
   if (entry.url) {
-    return <Thumb src={entry.url} onExpand={onExpand} />;
+    return <RemoteImage url={entry.url} onExpand={onExpand} />;
   }
   if (entry.media_id) {
     return <StoredThumb mediaId={entry.media_id} onExpand={onExpand} />;
   }
   return null;
+}
+
+/** Remote url: text plus a button. The <img> exists only after the click. */
+function RemoteImage({ url, onExpand }: { url: string; onExpand: (src: string) => void }) {
+  const [loaded, setLoaded] = useState(false);
+  if (loaded) return <Thumb src={url} onExpand={onExpand} />;
+  return (
+    <span
+      data-testid="prompt-lens-media-remote"
+      className="flex max-w-full items-center gap-2 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-[10px] text-slate-300"
+    >
+      <span className="break-all font-mono" title="remote image, not loaded">
+        {url}
+      </span>
+      <button
+        type="button"
+        data-testid="prompt-lens-media-load"
+        className="shrink-0 rounded border border-slate-600 px-1.5 py-0.5 hover:border-slate-400"
+        onClick={() => setLoaded(true)}
+      >
+        load image
+      </button>
+    </span>
+  );
 }
 
 function Thumb({ src, onExpand }: { src: string; onExpand: (src: string) => void }) {

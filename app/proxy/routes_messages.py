@@ -7,7 +7,7 @@ same ``_forward`` as ``/v1/chat/completions`` -- so admission, priority,
 accounting, the live registry, Prompt Lens, the runaway detector and the reaper
 behave exactly as they do for OpenAI traffic. Auth is ``require_bearer``
 (it also reads ``x-api-key`` on these routes, see auth.py) and routing is
-``_resolve_target``, both unchanged.
+``_resolve_for_token`` (the OpenAI routes' resolution, aliases included).
 
 Every refusal, including the ones ``require_bearer`` raises before the
 handler runs, answers in Anthropic's envelope
@@ -31,7 +31,7 @@ from starlette.responses import RedirectResponse
 from starlette.routing import Match
 
 from app.db.repos.tokens import TokenRow
-from app.proxy.auth import require_bearer, token_allows
+from app.proxy.auth import require_bearer
 from app.proxy.messages_clamp import clamp_max_tokens
 from app.proxy.messages_schemas import CountTokensRequest, MessagesRequest
 from app.proxy.messages_translate import (
@@ -45,7 +45,7 @@ from app.proxy.messages_translate import (
     upstream_error_message,
 )
 from app.proxy.request_id import GUARD_MODEL, copy_request_id, guard_blocked
-from app.proxy.routes import _forward, _resolve_target
+from app.proxy.routes import _forward, _resolve_for_token
 from app.router.data_plane import catch_all_entry, messages_entry
 from app.utils.sse import sse_headers
 
@@ -148,12 +148,13 @@ async def messages(request: Request, token: TokenRow = Depends(require_bearer)) 
 async def messages_legacy(request: Request, token: TokenRow) -> Response:
     """The handler as it was before the router: served names only."""
     req = await _parse(request, MessagesRequest)
-    if not token_allows(token, req.model):
-        raise HTTPException(403, f"token not allowed for model '{req.model}'")
     oai = _translate(req)
-    target = await _resolve_target(request, req.model)
+    target = await _resolve_for_token(request, token, req.model)
     await clamp_max_tokens(request, target, oai)
-    return await _serve_local(request, token, req, oai, target, response_model_name=req.model)
+    # Through an alias the answer names the model that served it, as the
+    # OpenAI routes' answers do; a served name is echoed as asked.
+    served = target[0].served_model_name if getattr(request.state, "lmw_alias", None) else req.model
+    return await _serve_local(request, token, req, oai, target, response_model_name=served)
 
 
 async def _serve_local(
@@ -289,10 +290,8 @@ async def count_tokens(request: Request, token: TokenRow = Depends(require_beare
 
 async def count_tokens_legacy(request: Request, token: TokenRow) -> Response:
     req = await _parse(request, CountTokensRequest)
-    if not token_allows(token, req.model):
-        raise HTTPException(403, f"token not allowed for model '{req.model}'")
     oai = _translate(req)
-    target = await _resolve_target(request, req.model)
+    target = await _resolve_for_token(request, token, req.model)
     return await _count_local(request, req, oai, target)
 
 

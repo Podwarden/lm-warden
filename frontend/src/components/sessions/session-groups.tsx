@@ -6,7 +6,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { promptLensHref } from "@/components/prompt-lens/prompt-lens-page";
+import type { SessionListItem as ScoredSession } from "@/lib/prompt-lens/scorecard";
 import { sessionHref } from "@/lib/routes";
+import type { SessionsMode } from "@/lib/sessions/client";
 import { S } from "@/lib/sessions/strings";
 import type { ListGroup, ListGroupBy, SessionListItem, Where } from "@/lib/sessions/types";
 
@@ -21,7 +24,7 @@ export interface MorePage {
 }
 
 const GRID =
-  "grid grid-cols-[22px_minmax(0,1.4fr)_90px_110px_120px_150px_110px] items-center gap-3 px-4 tabular-nums";
+  "grid grid-cols-[22px_minmax(0,1.4fr)_90px_110px_120px_150px_110px_130px] items-center gap-3 px-4 tabular-nums";
 
 /** "48 M · 96%": the share served from cache, never the anatomy's (dead weight is taken out there); no % when
  * the cache is unknown. */
@@ -54,7 +57,32 @@ function WhereBadge({ where }: { where: Where }) {
   );
 }
 
-function SessionRow({ it }: { it: SessionListItem }) {
+/** The session's Prompt Lens overall, and the way into its scorecard. */
+function ScoreCell({ it, score, mode }: { it: SessionListItem; score: ScoredSession | undefined; mode: SessionsMode }) {
+  if (!score) {
+    return it.active ? null : (
+      <span data-testid="score-pending" className="text-chat-muted" title={S.list.notScored}>
+        —
+      </span>
+    );
+  }
+  const overall = typeof score.overall === "number";
+  return (
+    <span className="flex items-baseline gap-2">
+      <b data-testid="session-score" className={overall ? "text-chat-fg" : "font-normal text-chat-muted"}>
+        {overall ? score.overall : "–"}
+      </b>
+      <Link
+        href={promptLensHref(mode, { session: it.session_id })}
+        className="text-[12px] text-chat-accent hover:underline focus-visible:outline focus-visible:outline-1 focus-visible:outline-chat-accent"
+      >
+        {S.list.openInLens}
+      </Link>
+    </span>
+  );
+}
+
+function SessionRow({ it, score, mode }: { it: SessionListItem; score: ScoredSession | undefined; mode: SessionsMode }) {
   const small = [
     it.active ? S.list.running : null,
     fmtDuration(it.duration_s),
@@ -91,6 +119,9 @@ function SessionRow({ it }: { it: SessionListItem }) {
       </span>
       <span role="cell">
         <Saved s={it.saved_vs_vanilla_s} relayedOnly={it.where === "relayed"} />
+      </span>
+      <span role="cell">
+        <ScoreCell it={it} score={score} mode={mode} />
       </span>
     </div>
   );
@@ -133,7 +164,11 @@ function GroupBlock({
   open,
   onToggle,
   onMore,
+  scores,
+  mode,
 }: {
+  scores: Record<string, ScoredSession>;
+  mode: SessionsMode;
   g: ListGroup;
   column: ListGroupBy;
   open: boolean;
@@ -191,8 +226,9 @@ function GroupBlock({
         <span role="cell">
           <Saved s={g.saved_vs_vanilla_s} relayedOnly={relayedOnly} />
         </span>
+        <span role="cell" />
       </div>
-      {open && items.map((it) => <SessionRow key={it.session_id} it={it} />)}
+      {open && items.map((it) => <SessionRow key={it.session_id} it={it} score={scores[it.session_id]} mode={mode} />)}
       {open && left > 0 && <MoreButton label={S.list.showMore(left, label)} busy={busy} onClick={() => void loadMore()} />}
     </div>
   );
@@ -205,7 +241,12 @@ export function SessionGroups({
   column,
   onMore,
   resetKey,
+  scores = {},
+  mode = "admin",
 }: {
+  /** The Prompt Lens scores by session id (the Score column); empty when off. */
+  scores?: Record<string, ScoredSession>;
+  mode?: SessionsMode;
   groups: ListGroup[] | null;
   sessions: SessionListItem[];
   total: number;
@@ -241,7 +282,7 @@ export function SessionGroups({
   const c = S.list.cols;
   return (
     <div className="overflow-x-auto">
-      <div role="table" className="min-w-[780px]">
+      <div role="table" className="min-w-[910px]">
         <div role="row" className={`${GRID} border-t border-chat-rule py-2 text-xs text-chat-dim`}>
           <span role="columnheader" aria-hidden />
           <span role="columnheader">{S.list.firstCol[flat ? "none" : column]}</span>
@@ -252,11 +293,12 @@ export function SessionGroups({
           <span role="columnheader" title={S.list.savedNote}>
             {c.saved}
           </span>
+          <span role="columnheader">{c.score}</span>
         </div>
         {flat ? (
           <div role="rowgroup">
             {items.map((it) => (
-              <SessionRow key={it.session_id} it={it} />
+              <SessionRow key={it.session_id} it={it} score={scores[it.session_id]} mode={mode} />
             ))}
             {flatLeft > 0 && <MoreButton label={S.list.showMoreFlat(flatLeft)} busy={busy} onClick={() => void loadFlat()} />}
           </div>
@@ -269,6 +311,8 @@ export function SessionGroups({
               open={toggled[g.key] ?? groups.length === 1}
               onToggle={() => setToggled((t) => ({ ...t, [g.key]: !(t[g.key] ?? groups.length === 1) }))}
               onMore={(k, offset) => onMore(k, offset)}
+              scores={scores}
+              mode={mode}
             />
           ))
         )}

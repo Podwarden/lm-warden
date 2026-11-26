@@ -42,7 +42,10 @@ def add_security(schema: dict[str, Any], app: FastAPI) -> None:
         "scheme": "bearer",
         "description": (
             "A session access token from POST /api/auth/login, or an admin "
-            "token (vwa_...) issued in Settings -> Admin tokens."
+            "token (vwa_...) issued in Settings -> Admin tokens. Under /api/lens/me/ "
+            "and for POST /api/lens/mcp, an inference key (vw_...) or a key holder's "
+            "sign-in token (POST /api/forest/login) is taken instead; GET /api/me/engine "
+            "takes an inference key."
         ),
     }
     schema["security"] = [{BEARER_SCHEME: []}]

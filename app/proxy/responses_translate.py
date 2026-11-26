@@ -119,6 +119,11 @@ def _image_part(part: dict[str, Any], where: str) -> dict[str, Any]:
         raise TranslationError(
             f"{where}: input_image needs an 'image_url' (file ids are not supported)"
         )
+    # #324: the engine would fetch a remote URL itself; only data: is accepted.
+    if url.strip()[:5].lower() != "data:":
+        raise TranslationError(
+            f"{where}: remote image URLs are not accepted; send the image as a data: URL"
+        )
     return {"type": "image_url", "image_url": {"url": url}}
 
 

@@ -1,8 +1,7 @@
 """The Prompt Lens switch (app/proxy/prompt_lens_switch.py).
 
 Precedence: the runtime setting ``prompt_lens_enabled`` when it is set, else
-the env (``VW_PROMPT_LENS_ENABLED`` or its deprecated alias
-``VW_GODMODE_ENABLED``), else off. Turning it off drops what is held in memory
+the env (``VW_PROMPT_LENS_ENABLED``), else off. Turning it off drops what is held in memory
 (ring, key windows, sections, images) and ends every open stream; kept captures
 on disk are not touched.
 """
@@ -55,12 +54,6 @@ def test_env_when_no_setting():
     st = sw.status(app)
     assert st["source"] == "env" and st["env_var"] == "VW_PROMPT_LENS_ENABLED"
     assert st["env_value"] is True
-
-
-def test_deprecated_env_alias_is_named():
-    app = _app(env_on=True, env_var="VW_GODMODE_ENABLED")
-    assert sw.enabled(app) is True
-    assert sw.status(app)["env_var"] == "VW_GODMODE_ENABLED"
 
 
 def test_setting_wins_over_env_both_ways():
@@ -165,7 +158,7 @@ async def test_on_to_on_keeps_memory():
 
 
 async def test_clearing_the_setting_falls_back_to_env():
-    app = _app(env_on=True, env_var="VW_GODMODE_ENABLED", runtime=False)
+    app = _app(env_on=True, env_var="VW_PROMPT_LENS_ENABLED", runtime=False)
     sw.apply(app, None)
     assert sw.enabled(app) is True
     assert sw.status(app)["source"] == "env"

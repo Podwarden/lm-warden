@@ -276,6 +276,12 @@ export const MODEL_HINTS: Record<string, FieldHint> = {
     short: 'Share of each GPU vLLM may use. Lower it after an out-of-memory at startup.',
     restart: 'model-reload',
   },
+  engine_vllm_version: {
+    label: 'Engine version',
+    hint: 'vLLM only. Which vLLM install runs this model: the default one, or another build bundled in the image (for a model the default cannot run). Applies on the next load; the engine log shows the version it started with.',
+    short: 'Default engine, or another vLLM build bundled in the image. Applies on next load.',
+    restart: 'model-reload',
+  },
   dtype: {
     label: 'dtype',
     hint: 'One of `auto`, `float16`, `bfloat16`, `float32`. `auto` follows the model\'s config.',

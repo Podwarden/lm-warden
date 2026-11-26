@@ -58,6 +58,25 @@ _COLS = (
     "cached_ttft_est_tokens",
     "diverged_at_own",
     "kv_isolated",
+    "lens_break",
+    "lens_cause",
+    "lens_span_class",
+    "lens_span_line",
+    "lens_lost_tokens",
+    "lens_cf_tokens",
+    "lens_other_breaks",
+    "cache_write_tokens",
+    "cache_marks",
+    "lens_repeat_results",
+    "max_tokens_req",
+    "reasoning_tokens",
+    "reply_chars",
+    "calls_n",
+    "calls_bad",
+    "tools_lint",
+    "lens_version",
+    "tools_in",
+    "guard",
 )
 _SELECT = "SELECT " + ", ".join(_COLS) + " FROM request_history"
 
@@ -95,7 +114,8 @@ class Row:
     cobs2_compaction_request: bool
     shape: dict[str, Any] | None
     toolset: str | None
-    tools_out: tuple[tuple[str, str], ...]
+    #: ``(family, name_hmac8)``, or ``(family, name_hmac8, args8)`` from Task 1.4 on.
+    tools_out: tuple[tuple[str, ...], ...]
     relayed: bool
     upstream: str | None
     served_gpu_tokens: int | None
@@ -110,6 +130,31 @@ class Row:
     diverged_at_own: int | None = None
     #: The turn ran isolated (0060): True / False, None on rows written before it.
     kv_isolated: bool | None = None
+    #: Prompt Lens (0063): layer 1 codes and counts, relay cache writes and
+    #: marks, layer 3 counts (``calls_bad`` / ``tools_lint`` as stored JSON).
+    #: None on rows written before it or when not computed.
+    lens_break: str | None = None
+    lens_cause: str | None = None
+    lens_span_class: str | None = None
+    lens_span_line: int | None = None
+    lens_lost_tokens: int | None = None
+    lens_cf_tokens: int | None = None
+    lens_other_breaks: int | None = None
+    cache_write_tokens: int | None = None
+    cache_marks: int | None = None
+    lens_repeat_results: int | None = None
+    max_tokens_req: int | None = None
+    reasoning_tokens: int | None = None
+    reply_chars: int | None = None
+    calls_n: int | None = None
+    calls_bad: str | None = None
+    tools_lint: str | None = None
+    #: Prompt version (0065): ``h:<name>`` or 8 hex; None when not computed.
+    lens_version: str | None = None
+    #: As stored JSON: ``[[family, tokens, failed], ...]`` (0045) and the guard's
+    #: ``{"m","b","f":[[rule, count, new]],"r"}`` (0055). Codes and counts only.
+    tools_in: str | None = None
+    guard: str | None = None
 
 
 @dataclass(frozen=True)
@@ -157,7 +202,9 @@ def _shape(v: Any) -> dict[str, Any] | None:
     return d if isinstance(d, dict) else None
 
 
-def _tools_out(v: Any) -> tuple[tuple[str, str], ...]:
+def _tools_out(v: Any) -> tuple[tuple[str, ...], ...]:
+    """The stored entries: ``[family, hash8]`` (older rows) or ``[family, hash8,
+    args8]`` (Task 1.4); index ``[0]`` and ``[1]``, never unpack two."""
     if not isinstance(v, str):
         return ()
     try:
@@ -166,7 +213,7 @@ def _tools_out(v: Any) -> tuple[tuple[str, str], ...]:
         return ()
     if not isinstance(d, list):
         return ()
-    return tuple((str(e[0]), str(e[1])) for e in d if isinstance(e, list) and len(e) >= 2)
+    return tuple(tuple(str(x) for x in e[:3]) for e in d if isinstance(e, list) and len(e) >= 2)
 
 
 def _row(t: tuple[Any, ...]) -> Row:
@@ -219,6 +266,25 @@ def _row(t: tuple[Any, ...]) -> Row:
         cached_ttft_est_tokens=d["cached_ttft_est_tokens"],
         diverged_at_own=d["diverged_at_own"],
         kv_isolated=None if d["kv_isolated"] is None else bool(d["kv_isolated"]),
+        lens_break=d["lens_break"],
+        lens_cause=d["lens_cause"],
+        lens_span_class=d["lens_span_class"],
+        lens_span_line=d["lens_span_line"],
+        lens_lost_tokens=d["lens_lost_tokens"],
+        lens_cf_tokens=d["lens_cf_tokens"],
+        lens_other_breaks=d["lens_other_breaks"],
+        cache_write_tokens=d["cache_write_tokens"],
+        cache_marks=d["cache_marks"],
+        lens_repeat_results=d["lens_repeat_results"],
+        max_tokens_req=d["max_tokens_req"],
+        reasoning_tokens=d["reasoning_tokens"],
+        reply_chars=d["reply_chars"],
+        calls_n=d["calls_n"],
+        calls_bad=d["calls_bad"],
+        tools_lint=d["tools_lint"],
+        lens_version=d["lens_version"],
+        tools_in=d["tools_in"],
+        guard=d["guard"],
     )
 
 
@@ -404,6 +470,29 @@ def tool_names(
     return out
 
 
+def recent_toolset_calls(
+    db: sqlite3.Connection, token_id: str | None, toolset: str, limit: int = 20
+) -> dict[str, int]:
+    """Per tool hash, the calls across the key's last ``limit`` sessions that carried
+    ``toolset`` (analysis spec 7.2 item 1). Scoped by ``token_id`` (A-1) and bounded
+    by ``limit`` sessions; counts only, no names and no text."""
+    if token_id is None or limit <= 0:
+        return {}
+    rows = db.execute(
+        "SELECT json_extract(e.value, '$[1]'), COUNT(*)"
+        " FROM request_history r,"
+        " json_each(CASE WHEN json_valid(r.tools_out) AND json_type(r.tools_out) = 'array'"
+        " THEN r.tools_out ELSE '[]' END) e"
+        " WHERE r.token_id = ? AND json_type(e.value) = 'array' AND r.cobs2_session IN ("
+        "  SELECT cobs2_session FROM request_history"
+        "  WHERE token_id = ? AND cobs2_toolset = ? AND cobs2_session IS NOT NULL"
+        "  GROUP BY cobs2_session ORDER BY MAX(finished_at) DESC LIMIT ?)"
+        " GROUP BY 1",
+        (token_id, token_id, toolset, int(limit)),
+    ).fetchall()
+    return {str(h): int(n) for h, n in rows if isinstance(h, str) and h}
+
+
 _LIST_COLS = (
     "id, token_id, token_name, model, finished_at, duration_s, prompt_tokens, cached_tokens,"
     " completion_tokens, cobs2_session, parent_session_key, cobs2_conv, cobs2_edge, relayed,"
@@ -461,7 +550,7 @@ def list_rows(
                 else None
             ),
             toolset=t[21],
-            called=tuple(h for _f, h in _tools_out(t[22])),
+            called=tuple(e[1] for e in _tools_out(t[22])),
             reusable_tokens=t[23],
             reusable_tokens_own=t[24],
             cache_outcome=t[25],

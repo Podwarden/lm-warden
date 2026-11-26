@@ -196,9 +196,7 @@ async def mint_sse_ticket(body: TicketBody, request: Request, user: str = Depend
             status.HTTP_403_FORBIDDEN, "a key holder's stream takes the key's own ticket"
         )
 
-    from app.proxy.prompt_lens_legacy import LEGACY_STREAM_PATH
-
-    if body.path in (PROMPT_LENS_STREAM_PATH, LEGACY_STREAM_PATH):
+    if body.path == PROMPT_LENS_STREAM_PATH:
         from app.proxy import prompt_lens_switch
         from app.proxy.routes_prompt_lens import DISABLED
 

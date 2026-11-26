@@ -19,6 +19,8 @@ anyone else:
   ``other``) the parts pass as they are. Should an ``other`` part still
   arrive, it reads ``new`` and merges with its ``new`` node neighbours, as a
   backstop;
+* an admin-only cause in the kvsig ``lens`` block: ``misrouted`` (a fleet
+  outcome, A-1) reads null. Nothing in the block names another key;
 * the hub's global ``seq``, which counts every key's events, so the gap between
   two own events would tell how busy the other keys are. The key stream numbers
   its own frames instead (app/proxy/prompt_lens_stream.py).
@@ -48,6 +50,10 @@ _DROP = frozenset(
         "parts_key",
     }
 )
+
+
+#: Layer 1 causes only the admin may see (app/lens/causes.py CAUSES).
+_ADMIN_ONLY_CAUSES = frozenset({"misrouted"})
 
 
 def _merge(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
@@ -104,4 +110,7 @@ def for_key_holder(event: dict[str, Any]) -> dict[str, Any]:
             parts = _backstop(parts)
         if parts is not None:
             out["parts"] = parts
+        lens = out.get("lens")
+        if isinstance(lens, dict) and lens.get("cause") in _ADMIN_ONLY_CAUSES:
+            out["lens"] = {**lens, "cause": None}
     return out

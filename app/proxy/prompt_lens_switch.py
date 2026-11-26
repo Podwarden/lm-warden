@@ -4,8 +4,7 @@ Precedence (owner request 2026-11-22):
 
 1. the runtime setting ``prompt_lens_enabled`` (Settings page, the ``settings``
    KV), when it has been set;
-2. otherwise the env: ``VW_PROMPT_LENS_ENABLED``, or the deprecated
-   ``VW_GODMODE_ENABLED`` (app/config.py);
+2. otherwise the env: ``VW_PROMPT_LENS_ENABLED`` (app/config.py);
 3. otherwise off.
 
 The runtime value lives on ``app.state.prompt_lens_runtime`` (True, False, or
@@ -127,9 +126,7 @@ async def load(app: Any) -> None:
         raw = await SettingsRepo(db).get(SETTING_KEY)
     app.state.prompt_lens_runtime = parse_stored(raw)
     st = status(app)
-    if st["source"] == "env" and st["env_var"] == "VW_GODMODE_ENABLED":
-        log.info("Prompt Lens is %s from VW_GODMODE_ENABLED (deprecated name)", _word(st))
-    elif st["source"] == "setting" and st["env_var"]:
+    if st["source"] == "setting" and st["env_var"]:
         log.info(
             "Prompt Lens is %s from the runtime setting (overrides %s)", _word(st), st["env_var"]
         )

@@ -46,6 +46,9 @@ interface ModelDetail {
   layout_notice?: { level: "info" | "warning"; message: string } | null;
   /** Which engine serves this model. NULL decodes to vLLM (D6). */
   backend: string | null;
+  /** #343: the bundled vLLM install the model is pinned to; null = the default
+   *  engine. Optional so the page renders against an older API. */
+  engine_vllm_version?: string | null;
   mmproj_filename: string | null;
   n_gpu_layers: number | null;
   dtype: string | null;
@@ -529,6 +532,14 @@ export function ModelDetailPage({ id }: { id: string }) {
                 {backendDisplayName(data.backend)}
               </span>
             </p>
+            {fieldAppliesTo("engine_vllm_version", data.backend) && data.engine_vllm_version && (
+              <p>
+                Engine version:{" "}
+                <span className="font-mono" data-testid="model-engine-version">
+                  {data.engine_vllm_version}
+                </span>
+              </p>
+            )}
             {/* Per-backend visibility, shared with the model settings page via
                 @/lib/backend-fields. Everything a DIFFERENT backend owns is
                 hidden, not disabled: gpu_memory_utilization on a llama.cpp row

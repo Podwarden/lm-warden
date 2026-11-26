@@ -390,7 +390,7 @@ async def my_capture(
     it stays for one release and goes in the next.
     """
     async with open_db(request.app.state.settings.db_path) as db:
-        if not prompt_lens_view_available(request):
+        if not await prompt_lens_view_available(request, tid):
             raise HTTPException(404, _NOT_FOUND)
         found = _capture_events(request.app.state.prompt_lens_hub, request_id, tid)
         kept = False

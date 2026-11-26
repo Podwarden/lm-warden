@@ -763,3 +763,56 @@ async def test_restored_frames_lead_the_replay_and_are_numbered():
     assert ev[0]["restored"] is True and ev[0]["prompt"] == "prompt of R1"
     assert "client_ip" not in ev[0] and "token_label" not in ev[0]
     assert [e["seq"] for e in ev] == list(range(1, len(ev) + 1))
+
+
+# ---- the lens block (analysis plan, Task 1.3) ------------------------------------
+
+
+def _lens(cause):
+    return {
+        "brk": None,
+        "cause": cause,
+        "span_class": None,
+        "span_line": None,
+        "cf_tokens": 900,
+        "lost_tokens": 400,
+        "other_breaks": 0,
+    }
+
+
+def test_key_holder_never_sees_misrouted():
+    """``misrouted`` is a fleet cause (A-1): the key holder's lens says null."""
+    ev = {"type": "kvsig", "available": True, "parts": [], "lens": _lens("misrouted")}
+    before = copy.deepcopy(ev)
+    out = for_key_holder(ev)
+    assert out["lens"]["cause"] is None
+    assert {k: v for k, v in out["lens"].items() if k != "cause"} == {
+        k: v for k, v in _lens(None).items() if k != "cause"
+    }
+    assert ev == before  # the ring's own dict is never changed
+    assert admin_view(ev)["lens"]["cause"] == "misrouted"
+
+
+def test_key_holder_keeps_its_own_causes():
+    for cause in ("sys_changed", "server_evicted", "provider_no_marks", None):
+        ev = {"type": "kvsig", "available": True, "parts": [], "lens": _lens(cause)}
+        assert for_key_holder(ev)["lens"] == _lens(cause)
+    ev = {"type": "kvsig", "available": True, "parts": [], "lens": None}
+    assert for_key_holder(ev)["lens"] is None
+
+
+def test_build_kvsig_lens_block_from_a_verdict():
+    from app.lens.causes import LensVerdict
+    from app.proxy.prompt_lens_kvsig import lens_block
+
+    v = LensVerdict("sys", "sys_changed", "path", 2, 7920, None, 1)
+    assert lens_block(v) == {
+        "brk": "sys",
+        "cause": "sys_changed",
+        "span_class": "path",
+        "span_line": 2,
+        "cf_tokens": 7920,
+        "lost_tokens": None,
+        "other_breaks": 1,
+    }
+    assert lens_block(None) is None

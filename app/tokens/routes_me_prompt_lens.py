@@ -4,7 +4,8 @@
   mints a single-use, 60 s SSE ticket for ``ME_STREAM_PATH``. Its subject is
   ``key_stream_key(token id)``, and the sign-in's session id rides inside it,
   signed. 404 ``"Prompt Lens is off"`` unless platform Prompt Lens is on
-  (``prompt_lens_view_available``; there is no per-key switch, commit 0bc0d655).
+  and the admin allowed Prompt Lens for the key (``prompt_lens_view_available``, the key's
+  ``prompt_lens`` permission, owner decision 2026-11-26).
 * ``GET /api/me/prompt-lens/stream?ticket=`` -- ``require_key_ticket`` spends the
   ticket and returns ``key:<id>``; the stream registers under it, so revoking,
   rotating or pausing the key and a key sign-out end it at once
@@ -163,7 +164,7 @@ async def mint_ticket(request: Request, tid: str = Depends(key_holder)) -> dict[
     """A single-use ticket for the key holder's live stream (60 s). At most
     30 a minute per key, and none while the key has 4 streams open (429 with
     Retry-After)."""
-    if not prompt_lens_view_available(request):
+    if not await prompt_lens_view_available(request, tid):
         raise HTTPException(404, _OFF)
     # The stream cap again here (ruling G-R15): the stream's own 429 comes on
     # the EventSource GET, whose status a browser cannot read; this one it
@@ -189,15 +190,15 @@ async def key_stream(
     that minted the ticket and takes no key parameter. Ends when the key is
     revoked, rotated or paused, the sign-in ends or expires, or Prompt Lens is turned
     off. At most 4 open per key (429)."""
-    if not prompt_lens_view_available(request):
-        raise HTTPException(404, _OFF)
     tid, sid, exp = request.state.key_stream
+    if not await prompt_lens_view_available(request, tid):
+        raise HTTPException(404, _OFF)
     if request.app.state.stream_registry.count(user) >= MAX_STREAMS_PER_KEY:
         raise _too_many(_STREAMS_FULL, 5)
     hub = request.app.state.prompt_lens_hub
 
     async def recheck() -> bool:
-        if not prompt_lens_view_available(request):
+        if not await prompt_lens_view_available(request, tid):
             return False
         return await _key_usable(request, tid, sid, exp) is None
 
@@ -241,7 +242,7 @@ async def my_section(
     unknown id, a released or expired one, and another key's. The body never
     carries the key id or the hub's seq."""
     sections = getattr(request.app.state, "prompt_lens_sections", None)
-    if sections is None or not prompt_lens_view_available(request):
+    if sections is None or not await prompt_lens_view_available(request, tid):
         raise HTTPException(404, _NOT_YOURS)
     view = sections.section(req_id, kind, start=from_)
     if view is None or view.token_id != tid:
@@ -258,7 +259,7 @@ async def my_section(
 async def my_kept(request: Request, tid: str = Depends(key_holder)) -> dict[str, Any]:
     """The signed-in key's kept captures, newest first (at most 50: an admin
     turned keep_captures on for this key). 404 when Prompt Lens is off."""
-    if not prompt_lens_view_available(request):
+    if not await prompt_lens_view_available(request, tid):
         raise HTTPException(404, _NOT_YOURS)
     kept_read_allowed(request, tid)
     async with open_db(request.app.state.settings.db_path) as db:
@@ -277,7 +278,7 @@ async def my_kept_capture(
     """One of the key's OWN kept captures, in the key holder's view
     (``for_key_holder`` on every event). One 404 for off, unknown and another
     key's id."""
-    if not prompt_lens_view_available(request):
+    if not await prompt_lens_view_available(request, tid):
         raise HTTPException(404, _NOT_YOURS)
     kept_read_allowed(request, tid)
     async with open_db(request.app.state.settings.db_path) as db:

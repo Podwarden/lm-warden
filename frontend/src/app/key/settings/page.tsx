@@ -125,6 +125,16 @@ function Settings() {
             {K.settings.thinkingValues[data.thinking_policy ?? "client"] ?? data.thinking_policy}
           </Row>
           <Row label={K.settings.relay}>{data.anthropic_relay ? K.settings.yes : K.settings.no}</Row>
+          <Row label={K.settings.promptLens}>
+            {data.prompt_lens === false
+              ? K.settings.promptLensOff
+              : data.prompt_lens_view_available
+                ? K.settings.promptLensOn
+                : K.settings.promptLensPlatformOff}
+          </Row>
+          <Row label={K.settings.engineFacts}>
+            {data.engine_facts === false ? K.settings.engineFactsOff : K.settings.engineFactsOn}
+          </Row>
           <Row label={K.settings.guard}>
             {guard.value}
             {guard.note && <small className="block text-xs text-slate-400">{guard.note}</small>}

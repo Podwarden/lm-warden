@@ -119,8 +119,8 @@ def _tools(
     called: dict[str, int] = {}
     truncated = False
     for r in rows:
-        for _fam, h in r.tools_out:
-            called[h] = called.get(h, 0) + 1
+        for e in r.tools_out:  # [family, hash8] or [family, hash8, args8]
+            called[e[1]] = called.get(e[1], 0) + 1
     known: list[tuple[Row, list[tuple[str, str, int]]]] = []
     for r in rows:
         if r.toolset is None or r.toolset not in toolsets:
@@ -318,7 +318,7 @@ def _c_of_row(r: Row, engines: Mapping[str, ModelEngine], rates: Mapping[str, fl
         chars=chars if isinstance(chars, int) else None,
         dw=_dw_tuple((r.shape or {}).get("dw")),
         toolset=r.toolset,
-        called=tuple(h for _f, h in r.tools_out),
+        called=tuple(e[1] for e in r.tools_out),
         reusable=r.reusable_tokens,
         reusable_own=r.reusable_tokens_own,
         outcome=r.cache_outcome,
@@ -522,7 +522,7 @@ def build_session(
     disp = [
         r
         for r in rows
-        if r.cobs2_conv not in side and any(f in DISPATCH_FAMILIES for f, _h in r.tools_out)
+        if r.cobs2_conv not in side and any(e[0] in DISPATCH_FAMILIES for e in r.tools_out)
     ]
     disp_starts = [r.started_at for r in disp]
 

@@ -217,10 +217,10 @@ def test_kv_columns_are_policy_and_appended_last():
     assert set(KV_TOKEN_COLS) <= set(_POLICY_COLS)
     names = [f for f in TokenRow.__dataclass_fields__]
     # In migration order: 0059's godmode_self_view, these (0060), then only
-    # 0061's keep_captures (Prompt Lens).
+    # 0061's keep_captures (Prompt Lens), then 0066's per-key permissions.
     i = names.index("godmode_self_view")
     assert tuple(names[i + 1 : i + 1 + len(KV_TOKEN_COLS)]) == KV_TOKEN_COLS
-    assert names[i + 1 + len(KV_TOKEN_COLS) :] == ["keep_captures"]
+    assert names[i + 1 + len(KV_TOKEN_COLS) :] == ["keep_captures", "prompt_lens", "engine_facts"]
     assert [c.strip() for c in _MODEL_COLS.split(",")][-1] == "kv_store_weight"
     assert list(ModelRow.__dataclass_fields__)[-1] == "kv_store_weight"
 

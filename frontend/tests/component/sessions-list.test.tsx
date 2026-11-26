@@ -133,8 +133,9 @@ function stub(pages: [string, unknown][], status = 200) {
   return fetchMock;
 }
 
+/** The sessions list's own calls (the Score column reads Prompt Lens' scored sessions apart). */
 function urls(f: ReturnType<typeof stub>): string[] {
-  return f.mock.calls.map((c) => String(c[0]));
+  return f.mock.calls.map((c) => String(c[0])).filter((u) => !u.includes('/prompt-lens/'));
 }
 
 function renderPage() {
@@ -162,6 +163,39 @@ const TWO = resp([
   group('tok9', 'gleb', [item(1), item(2), item(3)], { more: 211 }),
   group('tok2', 'alice', [item(4), item(5), item(6)], { more: 2 }),
 ]);
+
+describe('sessions list page: Prompt Lens score column', () => {
+  beforeEach(() => {
+    mockPath = '/sessions';
+    sessionStorage.clear();
+    localStorage.clear();
+    setAccessToken('admin-token');
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+    setAccessToken(null);
+  });
+
+  it('shows the overall of a scored session with a way into its scorecard, and a dash for the rest', async () => {
+    const scored = {
+      session_id: item(1).session_id, model: 'qwen', route: 'local', harness: 'claude_code', turns: 12,
+      started: T0, last_at: T0 + 100, overall: 62, e: 48, c: 71, r: 74, confidence: 'medium', reasons: {}, score_version: 1,
+    };
+    stub([
+      ['/api/admin/prompt-lens/sessions', { sessions: [scored], next_cursor: null }],
+      ['/api/sessions?', resp([group('tok9', 'gleb', [item(1), item(2)])])],
+    ]);
+    renderPage();
+    expect(await screen.findByRole('columnheader', { name: S.list.cols.score })).toBeTruthy(); // one group: open
+    const rows = await screen.findAllByTestId('session-row');
+    await waitFor(() => expect(within(rows[0]).getByTestId('session-score')).toHaveTextContent('62'));
+    const link = within(rows[0]).getByRole('link', { name: S.list.openInLens });
+    expect(link.getAttribute('href')).toBe(`/prompt-lens?view=sessions&session=${item(1).session_id}`);
+    expect(within(rows[1]).getByTestId('score-pending')).toHaveAttribute('title', S.list.notScored);
+    expect(within(rows[1]).queryByTestId('session-score')).toBeNull();
+  });
+});
 
 describe('sessions list page', () => {
   beforeEach(() => {

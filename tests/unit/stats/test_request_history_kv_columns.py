@@ -55,7 +55,8 @@ def _q(db_path: Path, sql: str, args: tuple = ()) -> list[tuple]:
 
 def test_kv_columns_are_their_own_tail_and_the_read_slice_did_not_move() -> None:
     assert rh._KV_ISO_COLUMNS == KV
-    assert rh._COLUMNS[-len(KV) :] == KV
+    # 0063's lens tail follows it.
+    assert rh._COLUMNS[: -len(rh._LENS_COLUMNS)][-len(KV) :] == KV
     # The v2 readers read exactly the columns before the forest block, as before 0060.
     assert rh._READ_COLUMNS == rh._COLUMNS[: rh._COLUMNS.index("session_key")]
     assert rh._READ_COLUMNS[-1] == "thinking_forced_off"
@@ -74,7 +75,7 @@ async def test_old_row_and_new_row_read_back_through_the_v2_reader(
     db_path = tmp_data_dir / "vllm-warden.db"
     real_sql = migrations.SQL_DIR
     monkeypatch.setattr(migrations, "SQL_DIR", old_sql)
-    old_cols = rh._COLUMNS[: -len(KV)]
+    old_cols = rh._COLUMNS[: -len(KV) - len(rh._LENS_COLUMNS)]
     old_params = rh._row_params(_record(1), 1000.0)[: len(old_cols)]
     async with open_db(db_path) as db:
         await apply_migrations(db)

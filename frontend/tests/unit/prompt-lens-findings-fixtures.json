@@ -1,0 +1,508 @@
+{
+ "_comment": "Generated from app/lens analysis over tests/unit/lens/seed.py sessions (the findings route's answer, one turn per fault; names joined for turn9). Regenerate when the catalogue's counts change.",
+ "empty_reply_template": {
+  "findings": [
+   {
+    "cause": "template_swallowed",
+    "confidence": "high",
+    "counts": {
+     "empty": 3,
+     "turns": 24
+    },
+    "guard": null,
+    "muted": false,
+    "part": null,
+    "rule": "R-07",
+    "saving": {
+     "decode_s": null,
+     "money": null,
+     "prefill_s": null,
+     "tokens": 900
+    },
+    "tool": null,
+    "turns": [
+     5,
+     11,
+     17
+    ]
+   }
+  ],
+  "names": {},
+  "turn": 11
+ },
+ "evicted_pauses": {
+  "findings": [
+   {
+    "cause": "server_evicted",
+    "confidence": "high",
+    "counts": {
+     "lost": 33200,
+     "pause_s": 928,
+     "turns": 3
+    },
+    "guard": null,
+    "muted": false,
+    "part": null,
+    "rule": "E-08",
+    "saving": {
+     "decode_s": null,
+     "money": null,
+     "prefill_s": null,
+     "tokens": 33200
+    },
+    "tool": null,
+    "turns": [
+     8,
+     15,
+     21
+    ]
+   }
+  ],
+  "names": {},
+  "turn": 15
+ },
+ "loop": {
+  "findings": [
+   {
+    "cause": null,
+    "confidence": "high",
+    "counts": {
+     "repeats": 3,
+     "tokens": 900,
+     "total": 2700
+    },
+    "guard": null,
+    "muted": false,
+    "part": null,
+    "rule": "C-02",
+    "saving": {
+     "decode_s": null,
+     "money": null,
+     "prefill_s": null,
+     "tokens": 43200
+    },
+    "tool": "fa000001",
+    "turns": [
+     8,
+     9,
+     10
+    ]
+   },
+   {
+    "cause": "result_not_final",
+    "confidence": "high",
+    "counts": {
+     "calls": 4,
+     "result": 900
+    },
+    "guard": null,
+    "muted": false,
+    "part": "call:0",
+    "rule": "R-05",
+    "saving": {
+     "decode_s": null,
+     "money": null,
+     "prefill_s": null,
+     "tokens": 2400
+    },
+    "tool": "fa000001",
+    "turns": [
+     6,
+     7,
+     8,
+     9
+    ]
+   }
+  ],
+  "names": {},
+  "turn": 8
+ },
+ "no_marks_anthropic": {
+  "findings": [
+   {
+    "cause": "provider_no_marks",
+    "confidence": "medium",
+    "counts": {
+     "lost": 239200,
+     "marks": 0,
+     "turns": 23
+    },
+    "guard": null,
+    "muted": false,
+    "part": null,
+    "rule": "E-06",
+    "saving": {
+     "decode_s": null,
+     "money": null,
+     "prefill_s": null,
+     "tokens": 239200
+    },
+    "tool": null,
+    "turns": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24
+    ]
+   }
+  ],
+  "names": {},
+  "turn": 10
+ },
+ "path_line": {
+  "findings": [
+   {
+    "cause": "sys_changed",
+    "confidence": "high",
+    "counts": {
+     "class": 2,
+     "line": 4,
+     "lost": 239200,
+     "sessions": 1,
+     "turns": 23
+    },
+    "guard": null,
+    "muted": false,
+    "part": "sys",
+    "rule": "E-01",
+    "saving": {
+     "decode_s": null,
+     "money": null,
+     "prefill_s": null,
+     "tokens": 239200
+    },
+    "tool": null,
+    "turns": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24
+    ]
+   },
+   {
+    "cause": "sys_changed",
+    "confidence": "high",
+    "counts": {
+     "line": 4,
+     "turns": 23
+    },
+    "guard": null,
+    "muted": false,
+    "part": "sys",
+    "rule": "C-06",
+    "saving": {
+     "decode_s": null,
+     "money": null,
+     "prefill_s": null,
+     "tokens": 0
+    },
+    "tool": null,
+    "turns": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24
+    ]
+   }
+  ],
+  "names": {},
+  "turn": 5
+ },
+ "tools_reordered": {
+  "findings": [
+   {
+    "cause": "tools_reordered",
+    "confidence": "high",
+    "counts": {
+     "lost": 30800,
+     "turns": 3
+    },
+    "guard": null,
+    "muted": false,
+    "part": "tools",
+    "rule": "E-02",
+    "saving": {
+     "decode_s": null,
+     "money": null,
+     "prefill_s": null,
+     "tokens": 30800
+    },
+    "tool": null,
+    "turns": [
+     6,
+     13,
+     19
+    ]
+   }
+  ],
+  "names": {},
+  "turn": 13
+ },
+ "truncating_max_tokens": {
+  "findings": [
+   {
+    "cause": "limit_below_need",
+    "confidence": "high",
+    "counts": {
+     "cuts": 3,
+     "m": 1024,
+     "p90": 1025
+    },
+    "guard": null,
+    "muted": false,
+    "part": null,
+    "rule": "R-01",
+    "saving": {
+     "decode_s": null,
+     "money": null,
+     "prefill_s": null,
+     "tokens": 3072
+    },
+    "tool": null,
+    "turns": [
+     8,
+     15,
+     20
+    ]
+   }
+  ],
+  "names": {},
+  "turn": 15
+ },
+ "turn9": {
+  "findings": [
+   {
+    "cause": "sys_changed",
+    "confidence": "high",
+    "counts": {
+     "class": 1,
+     "line": 2,
+     "lost": 239200,
+     "sessions": 1,
+     "turns": 23
+    },
+    "guard": null,
+    "muted": false,
+    "part": "sys",
+    "rule": "E-01",
+    "saving": {
+     "decode_s": null,
+     "money": null,
+     "prefill_s": null,
+     "tokens": 239200
+    },
+    "tool": null,
+    "turns": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24
+    ]
+   },
+   {
+    "cause": "sys_changed",
+    "confidence": "high",
+    "counts": {
+     "line": 2,
+     "turns": 23
+    },
+    "guard": null,
+    "muted": false,
+    "part": "sys",
+    "rule": "C-06",
+    "saving": {
+     "decode_s": null,
+     "money": null,
+     "prefill_s": null,
+     "tokens": 0
+    },
+    "tool": null,
+    "turns": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24
+    ]
+   },
+   {
+    "cause": "schema_undocumented",
+    "confidence": "high",
+    "counts": {
+     "bad": 4,
+     "calls": 6,
+     "code": 3
+    },
+    "guard": null,
+    "muted": false,
+    "part": "call:0",
+    "rule": "R-04",
+    "saving": {
+     "decode_s": null,
+     "money": null,
+     "prefill_s": null,
+     "tokens": 800
+    },
+    "tool": "fa000003",
+    "turns": [
+     7,
+     9,
+     12,
+     14
+    ]
+   }
+  ],
+  "names": {
+   "fa000003": "search_docs"
+  },
+  "turn": 9
+ },
+ "unused_tools": {
+  "findings": [
+   {
+    "cause": null,
+    "confidence": "high",
+    "counts": {
+     "offered": 12,
+     "rarely": 0,
+     "tokens": 2800,
+     "turns": 24,
+     "unused": 7
+    },
+    "guard": null,
+    "muted": false,
+    "part": "tools",
+    "rule": "C-01",
+    "saving": {
+     "decode_s": null,
+     "money": null,
+     "prefill_s": null,
+     "tokens": 67200
+    },
+    "tool": null,
+    "turns": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24
+    ]
+   }
+  ],
+  "names": {},
+  "turn": 10
+ }
+}

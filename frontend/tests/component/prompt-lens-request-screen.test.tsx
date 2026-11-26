@@ -386,8 +386,12 @@ describe('RequestScreen: input sections', () => {
   });
 
   it('shows the media strip to the admin', () => {
-    render(<Screen r={finished({ media: [{ kind: 'image', url: 'https://example.com/a.png' }] })} scope="admin" />);
+    const { container } = render(
+      <Screen r={finished({ media: [{ kind: 'image', url: 'https://example.com/a.png' }] })} scope="admin" />,
+    );
     expect(screen.getByTestId('prompt-lens-media-strip')).toBeTruthy();
+    // #324: a remote url is not fetched when the request is opened
+    expect(container.querySelector('img[src="https://example.com/a.png"]')).toBeNull();
   });
 });
 

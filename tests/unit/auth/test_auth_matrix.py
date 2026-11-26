@@ -45,9 +45,12 @@ from app.auth.policy import (
     SESSION_ONLY_PREFIXES,
     SESSION_ONLY_ROUTES,
     is_inference,
+    is_lens_key,
+    is_lens_mcp,
     is_session_only,
 )
 from app.auth.public_routes import public_routes
+from app.lens.auth import lens_credential, lens_mcp_credential
 from app.models.routes_logs import require_sse_ticket
 from app.proxy.auth import require_bearer
 from app.stats.routes_forest import forest_viewer
@@ -68,6 +71,8 @@ GUARDS: set[Callable[..., Any]] = ADMIN_CAPABLE | {
     deps.require_session,
     require_bearer,
     require_key_ticket,
+    lens_credential,
+    lens_mcp_credential,
 }
 STUB = "x-auth-matrix"
 # origin_check_dep runs before require_session on POST /api/auth/logout; this
@@ -98,6 +103,10 @@ def _guards(route: APIRoute) -> set[Callable[..., Any]]:
 def _bucket(app: FastAPI, method: str, path: str) -> str:
     if is_inference(method, path):
         return "inference"
+    if is_lens_key(method, path):
+        return "lens_key"
+    if is_lens_mcp(method, path):
+        return "lens_mcp"
     if (method, path) in KEY_HOLDER_ROUTES:
         return "key_holder"
     if (method, path) in KEY_STREAM_ROUTES:
@@ -186,11 +195,17 @@ def _misguarded(app: FastAPI) -> list[str]:
             ok = guards == set()
         elif bucket == "key_stream":
             ok = guards == {require_key_ticket}
+        elif bucket == "lens_key":
+            ok = guards == {lens_credential}
+        elif bucket == "lens_mcp":
+            ok = guards == {lens_mcp_credential}
         else:
             ok = bool(guards & ADMIN_CAPABLE) and not guards & {
                 deps.require_session,
                 require_bearer,
                 require_key_ticket,
+                lens_credential,
+                lens_mcp_credential,
             }
         if not ok:
             names = sorted(g.__name__ for g in guards)
@@ -242,9 +257,9 @@ def test_an_admin_token_opens_every_control_route_but_the_session_only_ones(
         if bucket == "public":
             continue
         r = _call(client, method, path, creds["admin"])
-        if bucket in ("key_holder", "key_stream"):
+        if bucket in ("key_holder", "key_stream", "lens_key"):
             ok = r.status_code == 403
-        elif bucket == "admin":
+        elif bucket in ("admin", "lens_mcp"):
             ok = _reached(r)
         elif bucket == "session":
             ok = r.status_code == 403 and _error_code(r) == "session_only"
@@ -265,7 +280,7 @@ def test_a_session_opens_every_control_route(client: TestClient, creds) -> None:
         # /v1 wants an inference key; a stream wants a ticket, not the header; the key holder's
         # area wants a key holder's sign-in (403 for an admin).
         refused = bucket == "inference" or require_sse_ticket in _guards(route)
-        if bucket in ("key_holder", "key_stream"):
+        if bucket in ("key_holder", "key_stream", "lens_key"):
             ok = r.status_code == 403
         else:
             ok = r.status_code == 401 if refused else _reached(r)
@@ -332,7 +347,9 @@ def test_a_forest_token_opens_only_the_forest_routes(client: TestClient, creds) 
         if _bucket(client.app, method, path) == "public":
             continue
         r = _call(client, method, path, creds["forest"])
-        if (method, path) in FOREST_ROUTES:
+        if _bucket(client.app, method, path) in ("lens_key", "lens_mcp"):
+            ok = _reached(r)  # the Prompt Lens API takes the key holder's sign-in too
+        elif (method, path) in FOREST_ROUTES:
             forest_seen.add((method, path))
             ok = _reached(r)
         else:
@@ -356,20 +373,15 @@ def test_the_key_stream_bucket(client: TestClient, creds) -> None:
     """Ruling G-F2: the key holder's live stream is ticket-only. Its ticket is
     minted on a forest route; the stream itself takes no header credential: a
     forest sign-in or an inference key is 401, an admin credential 403."""
-    # The old /api/me/godmode path is a deprecated alias (one release).
-    assert KEY_STREAM_ROUTES == {
-        ("GET", "/api/me/prompt-lens/stream"),
-        ("GET", "/api/me/godmode/stream"),
-    }
+    assert KEY_STREAM_ROUTES == {("GET", "/api/me/prompt-lens/stream")}
     assert ("POST", "/api/me/prompt-lens/ticket") in FOREST_ROUTES
-    assert ("POST", "/api/me/godmode/ticket") in FOREST_ROUTES
     assert not KEY_STREAM_ROUTES & FOREST_ROUTES
-    for path in ("/api/me/prompt-lens/stream", "/api/me/godmode/stream"):
-        assert _call(client, "GET", path, creds["forest"]).status_code == 401
-        assert _call(client, "GET", path, creds["inference"]).status_code == 401
-        assert _call(client, "GET", path, creds["none"]).status_code == 401
-        assert _call(client, "GET", path, creds["admin"]).status_code == 403
-        assert _call(client, "GET", path, creds["session"]).status_code == 403
+    path = "/api/me/prompt-lens/stream"
+    assert _call(client, "GET", path, creds["forest"]).status_code == 401
+    assert _call(client, "GET", path, creds["inference"]).status_code == 401
+    assert _call(client, "GET", path, creds["none"]).status_code == 401
+    assert _call(client, "GET", path, creds["admin"]).status_code == 403
+    assert _call(client, "GET", path, creds["session"]).status_code == 403
 
 
 def test_a_key_ticket_opens_no_admin_stream(client: TestClient, creds) -> None:
@@ -387,3 +399,140 @@ def test_a_key_ticket_opens_no_admin_stream(client: TestClient, creds) -> None:
         ticket = store.mint(deps.key_stream_key("tok1"), concrete)
         r = client.get(f"{concrete}?ticket={ticket}")
         assert r.status_code == 401, _line("GET", path, r)
+
+
+#: Prompt Lens request findings (analysis Task 1.8).
+FINDINGS_ME = ("GET", "/api/me/prompt-lens/requests/{req_id}/findings")
+FINDINGS_ADMIN = ("GET", "/api/admin/prompt-lens/requests/{req_id}/findings")
+
+
+def test_the_findings_routes(client: TestClient, creds) -> None:
+    """The key holder's findings route opens with the key's sign-in only (an
+    admin session or admin token 403, A-1); the admin's takes no key credential."""
+    assert FINDINGS_ME in KEY_HOLDER_ROUTES and FINDINGS_ME in FOREST_ROUTES
+    assert FINDINGS_ADMIN not in FOREST_ROUTES
+    assert _bucket(client.app, *FINDINGS_ADMIN) == "admin"
+    me, admin = FINDINGS_ME[1], FINDINGS_ADMIN[1]
+    # Statuses only: an assert over a call would print the credential on failure.
+    got = {
+        (path, who): _call(client, "GET", path, creds[who])
+        for path in (me, admin)
+        for who in ("admin", "session", "inference", "none", "forest")
+    }
+    status = {k: (r.status_code, _reached(r)) for k, r in got.items()}
+    assert status == {
+        (me, "admin"): (403, False),
+        (me, "session"): (403, False),
+        (me, "inference"): (401, False),
+        (me, "none"): (401, False),
+        (me, "forest"): (200, True),
+        (admin, "admin"): (200, True),
+        (admin, "session"): (200, True),
+        (admin, "inference"): (401, False),
+        (admin, "none"): (401, False),
+        (admin, "forest"): (401, False),
+    }
+
+
+#: Prompt Lens scores and the scorecard (analysis Task 2.4).
+SCORE_ROUTES = (
+    ("GET", "/api/me/prompt-lens/sessions"),
+    ("GET", "/api/me/prompt-lens/sessions/{ref}/scorecard"),
+)
+SCORE_ADMIN_ROUTES = (
+    ("GET", "/api/admin/prompt-lens/sessions"),
+    ("GET", "/api/admin/prompt-lens/sessions/{ref}/scorecard"),
+)
+
+
+def test_the_score_routes(client: TestClient, creds) -> None:
+    """The key holder's score routes open with the key's sign-in only (an admin
+    session or admin token 403, A-1); the admin's take no key credential."""
+    for r in SCORE_ROUTES:
+        assert r in KEY_HOLDER_ROUTES and r in FOREST_ROUTES
+    for r in SCORE_ADMIN_ROUTES:
+        assert r not in FOREST_ROUTES and _bucket(client.app, *r) == "admin"
+    # Statuses only: an assert over a call would print the credential on failure.
+    got = {
+        (path, who): _call(
+            client, "GET", path.replace("{ref}", "s_" + "0" * 32), creds[who]
+        ).status_code
+        for _m, path in (*SCORE_ROUTES, *SCORE_ADMIN_ROUTES)
+        for who in ("admin", "session", "inference", "none", "forest")
+    }
+    for _m, path in SCORE_ROUTES:
+        assert got[(path, "admin")] == got[(path, "session")] == 403
+        assert got[(path, "inference")] == got[(path, "none")] == 401
+        assert got[(path, "forest")] in (200, 404)  # the key's own door
+    for _m, path in SCORE_ADMIN_ROUTES:
+        assert got[(path, "admin")] in (200, 404) and got[(path, "session")] in (200, 404)
+        assert got[(path, "inference")] == got[(path, "none")] == got[(path, "forest")] == 401
+
+
+#: Prompt Lens trends, versions, comparison and won't fix (analysis Tasks 3.2, 3.3).
+TREND_ROUTES = (
+    ("GET", "/api/me/prompt-lens/trends"),
+    ("GET", "/api/me/prompt-lens/versions"),
+    ("GET", "/api/me/prompt-lens/compare"),
+    ("GET", "/api/me/prompt-lens/wontfix"),
+    ("PUT", "/api/me/prompt-lens/wontfix/{rule}"),
+    ("DELETE", "/api/me/prompt-lens/wontfix/{rule}"),
+)
+TREND_ADMIN_ROUTES = (
+    ("GET", "/api/admin/prompt-lens/trends"),
+    ("GET", "/api/admin/prompt-lens/versions"),
+    ("GET", "/api/admin/prompt-lens/compare"),
+    ("GET", "/api/admin/prompt-lens/wontfix"),
+    ("PUT", "/api/admin/prompt-lens/wontfix/{rule}"),
+    ("DELETE", "/api/admin/prompt-lens/wontfix/{rule}"),
+    ("GET", "/api/admin/prompt-lens/fleet"),
+)
+
+
+def test_the_trend_and_wontfix_routes(client: TestClient, creds) -> None:
+    """The key holder's routes open with the key's sign-in only (an admin session or
+    admin token 403, A-1); the admin's, and the fleet distribution above all, take no
+    key credential (D-4)."""
+    for r in TREND_ROUTES:
+        assert r in KEY_HOLDER_ROUTES and r in FOREST_ROUTES
+    for r in TREND_ADMIN_ROUTES:
+        assert r not in FOREST_ROUTES and _bucket(client.app, *r) == "admin"
+    got = {
+        (method, path, who): _call(client, method, path, creds[who]).status_code
+        for method, path in (*TREND_ROUTES, *TREND_ADMIN_ROUTES)
+        for who in ("admin", "session", "inference", "none", "forest")
+    }
+    for method, path in TREND_ROUTES:
+        assert got[(method, path, "admin")] == got[(method, path, "session")] == 403
+        assert got[(method, path, "inference")] == got[(method, path, "none")] == 401
+        assert got[(method, path, "forest")] not in (401, 403)  # the key's own door
+    for method, path in TREND_ADMIN_ROUTES:
+        assert got[(method, path, "admin")] not in (401, 403)
+        assert got[(method, path, "session")] not in (401, 403)
+        for who in ("inference", "none", "forest"):
+            assert got[(method, path, who)] == 401, (method, path, who)
+
+
+def test_the_lens_key_buckets(client: TestClient, creds) -> None:
+    """The Prompt Lens API (app/lens/auth.py): ``/api/lens/me/*`` takes an inference key or a key
+    holder's sign-in and refuses every admin credential with 403; the MCP endpoint takes those and
+    the admin's too; ``/api/lens/admin/*`` is an ordinary admin route."""
+    me = [(m, p) for m, p, _ in _endpoints(client.app) if is_lens_key(m, p)]
+    assert len(me) >= 14, "the /api/lens/me routes are not mounted"
+    assert _bucket(client.app, "POST", "/api/lens/mcp") == "lens_mcp"
+    assert _bucket(client.app, "GET", "/api/lens/admin/sessions") == "admin"
+    assert _bucket(client.app, "GET", "/api/lens/admin/fleet") == "admin"
+    assert _bucket(client.app, "GET", "/api/me/engine") == "inference"
+    for method, path in [*me, ("POST", "/api/lens/mcp")]:
+        got = {who: _call(client, method, path, creds[who]) for who in creds}
+        assert _reached(got["inference"]) and _reached(got["forest"]), (method, path)
+        assert got["none"].status_code == 401, (method, path)
+        if (method, path) == ("POST", "/api/lens/mcp"):
+            assert _reached(got["admin"]) and _reached(got["session"])
+        else:
+            assert got["admin"].status_code == got["session"].status_code == 403, (method, path)
+    for method, path, _ in _endpoints(client.app):
+        if path.startswith("/api/lens/admin/"):
+            for who in ("inference", "forest", "none"):
+                assert _call(client, method, path, creds[who]).status_code == 401, (path, who)
+            assert _reached(_call(client, method, path, creds["admin"])), path

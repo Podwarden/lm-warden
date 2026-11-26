@@ -62,6 +62,10 @@ export function CreateTokenDialog({
   const [priority, setPriority] = useState(String(PRIORITY_DEFAULT));
   const [anthropicRelay, setAnthropicRelay] = useState(initialRelay);
   const [thinkingPolicy, setThinkingPolicy] = useState<"client" | "off">("client");
+  // Per-key permissions (migration 0066): a new key starts without Prompt Lens (the admin ticks
+  // it) and with engine facts.
+  const [promptLens, setPromptLens] = useState(false);
+  const [engineFacts, setEngineFacts] = useState(true);
   // Sensitive data guard for the new key: the platform setting unless chosen otherwise. Own
   // settings start from the platform's, so an admin edits rather than starts from nothing.
   const packs = useSWR<PacksResponse>(open ? "/api/guard/packs" : null, authFetchJSON);
@@ -94,6 +98,8 @@ export function CreateTokenDialog({
     setPriority(String(PRIORITY_DEFAULT));
     setAnthropicRelay(initialRelay);
     setThinkingPolicy("client");
+    setPromptLens(false);
+    setEngineFacts(true);
     setGuardChoice("inherit");
     setGuardOwn(null);
     setError(null);
@@ -146,6 +152,8 @@ export function CreateTokenDialog({
           priority: parsedPrio,
           anthropic_relay: anthropicRelay,
           thinking_policy: thinkingPolicy,
+          prompt_lens: promptLens,
+          engine_facts: engineFacts,
           // Omitted when the key uses the platform setting, as before this section existed.
           ...(guardChoice === "inherit" ? {} : { guard: keyGuardBody(guardChoice, guardValue) }),
         }),
@@ -293,6 +301,42 @@ export function CreateTokenDialog({
               </span>
             </span>
           </label>
+
+          <fieldset className="space-y-2 rounded-md border border-slate-700 px-3 py-2.5">
+            <legend className="px-1 text-xs text-slate-400">Permissions</legend>
+            <label className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                data-testid="token-prompt-lens"
+                checked={promptLens}
+                onChange={(e) => setPromptLens(e.target.checked)}
+                className="mt-1"
+              />
+              <span className="space-y-0.5">
+                <span className="block text-sm">Prompt Lens</span>
+                <span className="block text-xs text-slate-500">
+                  The key&apos;s holder may use Prompt Lens on their own traffic: pages, API and MCP tools.
+                  Needs Prompt Lens on in Settings.
+                </span>
+              </span>
+            </label>
+            <label className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                data-testid="token-engine-facts"
+                checked={engineFacts}
+                onChange={(e) => setEngineFacts(e.target.checked)}
+                className="mt-1"
+              />
+              <span className="space-y-0.5">
+                <span className="block text-sm">Engine facts</span>
+                <span className="block text-xs text-slate-500">
+                  The key may read cache block size, match unit and context length of the models it may use.
+                </span>
+              </span>
+            </label>
+            <span className="block text-xs text-slate-500">Changeable later on the key&apos;s page.</span>
+          </fieldset>
 
           <fieldset className="space-y-2 rounded-md border border-slate-700 px-3 py-2.5">
             <legend className="px-1 text-xs text-slate-400">Thinking</legend>

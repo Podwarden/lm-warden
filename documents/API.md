@@ -727,7 +727,7 @@ unchanged: raw per-minute rows for one key, with no binning and no timings.
 
 ### Prompt Lens
 
-**Prompt Lens** (called god mode before 2026-11-22) is a tool for seeing what a
+**Prompt Lens** is a tool for seeing what a
 client really sent and what came back, prompt part by prompt part. It is off
 unless turned on: by the switch in Settings, General, Privacy (the runtime
 setting `prompt_lens_enabled`, applied at once), or, while that switch has never
@@ -754,13 +754,12 @@ key's kept captures stay on disk, and while it is off the admin routes
 `/kept`, `/kept/{req_id}` and `/requests/{req_id}/section/{kind}` still serve
 them (read-only; nothing from memory); the key holder's routes answer 404.
 
-**Old names (deprecated, one release).** Every route below also answers under
-its old path, `/api/admin/godmode/...` and `/api/me/godmode/...`: the same
-handler and auth, marked deprecated in the schema, with `Deprecation: true` and
-`Link: <new path>; rel="successor-version"` on every answer, errors included. A ticket for the
-old admin stream is minted for the old path. `GET /api/me/key` carries
-`godmode_view_available` beside `prompt_lens_view_available`. `VW_GODMODE_ENABLED`
-and the other `VW_GODMODE_*` variables still work; the new name wins.
+A key holder also needs the admin's permission for their key (below, "Per-key
+permissions"): Prompt Lens for a holder is on when the switch above is on **and**
+the key's `prompt_lens` permission is on.
+
+Prompt Lens was called god mode before 2026-11-22; the old routes, field and
+`VW_GODMODE_*` variables were removed in the release after v2026.11.24.1.
 
 **The admin stream.** A server-sent-event stream behind a single-use ticket,
 because a browser's `EventSource` cannot send an `Authorization` header. Mint
@@ -838,6 +837,146 @@ since. `dropped_chars` counts the oldest text the store dropped. Bounds:
 [Where request content can end up](OPERATING.md#where-request-content-can-end-up).
 A key holder reads their own with `GET /api/me/prompt-lens/requests/{req_id}/section/{kind}`;
 `seq` is then `null`.
+
+**Findings on a request.** Once a request ended, its findings come from the
+stored request history of its session (layers E reuse, C construction and R
+replies; every rule, its threshold and its fix are in `app/lens/catalogue.py`):
+
+```bash
+curl -s "$W/api/admin/prompt-lens/requests/$REQ_ID/findings" -H "Authorization: Bearer $JWT"
+# {"turn":9,"names":{"5c1e0a9f":"search_docs"},"findings":[
+#   {"rule":"E-01","turns":[2,3,9],"counts":{"line":2,"class":1,"turns":23,"lost":239200,"sessions":1},
+#    "tool":null,"cause":"sys_changed","saving":{"tokens":239200,"prefill_s":null,"decode_s":null,"money":null},
+#    "confidence":"high","muted":false,"part":"sys","guard":null},
+#   {"rule":"R-04","turns":[7,9,12,14],"counts":{"bad":4,"calls":6,"code":3},"tool":"5c1e0a9f",
+#    "cause":"schema_undocumented","saving":{…},"confidence":"high","muted":false,"part":"call:0","guard":null}]}
+```
+
+`req_id` is the Prompt Lens id of the request (in memory or a kept capture) or
+its stored request id. Each finding lists the session turns it is about (this
+request's `turn` among them), its counts, a keyed tool-name hash (`tool`), the
+likely cause, the saving and a confidence. `counts.info` = 1 marks a notice,
+never a fix; E-01's `counts.class` indexes the span classes (`date`, `time`,
+`path`, `uuid_or_hex_id`, `version`, `number`, `url`, `provider_or_model_id`,
+`user_name_or_email`, `other`) and R-04's `counts.code` the call verdicts
+(`ok`, `json`, `unknown_tool`, `missing_arg`, `type`, `leaked_markup`). `part`
+says where the finding sits on the request: `sys`, `tools`, `node:<i>`,
+`call:<k>` (the reply's tool call by index), or `null`. `guard` (R-09 only)
+holds the guard rule ids and where they matched. `names` maps the tool hashes
+above to the names the caller already sees on the Sessions pages. Nothing in
+the answer is prompt, reply or tool text. The admin route answers for any key,
+also while Prompt Lens is off; **404** `no such request` for an unknown id.
+
+A key holder reads their own with `GET /api/me/prompt-lens/requests/{req_id}/findings`:
+the analysis uses their own key's figures only (no other key's reuse, no
+fleet-wide cause), and names only their own tools. Prompt Lens off, an unknown
+id, an evicted one and another key's all answer the same **404** `no request
+of yours with this id`; an admin session or admin token gets **403**. A key may
+make 60 findings reads a minute; past that the answer is **429** with
+`Retry-After`.
+
+**Scores and the scorecard.** A session that has been quiet for 10 minutes
+is scored on its stored requests (so it works with Prompt Lens' capture off,
+and after the ring has forgotten it): E (cache reuse), C (construction), R
+(replies) and the overall, each 0-100 with 100 meaning "nothing measurable to
+fix in this layer". The formulas, minimums and weights are in the analysis
+spec (10) and are published in every answer (`weights`, `score_version`).
+
+```bash
+curl -s "$W/api/admin/prompt-lens/sessions?since=0&key=$TOKEN_ID" -H "Authorization: Bearer $JWT"
+# {"sessions":[{"session_id":"s_9f2c…","model":"qwen3","route":"local","harness":"other","turns":24,
+#   "overall":62,"e":48,"c":71,"r":74,"confidence":"high","reasons":{},"score_version":1,
+#   "key_name":"alpha-key","key_id":"…"}],"next_cursor":null}
+curl -s "$W/api/admin/prompt-lens/sessions/s_9f2c…/scorecard" -H "Authorization: Bearer $JWT"
+# {"session":{…},"scores":{"overall":{"layer":"overall","scored":true,"value":62,"lo":57,"hi":66,
+#   "confidence":"high","turns":24,"inputs":{"from":["E","C","R"],…}},
+#   "R":{"layer":"R","scored":false,"turns":3,"reason":"3 of 5 assistant turns"}, …},
+#  "top":[…3 findings…],"notice":null,"findings":[…],"turns":[{"n":1,"reused":0,"recomputed":0,"new":6000,"markers":[]},…],
+#  "cost":{…},"weights":{"E":0.45,"C":0.15,"R":0.4},"score_version":1,"review":null}
+```
+
+The list takes `key` (admin only), `model` and `harness` (the client: `claude_code`,
+`codex`, `opencode`, `openai_sdk`, `other`); each may repeat (`key=a&key=b`) and
+matches any of its values, and the three combine. A key holder's list takes `model`
+and `harness` only.
+
+A layer below its minimum data has **no number**: its entry is
+`{"layer", "scored": false, "reason", "turns"}` and the overall needs two
+scored layers. A score has a 10th-90th percentile range (`lo`, `hi`, a
+bootstrap seeded by the session id, so a reload shows the same range) and a
+confidence (`high`, `medium`, `low`). `top` is the three fixes worth most
+(money with a price card, else GPU-seconds, else tokens; weighted by
+confidence); `notice` is a secret in the prompt (R-09), pinned above them. The
+scorecard holds codes, counts and positions only: never prompt, reply or tool
+text. Money appears only with a price card: a relayed route uses the
+provider's card, an own model the reference card an admin picked per model
+(`GET/PUT /api/admin/lens/rate-cards`,
+`PUT /api/admin/lens/reference-card/{model_id}`, shown with the card's
+`effective_from` date).
+
+A key holder reads their own with `GET /api/me/prompt-lens/sessions` and
+`GET /api/me/prompt-lens/sessions/{ref}/scorecard`: the key is the sign-in's
+(a `key` parameter is ignored), the figures are their own key's only (no rank,
+percentile or other key's number), and an unknown ref, an evicted session and
+another key's all answer the same **404**; an admin session or admin token gets
+**403**. Each list item carries `key_name`, the API key's name (null when the
+key has been deleted); a key holder gets its own key's name only, and `key_id`
+stays admin-only. `since` (epoch seconds, default 30 days), `model`, `limit` (at most
+200) and `cursor` page the list. A key may open 30 scorecards a minute; past
+that the answer is **429** with `Retry-After`.
+
+**Prompt versions, trends and the comparison.** Every request is stamped with
+a prompt version: detected from the system prompt's lines (lines holding a
+date, a time, a path, an id or a version number are left out, so a changing
+working directory never starts a version) plus the tool list, or named by the
+client with an `X-Prompt-Version` header (at most 64 printable characters; it
+wins over detection and is shown as the client wrote it). The stored value is a
+keyed hash or that name, never prompt text. With kvsig off nothing is computed.
+
+```bash
+curl -s "$KEY_HOLDER/api/me/prompt-lens/trends?by=week&model=qwen3" -H "Authorization: Bearer $KEY_HOLDER_TOKEN"
+# {"by":"week","model":"qwen3","models":["qwen3"],
+#  "points":[{"bucket":"2026-11-23","n":9,"medians":{"overall":64,"E":58,"C":71,"R":80},"band":[55,70],"start":…}],
+#  "versions":[{"id":"3fa9c2d1","label":"v1","since":…,"n":9,"medians":{…},"rules":{"E-01":7},"resolved":[],"new":[]}], …}
+curl -s "$W/api/me/prompt-lens/compare?a=3fa9c2d1&b=b17e0c44" -H "Authorization: Bearer $KEY_HOLDER_TOKEN"
+# {"a_label":"v1","b_label":"v2","n_a":23,"n_b":31,"diffs":{"overall":12,"E":18,"C":3,"R":4},
+#  "verdict":"better_clear","like_for_like":true,"note":null,"resolved":["E-01"],"new":[],"p":0.004}
+```
+
+`GET /api/me/prompt-lens/trends` (`by=day|week|version`, `model`, `since`, `tz`
+in minutes east of UTC), `/versions` and `/compare` read the signed-in key's own
+scored sessions, across its rotation chain, with its won't-fix marks applied
+(below). A bucket with fewer than 3 scored sessions has `null` medians and no
+`band`, never a 0. `compare` sets version `b` against the earlier `a` on the
+same model: the median difference per layer (needs 5 scored sessions a side,
+else `verdict` is `not_enough`), and a verdict from a rank test on the per-session
+overall: `better_clear` / `worse_clear` at p < 0.05, `better_unclear` /
+`worse_unclear`, `no_change`. `like_for_like` is false, with a `note`, when the
+sessions' harness or route differs or their typical length differs by half.
+`resolved` lists the rules that fired on `a` and not on `b`. A key holder cannot
+name a key: a `key` parameter is **422**. The admin's routes
+(`/api/admin/prompt-lens/trends|versions|compare|wontfix`) take a required
+`key=`, and `GET /api/admin/prompt-lens/fleet?model=&since=` gives the
+distribution (10th, 25th, 50th, 75th and 90th percentile) of the stored scores
+over every key; it is the admin's alone (a key holder's sign-in or an inference
+key is **401**).
+
+**Won't fix.** A key holder (or the admin, for any key) can mark a rule "won't
+fix" for the key, for every prompt version or one. A marked rule stops counting
+in the scores (the scorecard's `excluded_rules` names it and `inputs.with_marks`
+holds the value with it counted), its findings stay listed with `muted: true`
+and `muted_by` (`key` or `admin`) and never enter `top`, and unmarking restores
+the scorecard at once. A mark limited to one version stops applying when the
+prompt version changes. Marks follow the key's rotation chain.
+`GET /api/me/prompt-lens/wontfix` lists them; `PUT /api/me/prompt-lens/wontfix/{rule}`
+with `{"version": "<id>" | null}` marks; `DELETE …/wontfix/{rule}?version=<id>`
+removes the mark for that version (no `version`: the one for every version). The
+answer is `{"marks":[{"rule","version","by","at"}],"changed":bool}`. An unknown
+rule and **R-09** (a secret in the prompt: a notice, not a score term) answer
+**422**. Every mark and unmark writes one `admin_audit` row (the key, who, the
+rule and the version are in `path`, after the route template). The stored
+scores and the fleet distribution are computed without
+the marks, so a mark cannot move a key within the fleet.
 
 **Keep captures.** An admin can set a key to keep its last finished requests
 on disk: `PATCH /api/tokens/{id}` with `{"keep_captures": true}` (off by
@@ -918,6 +1057,173 @@ curl -s $W/api/me/requests/$REQUEST_ID/capture -H "Authorization: Bearer $KEY_HO
   send. Past the store's total bounds the heaviest key's oldest request goes,
   so the key with the most text kept can lose its oldest section to the
   others' combined traffic. That tells it only that total traffic was high.
+
+### Per-key permissions
+
+An admin sets two permissions on a key, when creating it (`POST /api/tokens`)
+or later (`PATCH /api/tokens/{id}`, the key's page, "Permissions"). Both come
+back on every key (`GET /api/tokens`, `GET /api/tokens/{id}`):
+
+| Field | Meaning | New key | Existing keys |
+|---|---|---|---|
+| `prompt_lens` | the key's holder may use Prompt Lens on their own traffic: the key area's pages, the Prompt Lens API and the Prompt Lens MCP tools. The platform switch (Settings, General, Privacy) must be on too | `false` unless sent as `true` | `true` |
+| `engine_facts` | the key may read the engine facts of the models it may use (`GET /api/me/engine`, the `engine_facts` MCP tool) | `true` | `true` |
+
+```bash
+curl -s -X POST $W/api/tokens "${AUTH[@]}" -d '{"name":"ci-runner","prompt_lens":true,"engine_facts":true}'
+curl -s -X PATCH $W/api/tokens/$T "${AUTH[@]}" -d '{"prompt_lens":false}'
+```
+
+A rotation gives the successor both flags. The server decides on every call:
+without `prompt_lens` every Prompt Lens route of the key holder (the pages'
+routes under `/api/me/prompt-lens/`, the stream ticket, kept captures,
+`/api/lens/me/*`) answers the same **404** as when Prompt Lens is off, and the
+MCP endpoint lists no Prompt Lens tool. A key holder sees both flags,
+read-only, in `GET /api/me/key` and on the key area's Settings page; they
+cannot change them (`PATCH /api/me/key` refuses the fields). Each change an
+admin makes is one `admin_audit` row whose `path` ends in `key.prompt_lens:on`
+or `key.engine_facts:off`.
+
+### Engine facts
+
+`GET /api/me/engine` returns static facts about the engine behind each model
+the key may use, with the credential an app already uses for inference: an
+inference key (`Authorization: Bearer vw_…`, or `X-LMWarden-Key`), accepted
+exactly as `/v1/chat/completions` accepts it. A missing, malformed, unknown,
+expired or revoked key is **401**, a paused key **403** `token paused`, and a
+key whose `engine_facts` permission is off **403**. An admin credential is not
+accepted here. It is meant for tools such as
+`leanprompt profile detect --lmwarden`. It carries no traffic figure, no other
+key and no host name.
+
+```bash
+curl -s $W/api/me/engine -H "Authorization: Bearer $LMWARDEN_API_KEY"
+# {"v":1,"warden_version":"2026.11.26.1","models":[
+#   {"model":"qwen3-4b","backend":"vllm","running":true,"prefix_caching":true,
+#    "engine_block_tokens":1584,"engine_match_unit_tokens":16,"engine_drops_last_block":true,
+#    "speculative":"mtp","max_model_len":32768,"replicas":4,"cache_aware_routing":true,
+#    "unknown":[]}]}
+```
+
+Every model the key may use and that is configured is listed, whether or not it
+has served a request and whether or not it is loaded. A key with no allowed
+models gets `{"models": []}`. Fields:
+
+- `model` is the served model name, the one a client sends in `model`; `backend`
+  is `vllm` or `llamacpp`; `running` is true while the model is loaded.
+- `prefix_caching` is whether the running engine has prefix caching on.
+- `engine_block_tokens` is the real KV block size, a classic 16 included (the
+  dashboard's small-page filter is not applied). Reuse is in whole blocks.
+  `engine_match_unit_tokens` is `--prefix-match-unit` when set, else the block
+  size. `engine_drops_last_block` is true when speculative decoding that reads
+  the target model's hidden states (EAGLE, MTP and similar) makes the engine
+  recompute one more unit on every hit.
+- `speculative` is the method (`mtp`, `eagle`, …), or `null` when it is off.
+- `max_model_len` is the context length; `replicas` the engine copies serving
+  the model; `cache_aware_routing` is true when the warden keeps a conversation
+  on the replica that holds its cache (more than one replica).
+- **Unknown is `null`, never a guess.** A value the warden cannot determine now
+  (the model is not loaded, the engine has not reported its block size yet, a
+  backend that does not say) is `null` and its field is named in `unknown`.
+  For a model that is not loaded, every engine-run field and an unset
+  `max_model_len` are unknown; `replicas` and `cache_aware_routing` come from
+  the configuration.
+
+### The Prompt Lens API
+
+The same reads as the Prompt Lens page, for scripts and assistants, with the
+credential a client already has. `/api/lens/me/*` takes an **inference key**
+(`vw_…`, as `/v1` does) or the key holder's sign-in token, and answers for that
+key only: the key is the credential's, a `key=` parameter is **422**, an admin
+credential is **403**, and a key without the `prompt_lens` permission (or with
+the platform switch off) gets the one **404** of the page's routes. An unknown,
+evicted and another key's id all answer that same 404. Calls are limited per
+credential, shared with the MCP endpoint: 60 a minute for a key holder (and 2
+concurrent diffs), 300 for an admin (`VW_LENS_RATE_KEY_PER_MIN`,
+`VW_LENS_RATE_ADMIN_PER_MIN`); past it **429** with `Retry-After`. The log keeps
+the route, a hash of the credential, the status and the time, never a query or
+a body. Answers are codes, counts, sizes, positions and keyed hashes: no
+prompt, reply or tool text, and no rank, percentile or other key's number.
+
+| Route | Answer |
+|---|---|
+| `GET /api/lens/me/requests?since=&before=&model=&limit=` | the key's finished requests, newest first (`next_before` pages on) |
+| `GET /api/lens/me/requests/{id}` | cache figures, the first part that broke reuse (`break`, `cause`, `span_line`, `lost_tokens`) and its findings |
+| `GET /api/lens/me/requests/{id}/diff?against=` | what changed against the parent turn (or `against`): first broken part, cause, position, token deltas |
+| `GET /api/lens/me/requests/{id}/findings` | the findings that touch the request, with their parts |
+| `GET /api/lens/me/sessions?since=&model=&limit=&cursor=` | scored sessions with scores |
+| `GET /api/lens/me/sessions/{id}/scorecard` | scores, ranges, confidence, top 3, findings, turn strip |
+| `GET /api/lens/me/sessions/{id}/cost` | the session's cost and per-turn bars |
+| `GET /api/lens/me/sessions/{id}/findings?layer=&rule=` | the session's findings |
+| `GET /api/lens/me/sessions/{id}/report?format=json\|html&tool_names=0\|1` | the downloadable report (below) |
+| `GET /api/lens/me/trends`, `/versions`, `/compare` | as `/api/me/prompt-lens/…` |
+| `GET /api/lens/me/score?since=&model=` | leanprompt's measured score |
+| `GET\|PUT\|DELETE /api/lens/me/wontfix[/{rule}]` | won't-fix marks |
+
+`/api/lens/admin/*` has the same routes for any key (`key=`; required for
+trends, versions, compare, wontfix and score) with an admin credential, and
+`GET /api/lens/admin/fleet` (the distribution of stored scores, admin only; a key
+credential is 401).
+
+`GET /api/lens/me/score` returns leanprompt's measured-score JSON so
+`leanprompt score` can read it: `prefill_efficiency` (prompt tokens served from
+cache over the reusable ones), `stability` (reusable over prompt tokens on calls
+that continue an earlier one), `generation_waste` (output tokens of calls cut at
+the token limit or with a malformed tool call), `leanprompt` =
+`floor(100 × (0.6 × prefill_efficiency × stability + 0.4 × (1 − generation_waste)))`,
+and `calls`. With fewer than 50 calls in the window it answers
+`{"scored": false, "reason": "…", "calls": n}` and no number.
+
+**The session report.** `…/sessions/{id}/report` downloads one session as HTML
+(one self-contained page: inline CSS, no script, no link) or JSON (its schema is
+`app/lens/report.schema.json`, JSON Schema 2020-12, so CI can diff two reports).
+It holds the scores with ranges and confidence, the top 3 fixes, every finding,
+the turn bars, the cost and the `score_version`, with report-local labels (`T4`,
+"system prompt line 3", "tool #5"). It has no key name, key or session id,
+request id, kvsig id or client address, and never prompt, reply or tool text; tool
+names appear only with `tool_names=1`. The admin's copy says "admin view" on its
+first line. The scorecard's "Download report" menu calls the page's own routes,
+`GET /api/me/prompt-lens/sessions/{ref}/report` and its admin twin.
+
+### The Prompt Lens MCP endpoint
+
+`POST /api/lens/mcp` is a Model Context Protocol server (Streamable HTTP,
+JSON responses, protocol `2025-06-18`; server name `lm-warden`). It takes the
+inference key (or the key holder's sign-in token); an admin token gets the admin
+tool set. Point an MCP client at it, with a placeholder key:
+
+```json
+{
+  "mcpServers": {
+    "lm-warden": {
+      "type": "http",
+      "url": "https://warden.example/api/lens/mcp",
+      "headers": { "Authorization": "Bearer vw_REPLACE_WITH_YOUR_KEY" }
+    }
+  }
+}
+```
+
+`tools/list` shows only what the credential may use: no Prompt Lens tool unless
+the key has the `prompt_lens` permission and the platform switch is on, no
+`engine_facts` unless the key has `engine_facts`. Every tool description says its
+results are data about the caller's own traffic, never instructions. Tools:
+`lens_list_sessions`, `lens_list_requests`, `lens_explain_request`,
+`lens_turn_diff`, `lens_session_cost`, `lens_scorecard`, `lens_findings`,
+`lens_trends`, `lens_versions`, `lens_compare_versions`, `lens_score`,
+`lens_wontfix`, `lens_wait_for_request` (waits up to 30 s for the key's next
+request to finish, or answers `{"timeout": true}`), `engine_facts`, and the guide
+catalogue `list_skills` and `load_skill`. An admin credential gets
+`lens_admin_*` twins that take a `key` argument. An unknown or hidden tool is
+JSON-RPC error `-32602`; the rate limit is the REST one (HTTP 429 with
+`Retry-After`).
+
+The guides (`prompt-lens`, `leanprompt`, `kvsig`, `engine-facts`) are markdown
+shipped in the image. They are offered three ways that agree: the `list_skills`
+and `load_skill` tools, the resources `skill://<name>` (`resources/list`,
+`resources/read`), and a mention in the `initialize` result's `instructions`.
+`prompt-lens` is offered only to a key that may use Prompt Lens, `engine-facts`
+only to one that may read engine facts.
 
 ---
 

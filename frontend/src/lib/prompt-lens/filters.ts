@@ -19,6 +19,8 @@ export interface DockFilters {
   sessions: string[] | null;
   models: string[] | null;
   ips: string[] | null;
+  /** The client (harness): Sessions only, the live stream does not carry it. */
+  harnesses: string[] | null;
   phase: 'all' | 'live' | 'finished';
   finish: string[] | null;
   has: HasFlag[];
@@ -31,9 +33,6 @@ export const HAS_FLAGS: readonly HasFlag[] = ['tool_calls', 'thinking', 'images'
 const PHASES = ['all', 'live', 'finished'] as const;
 
 export const FILTERS_STORAGE_PREFIX = 'vw.prompt-lens.filters.';
-/** Where filters were saved while the feature was called god mode: read when the
- *  new key is empty, removed on the next save. */
-const LEGACY_STORAGE_PREFIX = 'vw.godmode.filters.';
 
 export function defaultFilters(
   scope: DockScope,
@@ -46,6 +45,7 @@ export function defaultFilters(
     sessions: null,
     models: presetModel ? [presetModel] : null,
     ips: null,
+    harnesses: null,
     phase: 'all',
     finish: null,
     has: [],
@@ -132,6 +132,7 @@ export function activeCount(f: DockFilters): number {
   if (listed(f.sessions)) n++;
   if (listed(f.models)) n++;
   if (listed(f.ips)) n++;
+  if (listed(f.harnesses)) n++;
   if (f.phase !== 'all') n++;
   if (listed(f.finish)) n++;
   if (f.has.length > 0) n++;
@@ -166,7 +167,7 @@ function restore(raw: string | null, base: DockFilters): DockFilters {
   if (!v || typeof v !== 'object') return base;
   const o = v as Record<string, unknown>;
   const out: DockFilters = { ...base };
-  for (const k of ['models', 'finish'] as const) {
+  for (const k of ['models', 'harnesses', 'finish'] as const) {
     const l = strList(o[k]);
     if (l !== undefined) out[k] = l;
   }
@@ -179,9 +180,8 @@ function restore(raw: string | null, base: DockFilters): DockFilters {
   return out;
 }
 
-/** The dock's filters for one page. Models, phase, finish and has are kept
- *  in `localStorage["vw.prompt-lens.filters." + pageKey]` (read from the old
- *  `vw.godmode.filters.` key when that is empty); keys (the page's
+/** The dock's filters for one page. Models, clients, phase, finish and has are kept
+ *  in `localStorage["vw.prompt-lens.filters." + pageKey]`; keys (the page's
  *  presets, or none), sessions, IPs and the search text never are. A Model
  *  preset overrides the stored models (G-R16). */
 export function useDockFilters(
@@ -190,13 +190,12 @@ export function useDockFilters(
   presets: FilterPresets,
 ): [DockFilters, (f: DockFilters) => void] {
   const storageKey = FILTERS_STORAGE_PREFIX + pageKey;
-  const legacyKey = LEGACY_STORAGE_PREFIX + pageKey;
   const presetKeys = presets.keys && presets.keys.length ? presets.keys : null;
   const [filters, setFilters] = useState<DockFilters>(() => {
     const base = defaultFilters(scope, presets.model, presetKeys);
     let raw: string | null = null;
     try {
-      raw = localStorage.getItem(storageKey) ?? localStorage.getItem(legacyKey);
+      raw = localStorage.getItem(storageKey);
     } catch {
       raw = null;
     }
@@ -212,15 +211,14 @@ export function useDockFilters(
       setFilters(f);
       // Only the coarse choices: never the search text (it can hold prompt
       // text or a pasted secret), session ids, IPs or keys.
-      const stored = { models: f.models, phase: f.phase, finish: f.finish, has: f.has };
+      const stored = { models: f.models, harnesses: f.harnesses, phase: f.phase, finish: f.finish, has: f.has };
       try {
         localStorage.setItem(storageKey, JSON.stringify(stored));
-        localStorage.removeItem(legacyKey);
       } catch {
         // Private window, blocked storage: the filters still apply this visit.
       }
     },
-    [storageKey, legacyKey],
+    [storageKey],
   );
 
   return [filters, update];

@@ -15,6 +15,18 @@
 //                  100 updates (pop-up size pill, section box header, facts)
 //   page           /ui/prompt-lens and /ui/key/prompt-lens fill the screen,
 //                  carry the menu entry and the breadcrumb
+//   sessions       ?view=sessions&session=... opens the scorecard: the score
+//                  tiles (two a row on a phone), the top 3 fixes and the turn
+//                  strip, no horizontal scroll at 1440 and 375, "not scored"
+//                  tiles carry no number
+//   trends         ?view=trends (admin: &key=...) draws the chart with the
+//                  version markers and a gap for an unscored week, the
+//                  "Did the last change help?" verdict and the findings by
+//                  version, no horizontal page scroll at 1440 and 375
+//   filters        the one filter bar sits on Requests, Sessions and Trends
+//                  (admin: Key picker with every named key, even one with no
+//                  traffic; key holder: none); Trends with no key offers an
+//                  inline "Pick a key" select; no horizontal scroll at 1440 and 375
 // Prints one JSON line per check, saves screenshots to <outdir>, exits 1 on
 // any failure.
 
@@ -108,6 +120,42 @@ const startEv = (req, o = {}) => ({
   client_ip: "10.0.0.7", prompt: "Summarise the build log", seq: 1, ...o,
 });
 
+const SESSION_A = "s_" + "a".repeat(32);
+const SESSION_B = "s_" + "b".repeat(32);
+const sc = (layer, value, o = {}) => ({ layer, scored: true, value, lo: value - 7, hi: value + 6, confidence: "high", turns: 24, inputs: {}, excluded_rules: [], ...o });
+const noSc = (layer, reason) => ({ layer, scored: false, reason, turns: 2 });
+const fnd = (rule, layer, turns, tokens, extra = {}) => ({ rule, layer, turns, counts: {}, tool: null, cause: null, saving: { tokens, prefill_s: null, decode_s: null, money: null }, confidence: "high", muted: false, part: null, ...extra });
+const CARD = (short) => ({
+  session: { harness: "other", model: "qwen3.8-27b", route: "local", turns: short ? 3 : 24, duration_s: 1080, version: null },
+  scores: short
+    ? { overall: noSc("overall", "1 of 2 layers scored"), E: noSc("E", "2 of 3 continuing turns"), C: sc("C", 90, { turns: 3 }), R: noSc("R", "3 of 5 assistant turns") }
+    : { overall: sc("overall", 62, { lo: 55, hi: 68, confidence: "medium", inputs: { from: ["E", "C", "R"] } }), E: sc("E", 48, { inputs: { ideal: 185000, lost: 96200 } }), C: sc("C", 71, { inputs: { waste: 89000, prompt: 612000 } }), R: sc("R", 74, { confidence: "medium", inputs: { turns: 24, bad: 5, completion: 4800, waste_out: 430 } }) },
+  top: short ? [] : [fnd("E-01", "E", [2, 3, 9], 61400, { counts: { line: 2, class: 1, turns: 3, lost: 61400, sessions: 1 }, cause: "sys_changed", part: "sys" }), fnd("C-01", "C", [1, 2, 3], 139000, { counts: { unused: 7, tools: 12, tokens: 5800 } }), fnd("R-04", "R", [7, 9, 12, 14], 2100, { counts: { bad: 4, calls: 6, code: 3 }, tool: "fa000003", cause: "schema_undocumented", confidence: "medium" })],
+  notice: null,
+  findings: short ? [] : [fnd("E-01", "E", [2, 3, 9], 61400, { counts: { line: 2, class: 1, turns: 3, lost: 61400, sessions: 1 }, cause: "sys_changed", part: "sys" }), fnd("C-01", "C", [1, 2, 3], 139000, { counts: { unused: 7, tools: 12, tokens: 5800 } }), fnd("R-04", "R", [7, 9, 12, 14], 2100, { counts: { bad: 4, calls: 6, code: 3 }, tool: "fa000003", cause: "schema_undocumented", confidence: "medium" })],
+  not_scored: short ? { E: "2 of 3 continuing turns", R: "3 of 5 assistant turns" } : {},
+  turns: Array.from({ length: short ? 3 : 24 }, (_, i) => ({ n: i + 1, req_id: `req-${i + 1}`, reused: i ? 6000 + 400 * (i - 1) : 0, recomputed: i === 8 ? 8800 : 0, new: i ? 400 : 6000, markers: i === 8 ? ["E-01", "R-04"] : [] })),
+  cost: { prompt_tokens: 612000, reused_tokens: 309000, recomputed_tokens: 96000, fixable_lost_tokens: 61400, card: null, actual_input: null, saving: null, saving_pct: null },
+  score_version: 1, weights: { E: 0.45, C: 0.15, R: 0.4 }, review: null, names: { fa000003: "search_docs" },
+});
+const WEEK = 7 * 86400;
+const T_NOW = Math.floor(Date.now() / 1000);
+const med = (o) => (o === null ? { overall: null, E: null, C: null, R: null } : { overall: o, E: o - 3, C: o + 5, R: o + 8 });
+const TRENDS = {
+  by: "week", model: "qwen3.8-27b", models: ["qwen3.8-27b"], weights: { E: 0.45, C: 0.15, R: 0.4 }, score_version: 1,
+  points: [44, 46, 47, null, 52, 50, 53, 62].map((o, i) => ({ bucket: `w${i}`, n: o === null ? 2 : 14 + i, medians: med(o), band: o === null ? null : [o - 7, o + 8], start: T_NOW - (8 - i) * WEEK })),
+  versions: [
+    { id: "aaaa1111", label: "v1", since: T_NOW - 8 * WEEK, last_at: T_NOW - 5 * WEEK, n: 52, medians: med(46), rules: { "E-01": 49, "E-02": 18, "C-01": 52 }, resolved: [], new: [] },
+    { id: "bbbb2222", label: "v2", since: T_NOW - 4 * WEEK, last_at: T_NOW - 2 * WEEK, n: 31, medians: med(51), rules: { "E-01": 28, "C-01": 31 }, resolved: ["E-02"], new: [] },
+    { id: "cccc3333", label: "v3", since: T_NOW - 2 * WEEK, last_at: T_NOW, n: 23, medians: med(62), rules: { "E-01": 21, "C-01": 14, "R-04": 9 }, resolved: [], new: ["R-04"] },
+  ],
+};
+const COMPARE = { model: "qwen3.8-27b", a: "bbbb2222", b: "cccc3333", a_label: "v2", b_label: "v3", n_a: 31, n_b: 23, diffs: { overall: 11, E: 3, C: 24, R: 6 }, verdict: "better_clear", like_for_like: true, note: null, resolved: [], new: ["R-04"], p: 0.004 };
+const LIST = { sessions: [
+  { session_id: SESSION_A, model: "qwen3.8-27b", route: "local", harness: "other", turns: 24, started: Date.now() / 1000 - 4000, last_at: Date.now() / 1000 - 3000, overall: 62, e: 48, c: 71, r: 74, confidence: "medium", reasons: {}, score_version: 1, key_name: "alpha-key", key_id: "tok-a" },
+  { session_id: SESSION_B, model: "qwen3.8-27b", route: "local", harness: "other", turns: 3, started: Date.now() / 1000 - 9000, last_at: Date.now() / 1000 - 8000, overall: null, e: null, c: 90, r: null, confidence: null, reasons: { E: "2 of 3 continuing turns", R: "3 of 5 assistant turns" }, score_version: 1, key_name: "alpha-key", key_id: "tok-a" },
+], next_cursor: null };
+
 async function api(route, view) {
   const req = route.request();
   const u = new URL(req.url());
@@ -118,8 +166,14 @@ async function api(route, view) {
   if (p === "/api/auth/sse-ticket" || p.endsWith("/prompt-lens/ticket")) return ok({ ticket: "t" });
   if (p === "/api/admin/prompt-lens/status") return ok({ enabled: true, default_on: true });
   if (p.endsWith("/prompt-lens/kept")) return ok({ kept: [] });
+  if (p === "/api/tokens") return ok({ items: [{ id: "tok-a", name: "alpha-key" }, { id: "tok-b", name: "beta-key" }] });
   if (p === "/api/me/key") return ok({ id: "tok-a", name: "ci-runner", prompt_lens_view_available: true, keep_captures: false });
   if (p === "/api/auth/me" || p === "/api/me") return ok({ username: "admin", role: "admin" });
+  if (/\/prompt-lens\/sessions$/.test(p)) return ok(LIST);
+  if (/\/prompt-lens\/trends$/.test(p)) return ok(TRENDS);
+  if (/\/prompt-lens\/compare$/.test(p)) return ok(COMPARE);
+  const sm = p.match(/\/prompt-lens\/sessions\/([^/]+)\/scorecard$/);
+  if (sm) return ok(CARD(sm[1] === SESSION_B));
   const m = p.match(/\/prompt-lens\/requests\/([^/]+)\/section\/([a-z_]+)$/);
   if (m) {
     const [, id, kind] = m;
@@ -160,7 +214,7 @@ async function openPage(browser, width, view, url) {
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
   if (process.env.LENS_DEBUG) {
-    page.on("pageerror", (e) => console.error("pageerror", String(e).slice(0, 300)));
+    page.on("pageerror", (e) => console.error("pageerror", String(e.stack ?? e).slice(0, 900)));
     page.on("request", (r) => r.url().includes("/api/") && console.error("api", r.url().replace(BASE, "")));
   }
   await page.goto(`${BASE}${url}`, { waitUntil: "networkidle" });
@@ -408,6 +462,102 @@ async function checkPage(browser, width, view, url) {
   await d.ctx.close();
 }
 
+async function checkSessions(browser, width, view, url) {
+  const tag = `${view}-${width}`;
+  const phone = width < 768;
+  const { ctx, page, errors } = await openPage(browser, width, view, `${url}?view=sessions${process.env.BIS_NO_SESSION ? "" : `&session=${SESSION_A}`}`);
+  const card = page.getByTestId("scorecard");
+  await card.waitFor();
+  const tiles = await Promise.all(["overall", "E", "C", "R", "review"].map(async (k) => page.getByTestId(`score-tile-${k}`).boundingBox()));
+  const nums = await page.getByTestId("score-value").allInnerTexts();
+  report(`sessions scorecard shows the scores ${tag}`, nums.join(",") === "62,48,71,74" && tiles.every(Boolean), { nums });
+  // Phone: two tiles a row (E and C share a row; the overall spans the width).
+  const [overall, e, c, r] = tiles;
+  if (phone) report(`sessions tiles two a row ${tag}`, Math.abs(e.y - c.y) < 2 && r.y > c.y && overall.width > e.width * 1.6, { overall, e, c, r });
+  else report(`sessions tiles in a row ${tag}`, Math.abs(e.y - c.y) < 2 && Math.abs(c.y - r.y) < 2, { e, c, r });
+  const scroll = await page.evaluate(() => ({ x: document.documentElement.scrollWidth - window.innerWidth, pane: (() => { const p = document.querySelector('[data-testid="lens-sessions-pane"]'); return p ? p.scrollWidth - p.clientWidth : 0; })() }));
+  report(`sessions no horizontal scroll ${tag}`, scroll.x <= 0 && scroll.pane <= 0, scroll);
+  const fixes = await page.getByTestId("fix-card").count();
+  const bars = await page.getByTestId("turn-bar").count();
+  report(`sessions top 3 fixes and the turn strip ${tag}`, fixes === 3 && bars === 24, { fixes, bars });
+  await page.screenshot({ path: path.join(outdir, `sessions-${tag}.png`) });
+  // A session below its minimums: "not scored: <reason>" and no number.
+  await ctx.close();
+  const b = await openPage(browser, width, view, `${url}?view=sessions&session=${SESSION_B}`);
+  await b.page.getByTestId("scorecard").waitFor();
+  const e2 = b.page.getByTestId("score-tile-E");
+  const text = await e2.innerText();
+  const hasNum = await e2.getByTestId("score-value").count();
+  report(`sessions not scored carries the reason, no number ${tag}`, /not scored: 2 of 3 continuing turns/.test(text) && hasNum === 0, { text });
+  await b.page.screenshot({ path: path.join(outdir, `sessions-not-scored-${tag}.png`) });
+  // The list itself: title with the key name, no model, no horizontal scroll.
+  const l = await openPage(browser, width, view, `${url}?view=sessions`);
+  await l.page.getByTestId("lens-session-row").first().waitFor();
+  const rows = await l.page.getByTestId("lens-session-row").allInnerTexts();
+  const lscroll = await l.page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  report(`sessions list rows read in words ${tag}`, rows.length === 2 && rows.every((t) => !/qwen/.test(t) && /Efficiency/.test(t)) && (view === "key" || /alpha-key/.test(rows[0])) && lscroll <= 0, { rows, lscroll });
+  await l.page.screenshot({ path: path.join(outdir, `sessions-list-${tag}.png`) });
+  await l.ctx.close();
+  report(`sessions no page errors ${tag}`, errors.length === 0 && b.errors.length === 0, [...errors, ...b.errors].slice(0, 3));
+  await b.ctx.close();
+}
+
+async function checkTrends(browser, width, view, url) {
+  const tag = `${view}-${width}`;
+  const sep = url.includes("?") ? "&" : "?";
+  const { ctx, page, errors } = await openPage(browser, width, view, `${url}${sep}view=trends${view === "admin" ? "&key=tok-a" : ""}`);
+  await page.getByTestId("trend-chart").waitFor();
+  const markers = await page.getByTestId("version-marker").count();
+  const gaps = await page.getByTestId("trend-gap").count();
+  report(`trends chart with version markers and a gap ${tag}`, markers === 2 && gaps === 1, { markers, gaps });
+  const verdict = await page.getByTestId("verdict").innerText();
+  report(`trends verdict card ${tag}`, /Better, clear · 23 vs 31 sessions/.test(verdict), { verdict });
+  const rows = await page.getByTestId("version-rule-row").count();
+  report(`trends findings by version ${tag}`, rows === 4, { rows });
+  const scroll = await page.evaluate(() => ({ x: document.documentElement.scrollWidth - window.innerWidth }));
+  report(`trends no horizontal page scroll ${tag}`, scroll.x <= 0, scroll);
+  const text = await page.getByTestId("lens-trends-view").innerText();
+  report(`trends a key sees no fleet figure ${tag}`, view === "admin" || !/rank|fleet|leaderboard/i.test(text), {});
+  await page.screenshot({ path: path.join(outdir, `trends-${tag}.png`) });
+  report(`trends no page errors ${tag}`, errors.length === 0, errors.slice(0, 3));
+  await ctx.close();
+}
+
+async function checkFilters(browser, width, view, url) {
+  const tag = `${view}-${width}`;
+  const phone = width < 768;
+  const sep = url.includes("?") ? "&" : "?";
+  for (const v of ["requests", "sessions", "trends"]) {
+    const { ctx, page, errors } = await openPage(browser, width, view, v === "requests" ? url : `${url}${sep}view=${v}`);
+    const bar = page.getByTestId("prompt-lens-filter-line");
+    await bar.waitFor();
+    const bars = await page.getByTestId("prompt-lens-filter-line").count();
+    report(`filters one bar on ${v} ${tag}`, bars === 1, { bars });
+    if (!phone) {
+      const key = await bar.getByRole("button", { name: /^Key/ }).count();
+      report(`filters Key picker only for the admin on ${v} ${tag}`, view === "admin" ? key === 1 : key === 0, { key });
+      if (view === "admin") {
+        await bar.getByRole("button", { name: /^Key/ }).click();
+        const names = await page.getByRole("menuitemcheckbox").allInnerTexts();
+        report(`filters Key picker lists every named key on ${v} ${tag}`, names.some((n) => /beta-key/.test(n)) && names.some((n) => /alpha-key/.test(n)), { names });
+        await page.keyboard.press("Escape");
+      }
+    } else {
+      const n = await bar.getByRole("button", { name: /^Filters/ }).count();
+      report(`filters phone button on ${v} ${tag}`, n === 1, { n });
+    }
+    if (v === "trends" && view === "admin") {
+      const pick = await page.getByRole("combobox", { name: "Pick a key" }).count();
+      report(`filters Trends offers an inline key picker ${tag}`, pick === 1, { pick });
+    }
+    const scroll = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    report(`filters no horizontal page scroll on ${v} ${tag}`, scroll <= 0, { scroll });
+    await page.screenshot({ path: path.join(outdir, `filters-${v}-${tag}.png`) });
+    report(`filters no page errors on ${v} ${tag}`, errors.length === 0, errors.slice(0, 3));
+    await ctx.close();
+  }
+}
+
 const viewsFor = (name) => [
   [1440, "admin", process.env.LENS_ADMIN_URL ?? "/ui/prompt-lens/"],
   [375, "admin", process.env.LENS_ADMIN_URL ?? "/ui/prompt-lens/"],
@@ -417,7 +567,7 @@ const viewsFor = (name) => [
 
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 try {
-  const checks = { page: checkPage, "popup-live": checkPopupLive, counters: checkCounters };
+  const checks = { page: checkPage, sessions: checkSessions, trends: checkTrends, filters: checkFilters, "popup-live": checkPopupLive, counters: checkCounters };
   for (const [name, fn] of Object.entries(checks)) {
     if (only && only !== name) continue;
     const vf = (process.env.LENS_VIEWS ?? "").split(",").filter(Boolean);

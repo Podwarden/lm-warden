@@ -257,3 +257,113 @@ def test_accumulator_accepts_a_data_line_with_leading_whitespace():
     frame = {"choices": [{"delta": {"tool_calls": [{"index": 0, "function": {"name": "Bash"}}]}}]}
     acc.feed(b"  " + _frame(frame))
     assert [g[0] for g in acc.result(SECRET)] == ["shell"]
+
+
+# ---- Task 1.4: args8 on tools_out, the error heuristic on tools_in ----------------
+
+ARGS_CANARY = "CANARY-1d4b7e-args"
+
+
+def _tc_frame(idx, name=None, args=None):
+    fn = {}
+    if name is not None:
+        fn["name"] = name
+    if args is not None:
+        fn["arguments"] = args
+    return _frame({"choices": [{"delta": {"tool_calls": [{"index": idx, "function": fn}]}}]})
+
+
+def test_tools_out_has_args8_and_old_rows_still_read():
+    from app.lens.probes import args8
+    from app.sessions import store
+    from app.stats import forest, routes_forest
+
+    args = json.dumps({"path": ARGS_CANARY, "n": 1})
+    msg = {
+        "tool_calls": [
+            {"function": {"name": "Read", "arguments": args}},
+            {"function": {"name": "Bash"}},
+        ]
+    }
+    got = ff.tools_out_from_message(msg, SECRET, args=True)
+    assert got == [
+        ["read", ff.hkey(SECRET, "Read", 8), args8(args, SECRET)],
+        ["shell", ff.hkey(SECRET, "Bash", 8), ""],
+    ]
+    assert ARGS_CANARY not in json.dumps(got)
+    # Without the lens (kvsig off) the entry keeps its two elements.
+    assert ff.tools_out_from_message(msg, SECRET) == [[g[0], g[1]] for g in got]
+    # Every reader takes an old 2-element row and a new 3-element one alike.
+    old = json.dumps([["read", "aaaaaaaa"]])
+    new = json.dumps([["read", "aaaaaaaa", "bbbbbbbb"], ["shell", "cccccccc", ""]])
+    assert store._tools_out(old) == (("read", "aaaaaaaa"),)
+    assert store._tools_out(new) == (("read", "aaaaaaaa", "bbbbbbbb"), ("shell", "cccccccc", ""))
+    assert routes_forest._decode(old, routes_forest._tools_out_ok) == [["read", "aaaaaaaa"]]
+    assert routes_forest._decode(new, routes_forest._tools_out_ok) == json.loads(new)
+    # A malformed entry is still dropped.
+    bad = json.dumps([["read"], ["read", "a", "b", "c"], ["read", 5], ["read", "a", 5]])
+    assert routes_forest._decode(bad, routes_forest._tools_out_ok) == []
+    for v in (old, new):
+        r = forest._Row({"tools_out": json.loads(v), "finished_at": 1.0})
+        assert forest._turn(r, 0.0)[5][0] == "read"
+
+
+def test_accumulator_args8_over_streamed_fragments():
+    from app.lens.probes import args8
+
+    acc = ff.ToolsOutAccumulator(args=True)
+    acc.feed(_tc_frame(0, "Read", ""))
+    acc.feed(_tc_frame(1, "Bash", ""))  # parallel calls interleave
+    acc.feed(_tc_frame(0, args='{"path": "'))
+    acc.feed(_tc_frame(1, args='{"cmd":"ls"}'))
+    acc.feed(_tc_frame(0, args=ARGS_CANARY + '"}'))
+    got = acc.result(SECRET)
+    assert got == [
+        ["read", ff.hkey(SECRET, "Read", 8), args8('{"path":"' + ARGS_CANARY + '"}', SECRET)],
+        ["shell", ff.hkey(SECRET, "Bash", 8), args8('{"cmd": "ls"}', SECRET)],
+    ]
+    assert ARGS_CANARY not in json.dumps(got)
+    # The plain accumulator is unchanged.
+    plain = ff.ToolsOutAccumulator()
+    plain.feed(_tc_frame(0, "Read", '{"a":1}'))
+    assert plain.result(SECRET) == [["read", ff.hkey(SECRET, "Read", 8)]]
+
+
+def test_accumulator_args_are_bounded():
+    acc = ff.ToolsOutAccumulator(args=True)
+    acc.feed(_tc_frame(0, "Read", '{"p":"'))
+    chunk = "x" * 65_536
+    for _ in range(ff._MAX_ARGS_CHARS // len(chunk) + 2):
+        acc.feed(_tc_frame(0, args=chunk))
+    acc.feed(_tc_frame(1, "Bash", "{}"))
+    got = acc.result(SECRET)
+    # Over the bound: no args hash for that call (unknown), never a wrong one.
+    assert got[0] == ["read", ff.hkey(SECRET, "Read", 8), ""]
+    assert sum(len("".join(v)) for v in acc._args.values()) <= ff._MAX_ARGS_CHARS
+
+
+def _results_body(*contents):
+    calls = [
+        {"id": f"c{i}", "type": "function", "function": {"name": "Bash", "arguments": "{}"}}
+        for i in range(len(contents))
+    ]
+    msgs = [
+        {"role": "user", "content": "go"},
+        {"role": "assistant", "content": None, "tool_calls": calls},
+    ]
+    msgs += [
+        {"role": "tool", "tool_call_id": f"c{i}", "content": c} for i, c in enumerate(contents)
+    ]
+    return {"messages": msgs}
+
+
+def test_tools_in_error_heuristic_for_openai_results():
+    body = _results_body(
+        "Traceback (most recent call last):\n  x",
+        [{"type": "text", "text": "command failed: exit code 2"}],
+        "all good",
+        "Error: translated is_error",
+    )
+    assert [x[2] for x in ff.tools_in_from_body(body, heuristic=True)] == [True, True, False, True]
+    # Without the heuristic (kvsig off, or an Anthropic body): only the "Error" prefix.
+    assert [x[2] for x in ff.tools_in_from_body(body)] == [False, False, False, True]

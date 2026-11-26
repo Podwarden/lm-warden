@@ -22,6 +22,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type Keyboar
 
 import { useBackLayer } from "@/lib/prompt-lens/back-layer";
 import { FINISH_VALUES, HAS_FLAGS, activeCount, type DockFilters, type HasFlag } from "@/lib/prompt-lens/filters";
+import type { LensView } from "@/lib/prompt-lens/scorecard";
 import type { LensScope } from "@/lib/prompt-lens/stream";
 import { LiveNumber } from "@/components/ui/live-number";
 import { cn } from "@/lib/utils";
@@ -45,9 +46,22 @@ export interface FilterOption {
 
 export interface FilterOptions {
   keys: FilterOption[];
+  /** The clients (harnesses), in words (strings.ts S.harness). */
+  clients: FilterOption[];
   sessions: FilterOption[];
   models: FilterOption[];
   ips: FilterOption[];
+}
+
+/** Why the Client filter is off on a view. */
+export const CLIENT_OFF_TIP = "The client is known for scored sessions only: switch to Sessions to filter by it";
+
+/** The filters that narrow a view: Requests has them all, Sessions and Trends the
+ *  shared three (Trends has no client dimension). */
+export function viewCount(f: DockFilters, view: LensView): number {
+  if (view === "requests") return activeCount({ ...f, q: "", harnesses: null });
+  const own = { ...f, q: "", sessions: null, ips: null, phase: "all" as const, finish: null, has: [] };
+  return activeCount(view === "trends" ? { ...own, harnesses: null } : own);
 }
 
 const SEL =
@@ -67,12 +81,17 @@ function Multi({
   value,
   onChange,
   allText = "all",
+  disabled = false,
+  title,
 }: {
   name: string;
   options: FilterOption[];
   value: string[] | null;
   onChange: (v: string[] | null) => void;
   allText?: string;
+  /** Off: shown but inert, `title` says why. */
+  disabled?: boolean;
+  title?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
@@ -156,7 +175,9 @@ function Multi({
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        className={cn(SEL, set && SET)}
+        disabled={disabled}
+        title={title}
+        className={cn(SEL, set && SET, disabled && "cursor-not-allowed opacity-50 hover:bg-transparent hover:text-chat-muted")}
         onClick={() => setOpen((o) => !o)}
       >
         {name} <b className="max-w-[160px] overflow-hidden text-ellipsis font-semibold">{text}</b>
@@ -246,18 +267,21 @@ function Choices({
 
 function FilterSheet({
   scope,
+  view,
   filters: f,
   onChange,
   options,
   onClose,
 }: {
   scope: LensScope;
+  view: LensView;
   filters: DockFilters;
   onChange: (f: DockFilters) => void;
   options: FilterOptions;
   onClose: () => void;
 }) {
   const admin = scope === "admin";
+  const requests = view === "requests";
   const patch = (p: Partial<DockFilters>) => onChange({ ...f, ...p });
   const done = useRef<HTMLButtonElement>(null);
   const closeRef = useRef(onClose);
@@ -272,7 +296,7 @@ function FilterSheet({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-  const n = activeCount({ ...f, q: "" });
+  const n = viewCount(f, view);
   return (
     <div
       role="dialog"
@@ -288,7 +312,7 @@ function FilterSheet({
           type="button"
           disabled={n === 0}
           onClick={() =>
-            onChange({ ...f, keys: null, sessions: null, models: null, ips: null, phase: "all", finish: null, has: [] })
+            onChange({ ...f, keys: null, sessions: null, models: null, ips: null, harnesses: null, phase: "all", finish: null, has: [] })
           }
           className="ml-auto inline-flex min-h-11 items-center rounded-md border border-chat-rule bg-transparent px-3 text-[13px] text-chat-muted disabled:opacity-40"
         >
@@ -307,9 +331,14 @@ function FilterSheet({
         {admin && (
           <Choices name="Key" options={options.keys} value={f.keys} onChange={(keys) => patch({ keys })} />
         )}
-        <Choices name="Session" options={options.sessions} value={f.sessions} onChange={(sessions) => patch({ sessions })} />
+        {requests && <Choices name="Session" options={options.sessions} value={f.sessions} onChange={(sessions) => patch({ sessions })} />}
         <Choices name="Model" options={options.models} value={f.models} onChange={(models) => patch({ models })} />
-        {admin && <Choices name="Client IP" options={options.ips} value={f.ips} onChange={(ips) => patch({ ips })} />}
+        {view === "sessions" && (
+          <Choices name="Client" options={options.clients} value={f.harnesses} onChange={(harnesses) => patch({ harnesses })} />
+        )}
+        {requests && admin && <Choices name="Client IP" options={options.ips} value={f.ips} onChange={(ips) => patch({ ips })} />}
+        {requests && (
+        <>
         <fieldset role="group" aria-label="Phase" className="m-0 min-w-0 border-0 p-0">
           <legend className="mb-1.5 p-0 text-[11px] font-semibold uppercase tracking-[.07em] text-chat-dim">Phase</legend>
           <div className="flex flex-wrap gap-2">
@@ -334,6 +363,8 @@ function FilterSheet({
           value={f.has.length ? f.has : null}
           onChange={(has) => patch({ has: (has ?? []) as HasFlag[] })}
         />
+        </>
+        )}
       </div>
     </div>
   );
@@ -341,6 +372,11 @@ function FilterSheet({
 
 export interface FilterLineProps {
   scope: LensScope;
+  /** The view the bar sits on (default Requests): Sessions and Trends show the
+   *  Key, Model and Client filters only (Client: Sessions only). */
+  view?: LensView;
+  /** Sessions and Trends: what stands where Requests shows its "N of M" count. */
+  summary?: ReactNode;
   /** Phone width: one "Filters (n)" button and a sheet (spec section 6). */
   phone?: boolean;
   filters: DockFilters;
@@ -380,7 +416,7 @@ function countText(scope: LensScope, shown: number, total: number, ringMinutes: 
   );
 }
 
-function PhoneFilterLine({ scope, filters: f, onChange, options, shown, total, ringMinutes = null }: FilterLineProps) {
+function PhoneFilterLine({ scope, view = "requests", summary, filters: f, onChange, options, shown, total, ringMinutes = null }: FilterLineProps) {
   const [sheet, setSheet] = useState(false);
   const btn = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => {
@@ -388,7 +424,8 @@ function PhoneFilterLine({ scope, filters: f, onChange, options, shown, total, r
     btn.current?.focus();
   }, []);
   useBackLayer(sheet, close);
-  const n = activeCount({ ...f, q: "" });
+  const requests = view === "requests";
+  const n = viewCount(f, view);
   return (
     <>
       <div
@@ -409,26 +446,29 @@ function PhoneFilterLine({ scope, filters: f, onChange, options, shown, total, r
         >
           Filters ({n})
         </button>
-        <input
-          type="search"
-          aria-label="Search captured text"
-          placeholder="Search captured text"
-          title={SEARCH_TOOLTIP}
-          value={f.q}
-          onChange={(e) => onChange({ ...f, q: e.target.value })}
-          className="h-11 w-[150px] min-w-0 flex-none rounded-md border border-chat-rule bg-transparent px-2 text-[16px] text-chat-fg placeholder:text-[13px] placeholder:text-chat-dim"
-        />
-        <span className="flex-none pl-1 text-[12px] tabular-nums text-chat-dim">
-          {countText(scope, shown, total, ringMinutes)}
+        {requests && (
+          <input
+            type="search"
+            aria-label="Search captured text"
+            placeholder="Search captured text"
+            title={SEARCH_TOOLTIP}
+            value={f.q}
+            onChange={(e) => onChange({ ...f, q: e.target.value })}
+            className="h-11 w-[150px] min-w-0 flex-none rounded-md border border-chat-rule bg-transparent px-2 text-[16px] text-chat-fg placeholder:text-[13px] placeholder:text-chat-dim"
+          />
+        )}
+        <span className="min-w-0 flex-1 overflow-hidden text-ellipsis pl-1 text-[12px] tabular-nums text-chat-dim">
+          {requests ? countText(scope, shown, total, ringMinutes) : summary}
         </span>
       </div>
-      {sheet && <FilterSheet scope={scope} filters={f} onChange={onChange} options={options} onClose={close} />}
+      {sheet && <FilterSheet scope={scope} view={view} filters={f} onChange={onChange} options={options} onClose={close} />}
     </>
   );
 }
 
-function DesktopFilterLine({ scope, filters: f, onChange, options, shown, total, ringMinutes = null }: FilterLineProps) {
+function DesktopFilterLine({ scope, view = "requests", summary, filters: f, onChange, options, shown, total, ringMinutes = null }: FilterLineProps) {
   const admin = scope === "admin";
+  const requests = view === "requests";
   const patch = (p: Partial<DockFilters>) => onChange({ ...f, ...p });
   const keysAll = options.keys.length ? `all ${options.keys.length}` : "all";
   return (
@@ -440,9 +480,18 @@ function DesktopFilterLine({ scope, filters: f, onChange, options, shown, total,
       {admin && (
         <Multi name="Key" options={options.keys} value={f.keys} allText={keysAll} onChange={(keys) => patch({ keys })} />
       )}
-      <Multi name="Session" options={options.sessions} value={f.sessions} onChange={(sessions) => patch({ sessions })} />
+      {requests && <Multi name="Session" options={options.sessions} value={f.sessions} onChange={(sessions) => patch({ sessions })} />}
       <Multi name="Model" options={options.models} value={f.models} onChange={(models) => patch({ models })} />
-      {admin && <Multi name="Client IP" options={options.ips} value={f.ips} onChange={(ips) => patch({ ips })} />}
+      <Multi
+        name="Client"
+        options={options.clients}
+        value={view === "sessions" ? f.harnesses : null}
+        disabled={view !== "sessions"}
+        title={view !== "sessions" ? CLIENT_OFF_TIP : undefined}
+        onChange={(harnesses) => patch({ harnesses })}
+      />
+      {requests && admin && <Multi name="Client IP" options={options.ips} value={f.ips} onChange={(ips) => patch({ ips })} />}
+      {requests && <>
       <span role="group" aria-label="Phase" className="inline-flex flex-none overflow-hidden rounded-[5px] border border-chat-rule">
         {(["all", "live", "finished"] as const).map((p) => (
           <button
@@ -482,8 +531,9 @@ function DesktopFilterLine({ scope, filters: f, onChange, options, shown, total,
         onChange={(e) => patch({ q: e.target.value })}
         className="h-[26px] w-[200px] flex-none rounded-[5px] border border-chat-rule bg-transparent px-2 text-[12px] text-chat-fg placeholder:text-chat-dim"
       />
+      </>}
       <span className="ml-auto flex-none pl-2 text-[12px] tabular-nums text-chat-dim">
-        {countText(scope, shown, total, ringMinutes)}
+        {requests ? countText(scope, shown, total, ringMinutes) : summary}
       </span>
     </div>
   );

@@ -870,3 +870,159 @@ def test_loose_depth_reported_beyond_exact() -> None:
     # An unchanged resend knows both chains to the same depth.
     again = _full(lin, t2)
     assert (again.exact_depth, again.loose_depth) == (2, 2)
+
+
+# -- Prompt Lens: per-node short msg ids and probes (lens spec 4.3) ---------
+
+
+def _short(h: str) -> bytes:
+    return bytes.fromhex(h)[1:9]
+
+
+def _fake_probes(ids: Ids):
+    """Deterministic 4 x 8-byte probes per body index, derived from the msg id."""
+    calls: list[int] = []
+
+    def probes_for(i: int):
+        calls.append(i)
+        b = bytes.fromhex(ids.msgs[i])
+        return (b[1:9], b[9:17], b[1:9][::-1], b[9:17][::-1])
+
+    return probes_for, calls
+
+
+def test_continuing_turn_reports_parent_short_msgs() -> None:
+    lin = Lineage()
+    a = _ids("a", "ra", "b")
+    pa, _ = _fake_probes(a)
+    _full(lin, a, probes_for=pa)
+    b = _ids("a", "ra", "b", "rb", "c")
+    pb, _ = _fake_probes(b)
+    o = _full(lin, b, probes_for=pb)
+    assert o.edge == "continue"
+    assert o.parent_msgs == tuple(_short(m) for m in a.msgs)
+    assert all(len(m) == 8 for m in o.parent_msgs)
+    # a plain extension has no break, so no parent probes
+    assert o.parent_probes is None
+
+
+def test_parent_probes_are_the_parents_message_at_the_break() -> None:
+    lin = Lineage()
+
+    def conv(*, reasoning: bool, more: bool) -> Ids:
+        asst = {"role": "assistant", "content": "ans"}
+        if reasoning:
+            asst["reasoning_content"] = "let me think about it"
+        msgs = [{"role": "user", "content": "q"}, asst, {"role": "user", "content": "q2"}]
+        if more:
+            msgs += [{"role": "assistant", "content": "ans2"}, {"role": "user", "content": "q3"}]
+        c = canonicalize({"messages": msgs})
+        assert c is not None
+        return ids_for(c, KEY, S)
+
+    n = conv(reasoning=True, more=False)
+    pn, _ = _fake_probes(n)
+    _full(lin, n, probes_for=pn)
+    n1 = conv(reasoning=False, more=True)
+    pn1, _ = _fake_probes(n1)
+    o = _full(lin, n1, probes_for=pn1)
+    assert o.edge == "continue" and o.loose_match_beyond_exact
+    assert o.parent_msgs == tuple(_short(m) for m in n.msgs)
+    # the break is message 1 (the assistant turn whose reasoning was dropped)
+    assert o.parent_probes == pn(1)
+    assert o.parent_probes != pn1(1)
+
+
+def test_fork_reports_the_parent_chain() -> None:
+    lin = Lineage()
+    _full(lin, _ids("a"))
+    _full(lin, _ids("a", "ra", "b"))
+    f = _ids("a", "ra", "other")
+    o = _full(lin, f)
+    assert o.edge == "fork"
+    assert o.parent_msgs == tuple(_short(m) for m in _ids("a", "ra").msgs)
+
+
+def test_new_turn_has_no_parent_msgs() -> None:
+    o = _full(Lineage(), _ids("a"))
+    assert (o.parent_msgs, o.parent_probes) == ((), None)
+
+
+def test_node_lens_bytes_are_one_packed_object() -> None:
+    lin = Lineage()
+    a = _ids("a", "ra", "b")
+    pa, _ = _fake_probes(a)
+    _full(lin, a, probes_for=pa)
+    nodes = list(lin._nodes.values())
+    assert len(nodes) == 3
+    for i, node in enumerate(nodes):
+        assert isinstance(node.lens, bytes) and len(node.lens) == 40
+        assert node.msg == _short(a.msgs[i])
+        assert node.probes == pa(i)
+    # msg known, probes not: the 8-byte form, still no probes
+    lin2 = Lineage()
+    _full(lin2, a)
+    assert all(len(n.lens) == 8 and n.probes is None for n in lin2._nodes.values())
+
+
+def test_node_lens_memory_per_node_is_packed() -> None:
+    """The lens bytes of a node cost one bytes object, not a tuple plus five."""
+    import tracemalloc
+
+    n_sessions, per = 50, 100  # 5,000 nodes
+    lin = Lineage(max_nodes=10_000)
+    gc.collect()
+    tracemalloc.start()
+    try:
+        for s in range(n_sessions):
+            ids = _ids(*(f"s{s}-m{j}" for j in range(per)))  # 100 nodes
+            pr, _ = _fake_probes(ids)
+            _full(lin, ids, sk=f"sess{s}", probes_for=pr)
+        gc.collect()
+        with_lens = tracemalloc.get_traced_memory()[0]
+        nodes = list(lin._nodes.values())
+        assert len(nodes) == n_sessions * per
+        assert all(n.lens is not None and len(n.lens) == 40 for n in nodes)
+        for n in nodes:
+            n.lens = None
+        gc.collect()
+        without = tracemalloc.get_traced_memory()[0]
+    finally:
+        tracemalloc.stop()
+    per_node = (with_lens - without) / len(nodes)
+    print(f"lens bytes per node: {per_node:.1f}")
+    assert per_node <= 80, per_node
+
+
+def test_probes_are_computed_once_per_node() -> None:
+    lin = Lineage()
+    a = _ids("a", "ra", "b")
+    pa, calls_a = _fake_probes(a)
+    _full(lin, a, probes_for=pa)
+    assert calls_a == [0, 1, 2]
+    b = _ids("a", "ra", "b", "rb", "c")
+    pb, calls_b = _fake_probes(b)
+    _full(lin, b, probes_for=pb)
+    assert calls_b == [3, 4]  # only the new tail is probed
+
+
+def test_probes_failure_is_fail_open() -> None:
+    lin = Lineage()
+
+    def boom(i: int):
+        raise RuntimeError("probe failed")
+
+    o = _full(lin, _ids("a", "ra", "b"), probes_for=boom)
+    assert o.edge == "new"
+    assert all(n.probes is None and n.msg is not None for n in lin._nodes.values())
+
+
+def test_parent_msgs_empty_when_the_chain_is_incomplete() -> None:
+    lin = Lineage()
+    a = _ids("a", "ra", "b")
+    _full(lin, a)
+    # evict the root node: the chain can no longer be walked to message 0
+    del lin._nodes[(M, S, "s", a.nodes[0])]
+    o = _full(lin, _ids("a", "ra", "b", "rb", "c"))
+    assert o.edge == "continue" and o.parent == a.nodes[-1]
+    assert o.parent_msgs == ()

@@ -190,3 +190,14 @@ async def test_unusable_match_unit_reads_as_the_block():
     m.extra_args = ["--prefix-match-unit", "100"]
     await learn_once(state, [m], fetch)
     assert state.engine_block_sizes.match_unit("qwen", _epoch(state)) == 1584
+
+
+def test_prefix_caching_is_per_engine_run_and_unknown_until_reported():
+    s = BlockSizes()
+    s.set("qwen", "v:1", 784)
+    assert s.prefix_caching("qwen", "v:1") is None
+    s.set("qwen", "v:1", 784, prefix_caching=False)
+    assert s.prefix_caching("qwen", "v:1") is False
+    assert s.prefix_caching("qwen", "v:2") is None  # another run
+    s.set("qwen", "v:1", 784)  # a later reading that does not say forgets it
+    assert s.prefix_caching("qwen", "v:1") is None

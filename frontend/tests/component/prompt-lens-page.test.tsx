@@ -27,6 +27,8 @@ import { setAccessToken, setCsrfToken } from '@/lib/auth-fetch';
 import { buildBreadcrumbs } from '@/lib/breadcrumbs';
 import { clearKeyToken, storeKeyToken } from '@/lib/sessions/key-token';
 
+import { listFixture, scorecardFixture, SESSION_ID, shortSession } from './prompt-lens-scorecard-fixture';
+
 class FakeES {
   static all: FakeES[] = [];
   onopen?: () => void;
@@ -77,6 +79,15 @@ function stub(o: Opts = {}) {
           ],
         });
       if (u === '/api/version') return json({ version: 'v1', sha: 'abc' });
+      if (/\/prompt-lens\/sessions\/s_a+\/scorecard$/.test(u)) return json(scorecardFixture());
+      if (/\/prompt-lens\/sessions\/s_b+\/scorecard$/.test(u)) return json(shortSession());
+      if (/\/prompt-lens\/sessions\/[^/]+\/scorecard$/.test(u)) return json({ detail: 'no such session' }, 404);
+      if (/\/prompt-lens\/sessions\?/.test(u)) return json(listFixture());
+      if (/\/prompt-lens\/trends\?/.test(u))
+        return json({
+          by: 'week', model: 'fake-model', models: ['fake-model'], weights: {}, score_version: 1, versions: [],
+          points: [{ bucket: '2023-11-20', n: 4, medians: { overall: 60, E: 55, C: 65, R: 70 }, band: [50, 70], start: 1_700_438_400 }],
+        });
       return json({});
     }),
   );
@@ -260,5 +271,108 @@ describe('menu, breadcrumb and links', () => {
     expect(promptLensHref('admin', { keys: ['a', 'b'] })).toBe('/prompt-lens?key=a%2Cb');
     // A key holder's link never carries a key.
     expect(promptLensHref('key', { req: 'r1', keys: ['a'] })).toBe('/key/prompt-lens?req=r1');
+  });
+});
+
+
+describe('the view switch and the Sessions view', () => {
+  it('?view=sessions&session= opens that session\'s scorecard (admin)', async () => {
+    stub();
+    nav.search = `view=sessions&session=${SESSION_ID}`;
+    wrap(<AdminPromptLensPage />);
+    const card = await screen.findByTestId('scorecard');
+    expect(within(card).getByTestId('score-tile-overall')).toHaveTextContent('62');
+    expect(urls).toContain(`/api/admin/prompt-lens/sessions/${SESSION_ID}/scorecard`);
+    expect(screen.getByRole('tab', { name: 'Sessions' })).toHaveAttribute('aria-selected', 'true');
+    // The request view stays mounted but hidden: the stream keeps running.
+    expect(screen.getByTestId('prompt-lens-view')).toBeInTheDocument();
+  });
+
+  it('a bare ?session= means the Sessions view; the list opens a scorecard and writes ?session=', async () => {
+    stub();
+    window.history.replaceState(null, '', '/ui/prompt-lens/');
+    wrap(<AdminPromptLensPage />);
+    await screen.findByTestId('prompt-lens-view');
+    const len = window.history.length;
+    fireEvent.click(screen.getByRole('tab', { name: 'Sessions' }));
+    expect(window.location.search).toBe('?view=sessions');
+    const rows = await screen.findAllByTestId('lens-session-row');
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent('alpha-key · Other session');
+    expect(rows[0]).toHaveTextContent('Overall 62');
+    expect(rows[0]).toHaveTextContent('Efficiency 48Construction 71Response 74');
+    expect(rows[0]).not.toHaveTextContent('fake-model');
+    expect(rows[1]).toHaveTextContent('Efficiency —');
+    expect(rows[1]).toHaveTextContent('Not scored: Efficiency (2 of the 3 continuing turns it needs), Response (3 of the 5 measured replies it needs)');
+    expect(within(rows[1]).queryByTestId('row-overall')).toBeNull();
+    expect(rows[1].textContent).not.toMatch(/E\s*–/);
+    fireEvent.click(rows[0]);
+    await screen.findByTestId('scorecard');
+    expect(window.location.search).toBe(`?view=sessions&session=${SESSION_ID}`);
+    expect(window.history.length).toBe(len); // replaceState: no history entry
+    fireEvent.click(screen.getByRole('tab', { name: 'Requests' }));
+    expect(window.location.search).toBe(`?session=${SESSION_ID}`);
+  });
+
+  it('a not-scored session says why and shows no number', async () => {
+    stub();
+    nav.search = `view=sessions&session=s_${'b'.repeat(32)}`;
+    wrap(<AdminPromptLensPage />);
+    const e = await screen.findByTestId('score-tile-E');
+    expect(e).toHaveTextContent('not scored: 2 of 3 continuing turns');
+    expect(within(e).queryByTestId('score-value')).toBeNull();
+  });
+
+  it('"Show turns" goes to the request view on that request', async () => {
+    stub();
+    nav.search = `view=sessions&session=${SESSION_ID}`;
+    wrap(<AdminPromptLensPage />);
+    const card = await screen.findByTestId('scorecard');
+    fireEvent.click(within(card).getAllByTestId('show-turns')[0]);
+    expect(screen.getByRole('tab', { name: 'Requests' })).toHaveAttribute('aria-selected', 'true');
+    await waitFor(() => expect(screen.getByTestId('prompt-lens-screen')).toHaveTextContent('Looking for the request'));
+    expect(window.location.search).toContain('req=req-fake-0002');
+  });
+
+  it('an unknown or foreign session is one calm line, never a number', async () => {
+    stub();
+    nav.search = `view=sessions&session=s_${'c'.repeat(32)}`;
+    wrap(<AdminPromptLensPage />);
+    expect(await screen.findByTestId('scorecard-missing')).toHaveTextContent('not available');
+    expect(screen.queryByTestId('score-value')).toBeNull();
+  });
+
+  it('key holder: Requests, Sessions and Trends only, the scorecard from /api/me/..., no Leaderboard', async () => {
+    stub();
+    nav.path = '/key/prompt-lens';
+    nav.search = `view=sessions&session=${SESSION_ID}`;
+    wrap(<KeyPromptLensPage />);
+    await screen.findByTestId('scorecard');
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Requests', 'Sessions', 'Trends']);
+    expect(urls).toContain(`/api/me/prompt-lens/sessions/${SESSION_ID}/scorecard`);
+    expect(urls.some((x) => x.startsWith('/api/admin/prompt-lens/sessions'))).toBe(false);
+    expect(document.body.textContent).not.toMatch(/cobs2/i);
+  });
+
+  it('key holder: the Trends tab opens the trends of the own key from /api/me/..., and a deep link works', async () => {
+    stub();
+    nav.path = '/key/prompt-lens';
+    nav.search = 'view=trends';
+    wrap(<KeyPromptLensPage />);
+    expect(await screen.findByTestId('lens-trends-view')).toBeInTheDocument();
+    await screen.findByTestId('trend-chart');
+    expect(screen.getByRole('tab', { name: 'Trends' })).toHaveAttribute('aria-selected', 'true');
+    expect(urls.some((x) => x.startsWith('/api/me/prompt-lens/trends?'))).toBe(true);
+    expect(urls.some((x) => x.includes('/api/admin/prompt-lens/trends'))).toBe(false);
+    fireEvent.click(screen.getByRole('tab', { name: 'Sessions' }));
+    expect(screen.queryByTestId('lens-trends-view')).toBeNull();
+  });
+
+  it('admin: Trends asks for one key until the Key filter names it', async () => {
+    stub();
+    nav.search = 'view=trends';
+    wrap(<AdminPromptLensPage />);
+    expect(await screen.findByTestId('trends-pick-key')).toBeInTheDocument();
+    expect(urls.some((x) => x.includes('/prompt-lens/trends'))).toBe(false);
   });
 });

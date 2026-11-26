@@ -25,7 +25,11 @@ from app.runtime.backends.vllm.env import (
     build_subprocess_env,
 )
 from app.runtime.backends.vllm.metrics import read as read_vllm_metrics
-from app.runtime.backends.vllm.spec_decode import drops_last_cached_block, prefix_match_unit
+from app.runtime.backends.vllm.spec_decode import (
+    drops_last_cached_block,
+    prefix_match_unit,
+    speculative_method,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - type-only, never imported at runtime
     from app.runtime.backends.paths import ResolvedModelPaths
@@ -235,6 +239,11 @@ class VllmBackend:
         ``.spec_decode``.) Read by app/cache_obs/block_size.py; a backend
         without this method keeps every whole block."""
         return drops_last_cached_block(extra_args)
+
+    def speculative_method(self, extra_args: list[str] | None) -> str | None:
+        """The speculative-decoding method of an engine launched with ``extra_args``
+        (``mtp``, ``eagle`` ...), or None when it is off. See ``.spec_decode``."""
+        return speculative_method(extra_args)
 
     def prefix_match_unit(self, extra_args: list[str] | None, block_size: int) -> int:
         """The prefix-match unit an engine launched with ``extra_args`` uses

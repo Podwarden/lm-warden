@@ -21,6 +21,7 @@ import {
   sessionsListUrl,
   useSessionsMode,
 } from "@/lib/sessions/client";
+import { useSessionScores } from "@/lib/prompt-lens/scorecard";
 import { SESSIONS_LOGIN } from "@/lib/sessions/key-token";
 import { S } from "@/lib/sessions/strings";
 import type { ListGroupBy, ListSort, ListView, ListWhere, SessionsListResponse } from "@/lib/sessions/types";
@@ -49,6 +50,7 @@ function SessionsList() {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<ListSort>("newest");
   const fetcher = sessionsFetcher<SessionsListResponse>(mode);
+  const scores = useSessionScores(mode);
 
   useEffect(() => setRange(readRange()), []);
 
@@ -178,6 +180,8 @@ function SessionsList() {
               column={group}
               onMore={more}
               resetKey={url}
+              scores={scores}
+              mode={mode}
             />
           )}
         </div>

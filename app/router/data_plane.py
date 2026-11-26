@@ -30,6 +30,7 @@ from app.db.repos.models import ModelRow
 from app.db.repos.tokens import TokenRow
 from app.guard import anthropic as guard_anthropic
 from app.guard import proxy as guard_proxy
+from app.proxy.aliases import resolve_alias
 from app.proxy.auth import token_allows, upstream_credential_headers
 from app.proxy.kv_scope import (
     ISOLATION_UNAVAILABLE,
@@ -470,7 +471,15 @@ async def _guard_entry(
     on the request for the local leg, with the outcome on ``request.state.guard``), or LM
     Warden's own answer (blocked, or the guard could not check it)."""
     app_state = request.app.state
-    guard = guard_proxy.guard_for(getattr(app_state, "guard_platform", None), token)
+    model_in = data.get("model")
+    alias = (
+        await resolve_alias(
+            getattr(app_state, "model_cache", None), app_state.settings.db_path, model_in
+        )
+        if isinstance(model_in, str)
+        else None
+    )
+    guard = guard_proxy.guard_for(getattr(app_state, "guard_platform", None), token, alias)
     if guard is None:
         return None
     seen = guard_proxy.shared_seen(app_state)
@@ -519,6 +528,10 @@ async def _guard_entry(
 async def _is_served_name(request: Request, name: str) -> bool:
     state = request.app.state
     cache = getattr(state, "model_cache", None)
+    # An enabled alias is served locally too (D4a), loaded target or not: an alias
+    # with nothing loaded answers 404 as on the OpenAI routes, never a relay.
+    if await resolve_alias(cache, state.settings.db_path, name) is not None:
+        return True
     return await model_by_served_name(cache, state.settings.db_path, name) is not None
 
 

@@ -111,6 +111,9 @@ class ReplyCapture:
             self._over = True
 
     def message(self) -> dict[str, Any] | None:
+        """The assistant message, assembled once: the kvsig reply id and the
+        Prompt Lens verdicts (``app.lens.reply_verdicts``) read the same one.
+        Call it once the response is complete; later frames are not absorbed."""
         try:
             if self._over:
                 return None
@@ -118,6 +121,10 @@ class ReplyCapture:
             if msg is None and self._agg is not None:
                 built = self._agg.build()
                 msg = ((built.get("choices") or [{}])[0] or {}).get("message")
+                if isinstance(msg, dict):
+                    # The aggregate is done with: keep the message, free the frames.
+                    self._msg = msg
+                    self._agg = None
             if not isinstance(msg, dict):
                 return None
             out: dict[str, Any] = {"role": "assistant", "content": msg.get("content")}

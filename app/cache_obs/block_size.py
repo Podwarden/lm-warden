@@ -45,6 +45,8 @@ class BlockSizes:
 
     def __init__(self) -> None:
         self._by_model: dict[str, tuple[str, int | None, bool, int | None]] = {}
+        # model_id -> (epoch, prefix caching on, from the engine's cache_config_info).
+        self._caching: dict[str, tuple[str, bool]] = {}
 
     def known(self, model_id: str, epoch: str) -> bool:
         hit = self._by_model.get(model_id)
@@ -66,6 +68,12 @@ class BlockSizes:
         hit = self._by_model.get(model_id)
         return hit[3] if hit is not None and hit[0] == epoch else None
 
+    def prefix_caching(self, model_id: str, epoch: str) -> bool | None:
+        """Is prefix caching on in this engine run, as the engine reported it; None when it
+        did not say (or the run is another one)."""
+        hit = self._caching.get(model_id)
+        return hit[1] if hit is not None and hit[0] == epoch else None
+
     def set(
         self,
         model_id: str,
@@ -74,9 +82,14 @@ class BlockSizes:
         *,
         drops_last_block: bool = False,
         match_unit: int | None = None,
+        prefix_caching: bool | None = None,
     ) -> None:
         unit = match_unit if match_unit and block else block
         self._by_model[model_id] = (epoch, block, drops_last_block, unit)
+        if prefix_caching is None:
+            self._caching.pop(model_id, None)
+        else:
+            self._caching[model_id] = (epoch, prefix_caching)
 
 
 def _launched_args(state: Any, model: Any) -> list[str] | None:
@@ -144,7 +157,15 @@ async def learn_once(state: Any, models: Iterable[Any], fetch: Fetch = _default_
                 continue
             block = int(reading.kv_block_size) if reading.kv_block_size else None
             drops, unit = _engine_rules(state, m, backend, block)
-            sizes.set(m.id, epoch, block, drops_last_block=drops, match_unit=unit)
+            caching = reading.prefix_caching_enabled
+            sizes.set(
+                m.id,
+                epoch,
+                block,
+                drops_last_block=drops,
+                match_unit=unit,
+                prefix_caching=None if caching is None else caching > 0,
+            )
         except Exception:  # noqa: BLE001 -- one engine's failure must not stop the pass
             logger.debug("cache-obs: block size scrape failed for %s", m.id, exc_info=True)
 

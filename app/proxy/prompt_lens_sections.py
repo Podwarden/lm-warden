@@ -618,6 +618,17 @@ class PromptLensSections:
 
     # -- read --
 
+    def request_of(self, req_id: str) -> tuple[str, str | None] | None:
+        """``(token id, stored request id)`` of a request still held, else None
+        (unknown, evicted or expired). The findings route uses it to find the
+        ``request_history`` row a Prompt Lens id stands for."""
+        try:
+            self._expire()
+            r = self._reqs.get(req_id)
+        except Exception:  # noqa: BLE001 -- display only
+            return None
+        return None if r is None else (r.token_id, r.request_id)
+
     def section(self, req_id: str, kind: SectionKind, *, start: int = 0) -> SectionView | None:
         """One section of ``req_id``, text from the absolute offset ``start``;
         None for an unknown, evicted or expired request or an unknown kind."""

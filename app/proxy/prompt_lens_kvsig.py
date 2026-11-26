@@ -43,6 +43,7 @@ from app.cache_obs.classify import bytes_to_tokens
 from app.cache_obs.index import Match
 from app.cobs2.ids import HeadPartIds, Ids
 from app.cobs2.lineage import Observation
+from app.lens.causes import LensVerdict
 
 #: Most parts one event carries (sys and tools included).
 MAX_KVSIG_PARTS = 64
@@ -230,6 +231,25 @@ def _cap(runs: list[_Run], budget: int) -> list[_Run]:
     return out
 
 
+def lens_block(v: LensVerdict | None) -> dict[str, Any] | None:
+    """The event's ``lens`` block (Prompt Lens layer 1, analysis plan Task
+    1.3): the first broken part, its cause code, the changed system prompt
+    line's class and number, the counterfactual and lost tokens and the count
+    of further breaks. Codes and ints only. At admission the request's reuse
+    is not known yet, so ``lost_tokens`` is null there. None: not computed."""
+    if v is None:
+        return None
+    return {
+        "brk": v.brk,
+        "cause": v.cause,
+        "span_class": v.span_class,
+        "span_line": v.span_line,
+        "cf_tokens": v.counterfactual_tokens,
+        "lost_tokens": v.lost_tokens,
+        "other_breaks": v.other_breaks,
+    }
+
+
 def build_kvsig_pair(**kw: Any) -> dict[str, Any]:
     """``build_kvsig(**kw)``, plus ``parts_key`` when a part reads ``other``: the
     parts of ``build_kvsig`` with no all-keys match, the key holder's view
@@ -258,6 +278,7 @@ def build_kvsig(
     reason: str | None,
     raw_head_index: Sequence[int] | None = None,
     head_roles: Sequence[str] = (),
+    lens: LensVerdict | None = None,
 ) -> dict[str, Any]:
     """The kvsig event body (the caller adds ``type``, ``req_id``,
     ``token_id``, ``ts``, ``session_id`` and ``turn``).
@@ -388,4 +409,5 @@ def build_kvsig(
         "reusable_own": reusable(match_own),
         "reusable_any": reusable(match_all),
         "parts": parts,
+        "lens": lens_block(lens),
     }

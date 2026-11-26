@@ -27,12 +27,36 @@ INFERENCE_PREFIX = "/v1/"
 #: control-plane credential: the key holder's forest login trades one for a
 #: forest-only JWT. Sorted into the inference bucket (require_bearer, no admin
 #: token, no session JWT).
-INFERENCE_KEY_ROUTES: frozenset[tuple[str, str]] = frozenset({("POST", "/api/forest/login")})
+INFERENCE_KEY_ROUTES: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("POST", "/api/forest/login"),
+        # The engine facts of the models the key may use (app/tokens/routes_me_engine.py): the
+        # key as /v1 takes it, for a CLI that has nothing else. Needs the key's engine_facts flag.
+        ("GET", "/api/me/engine"),
+    }
+)
 
 
 def is_inference(method: str, path: str) -> bool:
     """Whether (METHOD, route.path) takes an inference key: /v1, or INFERENCE_KEY_ROUTES."""
     return path.startswith(INFERENCE_PREFIX) or (method, path) in INFERENCE_KEY_ROUTES
+
+
+#: The Prompt Lens API for a key holder (app/lens/auth.py): every route under this prefix takes
+#: an inference key (``vw_``, as /v1 takes it) OR the key holder's forest JWT, and an admin
+#: credential gets 403 (``/api/lens/admin/*`` is the admin's, an ordinary admin route).
+LENS_KEY_PREFIX = "/api/lens/me/"
+#: The MCP endpoint: the same two credentials, and an admin credential too (the admin tool set).
+LENS_MCP_ROUTE: tuple[str, str] = ("POST", "/api/lens/mcp")
+
+
+def is_lens_key(method: str, path: str) -> bool:
+    """Whether (METHOD, route.path) is a Prompt Lens key route (an inference key or a sign-in)."""
+    return path.startswith(LENS_KEY_PREFIX)
+
+
+def is_lens_mcp(method: str, path: str) -> bool:
+    return (method, path) == LENS_MCP_ROUTE
 
 
 #: The only routes a key holder's forest JWT (typ="forest") may open. Every
@@ -75,14 +99,25 @@ FOREST_ROUTES: frozenset[tuple[str, str]] = frozenset(
         # The key's own kept captures (keep_captures, an admin's switch).
         ("GET", "/api/me/prompt-lens/kept"),
         ("GET", "/api/me/prompt-lens/kept/{req_id}"),
+        # The findings on one of the key's own requests (app/lens/routes_ui.py),
+        # own lens only, nothing fleet-wide.
+        ("GET", "/api/me/prompt-lens/requests/{req_id}/findings"),
+        # The key's own scored sessions and one scorecard (app/lens/routes_ui.py):
+        # own lens only, never a fleet figure (D-4).
+        ("GET", "/api/me/prompt-lens/sessions"),
+        ("GET", "/api/me/prompt-lens/sessions/{ref}/scorecard"),
+        # One session's downloadable report (HTML or JSON), own sessions only.
+        ("GET", "/api/me/prompt-lens/sessions/{ref}/report"),
+        # The key's own trends, prompt versions, version comparison and won't-fix
+        # marks (app/lens/routes_ui.py): the key is the sign-in's, a ``key=`` is
+        # refused, nothing fleet-wide (D-4).
+        ("GET", "/api/me/prompt-lens/trends"),
+        ("GET", "/api/me/prompt-lens/versions"),
+        ("GET", "/api/me/prompt-lens/compare"),
+        ("GET", "/api/me/prompt-lens/wontfix"),
+        ("PUT", "/api/me/prompt-lens/wontfix/{rule}"),
+        ("DELETE", "/api/me/prompt-lens/wontfix/{rule}"),
     }
-)
-# The same key-holder routes under their deprecated /api/me/godmode paths
-# (app/proxy/prompt_lens_legacy.py): one release.
-FOREST_ROUTES = FOREST_ROUTES | frozenset(
-    (m, p.replace("/api/me/prompt-lens", "/api/me/godmode", 1))
-    for m, p in FOREST_ROUTES
-    if p.startswith("/api/me/prompt-lens/")
 )
 
 #: The key holder's ticket streams (ruling G-F2): a single-use ticket minted by
@@ -90,9 +125,7 @@ FOREST_ROUTES = FOREST_ROUTES | frozenset(
 #: ``require_key_ticket``. A header credential is refused: a forest sign-in or
 #: an inference key 401, an admin session or admin token 403 (the admin
 #: watches every key on /api/admin/prompt-lens/stream).
-KEY_STREAM_ROUTES: frozenset[tuple[str, str]] = frozenset(
-    {("GET", "/api/me/prompt-lens/stream"), ("GET", "/api/me/godmode/stream")}  # old: deprecated
-)
+KEY_STREAM_ROUTES: frozenset[tuple[str, str]] = frozenset({("GET", "/api/me/prompt-lens/stream")})
 
 #: Routes ONLY a key holder's sign-in opens: the key's own area. An admin session or admin token
 #: gets 403 there (the admin manages keys under /api/tokens).

@@ -21,9 +21,13 @@ export interface MeKey {
   thinking_policy: string | null;
   anthropic_relay: boolean;
   guard_effective?: { mode?: string; packs?: string[]; rules?: number; source?: { mode?: string } } | null;
-  /** True when Prompt Lens is on for the platform (VW_PROMPT_LENS_ENABLED): the key
-   *  holder can then open captures of their own requests. */
+  /** True when Prompt Lens is on for the platform AND the admin allowed it for this key
+   *  (``prompt_lens``): the key holder can then open captures of their own requests. */
   prompt_lens_view_available?: boolean;
+  /** The admin's per-key permissions (read-only here): Prompt Lens on this key's own
+   *  traffic, and reading the engine facts of the models it may use. */
+  prompt_lens?: boolean;
+  engine_facts?: boolean;
   /** The key's prompt cache: shared with other keys, or kept separate (plan 2). */
   kv_isolation?: "sharing" | "isolated";
   /** The loaded models this key may use, with whether each can keep its cache apart. */
@@ -68,14 +72,14 @@ export function useMe<T>(url: string | null, refreshInterval?: number) {
 }
 
 /** A write as the key holder. Throws KeyAuthError on 401 (the sign-in is gone); returns the response otherwise. */
-export async function meWrite(url: string, method: "PATCH" | "POST", body: unknown): Promise<Response> {
+export async function meWrite(url: string, method: "PATCH" | "POST" | "PUT" | "DELETE", body?: unknown): Promise<Response> {
   const token = readKeyToken();
   if (!token) throw new KeyAuthError();
   const r = await fetch(url, {
     method,
     credentials: "omit",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (r.status === 401) {
     clearKeyToken();

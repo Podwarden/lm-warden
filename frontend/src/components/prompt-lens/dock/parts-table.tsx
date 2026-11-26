@@ -6,11 +6,18 @@
 // the table scrolls inside a fixed-height box (the fixed-size rule); with
 // `bare` a SectionBox (Task 11) hosts it and does the scrolling instead. On a phone it sits behind "Show the N
 // parts ▸" and stacks into cards.
+//
+// Findings (analysis spec 16.1, Task 1.8): a finding whose `part` is this row
+// (sys, tools, or a body node the row covers) sits beside it as a FindingChip,
+// in the "vs earlier" cell; on a phone it wraps under the part's card.
 
 import { useState } from "react";
 
+import { findingsOn, partKeys, type LensFinding } from "@/lib/prompt-lens/findings";
 import { cacheText, shortId, type MapPart } from "@/lib/prompt-lens/kvsig";
+import type { LensScope } from "@/lib/prompt-lens/stream";
 import { cn } from "@/lib/utils";
+import { FindingChip } from "../findings/finding-chip";
 import { Swatch } from "./kvsig-map";
 
 /** Rows shown before the table scrolls in its box. */
@@ -32,6 +39,25 @@ export interface PartsTableProps {
   active?: number | null;
   /** Hosted in a SectionBox (Task 11), which scrolls it: no box of its own. */
   bare?: boolean;
+  /** The request's findings (Task 1.8); each shows beside the part it names. */
+  findings?: LensFinding[];
+  /** Tool hash -> name, for the findings' copy. */
+  names?: Record<string, string>;
+  scope?: LensScope;
+}
+
+const NO_FINDINGS: LensFinding[] = [];
+
+function Chips({ p, findings, names, scope }: { p: MapPart; findings: LensFinding[]; names?: Record<string, string>; scope: LensScope }) {
+  const on = findings.length ? findingsOn(findings, partKeys(p)) : NO_FINDINGS;
+  if (on.length === 0) return null;
+  return (
+    <>
+      {on.map((f, i) => (
+        <FindingChip key={`${f.rule}:${i}`} finding={f} names={names} scope={scope} />
+      ))}
+    </>
+  );
 }
 
 function PartName({ p }: { p: MapPart }) {
@@ -43,7 +69,15 @@ function PartName({ p }: { p: MapPart }) {
   );
 }
 
-export function PartsTable({ parts, phone, active = null, bare = false }: PartsTableProps) {
+export function PartsTable({
+  parts,
+  phone,
+  active = null,
+  bare = false,
+  findings = NO_FINDINGS,
+  names,
+  scope = "admin",
+}: PartsTableProps) {
   const [open, setOpen] = useState(false);
   if (parts.length === 0) return null;
   const boxed = !bare && parts.length > PARTS_BOX_ROWS;
@@ -70,6 +104,9 @@ export function PartsTable({ parts, phone, active = null, bare = false }: PartsT
             <span className={CARD_LABEL}>Cache</span>
             <span data-testid="parts-cache" className="text-chat-dim">
               {cacheText(p.cache)}
+            </span>
+            <span className="col-span-2 min-w-0 empty:hidden">
+              <Chips p={p} findings={findings} names={names} scope={scope} />
             </span>
           </li>
         ))}
@@ -117,7 +154,10 @@ export function PartsTable({ parts, phone, active = null, bare = false }: PartsT
             <td className={cn(TD, "whitespace-nowrap")}>{fmt(p.tok)}</td>
             <td className={cn(TD, "whitespace-nowrap font-mono text-[11px] text-chat-muted")}>{shortId(p.exact8)}</td>
             <td className={cn(TD, "whitespace-nowrap font-mono text-[11px] text-chat-muted")}>{shortId(p.loose8)}</td>
-            <td className={TD}>{p.vsEarlier}</td>
+            <td className={TD}>
+              {p.vsEarlier}
+              <Chips p={p} findings={findings} names={names} scope={scope} />
+            </td>
             <td data-testid="parts-cache" className={cn(TD, "whitespace-nowrap")}>
               {cacheText(p.cache)}
             </td>

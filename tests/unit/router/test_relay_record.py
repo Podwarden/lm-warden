@@ -417,3 +417,146 @@ def test_relayed_row_records_dead_weight_and_session_source(tmp_data_dir, client
     assert rec["session_source"] == "claude_code_header"
     dw = json.loads(rec["cobs2_shape"])["dw"]
     assert dw["boil"] == len("<system-reminder>r</system-reminder>") and dw["reason"] == 0  # R3
+
+
+# ---- Prompt Lens (analysis plan, Task 1.3): cache writes, marks, layer 1 -----------
+
+
+def _marked_body(messages=None, **extra):
+    """Two ``cache_control`` marks: one on the system block, one on a message block."""
+    return sonnet_body(
+        messages
+        or [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "hello", "cache_control": {"type": "ephemeral"}}
+                ],
+            }
+        ],
+        system=[{"type": "text", "text": "be brief", "cache_control": {"type": "ephemeral"}}],
+        **extra,
+    )
+
+
+def test_relay_records_cache_writes_and_marks(tmp_data_dir, client):
+    raw = anthropic_sse_bytes(usage_in=3, cache_read=0, cache_create=28434)
+    _setup(client, tmp_data_dir, anthropic=_sse_handler(raw))
+    recs = _spy_history(client)
+    r = _post(client, _marked_body(stream=True))
+    assert r.status_code == 200 and r.content == raw
+    rec = wait_until(lambda: recs[-1] if recs else None, what="relayed row", timeout_s=5)
+    assert (rec["cache_write_tokens"], rec["cache_marks"]) == (28434, 2)
+    # Written tokens still count in the prompt, as before.
+    assert rec["prompt_tokens"] == 3 + 28434
+
+
+def test_relay_without_marks_counts_zero_marks(tmp_data_dir, client):
+    raw = anthropic_sse_bytes()
+    _setup(client, tmp_data_dir, anthropic=_sse_handler(raw))
+    recs = _spy_history(client)
+    _post(client, sonnet_body(stream=True))
+    rec = wait_until(lambda: recs[-1] if recs else None, what="relayed row", timeout_s=5)
+    assert (rec["cache_write_tokens"], rec["cache_marks"]) == (40, 0)
+
+
+def test_relay_miss_without_marks_is_provider_no_marks(tmp_data_dir, client):
+    """A stable relayed prompt that reused nothing and carries no marks: the
+    provider's rule explains the miss (spec 6), not the prompt."""
+    raw = anthropic_sse_bytes(text="answer one", usage_in=5000, cache_read=0, cache_create=0)
+    _setup(client, tmp_data_dir, anthropic=_sse_handler(raw))
+    recs = _spy_history(client)
+    m1 = [{"role": "user", "content": "hello"}]
+    _post(client, sonnet_body(m1, stream=True))
+    wait_until(lambda: recs[0] if recs else None, what="turn 1", timeout_s=5)
+    m2 = [
+        *m1,
+        {"role": "assistant", "content": [{"type": "text", "text": "answer one"}]},
+        {"role": "user", "content": "more"},
+    ]
+    _post(client, sonnet_body(m2, stream=True))
+    t2 = wait_until(lambda: recs[1] if len(recs) > 1 else None, what="turn 2", timeout_s=5)
+    assert t2["cobs2_edge"] == "continue"
+    assert (t2["lens_cause"], t2["lens_break"], t2["cache_marks"]) == (
+        "provider_no_marks",
+        None,
+        0,
+    )
+    assert t2["lens_cf_tokens"] > 1024 and t2["lens_lost_tokens"] == t2["lens_cf_tokens"]
+
+
+def test_relay_renders_tools_first(tmp_data_dir, client):
+    """On a relay to Anthropic the tool list is rendered before the system
+    prompt: a changed tool list breaks first, the system change is counted."""
+    raw = anthropic_sse_bytes(text="answer one")
+    _setup(client, tmp_data_dir, anthropic=_sse_handler(raw))
+    recs = _spy_history(client)
+    tool = {"name": "read", "input_schema": {"type": "object"}}
+    m1 = [{"role": "user", "content": "hello"}]
+    _post(client, sonnet_body(m1, stream=True, tools=[tool]))
+    wait_until(lambda: recs[0] if recs else None, what="turn 1", timeout_s=5)
+    m2 = [
+        *m1,
+        {"role": "assistant", "content": [{"type": "text", "text": "answer one"}]},
+        {"role": "user", "content": "more"},
+    ]
+    tool2 = {"name": "write", "input_schema": {"type": "object"}}
+    _post(client, sonnet_body(m2, stream=True, tools=[tool, tool2], system="be terse"))
+    t2 = wait_until(lambda: recs[1] if len(recs) > 1 else None, what="turn 2", timeout_s=5)
+    assert (t2["lens_break"], t2["lens_cause"], t2["lens_other_breaks"]) == (
+        "tools",
+        "tools_added_end",
+        1,
+    )
+
+
+def test_relay_with_kvsig_off_counts_no_marks_and_no_lens(tmp_data_dir, client, monkeypatch):
+    raw = anthropic_sse_bytes(cache_create=12)
+    _setup(client, tmp_data_dir, anthropic=_sse_handler(raw))
+    client.app.state.cobs2_key = None
+    calls = {"n": 0}
+    from app.lens import causes, hot
+
+    def count(*a, **k):
+        calls["n"] += 1
+        raise AssertionError("no lens call with kvsig off")
+
+    monkeypatch.setattr(causes, "evaluate", count)
+    monkeypatch.setattr(hot, "cache_marks_of", count)
+    recs = _spy_history(client)
+    r = _post(client, _marked_body(stream=True))
+    assert r.content == raw
+    rec = wait_until(lambda: recs[-1] if recs else None, what="relayed row", timeout_s=5)
+    assert calls["n"] == 0
+    assert (rec["cache_write_tokens"], rec["cache_marks"], rec["lens_cause"]) == (12, None, None)
+
+
+def test_isolated_key_relay_is_never_provider_no_marks(tmp_data_dir, client):
+    """A-11: for an isolated key the warden strips cache_control itself, so the
+    same stable miss without marks names no provider cause against the prompt."""
+    import sqlite3
+
+    raw = anthropic_sse_bytes(text="answer one", usage_in=5000, cache_read=0, cache_create=0)
+    _setup(client, tmp_data_dir, anthropic=_sse_handler(raw))
+    with sqlite3.connect(tmp_data_dir / "vllm-warden.db") as db:
+        db.execute("UPDATE api_tokens SET kv_isolation='isolated' WHERE id='tok1'")
+        db.commit()
+    from app.proxy import token_cache
+
+    token_cache.invalidate_all()
+    recs = _spy_history(client)
+    m1 = [{"role": "user", "content": "hello"}]
+    _post(client, _marked_body(m1, stream=True))
+    wait_until(lambda: recs[0] if recs else None, what="turn 1", timeout_s=5)
+    m2 = [
+        *m1,
+        {"role": "assistant", "content": [{"type": "text", "text": "answer one"}]},
+        {"role": "user", "content": "more"},
+    ]
+    _post(client, _marked_body(m2, stream=True))
+    t2 = wait_until(lambda: recs[1] if len(recs) > 1 else None, what="turn 2", timeout_s=5)
+    assert t2["cobs2_edge"] == "continue"
+    # The marks left stripped (0 sent), and the lens names no provider cause.
+    assert t2["cache_marks"] == 0
+    assert t2["lens_cause"] is None
+    assert t2["lens_cf_tokens"] > 1024

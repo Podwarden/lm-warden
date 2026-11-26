@@ -187,3 +187,14 @@ def test_layout_notice_is_a_nested_object_or_null():
     for body in (model_detail(row), model_summary(row)):
         assert body["layout_notice"] == {"level": "warning", "message": "fix extra_args"}
         assert "layout_notice_level" not in body
+
+
+def test_detail_publishes_a_bare_bundled_engine_pin():
+    """#343: a bundled pin has no channel, so the nested ``engine`` stays null; the
+    flat ``engine_vllm_version`` is how the UI reads which install a model runs on."""
+    assert model_detail(_row())["engine_vllm_version"] is None
+    row = _row(engine_vllm_version="0.34.0rc1.dev1202-pr69165")
+    for fn in (model_detail, model_summary):
+        body = fn(row)
+        assert body["engine"] is None
+        assert body["engine_vllm_version"] == "0.34.0rc1.dev1202-pr69165"

@@ -8,6 +8,9 @@
 //   facts    queued · first token · elapsed or duration · prompt · out · rate
 //            · client IP (admin only); one line that scrolls sideways
 //   lines    key holder: the fixed privacy line; non-streamed: the banner
+//   findings once the request ended: "Findings on this request" (analysis
+//            spec 16.1, Task 1.8); each finding also sits beside its part
+//            (parts table) or under the tool calls it judged
 //   map      kvsig prompt map, parts table (in a section box over 8 rows), footer
 //   columns  Input (tool results, prompt by role) · Output (thinking, reply,
 //            tool calls, usage); stacked on a phone
@@ -35,6 +38,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import type { PromptMsg } from "@/lib/prompt-lens/events";
+import { useRequestFindings } from "@/lib/prompt-lens/findings";
 import { mapParts, type MapPart } from "@/lib/prompt-lens/kvsig";
 import { prettyJson } from "@/lib/prompt-lens/pretty-json";
 import { sectionMarks } from "@/lib/prompt-lens/section-marks";
@@ -45,6 +49,8 @@ import { K } from "@/lib/key-area/strings";
 import { LiveNumber } from "@/components/ui/live-number";
 import { cn } from "@/lib/utils";
 import { MediaStrip } from "../prompt-lens-media";
+import { FindingChip } from "../findings/finding-chip";
+import { FindingsStrip } from "../findings/findings-strip";
 import { KvsigFooter, KvsigMap } from "./kvsig-map";
 import { PARTS_BOX_ROWS, PartsTable } from "./parts-table";
 import { LIVE_RATE_CH, SectionBox, type SectionKind, type useCollapseMemory } from "./section-box";
@@ -145,6 +151,7 @@ function useNoteServerTs(r: RequestView) {
 }
 
 const PILL = "flex-none rounded border px-[5px] text-[10px] leading-4";
+const NO_FINDINGS: never[] = [];
 /** Live fact slots, in characters (ui.live-numbers): a ticking clock up to
  *  "59 min 59 s", a duration up to "99.9 s", tokens out up to "≈ 99,999". */
 const LIVE_CLOCK_CH = 11;
@@ -163,6 +170,11 @@ export function RequestScreen({ request: r, scope, phone, collapse, onBack, keep
   useNoteServerTs(r);
   const now = useNow(!ended);
   const view = useMemo(() => mapParts(r, scope), [r, scope]);
+  // Findings come from the stored row: asked for once the request ended.
+  const found = useRequestFindings(scope, ended ? r.reqId : null);
+  const findings = found?.findings ?? NO_FINDINGS;
+  const names = found?.names;
+  const callFindings = useMemo(() => findings.filter((f) => f.part?.startsWith("call:")), [findings]);
 
   // --- pop-up --------------------------------------------------------------
   const [popup, setPopup] = useState<FetchKind | null>(null);
@@ -390,6 +402,16 @@ export function RequestScreen({ request: r, scope, phone, collapse, onBack, keep
       >
         {r.toolCalls.length > 0 ? <ToolCallBlocks calls={calls} live={callsLive} /> : undefined}
       </SectionBox>
+      {callFindings.length > 0 && (
+        <div data-testid="call-findings" className="-mt-1 mb-2.5 min-w-0">
+          {callFindings.map((f, i) => {
+            const k = Number(f.part?.slice(5));
+            const call = r.toolCalls.find((c) => c.index === k);
+            const lead = `tool call ${k + 1}${call?.name ? ` · ${call.name}` : ""}`;
+            return <FindingChip key={`${f.rule}:${i}`} finding={f} names={names} scope={scope} lead={lead} />;
+          })}
+        </div>
+      )}
       <Usage r={r} isKey={isKey} phone={phone} />
     </>
   );
@@ -535,6 +557,8 @@ export function RequestScreen({ request: r, scope, phone, collapse, onBack, keep
         </p>
       )}
 
+      <FindingsStrip findings={findings} names={names} scope={scope} />
+
       <div className="mb-2.5 mt-2 min-w-0 rounded-lg border border-chat-rule bg-chat-surface px-3 py-2.5">
         <KvsigMap view={view} onSegment={onSegment} active={activePart} phone={phone} />
         {partsInBox ? (
@@ -547,10 +571,10 @@ export function RequestScreen({ request: r, scope, phone, collapse, onBack, keep
             onExpand={() => setPopup("prompt")}
             {...box("parts")}
           >
-            <PartsTable parts={view.parts} phone={false} active={activePart} bare />
+            <PartsTable parts={view.parts} phone={false} active={activePart} bare findings={findings} names={names} scope={scope} />
           </SectionBox>
         ) : (
-          <PartsTable parts={view.parts} phone={phone} active={activePart} />
+          <PartsTable parts={view.parts} phone={phone} active={activePart} findings={findings} names={names} scope={scope} />
         )}
         <KvsigFooter view={view} />
       </div>

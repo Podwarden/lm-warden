@@ -36,7 +36,7 @@ function fakeItem(overrides: Partial<TokenItem> = {}): TokenItem {
     // defaults for a freshly minted token.
     priority: 5,
     anthropic_relay: false,
-    keep_captures: false,
+    keep_captures: false, prompt_lens: true, engine_facts: true,
     thinking_policy: 'client', kv_isolation: 'sharing',
     usage_24h: {
       requests: 0,
@@ -276,7 +276,7 @@ describe('CreateTokenDialog', () => {
     await waitFor(() => expect(screen.getByText('vw_freshtoken')).toBeInTheDocument());
     const post = f.mock.calls.find((c) => (c[1] as RequestInit | undefined)?.method === 'POST')!;
     const body = JSON.parse(String((post[1] as RequestInit).body));
-    expect(body).toEqual({ name: 'ci-bot', expires_in_days: 365, priority: 5, anthropic_relay: false, thinking_policy: 'client' });
+    expect(body).toEqual({ name: 'ci-bot', expires_in_days: 365, priority: 5, anthropic_relay: false, thinking_policy: 'client', prompt_lens: false, engine_facts: true });
   });
 
   it('clears plaintext from DOM after close', async () => {

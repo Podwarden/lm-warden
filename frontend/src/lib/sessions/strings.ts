@@ -77,7 +77,10 @@ export const S = {
       prompt: "Prompt tokens",
       anatomy: "Prompt anatomy",
       saved: "Saved vs plain vLLM",
+      score: "Prompt Lens score",
     },
+    openInLens: "Open in Prompt Lens",
+    notScored: "not scored yet",
     durationTotal: (d: string) => `${d} total`,
     whereCounts: (w: { relayed: number; hybrid: number; local: number }) =>
       [

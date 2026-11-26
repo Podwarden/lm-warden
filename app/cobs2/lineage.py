@@ -120,9 +120,17 @@ class Observation:
     #: Display (Prompt Lens's kvsig parts): nodes past ``exact_depth`` up to here
     #: match only in their loose form.
     loose_depth: int = -1
+    #: Prompt Lens (lens spec 4.3 item 2): the parent chain's 8-byte short
+    #: ``msgs`` ids, oldest first. Empty when there is no parent or its chain
+    #: is no longer complete in memory (indices would not line up).
+    parent_msgs: tuple[bytes, ...] = ()
+    #: The four probes (``app.lens.probes.PROBE_ORDER``) of the parent's
+    #: message at the break: the first index where ``parent_msgs`` and this
+    #: request's short msgs differ. None without a break or without probes.
+    parent_probes: tuple[bytes, bytes, bytes, bytes] | None = None
 
 
-@dataclass
+@dataclass(slots=True)
 class _Node:
     parent: str | None
     loose_head: str
@@ -133,6 +141,34 @@ class _Node:
     req: str | None = None
     #: The conversation the node belongs to (see Observation.conv).
     conv: str | None = None
+    #: Prompt Lens: this node's lens bytes as ONE ``bytes`` object (one object
+    #: instead of a tuple plus five: about 73 B per node, not about 280 B).
+    #: Layout: the 8-byte short ``msgs[i]``, then, when known, the four 8-byte
+    #: probes in ``PROBE_ORDER`` (computed once, when the node is first
+    #: recorded). So 8 bytes = message only, 40 bytes = message and probes;
+    #: the length is the only discriminator. None: nothing recorded.
+    lens: bytes | None = None
+
+    @property
+    def msg(self) -> bytes | None:
+        return self.lens[:8] if self.lens is not None else None
+
+    @property
+    def probes(self) -> tuple[bytes, bytes, bytes, bytes] | None:
+        d = self.lens
+        if d is None or len(d) != 40:
+            return None
+        return (d[8:16], d[16:24], d[24:32], d[32:40])
+
+
+#: The probes of body message ``i`` of the request being observed.
+ProbesFor = Callable[[int], tuple[bytes, bytes, bytes, bytes]]
+
+
+def short_msg(msg_id: str) -> bytes:
+    """The 8-byte short form of a ``msgs[i]`` id: the 8 bytes after its epoch
+    byte (the same slice ``app.lens.probes`` takes of a keyed hash)."""
+    return bytes.fromhex(msg_id[2:18])
 
 
 @dataclass
@@ -262,7 +298,11 @@ class Lineage:
         inflight_heads: Collection[str] | None = None,
         request_id: str | None = None,
         conv: str | None = None,
+        probes_for: ProbesFor | None = None,
     ) -> Observation:
+        """``probes_for(i)`` gives the Prompt Lens probes of body message ``i``;
+        it is called only for nodes recorded for the first time (memoised like
+        ``msgs``), and a failure leaves that node without probes (fail-open)."""
         now = self._clock()
         self._gc(now)
         # The LOOSE head, like the tips and the replica key: a changed reminder
@@ -312,10 +352,45 @@ class Lineage:
         out_conv = conv
         if edge in ("continue", "fork") and pnode is not None and pnode.conv is not None:
             out_conv = pnode.conv
+        # Walked before _record: its eviction may drop the parent's chain.
+        pmsgs, pprobes = self._parent_chain(pms, parent, ids)
         self._record(
-            ms, now, ids, self.is_compaction_request(last_user_text_loose), request_id, out_conv
+            ms,
+            now,
+            ids,
+            self.is_compaction_request(last_user_text_loose),
+            request_id,
+            out_conv,
+            probes_for,
         )
-        return Observation(edge, parent, beyond, skey, parent_req, k, out_conv, kl)
+        return Observation(edge, parent, beyond, skey, parent_req, k, out_conv, kl, pmsgs, pprobes)
+
+    def _parent_chain(
+        self, ms: _Key, parent: str | None, ids: Ids
+    ) -> tuple[tuple[bytes, ...], tuple[bytes, bytes, bytes, bytes] | None]:
+        """The parent chain's short msgs (oldest first) and the probes of its
+        message at the first index where this request differs. ``((), None)``
+        when the chain cannot be walked back to its root message."""
+        if parent is None:
+            return (), None
+        chain: list[_Node] = []
+        msgs: list[bytes] = []
+        nodes = self._nodes
+        cur: str | None = parent
+        while cur is not None:
+            node = nodes.get((*ms, cur))
+            if node is None or node.msg is None or len(chain) > len(nodes):
+                return (), None
+            chain.append(node)
+            msgs.append(node.msg)
+            cur = node.parent
+        chain.reverse()
+        msgs.reverse()
+        pmsgs = tuple(msgs)
+        for i in range(min(len(chain), len(ids.msgs))):
+            if short_msg(ids.msgs[i]) != pmsgs[i]:
+                return pmsgs, chain[i].probes
+        return pmsgs, None
 
     def _reply_anchor(self, ms: _Key, now: float, ids: Ids) -> str | None:
         """The node whose reply is the deepest message of this body that this
@@ -428,6 +503,7 @@ class Lineage:
         is_compaction: bool,
         request_id: str | None = None,
         conv: str | None = None,
+        probes_for: ProbesFor | None = None,
     ) -> None:
         nodes, loose = self._nodes, self._loose
         n = len(ids.nodes)
@@ -437,9 +513,23 @@ class Lineage:
             nk = (*ms, ids.nodes[i])
             e = nodes.get(nk)
             if e is None:
+                msg8 = short_msg(ids.msgs[i])
                 e = nodes[nk] = _Node(
-                    ids.nodes[i - 1] if i else None, ids.loose_head, now, req=prev_req, conv=conv
+                    ids.nodes[i - 1] if i else None,
+                    ids.loose_head,
+                    now,
+                    req=prev_req,
+                    conv=conv,
+                    lens=msg8,
                 )
+                if probes_for is not None:
+                    try:
+                        pr = probes_for(i)
+                        packed = msg8 + b"".join(pr)
+                        if len(pr) == 4 and len(packed) == 40:
+                            e.lens = packed
+                    except Exception:  # noqa: BLE001 - fail-open (A-5): lens only
+                        pass  # the node keeps its 8-byte message form
             else:
                 e.ts = now
                 nodes.move_to_end(nk)

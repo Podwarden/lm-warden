@@ -38,14 +38,22 @@ import {
   type LensScope,
 } from "@/lib/prompt-lens/stream";
 import { useMe, type MeKey } from "@/lib/key-area/api";
+import { S } from "@/lib/sessions/strings";
 import { useBackLayer } from "@/lib/prompt-lens/back-layer";
+import { type LensView } from "@/lib/prompt-lens/scorecard";
 import { MAX_RECONNECT, type SseState } from "@/lib/sse";
 import { PHONE_QUERY, useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
 import { FilterLine, type FilterOption, type FilterOptions } from "./dock/filter-line";
 import { RequestList, LIST_WIDTH_PX, listOrder } from "./dock/request-list";
 import { RequestScreen } from "./dock/request-screen";
+import { writeLensParams } from "./prompt-lens-page";
+import { SessionsView } from "./sessions/sessions-view";
+import { TrendsView } from "./trends/trends-view";
+import { ViewSwitch } from "./view-switch";
 import { useCollapseMemory } from "./dock/section-box";
+
+const EMPTY_NAMES: Record<string, string> = {};
 
 /** Re-renders only when its request (or the scope, collapse or note) changes. */
 const MemoScreen = memo(RequestScreen);
@@ -91,6 +99,10 @@ export interface PromptLensViewProps {
   /** The reader picked a request in the list (not Follow newest): the page
    *  puts it in its URL. */
   onPick?: (r: RequestView) => void;
+  /** Open on this view (a deep link, ?view=) and, for Sessions, on this session
+   *  (?session=, a session id of the Sessions page). */
+  view?: LensView | null;
+  session?: string | null;
 }
 
 /** How long after connecting a selected request may take to arrive before
@@ -132,11 +144,13 @@ interface HeaderProps {
   running: number;
   lagged: boolean;
   tools: ReactNode;
+  /** The Requests · Sessions · Trends switch, shown after the title. */
+  switcher?: ReactNode;
 }
 
 /** The view's header: title, scope, Live, the counts and the tools. The
  *  counts sit in reserved slots (ui.live-numbers). */
-function Header({ scope, phone, scopeText, status, rows, running, lagged, tools }: HeaderProps) {
+function Header({ scope, phone, scopeText, status, rows, running, lagged, tools, switcher }: HeaderProps) {
   const title = titleOf(scope);
   const word =
     status === "connected" ? "Live" : status === "connecting" || status === "reconnecting" ? "Connecting" : "Not connected";
@@ -154,6 +168,7 @@ function Header({ scope, phone, scopeText, status, rows, running, lagged, tools 
         <EyeIcon />
         {title}
       </h1>
+      {switcher}
       {!phone && <span className="min-w-0 overflow-hidden text-ellipsis text-[12px] text-chat-dim">{scopeText}</span>}
       <span className="ml-auto flex flex-none items-center gap-2.5 text-[12px] text-chat-muted">
         {status === "connected" && (
@@ -243,8 +258,12 @@ function optionsOf(
     ...newest.map((r) => r.servedName || r.model).filter((v) => !shown.has(v) || picked.includes(v)),
   ]);
   const modelLabel = (v: string) => served[v] ?? v;
+  const clients = [...new Set([...Object.keys(S.harness), ...(f.harnesses ?? [])])].map((value) => ({
+    value,
+    label: S.harness[value] ?? value,
+  }));
   if (scope === "key") {
-    return { keys: [], sessions: opt(sessions, (s) => s.slice(0, 8)), models: opt(models, modelLabel), ips: [] };
+    return { keys: [], clients, sessions: opt(sessions, (s) => s.slice(0, 8)), models: opt(models, modelLabel), ips: [] };
   }
   const labels: Record<string, string> = { ...keyNames };
   for (const id of state.order) {
@@ -254,11 +273,36 @@ function optionsOf(
   const keys = uniq([...Object.keys(keyNames), ...(f.keys ?? []), ...newest.map((r) => r.tokenId)]);
   const ips = uniq([...(f.ips ?? []), ...newest.map((r) => r.clientIp)]);
   return {
-    keys: opt(keys, (k) => labels[k] ?? k.slice(0, 8)),
+    // Named keys first, A to Z (a key with no name left stands last under its short id).
+    keys: opt(keys, (k) => labels[k] ?? k.slice(0, 8)).sort(
+      (a, b) => Number(!(a.value in labels)) - Number(!(b.value in labels)) || a.label.localeCompare(b.label),
+    ),
+    clients,
     sessions: opt(sessions, (s) => s.slice(0, 8)),
     models: opt(models, modelLabel),
     ips: opt(ips),
   };
+}
+
+/** The words a pick stands for in the header: the first two, then "+n". */
+function listed(names: string[]): string {
+  return names.length <= 2 ? names.join(", ") : `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
+}
+
+/** Admin: every key's name from the tokens list (the page the tokens table reads),
+ *  so the Key filter offers keys that have no traffic right now. Others' names
+ *  from the page (a deep link's lineage) win. */
+function useKeyNames(scope: LensScope, given: Record<string, string>): Record<string, string> {
+  const tokens = useSWR<{ items?: { id: string; name: string }[] }>(
+    scope === "admin" ? "/api/tokens?limit=500" : null,
+    authFetchJSON,
+    { revalidateOnFocus: false, shouldRetryOnError: false },
+  );
+  return useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const t of tokens.data?.items ?? []) if (t.id && t.name) out[t.id] = t.name;
+    return { ...out, ...given };
+  }, [tokens.data, given]);
 }
 
 export function PromptLensView({
@@ -266,11 +310,36 @@ export function PromptLensView({
   pageKey,
   presetModel,
   presetKeys,
-  keyNames = {},
-  select,
+  keyNames: givenNames = EMPTY_NAMES,
+  select: selectProp,
   onPick,
+  view: viewProp,
+  session: sessionProp,
 }: PromptLensViewProps) {
   const phone = useMediaQuery(PHONE_QUERY);
+  const keyNames = useKeyNames(scope, givenNames);
+  // The view switch (spec 16.1): Requests (the live list), Sessions (scores) or Trends.
+  // ?view= and ?session= follow it with history.replaceState, like ?req=.
+  const [lensView, setLensView] = useState<LensView>(
+    viewProp === "sessions" || viewProp === "trends" ? viewProp : "requests",
+  );
+  const [lensSession, setLensSession] = useState<string | null>(sessionProp ?? null);
+  const [shown, setShown] = useState<{ requestId: string; nonce: number } | null>(null);
+  const select = shown ?? selectProp;
+  const changeView = useCallback((v: LensView) => {
+    setLensView(v);
+    writeLensParams({ view: v });
+  }, []);
+  const openSession = useCallback((id: string | null) => {
+    setLensSession(id);
+    writeLensParams({ session: id });
+  }, []);
+  // "Show turns" on a scorecard: the request view, on that turn's request.
+  const showTurn = useCallback((requestId: string) => {
+    setShown((s) => ({ requestId, nonce: (s?.nonce ?? 1) + 1 }));
+    setLensView("requests");
+    writeLensParams({ view: "requests", req: requestId });
+  }, []);
   const [filters, setFilters] = useDockFilters(pageKey, scope, {
     model: presetModel ?? null,
     keys: scope === "admin" ? presetKeys ?? null : null,
@@ -403,7 +472,7 @@ export function PromptLensView({
     // matches) and a note says so.
     let next: DockFilters = { ...filtersRef.current, sessions: r.sessionId ? [r.sessionId] : null };
     const hidden = applyFilters([r], next, scope).length === 0;
-    if (hidden) next = { ...next, models: null, ips: null, phase: "all", finish: null, has: [], q: "" };
+    if (hidden) next = { ...next, models: null, ips: null, harnesses: null, phase: "all", finish: null, has: [], q: "" };
     setFilterNote(hidden);
     setFilters(next);
   }, [pending, state, setFilters, scope]);
@@ -480,16 +549,54 @@ export function PromptLensView({
 
   // --- header text ------------------------------------------------------------
   const running = rows.filter((r) => r.endedTs === null).length;
-  let scopeText: string;
-  if (scope === "key") scopeText = "all sessions of your key · live and recent";
-  else if (tokenIds) scopeText = `${tokenIds.map((k) => keyNames[k] ?? k.slice(0, 8)).join(", ")} · live and recent`;
-  else scopeText = "all keys · all sessions · live and recent";
+  const keyList = tokenIds ? tokenIds.map((k) => keyNames[k] ?? k.slice(0, 8)) : [];
+  const clientList = (filters.harnesses ?? []).map((h) => S.harness[h] ?? h);
+  // A Model value may be a model row id (the /stats preset): the served name is what
+  // the scored sessions and trends carry.
+  const modelList = useMemo(() => {
+    const served: Record<string, string> = {};
+    for (const id of state.order) {
+      const r = state.byId[id];
+      if (r.model && r.servedName) served[r.model] = r.servedName;
+    }
+    return (filters.models ?? []).map((m) => served[m] ?? m);
+  }, [filters.models, state.order, state.byId]);
+  const tail = lensView === "sessions" ? "scored sessions" : lensView === "trends" ? "trends" : "live and recent";
+  const scopeParts: string[] = [];
+  if (scope === "key") scopeParts.push("your key");
+  else if (keyList.length) scopeParts.push(listed(keyList));
+  else scopeParts.push("all keys");
+  // Trends has no client dimension: a Client pick is left out of its text.
+  if (clientList.length && lensView === "sessions") scopeParts.push(listed(clientList));
+  if (modelList.length) scopeParts.push(listed(modelList));
+  const plain = !keyList.length && !clientList.length && !modelList.length;
+  const scopeText =
+    plain && lensView === "requests"
+      ? scope === "key"
+        ? "all sessions of your key · live and recent"
+        : "all keys · all sessions · live and recent"
+      : [...scopeParts, tail].join(" · ");
 
   const ringMinutes =
     scope === "admin" && state.ring && typeof state.ring.oldest_ts === "number"
       ? Math.max(0, Math.round((serverNow() - state.ring.oldest_ts) / 60))
       : null;
 
+  const oneKey = scope === "admin" && filters.keys && filters.keys.length === 1 ? filters.keys[0] : null;
+  const setModelPick = useCallback((m: string | null) => setFilters({ ...filters, models: m ? [m] : null }), [filters, setFilters]);
+  const pickKey = useCallback((id: string) => setFilters({ ...filters, keys: [id] }), [filters, setFilters]);
+  const [sessionCount, setSessionCount] = useState<{ shown: number | null; more: boolean }>({ shown: null, more: false });
+  const onSessionCount = useCallback((shown: number | null, more: boolean) => setSessionCount({ shown, more }), []);
+  const summary: ReactNode =
+    lensView === "sessions"
+      ? sessionCount.shown === null
+        ? "Loading sessions…"
+        : `${sessionCount.shown}${sessionCount.more ? "+" : ""} scored session${sessionCount.shown === 1 ? "" : "s"}`
+      : lensView === "trends"
+        ? oneKey || scope === "key"
+          ? "Trends of one key"
+          : "Pick one key to see trends"
+        : null;
   const options = useMemo(
     () => optionsOf(scope, state, rows, filters, presetModel, keyNames),
     [scope, state, rows, filters, presetModel, keyNames],
@@ -500,7 +607,7 @@ export function PromptLensView({
   const offerRetry = down;
 
   // A phone's header has no tools (mockup state 7): the list follows newest.
-  const tools = phone ? null : (
+  const tools = phone || lensView !== "requests" ? null : (
     <span className="flex flex-none items-center gap-2">
       <button type="button" aria-pressed={follow} className={TOOL} onClick={() => setFollow((v) => !v)}>
         Follow newest
@@ -568,18 +675,49 @@ export function PromptLensView({
         running={running}
         lagged={state.lagged}
         tools={tools}
+        switcher={<ViewSwitch scope={scope} view={lensView} onChange={changeView} trends phone={phone} />}
       />
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <FilterLine
+      {/* One filter bar on every view: the same picks (Key, Model, Client) follow the
+          reader from Requests to Sessions and Trends. */}
+      <FilterLine
+        scope={scope}
+        view={lensView}
+        phone={phone}
+        filters={filters}
+        onChange={setFilters}
+        options={options}
+        shown={filtered.length}
+        total={rows.length}
+        ringMinutes={ringMinutes}
+        summary={summary}
+      />
+      {lensView === "sessions" && (
+        <SessionsView
           scope={scope}
           phone={phone}
-          filters={filters}
-          onChange={setFilters}
-          options={options}
-          shown={filtered.length}
-          total={rows.length}
-          ringMinutes={ringMinutes}
+          keyNames={keyNames}
+          keys={scope === "admin" ? tokenIds : null}
+          models={modelList.length ? modelList : null}
+          harnesses={filters.harnesses}
+          onCount={onSessionCount}
+          session={lensSession}
+          onSession={openSession}
+          onShowTurn={showTurn}
         />
+      )}
+      {lensView === "trends" && (
+        <TrendsView
+          scope={scope}
+          phone={phone}
+          keyId={oneKey}
+          pickedKeys={tokenIds?.length ?? 0}
+          keyOptions={options.keys}
+          onPickKey={pickKey}
+          model={modelList[0] ?? null}
+          onModel={setModelPick}
+        />
+      )}
+      <div className={cn("min-h-0 flex-1 flex-col overflow-hidden", lensView === "requests" ? "flex" : "hidden")}>
         <div className="relative flex min-h-0 flex-1">
           {message && (
             <div

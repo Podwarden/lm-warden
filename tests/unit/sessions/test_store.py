@@ -16,6 +16,7 @@ from app.sessions.store import (
     list_rows,
     lookup_ref,
     oldest_finished_at,
+    recent_toolset_calls,
     request_row,
     root_of,
     rows_for,
@@ -266,3 +267,44 @@ def test_model_engines_reads_dp_affinity_backend_and_slots(db):
 )
 def test_llamacpp_slots(backend, mns, extra, s):
     assert llamacpp_slots(backend, mns, extra) == s
+
+
+def test_recent_toolset_calls_counts_per_tool_for_the_keys_last_sessions(db):
+    ts = "d" * 32
+    # 22 sessions of tok1 with the toolset: s00 is the oldest; the last 20 are s02..s21.
+    for i in range(22):
+        out = json.dumps([["fn", "aaaaaaaa", "x1"], ["fn", "bbbbbbbb"]]) if i % 2 == 0 else "[]"
+        _insert(db, f"r{i:02d}", sess=f"s{i:02d}", fin=1000.0 + i, cobs2_toolset=ts, tools_out=out)
+    # the oldest session called a tool nobody else did: outside the last 20
+    _insert(
+        db,
+        "old",
+        sess="s00",
+        fin=1000.5,
+        cobs2_toolset=ts,
+        tools_out=json.dumps([["fn", "cccccccc"]]),
+    )
+    # another key, another toolset, and a malformed tools_out are never counted
+    _insert(
+        db,
+        "foreign",
+        tok="tok2",
+        sess="f1",
+        fin=1030.0,
+        cobs2_toolset=ts,
+        tools_out=json.dumps([["fn", "aaaaaaaa"]]),
+    )
+    _insert(
+        db,
+        "other",
+        sess="o1",
+        fin=1031.0,
+        cobs2_toolset="e" * 32,
+        tools_out=json.dumps([["fn", "dddddddd"]]),
+    )
+    _insert(db, "bad", sess="s03", fin=1003.5, cobs2_toolset=ts, tools_out="not json")
+    got = recent_toolset_calls(db, "tok1", ts)
+    assert got == {"aaaaaaaa": 10, "bbbbbbbb": 10}  # even sessions s02..s20
+    assert recent_toolset_calls(db, "tok1", ts, limit=1) == {}  # s21 called nothing
+    assert recent_toolset_calls(db, "nobody", ts) == {}
+    assert recent_toolset_calls(db, None, ts) == {}  # type: ignore[arg-type]

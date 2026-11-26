@@ -93,6 +93,11 @@ class TokenRow:
     # are kept on disk (prompt_lens_kept, app/proxy/prompt_lens_kept.py). Admin-only.
     # Appended last, per the rule above.
     keep_captures: int = 0
+    # Per-key permissions (0066). prompt_lens: the holder may use Prompt Lens on their own
+    # traffic; engine_facts: the key may read the static engine facts of its models.
+    # Appended last, per the rule above.
+    prompt_lens: int = 1
+    engine_facts: int = 1
 
 
 _SELECT_COLS = (
@@ -100,7 +105,8 @@ _SELECT_COLS = (
     "revoked_at, last_used_at, created_at, expires_at, rotated_at, rotated_from, "
     "rate_limit_tps, priority, paused_at, created_by, anthropic_relay, "
     "thinking_policy, prompt_diet, capture_until, guard, godmode_self_view, "
-    "kv_isolation, kv_tenant_id, kv_epoch, kv_max_pct_ram, kv_max_pct_nvme, keep_captures"
+    "kv_isolation, kv_tenant_id, kv_epoch, kv_max_pct_ram, kv_max_pct_nvme, keep_captures, "
+    "prompt_lens, engine_facts"
 )
 
 #: The values ``api_tokens.kv_isolation`` may hold.
@@ -127,6 +133,8 @@ _POLICY_COLS = (
     "kv_max_pct_ram",
     "kv_max_pct_nvme",
     "keep_captures",
+    "prompt_lens",
+    "engine_facts",
 )
 
 
@@ -220,6 +228,8 @@ class TokenRepo:
         thinking_policy: str = "client",
         guard: str | None = None,
         kv_isolation: str = "sharing",
+        prompt_lens: bool = False,
+        engine_facts: bool = True,
     ) -> None:
         """Insert a new API token row and commit.
 
@@ -241,8 +251,8 @@ class TokenRepo:
             "INSERT INTO api_tokens"
             "(id, name, prefix, hash, scope, allowed_models, expires_at, "
             " priority, created_by, anthropic_relay, thinking_policy, guard, "
-            " kv_isolation, kv_tenant_id) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " kv_isolation, kv_tenant_id, prompt_lens, engine_facts) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 token_id,
                 name,
@@ -258,6 +268,8 @@ class TokenRepo:
                 guard,
                 kv_isolation,
                 token_id,
+                int(prompt_lens),
+                int(engine_facts),
             ),
         )
         await self.db.commit()
@@ -721,6 +733,8 @@ class TokenRepo:
         kv_max_pct_ram: "int | None | _Unset" = _UNSET,
         kv_max_pct_nvme: "int | None | _Unset" = _UNSET,
         keep_captures: "bool | _Unset" = _UNSET,
+        prompt_lens: "bool | _Unset" = _UNSET,
+        engine_facts: "bool | _Unset" = _UNSET,
     ) -> bool:
         """PATCH-style update for the operator-editable fields.
 
@@ -776,6 +790,12 @@ class TokenRepo:
         if not isinstance(kv_max_pct_nvme, _Unset):
             sets.append("kv_max_pct_nvme = ?")
             params.append(kv_max_pct_nvme)
+        if not isinstance(prompt_lens, _Unset):
+            sets.append("prompt_lens = ?")
+            params.append(int(prompt_lens))
+        if not isinstance(engine_facts, _Unset):
+            sets.append("engine_facts = ?")
+            params.append(int(engine_facts))
         if keep_captures is True:
             # On: a fresh generation, unless it is already on (keeps its own).
             sets.append(

@@ -36,7 +36,7 @@ from app.kv.schemas import TokenCacheOut
 from app.proxy.prompt_diet import Diet, diet_json, parse_diet
 from app.proxy.thinking_policy import ThinkingPolicy
 from app.stats import request_history
-from app.tokens import series
+from app.tokens import permissions, series
 
 router = APIRouter(prefix="/api/tokens", tags=["tokens"])
 
@@ -104,6 +104,11 @@ class TokenCreate(BaseModel):
     #: Sensitive data guard, as on PATCH: null = use the platform setting, {"off": true}, or
     #: {"override": {...}}. Checked before the key exists, so a bad value creates nothing.
     guard: dict[str, Any] | None = None
+    #: Per-key permissions (0066). ``prompt_lens``: the key's holder may use Prompt Lens on their
+    #: own traffic (off for a new key until the admin ticks it); ``engine_facts``: the key may
+    #: read the static engine facts of the models it may use.
+    prompt_lens: bool = False
+    engine_facts: bool = True
 
     @model_validator(mode="before")
     @classmethod
@@ -156,6 +161,9 @@ class TokenUpdate(BaseModel):
     #: Prompt Lens keep captures: the key's last 50 finished requests (prompts
     #: included) are kept on disk. false turns it off and deletes what it kept.
     keep_captures: bool | None = None
+    #: Per-key permissions (0066): see TokenCreate.
+    prompt_lens: bool | None = None
+    engine_facts: bool | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -176,6 +184,8 @@ class TokenUpdate(BaseModel):
         "anthropic_relay",
         "thinking_policy",
         "kv_isolation",
+        "prompt_lens",
+        "engine_facts",
         mode="before",
     )
     @classmethod
@@ -263,6 +273,8 @@ def _enrich(
         "capture_until": r.capture_until,
         "guard": _json_or_none(r.guard),
         "keep_captures": bool(r.keep_captures),
+        "prompt_lens": bool(r.prompt_lens),
+        "engine_facts": bool(r.engine_facts),
         "usage_24h": {
             "requests": usage_requests,
             "prompt_tokens": usage_prompt,
@@ -351,6 +363,8 @@ async def create_token(body: TokenCreate, request: Request, _user: str = Depends
             thinking_policy=body.thinking_policy,
             guard=json.dumps(guard) if guard is not None else None,
             kv_isolation=default if default in KV_ISOLATION_VALUES else "sharing",
+            prompt_lens=body.prompt_lens,
+            engine_facts=body.engine_facts,
         )
         created = await repo.get(tid)
     if created is None:  # defensive — race between insert and read is impossible
@@ -367,6 +381,8 @@ async def create_token(body: TokenCreate, request: Request, _user: str = Depends
         "priority": created.priority,
         "anthropic_relay": bool(created.anthropic_relay),
         "thinking_policy": created.thinking_policy,
+        "prompt_lens": bool(created.prompt_lens),
+        "engine_facts": bool(created.engine_facts),
         "guard": guard,
         "guard_effective": effective(getattr(request.app.state, "guard_platform", None), guard),
     }
@@ -402,7 +418,7 @@ async def update_token(
         raise HTTPException(422, "priority cannot be null")
     changes: list[KvChange] = []
     try:
-        out = await _update_token(request, token_id, raw, changes)
+        out = await _update_token(request, token_id, raw, changes, _user)
         # Priority (the tenant's weight), caps and isolation all reach the daemon.
         policy_sync.request_sync(request.app.state)
         return out
@@ -413,7 +429,11 @@ async def update_token(
 
 
 async def _update_token(
-    request: Request, token_id: str, raw: dict[str, Any], change_out: list[KvChange]
+    request: Request,
+    token_id: str,
+    raw: dict[str, Any],
+    change_out: list[KvChange],
+    _user: str = "admin",
 ) -> dict[str, Any]:
     """``update_token``'s writes. The KV change, once committed, is appended to
     ``change_out`` so the caller can finish it whatever happens next."""
@@ -440,6 +460,11 @@ async def _update_token(
         change_out.append(
             await kv_change(request, repo, row, isolation=raw.get("kv_isolation"), reset=False)
         )
+        flips = [
+            (flag, bool(raw[flag]))
+            for flag in permissions.FLAGS
+            if raw.get(flag) is not None and bool(getattr(row, flag)) != bool(raw[flag])
+        ]
         await repo.update(
             token_id,
             name=raw.get("name", _UNSET),
@@ -453,6 +478,8 @@ async def _update_token(
             keep_captures=(
                 _UNSET if raw.get("keep_captures") is None else bool(raw["keep_captures"])
             ),
+            prompt_lens=raw.get("prompt_lens", _UNSET),
+            engine_facts=raw.get("engine_facts", _UNSET),
             capture_until=(
                 _UNSET
                 if raw.get("capture_hours") is None
@@ -474,6 +501,8 @@ async def _update_token(
             ),
         )
         detail = await _token_detail(db, token_id)
+    for flag, on in flips:
+        permissions.audit_change(request, token_id=token_id, username=_user, flag=flag, on=on)
     # get() found the row above and sqlite serialises the write, so the row
     # MUST still exist; the assert narrows the Optional and guards a race
     # with a concurrent DELETE.
@@ -665,6 +694,9 @@ class TokenListItem(BaseModel):
     guard: dict[str, Any] | None = None
     #: Prompt Lens keep captures: the last 50 finished requests are kept on disk.
     keep_captures: bool = False
+    #: Per-key permissions (0066).
+    prompt_lens: bool = True
+    engine_facts: bool = True
     usage_24h: TokenUsage24h
     paused_at: str | None
     is_paused: bool

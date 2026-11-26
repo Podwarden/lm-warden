@@ -23,7 +23,7 @@ import type { TokenDetail } from "@/lib/token-series";
 
 function AdminPromptLens() {
   const params = useSearchParams();
-  const { select, keys } = useLensDeepLink(params);
+  const { select, keys, view, session } = useLensDeepLink(params);
   const status = usePromptLensStatus();
   const onPick = useWritePick();
   // The key the link came from is the last of the set (its earlier keys first).
@@ -68,6 +68,8 @@ function AdminPromptLens() {
         keyNames={keyNames}
         select={select}
         onPick={onPick}
+        view={view}
+        session={session}
       />
     </FullScreen>
   );

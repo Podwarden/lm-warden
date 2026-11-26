@@ -168,7 +168,14 @@ def _compute(oai: dict[str, Any], key: Any, secret: str) -> Any:
     """The cobs2 pure pass over the translated body (worker thread)."""
     from app.proxy.routes import _cobs2_compute
 
-    return _cobs2_compute(oai, key, secret)
+    return _cobs2_compute(oai, key, secret, lens=True)
+
+
+def _count_marks(body: bytes) -> int | None:
+    """``cache_control`` marks in the relayed body (worker thread)."""
+    from app.lens.hot import cache_marks_of
+
+    return cache_marks_of(json.loads(body))
 
 
 def _translate(body: bytes) -> tuple[Any, dict[str, Any]]:
@@ -214,6 +221,8 @@ class _Prep:
     session_source: str | None = None
     pre: Any = None
     seen: Any = None
+    #: ``cache_control`` marks counted in the relayed body (None: not counted).
+    marks: int | None = None
 
 
 class RelayRecorder:
@@ -293,6 +302,12 @@ class RelayRecorder:
             logger.debug("relay record: translate failed", exc_info=True)
             return prep
         prep.model_in = req.model
+        if getattr(state, "cobs2_key", None) is not None:
+            # Prompt Lens evidence: with kvsig off the lens makes no call (A-5).
+            try:
+                prep.marks = await asyncio.to_thread(_count_marks, self._body)
+            except Exception:  # noqa: BLE001
+                prep.marks = None
         try:
             sess = extract_session(oai, self._request.headers, anthropic_affinity_key(req))
             prep.session_id = sess.id
@@ -319,9 +334,21 @@ class RelayRecorder:
                     token_scope=forest_fields.hkey(secret, self._token.id),
                     inflight_heads=[],
                     request_id=self.request_id,
+                    lens_heads=getattr(state, "lens_heads", None),
+                    lens_parents=getattr(state, "lens_parents", None),
+                    # The Messages API renders tools, then system, then messages.
+                    render_order="tools_first",
                 )
             except Exception:  # noqa: BLE001
                 logger.debug("relay record: lineage failed", exc_info=True)
+            # Prompt Lens: the changed system line's class, while the body is
+            # held (no token count yet: the numbers come at the finish).
+            try:
+                if prep.seen is not None and prep.seen.lens is not None:
+                    prep.seen.lens.admit(0)
+            except Exception as exc:  # noqa: BLE001
+                prep.seen.lens = None
+                logger.warning("relay record: lens failed: %s", type(exc).__name__)
         return prep
 
     async def _finish(
@@ -424,6 +451,33 @@ class RelayRecorder:
                     live.cobs2_shape = shape_json(pre.shape, break_index(obs))
                 except Exception:  # noqa: BLE001
                     pass
+        if usage:
+            live.cache_write_tokens = int(cache_create)
+        live.cache_marks = prep.marks
+        lens = seen.lens if seen is not None else None
+        if lens is not None:
+            # Prompt Lens layer 1 on a relay: the provider's rules (marks,
+            # minimum prefix) and its measured reuse. FAIL-OPEN.
+            try:
+                from app.lens import hot as lens_hot
+                from app.proxy.kv_scope import is_isolated
+
+                lens_hot.apply(
+                    live,
+                    lens.final(
+                        prompt_tokens=live.prompt_tokens,
+                        own_outcome=lens_hot.relay_outcome(bool(usage), int(cache_read)),
+                        actual_tokens=int(cache_read) if usage else None,
+                        relayed_to=self._upstream or "relay",
+                        # A-11: for an isolated key the warden strips the
+                        # client's marks itself, so "no marks" is never the
+                        # prompt's fault there.
+                        cache_marks=None if is_isolated(self._token) else prep.marks,
+                        provider_min=lens_hot.provider_min(model),
+                    ),
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("relay record: lens failed: %s", type(exc).__name__)
         if not live.cobs2_session and prep.session_key:
             live.cobs2_session = prep.session_key
         if live.cobs2_session:

@@ -138,3 +138,23 @@ def test_incomplete_until_finish_reason():
     assert not cap.complete
     cap.feed_sse(_sse({}, fr="stop"))
     assert cap.complete
+
+
+def test_message_is_assembled_once(monkeypatch):
+    """The kvsig reply id and the Prompt Lens verdicts read one assembly."""
+    from app.proxy.reaggregate import StreamAggregator
+
+    builds = {"n": 0}
+    real = StreamAggregator.build
+
+    def counting(self, *a, **k):
+        builds["n"] += 1
+        return real(self, *a, **k)
+
+    monkeypatch.setattr(StreamAggregator, "build", counting)
+    cap = ReplyCapture()
+    cap.feed_sse(_sse({"role": "assistant", "content": "ans"}))
+    cap.feed_sse(_sse({}, fr="stop"))
+    first = cap.message()
+    assert first == cap.message() and first["content"] == "ans"
+    assert builds["n"] == 1

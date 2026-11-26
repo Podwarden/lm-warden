@@ -2226,7 +2226,1057 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/me/godmode/ticket": {
+    "/api/me/engine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Engine Facts
+         * @description Static engine facts for the models this key may use.
+         */
+        get: operations["engine_facts_api_me_engine_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/requests/{req_id}/findings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Request Findings
+         * @description The findings on one of the signed-in key's own requests (own lens).
+         */
+        get: operations["my_request_findings_api_me_prompt_lens_requests__req_id__findings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/requests/{req_id}/findings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Request Findings
+         * @description The findings on any key's request, as the admin sees them.
+         */
+        get: operations["admin_request_findings_api_admin_prompt_lens_requests__req_id__findings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Sessions
+         * @description The signed-in key's scored sessions, newest first. No ``key`` parameter:
+         *     the key is the sign-in's (A-1).
+         */
+        get: operations["my_sessions_api_me_prompt_lens_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/sessions/{ref}/scorecard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Scorecard
+         * @description The scorecard of one of the signed-in key's own sessions.
+         */
+        get: operations["my_scorecard_api_me_prompt_lens_sessions__ref__scorecard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/sessions/{ref}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Report
+         * @description Download one of the signed-in key's own session reports (HTML or JSON): numbers and
+         *     codes with report-local labels, no key, session or request ids, no prompt or reply text;
+         *     tool names only with ``tool_names=1`` (analysis Task 4.4).
+         */
+        get: operations["my_report_api_me_prompt_lens_sessions__ref__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/sessions/{ref}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Report
+         * @description Download any key's session report; its first line says "admin view".
+         */
+        get: operations["admin_report_api_admin_prompt_lens_sessions__ref__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Sessions
+         * @description Every key's scored sessions, or those of the keys named by ``key=`` (repeat it
+         *     for several). ``model=`` and ``harness=`` repeat the same way.
+         */
+        get: operations["admin_sessions_api_admin_prompt_lens_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/sessions/{ref}/scorecard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Scorecard
+         * @description The scorecard of any key's session.
+         */
+        get: operations["admin_scorecard_api_admin_prompt_lens_sessions__ref__scorecard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/trends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Trends
+         * @description The signed-in key's medians per day, week or prompt version.
+         */
+        get: operations["my_trends_api_me_prompt_lens_trends_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Versions
+         * @description The prompt versions of the signed-in key's sessions.
+         */
+        get: operations["my_versions_api_me_prompt_lens_versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Compare
+         * @description Version ``b`` against version ``a`` of the signed-in key.
+         */
+        get: operations["my_compare_api_me_prompt_lens_compare_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/wontfix": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Wontfix
+         * @description The rules the signed-in key marked won't fix.
+         */
+        get: operations["my_wontfix_api_me_prompt_lens_wontfix_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/prompt-lens/wontfix/{rule}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * My Wontfix Mark
+         * @description Mark a rule won't fix for the signed-in key, for every version or one.
+         */
+        put: operations["my_wontfix_mark_api_me_prompt_lens_wontfix__rule__put"];
+        post?: never;
+        /**
+         * My Wontfix Unmark
+         * @description Remove the mark (the one for ``version``, or the one for every version).
+         */
+        delete: operations["my_wontfix_unmark_api_me_prompt_lens_wontfix__rule__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/trends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Trends
+         * @description One key's medians per day, week or prompt version.
+         */
+        get: operations["admin_trends_api_admin_prompt_lens_trends_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Versions
+         * @description One key's prompt versions.
+         */
+        get: operations["admin_versions_api_admin_prompt_lens_versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Compare
+         * @description Version ``b`` against version ``a`` of one key.
+         */
+        get: operations["admin_compare_api_admin_prompt_lens_compare_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/wontfix": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Wontfix
+         * @description The rules one key marked won't fix.
+         */
+        get: operations["admin_wontfix_api_admin_prompt_lens_wontfix_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/wontfix/{rule}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Admin Wontfix Mark
+         * @description Mark a rule won't fix for any key.
+         */
+        put: operations["admin_wontfix_mark_api_admin_prompt_lens_wontfix__rule__put"];
+        post?: never;
+        /**
+         * Admin Wontfix Unmark
+         * @description Remove a won't-fix mark of any key.
+         */
+        delete: operations["admin_wontfix_unmark_api_admin_prompt_lens_wontfix__rule__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prompt-lens/fleet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Fleet
+         * @description The distribution of the stored scores over every key (admin only, D-4).
+         */
+        get: operations["admin_fleet_api_admin_prompt_lens_fleet_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Requests List
+         * @description The caller's finished requests, newest first (``before`` pages on).
+         */
+        get: operations["requests_list_api_lens_me_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/requests/{req_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Request One
+         * @description One request: cache figures, the first part that broke reuse and its findings.
+         */
+        get: operations["request_one_api_lens_me_requests__req_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/requests/{req_id}/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Request Diff
+         * @description What changed against the parent turn (or ``against``): the first broken part, its
+         *     cause and position, and the token deltas. Codes and counts, never text.
+         */
+        get: operations["request_diff_api_lens_me_requests__req_id__diff_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/requests/{req_id}/findings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Request Findings
+         * @description The findings that touch one request, with the part each sits on.
+         */
+        get: operations["request_findings_api_lens_me_requests__req_id__findings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sessions
+         * @description Scored sessions, newest first, with their scores.
+         */
+        get: operations["sessions_api_lens_me_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/sessions/{ref}/scorecard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Scorecard
+         * @description One session's scores, inputs, ranges, confidence, top 3, findings and turn strip.
+         */
+        get: operations["scorecard_api_lens_me_sessions__ref__scorecard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/sessions/{ref}/cost": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Session Cost
+         * @description One session's cost (tokens, seconds, money with a price card) and per-turn bars.
+         */
+        get: operations["session_cost_api_lens_me_sessions__ref__cost_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/sessions/{ref}/findings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Session Findings
+         * @description A session's findings, optionally one layer or one rule.
+         */
+        get: operations["session_findings_api_lens_me_sessions__ref__findings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/sessions/{ref}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Session Report
+         * @description Download a session report (HTML or JSON): numbers and codes with report-local labels,
+         *     no key, session or request ids and no prompt or reply text. Tool names only with
+         *     ``tool_names=1``.
+         */
+        get: operations["session_report_api_lens_me_sessions__ref__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/trends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Trends
+         * @description Medians per day, week or prompt version, with the prompt versions seen.
+         */
+        get: operations["trends_api_lens_me_trends_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Versions
+         * @description The detected prompt versions: first and last seen, sessions, medians.
+         */
+        get: operations["versions_api_lens_me_versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Compare
+         * @description Version ``b`` against version ``a``: the verdict, the differences, like for like.
+         */
+        get: operations["compare_api_lens_me_compare_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/score": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Score
+         * @description leanprompt's measured score (``npx leanprompt score --from lmwarden``): prefill
+         *     efficiency, stability, generation waste, the number and the calls counted. Under 50
+         *     calls: ``{"scored": false, ...}`` and no number.
+         */
+        get: operations["score_api_lens_me_score_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/wontfix": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Wontfix List
+         * @description The rules marked won't fix.
+         */
+        get: operations["wontfix_list_api_lens_me_wontfix_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/me/wontfix/{rule}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Wontfix Mark
+         * @description Mark a rule won't fix for every version or one: it stops counting in the scores.
+         */
+        put: operations["wontfix_mark_api_lens_me_wontfix__rule__put"];
+        post?: never;
+        /**
+         * Wontfix Unmark
+         * @description Remove the mark (the one for ``version``, or the one for every version).
+         */
+        delete: operations["wontfix_unmark_api_lens_me_wontfix__rule__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Requests List
+         * @description The caller's finished requests, newest first (``before`` pages on).
+         */
+        get: operations["requests_list_api_lens_admin_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/requests/{req_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Request One
+         * @description One request: cache figures, the first part that broke reuse and its findings.
+         */
+        get: operations["request_one_api_lens_admin_requests__req_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/requests/{req_id}/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Request Diff
+         * @description What changed against the parent turn (or ``against``): the first broken part, its
+         *     cause and position, and the token deltas. Codes and counts, never text.
+         */
+        get: operations["request_diff_api_lens_admin_requests__req_id__diff_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/requests/{req_id}/findings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Request Findings
+         * @description The findings that touch one request, with the part each sits on.
+         */
+        get: operations["request_findings_api_lens_admin_requests__req_id__findings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sessions
+         * @description Scored sessions, newest first, with their scores.
+         */
+        get: operations["sessions_api_lens_admin_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/sessions/{ref}/scorecard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Scorecard
+         * @description One session's scores, inputs, ranges, confidence, top 3, findings and turn strip.
+         */
+        get: operations["scorecard_api_lens_admin_sessions__ref__scorecard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/sessions/{ref}/cost": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Session Cost
+         * @description One session's cost (tokens, seconds, money with a price card) and per-turn bars.
+         */
+        get: operations["session_cost_api_lens_admin_sessions__ref__cost_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/sessions/{ref}/findings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Session Findings
+         * @description A session's findings, optionally one layer or one rule.
+         */
+        get: operations["session_findings_api_lens_admin_sessions__ref__findings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/sessions/{ref}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Session Report
+         * @description Download a session report (HTML or JSON): numbers and codes with report-local labels,
+         *     no key, session or request ids and no prompt or reply text. Tool names only with
+         *     ``tool_names=1``.
+         */
+        get: operations["session_report_api_lens_admin_sessions__ref__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/trends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Trends
+         * @description Medians per day, week or prompt version, with the prompt versions seen.
+         */
+        get: operations["trends_api_lens_admin_trends_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Versions
+         * @description The detected prompt versions: first and last seen, sessions, medians.
+         */
+        get: operations["versions_api_lens_admin_versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Compare
+         * @description Version ``b`` against version ``a``: the verdict, the differences, like for like.
+         */
+        get: operations["compare_api_lens_admin_compare_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/score": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Score
+         * @description leanprompt's measured score (``npx leanprompt score --from lmwarden``): prefill
+         *     efficiency, stability, generation waste, the number and the calls counted. Under 50
+         *     calls: ``{"scored": false, ...}`` and no number.
+         */
+        get: operations["score_api_lens_admin_score_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/wontfix": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Wontfix List
+         * @description The rules marked won't fix.
+         */
+        get: operations["wontfix_list_api_lens_admin_wontfix_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/wontfix/{rule}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Wontfix Mark
+         * @description Mark a rule won't fix for every version or one: it stops counting in the scores.
+         */
+        put: operations["wontfix_mark_api_lens_admin_wontfix__rule__put"];
+        post?: never;
+        /**
+         * Wontfix Unmark
+         * @description Remove the mark (the one for ``version``, or the one for every version).
+         */
+        delete: operations["wontfix_unmark_api_lens_admin_wontfix__rule__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/admin/fleet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fleet
+         * @description The distribution of stored scores over every key (admin only, D-4).
+         */
+        get: operations["fleet_api_lens_admin_fleet_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lens/mcp": {
         parameters: {
             query?: never;
             header?: never;
@@ -2236,107 +3286,11 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Mint Ticket Legacy
-         * @deprecated
-         * @description A single-use ticket for the key holder's live stream (60 s). At most
-         *     30 a minute per key, and none while the key has 4 streams open (429 with
-         *     Retry-After).
+         * Mcp
+         * @description MCP over Streamable HTTP (JSON responses): initialize, tools/list, tools/call,
+         *     resources/list, resources/read.
          */
-        post: operations["mint_ticket_legacy_api_me_godmode_ticket_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/godmode/stream": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Key Stream Legacy
-         * @deprecated
-         * @description The signed-in key's own requests, live (SSE): the stream is bound to the key
-         *     that minted the ticket and takes no key parameter. Ends when the key is
-         *     revoked, rotated or paused, the sign-in ends or expires, or Prompt Lens is turned
-         *     off. At most 4 open per key (429).
-         */
-        get: operations["key_stream_legacy_api_me_godmode_stream_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/godmode/requests/{req_id}/section/{kind}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * My Section Legacy
-         * @deprecated
-         * @description One whole section of one of the signed-in key's OWN requests (G9).
-         *
-         *     One 404 ``"no capture of yours with this id"`` for Prompt Lens off, an
-         *     unknown id, a released or expired one, and another key's. The body never
-         *     carries the key id or the hub's seq.
-         */
-        get: operations["my_section_legacy_api_me_godmode_requests__req_id__section__kind__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/godmode/kept": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * My Kept Legacy
-         * @deprecated
-         * @description The signed-in key's kept captures, newest first (at most 50: an admin
-         *     turned keep_captures on for this key). 404 when Prompt Lens is off.
-         */
-        get: operations["my_kept_legacy_api_me_godmode_kept_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/godmode/kept/{req_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * My Kept Capture Legacy
-         * @deprecated
-         * @description One of the key's OWN kept captures, in the key holder's view
-         *     (``for_key_holder`` on every event). One 404 for off, unknown and another
-         *     key's id.
-         */
-        get: operations["my_kept_capture_legacy_api_me_godmode_kept__req_id__get"];
-        put?: never;
-        post?: never;
+        post: operations["mcp_api_lens_mcp_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2738,6 +3692,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/lens/rate-cards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Lens Rate Cards
+         * @description The platform's price cards, the shipped list prices (not yet confirmed)
+         *     and each own model's reference card.
+         */
+        get: operations["get_lens_rate_cards_api_admin_lens_rate_cards_get"];
+        /**
+         * Put Lens Rate Cards
+         * @description Add or replace price cards (one per provider, model and effective date).
+         */
+        put: operations["put_lens_rate_cards_api_admin_lens_rate_cards_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/lens/reference-card/{model_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Lens Reference Card
+         * @description Price own model ``model_id`` as another provider's card (money is shown
+         *     for own engines only with one); null clears it.
+         */
+        put: operations["put_lens_reference_card_api_admin_lens_reference_card__model_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/chat/completions": {
         parameters: {
             query?: never;
@@ -2963,139 +3963,6 @@ export interface paths {
         };
         /** Prompt Lens Stream */
         get: operations["prompt_lens_stream_api_admin_prompt_lens_stream_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/admin/godmode/media/{media_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Prompt Lens Media Legacy
-         * @deprecated
-         * @description Serve one stored Prompt Lens image (spec 2026-08-03, §5). Plain authed
-         *     fetch (NOT EventSource), so require_jwt applies directly — no SSE ticket.
-         *     Decoding happens here, off the proxy hot path.
-         */
-        get: operations["prompt_lens_media_legacy_api_admin_godmode_media__media_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/admin/godmode/requests/{req_id}/section/{kind}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Prompt Lens Section Legacy
-         * @deprecated
-         * @description One whole section of any key's request (G9): the dock's pop-up. 404 when
-         *     neither memory nor the kept captures have it. While Prompt Lens is off only
-         *     kept captures (on disk) are served: an admin can still read them.
-         */
-        get: operations["prompt_lens_section_legacy_api_admin_godmode_requests__req_id__section__kind__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/admin/godmode/kept": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Prompt Lens Kept List Legacy
-         * @deprecated
-         * @description Kept captures (keys with keep_captures on), newest first. Also while
-         *     Prompt Lens is off: what is on disk stays readable to an admin.
-         */
-        get: operations["prompt_lens_kept_list_legacy_api_admin_godmode_kept_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/admin/godmode/kept/{req_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Prompt Lens Kept Capture Legacy
-         * @deprecated
-         * @description One kept capture of any key, as the admin sees it (also while Prompt Lens
-         *     is off). 404 unknown.
-         */
-        get: operations["prompt_lens_kept_capture_legacy_api_admin_godmode_kept__req_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/admin/godmode/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Prompt Lens Status Legacy
-         * @deprecated
-         * @description Whether Prompt Lens is on. The token page asks before it renders the dock
-         *     at all (spec 2026-09-18 §3.5). A plain authed fetch, like ``/media``: no
-         *     SSE ticket, and nothing is subscribed.
-         */
-        get: operations["prompt_lens_status_legacy_api_admin_godmode_status_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/admin/godmode/stream": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Prompt Lens Stream Legacy
-         * @deprecated
-         */
-        get: operations["prompt_lens_stream_legacy_api_admin_godmode_stream_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4198,6 +5065,42 @@ export interface components {
             model?: string | null;
             settings?: components["schemas"]["SettingsPatch"] | null;
         };
+        /** Compare */
+        Compare: {
+            /** Model */
+            model?: string | null;
+            /** A */
+            a: string;
+            /** B */
+            b: string;
+            /** A Label */
+            a_label: string;
+            /** B Label */
+            b_label: string;
+            /** N A */
+            n_a: number;
+            /** N B */
+            n_b: number;
+            /** Diffs */
+            diffs: {
+                [key: string]: number | null;
+            };
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "better_clear" | "better_unclear" | "no_change" | "worse_clear" | "worse_unclear" | "not_enough";
+            /** Like For Like */
+            like_for_like: boolean;
+            /** Note */
+            note?: string | null;
+            /** Resolved */
+            resolved: string[];
+            /** New */
+            new: string[];
+            /** P */
+            p?: number | null;
+        };
         /** ConnectClient */
         ConnectClient: {
             /** Id */
@@ -4524,6 +5427,45 @@ export interface components {
              */
             argv: string[];
         };
+        /** EngineFacts */
+        EngineFacts: {
+            /**
+             * V
+             * @default 1
+             */
+            v: number;
+            /** Warden Version */
+            warden_version: string;
+            /** Models */
+            models: components["schemas"]["EngineModel"][];
+        };
+        /** EngineModel */
+        EngineModel: {
+            /** Model */
+            model: string;
+            /** Backend */
+            backend: string | null;
+            /** Running */
+            running: boolean;
+            /** Prefix Caching */
+            prefix_caching: boolean | null;
+            /** Engine Block Tokens */
+            engine_block_tokens: number | null;
+            /** Engine Match Unit Tokens */
+            engine_match_unit_tokens: number | null;
+            /** Engine Drops Last Block */
+            engine_drops_last_block: boolean | null;
+            /** Speculative */
+            speculative: string | null;
+            /** Max Model Len */
+            max_model_len: number | null;
+            /** Replicas */
+            replicas: number;
+            /** Cache Aware Routing */
+            cache_aware_routing: boolean;
+            /** Unknown */
+            unknown: string[];
+        };
         /** EngineSpecBody */
         EngineSpecBody: {
             /** Channel */
@@ -4558,6 +5500,27 @@ export interface components {
              * @description Set to a short sanitised code (e.g. 'docker_hub_unavailable') when the upstream tag fetch failed; versions then come from stale cache or are empty. The field never causes the request to fail.
              */
             error?: string | null;
+        };
+        /**
+         * FindingGuard
+         * @description R-09 only: the guard rule ids and the roles they matched in, from the guard's data.
+         */
+        FindingGuard: {
+            /** Rules */
+            rules: string[];
+            /** Where */
+            where: string[];
+        };
+        /** FindingSaving */
+        FindingSaving: {
+            /** Tokens */
+            tokens: number;
+            /** Prefill S */
+            prefill_s?: number | null;
+            /** Decode S */
+            decode_s?: number | null;
+            /** Money */
+            money?: number | null;
         };
         /** FitPreviewBreakdown */
         FitPreviewBreakdown: {
@@ -4649,6 +5612,19 @@ export interface components {
             recommended_max_model_len?: number | null;
             /** Warnings */
             warnings?: string[];
+        };
+        /** Fleet */
+        Fleet: {
+            /** Model */
+            model?: string | null;
+            /** Sessions */
+            sessions: number;
+            /** Keys */
+            keys: number;
+            overall: components["schemas"]["Quartiles"];
+            E: components["schemas"]["Quartiles"];
+            C: components["schemas"]["Quartiles"];
+            R: components["schemas"]["Quartiles"];
         };
         /** ForkBody */
         ForkBody: {
@@ -5063,6 +6039,204 @@ export interface components {
             message: string;
         };
         /**
+         * LeanpromptScore
+         * @description leanprompt's measured score. Without enough calls only ``scored`` (false), ``reason``
+         *     and ``calls`` are set, never a number (A-7).
+         */
+        LeanpromptScore: {
+            /** Scored */
+            scored: boolean;
+            /** Reason */
+            reason?: string | null;
+            /** Calls */
+            calls: number;
+            /** Kind */
+            kind?: string | null;
+            /** Leanprompt */
+            leanprompt?: number | null;
+            /** Prefill Efficiency */
+            prefill_efficiency?: number | null;
+            /** Stability */
+            stability?: number | null;
+            /** Generation Waste */
+            generation_waste?: number | null;
+            /** Continuing Calls */
+            continuing_calls?: number | null;
+            /** Source */
+            source: string;
+            /** Since */
+            since?: number | null;
+            /** Model */
+            model?: string | null;
+        };
+        /** LensDiff */
+        LensDiff: {
+            /** Request Id */
+            request_id: string;
+            /** Against */
+            against?: string | null;
+            /** Continues */
+            continues: boolean;
+            /** First Change */
+            first_change?: {
+                [key: string]: unknown;
+            } | null;
+            /** Tokens */
+            tokens?: {
+                [key: string]: number;
+            } | null;
+            /** A */
+            a?: {
+                [key: string]: unknown;
+            } | null;
+            /** B */
+            b: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * LensFinding
+         * @description One finding on the request: ``Finding.to_json()`` and where it sits.
+         *     ``counts["info"] == 1`` marks a notice (never a fix); E-01's ``counts["class"]``
+         *     indexes ``app.lens.probes.SPAN_CLASSES``; ``tool`` is a keyed hash.
+         */
+        LensFinding: {
+            /** Rule */
+            rule: string;
+            /** Turns */
+            turns: number[];
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Tool */
+            tool?: string | null;
+            /** Cause */
+            cause?: string | null;
+            saving: components["schemas"]["FindingSaving"];
+            /**
+             * Confidence
+             * @enum {string}
+             */
+            confidence: "high" | "medium" | "low";
+            /**
+             * Muted
+             * @default false
+             */
+            muted: boolean;
+            /** Muted By */
+            muted_by?: string | null;
+            /** Part */
+            part?: string | null;
+            guard?: components["schemas"]["FindingGuard"] | null;
+        };
+        /**
+         * LensRateCard
+         * @description One platform price card (``rate_cards`` row with no org), in micro-units
+         *     of the currency per million tokens (100000 = 0.10).
+         */
+        LensRateCard: {
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+            /**
+             * Currency
+             * @default USD
+             */
+            currency: string;
+            /** Input Per M Micros */
+            input_per_m_micros: number;
+            /** Output Per M Micros */
+            output_per_m_micros: number;
+            /** Cache Read Per M Micros */
+            cache_read_per_m_micros?: number | null;
+            /** Cache Write Per M Micros */
+            cache_write_per_m_micros?: number | null;
+            /** Effective From */
+            effective_from: string;
+        };
+        /** LensRateCardsPut */
+        LensRateCardsPut: {
+            /** Cards */
+            cards: components["schemas"]["LensRateCard"][];
+        };
+        /**
+         * LensReferenceCard
+         * @description Price an own model as ``provider``/``model``; both null clears it.
+         */
+        LensReferenceCard: {
+            /** Provider */
+            provider?: string | null;
+            /** Model */
+            model?: string | null;
+        };
+        /**
+         * LensRequest
+         * @description One request: figures, the layer 1 verdict and the findings that touch it.
+         */
+        LensRequest: {
+            /** Request Id */
+            request_id: string;
+            /** Finished At */
+            finished_at: number;
+            /** Model */
+            model: string;
+            /** Relayed */
+            relayed: boolean;
+            /** Finish Reason */
+            finish_reason?: string | null;
+            /** Prompt Tokens */
+            prompt_tokens: number;
+            /** Cached Tokens */
+            cached_tokens?: number | null;
+            /** Completion Tokens */
+            completion_tokens: number;
+            /** Reusable Tokens */
+            reusable_tokens?: number | null;
+            /** Edge */
+            edge?: string | null;
+            /** Ttft S */
+            ttft_s?: number | null;
+            /** Break */
+            break?: string | null;
+            /** Cause */
+            cause?: string | null;
+            /** Span Class */
+            span_class?: string | number | null;
+            /** Span Line */
+            span_line?: number | null;
+            /** Lost Tokens */
+            lost_tokens?: number | null;
+            /** Counterfactual Tokens */
+            counterfactual_tokens?: number | null;
+            /** Other Breaks */
+            other_breaks?: number | null;
+            /** Version */
+            version?: string | null;
+            /** Session Id */
+            session_id?: string | null;
+            /** Turn */
+            turn?: number | null;
+            /** Findings */
+            findings: {
+                [key: string]: unknown;
+            }[];
+            /** Names */
+            names: {
+                [key: string]: string;
+            };
+        };
+        /** LensRequestList */
+        LensRequestList: {
+            /** Requests */
+            requests: {
+                [key: string]: unknown;
+            }[];
+            /** Next Before */
+            next_before?: number | null;
+        };
+        /**
          * LoadProgressOut
          * @description The load-progress snapshot for one active model load.
          *
@@ -5110,6 +6284,17 @@ export interface components {
             username: string;
             /** Password */
             password: string;
+        };
+        /** MarkOut */
+        MarkOut: {
+            /** Rule */
+            rule: string;
+            /** Version */
+            version?: string | null;
+            /** By */
+            by: string;
+            /** At */
+            at: number;
         };
         /**
          * MatchedModelRef
@@ -5374,6 +6559,8 @@ export interface components {
             thinking_policy_supported: boolean | null;
             layout_notice: components["schemas"]["LayoutNotice"] | null;
             engine: components["schemas"]["ModelEngine"] | null;
+            /** Engine Vllm Version */
+            engine_vllm_version: string | null;
             /**
              * Cache Isolation
              * @enum {string}
@@ -5494,8 +6681,7 @@ export interface components {
          * PromptLensStatus
          * @description Whether Prompt Lens is on, and where that comes from (the Settings page
          *     shows it): ``source`` is ``setting`` (the runtime setting
-         *     ``prompt_lens_enabled``), ``env`` (``env_var``: ``VW_PROMPT_LENS_ENABLED``
-         *     or the deprecated ``VW_GODMODE_ENABLED``) or ``default`` (off).
+         *     ``prompt_lens_enabled``), ``env`` (``env_var``: ``VW_PROMPT_LENS_ENABLED``) or ``default`` (off).
          */
         PromptLensStatus: {
             /** Enabled */
@@ -5512,6 +6698,32 @@ export interface components {
             /** Env Value */
             env_value?: boolean | null;
             last_change?: components["schemas"]["PromptLensChange"] | null;
+        };
+        /** Quartiles */
+        Quartiles: {
+            /** N */
+            n: number;
+            /** P10 */
+            p10?: number | null;
+            /** P25 */
+            p25?: number | null;
+            /** P50 */
+            p50?: number | null;
+            /** P75 */
+            p75?: number | null;
+            /** P90 */
+            p90?: number | null;
+        };
+        /** RequestFindings */
+        RequestFindings: {
+            /** Turn */
+            turn?: number | null;
+            /** Findings */
+            findings: components["schemas"]["LensFinding"][];
+            /** Names */
+            names: {
+                [key: string]: string;
+            };
         };
         /** RouterSettingsOut */
         RouterSettingsOut: {
@@ -5689,6 +6901,158 @@ export interface components {
             passthrough_cache_isolation: "not_isolated_at_provider";
         };
         /**
+         * ScoreOut
+         * @description One score, or the reason there is none (A-7): a score that was not
+         *     computed has no ``value``, ``lo`` or ``hi`` at all, never a placeholder.
+         */
+        ScoreOut: {
+            /**
+             * Layer
+             * @enum {string}
+             */
+            layer: "E" | "C" | "R" | "overall";
+            /** Scored */
+            scored: boolean;
+            /** Turns */
+            turns: number;
+            /** Reason */
+            reason?: string | null;
+            /** Value */
+            value?: number | null;
+            /** Lo */
+            lo?: number | null;
+            /** Hi */
+            hi?: number | null;
+            /** Confidence */
+            confidence?: ("high" | "medium" | "low") | null;
+            /** Inputs */
+            inputs?: {
+                [key: string]: unknown;
+            } | null;
+            /** Excluded Rules */
+            excluded_rules?: string[] | null;
+        };
+        /** Scorecard */
+        Scorecard: {
+            session: components["schemas"]["ScorecardSession"];
+            /** Scores */
+            scores: {
+                [key: string]: components["schemas"]["ScoreOut"];
+            };
+            /** Top */
+            top: components["schemas"]["ScorecardFinding"][];
+            notice?: components["schemas"]["ScorecardFinding"] | null;
+            /** Findings */
+            findings: components["schemas"]["ScorecardFinding"][];
+            /** Not Scored */
+            not_scored: {
+                [key: string]: string | null;
+            };
+            /** Turns */
+            turns: components["schemas"]["TurnBar"][];
+            cost: components["schemas"]["ScorecardCost"];
+            /** Score Version */
+            score_version: number;
+            /** Weights */
+            weights: {
+                [key: string]: number;
+            };
+            /** Review */
+            review?: {
+                [key: string]: unknown;
+            } | null;
+            /** Names */
+            names: {
+                [key: string]: string;
+            };
+        };
+        /** ScorecardCard */
+        ScorecardCard: {
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+            /** Currency */
+            currency: string;
+            /** Effective From */
+            effective_from: string;
+        };
+        /** ScorecardCost */
+        ScorecardCost: {
+            /** Prompt Tokens */
+            prompt_tokens: number;
+            /** Reused Tokens */
+            reused_tokens: number;
+            /** Recomputed Tokens */
+            recomputed_tokens: number;
+            /** Fixable Lost Tokens */
+            fixable_lost_tokens: number;
+            card?: components["schemas"]["ScorecardCard"] | null;
+            /** Actual Input */
+            actual_input?: number | null;
+            /** Saving */
+            saving?: number | null;
+            /** Saving Pct */
+            saving_pct?: number | null;
+        };
+        /** ScorecardFinding */
+        ScorecardFinding: {
+            /** Rule */
+            rule: string;
+            /** Turns */
+            turns: number[];
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Tool */
+            tool?: string | null;
+            /** Cause */
+            cause?: string | null;
+            saving: components["schemas"]["FindingSaving"];
+            /**
+             * Confidence
+             * @enum {string}
+             */
+            confidence: "high" | "medium" | "low";
+            /**
+             * Muted
+             * @default false
+             */
+            muted: boolean;
+            /** Muted By */
+            muted_by?: string | null;
+            /** Part */
+            part?: string | null;
+            guard?: components["schemas"]["FindingGuard"] | null;
+            /**
+             * Layer
+             * @enum {string}
+             */
+            layer: "E" | "C" | "R";
+        };
+        /** ScorecardSession */
+        ScorecardSession: {
+            /** Harness */
+            harness: string;
+            /** Model */
+            model: string;
+            /** Route */
+            route: string;
+            /** Turns */
+            turns: number;
+            /** Duration S */
+            duration_s: number;
+            /** Version */
+            version?: string | null;
+            /** Version Id */
+            version_id?: string | null;
+            /** Version Since */
+            version_since?: number | null;
+            /** Key Id */
+            key_id?: string | null;
+        };
+        /**
          * SectionResponse
          * @description One whole section of a request (G9), as ``GET .../section/{kind}`` returns it.
          *
@@ -5739,6 +7103,76 @@ export interface components {
              * @default false
              */
             kept: boolean;
+        };
+        /** SessionCost */
+        SessionCost: {
+            /** Cost */
+            cost: {
+                [key: string]: unknown;
+            };
+            /** Turns */
+            turns: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** SessionFindings */
+        SessionFindings: {
+            /** Findings */
+            findings: {
+                [key: string]: unknown;
+            }[];
+            /** Not Scored */
+            not_scored: {
+                [key: string]: string | null;
+            };
+            /** Names */
+            names: {
+                [key: string]: string;
+            };
+        };
+        /** SessionList */
+        SessionList: {
+            /** Sessions */
+            sessions: components["schemas"]["SessionListItem"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** SessionListItem */
+        SessionListItem: {
+            /** Session Id */
+            session_id: string;
+            /** Model */
+            model: string;
+            /** Route */
+            route: string;
+            /** Harness */
+            harness: string;
+            /** Turns */
+            turns: number;
+            /** Started */
+            started: number;
+            /** Last At */
+            last_at: number;
+            /** Overall */
+            overall?: number | null;
+            /** E */
+            e?: number | null;
+            /** C */
+            c?: number | null;
+            /** R */
+            r?: number | null;
+            /** Confidence */
+            confidence?: ("high" | "medium" | "low") | null;
+            /** Reasons */
+            reasons: {
+                [key: string]: string | null;
+            };
+            /** Score Version */
+            score_version: number;
+            /** Key Name */
+            key_name?: string | null;
+            /** Key Id */
+            key_id?: string | null;
         };
         /** SettingsPatch */
         SettingsPatch: {
@@ -6038,6 +7472,16 @@ export interface components {
             guard?: {
                 [key: string]: unknown;
             } | null;
+            /**
+             * Prompt Lens
+             * @default false
+             */
+            prompt_lens: boolean;
+            /**
+             * Engine Facts
+             * @default true
+             */
+            engine_facts: boolean;
         };
         /**
          * TokenListItem
@@ -6095,6 +7539,16 @@ export interface components {
              * @default false
              */
             keep_captures: boolean;
+            /**
+             * Prompt Lens
+             * @default true
+             */
+            prompt_lens: boolean;
+            /**
+             * Engine Facts
+             * @default true
+             */
+            engine_facts: boolean;
             usage_24h: components["schemas"]["TokenUsage24h"];
             /** Paused At */
             paused_at: string | null;
@@ -6176,6 +7630,10 @@ export interface components {
             kv_max_pct_nvme?: number | null;
             /** Keep Captures */
             keep_captures?: boolean | null;
+            /** Prompt Lens */
+            prompt_lens?: boolean | null;
+            /** Engine Facts */
+            engine_facts?: boolean | null;
         };
         /** TokenUsage24h */
         TokenUsage24h: {
@@ -6195,6 +7653,45 @@ export interface components {
             /** Result */
             result: unknown;
         };
+        /** TrendPointOut */
+        TrendPointOut: {
+            /** Bucket */
+            bucket: string;
+            /** N */
+            n: number;
+            /** Medians */
+            medians: {
+                [key: string]: number | null;
+            };
+            /** Band */
+            band?: number[] | null;
+            /** Start */
+            start: number;
+            /** Label */
+            label?: string | null;
+        };
+        /** Trends */
+        Trends: {
+            /**
+             * By
+             * @enum {string}
+             */
+            by: "day" | "week" | "version";
+            /** Model */
+            model?: string | null;
+            /** Models */
+            models: string[];
+            /** Points */
+            points: components["schemas"]["TrendPointOut"][];
+            /** Versions */
+            versions: components["schemas"]["VersionOut"][];
+            /** Weights */
+            weights: {
+                [key: string]: number;
+            };
+            /** Score Version */
+            score_version: number;
+        };
         /** TryStackRequest */
         TryStackRequest: {
             /** Channel */
@@ -6213,6 +7710,21 @@ export interface components {
             result: "ok" | "failed";
             /** Error */
             error?: string | null;
+        };
+        /** TurnBar */
+        TurnBar: {
+            /** N */
+            n: number;
+            /** Req Id */
+            req_id: string;
+            /** Reused */
+            reused: number;
+            /** Recomputed */
+            recomputed: number;
+            /** New */
+            new: number;
+            /** Markers */
+            markers: string[];
         };
         /** TurnBody */
         TurnBody: {
@@ -6238,6 +7750,38 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** VersionOut */
+        VersionOut: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Since */
+            since: number;
+            /** Last At */
+            last_at: number;
+            /** N */
+            n: number;
+            /** Medians */
+            medians: {
+                [key: string]: number | null;
+            };
+            /** Rules */
+            rules: {
+                [key: string]: number;
+            };
+            /** Resolved */
+            resolved: string[];
+            /** New */
+            new: string[];
+        };
+        /** Versions */
+        Versions: {
+            /** Model */
+            model?: string | null;
+            /** Versions */
+            versions: components["schemas"]["VersionOut"][];
         };
         /**
          * VitalsOut
@@ -6287,6 +7831,21 @@ export interface components {
             cpu_cores?: number | null;
             /** Gpu Mem Mib */
             gpu_mem_mib?: number | null;
+        };
+        /** WontfixBody */
+        WontfixBody: {
+            /** Version */
+            version?: string | null;
+        };
+        /** WontfixMarks */
+        WontfixMarks: {
+            /** Marks */
+            marks: components["schemas"]["MarkOut"][];
+            /**
+             * Changed
+             * @default true
+             */
+            changed: boolean;
         };
     };
     responses: never;
@@ -9557,7 +11116,7 @@ export interface operations {
             };
         };
     };
-    mint_ticket_legacy_api_me_godmode_ticket_post: {
+    engine_facts_api_me_engine_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -9572,21 +11131,149 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: string;
-                    };
+                    "application/json": components["schemas"]["EngineFacts"];
                 };
             };
         };
     };
-    key_stream_legacy_api_me_godmode_stream_get: {
+    my_request_findings_api_me_prompt_lens_requests__req_id__findings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestFindings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_request_findings_api_admin_prompt_lens_requests__req_id__findings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestFindings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_sessions_api_me_prompt_lens_sessions_get: {
         parameters: {
             query?: {
-                /** @description Single-use ticket from POST /api/me/prompt-lens/ticket (the key's sign-in). */
-                ticket?: string | null;
+                since?: number | null;
+                model?: string[] | null;
+                harness?: string[] | null;
+                limit?: number;
+                cursor?: string | null;
             };
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_scorecard_api_me_prompt_lens_sessions__ref__scorecard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scorecard"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_report_api_me_prompt_lens_sessions__ref__report_get: {
+        parameters: {
+            query?: {
+                format?: "json" | "html";
+                tool_names?: number;
+            };
+            header?: never;
+            path: {
+                ref: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9611,16 +11298,15 @@ export interface operations {
             };
         };
     };
-    my_section_legacy_api_me_godmode_requests__req_id__section__kind__get: {
+    admin_report_api_admin_prompt_lens_sessions__ref__report_get: {
         parameters: {
             query?: {
-                /** @description Absolute char offset (text sections). */
-                from?: number;
+                format?: "json" | "html";
+                tool_names?: number;
             };
             header?: never;
             path: {
-                req_id: string;
-                kind: "thinking" | "reply" | "tool_calls" | "tool_results" | "prompt";
+                ref: string;
             };
             cookie?: never;
         };
@@ -9632,7 +11318,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SectionResponse"];
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -9646,7 +11332,174 @@ export interface operations {
             };
         };
     };
-    my_kept_legacy_api_me_godmode_kept_get: {
+    admin_sessions_api_admin_prompt_lens_sessions_get: {
+        parameters: {
+            query?: {
+                since?: number | null;
+                model?: string[] | null;
+                harness?: string[] | null;
+                key?: string[] | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_scorecard_api_admin_prompt_lens_sessions__ref__scorecard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scorecard"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_trends_api_me_prompt_lens_trends_get: {
+        parameters: {
+            query?: {
+                by?: "day" | "week" | "version";
+                model?: string | null;
+                since?: number | null;
+                tz?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Trends"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_versions_api_me_prompt_lens_versions_get: {
+        parameters: {
+            query?: {
+                model?: string | null;
+                since?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Versions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_compare_api_me_prompt_lens_compare_get: {
+        parameters: {
+            query: {
+                a: string;
+                b: string;
+                model?: string | null;
+                since?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Compare"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_wontfix_api_me_prompt_lens_wontfix_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -9661,14 +11514,356 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["KeptList"];
+                    "application/json": components["schemas"]["WontfixMarks"];
                 };
             };
         };
     };
-    my_kept_capture_legacy_api_me_godmode_kept__req_id__get: {
+    my_wontfix_mark_api_me_prompt_lens_wontfix__rule__put: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                rule: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WontfixBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WontfixMarks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_wontfix_unmark_api_me_prompt_lens_wontfix__rule__delete: {
+        parameters: {
+            query?: {
+                version?: string | null;
+            };
+            header?: never;
+            path: {
+                rule: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WontfixMarks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_trends_api_admin_prompt_lens_trends_get: {
+        parameters: {
+            query: {
+                key: string;
+                by?: "day" | "week" | "version";
+                model?: string | null;
+                since?: number | null;
+                tz?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Trends"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_versions_api_admin_prompt_lens_versions_get: {
+        parameters: {
+            query: {
+                key: string;
+                model?: string | null;
+                since?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Versions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_compare_api_admin_prompt_lens_compare_get: {
+        parameters: {
+            query: {
+                key: string;
+                a: string;
+                b: string;
+                model?: string | null;
+                since?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Compare"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_wontfix_api_admin_prompt_lens_wontfix_get: {
+        parameters: {
+            query: {
+                key: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WontfixMarks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_wontfix_mark_api_admin_prompt_lens_wontfix__rule__put: {
+        parameters: {
+            query: {
+                key: string;
+            };
+            header?: never;
+            path: {
+                rule: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WontfixBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WontfixMarks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_wontfix_unmark_api_admin_prompt_lens_wontfix__rule__delete: {
+        parameters: {
+            query: {
+                key: string;
+                version?: string | null;
+            };
+            header?: never;
+            path: {
+                rule: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WontfixMarks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_fleet_api_admin_prompt_lens_fleet_get: {
+        parameters: {
+            query?: {
+                model?: string | null;
+                since?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Fleet"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    requests_list_api_lens_me_requests_get: {
+        parameters: {
+            query?: {
+                key?: string | null;
+                since?: number | null;
+                before?: number | null;
+                model?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LensRequestList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_one_api_lens_me_requests__req_id__get: {
+        parameters: {
+            query?: {
+                key?: string | null;
+            };
             header?: never;
             path: {
                 req_id: string;
@@ -9683,7 +11878,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["KeptCapture"];
+                    "application/json": components["schemas"]["LensRequest"];
                 };
             };
             /** @description Validation Error */
@@ -9693,6 +11888,1082 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_diff_api_lens_me_requests__req_id__diff_get: {
+        parameters: {
+            query?: {
+                against?: string | null;
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LensDiff"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_findings_api_lens_me_requests__req_id__findings_get: {
+        parameters: {
+            query?: {
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sessions_api_lens_me_sessions_get: {
+        parameters: {
+            query?: {
+                since?: number | null;
+                model?: string | null;
+                key?: string | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scorecard_api_lens_me_sessions__ref__scorecard_get: {
+        parameters: {
+            query?: {
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scorecard"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_cost_api_lens_me_sessions__ref__cost_get: {
+        parameters: {
+            query?: {
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionCost"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_findings_api_lens_me_sessions__ref__findings_get: {
+        parameters: {
+            query?: {
+                layer?: ("E" | "C" | "R") | null;
+                rule?: string | null;
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionFindings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_report_api_lens_me_sessions__ref__report_get: {
+        parameters: {
+            query?: {
+                format?: "json" | "html";
+                tool_names?: number;
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trends_api_lens_me_trends_get: {
+        parameters: {
+            query?: {
+                by?: "day" | "week" | "version";
+                model?: string | null;
+                since?: number | null;
+                tz?: number;
+                key?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Trends"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    versions_api_lens_me_versions_get: {
+        parameters: {
+            query?: {
+                model?: string | null;
+                since?: number | null;
+                key?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Versions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compare_api_lens_me_compare_get: {
+        parameters: {
+            query: {
+                a: string;
+                b: string;
+                model?: string | null;
+                since?: number | null;
+                key?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Compare"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    score_api_lens_me_score_get: {
+        parameters: {
+            query?: {
+                since?: number | null;
+                model?: string | null;
+                key?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeanpromptScore"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    wontfix_list_api_lens_me_wontfix_get: {
+        parameters: {
+            query?: {
+                key?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WontfixMarks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    wontfix_mark_api_lens_me_wontfix__rule__put: {
+        parameters: {
+            query?: {
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                rule: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WontfixBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WontfixMarks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    wontfix_unmark_api_lens_me_wontfix__rule__delete: {
+        parameters: {
+            query?: {
+                version?: string | null;
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                rule: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WontfixMarks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    requests_list_api_lens_admin_requests_get: {
+        parameters: {
+            query?: {
+                key?: string | null;
+                since?: number | null;
+                before?: number | null;
+                model?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LensRequestList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_one_api_lens_admin_requests__req_id__get: {
+        parameters: {
+            query?: {
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LensRequest"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_diff_api_lens_admin_requests__req_id__diff_get: {
+        parameters: {
+            query?: {
+                against?: string | null;
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LensDiff"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_findings_api_lens_admin_requests__req_id__findings_get: {
+        parameters: {
+            query?: {
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sessions_api_lens_admin_sessions_get: {
+        parameters: {
+            query?: {
+                since?: number | null;
+                model?: string | null;
+                key?: string | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scorecard_api_lens_admin_sessions__ref__scorecard_get: {
+        parameters: {
+            query?: {
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scorecard"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_cost_api_lens_admin_sessions__ref__cost_get: {
+        parameters: {
+            query?: {
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionCost"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_findings_api_lens_admin_sessions__ref__findings_get: {
+        parameters: {
+            query?: {
+                layer?: ("E" | "C" | "R") | null;
+                rule?: string | null;
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionFindings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_report_api_lens_admin_sessions__ref__report_get: {
+        parameters: {
+            query?: {
+                format?: "json" | "html";
+                tool_names?: number;
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trends_api_lens_admin_trends_get: {
+        parameters: {
+            query?: {
+                by?: "day" | "week" | "version";
+                model?: string | null;
+                since?: number | null;
+                tz?: number;
+                key?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Trends"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    versions_api_lens_admin_versions_get: {
+        parameters: {
+            query?: {
+                model?: string | null;
+                since?: number | null;
+                key?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Versions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compare_api_lens_admin_compare_get: {
+        parameters: {
+            query: {
+                a: string;
+                b: string;
+                model?: string | null;
+                since?: number | null;
+                key?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Compare"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    score_api_lens_admin_score_get: {
+        parameters: {
+            query?: {
+                since?: number | null;
+                model?: string | null;
+                key?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeanpromptScore"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    wontfix_list_api_lens_admin_wontfix_get: {
+        parameters: {
+            query?: {
+                key?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WontfixMarks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    wontfix_mark_api_lens_admin_wontfix__rule__put: {
+        parameters: {
+            query?: {
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                rule: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WontfixBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WontfixMarks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    wontfix_unmark_api_lens_admin_wontfix__rule__delete: {
+        parameters: {
+            query?: {
+                version?: string | null;
+                key?: string | null;
+            };
+            header?: never;
+            path: {
+                rule: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WontfixMarks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fleet_api_lens_admin_fleet_get: {
+        parameters: {
+            query?: {
+                model?: string | null;
+                since?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Fleet"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mcp_api_lens_mcp_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };
@@ -10167,6 +13438,100 @@ export interface operations {
             };
         };
     };
+    get_lens_rate_cards_api_admin_lens_rate_cards_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    put_lens_rate_cards_api_admin_lens_rate_cards_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LensRateCardsPut"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_lens_reference_card_api_admin_lens_reference_card__model_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                model_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LensReferenceCard"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     chat_completions_v1_chat_completions_post: {
         parameters: {
             query?: never;
@@ -10438,190 +13803,6 @@ export interface operations {
         };
     };
     prompt_lens_stream_api_admin_prompt_lens_stream_get: {
-        parameters: {
-            query?: {
-                /** @description Comma-separated api_tokens ids, at most 20. Only those keys' events are replayed and streamed. Omit for every key. */
-                token_ids?: string | null;
-                /** @description Single-use ticket from POST /api/auth/sse-ticket (browsers). Omit it when sending `Authorization: Bearer vwa_...` (an admin token). */
-                ticket?: string | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    prompt_lens_media_legacy_api_admin_godmode_media__media_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                media_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    prompt_lens_section_legacy_api_admin_godmode_requests__req_id__section__kind__get: {
-        parameters: {
-            query?: {
-                /** @description Absolute char offset (text sections). */
-                from?: number;
-            };
-            header?: never;
-            path: {
-                req_id: string;
-                kind: "thinking" | "reply" | "tool_calls" | "tool_results" | "prompt";
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SectionResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    prompt_lens_kept_list_legacy_api_admin_godmode_kept_get: {
-        parameters: {
-            query?: {
-                /** @description Comma-separated api_tokens ids, at most 20; omit for all. */
-                token_ids?: string | null;
-                limit?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AdminKeptList"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    prompt_lens_kept_capture_legacy_api_admin_godmode_kept__req_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                req_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AdminKeptCapture"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    prompt_lens_status_legacy_api_admin_godmode_status_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PromptLensStatus"];
-                };
-            };
-        };
-    };
-    prompt_lens_stream_legacy_api_admin_godmode_stream_get: {
         parameters: {
             query?: {
                 /** @description Comma-separated api_tokens ids, at most 20. Only those keys' events are replayed and streamed. Omit for every key. */

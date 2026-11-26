@@ -24,6 +24,7 @@ from app.proxy.auth import token_allows
 from app.proxy.kv_scope import can_isolate_running
 from app.proxy.model_cache import all_models
 from app.stats.routes_forest import FOREST_TTL_MIN, ForestViewer, _connect, forest_viewer
+from app.tokens import permissions
 from app.tokens import routes_api as tokens
 
 router = APIRouter(prefix="/api/me")
@@ -85,15 +86,14 @@ class MeRevoke(BaseModel):
     confirm_name: str
 
 
-def prompt_lens_view_available(request: Request) -> bool:
-    """B11, owner decision 2026-11-22 (replaces D8's two switches): a key holder
-    may open captures of their OWN requests whenever Prompt Lens is on for the
-    platform (app/proxy/prompt_lens_switch.py: the Settings switch, else
-    ``VW_PROMPT_LENS_ENABLED``; the hub present). There is no per-key switch;
-    isolation to the caller's own key is enforced by the capture route."""
-    from app.proxy import prompt_lens_switch
-
-    return prompt_lens_switch.enabled(request.app)
+async def prompt_lens_view_available(request: Request, tid: str) -> bool:
+    """May this key's holder use Prompt Lens now? The platform switch is on
+    (app/proxy/prompt_lens_switch.py: the Settings switch, else
+    ``VW_PROMPT_LENS_ENABLED``; the hub present) AND the admin allowed Prompt Lens
+    for the key (``api_tokens.prompt_lens``, owner decision 2026-11-26: a per-key
+    permission, which replaces B11's "no per-key switch"). Isolation to the
+    caller's own key is enforced by each route."""
+    return await permissions.prompt_lens_allowed(request, tid)
 
 
 async def _models(request: Request, tid: str) -> list[dict[str, str]]:
@@ -124,9 +124,10 @@ async def _detail(request: Request, tid: str) -> dict[str, Any]:
     if d is None:
         raise HTTPException(404)
     out = _public(tokens._with_effective(d, request))
-    out["prompt_lens_view_available"] = prompt_lens_view_available(request)
-    # Deprecated name of the same field (the feature was "god mode"): one release.
-    out["godmode_view_available"] = out["prompt_lens_view_available"]
+    out["prompt_lens_view_available"] = await prompt_lens_view_available(request, tid)
+    # Read-only for the holder: the admin sets both (owner decision 2026-11-26).
+    out["prompt_lens"] = bool(out.get("prompt_lens", True))
+    out["engine_facts"] = bool(out.get("engine_facts", True))
     out["models"] = await _models(request, tid)
     return out
 

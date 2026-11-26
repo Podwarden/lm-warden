@@ -192,6 +192,19 @@ describe('ModelDetailPage — Status block, per-backend fields', () => {
     expect(screen.getByTestId('model-engine')).toHaveTextContent('vLLM');
   });
 
+  it('shows a bundled engine pin read-only, and nothing for the default engine (#343)', async () => {
+    await renderWith(fakeModel({ engine_vllm_version: '0.34.0rc1.dev1202-pr69165' }));
+    expect(screen.getByTestId('model-engine-version')).toHaveTextContent('0.34.0rc1.dev1202-pr69165');
+    cleanup();
+    await renderWith(fakeModel({ engine_vllm_version: null }));
+    expect(screen.queryByTestId('model-engine-version')).toBeNull();
+  });
+
+  it('shows no engine version for a llama.cpp row (#343)', async () => {
+    await renderWith(fakeModel({ backend: 'llamacpp', engine_vllm_version: '0.34.0' }));
+    expect(screen.queryByTestId('model-engine-version')).toBeNull();
+  });
+
   it('labels the GPU list as indices, not as a count', async () => {
     // "GPUs: 1" on a model pinned to GPU index 1 reads as "one GPU". The
     // deployment this was reported from has exactly two cards and one model on

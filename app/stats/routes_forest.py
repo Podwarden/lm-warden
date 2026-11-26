@@ -184,7 +184,8 @@ def _tools_in_ok(e: Any) -> bool:
 
 
 def _tools_out_ok(e: Any) -> bool:
-    return isinstance(e, list) and len(e) == 2 and isinstance(e[0], str) and isinstance(e[1], str)
+    """``[family, hash8]`` (older rows) or ``[family, hash8, args8]`` (Task 1.4)."""
+    return isinstance(e, list) and len(e) in (2, 3) and all(isinstance(x, str) for x in e)
 
 
 def _decode(v: Any, ok: Callable[[Any], bool]) -> list[Any]:

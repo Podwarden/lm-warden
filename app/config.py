@@ -18,25 +18,35 @@ def _truthy(raw: str) -> bool:
     return raw.strip().lower() in _TRUTHY
 
 
-#: Deprecated env names already warned about in this process (one line each).
-_DEPRECATED_LOGGED: set[str] = set()
+#: The env prefix Prompt Lens had under its former name. No longer read: a variable
+#: still set under it is named in one startup warning (``warn_removed_prompt_lens_env``).
+REMOVED_ENV_PREFIX = "VW_GODMODE_"
 
 
 def _prompt_lens_env(suffix: str) -> tuple[str | None, str | None]:
-    """``VW_PROMPT_LENS_<suffix>``, else the deprecated ``VW_GODMODE_<suffix>``
-    (the feature's former name; installs set it). Returns (value, the name it
-    came from), (None, None) when neither is set; an empty value counts as not
-    set (install.sh forwards the variable blank). A value from the old name is
-    logged once per process."""
-    new, old = f"VW_PROMPT_LENS_{suffix}", f"VW_GODMODE_{suffix}"
-    if os.environ.get(new, "").strip():
-        return os.environ[new], new
-    if os.environ.get(old, "").strip():
-        if old not in _DEPRECATED_LOGGED:
-            _DEPRECATED_LOGGED.add(old)
-            log.warning("%s is deprecated: set %s instead (same meaning)", old, new)
-        return os.environ[old], old
+    """``VW_PROMPT_LENS_<suffix>``. Returns (value, the name it came from),
+    (None, None) when it is not set; an empty value counts as not set
+    (install.sh forwards the variable blank)."""
+    name = f"VW_PROMPT_LENS_{suffix}"
+    if os.environ.get(name, "").strip():
+        return os.environ[name], name
     return None, None
+
+
+def warn_removed_prompt_lens_env() -> list[str]:
+    """Log ONE warning when a variable under the removed prefix is still set
+    (non-empty): it is no longer read, so the feature would silently stay off.
+    Returns the variable names (sorted), empty when there are none."""
+    stale = sorted(
+        k for k, v in os.environ.items() if k.startswith(REMOVED_ENV_PREFIX) and v.strip()
+    )
+    if stale:
+        log.warning(
+            "%s is no longer read; set %s instead (same meaning)",
+            ", ".join(stale),
+            ", ".join("VW_PROMPT_LENS_" + k[len(REMOVED_ENV_PREFIX) :] for k in stale),
+        )
+    return stale
 
 
 def _parse_trusted_proxies(raw: str) -> tuple[str, ...]:
@@ -142,8 +152,8 @@ class Settings:
     # proxy hot path is byte-identical to pre-Prompt Lens: no hub call happens at
     # any tap. All bounds are read once at startup into PromptLensHub.
     prompt_lens_enabled: bool = False
-    # Which env variable set prompt_lens_enabled: "VW_PROMPT_LENS_ENABLED", the
-    # deprecated "VW_GODMODE_ENABLED", or None (neither: the default). The
+    # Which env variable set prompt_lens_enabled: "VW_PROMPT_LENS_ENABLED", or
+    # None (not set: the default). The
     # runtime setting ``prompt_lens_enabled`` (Settings page) overrides it while
     # the app runs: app/proxy/prompt_lens_switch.py.
     prompt_lens_env_var: str | None = None
@@ -170,6 +180,14 @@ class Settings:
     prompt_lens_section_chars: int = 16_000_000
     prompt_lens_section_max_chars: int = 2_000_000
     prompt_lens_section_ttl_s: float = 600.0
+    # Prompt Lens scores (analysis spec 10; app/lens/scorer_job.py): how often the
+    # scorer looks for sessions that went quiet, and how long a session must have
+    # been quiet to be scored.
+    lens_scorer_interval_s: float = 60.0
+    lens_quiet_s: float = 600.0
+    # The Prompt Lens API and MCP (app/lens/limits.py): calls a minute per credential.
+    lens_rate_key_per_min: int = 60
+    lens_rate_admin_per_min: int = 300
     # Content logging (diagnostic) — see app/proxy/content_log.py. Disabled by
     # default; when off the proxy forward path is byte-identical to a build
     # without it. Hard-scoped to an explicit token allowlist so this can run on
@@ -369,6 +387,8 @@ def load_settings() -> Settings:
     prompt_lens_section_chars = int(_prompt_lens_env("SECTION_CHARS")[0] or "16000000")
     prompt_lens_section_max_chars = int(_prompt_lens_env("SECTION_MAX_CHARS")[0] or "2000000")
     prompt_lens_section_ttl_s = float(_prompt_lens_env("SECTION_TTL_S")[0] or "600")
+    lens_rate_key_per_min = max(1, int(os.environ.get("VW_LENS_RATE_KEY_PER_MIN", "60")))
+    lens_rate_admin_per_min = max(1, int(os.environ.get("VW_LENS_RATE_ADMIN_PER_MIN", "300")))
     request_max_wall_s = float(os.environ.get("VW_REQUEST_MAX_WALL_S", "0.0"))
     upstream_idle_s = max(1.0, float(os.environ.get("VW_UPSTREAM_IDLE_S", "300")))
     nonstream_max_s = max(1.0, float(os.environ.get("VW_NONSTREAM_MAX_S", "1800")))
@@ -472,6 +492,8 @@ def load_settings() -> Settings:
         prompt_lens_section_chars=prompt_lens_section_chars,
         prompt_lens_section_max_chars=prompt_lens_section_max_chars,
         prompt_lens_section_ttl_s=prompt_lens_section_ttl_s,
+        lens_rate_key_per_min=lens_rate_key_per_min,
+        lens_rate_admin_per_min=lens_rate_admin_per_min,
         request_max_wall_s=request_max_wall_s,
         upstream_idle_s=upstream_idle_s,
         nonstream_max_s=nonstream_max_s,

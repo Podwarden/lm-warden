@@ -37,6 +37,8 @@ export const BACKEND_ONLY_FIELDS: Record<string, readonly string[]> = {
     "data_parallel_size",
     "dp_affinity_enabled",
     "dp_spill_threshold",
+    // #343: the bundled vLLM install; llama.cpp has no such engines.
+    "engine_vllm_version",
   ],
   llamacpp: [
     "n_gpu_layers",

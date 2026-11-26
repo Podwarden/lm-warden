@@ -47,9 +47,16 @@ describe('MediaStrip', () => {
     expect(imgs[0]).toHaveAttribute('src', 'blob:fake-url');
   });
 
-  it('renders remote-url entries as direct <img> without authFetch', () => {
-    render(<MediaStrip media={[{ kind: 'image', url: 'https://example.com/cat.jpg' }]} />);
-    expect(screen.getByRole('img')).toHaveAttribute('src', 'https://example.com/cat.jpg');
+  it('shows a remote url as text and renders no <img> for it until clicked (#324)', () => {
+    const url = 'https://example.com/cat.jpg';
+    const { container } = render(<MediaStrip media={[{ kind: 'image', url }]} />);
+    expect(screen.getByTestId('prompt-lens-media-remote').textContent).toContain(url);
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector(`img[src="${url}"]`)).toBeNull();
+    expect(mocks.authFetch).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('prompt-lens-media-load'));
+    expect(container.querySelector(`img[src="${url}"]`)).not.toBeNull();
     expect(mocks.authFetch).not.toHaveBeenCalled();
   });
 

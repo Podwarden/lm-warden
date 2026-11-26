@@ -335,7 +335,7 @@ async def get_session(state: Any, viewer: ForestViewer, ref: ParsedRef) -> dict[
             digests = {r.toolset for r in rows if r.toolset}
             ts = store.toolsets(db, digests)
             hmacs = {h for d in ts.values() for h, _f, _c in d} | {
-                h for r in rows for _f, h in r.tools_out
+                e[1] for r in rows for e in r.tools_out
             }
             names = store.tool_names(db, token_id, hmacs)
             oldest = store.oldest_finished_at(db)

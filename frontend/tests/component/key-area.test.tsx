@@ -123,6 +123,21 @@ describe('key area', () => {
     expect(JSON.parse(String(patch[1]!.body))).toEqual({ name: 'mine' });
   });
 
+  it('settings: the key holder sees both permissions read-only, with a reason when Prompt Lens is off', async () => {
+    mockPath = '/key/settings';
+    stub({ '/api/me/key': json({ ...DETAIL, prompt_lens: false, engine_facts: true, prompt_lens_view_available: false }) });
+    wrap(<KeySettingsPage />);
+    expect(await screen.findByText(K.settings.promptLensOff)).toBeTruthy();
+    expect(screen.getByText(K.settings.engineFactsOn)).toBeTruthy();
+    // No control for either: the admin sets them.
+    expect(screen.queryByRole('switch')).toBeNull();
+    cleanup();
+    stub({ '/api/me/key': json({ ...DETAIL, prompt_lens: true, engine_facts: false, prompt_lens_view_available: true }) });
+    wrap(<KeySettingsPage />);
+    expect(await screen.findByText(K.settings.promptLensOn)).toBeTruthy();
+    expect(screen.getByText(K.settings.engineFactsOff)).toBeTruthy();
+  });
+
   it('rotate shows the new key once and switches the sign-in to it', async () => {
     mockPath = '/key/manage';
     const f = stub({

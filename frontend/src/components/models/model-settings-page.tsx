@@ -149,6 +149,11 @@ function memorySummary({ draft, data }: SummaryCtx): string {
   return parts.join(" · ");
 }
 
+function engineSummary({ draft, data }: SummaryCtx): string {
+  if (data.engine_channel) return `pinned by channel ${data.engine_channel}`;
+  return draft.engine_vllm_version ? `vLLM ${draft.engine_vllm_version}` : "default engine";
+}
+
 function llamacppSummary({ draft }: SummaryCtx): string {
   const { managed } = splitManagedArgs(draft.extra_args);
   return [
@@ -190,6 +195,15 @@ const SECTION_GROUPS: ReadonlyArray<SectionGroup> = [
     band: "engine",
     keys: ["gpu_memory_utilization", "max_model_len", "dtype", "n_gpu_layers"],
     summary: memorySummary,
+    defaultOpen: (loaded) => !loaded,
+  },
+  {
+    // vLLM only (fieldAppliesTo hides the whole section on llama.cpp).
+    title: "Engine version",
+    testId: "section-engine-version",
+    band: "engine",
+    keys: ["engine_vllm_version"],
+    summary: engineSummary,
     defaultOpen: (loaded) => !loaded,
   },
   {
@@ -365,6 +379,16 @@ export function ModelSettingsPage({ id }: { id: string }) {
   const { data: modelInfo } = useSWR<{ cache_isolation?: CacheIsolation }>(`/api/models/${id}`, authFetchJSON, {
     revalidateOnFocus: false,
   });
+  // #343: the vLLM installs bundled in the image, for the engine-version control.
+  const { data: engineInfo } = useSWR<{ bundled_vllm?: string[] }>("/api/system/engine", authFetchJSON, {
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+  });
+  const bundledEngines = useMemo(() => engineInfo?.bundled_vllm ?? [], [engineInfo]);
+  // Set once an engine-version change is saved: the notice says it applies on
+  // the next load and offers to load now.
+  const [engineSaved, setEngineSaved] = useState(false);
+  const [engineLoadError, setEngineLoadError] = useState<string | null>(null);
   const { data: kvUsage } = useSWR<KvUsage>("/api/kv/usage", authFetchJSON, {
     revalidateOnFocus: false,
     shouldRetryOnError: false,
@@ -571,6 +595,10 @@ export function ModelSettingsPage({ id }: { id: string }) {
       // Success — clear the seeded signal so the next revalidate re-seeds
       // the draft to the freshly-saved snapshot.
       seededFor.current = null;
+      if (dirtyNow.includes("engine_vllm_version")) {
+        setEngineSaved(true);
+        setEngineLoadError(null);
+      }
       await mutate();
       // Fire-and-forget cross-page cache busts (dashboard list, detail page)
       // and the effective command, which is keyed off the saved settings.
@@ -581,6 +609,30 @@ export function ModelSettingsPage({ id }: { id: string }) {
       setSaveError(e instanceof Error ? e.message : String(e));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function loadNow() {
+    setEngineLoadError(null);
+    try {
+      const r = await authFetch(`/api/models/${id}/load`, { method: "POST" });
+      if (!r.ok) {
+        let detail = `HTTP ${r.status}`;
+        try {
+          const j = await r.json();
+          if (j && typeof j.detail === "string") detail = j.detail;
+        } catch {
+          /* non-JSON body */
+        }
+        setEngineLoadError(detail);
+        return;
+      }
+      setEngineSaved(false);
+      await mutate();
+      void globalMutate("/api/models");
+      void globalMutate(`/api/models/${id}`);
+    } catch (e) {
+      setEngineLoadError(e instanceof Error ? e.message : String(e));
     }
   }
 
@@ -671,6 +723,9 @@ export function ModelSettingsPage({ id }: { id: string }) {
             break;
           case "kv_store_weight":
             if (typeof v === "number" && Number.isInteger(v) && v >= 1 && v <= 100) next.kv_store_weight = v;
+            break;
+          case "engine_vllm_version":
+            if (v === null || typeof v === "string") next.engine_vllm_version = v === "" ? null : v;
             break;
           case "n_gpu_layers":
             if (v === null) next.n_gpu_layers = null;
@@ -835,6 +890,8 @@ export function ModelSettingsPage({ id }: { id: string }) {
                   dirty={fieldDirty(k, draft, snap)}
                   gpuIndicesEmpty={gpuIndicesEmpty}
                   modelId={id}
+                  bundledEngines={bundledEngines}
+                  engineChannel={data.engine_channel ?? null}
                   readout={
                     k === "gpu_memory_utilization" && readout ? (
                       <span
@@ -975,6 +1032,32 @@ export function ModelSettingsPage({ id }: { id: string }) {
 
       <div className="mt-4 flex flex-col gap-3">
         <StatusStrip status={data.status} conflict={conflict} modelId={id} />
+        {engineSaved && !isLoaded && (
+          <div
+            role="status"
+            data-testid="engine-version-saved"
+            className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-vw-rule-soft/70 bg-chat-surface/55 px-4 py-3 text-[13px]"
+          >
+            <span>
+              Engine version saved. It takes effect on the model&apos;s next load
+              {data.status === "pulled" ? "." : " (pull the model first)."}
+            </span>
+            {data.status === "pulled" && (
+              <button
+                type="button"
+                onClick={() => void loadNow()}
+                className="rounded-md border border-vw-rule-soft px-2.5 py-1 text-[13px] font-medium hover:bg-chat-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chat-accent"
+              >
+                Load now
+              </button>
+            )}
+            {engineLoadError && (
+              <span role="alert" className="text-vw-danger-fg">
+                {engineLoadError}
+              </span>
+            )}
+          </div>
+        )}
         {data.layout_notice && data.layout_notice_level && (
           <LayoutNotice
             modelId={data.id}
@@ -1068,6 +1151,8 @@ function SettingFieldFor({
   gpus,
   gpuIndicesEmpty,
   modelId,
+  bundledEngines,
+  engineChannel,
   readout,
   readoutId,
 }: {
@@ -1082,6 +1167,11 @@ function SettingFieldFor({
   /** This row's id, so its own loaded engine is not reported as a competing
    *  occupant of the card it is running on. */
   modelId: string;
+  /** Ids of the vLLM installs bundled in the image (engine-version control). */
+  bundledEngines: string[];
+  /** Set when a channel pins the engine image: the version is then an upstream
+   *  tag and this page shows it read-only. */
+  engineChannel: string | null;
   /** Rendered between the control and its hint, linked as a description. */
   readout?: ReactNode;
   readoutId?: string;
@@ -1229,6 +1319,45 @@ function SettingFieldFor({
           describedBy={readoutId}
         />
       );
+    case "engine_vllm_version": {
+      if (engineChannel) {
+        return (
+          <div className="flex flex-col gap-1">
+            <span className="text-[13px] font-medium">{hint.label}</span>
+            <span data-testid="engine-version-readonly" className="!font-mono text-[13px]">
+              {draft.engine_vllm_version ?? "default"} · pinned by channel {engineChannel}
+            </span>
+            <span className="text-[12.5px] leading-[1.45] text-chat-muted">
+              This model&apos;s engine image is chosen by its channel (set through Try a stack), so
+              it is shown here, not edited.
+            </span>
+          </div>
+        );
+      }
+      const current = draft.engine_vllm_version;
+      const missing = current !== null && !bundledEngines.includes(current);
+      return (
+        <div className="flex flex-col gap-1.5">
+          <SettingField
+            {...common}
+            kind="select"
+            value={current}
+            onChange={(v) => set("engine_vllm_version", v)}
+            options={missing ? [current, ...bundledEngines] : bundledEngines}
+            allowNull
+          />
+          {missing && (
+            <p
+              data-testid="engine-version-missing"
+              className="m-0 text-[12.5px] leading-[1.45] text-vw-amber-fg"
+            >
+              This image does not carry engine {current}; the model will fail to load until you
+              pick another or go back to the default.
+            </p>
+          )}
+        </div>
+      );
+    }
     case "dtype":
       return (
         <SettingField

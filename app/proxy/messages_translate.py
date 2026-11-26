@@ -71,6 +71,11 @@ def _text_of(blocks: str | list[Any] | None, where: str) -> str:
     return "\n\n".join(parts)
 
 
+_REMOTE_IMAGE_MSG = (
+    "remote image URLs are not accepted; send the image as a base64 source or a data: URL"
+)
+
+
 def _image_part(blk: dict[str, Any]) -> dict[str, Any]:
     src = blk.get("source")
     if not isinstance(src, dict):
@@ -82,6 +87,9 @@ def _image_part(blk: dict[str, Any]) -> dict[str, Any]:
             "image_url": {"url": f"data:{media};base64,{src.get('data', '')}"},
         }
     if src.get("type") == "url" and isinstance(src.get("url"), str):
+        # #324: the engine would fetch a remote URL itself; only data: is accepted.
+        if src["url"].strip()[:5].lower() != "data:":
+            raise TranslationError(_REMOTE_IMAGE_MSG)
         return {"type": "image_url", "image_url": {"url": src["url"]}}
     raise TranslationError(f"image source type '{src.get('type')}' is not supported")
 

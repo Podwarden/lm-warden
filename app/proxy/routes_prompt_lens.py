@@ -269,8 +269,7 @@ class PromptLensChange(BaseModel):
 class PromptLensStatus(BaseModel):
     """Whether Prompt Lens is on, and where that comes from (the Settings page
     shows it): ``source`` is ``setting`` (the runtime setting
-    ``prompt_lens_enabled``), ``env`` (``env_var``: ``VW_PROMPT_LENS_ENABLED``
-    or the deprecated ``VW_GODMODE_ENABLED``) or ``default`` (off)."""
+    ``prompt_lens_enabled``), ``env`` (``env_var``: ``VW_PROMPT_LENS_ENABLED``) or ``default`` (off)."""
 
     enabled: bool
     source: Literal["setting", "env", "default"]
