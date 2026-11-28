@@ -10,6 +10,7 @@ import { ModelTab } from "@/components/settings/model-tab";
 import { AdminTokensTab } from "@/components/settings/admin-tokens-tab";
 import { GuardPlatformTab } from "@/components/settings/guard-tab";
 import { PromptCacheTab } from "@/components/settings/prompt-cache-tab";
+import { PricesTab } from "@/components/settings/prices-tab";
 import ee from "@/lib/extensions";
 import { useEdition, hasFeature } from "@/lib/edition";
 
@@ -23,7 +24,7 @@ import { useEdition, hasFeature } from "@/lib/edition";
 //
 // Tab order is the spec's:
 //   General → Networking → Sessions & Tokens → Maintenance → Model → Prompt cache → Access Tokens
-//   → Sensitive data (the guard's platform default)
+//   → Sensitive data (the guard's platform default) → Prices
 //
 // Each of the four runtime sub-tabs owns its own useRuntimeSettings()
 // instance — SWR dedupes the GET across tabs, so we still issue exactly
@@ -40,6 +41,8 @@ const CORE_TABS: { id: string; label: string }[] = [
   { id: "prompt-cache", label: "Prompt cache" },
   { id: "admin-tokens", label: "Access Tokens" },
   { id: "guard", label: "Sensitive data" },
+  // #347: public list prices, daily refresh, per-price overrides.
+  { id: "prices", label: "Prices" },
 ];
 
 export default function SettingsPage() {
@@ -75,6 +78,7 @@ export default function SettingsPage() {
         {activeTab === "prompt-cache" && <PromptCacheTab />}
         {activeTab === "admin-tokens" && <AdminTokensTab />}
         {activeTab === "guard" && <GuardPlatformTab />}
+        {activeTab === "prices" && <PricesTab />}
         {EeTab && <EeTab />}
       </Tabs>
     </div>

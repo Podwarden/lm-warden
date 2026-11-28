@@ -148,10 +148,10 @@ class Settings:
     # pre-#160); "docker" = sibling container via the host docker socket
     # (requires VLLM_ENGINE_IMAGE; image-channel resolution lands in P2/#161).
     engine_driver: str = "local"
-    # Prompt Lens (live prompt/output viewer) — OFF by default. When false the
+    # Prompt Lens (live prompt/output viewer) — ON by default (#346). When off the
     # proxy hot path is byte-identical to pre-Prompt Lens: no hub call happens at
     # any tap. All bounds are read once at startup into PromptLensHub.
-    prompt_lens_enabled: bool = False
+    prompt_lens_enabled: bool = True
     # Which env variable set prompt_lens_enabled: "VW_PROMPT_LENS_ENABLED", or
     # None (not set: the default). The
     # runtime setting ``prompt_lens_enabled`` (Settings page) overrides it while
@@ -375,7 +375,8 @@ def load_settings() -> Settings:
     )
     engine_log_max_bytes = int(os.environ.get("VW_ENGINE_LOG_MAX_BYTES", str(32 * 1024 * 1024)))
     prompt_lens_raw, prompt_lens_env_var = _prompt_lens_env("ENABLED")
-    prompt_lens_enabled = _truthy(prompt_lens_raw or "")
+    # On unless the env says otherwise (owner decision 2026-11-26, #346).
+    prompt_lens_enabled = True if prompt_lens_raw is None else _truthy(prompt_lens_raw)
     prompt_lens_ring_events = int(_prompt_lens_env("RING_EVENTS")[0] or "2000")
     prompt_lens_ring_chars = int(_prompt_lens_env("RING_CHARS")[0] or "4000000")
     prompt_lens_max_prompt_chars = int(_prompt_lens_env("MAX_PROMPT_CHARS")[0] or "16000")

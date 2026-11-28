@@ -12,6 +12,9 @@ from tests.unit.stats.test_forest_routes import _forest_login, _ready_key
 
 def test_available_follows_the_platform_only(tmp_data_dir, client):
     _db, plaintext, _admin = _ready_key(client, tmp_data_dir)
+    client.app.state.settings = dataclasses.replace(
+        client.app.state.settings, prompt_lens_enabled=False
+    )
     k = _forest_login(client, plaintext)
     me = client.get("/api/me/key", headers=k).json()
     assert me["prompt_lens_view_available"] is False

@@ -291,6 +291,9 @@ def test_status_reports_disabled_then_enabled(tmp_data_dir, client):
     client.get("/healthz")
     seed_admin_user(tmp_data_dir / "vllm-warden.db")
     auth = jwt_login(client)
+    client.app.state.settings = dataclasses.replace(
+        client.app.state.settings, prompt_lens_enabled=False
+    )
     r = client.get("/api/admin/prompt-lens/status", headers=auth)
     assert r.status_code == 200
     assert r.json()["enabled"] is False  # off by default

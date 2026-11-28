@@ -59,7 +59,7 @@ describe('community stub', () => {
 });
 
 describe('Settings tabs', () => {
-  const TODAY = ['General', 'Networking', 'Sessions & Tokens', 'Maintenance', 'Model', 'Prompt cache', 'Access Tokens', 'Sensitive data'];
+  const TODAY = ['General', 'Networking', 'Sessions & Tokens', 'Maintenance', 'Model', 'Prompt cache', 'Access Tokens', 'Sensitive data', 'Prices'];
 
   it('shows exactly today\'s tabs with no ee tabs', async () => {
     mockApi();

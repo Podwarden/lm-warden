@@ -39,9 +39,9 @@ def env(monkeypatch):
     return monkeypatch
 
 
-def test_default_off_and_no_env_source(env):
+def test_default_on_and_no_env_source(env):
     s = load_settings()
-    assert s.prompt_lens_enabled is False
+    assert s.prompt_lens_enabled is True
     assert s.prompt_lens_env_var is None
 
 
@@ -50,6 +50,13 @@ def test_new_name_turns_it_on(env):
     s = load_settings()
     assert s.prompt_lens_enabled is True
     assert s.prompt_lens_env_var == "VW_PROMPT_LENS_ENABLED"
+
+
+def test_a_blank_env_is_not_a_source(env):
+    env.setenv("VW_PROMPT_LENS_ENABLED", "  ")
+    s = load_settings()
+    assert s.prompt_lens_enabled is True
+    assert s.prompt_lens_env_var is None
 
 
 def test_new_name_false_is_still_a_source(env):
@@ -63,7 +70,7 @@ def test_removed_prefix_is_not_read(env):
     env.setenv(f"{config.REMOVED_ENV_PREFIX}ENABLED", "true")
     env.setenv(f"{config.REMOVED_ENV_PREFIX}RING_EVENTS", "123")
     s = load_settings()
-    assert s.prompt_lens_enabled is False
+    assert s.prompt_lens_enabled is True  # the removed name does not switch it off either
     assert s.prompt_lens_env_var is None
     assert s.prompt_lens_ring_events == 2000
 

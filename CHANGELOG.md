@@ -7,6 +7,58 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.11.28.1] — 2026-11-28
+
+### Fixed
+
+- A model whose tokenizer cannot be loaded (a GGUF-only repo with no
+  `tokenizer_repo`, a gated repo with no Hugging Face token, a tokenizer that
+  needs the repo's own code, or no route to huggingface.co) no longer makes
+  every API request contact Hugging Face. The failed load is remembered for 5
+  minutes, token counts are estimated meanwhile as before, and unloading the
+  model clears it, so a corrected `tokenizer_repo` applies on the next load.
+
+## [v2026.11.27.6] — 2026-11-27
+
+### Changed
+
+- Vendor website (lmwarden.com) only: no change to the Community product.
+
+## [v2026.11.27.5] — 2026-11-27
+
+### Changed
+
+- Vendor website (lmwarden.com) only: no change to the Community product.
+
+## [v2026.11.27.4] — 2026-11-27
+
+### Changed
+
+- Vendor website (lmwarden.com) only: no change to the Community product.
+
+## [v2026.11.27.3] — 2026-11-27
+
+### Changed
+
+- Vendor website (lmwarden.com) only: no change to the Community product.
+
+## [v2026.11.27.2] — 2026-11-27
+
+### Changed
+
+- Vendor website (lmwarden.com) and a CI test only: no change to the Community product.
+
+## [v2026.11.27.1] — 2026-11-27
+
+### Added
+
+- **Settings has a Prices tab: every provider, prices fetched automatically (#347).** One section per provider the install uses (the router's upstream, every upstream seen in the request history, every provider priced by hand), then a section that prices each local model as a provider's model ("what this would have cost"). Public list prices are read once a day (Settings, Prices sets the interval; 0 turns it off) from OpenRouter's public model list, with LiteLLM's MIT price file as the fallback when OpenRouter fails. Only those two HTTPS hosts are contacted, without credentials, redirects or anything about your install; a failed refresh keeps the last good table, and the refresh never delays startup. A price snapshot ships with each release (`app/lens/price_snapshot.json`, refreshed by `scripts/refresh_price_snapshot.py`) and is used on an offline install (`HF_HUB_OFFLINE=1` or `VW_PRICE_REFRESH=0`). Every price shows its source and date; an admin can override one price, and every override, reference-card change and interval change is audited. Prompt Lens savings use these prices; a model with no known price shows tokens, as before. New routes under `/api/admin/prices` ([documents/API.md](documents/API.md#prices)).
+
+### Changed
+
+- **The Prompt Lens price cards moved from the bottom of Settings, General to the Prices tab, and the shipped defaults are gone.** `GET/PUT /api/admin/lens/rate-cards` and `PUT /api/admin/lens/reference-card/{model_id}` (released in v2026.11.26.1) keep working as thin wrappers: a saved card is now an audited override; `defaults` is always empty (the price table replaces it). A card you saved keeps winning over the fetched price for its model.
+- **Prompt Lens is on by default (#346).** The platform switch default flips from off to on; the order is unchanged: the switch in Settings (General, Privacy), then `VW_PROMPT_LENS_ENABLED`, then the default, which is now on. Off stays possible either way: save the switch as off, or set `VW_PROMPT_LENS_ENABLED=false`. Per-key permissions are unchanged: existing keys keep Prompt Lens, new keys start with it off, so a key holder sees it only where an admin ticked it. Requests are held in memory only (a bounded ring, gone on restart), unless Keep is on for a key. **Upgrade note: an install that never set the switch turns Prompt Lens on after the upgrade.** To keep it off, save the switch as off in Settings or set `VW_PROMPT_LENS_ENABLED=false` in `.env` before upgrading. The site texts that said "off by default", in every language, now say on by default; `.env.example` ships `VW_PROMPT_LENS_ENABLED=true`.
+
 ## [v2026.11.26.1] — 2026-11-26
 
 ### Added

@@ -186,8 +186,8 @@ A native menu-bar app for Apple silicon, in beta. Linux with NVIDIA GPUs is
 still the main way to run LM Warden; this is the way to run it on a Mac.
 
 **[Download the beta](https://lmwarden.com/download/mac)** (about 110 MB, release
-v2026.10.24.2) · [SHA-256 checksum](https://lmwarden.com/download/mac.sha256) ·
-[release notes](https://github.com/Podwarden/lm-warden/releases/tag/v2026.10.24.2-macos-beta)
+v2026.11.26.1) · [SHA-256 checksum](https://lmwarden.com/download/mac.sha256) ·
+[release notes](https://github.com/Podwarden/lm-warden/releases/tag/v2026.11.26.1-macos-beta)
 
 <table>
 <tr>
@@ -243,7 +243,7 @@ update itself: a newer beta is a new download.
 1. Check the download. With the DMG and its checksum file in one folder:
 
    ```sh
-   shasum -a 256 -c LM-Warden-v2026.10.24.2-beta.dmg.sha256
+   shasum -a 256 -c LM-Warden-v2026.11.26.1-beta.dmg.sha256
    ```
 
    It prints `OK` for an intact file.
@@ -325,7 +325,7 @@ line on someone's invoice.
 | One engine, take it or leave it | vLLM v0.32.0 **and** llama.cpp b12644 on Linux, MLX **and** llama.cpp on a Mac, chosen per model |
 | A single shared API key, or none | A key per consumer, each with its own page, priority lane, pause switch and rotation grace window |
 | No record of who used what | Requests, prompt tokens and completion tokens rolled up per key and per client IP, plus each key's queue wait and latency |
-| No way to see what a client actually sent | Prompt Lens: an opt-in, in-memory live view of prompts, reasoning, replies and tool calls, for all keys or one, streaming only while open; off by default |
+| No way to see what a client actually sent | Prompt Lens: an in-memory live view of prompts, reasoning, replies and tool calls, for all keys or one, streaming only while open; on by default, switchable off |
 | A port per engine to expose | One published port; your own TLS terminator, ingress, SSO or network policy goes in front of it |
 | `nvidia-smi` in a second terminal | On Linux, per-card VRAM, utilisation, power, temperature against the driver's own throttle point, PCIe width, ECC, NVLink; on a Mac, GPU use and the memory budget Metal reports, without power |
 | No idea why a request is slow | Live request table, TTFT and duration distributions from the proxy, KV-cache pressure and preemptions where the engine reports them |
@@ -491,8 +491,8 @@ you create it here, since the warden keeps only hashes.</td>
 or from a key's page, to watch prompts and responses as they happen:
 every key's, or that key's with its earlier keys. Each request shows its
 prompt part by part, its thinking, reply and tool calls. Leave the page and the
-stream stops; nothing is watched in the background. Off by default
-(a switch in Settings, or <code>VW_PROMPT_LENS_ENABLED</code>), and held only in memory unless an admin
+stream stops; nothing is watched in the background. On by default
+(a switch in Settings, or <code>VW_PROMPT_LENS_ENABLED</code>, turns it off), and held only in memory unless an admin
 sets a key to keep its last 50 requests.</td>
 </tr>
 </table>
@@ -720,8 +720,11 @@ No account, no licence check, no analytics: [`install.sh`](install.sh) and
 can read both. Apart from the update check, the stack makes outbound calls
 only when you ask it to:
 huggingface.co to pull weights (`HF_HUB_OFFLINE=1` stops even that), Docker
-Hub to list published vLLM tags when you open the engine-version picker, and
-the release registry for the images, which `docker load` replaces entirely
+Hub to list published vLLM tags when you open the engine-version picker,
+openrouter.ai (else LiteLLM's price file on raw.githubusercontent.com) once a day
+to read public model prices for Prompt Lens money figures (no credentials, nothing
+about your install sent; `VW_PRICE_REFRESH=0` or `HF_HUB_OFFLINE=1` stops it and
+the price snapshot shipped with the release is used), and the release registry for the images, which `docker load` replaces entirely
 ([offline install](documents/INSTALL.md#a7-offline--air-gapped-install)). No
 part of a request leaves the host unless you switch on the Claude Code router
 and flag a key to relay, both off by default.
@@ -733,8 +736,9 @@ Prompt Lens (`VW_PROMPT_LENS_ENABLED`), an in-memory ring watched from a dock on
 Stats page or a key's page, streaming only while the dock is open (an admin
 can set one key to keep its last 50 requests on disk); and the
 content log (`VW_CONTENT_LOG_ENABLED`), which writes to disk and only for
-token ids on an explicit allowlist. Both are off by default, and with both off
-the proxy's forward path is the code it would be in a build that never had
+token ids on an explicit allowlist. Prompt Lens is on by default (memory only,
+switchable off in Settings or with `VW_PROMPT_LENS_ENABLED=false`); the content
+log is off by default, and with both off the proxy's forward path is the code it would be in a build that never had
 them. Their bounds, and what you must arrange yourself before switching the
 second one on:
 [Where request content can end up](documents/OPERATING.md#where-request-content-can-end-up).

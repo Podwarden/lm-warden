@@ -38,6 +38,9 @@ def test_media_rejects_unauthenticated(tmp_data_dir, client):
 
 def test_media_disabled_returns_409(tmp_data_dir, client):
     auth = _auth(tmp_data_dir, client)
+    client.app.state.settings = dataclasses.replace(
+        client.app.state.settings, prompt_lens_enabled=False
+    )
     r = client.get("/api/admin/prompt-lens/media/" + "a" * 16, headers=auth)
     assert r.status_code == 409
     assert "disabled" in r.text.lower()

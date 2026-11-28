@@ -215,6 +215,9 @@ def test_requests_now_own_rows_no_fleet_values(client, key):
 
 def test_capture_follows_platform_prompt_lens_and_is_own_only(client, key):
     hub = client.app.state.prompt_lens_hub
+    client.app.state.settings = dataclasses.replace(
+        client.app.state.settings, prompt_lens_enabled=False
+    )
     for rid, tok, prompt in (("h-mine", "tok1", "my prompt"), ("h-other", "tok2", "their secret")):
         req_id = "gm-" + rid
         hub.publish(

@@ -96,7 +96,8 @@ async def test_migrations_idempotent(tmp_data_dir):
         # + 0064 (lens_session_scores and lens_findings: scores of quiet sessions).
         # + 0065 (request_history.lens_version and lens_wontfix).
         # + 0066 (api_tokens.prompt_lens and engine_facts: per-key permissions).
-        assert count == 65
+        # + 0067 (price_catalogue, price_audit: the Prices tab).
+        assert count == 66
 
 
 async def test_migrations_create_all_v2_tables(tmp_data_dir):

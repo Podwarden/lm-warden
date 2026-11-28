@@ -39,6 +39,9 @@ def test_mint_prompt_lens_ticket_disabled_returns_409(tmp_data_dir, client):
     client.get("/healthz")
     seed_admin_user(tmp_data_dir / "vllm-warden.db")
     auth = jwt_login(client)
+    client.app.state.settings = dataclasses.replace(
+        client.app.state.settings, prompt_lens_enabled=False
+    )
     # prompt_lens_enabled is false by default.
     r = client.post("/api/auth/sse-ticket", json={"path": STREAM_PATH}, headers=auth)
     assert r.status_code == 409, r.text
@@ -213,6 +216,9 @@ def test_admin_section_off_serves_no_memory(tmp_data_dir, client):
     client.get("/healthz")
     seed_admin_user(tmp_data_dir / "vllm-warden.db")
     auth = jwt_login(client)
+    client.app.state.settings = dataclasses.replace(
+        client.app.state.settings, prompt_lens_enabled=False
+    )
     _section_traffic(client.app.state.prompt_lens_hub)
     r = client.get("/api/admin/prompt-lens/requests/r-tok1/section/reply", headers=auth)
     assert r.status_code == 404

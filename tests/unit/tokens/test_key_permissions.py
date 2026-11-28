@@ -4,6 +4,7 @@ holder read-only, and enforced on the server wherever Prompt Lens is offered."""
 
 from __future__ import annotations
 
+import dataclasses
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -117,6 +118,9 @@ def test_prompt_lens_is_refused_without_the_key_permission(client, seeded_db, tm
 
 def test_the_platform_switch_still_decides(client, seeded_db) -> None:
     h = _admin(client, seeded_db)
+    client.app.state.settings = dataclasses.replace(
+        client.app.state.settings, prompt_lens_enabled=False
+    )
     made = _create(client, h, prompt_lens=True)
     fh = _forest_login(client, made["plaintext"])
     assert client.get("/api/me/key", headers=fh).json()["prompt_lens_view_available"] is False

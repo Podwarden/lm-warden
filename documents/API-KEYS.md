@@ -17,7 +17,7 @@ content-type: application/json
 {"detail":"token paused"}
 ```
 
-- **Watch** a key's requests and tokens per minute over the last hour, its whole history, and (opt-in, off by default) a live view of its prompts and replies in Prompt Lens (the page `/ui/prompt-lens`, opened from the key's page with this key and its earlier keys preset).
+- **Watch** a key's requests and tokens per minute over the last hour, its whole history, and (on by default, a switch in Settings turns it off) a live view of its prompts and replies in Prompt Lens (the page `/ui/prompt-lens`, opened from the key's page with this key and its earlier keys preset).
 
 The Stats page also draws every key's requests on one chart: a mark per request, coloured by key, sized by the tokens it generated, at the height of its duration.
 

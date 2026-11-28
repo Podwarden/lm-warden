@@ -476,7 +476,7 @@ async def get_runtime(request: Request, _user: str = Depends(require_jwt)) -> di
     if out.get("hf_token") is not None:
         out["hf_token"] = _MASKED
     # Prompt Lens: the value in effect when no setting is stored (the env, else
-    # off), so the switch shows what is actually on. Where it comes from:
+    # on), so the switch shows what is actually on. Where it comes from:
     # GET /api/admin/prompt-lens/status.
     if out.get("prompt_lens_enabled") is None:
         from app.proxy import prompt_lens_switch
@@ -561,7 +561,7 @@ async def patch_runtime(
     # so the inner DB block can stay short.
     to_write: dict[str, str] = {}
     # Prompt Lens "Use server default": null clears the stored switch, so the
-    # env value (VW_PROMPT_LENS_ENABLED, else off) applies again.
+    # env value (VW_PROMPT_LENS_ENABLED, else on) applies again.
     prompt_lens_clear = "prompt_lens_enabled" in body and body["prompt_lens_enabled"] is None
     for k, v in body.items():
         if k in ("admin_username", "admin_password", "hf_token"):
@@ -1025,45 +1025,31 @@ async def get_lens_rate_cards(
 
 @lens_prices_router.put("/rate-cards")
 async def put_lens_rate_cards(
-    body: LensRateCardsPut, request: Request, _user: str = Depends(require_jwt)
+    body: LensRateCardsPut, request: Request, user: str = Depends(require_jwt)
 ) -> dict[str, Any]:
-    """Add or replace price cards (one per provider, model and effective date)."""
-    import uuid
+    """Add or replace price cards (one per provider, model and effective date). Kept from
+    v2026.11.26.1: now the same audited write as ``PUT /api/admin/prices/override``."""
+    from app.lens import price_store
 
     for c in body.cards:
         if not _DATE.fullmatch(c.effective_from):
             raise HTTPException(status_code=422, detail="effective_from must be YYYY-MM-DD")
     async with open_db(request.app.state.settings.db_path) as db:
         for c in body.cards:
-            cur = await db.execute(
-                "SELECT id FROM rate_cards WHERE org_id IS NULL AND provider = ? "
-                "AND model = ? AND effective_from = ?",
-                (c.provider, c.model, c.effective_from),
+            await price_store.set_override(
+                db,
+                actor=user,
+                provider=c.provider,
+                model=c.model,
+                prices={
+                    "currency": c.currency.upper(),
+                    "input_per_m_micros": c.input_per_m_micros,
+                    "output_per_m_micros": c.output_per_m_micros,
+                    "cache_read_per_m_micros": c.cache_read_per_m_micros,
+                    "cache_write_per_m_micros": c.cache_write_per_m_micros,
+                },
+                effective_from=c.effective_from,
             )
-            row = await cur.fetchone()
-            vals = (
-                c.currency.upper(),
-                c.input_per_m_micros,
-                c.output_per_m_micros,
-                c.cache_read_per_m_micros,
-                c.cache_write_per_m_micros,
-            )
-            if row is not None:
-                await db.execute(
-                    "UPDATE rate_cards SET currency = ?, input_per_m_micros = ?, "
-                    "output_per_m_micros = ?, cache_read_per_m_micros = ?, "
-                    "cache_write_per_m_micros = ? WHERE id = ?",
-                    (*vals, row[0]),
-                )
-            else:
-                await db.execute(
-                    "INSERT INTO rate_cards (id, org_id, provider, model, currency, "
-                    "input_per_m_micros, output_per_m_micros, cache_read_per_m_micros, "
-                    "cache_write_per_m_micros, markup_pct, effective_from) "
-                    "VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, 0, ?)",
-                    (uuid.uuid4().hex, c.provider, c.model, *vals, c.effective_from),
-                )
-        await db.commit()
     return {"ok": True, "saved": len(body.cards)}
 
 
@@ -1072,25 +1058,18 @@ async def put_lens_reference_card(
     model_id: str,
     body: LensReferenceCard,
     request: Request,
-    _user: str = Depends(require_jwt),
+    user: str = Depends(require_jwt),
 ) -> dict[str, Any]:
     """Price own model ``model_id`` as another provider's card (money is shown
     for own engines only with one); null clears it."""
-    from app.lens.prices import REFERENCE_PREFIX
+    from app.lens import price_store
 
     if (body.provider is None) != (body.model is None):
         raise HTTPException(status_code=422, detail="give both provider and model, or neither")
     async with open_db(request.app.state.settings.db_path) as db:
         if not await ModelRepo(db).get(model_id):
             raise HTTPException(status_code=404, detail="model not found")
-        key = REFERENCE_PREFIX + model_id
-        if body.provider is None:
-            await db.execute("DELETE FROM settings WHERE key = ?", (key,))
-        else:
-            await db.execute(
-                "INSERT INTO settings (key, value) VALUES (?, ?) "
-                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-                (key, json.dumps({"provider": body.provider, "model": body.model})),
-            )
-        await db.commit()
+        await price_store.set_reference(
+            db, actor=user, model_id=model_id, provider=body.provider, model=body.model
+        )
     return {"ok": True}

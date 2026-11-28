@@ -34,6 +34,7 @@ again later transparently re-fetches.
 
 import asyncio
 import logging
+import time
 from typing import Any
 
 from transformers import AutoTokenizer
@@ -49,6 +50,22 @@ _CHARS_PER_TOKEN = 4
 
 # Above this many characters the encode runs in a worker thread (#279).
 OFFLOOP_TOKENIZE_CHARS = 4096
+
+# A repo whose tokenizer failed to load is not tried again for this long.
+# Without it every /v1 request re-ran ``from_pretrained`` -- several HTTP round
+# trips to huggingface.co on the hot path -- for a load that keeps failing
+# (GGUF-only repo, gated repo with no token, remote-code tokenizer, no route to
+# the Hub). ``evict`` clears it at once, so a corrected tokenizer_repo applies
+# on the next load without waiting.
+FAILED_LOAD_RETRY_S = 300.0
+
+
+def _now() -> float:
+    return time.monotonic()
+
+
+class _RecentLoadFailure(LookupError):
+    """The load failed within FAILED_LOAD_RETRY_S; not retried yet."""
 
 
 def _load_warm(hf_repo: str) -> Any:
@@ -77,6 +94,8 @@ class TokenizerCache:
         # what an operator looking for the row to fix would search for -- not by
         # whichever repo we happened to try.
         self._estimating: set[str] = set()
+        # Tried repo -> monotonic time before which a failed load is not retried.
+        self._failed_until: dict[str, float] = {}
         self._lock = asyncio.Lock()
 
     def estimating(self) -> frozenset[str]:
@@ -98,8 +117,16 @@ class TokenizerCache:
         """
         async with self._lock:
             if hf_repo not in self._cache:
+                until = self._failed_until.get(hf_repo)
+                if until is not None and _now() < until:
+                    raise _RecentLoadFailure(hf_repo)
                 loop = asyncio.get_running_loop()
-                self._cache[hf_repo] = await loop.run_in_executor(None, _load_warm, hf_repo)
+                try:
+                    self._cache[hf_repo] = await loop.run_in_executor(None, _load_warm, hf_repo)
+                except Exception:
+                    self._failed_until[hf_repo] = _now() + FAILED_LOAD_RETRY_S
+                    raise
+                self._failed_until.pop(hf_repo, None)
             return self._cache[hf_repo]
 
     async def count(
@@ -136,6 +163,8 @@ class TokenizerCache:
         repo = fallback_repo or hf_repo
         try:
             tok = await self.get(repo)
+            # A retry after the failure window succeeded: counts are exact again.
+            self._estimating.discard(hf_repo)
             off_loop = len(text) > OFFLOOP_TOKENIZE_CHARS
             for attempt in (1, 2):
                 try:
@@ -187,6 +216,10 @@ class TokenizerCache:
             # restarts -- and the once-per-repo log would never fire again to
             # say so.
             self._estimating.discard(hf_repo)
+            # Forget every remembered load failure, not only hf_repo's: the
+            # failure is keyed by the repo TRIED, which may be the row's old
+            # tokenizer_repo. Unload is rare, so a few extra retries cost nothing.
+            self._failed_until.clear()
         if to_drop:
             logger.debug(
                 "TokenizerCache.evict(%r) dropped %d entr%s",

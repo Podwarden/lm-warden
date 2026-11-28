@@ -202,6 +202,9 @@ def _enable_prompt_lens(client):
 
 def test_disabled_gate_zero_media_store_calls(tmp_data_dir, client):
     client.get("/healthz")
+    client.app.state.settings = dataclasses.replace(
+        client.app.state.settings, prompt_lens_enabled=False
+    )
     plaintext = _seed_loaded(tmp_data_dir / "vllm-warden.db")
     client.app.state.supervisor._ports["qwen"] = 19099
     client.app.state.tokenizers = _fake_tokenizer(lambda t: len(t.split()) if t else 0)

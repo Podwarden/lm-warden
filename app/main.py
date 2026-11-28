@@ -463,6 +463,12 @@ async def lifespan(app: FastAPI):
         run_update_check(settings.db_path, app.state.ext.edition, release_version())
     )
 
+    # Price catalogue (#347): seeds from the bundled snapshot at once, then refreshes
+    # on the settings interval. Never blocks startup; a network failure keeps the table.
+    from app.lens.price_store import run_forever as run_price_refresh
+
+    price_task = asyncio.create_task(run_price_refresh(settings.db_path))
+
     # Metal design s2 — on the macOS launcher, a force-quit must not leave a
     # headless uvicorn behind: when VW_PARENT_PID is set, watch the launcher
     # and SIGTERM ourselves (the normal graceful shutdown) if it dies. Unset
@@ -546,6 +552,7 @@ async def lifespan(app: FastAPI):
         except Exception:  # noqa: BLE001 -- shutdown must proceed (TimeoutError included)
             logging.getLogger(__name__).warning("prompt_lens: kept captures final flush failed")
         kept_task.cancel()
+        price_task.cancel()
         lens_scorer_task.cancel()
         sampler_task.cancel()
         pruner_task.cancel()
@@ -580,6 +587,7 @@ async def lifespan(app: FastAPI):
             audit_task,
             update_task,
             kept_task,
+            price_task,
             lens_scorer_task,
             *((parent_watch_task,) if parent_watch_task is not None else ()),
             return_exceptions=True,
@@ -781,6 +789,9 @@ def build_app() -> FastAPI:
     app.include_router(settings_routes_api.router)
     app.include_router(settings_routes_api.model_settings_router)
     app.include_router(settings_routes_api.lens_prices_router)
+    from app.lens.prices_routes import router as prices_router
+
+    app.include_router(prices_router)
 
     from app.proxy import routes as proxy_routes
 

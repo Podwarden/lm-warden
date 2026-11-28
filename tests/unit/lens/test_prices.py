@@ -99,9 +99,8 @@ def test_missing_tables_read_as_no_card():
     assert card_for(db, relayed=False, upstream=None, model="m", model_id="x") is None
 
 
-def test_shipped_defaults_carry_source_and_date():
-    cards = load_defaults()
-    assert cards and all(c["source"] and c["effective_from"] and c["currency"] for c in cards)
+def test_shipped_defaults_are_retired_the_catalogue_replaced_them():
+    assert load_defaults() == []
 
 
 # -- admin routes ---------------------------------------------------------------------
@@ -118,7 +117,7 @@ def _admin(client, tmp_data_dir):
 def test_rate_card_routes(client, tmp_data_dir):
     h = _admin(client, tmp_data_dir)
     got = client.get("/api/admin/lens/rate-cards", headers=h).json()
-    assert got["cards"] == [] and got["defaults"] and got["reference"] == {}
+    assert got["cards"] == [] and got["defaults"] == [] and got["reference"] == {}
     card = {
         "provider": "upstream.example",
         "model": "big",

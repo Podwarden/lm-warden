@@ -5,7 +5,7 @@ Precedence (owner request 2026-11-22):
 1. the runtime setting ``prompt_lens_enabled`` (Settings page, the ``settings``
    KV), when it has been set;
 2. otherwise the env: ``VW_PROMPT_LENS_ENABLED`` (app/config.py);
-3. otherwise off.
+3. otherwise on (default flipped to on 2026-11-26, #346).
 
 The runtime value lives on ``app.state.prompt_lens_runtime`` (True, False, or
 absent/None for "not set"): read once at startup (``load``) and replaced by the
@@ -71,11 +71,11 @@ def _runtime(app: Any) -> bool | None:
 
 
 def _env(app: Any) -> bool:
-    return bool(getattr(app.state.settings, "prompt_lens_enabled", False))
+    return bool(getattr(app.state.settings, "prompt_lens_enabled", True))
 
 
 def configured(app: Any) -> bool:
-    """The switch alone (setting, else env, else off), hub or not."""
+    """The switch alone (setting, else env, else on), hub or not."""
     rt = _runtime(app)
     return rt if rt is not None else _env(app)
 

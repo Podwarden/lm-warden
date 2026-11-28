@@ -62,6 +62,9 @@ def _enable_prompt_lens(client):
 # --------------------------------------------------------------------------
 def test_disabled_makes_zero_hub_calls_and_byte_identical_stream(tmp_data_dir, client):
     client.get("/healthz")
+    client.app.state.settings = dataclasses.replace(
+        client.app.state.settings, prompt_lens_enabled=False
+    )
     plaintext = _seed_loaded(tmp_data_dir / "vllm-warden.db")
     client.app.state.supervisor._ports["qwen"] = 19099
     client.app.state.tokenizers = _fake_tokenizer(lambda t: len(t.split()) if t else 0)
@@ -415,6 +418,9 @@ def test_request_start_without_session_has_null_session_and_turn(tmp_data_dir, c
 
 def test_disabled_never_builds_the_structured_prompt(tmp_data_dir, client):
     client.get("/healthz")
+    client.app.state.settings = dataclasses.replace(
+        client.app.state.settings, prompt_lens_enabled=False
+    )
     plaintext = _seed_loaded(tmp_data_dir / "vllm-warden.db")
     client.app.state.supervisor._ports["qwen"] = 19099
     client.app.state.tokenizers = _fake_tokenizer(lambda t: len(t.split()) if t else 0)
@@ -526,6 +532,9 @@ def test_a_keeping_key_has_its_request_kept_on_disk(tmp_data_dir, client):
 
 def test_disabled_puts_nothing_in_the_section_store(tmp_data_dir, client):
     client.get("/healthz")
+    client.app.state.settings = dataclasses.replace(
+        client.app.state.settings, prompt_lens_enabled=False
+    )
     plaintext = _seed_loaded(tmp_data_dir / "vllm-warden.db")
     client.app.state.supervisor._ports["qwen"] = 19099
     client.app.state.tokenizers = _fake_tokenizer(lambda t: 1)
@@ -549,6 +558,10 @@ def _ready_gm(client, tmp_data_dir, *, on=True):
     client.app.state.tokenizers = _fake_tokenizer(lambda t: len(t.split()) if t else 0)
     if on:
         _enable_prompt_lens(client)
+    else:
+        client.app.state.settings = dataclasses.replace(
+            client.app.state.settings, prompt_lens_enabled=False
+        )
     return plaintext
 
 

@@ -392,11 +392,12 @@ By default no prompt or completion text is stored anywhere. `request_history`
 — the table behind the requests chart and the per-key rollups — has no column
 that holds it; it carries identifiers, token counts, timings and finish
 reasons, and that is the whole of the metadata path. Two diagnostic features
-can capture content. Both are off by default, and with both off the proxy's
-forward path is the code it would be in a build that never had them.
+can capture content. Prompt Lens is on by default (held in memory only) and
+the content log is off by default; with Prompt Lens switched off as well, the
+proxy's forward path is the code it would be in a build that never had them.
 
-**Prompt Lens** (turned on by the switch in
-Settings, General, Privacy, or `VW_PROMPT_LENS_ENABLED`) streams prompts,
+**Prompt Lens** (on by default since v2026.11.27; turn it off with the switch in
+Settings, General, Privacy, or `VW_PROMPT_LENS_ENABLED=false`) streams prompts,
 replies, reasoning, tool calls and any inline images to the admin session —
 the way to settle "the model said X" when the client is somebody else's code,
 and to see which parts of a prompt matched earlier requests. The env
@@ -405,7 +406,9 @@ variables are `VW_PROMPT_LENS_*` and the routes are
 old `VW_GODMODE_*` names and `/godmode` routes were removed in the release
 after v2026.11.24.1). The Settings switch overrides
 the env variable and applies at once: off ends every open Prompt Lens view and
-clears what memory holds (kept captures stay on disk). With it on, Prompt Lens
+clears what memory holds (kept captures stay on disk). Requests are held in
+memory only (a bounded ring, gone on restart) unless Keep is on for a key.
+With it on, Prompt Lens
 is a page of its own, in the menu: `/ui/prompt-lens` for the admin (every key;
 breadcrumb Home › Prompt Lens) and `/ui/key/prompt-lens` for a key holder
 (their own requests only; in the key area's nav, and only for a key whose

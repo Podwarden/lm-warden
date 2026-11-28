@@ -744,7 +744,7 @@ curl -s $W/api/admin/prompt-lens/status -H "Authorization: Bearer $JWT"
 
 Only a signed-in session can change the switch (`PATCH /api/settings/runtime`
 `{"prompt_lens_enabled": false}`; `null` clears it, "Use server default", so
-the env variable decides again; an admin token gets 403 `session_only`). Every
+the env variable, else the default (on), decides again; an admin token gets 403 `session_only`). Every
 save is a row in `prompt_lens_switch_audit` (who, when, through what, value and
 source before and after); the status carries the newest as `last_change`.
 Turning it off stops capturing at once (a request already running captures
@@ -908,11 +908,10 @@ confidence (`high`, `medium`, `low`). `top` is the three fixes worth most
 (money with a price card, else GPU-seconds, else tokens; weighted by
 confidence); `notice` is a secret in the prompt (R-09), pinned above them. The
 scorecard holds codes, counts and positions only: never prompt, reply or tool
-text. Money appears only with a price card: a relayed route uses the
-provider's card, an own model the reference card an admin picked per model
-(`GET/PUT /api/admin/lens/rate-cards`,
-`PUT /api/admin/lens/reference-card/{model_id}`, shown with the card's
-`effective_from` date).
+text. Money appears only with a price: a relayed route uses its provider's
+price, an own model the reference price an admin picked per model (see
+[Prices](#prices) below; the price's date is shown with every money figure).
+A model with no known price shows tokens, as before.
 
 A key holder reads their own with `GET /api/me/prompt-lens/sessions` and
 `GET /api/me/prompt-lens/sessions/{ref}/scorecard`: the key is the sign-in's
@@ -1128,6 +1127,48 @@ models gets `{"models": []}`. Fields:
   For a model that is not loaded, every engine-run field and an unset
   `max_model_len` are unknown; `replicas` and `cache_aware_routing` come from
   the configuration.
+
+### Prices
+
+Settings, Prices tab. Admin session or admin token, like every `/api/admin` route.
+Prices are **per million tokens, in micro-units of the currency** (`3000000` =
+3.00 USD per million). The price of a model is, in order: the admin's
+**override**, else the public list price in the install's price table. The table
+is seeded a few seconds after startup from the snapshot shipped with the release
+(`app/lens/price_snapshot.json`, with its source and date), so an offline
+install has prices from its first minute (Prompt Lens reads the snapshot itself until the table is seeded), then refreshed in the background from
+public lists: OpenRouter's `GET https://openrouter.ai/api/v1/models` (primary)
+and, only when that fails, LiteLLM's `model_prices_and_context_window.json` on
+`raw.githubusercontent.com` (MIT). Only those two HTTPS hosts are contacted,
+without credentials or redirects, with timeouts and a 16 MiB cap, and nothing
+about the install is sent. A failed refresh keeps the last good table. The
+refresh is off for `HF_HUB_OFFLINE=1` or `VW_PRICE_REFRESH=0`, and runs every
+`refresh_interval_hours` (default 24, 0 = off). It never delays startup.
+
+| Route | What it does |
+|---|---|
+| `GET /api/admin/prices` | `providers` (the router's upstream, every upstream seen in the last 90 days, every provider priced by hand; each with its `models` and `catalogue_models`), `local` (own models with their reference and `priced_as`), `refresh` (interval, `last_success`, `last_error`, `last_source`, the snapshot's `source` and `fetched_at`) |
+| `GET /api/admin/prices/models?provider=&q=&limit=` | catalogue models of one provider whose name contains `q` |
+| `PUT /api/admin/prices/override` | `{provider, model, currency, input_per_m_micros, output_per_m_micros?, cache_read_per_m_micros?, cache_write_per_m_micros?}`: the admin's price; returns the entry |
+| `DELETE /api/admin/prices/override?provider=&model=` | removes it so the list price applies again; **404** when there was none |
+| `POST /api/admin/prices/refresh` | fetch now; a failure answers **200** with `last_error` |
+| `PUT /api/admin/prices/settings` | `{refresh_interval_hours}` (0 to 720) |
+| `GET /api/admin/prices/audit?limit=` | newest changes: who, when, what, before and after |
+
+An entry is `{model, price, source, fetched_at}` with `source` one of `override`
+(`fetched_at` is its date), `openrouter`, `litellm` or `snapshot`; an override
+also carries `override.by`, `list_price` and `list_source`. `price` is null for a
+model with no known price. `provider` is the provider's API host as the request
+history records it (`api.anthropic.com`); model names match by folding case,
+dots and a trailing date, so `claude-sonnet-4.5` and
+`claude-sonnet-4-5-20250929` are one model. Every override set or cleared, every
+reference card change and every interval change is a `price_audit` row.
+
+**Kept from v2026.11.26.1, now thin wrappers:** `GET /api/admin/lens/rate-cards`
+(`cards` are the overrides; `defaults` is always `[]`, the shipped list prices
+are the price table now; `reference` as before), `PUT /api/admin/lens/rate-cards`
+(each card is an audited override dated `effective_from`) and
+`PUT /api/admin/lens/reference-card/{model_id}` (audited).
 
 ### The Prompt Lens API
 

@@ -3707,7 +3707,8 @@ export interface paths {
         get: operations["get_lens_rate_cards_api_admin_lens_rate_cards_get"];
         /**
          * Put Lens Rate Cards
-         * @description Add or replace price cards (one per provider, model and effective date).
+         * @description Add or replace price cards (one per provider, model and effective date). Kept from
+         *     v2026.11.26.1: now the same audited write as ``PUT /api/admin/prices/override``.
          */
         put: operations["put_lens_rate_cards_api_admin_lens_rate_cards_put"];
         post?: never;
@@ -3731,6 +3732,132 @@ export interface paths {
          *     for own engines only with one); null clears it.
          */
         put: operations["put_lens_reference_card_api_admin_lens_reference_card__model_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Prices
+         * @description Every provider the install uses with its models and prices, the local models and
+         *     what each is priced as, and the refresh state.
+         */
+        get: operations["get_prices_api_admin_prices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search Models
+         * @description The catalogue's models of one provider whose name contains ``q``.
+         */
+        get: operations["search_models_api_admin_prices_models_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/override": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Override
+         * @description Set the admin's price for one model of one provider. Audited.
+         */
+        put: operations["put_override_api_admin_prices_override_put"];
+        post?: never;
+        /**
+         * Delete Override
+         * @description Remove the admin's price so the catalogue's applies again. Audited.
+         */
+        delete: operations["delete_override_api_admin_prices_override_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh Now
+         * @description Fetch the public price lists now (bounded by the fetch timeouts). A failure keeps the
+         *     last good table and is reported as ``last_error``.
+         */
+        post: operations["refresh_now_api_admin_prices_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Settings
+         * @description The refresh interval in hours (0 turns the automatic refresh off). Audited.
+         */
+        put: operations["put_settings_api_admin_prices_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Audit
+         * @description The newest changes of prices, reference cards and the refresh interval.
+         */
+        get: operations["get_audit_api_admin_prices_audit_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -6644,6 +6771,31 @@ export interface components {
             /** Presets */
             presets: components["schemas"]["PresetEntry"][];
         };
+        /** PriceOverrideBody */
+        PriceOverrideBody: {
+            /**
+             * Currency
+             * @default USD
+             */
+            currency: string;
+            /** Input Per M Micros */
+            input_per_m_micros: number;
+            /** Output Per M Micros */
+            output_per_m_micros?: number | null;
+            /** Cache Read Per M Micros */
+            cache_read_per_m_micros?: number | null;
+            /** Cache Write Per M Micros */
+            cache_write_per_m_micros?: number | null;
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+        };
+        /** PriceSettingsBody */
+        PriceSettingsBody: {
+            /** Refresh Interval Hours */
+            refresh_interval_hours: number;
+        };
         /**
          * PromptDiet
          * @description A key's opt-in cut of dead weight before the engine (app/proxy/prompt_diet.py).
@@ -6681,7 +6833,7 @@ export interface components {
          * PromptLensStatus
          * @description Whether Prompt Lens is on, and where that comes from (the Settings page
          *     shows it): ``source`` is ``setting`` (the runtime setting
-         *     ``prompt_lens_enabled``), ``env`` (``env_var``: ``VW_PROMPT_LENS_ENABLED``) or ``default`` (off).
+         *     ``prompt_lens_enabled``), ``env`` (``env_var``: ``VW_PROMPT_LENS_ENABLED``) or ``default`` (on).
          */
         PromptLensStatus: {
             /** Enabled */
@@ -13509,6 +13661,222 @@ export interface operations {
                 "application/json": components["schemas"]["LensReferenceCard"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_prices_api_admin_prices_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    search_models_api_admin_prices_models_get: {
+        parameters: {
+            query: {
+                provider: string;
+                q?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_override_api_admin_prices_override_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceOverrideBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_override_api_admin_prices_override_delete: {
+        parameters: {
+            query: {
+                provider: string;
+                model: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_now_api_admin_prices_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    put_settings_api_admin_prices_settings_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceSettingsBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_audit_api_admin_prices_audit_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

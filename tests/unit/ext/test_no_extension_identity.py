@@ -47,6 +47,14 @@ EXPECTED_ADDED = {
     ("GET", "/api/aliases/{alias_id}"),
     ("PATCH", "/api/aliases/{alias_id}"),
     ("DELETE", "/api/aliases/{alias_id}"),
+    # Prices tab (#347).
+    ("GET", "/api/admin/prices"),
+    ("GET", "/api/admin/prices/models"),
+    ("GET", "/api/admin/prices/audit"),
+    ("PUT", "/api/admin/prices/override"),
+    ("DELETE", "/api/admin/prices/override"),
+    ("POST", "/api/admin/prices/refresh"),
+    ("PUT", "/api/admin/prices/settings"),
 }
 
 NONDETERMINISTIC_HEADERS = {"date", "set-cookie", "x-request-id", "content-length"}

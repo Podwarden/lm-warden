@@ -1,7 +1,7 @@
 """The Prompt Lens switch (app/proxy/prompt_lens_switch.py).
 
 Precedence: the runtime setting ``prompt_lens_enabled`` when it is set, else
-the env (``VW_PROMPT_LENS_ENABLED``), else off. Turning it off drops what is held in memory
+the env (``VW_PROMPT_LENS_ENABLED``), else on (#346). Turning it off drops what is held in memory
 (ring, key windows, sections, images) and ends every open stream; kept captures
 on disk are not touched.
 """
@@ -15,14 +15,15 @@ from app.proxy.prompt_lens import STOP, PromptLensHub, PromptLensMediaStore
 from app.proxy.prompt_lens_sections import PromptLensSections
 
 
-def _app(*, env_on: bool = False, env_var: str | None = None, runtime=None):
+def _app(*, env_on: bool | None = None, env_var: str | None = None, runtime=None):
+    extra = {} if env_on is None else {"prompt_lens_enabled": env_on}
     settings = Settings(
         data_dir=None,  # type: ignore[arg-type]
         hf_cache_dir=None,  # type: ignore[arg-type]
         cookie_secret="x" * 32,
         container_gpu_count=0,
-        prompt_lens_enabled=env_on,
         prompt_lens_env_var=env_var,
+        **extra,
     )
     sections = PromptLensSections()
     state = SimpleNamespace(
@@ -36,11 +37,11 @@ def _app(*, env_on: bool = False, env_var: str | None = None, runtime=None):
     return SimpleNamespace(state=state)
 
 
-def test_default_is_off():
+def test_default_is_on():
     app = _app()
-    assert sw.enabled(app) is False
+    assert sw.enabled(app) is True
     assert sw.status(app) == {
-        "enabled": False,
+        "enabled": True,
         "source": "default",
         "setting": None,
         "env_var": None,
@@ -62,6 +63,18 @@ def test_setting_wins_over_env_both_ways():
     assert sw.status(app)["source"] == "setting"
     app = _app(env_on=False, env_var="VW_PROMPT_LENS_ENABLED", runtime=True)
     assert sw.enabled(app) is True
+
+
+def test_env_false_beats_the_default():
+    app = _app(env_on=False, env_var="VW_PROMPT_LENS_ENABLED")
+    assert sw.enabled(app) is False
+    assert sw.status(app)["source"] == "env"
+
+
+def test_setting_off_beats_the_default():
+    app = _app(runtime=False)
+    assert sw.enabled(app) is False
+    assert sw.status(app)["source"] == "setting"
 
 
 def test_no_hub_is_off():

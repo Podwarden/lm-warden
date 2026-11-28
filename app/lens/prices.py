@@ -1,28 +1,30 @@
 """Prompt Lens prices: which card prices a session, and what a fix saves in money
 (analysis spec 5.2, 5.4).
 
-Money is shown only with a price card: a relayed request uses the provider's card
-(``rate_cards``, migration 0025); an own engine uses the card the admin picked as
-that model's reference card (``settings`` key ``lens_reference_card:<model_id>``),
-and without one the lens shows tokens and seconds only. A card's ``effective_from``
+Money is shown only with a price: a relayed request uses the provider's price; an
+own engine uses the price of the model the admin picked as its reference
+(``settings`` key ``lens_reference_card:<model_id>``); with none the lens shows tokens
+and seconds only. A price is, in order: the admin's override (a ``rate_cards`` row,
+migration 0025), else the public list price in ``price_catalogue`` (refreshed daily,
+seeded from the snapshot shipped with the release: app/lens/price_store.py). A card's ``effective_from``
 date is shown next to every money figure. Reads here are synchronous (the lens
 services run in a worker thread). A card holds prices, never text (A-10).
 """
 
 from __future__ import annotations
 
+import functools
 import json
 import sqlite3
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any, Literal
 
 from app.chat2.ledger import _CARD_COLS, RateCard
 from app.lens.catalogue import Saving
+from app.lens.price_sources import PriceRow, model_key
+from app.lens.price_store import load_snapshot
 
 REFERENCE_PREFIX = "lens_reference_card:"
-#: ``rate_cards.model`` for the shipped list prices a confirmed card came from.
-DEFAULTS_PATH = Path(__file__).with_name("rate_cards_default.json")
 _PER_M = 1_000_000.0
 
 
@@ -33,17 +35,55 @@ def _today() -> str:
 def find_card(
     db: sqlite3.Connection, provider: str, model: str, at: str | None = None
 ) -> RateCard | None:
-    """The platform's newest card for ``(provider, model)`` effective by ``at``."""
+    """The price of ``(provider, model)``: the admin's newest card effective by ``at``
+    (exact model name first, else a name that folds the same), else the catalogue's."""
     try:
-        r = db.execute(
-            f"SELECT {_CARD_COLS} FROM rate_cards WHERE provider = ? AND model = ? "
+        rows = db.execute(
+            f"SELECT {_CARD_COLS} FROM rate_cards WHERE provider = ? "
             "AND org_id IS NULL AND effective_from <= ? "
-            "ORDER BY effective_from DESC, id DESC LIMIT 1",
-            (provider, model, at or _today()),
-        ).fetchone()
+            "ORDER BY effective_from DESC, id DESC",
+            (provider, at or _today()),
+        ).fetchall()
     except sqlite3.OperationalError:
         return None
-    return RateCard(*r) if r is not None else None
+    for r in rows:
+        if r[3] == model:
+            return RateCard(*r)
+    key = model_key(model)
+    for r in rows:
+        if model_key(r[3]) == key:
+            return RateCard(*r)
+    return _catalogue_card(db, provider, model)
+
+
+def _catalogue_card(db: sqlite3.Connection, provider: str, model: str) -> RateCard | None:
+    try:
+        r = db.execute(
+            "SELECT host, model, currency, input_per_m_micros, output_per_m_micros, "
+            "cache_read_per_m_micros, cache_write_per_m_micros, fetched_at FROM price_catalogue "
+            "WHERE host = ? AND model_key = ?",
+            (provider, model_key(model)),
+        ).fetchone()
+    except sqlite3.OperationalError:
+        return _snapshot_card(provider, model)
+    if r is None:
+        return _snapshot_card(provider, model)
+    host, name, cur, inp, out, read, write, at = r
+    # ``out`` may be unknown: 0 makes the output-side figure absent (price_saving needs > 0).
+    return RateCard(
+        f"catalogue:{host}:{name}",
+        None,
+        host,
+        name,
+        inp,
+        out or 0,
+        None,
+        read,
+        write,
+        0,
+        cur,
+        at[:10],
+    )
 
 
 def reference_of(db: sqlite3.Connection, model_id: str) -> tuple[str, str] | None:
@@ -83,6 +123,24 @@ def card_for(
         return find_card(db, upstream, model, at) if upstream else None
     ref = reference_of(db, model_id)
     return find_card(db, ref[0], ref[1], at) if ref is not None else None
+
+
+@functools.lru_cache(maxsize=1)
+def _snapshot_index() -> dict[tuple[str, str], PriceRow]:
+    return {(r.host, r.model_key): r for r in load_snapshot()[1]}
+
+
+def _snapshot_card(provider: str, model: str) -> RateCard | None:
+    """The price in the snapshot shipped with the release, for the moments before the
+    catalogue is seeded and for a catalogue that could not be read."""
+    r = _snapshot_index().get((provider, model_key(model)))
+    if r is None:
+        return None
+    return RateCard(
+        f"snapshot:{r.host}:{r.model}", None, r.host, r.model, r.input_per_m_micros,
+        r.output_per_m_micros or 0, None, r.cache_read_per_m_micros, r.cache_write_per_m_micros,
+        0, r.currency, r.fetched_at[:10],
+    )  # fmt: skip
 
 
 def _micros(v: int | None) -> float | None:
@@ -136,11 +194,6 @@ def session_input_cost(prompt_tokens: int, card: RateCard | None) -> float | Non
 
 
 def load_defaults() -> list[dict[str, Any]]:
-    """The shipped list prices; the admin confirms them in the UI, nothing is
-    written to ``rate_cards`` until then."""
-    try:
-        d = json.loads(DEFAULTS_PATH.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return []
-    cards = d.get("cards") if isinstance(d, dict) else None
-    return [c for c in cards if isinstance(c, dict)] if isinstance(cards, list) else []
+    """Retired with #347: the shipped list prices are now the catalogue (Settings, Prices);
+    ``GET /api/admin/lens/rate-cards`` still answers a ``defaults`` list, always empty."""
+    return []

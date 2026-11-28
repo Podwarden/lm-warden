@@ -1,5 +1,6 @@
 """Reply capture through the real forward path (cobs2 task 3)."""
 
+import hashlib
 import json
 import os
 import sqlite3
@@ -586,20 +587,81 @@ def _body_200kb():
     return {"model": "qwen", "messages": msgs, "tools": tools}
 
 
+#: One encoder for the reference workload below, built once (as the hot path's is).
+_REF_ENC = json.JSONEncoder(sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _reference_work(body):
+    """A frozen yardstick for the hot-path perf guard: the same kind of work as
+    canonicalize + ids_for (a pure-Python walk of every message, a JSON
+    encode of each and a sha256 chain over them) on the same body, written
+    here and importing nothing from ``app`` so a change to the code under test
+    cannot move it. Never optimise or "fix" it: the ratio bound below is
+    calibrated against it as it is."""
+    prev = hashlib.sha256(_REF_ENC.encode({"tools": body["tools"]}).encode()).digest()
+    for m in body["messages"]:
+        parts = []
+        c = m.get("content")
+        if isinstance(c, str):
+            parts.append({"t": "text", "v": " ".join(c.split())})
+        for tc in m.get("tool_calls") or ():
+            f = tc["function"]
+            parts.append({"t": "call", "n": f["name"], "a": f["arguments"]})
+        d = _REF_ENC.encode({"r": m["role"], "p": parts}).encode("utf-8", "surrogatepass")
+        prev = hashlib.sha256(prev + hashlib.sha256(d).digest()).digest()
+    return prev
+
+
+#: Hot path / reference, median of 200 interleaved pairs, best of 3 rounds.
+#: See the calibration in test_hot_path_overhead_200kb_p99_under_2ms.
+HOT_PATH_REF_RATIO_MAX = 1.7
+
+
 @pytest.mark.perf
-def test_hot_path_overhead_200kb_p99_under_2ms():
+def test_hot_path_overhead_200kb_p99_under_2ms(record_property):
     """canonicalize + ids_for (the plan's measure) on a 200 KB coding-agent
     body, as the hot path sees it in a live session: the previous turn was
     hashed already and each request adds a NEW tail (a user turn, a tool call
     and its result) that has never been seen.
 
-    Timed in this thread's CPU time, so a busy box (CI runs four workers)
-    measures the work, not the wait for a core. The collector is paused while
-    timing: its pauses are process-wide and amortised over all allocation, not
-    a cost of this code path. Measured on
-    an M4: about 1.2 ms median (1.3 ms with the lineage observe), about 3 ms
-    for a body with nothing memoised (the first request of a process)."""
+    The guard is machine-relative. Each body is timed through the hot path and,
+    right after it, through ``_reference_work`` (a frozen pure-Python
+    walk + JSON + sha256 of the same body), both in this thread's CPU time with
+    the collector paused. The assertion is on the median of the 200 per-body
+    ratios hot / reference.
+
+    Why not an absolute bound: thread CPU time removes the wait for a core but
+    not running slower ON a core. On 2026-11-27 runner05 (32 threads) was
+    running three lm-warden unit-tests jobs (4 workers each), podwarden
+    test:backend and test:frontend, and imi/fts jobs on its docker
+    registration; the same code's median went from about 5 ms to 8.8-10.2 ms
+    (p99 about 11 ms) and failed the old absolute 8 ms median bound 4 times in
+    a row (pipelines 44779, 44780, 44782), with no change to app/ or tests/.
+    Host load (SMT siblings, shared cache, clock) slows the hot path and the
+    reference alike, so the ratio cancels it; a real slowdown of the hot path
+    moves only the numerator.
+
+    Calibration (median of the per-body ratios, best of 3 rounds):
+      - M4, idle: hot 1.18 ms, reference 1.17 ms, ratio 1.01.
+      - M4 under 10 and 30 CPU burners (10 cores): ratio 1.03-1.05 while the
+        old metric (best-of-3 absolute median) rose from 1.15 to 1.50-1.92 ms.
+      - runner05 in CI (pipeline 44793, beside imi/fts jobs): hot 5.21 ms,
+        reference 4.01 ms, ratio 1.30 (p99 10.6 ms).
+      - The hot path made 2x slower (canonicalize and ids_for each run
+        twice, in a scratch copy) on the M4: ratio 1.96-2.03, idle and under
+        load. On runner05 doubling the numerator would give about 2.6 (not run
+        there).
+    HOT_PATH_REF_RATIO_MAX = 1.7 is about 30 % above the slowest normal ratio
+    (runner05) and below the smallest 2x-regression ratio (the M4's 2.0), so a
+    2x regression fails on both machines, while host load (which moved the
+    M4's ratio by under 5 %) stays well inside it.
+    If unit-tests moves to a different CPU, re-measure: the ratio is a property
+    of the CPU (1.0 on the M4, 1.3 on runner05), not of its load.
+
+    Under ``LMW_STRICT_PERF=1`` (a quiet box) the plan's absolute budget is
+    asserted as well: p99 under 2 ms."""
     import gc
+    import statistics
     import time
 
     from app.cobs2.keys import NetworkKey
@@ -635,9 +697,9 @@ def test_hot_path_overhead_200kb_p99_under_2ms():
         ]
         return {**base, "messages": [*base["messages"], *tail]}
 
-    def round_p99(r):
+    def one_round(r):
         bodies = [turn(r * 1000 + i) for i in range(200)]
-        times = []
+        hot, ref = [], []
         gc.collect()
         gc.disable()
         try:
@@ -646,31 +708,45 @@ def test_hot_path_overhead_200kb_p99_under_2ms():
                 canon = canonicalize(b)
                 assert canon is not None
                 ids_for(canon, key, b"")
-                times.append(time.thread_time() - t0)
+                t1 = time.thread_time()
+                _reference_work(b)
+                t2 = time.thread_time()
+                hot.append(t1 - t0)
+                ref.append(t2 - t1)
         finally:
             gc.enable()
-        times.sort()
-        return times[197], times[100]
+        ratio = statistics.median(h / max(f, 1e-9) for h, f in zip(hot, ref, strict=True))
+        hot.sort()
+        return {
+            "ratio": ratio,
+            "p99": hot[197],
+            "median": hot[100],
+            "ref_median": statistics.median(ref),
+        }
 
-    # Best of three rounds: one noisy sample (a cache-cold core after a
-    # migration) is a whole p99 sample out of 200.
-    # The plan's 2 ms under LMW_STRICT_PERF=1 (a quiet box); by default a
-    # regression guard, 4x the budget: shared runners and a busy Mac put the
-    # work on slower cores.
-    # On shared CI runners the p99 tracks the runner's load, not this code: it
-    # sat at 8.2-10 ms against an 8 ms bound while the median stayed near 5 ms,
-    # and failed develop and MR pipelines alike. There the guard is the median
-    # (a real slowdown moves it); the p99 is asserted only on a quiet box.
     strict = os.environ.get("LMW_STRICT_PERF") == "1"
-    budget = 0.002 if strict else 0.008
+
+    def ok(m):
+        return m["ratio"] < HOT_PATH_REF_RATIO_MAX and (not strict or m["p99"] < 0.002)
+
+    # Best of three rounds: one noisy round (a migration to a cache-cold core
+    # between the two timings of many pairs) should not fail the guard.
     rounds = []
     for r in range(3):
-        rounds.append(round_p99(r))
-        if rounds[-1][0 if strict else 1] < budget:
+        rounds.append(one_round(r))
+        if ok(rounds[-1]):
             break
-    p99, median = min(rounds, key=lambda pm: pm[0 if strict else 1])
-    measured = p99 if strict else median
-    assert measured < budget, f"p99 {p99 * 1e3:.2f} ms, median {median * 1e3:.2f} ms"
+    best = min(rounds, key=lambda m: m["ratio"])
+    for k, v in best.items():
+        record_property(f"cobs2_hot_{k}", round(v * (1 if k == "ratio" else 1e3), 3))
+    msg = (
+        f"ratio {best['ratio']:.2f} (bound {HOT_PATH_REF_RATIO_MAX}), "
+        f"hot median {best['median'] * 1e3:.2f} ms, p99 {best['p99'] * 1e3:.2f} ms, "
+        f"reference median {best['ref_median'] * 1e3:.2f} ms"
+    )
+    assert best["ratio"] < HOT_PATH_REF_RATIO_MAX, msg
+    if strict:
+        assert min(m["p99"] for m in rounds) < 0.002, msg
 
 
 def test_same_conversation_messages_and_chat_record_equal_ids(tmp_data_dir, client):

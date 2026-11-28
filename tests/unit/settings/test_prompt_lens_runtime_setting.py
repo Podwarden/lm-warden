@@ -56,12 +56,14 @@ async def _status(env: Env) -> dict[str, Any]:
 # -- precedence ---------------------------------------------------------------
 
 
-async def test_default_is_off_from_the_default(env: Env) -> None:
+async def test_default_is_on_from_the_default(env: Env) -> None:
     env.prompt_lens(False)
-    env.app.state.settings = dataclasses.replace(env.app.state.settings, prompt_lens_env_var=None)
+    env.app.state.settings = dataclasses.replace(
+        env.app.state.settings, prompt_lens_env_var=None, prompt_lens_enabled=True
+    )
     st = await _status(env)
     assert st == {
-        "enabled": False,
+        "enabled": True,
         "source": "default",
         "setting": None,
         "env_var": None,
@@ -69,7 +71,7 @@ async def test_default_is_off_from_the_default(env: Env) -> None:
         "last_change": None,
     }
     r = await env.http.get(URL, headers=env.admin)
-    assert r.json()["prompt_lens_enabled"] == "false"  # the value in effect
+    assert r.json()["prompt_lens_enabled"] == "true"  # the value in effect
 
 
 async def test_env_decides_while_the_setting_is_unset(env: Env) -> None:
