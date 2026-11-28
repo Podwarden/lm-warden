@@ -45,6 +45,14 @@ services:
       # Daily read of public model price lists (openrouter.ai, else LiteLLM on
       # raw.githubusercontent.com) for Prompt Lens money figures. 0 = off.
       VW_PRICE_REFRESH: "${VW_PRICE_REFRESH:-}"
+      # Model load budgets (seconds), read by app/config.py. Compose passes a
+      # variable to the container only when it is named here: a deployment
+      # value for VW_LOAD_TIMEOUT_S that is not listed never arrives. The
+      # defaults repeat the app's, so an unset value is the built-in budget.
+      VW_LOAD_TIMEOUT_S: "${VW_LOAD_TIMEOUT_S:-600}"
+      VW_WARMUP_PROBE_TIMEOUT_S: "${VW_WARMUP_PROBE_TIMEOUT_S:-600}"
+      VW_LOAD_STALL_WARN_S: "${VW_LOAD_STALL_WARN_S:-300}"
+      VW_LOAD_STALL_TIMEOUT_S: "${VW_LOAD_STALL_TIMEOUT_S:-1200}"
     volumes:
       - vw-data:/data
       - vw-hfcache:/root/.cache/huggingface

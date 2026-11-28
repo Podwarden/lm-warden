@@ -35,3 +35,43 @@ def test_load_timeout_env_override_wins(_base_env):
     _base_env.setenv("VW_LOAD_TIMEOUT_S", "1800")
     s = load_settings()
     assert s.load_timeout_s == 1800.0
+
+
+def test_load_timeout_empty_string_means_default(_base_env):
+    # A compose file forwards the variable as "${VW_LOAD_TIMEOUT_S:-}", so an
+    # unset deployment value arrives as "" -- that must not crash startup.
+    _base_env.setenv("VW_LOAD_TIMEOUT_S", "")
+    assert load_settings().load_timeout_s == 600.0
+    _base_env.setenv("VW_LOAD_TIMEOUT_S", "   ")
+    assert load_settings().load_timeout_s == 600.0
+
+
+@pytest.mark.parametrize(
+    "name,attr,default",
+    [
+        ("VW_WARMUP_PROBE_TIMEOUT_S", "warmup_probe_timeout_s", 600.0),
+        ("VW_LOAD_STALL_WARN_S", "load_stall_warn_s", 300.0),
+        ("VW_WATCHDOG_FAILURE_THRESHOLD", "watchdog_failure_threshold", 3),
+        ("VW_REQUEST_MAX_WALL_S", "request_max_wall_s", 0.0),
+        ("VW_CONTENT_LOG_MAX_CHARS", "content_log_max_chars", 40000),
+        ("VW_MAX_REQUEST_BODY_MB", "max_request_body_mb", 64),
+    ],
+)
+def test_numeric_env_empty_string_means_default(_base_env, name, attr, default):
+    _base_env.setenv(name, "")
+    assert getattr(load_settings(), attr) == default
+
+
+def test_garbage_numeric_env_still_fails_loudly(_base_env):
+    _base_env.setenv("VW_LOAD_TIMEOUT_S", "soon")
+    with pytest.raises(ValueError):
+        load_settings()
+
+
+def test_compose_forwards_load_timeout_with_a_non_empty_default():
+    # Compose gives a container only the variables its environment block
+    # names; a deployment value for VW_LOAD_TIMEOUT_S is otherwise dropped.
+    from pathlib import Path
+
+    text = (Path(__file__).resolve().parents[3] / "docker-compose.yml").read_text()
+    assert 'VW_LOAD_TIMEOUT_S: "${VW_LOAD_TIMEOUT_S:-600}"' in text

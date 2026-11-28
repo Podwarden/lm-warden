@@ -108,6 +108,12 @@ class ModelRow:
     kv_store: str = "off"
     # Migration 0060: the model's part of each KV tier under the fair eviction policy.
     kv_store_weight: int = 1
+    # Migration 0068 (#348): the model's cap on thinking tokens (None = no cap), what
+    # happens at the cap, and what reasoning_effort levels mean in tokens on this model
+    # (None = the defaults). Read per request, so editable while loaded.
+    reasoning_budget: int | None = None
+    reasoning_budget_mode: str = "force_answer"
+    reasoning_effort_budgets: dict[str, int] | None = None
 
 
 # Column list shared by insert + every SELECT so we can't drift them.
@@ -124,7 +130,8 @@ _MODEL_COLS = (
     "supports_tools, supports_vision, supports_reasoning, backend, "
     "mmproj_filename, n_gpu_layers, "
     "data_parallel_size, dp_affinity_enabled, dp_spill_threshold, "
-    "layout_notice_level, layout_notice, thinking_policy, kv_store, kv_store_weight"
+    "layout_notice_level, layout_notice, thinking_policy, kv_store, kv_store_weight, "
+    "reasoning_budget, reasoning_budget_mode, reasoning_effort_budgets"
 )
 
 
@@ -175,6 +182,9 @@ def _decode_row(row: tuple) -> ModelRow:
         thinking_policy=row[37] if row[37] is not None else "client",
         kv_store=row[38] if row[38] is not None else "off",
         kv_store_weight=row[39] if row[39] is not None else 1,
+        reasoning_budget=row[40],
+        reasoning_budget_mode=row[41] if row[41] is not None else "force_answer",
+        reasoning_effort_budgets=json.loads(row[42]) if row[42] else None,
     )
 
 
@@ -201,8 +211,8 @@ class ModelRepo:
                 engine_channel, engine_vllm_version, engine_image,
                 backend, mmproj_filename, n_gpu_layers,
                 data_parallel_size, dp_affinity_enabled, dp_spill_threshold, thinking_policy, kv_store,
-                kv_store_weight
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                kv_store_weight, reasoning_budget, reasoning_budget_mode, reasoning_effort_budgets
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 row.id,
                 row.served_model_name,
@@ -237,6 +247,11 @@ class ModelRepo:
                 row.thinking_policy,
                 row.kv_store,
                 row.kv_store_weight,
+                row.reasoning_budget,
+                row.reasoning_budget_mode,
+                json.dumps(row.reasoning_effort_budgets)
+                if row.reasoning_effort_budgets is not None
+                else None,
             ),
         )
         await self._commit()
@@ -444,6 +459,8 @@ class ModelRepo:
             value = values[column]
             if column in _JSON_COLUMNS:
                 params.append(json.dumps(value))
+            elif column == "reasoning_effort_budgets":
+                params.append(json.dumps(value) if value is not None else None)
             elif column in ("trust_remote_code", "dp_affinity_enabled"):
                 params.append(int(bool(value)))
             else:

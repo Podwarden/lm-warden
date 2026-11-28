@@ -12,8 +12,20 @@ export interface LimitsPatch {
   priority?: number;
 }
 
+/** #348: the key's cap on thinking tokens and what happens at the cap (null = the model's). */
+export interface ReasoningPatch {
+  reasoning_budget: number | null;
+  reasoning_budget_mode: "force_answer" | "stop" | null;
+}
+
 export interface LimitsCardProps {
-  token: Pick<TokenDetail, "id" | "priority"> & Partial<Pick<TokenDetail, "anthropic_relay" | "thinking_policy">>;
+  token: Pick<TokenDetail, "id" | "priority"> &
+    Partial<
+      Pick<
+        TokenDetail,
+        "anthropic_relay" | "thinking_policy" | "reasoning_budget" | "reasoning_budget_mode"
+      >
+    >;
   onSave: (patch: LimitsPatch) => Promise<string | null>;
   /** Flips the Claude Code router relay flag; resolves true on success. */
   onRelay?: (on: boolean) => Promise<boolean>;
@@ -23,6 +35,8 @@ export interface LimitsCardProps {
   onThinking?: (policy: "client" | "off") => Promise<boolean>;
   thinkingError?: string | null;
   thinkingBusy?: boolean;
+  /** Saves the key's reasoning budget; resolves to an error message, or null on success. */
+  onReasoning?: (patch: ReasoningPatch) => Promise<string | null>;
   /** The cache store's eviction policy: under fair share the priority is also the key's weight. */
   policy?: "lru" | "fair";
 }
@@ -38,6 +52,7 @@ export function LimitsCard({
   onThinking,
   thinkingError,
   thinkingBusy,
+  onReasoning,
   policy,
 }: LimitsCardProps) {
   const [prio, setPrio] = useState(token.priority);
@@ -61,6 +76,45 @@ export function LimitsCard({
     if (prio === seen) setPrio(token.priority);
   }
   const dirty = prio !== token.priority;
+
+  // Reasoning budget (#348): the same "reset a clean form when a poll brings a new saved
+  // value" rule as the priority above, judged against the saved value the form last saw.
+  const savedBudget = token.reasoning_budget == null ? "" : String(token.reasoning_budget);
+  const savedMode = token.reasoning_budget_mode ?? "";
+  const [rbBudget, setRbBudget] = useState(savedBudget);
+  const [rbMode, setRbMode] = useState<string>(savedMode);
+  const [rbSeen, setRbSeen] = useState(`${savedBudget}|${savedMode}`);
+  const [rbSaving, setRbSaving] = useState(false);
+  const [rbError, setRbError] = useState<string | null>(null);
+  if (rbSeen !== `${savedBudget}|${savedMode}`) {
+    const [seenBudget, seenMode] = rbSeen.split("|");
+    setRbSeen(`${savedBudget}|${savedMode}`);
+    if (rbBudget === seenBudget && rbMode === seenMode) {
+      setRbBudget(savedBudget);
+      setRbMode(savedMode);
+    }
+  }
+  const rbDirty = rbBudget !== savedBudget || rbMode !== savedMode;
+  const rbNumber = rbBudget.trim() === "" ? null : Number(rbBudget);
+  const rbValid = rbNumber === null || (Number.isInteger(rbNumber) && rbNumber >= 1);
+  const reasoningBudgetId = useId();
+  const reasoningModeId = useId();
+
+  async function saveReasoning() {
+    if (!onReasoning || !rbValid) return;
+    setRbSaving(true);
+    setRbError(null);
+    try {
+      setRbError(
+        await onReasoning({
+          reasoning_budget: rbNumber,
+          reasoning_budget_mode: rbMode === "stop" || rbMode === "force_answer" ? rbMode : null,
+        }),
+      );
+    } finally {
+      setRbSaving(false);
+    }
+  }
 
   async function save() {
     const patch: LimitsPatch = { priority: prio };
@@ -183,6 +237,73 @@ export function LimitsCard({
         </div>
         {thinkingError && (
           <div role="alert" className="mt-1 text-[12px] text-vw-danger-fg">{thinkingError}</div>
+        )}
+      </div>
+
+      <div className="mt-[18px] border-t border-chat-rule pt-3.5" data-testid="reasoning-budget">
+        <div className="mb-1.5 text-[13px] text-chat-muted">
+          Reasoning budget:{" "}
+          <span className="font-semibold text-chat-fg">
+            {token.reasoning_budget == null ? "no cap" : `${token.reasoning_budget} tokens`}
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor={reasoningBudgetId} className="sr-only">
+            Reasoning budget (tokens)
+          </label>
+          <input
+            id={reasoningBudgetId}
+            type="number"
+            min={1}
+            step={1}
+            inputMode="numeric"
+            placeholder="no cap"
+            value={rbBudget}
+            disabled={!onReasoning}
+            onChange={(e) => {
+              setRbBudget(e.target.value);
+              setRbError(null);
+            }}
+            className="w-28 rounded border border-chat-rule bg-chat-page px-2 py-1 text-[13px] text-chat-fg"
+          />
+          <label htmlFor={reasoningModeId} className="sr-only">
+            When the budget is spent
+          </label>
+          <select
+            id={reasoningModeId}
+            value={rbMode}
+            disabled={!onReasoning}
+            onChange={(e) => {
+              setRbMode(e.target.value);
+              setRbError(null);
+            }}
+            className="rounded border border-chat-rule bg-chat-page px-2 py-1 text-[13px] text-chat-fg"
+          >
+            <option value="">model&apos;s mode</option>
+            <option value="force_answer">force_answer</option>
+            <option value="stop">stop</option>
+          </select>
+          <button
+            type="button"
+            className={btn("primary")}
+            disabled={!onReasoning || !rbDirty || !rbValid || rbSaving}
+            onClick={saveReasoning}
+          >
+            Save budget
+          </button>
+        </div>
+        <div className="mt-1.5 text-[12px] leading-[1.45] text-chat-dim">
+          The most tokens a request with this key may spend thinking. A request can ask for less
+          (Anthropic <code>thinking.budget_tokens</code>, <code>reasoning_effort</code>,{" "}
+          <code>lmw_reasoning_budget</code>), never more; the model&apos;s own budget applies too,
+          and the smallest wins. <code>force_answer</code> closes the thinking and lets the model
+          answer; <code>stop</code> ends the request. Either way the client gets{" "}
+          <code>lmw_stop_reason: &quot;reasoning_budget&quot;</code>. Takes effect on the next request.
+        </div>
+        {rbError ? (
+          <div role="alert" className="mt-1 text-[12px] text-vw-danger-fg">{rbError}</div>
+        ) : (
+          rbDirty && <div className="mt-1 text-[12px] text-chat-accent">Unsaved</div>
         )}
       </div>
     </section>

@@ -38,11 +38,16 @@ function FinishPill({ reason }: { reason: string | null | undefined }) {
   const cls =
     reason === "stop"
       ? "rounded-md border border-chat-rule text-chat-muted"
-      : reason === "length"
+      : reason === "length" || reason === "reasoning_budget"
         ? "rounded-full border border-chat-warn/40 text-chat-warn"
         : "rounded-md border border-chat-negative/40 text-chat-negative";
   return (
-    <span className={cn("inline-block px-2 py-0.5 font-mono text-[11px]", cls)}>{reason}</span>
+    <span
+      className={cn("inline-block px-2 py-0.5 font-mono text-[11px]", cls)}
+      title={reason === "reasoning_budget" ? "The reasoning budget decided how this request ended" : undefined}
+    >
+      {reason === "reasoning_budget" ? "reasoning budget hit" : reason}
+    </span>
   );
 }
 

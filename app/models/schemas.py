@@ -7,6 +7,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    StrictInt,
     ValidationInfo,
     field_validator,
     model_validator,
@@ -14,6 +15,7 @@ from pydantic import (
 
 from app.models.model_id_flags import long_flag_in
 from app.models.parallelism import PARALLEL_FLAGS_REFUSAL, parallel_flag_values
+from app.proxy.reasoning_budget import EffortName, ReasoningBudgetMode
 from app.proxy.thinking_policy import ThinkingPolicy
 from app.runtime.backends import registry
 
@@ -51,6 +53,8 @@ HfRepoId = Annotated[str, Field(pattern=HF_REPO_PATTERN)]
 RepoFilename = Annotated[str, Field(min_length=1, max_length=512)]
 MaxModelLen = Annotated[int, Field(gt=0)]
 GpuMemoryUtilisation = Annotated[float, Field(gt=0, le=1.0)]
+#: A reasoning budget in tokens (#348); strict, so ``true`` and ``"5"`` are refused.
+ReasoningTokens = Annotated[StrictInt, Field(ge=1)]
 
 
 def _safe_revision(v: str) -> str:
@@ -243,6 +247,11 @@ class ModelSpec(BaseModel):
     # Migration 0060: the model's part of each KV tier under the fair eviction policy (the
     # store's owner weight). Sent to the daemon at once, so it is editable while loaded.
     kv_store_weight: int = Field(1, ge=1, le=100)
+    # Migration 0068 (#348), proxy-side knobs: the model's cap on thinking tokens (null = none),
+    # what happens at the cap, and what each reasoning_effort level means in tokens here.
+    reasoning_budget: ReasoningTokens | None = None
+    reasoning_budget_mode: ReasoningBudgetMode = "force_answer"
+    reasoning_effort_budgets: dict[EffortName, ReasoningTokens] | None = None
     # ``parallelism_strategy`` records the operator's choice; ``auto`` is the
     # safe default — single GPU is no-parallelism, multi-GPU defaults to TP.
     parallelism_strategy: Literal["tp", "pp", "auto"] = "auto"
@@ -664,6 +673,9 @@ class ModelOut(BaseModel):
     thinking_policy: ThinkingPolicy
     kv_store: KvStore
     kv_store_weight: int
+    reasoning_budget: int | None
+    reasoning_budget_mode: ReasoningBudgetMode
+    reasoning_effort_budgets: dict[str, int] | None
     # Whether the chat template branches on enable_thinking; None = template unreadable.
     thinking_policy_supported: bool | None
     layout_notice: LayoutNotice | None

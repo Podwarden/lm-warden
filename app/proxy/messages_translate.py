@@ -40,7 +40,8 @@ from typing import Any
 from uuid import uuid4
 
 from app.proxy.messages_schemas import CountTokensRequest, MessagesRequest
-from app.proxy.reaggregate import StreamAggregator, parse_sse_event
+from app.proxy.reaggregate import LMW_OUT_KEYS, StreamAggregator, parse_sse_event
+from app.proxy.reasoning_budget import valid_budget
 from app.utils.sse import delta_reasoning
 
 logger = logging.getLogger(__name__)
@@ -323,6 +324,19 @@ def to_openai_request(req: MessagesRequest | CountTokensRequest) -> dict[str, An
         # must keep its own default, which is what "on" has to mean here.
         if not thinking_requested(req):
             body["chat_template_kwargs"] = {"enable_thinking": False}
+        # #348: the thinking budget the client asked for (only when it turned thinking on)
+        # and/or the warden's own explicit field; the smaller binds. The warden applies it
+        # under the key's and the model's caps.
+        budgets = [
+            v
+            for v in (
+                req.thinking.budget_tokens if thinking_requested(req) and req.thinking else None,
+                (req.model_extra or {}).get("lmw_reasoning_budget"),
+            )
+            if valid_budget(v)
+        ]
+        if budgets:
+            body["lmw_reasoning_budget"] = min(budgets)
     return body
 
 
@@ -462,6 +476,8 @@ def to_anthropic_message(
         "stop_reason": stop_reason,
         "stop_sequence": stop_sequence,
         "usage": anthropic_usage(oai.get("usage")),
+        # #348: why the warden ended the thinking, when it did.
+        **{k: oai[k] for k in LMW_OUT_KEYS if k in oai},
     }
 
 
@@ -652,7 +668,12 @@ class AnthropicStreamTranslator:
                 "message_delta",
                 {
                     "type": "message_delta",
-                    "delta": {"stop_reason": stop_reason, "stop_sequence": stop_sequence},
+                    "delta": {
+                        "stop_reason": stop_reason,
+                        "stop_sequence": stop_sequence,
+                        # #348: why the warden ended the thinking, when it did.
+                        **{k: built[k] for k in LMW_OUT_KEYS if k in built},
+                    },
                     "usage": anthropic_usage(built.get("usage")),
                 },
             )

@@ -45,7 +45,7 @@ from app.proxy.messages_translate import (
     system_note,
     upstream_error_text,
 )
-from app.proxy.reaggregate import StreamAggregator, parse_sse_event
+from app.proxy.reaggregate import LMW_OUT_KEYS, StreamAggregator, parse_sse_event
 from app.proxy.responses_schemas import ResponsesRequest
 from app.utils.sse import delta_reasoning
 
@@ -439,6 +439,10 @@ def to_openai_request(req: ResponsesRequest) -> Translation:
     if req.stream:
         body["stream"] = True
         body["stream_options"] = {"include_usage": True, "continuous_usage_stats": True}
+    effort = (req.reasoning or {}).get("effort")
+    if isinstance(effort, str) and effort != "none":
+        # #348: not forwarded as reasoning_effort (see reasoning_budget.request_budget).
+        body["lmw_reasoning_effort"] = effort
     emit = thinking_requested(req)
     # Only the OFF case is sent: a template that has never heard of the flag
     # must keep its own default (same rule as /v1/messages).
@@ -593,6 +597,7 @@ def response_object(
     usage: dict[str, Any] | None = None,
     incomplete_details: dict[str, str] | None = None,
     error: dict[str, Any] | None = None,
+    lmw: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "id": rid,
@@ -609,6 +614,8 @@ def response_object(
         "store": False,
         "instructions": None,
         "metadata": {},
+        # #348: why the warden ended the thinking, when it did.
+        **(lmw or {}),
     }
 
 
@@ -628,6 +635,7 @@ def to_response_object(oai: dict[str, Any], *, model: str, tr: Translation) -> d
         output=output,
         usage=responses_usage(oai.get("usage")),
         incomplete_details=details,
+        lmw={k: oai[k] for k in LMW_OUT_KEYS if k in oai},
     )
 
 
@@ -907,6 +915,7 @@ class ResponsesStreamTranslator:
                     output=list(self._outputs),
                     usage=responses_usage(built.get("usage")),
                     incomplete_details=details,
+                    lmw={k: built[k] for k in LMW_OUT_KEYS if k in built},
                 ),
             )
         )

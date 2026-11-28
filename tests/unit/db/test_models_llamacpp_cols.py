@@ -111,6 +111,9 @@ def test_new_columns_are_appended_last():
     from app.db.repos.models import _MODEL_COLS
 
     cols = [c.strip() for c in _MODEL_COLS.split(",")]
+    # 0068 appended the reasoning budget (#348); what is below is checked without it.
+    assert cols[-3:] == ["reasoning_budget", "reasoning_budget_mode", "reasoning_effort_budgets"]
+    cols = cols[:-3]
     # 0038 (#286) appended three more after the llama.cpp pair.
     assert cols[-11:-8] == ["backend", "mmproj_filename", "n_gpu_layers"]
     # 0039 (#286 review) appended the boot-reconcile notice pair.

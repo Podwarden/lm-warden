@@ -86,7 +86,7 @@ export function KeyRequestsChart({
               {title}
             </circle>
           );
-        if (p.finish_reason === "length")
+        if (p.finish_reason === "length" || p.finish_reason === "reasoning_budget")
           return (
             <circle key={p.id} cx={cx} cy={cy} r={s} fill="none" stroke={c} strokeWidth={2} pointerEvents="all" {...props}>
               {title}

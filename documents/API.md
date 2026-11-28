@@ -416,6 +416,99 @@ to the targets.
 
 ---
 
+## Reasoning budget
+
+A reasoning model can think for as long as it likes: a 2-bit quant may spend its
+whole `max_tokens` on reasoning and answer nothing, and the client sees a request
+that was accepted and then hung. A reasoning budget bounds the thinking, and tells
+the client when it did.
+
+The budget is set at three levels and the **smallest one that is set wins**. A
+request can lower the budget, never raise it above the key's or the model's. A level
+that is not set (`null`) puts no limit, so with nothing set the warden behaves as it
+always did.
+
+| Level | Set by | Where |
+|---|---|---|
+| Model | the operator | `reasoning_budget` on `PATCH /api/models/{id}/settings` (or `POST /api/models`) |
+| Key | the operator | `reasoning_budget` on `POST /api/tokens` and `PATCH /api/tokens/{id}` |
+| Request | the client | `thinking.budget_tokens`, `reasoning_effort` or `lmw_reasoning_budget` |
+
+Budgets are whole tokens, at least 1 (`422` otherwise; `null` clears one). They take
+effect on the next request, and a model's can be changed while it is loaded.
+
+**What the client sends.**
+
+- Anthropic `/v1/messages`: `thinking.budget_tokens` (with `thinking.type` other than
+  `disabled`).
+- OpenAI `/v1/chat/completions`: `reasoning_effort`. OpenAI `/v1/responses`:
+  `reasoning.effort`. The level is turned into tokens by the model's table,
+  `reasoning_effort_budgets` on the model, whose defaults are `minimal` 256, `low` 1024,
+  `medium` 4096 and `high` 16384 (set any of the four to override it; `null` restores the
+  defaults). Other levels (`none`, `xhigh`, `max`) set no budget.
+- `lmw_reasoning_budget`: an exact number of tokens, on any of the three endpoints. It
+  wins over the effort level. The warden removes it before the request reaches the
+  engine. A value that is not a positive integer is ignored.
+
+`max_tokens` / `max_completion_tokens` stay the overall cap, as before. The budget
+counts only the thinking.
+
+**What happens when the budget is spent.** The mode is `reasoning_budget_mode` on the
+model (default `force_answer`), and the key's own `reasoning_budget_mode` wins when it is
+set (`null` on a key means the model's).
+
+- `force_answer`: the thinking block is closed and the model writes its reply. Both
+  engines do this themselves for a single request: llama.cpp takes
+  `reasoning_budget_tokens` and vLLM takes `thinking_token_budget` (vLLM only when the
+  model has `--reasoning-parser` in its `extra_args`; without a parser the engine refuses
+  the field). The warden sends the field for you. Where an engine cannot do it (MLX, vLLM
+  without a parser) the warden enforces the budget itself and the request ends as in `stop`.
+  If an engine keeps thinking well past the budget (a llama.cpp chat template with no
+  thinking tags ignores the field), the warden ends the request itself once the thinking
+  exceeds the budget by a quarter (at least 256 tokens).
+- `stop`: the request ends at once. The warden counts the model's reasoning deltas, about
+  one token each, and closes the engine's connection when the budget is passed.
+
+**What the client is told.** When the budget decided how the request ended, the
+response carries `lmw_stop_reason: "reasoning_budget"` and `lmw_reasoning_budget` (the
+budget that applied): at the top level of the body, and of the final chunk of a stream.
+
+- In `stop` mode `finish_reason` is `length` (Anthropic: `stop_reason: "max_tokens"`).
+- In `force_answer` mode the engine's own `finish_reason` is kept (`stop`, `tool_calls`),
+  because the reply is complete.
+- Anthropic: both fields are on the message, and in the `delta` of the final
+  `message_delta` event when streaming. Responses: both are on the response object, and
+  `status` is `incomplete` in `stop` mode.
+
+```json
+{"object": "chat.completion", "choices": [{"index": 0, "finish_reason": "length",
+  "message": {"role": "assistant", "content": "", "reasoning_content": "..."}}],
+ "lmw_stop_reason": "reasoning_budget", "lmw_reasoning_budget": 4096}
+```
+
+A request with a budget is streamed from the engine even when the client did not ask
+for a stream, and put back together for the client, so non-streaming and streaming
+clients get the same enforcement. Request history records `reasoning_budget` as the
+request's `finish_reason`, and the Stats request list and the key's pages show it as
+"reasoning budget hit". Requests to `/v1/completions` are not subject to the budget, and
+the proxy counts the reasoning channel (`reasoning_content`), so an engine that leaves
+`<think>` tags inside the reply text is bounded only by its own field.
+
+```bash
+# A model-wide default of 8192 thinking tokens, ending the request when spent
+curl -s -X PATCH $W/api/models/qwen/settings -H "Authorization: Bearer $ACCESS" \
+     -H "X-CSRF-Token: $CSRF" -b jar -H 'Content-Type: application/json' \
+     -d '{"reasoning_budget": 8192, "reasoning_budget_mode": "stop"}'
+
+# A tighter cap for one key, and a request that asks for less still
+curl -s -X PATCH $W/api/tokens/53e7011c… -H "Authorization: Bearer $ACCESS" \
+     -H "X-CSRF-Token: $CSRF" -b jar -H 'Content-Type: application/json' \
+     -d '{"reasoning_budget": 2048}'
+curl -s $W/v1/chat/completions -H "Authorization: Bearer $KEY" \
+     -H 'Content-Type: application/json' \
+     -d '{"model":"qwen","messages":[{"role":"user","content":"hi"}],"lmw_reasoning_budget":512}'
+```
+
 ## Health and readiness
 
 Two public routes (no credential) for two different questions, and an admin

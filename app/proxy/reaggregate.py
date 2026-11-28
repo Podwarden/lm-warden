@@ -15,8 +15,13 @@ spec's hard rule is *never 500 a request that generated fine*.
 """
 
 import json
+from typing import Any
 
 from app.utils.sse import delta_reasoning, delta_reasoning_field
+
+#: The warden's own fields on the final chunk / body when a reasoning budget decided how a
+#: request ended (#348). Kept through aggregation so a re-aggregated body carries them.
+LMW_OUT_KEYS = ("lmw_stop_reason", "lmw_reasoning_budget")
 
 
 def parse_sse_event(line: bytes | str) -> dict | None:
@@ -84,6 +89,7 @@ class StreamAggregator:
         self._model: str | None = None
         self._created: int | None = None
         self._system_fingerprint = None
+        self._lmw: dict[str, Any] = {}
 
     def feed_event(self, ev: dict) -> None:
         """Absorb one parsed chunk. Malformed shapes are skipped, never raised."""
@@ -99,6 +105,9 @@ class StreamAggregator:
             self._created = ev["created"]
         if self._system_fingerprint is None and ev.get("system_fingerprint") is not None:
             self._system_fingerprint = ev["system_fingerprint"]
+        for key in LMW_OUT_KEYS:
+            if key in ev:
+                self._lmw[key] = ev[key]
         # ``include_usage`` puts usage on a tail chunk (empty choices); earlier
         # chunks carry usage: null. Keep the last non-null one.
         if ev.get("usage") is not None:
@@ -223,4 +232,5 @@ class StreamAggregator:
             out["usage"] = self._usage
         if self._system_fingerprint is not None:
             out["system_fingerprint"] = self._system_fingerprint
+        out.update(self._lmw)
         return out

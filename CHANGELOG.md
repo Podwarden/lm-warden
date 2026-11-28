@@ -7,6 +7,37 @@ date-versioned: `vYYYY.MM.DD.N`, where `N` counts the releases made that day.
 
 ## [Unreleased]
 
+## [v2026.11.28.2] — 2026-11-28
+
+### Added
+
+- A reasoning budget (#348) bounds how long a reasoning model may think, set per
+  model, per key and per request; the smallest one set wins, and a request can
+  only lower it. A client asks with Anthropic `thinking.budget_tokens`, OpenAI
+  `reasoning_effort` (also `reasoning.effort` on `/v1/responses`, turned into
+  tokens by a per-model table) or an exact `lmw_reasoning_budget`. When it is
+  spent, `force_answer` (the default) closes the thinking and lets the model
+  reply, and `stop` ends the request. The response says so with
+  `lmw_stop_reason: "reasoning_budget"` and the applied `lmw_reasoning_budget`,
+  in the body and on the final stream chunk (Anthropic and Responses too), and
+  request history records the outcome, shown as "reasoning budget hit". llama.cpp
+  and vLLM (with `--reasoning-parser`) enforce `force_answer` themselves through
+  their own per-request field; the warden enforces everything else. Set on the model
+  settings page, on a key's page, and through the API (`reasoning_budget`,
+  `reasoning_budget_mode`, `reasoning_effort_budgets`). Nothing set, nothing
+  changes. See the API guide, "Reasoning budget".
+
+### Fixed
+
+- `VW_LOAD_TIMEOUT_S` now reaches the api container on a compose deployment:
+  `docker-compose.yml` forwards it (default 600), together with
+  `VW_WARMUP_PROBE_TIMEOUT_S`, `VW_LOAD_STALL_WARN_S` and
+  `VW_LOAD_STALL_TIMEOUT_S`. A value set on a deployment only feeds compose
+  interpolation, so it never arrived unless the service named it. A blank
+  number in an environment variable (what `"${NAME:-}"` hands over) now means
+  the default for every numeric `VW_*` setting read in `app/config.py`, where it
+  used to stop the server at startup.
+
 ## [v2026.11.28.1] — 2026-11-28
 
 ### Fixed

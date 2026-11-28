@@ -14,6 +14,28 @@ _TRUTHY = {"1", "true", "yes", "on"}
 _RUNAWAY_MODES = {"off", "log", "enforce"}
 
 
+def _env_float(name: str, default: "str | float") -> float:
+    """Read a float env var; unset or blank means ``default``.
+
+    A compose file forwards a knob as ``"${NAME:-}"``, which hands the container
+    an empty string when the deployment never set it. ``float("")`` would crash
+    startup, so blank is "not set". Anything else that is not a number still
+    raises: a typo should fail loudly, not fall back quietly.
+    """
+    raw = os.environ.get(name)
+    if raw is None or not raw.strip():
+        return float(default)
+    return float(raw)
+
+
+def _env_int(name: str, default: "str | int") -> int:
+    """Read an int env var; unset or blank means ``default`` (see _env_float)."""
+    raw = os.environ.get(name)
+    if raw is None or not raw.strip():
+        return int(default)
+    return int(raw)
+
+
 def _truthy(raw: str) -> bool:
     return raw.strip().lower() in _TRUTHY
 
@@ -321,7 +343,7 @@ def load_settings() -> Settings:
         )
     if not secret or len(secret) < 32:
         raise RuntimeError("VW_COOKIE_SECRET must be set and >=32 chars")
-    gpu_count = int(os.environ.get("VW_CONTAINER_GPU_COUNT", "0"))
+    gpu_count = _env_int("VW_CONTAINER_GPU_COUNT", "0")
     # `None` when unset, distinct from a set-but-blank value. Both mean "not
     # configured" here, but reading it with a default would make an unset var
     # look configured and silently disable derivation.
@@ -354,10 +376,10 @@ def load_settings() -> Settings:
     allowed_origins = configured or ("http://localhost:3000",)
     trust_proxy_origin = _truthy(os.environ.get("VW_TRUST_PROXY_ORIGIN", ""))
     trusted_proxies = _parse_trusted_proxies(os.environ.get("VW_TRUSTED_PROXIES", ""))
-    load_timeout_s = float(os.environ.get("VW_LOAD_TIMEOUT_S", "600.0"))
-    warmup_probe_timeout_s = float(os.environ.get("VW_WARMUP_PROBE_TIMEOUT_S", "600.0"))
-    load_stall_warn_s = float(os.environ.get("VW_LOAD_STALL_WARN_S", "300.0"))
-    load_stall_timeout_s = float(os.environ.get("VW_LOAD_STALL_TIMEOUT_S", "1200.0"))
+    load_timeout_s = _env_float("VW_LOAD_TIMEOUT_S", "600.0")
+    warmup_probe_timeout_s = _env_float("VW_WARMUP_PROBE_TIMEOUT_S", "600.0")
+    load_stall_warn_s = _env_float("VW_LOAD_STALL_WARN_S", "300.0")
+    load_stall_timeout_s = _env_float("VW_LOAD_STALL_TIMEOUT_S", "1200.0")
     _raw_load_max_s = os.environ.get("VW_LOAD_MAX_S")
     if _raw_load_max_s is not None:
         load_max_s = float(_raw_load_max_s)
@@ -365,15 +387,15 @@ def load_settings() -> Settings:
         load_max_s = max(7200.0, 3 * load_timeout_s)
     engine_driver = os.environ.get("VW_ENGINE_DRIVER", "local")
     watchdog_enabled = _truthy(os.environ.get("VW_WATCHDOG_ENABLED", "1"))
-    watchdog_interval_s = float(os.environ.get("VW_WATCHDOG_INTERVAL_S", "30.0"))
-    watchdog_failure_threshold = int(os.environ.get("VW_WATCHDOG_FAILURE_THRESHOLD", "3"))
-    watchdog_max_restarts = int(os.environ.get("VW_WATCHDOG_MAX_RESTARTS", "3"))
-    watchdog_restart_window_s = float(os.environ.get("VW_WATCHDOG_RESTART_WINDOW_S", "3600.0"))
-    watchdog_crash_keep = int(os.environ.get("VW_WATCHDOG_CRASH_KEEP", "20"))
+    watchdog_interval_s = _env_float("VW_WATCHDOG_INTERVAL_S", "30.0")
+    watchdog_failure_threshold = _env_int("VW_WATCHDOG_FAILURE_THRESHOLD", "3")
+    watchdog_max_restarts = _env_int("VW_WATCHDOG_MAX_RESTARTS", "3")
+    watchdog_restart_window_s = _env_float("VW_WATCHDOG_RESTART_WINDOW_S", "3600.0")
+    watchdog_crash_keep = _env_int("VW_WATCHDOG_CRASH_KEEP", "20")
     watchdog_crash_log_bytes = int(
         os.environ.get("VW_WATCHDOG_CRASH_LOG_BYTES", str(4 * 1024 * 1024))
     )
-    engine_log_max_bytes = int(os.environ.get("VW_ENGINE_LOG_MAX_BYTES", str(32 * 1024 * 1024)))
+    engine_log_max_bytes = _env_int("VW_ENGINE_LOG_MAX_BYTES", str(32 * 1024 * 1024))
     prompt_lens_raw, prompt_lens_env_var = _prompt_lens_env("ENABLED")
     # On unless the env says otherwise (owner decision 2026-11-26, #346).
     prompt_lens_enabled = True if prompt_lens_raw is None else _truthy(prompt_lens_raw)
@@ -388,13 +410,13 @@ def load_settings() -> Settings:
     prompt_lens_section_chars = int(_prompt_lens_env("SECTION_CHARS")[0] or "16000000")
     prompt_lens_section_max_chars = int(_prompt_lens_env("SECTION_MAX_CHARS")[0] or "2000000")
     prompt_lens_section_ttl_s = float(_prompt_lens_env("SECTION_TTL_S")[0] or "600")
-    lens_rate_key_per_min = max(1, int(os.environ.get("VW_LENS_RATE_KEY_PER_MIN", "60")))
-    lens_rate_admin_per_min = max(1, int(os.environ.get("VW_LENS_RATE_ADMIN_PER_MIN", "300")))
-    request_max_wall_s = float(os.environ.get("VW_REQUEST_MAX_WALL_S", "0.0"))
-    upstream_idle_s = max(1.0, float(os.environ.get("VW_UPSTREAM_IDLE_S", "300")))
-    nonstream_max_s = max(1.0, float(os.environ.get("VW_NONSTREAM_MAX_S", "1800")))
+    lens_rate_key_per_min = max(1, _env_int("VW_LENS_RATE_KEY_PER_MIN", "60"))
+    lens_rate_admin_per_min = max(1, _env_int("VW_LENS_RATE_ADMIN_PER_MIN", "300"))
+    request_max_wall_s = _env_float("VW_REQUEST_MAX_WALL_S", "0.0")
+    upstream_idle_s = max(1.0, _env_float("VW_UPSTREAM_IDLE_S", "300"))
+    nonstream_max_s = max(1.0, _env_float("VW_NONSTREAM_MAX_S", "1800"))
     try:
-        prefill_tok_s_hint = float(os.environ.get("VW_PREFILL_TOK_S_HINT", "2000"))
+        prefill_tok_s_hint = _env_float("VW_PREFILL_TOK_S_HINT", "2000")
     except ValueError:
         prefill_tok_s_hint = 2000.0
     if prefill_tok_s_hint <= 0:
@@ -426,7 +448,7 @@ def load_settings() -> Settings:
     # naturally reaches for because VW_REQUEST_MAX_WALL_S=0 does mean "no cap".
     # Clamped to 0 (capture nothing) and said out loud: fail-safe beats
     # unbounded records on the volume that also holds the database.
-    content_log_max_chars = int(os.environ.get("VW_CONTENT_LOG_MAX_CHARS", "40000"))
+    content_log_max_chars = _env_int("VW_CONTENT_LOG_MAX_CHARS", "40000")
     if content_log_max_chars < 0:
         log.warning(
             "VW_CONTENT_LOG_MAX_CHARS=%d is negative; there is no value that "
@@ -439,24 +461,24 @@ def load_settings() -> Settings:
     # Bounds the FILE, not a record. Fail-safe: the sink stops writing and
     # warns once on reaching this -- no rotation, no deletion. Same shape and
     # same <= 0 = off convention as VW_ENGINE_LOG_MAX_BYTES.
-    content_log_max_bytes = int(os.environ.get("VW_CONTENT_LOG_MAX_BYTES", str(512 * 1024 * 1024)))
+    content_log_max_bytes = _env_int("VW_CONTENT_LOG_MAX_BYTES", str(512 * 1024 * 1024))
     _capture_dir_raw = os.environ.get("VW_CAPTURE_DIR", "").strip()
     capture_dir = Path(_capture_dir_raw) if _capture_dir_raw else data_dir / "capture"
-    capture_max_bytes = int(float(os.environ.get("VW_CAPTURE_MAX_GB", "120")) * 1024**3)
-    max_request_body_mb = max(1, int(os.environ.get("VW_MAX_REQUEST_BODY_MB", "64")))
+    capture_max_bytes = int(_env_float("VW_CAPTURE_MAX_GB", "120") * 1024**3)
+    max_request_body_mb = max(1, _env_int("VW_MAX_REQUEST_BODY_MB", "64"))
     # Unknown / typo'd modes fall back to "off" so the forward path stays
     # byte-identical rather than silently arming enforcement on shared prod.
     runaway_mode = os.environ.get("VW_RUNAWAY_MODE", "off").strip().lower()
     if runaway_mode not in _RUNAWAY_MODES:
         runaway_mode = "off"
-    runaway_think_budget = int(os.environ.get("VW_RUNAWAY_THINK_BUDGET", "24000"))
-    runaway_repeat_max = int(os.environ.get("VW_RUNAWAY_REPEAT_MAX", "6"))
-    runaway_hard_max = int(os.environ.get("VW_RUNAWAY_HARD_MAX", "96000"))
-    chat_quota_user_bytes = int(os.environ.get("VW_CHAT_QUOTA_USER_BYTES", 2 * 1024**3))
-    chat_quota_free_floor_bytes = int(os.environ.get("VW_CHAT_QUOTA_FREE_FLOOR_BYTES", 5 * 1024**3))
-    chat_attachment_ttl_days = int(os.environ.get("VW_CHAT_ATTACHMENT_TTL_DAYS", 90))
-    request_history_retention_days = int(os.environ.get("VW_REQUEST_HISTORY_RETENTION_DAYS", "30"))
-    request_history_max_rows = int(os.environ.get("VW_REQUEST_HISTORY_MAX_ROWS", "1000000"))
+    runaway_think_budget = _env_int("VW_RUNAWAY_THINK_BUDGET", "24000")
+    runaway_repeat_max = _env_int("VW_RUNAWAY_REPEAT_MAX", "6")
+    runaway_hard_max = _env_int("VW_RUNAWAY_HARD_MAX", "96000")
+    chat_quota_user_bytes = _env_int("VW_CHAT_QUOTA_USER_BYTES", 2 * 1024**3)
+    chat_quota_free_floor_bytes = _env_int("VW_CHAT_QUOTA_FREE_FLOOR_BYTES", 5 * 1024**3)
+    chat_attachment_ttl_days = _env_int("VW_CHAT_ATTACHMENT_TTL_DAYS", 90)
+    request_history_retention_days = _env_int("VW_REQUEST_HISTORY_RETENTION_DAYS", "30")
+    request_history_max_rows = _env_int("VW_REQUEST_HISTORY_MAX_ROWS", "1000000")
     return Settings(
         data_dir=data_dir,
         hf_cache_dir=hf_cache_dir,

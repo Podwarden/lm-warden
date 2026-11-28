@@ -8,7 +8,7 @@ from typing import Any, Literal
 import aiosqlite
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, StrictInt, field_validator, model_validator
 
 from app.auth.bearer import generate_bearer_token
 from app.auth.deps import key_stream_key, require_jwt
@@ -34,6 +34,7 @@ from app.kv import policy_sync
 from app.kv import usage as kv_usage
 from app.kv.schemas import TokenCacheOut
 from app.proxy.prompt_diet import Diet, diet_json, parse_diet
+from app.proxy.reasoning_budget import ReasoningBudgetMode
 from app.proxy.thinking_policy import ThinkingPolicy
 from app.stats import request_history
 from app.tokens import permissions, series
@@ -109,6 +110,10 @@ class TokenCreate(BaseModel):
     #: read the static engine facts of the models it may use.
     prompt_lens: bool = False
     engine_facts: bool = True
+    #: Reasoning budget (#348): the key's cap on thinking tokens (null = no cap), and
+    #: what happens at the cap (null = the model's mode).
+    reasoning_budget: StrictInt | None = Field(default=None, ge=1)
+    reasoning_budget_mode: ReasoningBudgetMode | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -164,6 +169,9 @@ class TokenUpdate(BaseModel):
     #: Per-key permissions (0066): see TokenCreate.
     prompt_lens: bool | None = None
     engine_facts: bool | None = None
+    #: Reasoning budget (#348), as on create; null clears it.
+    reasoning_budget: StrictInt | None = Field(default=None, ge=1)
+    reasoning_budget_mode: ReasoningBudgetMode | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -275,6 +283,8 @@ def _enrich(
         "keep_captures": bool(r.keep_captures),
         "prompt_lens": bool(r.prompt_lens),
         "engine_facts": bool(r.engine_facts),
+        "reasoning_budget": r.reasoning_budget,
+        "reasoning_budget_mode": r.reasoning_budget_mode,
         "usage_24h": {
             "requests": usage_requests,
             "prompt_tokens": usage_prompt,
@@ -365,6 +375,8 @@ async def create_token(body: TokenCreate, request: Request, _user: str = Depends
             kv_isolation=default if default in KV_ISOLATION_VALUES else "sharing",
             prompt_lens=body.prompt_lens,
             engine_facts=body.engine_facts,
+            reasoning_budget=body.reasoning_budget,
+            reasoning_budget_mode=body.reasoning_budget_mode,
         )
         created = await repo.get(tid)
     if created is None:  # defensive — race between insert and read is impossible
@@ -383,6 +395,8 @@ async def create_token(body: TokenCreate, request: Request, _user: str = Depends
         "thinking_policy": created.thinking_policy,
         "prompt_lens": bool(created.prompt_lens),
         "engine_facts": bool(created.engine_facts),
+        "reasoning_budget": created.reasoning_budget,
+        "reasoning_budget_mode": created.reasoning_budget_mode,
         "guard": guard,
         "guard_effective": effective(getattr(request.app.state, "guard_platform", None), guard),
     }
@@ -480,6 +494,8 @@ async def _update_token(
             ),
             prompt_lens=raw.get("prompt_lens", _UNSET),
             engine_facts=raw.get("engine_facts", _UNSET),
+            reasoning_budget=raw.get("reasoning_budget", _UNSET),
+            reasoning_budget_mode=raw.get("reasoning_budget_mode", _UNSET),
             capture_until=(
                 _UNSET
                 if raw.get("capture_hours") is None
@@ -704,6 +720,8 @@ class TokenListItem(BaseModel):
     kv_max_pct_ram: int | None = None
     kv_max_pct_nvme: int | None = None
     allowed_models: list[str] | None = None
+    reasoning_budget: int | None = None
+    reasoning_budget_mode: ReasoningBudgetMode | None = None
 
 
 class TokenListPage(BaseModel):

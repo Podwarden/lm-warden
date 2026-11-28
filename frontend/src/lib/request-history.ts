@@ -132,7 +132,8 @@ export type FinishClass = "stop" | "length" | "other";
 
 export function finishClassOf(reason: string | null | undefined): FinishClass {
   if (reason === "stop") return "stop";
-  if (reason === "length") return "length";
+  // #348: a request the reasoning budget ended is a cut-short one, drawn like length.
+  if (reason === "length" || reason === "reasoning_budget") return "length";
   return "other";
 }
 

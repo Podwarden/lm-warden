@@ -6525,6 +6525,18 @@ export interface components {
              * @default 1
              */
             kv_store_weight: number;
+            /** Reasoning Budget */
+            reasoning_budget?: number | null;
+            /**
+             * Reasoning Budget Mode
+             * @default force_answer
+             * @enum {string}
+             */
+            reasoning_budget_mode: "force_answer" | "stop";
+            /** Reasoning Effort Budgets */
+            reasoning_effort_budgets?: {
+                [key: string]: number;
+            } | null;
             /**
              * Parallelism Strategy
              * @default auto
@@ -6682,6 +6694,17 @@ export interface components {
             kv_store: "off" | "ram" | "ram+nvme" | "nvme";
             /** Kv Store Weight */
             kv_store_weight: number;
+            /** Reasoning Budget */
+            reasoning_budget: number | null;
+            /**
+             * Reasoning Budget Mode
+             * @enum {string}
+             */
+            reasoning_budget_mode: "force_answer" | "stop";
+            /** Reasoning Effort Budgets */
+            reasoning_effort_budgets: {
+                [key: string]: number;
+            } | null;
             /** Thinking Policy Supported */
             thinking_policy_supported: boolean | null;
             layout_notice: components["schemas"]["LayoutNotice"] | null;
@@ -7634,6 +7657,10 @@ export interface components {
              * @default true
              */
             engine_facts: boolean;
+            /** Reasoning Budget */
+            reasoning_budget?: number | null;
+            /** Reasoning Budget Mode */
+            reasoning_budget_mode?: ("force_answer" | "stop") | null;
         };
         /**
          * TokenListItem
@@ -7718,6 +7745,10 @@ export interface components {
             kv_max_pct_nvme?: number | null;
             /** Allowed Models */
             allowed_models?: string[] | null;
+            /** Reasoning Budget */
+            reasoning_budget?: number | null;
+            /** Reasoning Budget Mode */
+            reasoning_budget_mode?: ("force_answer" | "stop") | null;
         };
         /** TokenListPage */
         TokenListPage: {
@@ -7786,6 +7817,10 @@ export interface components {
             prompt_lens?: boolean | null;
             /** Engine Facts */
             engine_facts?: boolean | null;
+            /** Reasoning Budget */
+            reasoning_budget?: number | null;
+            /** Reasoning Budget Mode */
+            reasoning_budget_mode?: ("force_answer" | "stop") | null;
         };
         /** TokenUsage24h */
         TokenUsage24h: {

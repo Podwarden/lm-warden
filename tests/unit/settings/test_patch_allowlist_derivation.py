@@ -145,6 +145,9 @@ _EXPECTED_OPERATOR_WRITABLE = {
     "thinking_policy",
     "kv_store",
     "kv_store_weight",
+    "reasoning_budget",
+    "reasoning_budget_mode",
+    "reasoning_effort_budgets",
     "parallelism_strategy",
     "max_batch_size",
     "max_model_len",
@@ -245,6 +248,10 @@ def test_tristate_and_loaded_editable_are_the_capability_flags():
         "thinking_policy",
         # KV plan 2: sent to the store daemon at once (app/kv/policy_sync.py).
         "kv_store_weight",
+        # #348: read per request by the proxy.
+        "reasoning_budget",
+        "reasoning_budget_mode",
+        "reasoning_effort_budgets",
     }
     assert TRISTATE_FIELDS == capability_flags
 
@@ -300,6 +307,9 @@ def test_patchable_surface_pins_the_pre_policy_frozenset():
             "thinking_policy",
             "kv_store",
             "kv_store_weight",
+            "reasoning_budget",
+            "reasoning_budget_mode",
+            "reasoning_effort_budgets",
             "backend",
             "dtype",
             "engine_channel",
@@ -327,7 +337,7 @@ def test_patchable_surface_pins_the_pre_policy_frozenset():
             "trust_remote_code",
         }
     )
-    assert len(_PATCHABLE_MODEL_FIELDS) == 31
+    assert len(_PATCHABLE_MODEL_FIELDS) == 34
 
 
 @pytest.mark.parametrize(

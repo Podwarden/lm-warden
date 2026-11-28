@@ -4,7 +4,7 @@ import json
 import logging
 import secrets
 import time
-from collections.abc import AsyncGenerator, Awaitable, Callable, Iterable
+from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable, Iterable
 from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
@@ -75,6 +75,16 @@ from app.proxy.prompt_lens_capture import (
 )
 from app.proxy.prompt_lens_kvsig import build_kvsig, build_kvsig_pair
 from app.proxy.reaggregate import StreamAggregator, parse_sse_event
+from app.proxy.reasoning_budget import (
+    HISTORY_OUTCOME as REASONING_BUDGET_OUTCOME,
+)
+from app.proxy.reasoning_budget import (
+    BudgetGuard,
+    budget_frames,
+    engine_field,
+    resolve_for_request,
+    strip_request_fields,
+)
 from app.proxy.request_id import REQUEST_ID_HEADER, with_request_id
 from app.proxy.request_registry import LiveRequest, finished_record
 from app.proxy.runaway import RunawayDetector
@@ -747,6 +757,22 @@ def _gm_after_settle(gm: "_GmEnd", _task: Any) -> None:
     ``error``. It never reads the task's exception, so an unawaited failure still
     logs as it did before."""
     gm.fallback("error")
+
+
+def _reasoning_budget_frames(
+    source: AsyncIterator[bytes], guard: BudgetGuard | None
+) -> AsyncIterator[bytes]:
+    """The upstream bytes through the reasoning budget guard (#348), or untouched."""
+    return source if guard is None else budget_frames(source, guard)
+
+
+def _note_reasoning_budget(live_req: Any, guard: BudgetGuard | None) -> None:
+    """Record on the live row that the reasoning budget decided how the request ended."""
+    if live_req is not None and guard is not None and guard.hit:
+        try:
+            live_req.finish_reason = REASONING_BUDGET_OUTCOME
+        except Exception:  # noqa: BLE001 -- display only
+            pass
 
 
 def _feed_detector(detector: RunawayDetector, synth: dict, ev: dict, is_chat: bool) -> None:
@@ -1910,7 +1936,31 @@ async def _forward_body(
     runaway_active = runaway_mode != "off" and path in _RUNAWAY_PATHS
     client_wants_stream = is_stream
     is_chat_path = path.endswith("/chat/completions")
-    if runaway_active and not client_wants_stream:
+    # Reasoning budget (#348): min(model, key, request). A force_answer budget goes to the
+    # engine as its own per-request field where the engine has one; the proxy counts the
+    # reasoning channel either way (a stop-mode budget, or the backstop for an engine that
+    # ignores the field), which needs the response streamed, like the runaway detector.
+    # The warden-only request fields never reach an engine. Fail open: any error here
+    # forwards the request without a budget.
+    rb_guard: BudgetGuard | None = None
+    try:
+        if is_chat_path:
+            rb_applied = resolve_for_request(
+                model, token, body_json, getattr(request.state, "lmw_alias", None)
+            )
+            rb_changed = strip_request_fields(body_json)
+            if rb_applied is not None:
+                rb_engine = engine_field(model, rb_applied)
+                if rb_engine is not None:
+                    body_json[rb_engine[0]] = rb_engine[1]
+                    rb_changed = True
+                rb_guard = BudgetGuard(rb_applied, engine_enforced=rb_engine is not None)
+            if rb_changed:
+                body = json.dumps(body_json).encode()
+    except Exception:  # noqa: BLE001 - the budget must never fail a request
+        logger.debug("reasoning budget: could not apply, forwarding unchanged", exc_info=True)
+        rb_guard = None
+    if (runaway_active or rb_guard is not None) and not client_wants_stream:
         # Force upstream streaming + request the usage tail so the re-aggregated
         # non-stream response still carries an accurate usage block. A streaming
         # client needs neither mutation (its stream is already true and it did
@@ -3304,6 +3354,7 @@ async def _forward_body(
                         )
                     except Exception:  # noqa: BLE001
                         logger.debug("forest: tools_out failed", exc_info=True)
+                _note_reasoning_budget(live_req, rb_guard)
                 await _deregister()
                 await resp.aclose()
                 produced_s = _produced_s(live_req, _monotonic())
@@ -3396,7 +3447,10 @@ async def _forward_body(
             )
             try:
                 async for chunk in _guard_frames(
-                    _idle_bounded(resp.aiter_bytes(), idle_s, live_req), g_trailer
+                    _reasoning_budget_frames(
+                        _idle_bounded(resp.aiter_bytes(), idle_s, live_req), rb_guard
+                    ),
+                    g_trailer,
                 ):
                     if client_r is None:
                         yield chunk
@@ -3684,7 +3738,7 @@ async def _forward_body(
             gm.handed_off = True
         return streaming
 
-    if runaway_active and _is_sse_stream(resp):
+    if (runaway_active or rb_guard is not None) and _is_sse_stream(resp):
         # Non-streaming client, but we forced upstream stream=true so the
         # detector could watch every token. Re-aggregate the SSE back into the
         # non-stream JSON vLLM would have produced (reaggregate.py). Defensive by
@@ -3694,7 +3748,7 @@ async def _forward_body(
         # signal so the client sees it on the partial content it did receive.
         do_content_log = content_log.should_log(request.app.state.settings, token_id)
         agg = StreamAggregator(is_chat=is_chat_path)
-        detector = RunawayDetector.from_settings(settings)
+        detector = RunawayDetector.from_settings(settings) if runaway_active else None
         synth = {"think_open": False}
         enforce = runaway_mode == "enforce"
         tripped_enforce = False
@@ -3705,7 +3759,10 @@ async def _forward_body(
         buf = b""
         try:
             async for chunk in _guard_frames(
-                _idle_bounded(resp.aiter_bytes(), idle_s, live_req), g_trailer
+                _reasoning_budget_frames(
+                    _idle_bounded(resp.aiter_bytes(), idle_s, live_req), rb_guard
+                ),
+                g_trailer,
             ):
                 buf += chunk
                 _cap_feed(chunk)
@@ -3720,18 +3777,31 @@ async def _forward_body(
                     ev_cached = _cached_tokens_of(ev)
                     if ev_cached is not None:
                         runaway_cached = ev_cached
-                    if not detector.tripped:
+                    if detector is not None and not detector.tripped:
                         _feed_detector(detector, synth, ev, is_chat_path)
                         if detector.tripped and enforce:
                             tripped_enforce = True
                             break
                 if tripped_enforce:
                     break
-            override = detector.finish_reason if (detector.tripped and enforce) else None
+            override = (
+                detector.finish_reason
+                if (detector is not None and detector.tripped and enforce)
+                else None
+            )
             out = agg.build(finish_reason_override=override)
             _set_tools_out(out)
             if reply_cap is not None:
                 reply_cap.set_json(out)
+            if live_req is not None and rb_guard is not None and live_req.finish_reason is None:
+                # Streamed upstream for the budget guard: the history row still records how
+                # the answer ended, as it does for a non-streamed one.
+                try:
+                    _fr = (out.get("choices") or [{}])[0].get("finish_reason")
+                    if isinstance(_fr, str):
+                        live_req.finish_reason = _fr
+                except Exception:  # noqa: BLE001 -- display only
+                    pass
             completion = _completion_text(out, is_chat_path)
             usage = out.get("usage") or {}
             prefix_processed = True
@@ -3765,12 +3835,13 @@ async def _forward_body(
                 produced_s=_produced_s(live_req, _monotonic()),
             )
         finally:
+            _note_reasoning_budget(live_req, rb_guard)
             await _deregister()
             await resp.aclose()
             await _release_slot()
             await _capture_done()
             if do_content_log:
-                if detector.tripped:
+                if detector is not None and detector.tripped:
                     await content_log.write_entry(
                         request.app.state.settings,
                         token_id=token_id,

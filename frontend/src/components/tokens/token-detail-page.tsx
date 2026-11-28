@@ -20,7 +20,7 @@ import {
 import { RotateTokenDialog } from "@/components/tokens/rotate-token-dialog";
 import { errorDetail, useTokenActions } from "@/components/tokens/use-token-actions";
 import { TokenHeader } from "@/components/tokens/detail/token-header";
-import { LimitsCard, type LimitsPatch } from "@/components/tokens/detail/limits-card";
+import { LimitsCard, type LimitsPatch, type ReasoningPatch } from "@/components/tokens/detail/limits-card";
 import { KeepCapturesCard } from "@/components/tokens/detail/keep-captures-card";
 import { PermissionsCard } from "@/components/tokens/detail/permissions-card";
 import { DetailsCard } from "@/components/tokens/detail/details-card";
@@ -450,6 +450,12 @@ export function TokenDetailPage({ id }: { id: string }) {
     return ok;
   }
 
+  async function onReasoning(p: ReasoningPatch): Promise<string | null> {
+    const err = await patch({ ...p });
+    if (!err) toast.show("Reasoning budget saved");
+    return err;
+  }
+
   async function onKeepCaptures(on: boolean): Promise<boolean> {
     setKeepBusy(true);
     setKeepError(null);
@@ -531,6 +537,7 @@ export function TokenDetailPage({ id }: { id: string }) {
             onThinking={onThinking}
             thinkingError={actions.thinkingError}
             thinkingBusy={actions.thinkingBusy}
+            onReasoning={onReasoning}
           />
           <PermissionsCard
             promptLens={token.prompt_lens !== false}

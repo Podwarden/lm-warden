@@ -270,6 +270,18 @@ export const MODEL_HINTS: Record<string, FieldHint> = {
     short: 'Off stops every request to this model from thinking. Takes effect on the next request.',
     restart: 'none',
   },
+  reasoning_budget: {
+    label: 'Reasoning budget',
+    hint: 'The most tokens a request to this model may spend thinking, whatever the client asks. The effective budget is the smallest of this, the key\'s cap and the request\'s own (Anthropic thinking.budget_tokens, reasoning_effort, or lmw_reasoning_budget). Blank = no limit at this level. Takes effect on the next request, no reload.',
+    short: 'Cap on thinking tokens per request. Blank = no limit. Takes effect on the next request.',
+    restart: 'none',
+  },
+  reasoning_budget_mode: {
+    label: 'When the budget is spent',
+    hint: 'force_answer: close the thinking block and let the model write its reply. stop: end the request at once. Either way the client sees lmw_stop_reason: "reasoning_budget" and the request history records the outcome. A key can set its own mode. Takes effect on the next request, no reload.',
+    short: 'force_answer closes the thinking and lets the model answer; stop ends the request.',
+    restart: 'none',
+  },
   gpu_memory_utilization: {
     label: 'GPU memory utilization',
     hint: 'vLLM only. Fraction of VRAM vLLM may consume per GPU (0.0–1.0, default 0.9). Lower if you hit OOM during paged-attention warmup. llama.cpp has no equivalent — it sizes its own allocation — so this field is hidden for that backend.',

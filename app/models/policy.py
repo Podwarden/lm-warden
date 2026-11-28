@@ -148,6 +148,21 @@ MODEL_FIELD_POLICY: dict[str, FieldPolicy] = {
         editable_while_loaded=True,
         why="migration 0060; the model's part of each KV tier, pushed to the store daemon live",
     ),
+    "reasoning_budget": FieldPolicy(
+        Writer.OPERATOR,
+        editable_while_loaded=True,
+        why="#348; proxy-side knob read per request, no reload needed",
+    ),
+    "reasoning_budget_mode": FieldPolicy(
+        Writer.OPERATOR,
+        editable_while_loaded=True,
+        why="#348; proxy-side knob read per request, no reload needed",
+    ),
+    "reasoning_effort_budgets": FieldPolicy(
+        Writer.OPERATOR,
+        editable_while_loaded=True,
+        why="#348; proxy-side table read per request, no reload needed",
+    ),
     # -- engine axis ---------------------------------------------------------
     "backend": FieldPolicy(
         Writer.OPERATOR,

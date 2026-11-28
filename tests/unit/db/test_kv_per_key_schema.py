@@ -220,9 +220,16 @@ def test_kv_columns_are_policy_and_appended_last():
     # 0061's keep_captures (Prompt Lens), then 0066's per-key permissions.
     i = names.index("godmode_self_view")
     assert tuple(names[i + 1 : i + 1 + len(KV_TOKEN_COLS)]) == KV_TOKEN_COLS
-    assert names[i + 1 + len(KV_TOKEN_COLS) :] == ["keep_captures", "prompt_lens", "engine_facts"]
-    assert [c.strip() for c in _MODEL_COLS.split(",")][-1] == "kv_store_weight"
-    assert list(ModelRow.__dataclass_fields__)[-1] == "kv_store_weight"
+    assert names[i + 1 + len(KV_TOKEN_COLS) :] == [
+        "keep_captures",
+        "prompt_lens",
+        "engine_facts",
+        "reasoning_budget",
+        "reasoning_budget_mode",
+    ]
+    # 0068 (#348) appended the reasoning budget after the KV weight.
+    assert [c.strip() for c in _MODEL_COLS.split(",")][-4] == "kv_store_weight"
+    assert list(ModelRow.__dataclass_fields__)[-4] == "kv_store_weight"
 
 
 async def test_model_row_round_trips_kv_store_weight(tmp_data_dir):

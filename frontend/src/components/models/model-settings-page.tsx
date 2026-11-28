@@ -72,6 +72,8 @@ function layoutForGpuCount(n: number, dp: number): { dp: number; tp: number } {
 }
 
 const DTYPE_OPTIONS = ["auto", "float16", "bfloat16", "float32"];
+// #348: what happens when the reasoning budget is spent.
+const REASONING_MODE_OPTIONS = ["force_answer", "stop"];
 
 // The input the save bar's "Fix" focuses when the replica count is invalid.
 const DP_INPUT_ID = "dp";
@@ -247,9 +249,11 @@ const SECTION_GROUPS: ReadonlyArray<SectionGroup> = [
     title: "Thinking",
     testId: "section-thinking",
     band: "live",
-    keys: ["thinking_policy"],
+    keys: ["thinking_policy", "reasoning_budget", "reasoning_budget_mode"],
     summary: ({ draft }) =>
-      draft.thinking_policy === "off" ? "off for every key" : "client decides",
+      `${draft.thinking_policy === "off" ? "off for every key" : "client decides"} · budget ${
+        draft.reasoning_budget === null ? "no limit" : `${draft.reasoning_budget} tokens`
+      }`,
     defaultOpen: () => true,
   },
   {
@@ -712,6 +716,14 @@ export function ModelSettingsPage({ id }: { id: string }) {
             break;
           case "thinking_policy":
             if (v === "client" || v === "off") next.thinking_policy = v;
+            break;
+          case "reasoning_budget":
+            if (v === null) next.reasoning_budget = null;
+            else if (typeof v === "number" && Number.isFinite(v))
+              next.reasoning_budget = Math.max(1, Math.floor(v));
+            break;
+          case "reasoning_budget_mode":
+            if (v === "force_answer" || v === "stop") next.reasoning_budget_mode = v;
             break;
           case "supports_vision":
           case "supports_tools":
@@ -1377,6 +1389,28 @@ function SettingFieldFor({
           disabled={disabled}
           dirty={dirty}
           onChange={(v) => set("thinking_policy", v)}
+        />
+      );
+    case "reasoning_budget":
+      return (
+        <SettingField
+          {...common}
+          kind="number"
+          value={draft.reasoning_budget}
+          onChange={(v) => set("reasoning_budget", v)}
+          min={1}
+          step={1}
+          placeholder="no limit"
+        />
+      );
+    case "reasoning_budget_mode":
+      return (
+        <SettingField
+          {...common}
+          kind="select"
+          value={draft.reasoning_budget_mode}
+          onChange={(v) => set("reasoning_budget_mode", v === "stop" ? "stop" : "force_answer")}
+          options={REASONING_MODE_OPTIONS}
         />
       );
     case "supports_vision":

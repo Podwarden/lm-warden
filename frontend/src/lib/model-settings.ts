@@ -32,6 +32,9 @@ export const PATCHABLE_KEYS = [
   "supports_reasoning",
   // Thinking policy ("client" | "off"); editable while loaded, no reload.
   "thinking_policy",
+  // #348: the model's cap on thinking tokens and what happens at the cap; live, no reload.
+  "reasoning_budget",
+  "reasoning_budget_mode",
   "trust_remote_code",
   "extra_args",
   "extra_env",
@@ -87,6 +90,9 @@ export interface ModelSettings {
   supports_reasoning: number | boolean | null;
   // Optional on the wire: an older server omits both, which reads as "client".
   thinking_policy?: "client" | "off";
+  // #348. Optional on the wire: an older server omits both, which reads as no budget.
+  reasoning_budget?: number | null;
+  reasoning_budget_mode?: "force_answer" | "stop";
   // null = LM Warden cannot tell (usual for GGUF); false = no thinking switch.
   thinking_policy_supported?: boolean | null;
   status:
@@ -118,7 +124,7 @@ export type TristateKey = (typeof TRISTATE_KEYS)[number];
 
 export type Draft = Omit<
   Pick<ModelSettings, PatchableKey>,
-  TristateKey | "data_parallel_size" | "dp_affinity_enabled" | "dp_spill_threshold" | "thinking_policy" | "kv_store" | "kv_store_weight" | "engine_vllm_version"
+  TristateKey | "data_parallel_size" | "dp_affinity_enabled" | "dp_spill_threshold" | "thinking_policy" | "reasoning_budget" | "reasoning_budget_mode" | "kv_store" | "kv_store_weight" | "engine_vllm_version"
 > & {
   [K in TristateKey]: boolean | null;
 } & {
@@ -126,6 +132,8 @@ export type Draft = Omit<
   dp_affinity_enabled: boolean;
   dp_spill_threshold: number | null;
   thinking_policy: "client" | "off";
+  reasoning_budget: number | null;
+  reasoning_budget_mode: "force_answer" | "stop";
   kv_store: "off" | "ram" | "ram+nvme" | "nvme";
   kv_store_weight: number;
   engine_vllm_version: string | null;
@@ -141,6 +149,8 @@ export const LOADED_EDITABLE_KEYS: readonly string[] = [
   "dp_affinity_enabled",
   "dp_spill_threshold",
   "thinking_policy",
+  "reasoning_budget",
+  "reasoning_budget_mode",
   "kv_store_weight",
 ];
 
@@ -166,6 +176,8 @@ export function snapshotToDraft(s: ModelSettings): Draft {
     n_gpu_layers: s.n_gpu_layers ?? null,
     mmproj_filename: s.mmproj_filename ?? null,
     thinking_policy: s.thinking_policy ?? "client",
+    reasoning_budget: s.reasoning_budget ?? null,
+    reasoning_budget_mode: s.reasoning_budget_mode ?? "force_answer",
     supports_vision: triState(s.supports_vision),
     supports_tools: triState(s.supports_tools),
     supports_reasoning: triState(s.supports_reasoning),
@@ -231,6 +243,8 @@ export function labelFor(key: string): string {
  */
 export function formatSettingValue(key: string, v: unknown): string {
   if (key === "thinking_policy") return v === "off" ? "Off for every key" : "Let the client decide";
+  if (key === "reasoning_budget") return v === null || v === undefined ? "no limit" : `${v} tokens`;
+  if (key === "reasoning_budget_mode") return v === "stop" ? "End the request" : "Close thinking, then answer";
   if (key === "kv_store") return v === "ram" ? "RAM" : v === "ram+nvme" ? "RAM + disk" : v === "nvme" ? "Disk only" : "Off";
   if (key.startsWith("supports_")) return v === null || v === undefined ? "Auto" : v ? "Yes" : "No";
   if (typeof v === "boolean") return v ? "on" : "off";

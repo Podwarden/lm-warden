@@ -343,8 +343,27 @@ final class LiveEnvironmentTests: XCTestCase {
         )
         try env.prepare(paths)
 
-        let after = try URL(fileURLWithPath: paths.modelsDir).resourceValues(forKeys: [.isExcludedFromBackupKey])
-        XCTAssertEqual(after.isExcludedFromBackup, false, "unticking must clear an earlier exclusion")
+        let after = try Self.excludedFromBackup(paths.modelsDir, settlingTo: false)
+        XCTAssertEqual(after, false, "unticking must clear an earlier exclusion")
+    }
+
+    /// Reads NSURLIsExcludedFromBackupKey from a fresh, uncached URL, polling
+    /// until it reads `expected` or `timeout` passes. On macOS 27 clearing the
+    /// key is applied asynchronously: right after setResourceValues returns,
+    /// the backup-exclusion xattr can linger for up to ~300 ms (measured on the
+    /// CI Mac, macOS 27.0.1, 2026-11-28: 43 of 500 clears; 0 of 500 on macOS
+    /// 26.1). An immediate read then sees `true` although the clear succeeded.
+    static func excludedFromBackup(
+        _ path: String, settlingTo expected: Bool, timeout: TimeInterval = 2
+    ) throws -> Bool? {
+        let deadline = Date().addingTimeInterval(timeout)
+        while true {
+            var url = URL(fileURLWithPath: path)
+            url.removeAllCachedResourceValues()
+            let value = try url.resourceValues(forKeys: [.isExcludedFromBackupKey]).isExcludedFromBackup
+            if value == expected || Date() >= deadline { return value }
+            usleep(20_000)
+        }
     }
 
     /// live() default keeps today's behaviour: the flag is on, so the dir's

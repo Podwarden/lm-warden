@@ -97,7 +97,8 @@ async def test_migrations_idempotent(tmp_data_dir):
         # + 0065 (request_history.lens_version and lens_wontfix).
         # + 0066 (api_tokens.prompt_lens and engine_facts: per-key permissions).
         # + 0067 (price_catalogue, price_audit: the Prices tab).
-        assert count == 66
+        # + 0068 (reasoning budget: models and api_tokens columns, #348).
+        assert count == 67
 
 
 async def test_migrations_create_all_v2_tables(tmp_data_dir):

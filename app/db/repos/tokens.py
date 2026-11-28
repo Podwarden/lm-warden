@@ -98,6 +98,10 @@ class TokenRow:
     # Appended last, per the rule above.
     prompt_lens: int = 1
     engine_facts: int = 1
+    # Reasoning budget (0068, #348): the key's cap on thinking tokens (None = no cap) and
+    # what happens at the cap (None = the model's mode). Appended last, per the rule above.
+    reasoning_budget: int | None = None
+    reasoning_budget_mode: str | None = None
 
 
 _SELECT_COLS = (
@@ -106,7 +110,7 @@ _SELECT_COLS = (
     "rate_limit_tps, priority, paused_at, created_by, anthropic_relay, "
     "thinking_policy, prompt_diet, capture_until, guard, godmode_self_view, "
     "kv_isolation, kv_tenant_id, kv_epoch, kv_max_pct_ram, kv_max_pct_nvme, keep_captures, "
-    "prompt_lens, engine_facts"
+    "prompt_lens, engine_facts, reasoning_budget, reasoning_budget_mode"
 )
 
 #: The values ``api_tokens.kv_isolation`` may hold.
@@ -135,6 +139,8 @@ _POLICY_COLS = (
     "keep_captures",
     "prompt_lens",
     "engine_facts",
+    "reasoning_budget",
+    "reasoning_budget_mode",
 )
 
 
@@ -230,6 +236,8 @@ class TokenRepo:
         kv_isolation: str = "sharing",
         prompt_lens: bool = False,
         engine_facts: bool = True,
+        reasoning_budget: int | None = None,
+        reasoning_budget_mode: str | None = None,
     ) -> None:
         """Insert a new API token row and commit.
 
@@ -251,8 +259,9 @@ class TokenRepo:
             "INSERT INTO api_tokens"
             "(id, name, prefix, hash, scope, allowed_models, expires_at, "
             " priority, created_by, anthropic_relay, thinking_policy, guard, "
-            " kv_isolation, kv_tenant_id, prompt_lens, engine_facts) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " kv_isolation, kv_tenant_id, prompt_lens, engine_facts, "
+            " reasoning_budget, reasoning_budget_mode) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 token_id,
                 name,
@@ -270,6 +279,8 @@ class TokenRepo:
                 token_id,
                 int(prompt_lens),
                 int(engine_facts),
+                reasoning_budget,
+                reasoning_budget_mode,
             ),
         )
         await self.db.commit()
@@ -735,6 +746,8 @@ class TokenRepo:
         keep_captures: "bool | _Unset" = _UNSET,
         prompt_lens: "bool | _Unset" = _UNSET,
         engine_facts: "bool | _Unset" = _UNSET,
+        reasoning_budget: "int | None | _Unset" = _UNSET,
+        reasoning_budget_mode: "str | None | _Unset" = _UNSET,
     ) -> bool:
         """PATCH-style update for the operator-editable fields.
 
@@ -796,6 +809,12 @@ class TokenRepo:
         if not isinstance(engine_facts, _Unset):
             sets.append("engine_facts = ?")
             params.append(int(engine_facts))
+        if not isinstance(reasoning_budget, _Unset):
+            sets.append("reasoning_budget = ?")
+            params.append(reasoning_budget)
+        if not isinstance(reasoning_budget_mode, _Unset):
+            sets.append("reasoning_budget_mode = ?")
+            params.append(reasoning_budget_mode)
         if keep_captures is True:
             # On: a fresh generation, unless it is already on (keeps its own).
             sets.append(
